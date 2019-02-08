@@ -1,0 +1,6 @@
+node_modules
+/scr_locker_backend/nbproject/private/
+scr_locker_backend/nbproject/
+/.vscode
+.idea/
+/uploads
