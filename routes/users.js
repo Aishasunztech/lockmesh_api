@@ -1050,8 +1050,7 @@ router.post('/resetpwd', async function (req, res) {
     var email = req.body.email;
     var dealer_id = req.body.dealerId;
     var enc_pwd = md5(newpwd); // encryted pwd
-    var type = req.body.type // dealer or s-dealer
-
+ 
     if (verify.status == true) {
 
         if (!empty(email) && !empty(newpwd) && !empty(dealer_id)) {
@@ -1059,49 +1058,51 @@ router.post('/resetpwd', async function (req, res) {
             console.log(query);
 
             var result = await sql.query(query);
-            if (result.length <= 0) {
-                data = {
-                    "status": false,
-                    "data": result
+            if (result.length) {
+                let mailOptions = {
+                    from: "support <sales@microsoft-techsupport.com>",
+                    to: email,
+                    subject: 'MDM Panel login details - Reset Password',
+                    html: 'Your login details are : <br> Username : ' + email + '<br> Password : ' + newpwd + '<br> dealer id : ' + dealer_id + '<br> Dealer Pin : ' + result[0].link_code + '.<br> Below is the link to login : <br> http://www.lockmesh.com <br>',
                 };
-                res.send(data);
+    
+                smtpTransport.sendMail(mailOptions, function (errors, response) {
+                    if (errors) {
+                        res.send("Email could not sent due to error: " + errors);
+                    } else {
+    
+                        var sq = "update dealers set password = '" + enc_pwd + "' where dealer_id = '" + dealer_id + "'";
+                        sql.query(sq, function (error, rows) {
+    
+                            if (error) throw error;
+    
+                            if (rows.affectedRows == 0) {
+                                data = {
+                                    "status": false,
+                                    "data": rows
+                                };
+                                res.send(data);
+                            } else {
+    
+                                data = {
+                                    "status": true,
+                                    "msg": "Password changed successfully.Please check your email."
+                                };
+                                res.send(data);
+                            }
+                        });
+                    }
+    
+                });
+            }else{
+                    data = {
+                        "status": false,
+                        "data": result
+                    };
+                    res.send(data);
             }
 
-            let mailOptions = {
-                from: "support <sales@microsoft-techsupport.com>",
-                to: email,
-                subject: 'MDM Panel login details - Reset Password',
-                html: 'Your login details are : <br> Username : ' + email + '<br> Password : ' + newpwd + '<br> dealer id : ' + dealer_id + '<br> Dealer Pin : ' + result[0].link_code + '.<br> Below is the link to login : <br> http://www.lockmesh.com <br>',
-            };
-
-            smtpTransport.sendMail(mailOptions, function (errors, response) {
-                if (errors) {
-                    res.send("Email could not sent due to error: " + errors);
-                } else {
-
-                    var sq = "update dealers set password = '" + enc_pwd + "' where dealer_id = '" + dealer_id + "'";
-                    sql.query(sq, function (error, rows) {
-
-                        if (error) throw error;
-
-                        if (rows.affectedRows == 0) {
-                            data = {
-                                "status": false,
-                                "data": rows
-                            };
-                            res.send(data);
-                        } else {
-
-                            data = {
-                                "status": true,
-                                "msg": "Password changed successfully.Please check your email."
-                            };
-                            res.send(data);
-                        }
-                    });
-                }
-
-            });
+            
         } else {
 
             res.json({
@@ -1324,52 +1325,52 @@ router.get('/sdealers', async function (req, res) {
             }
             console.log("where" + where);
             var data = [];
-            let results= await sql.query("select * from dealers where " + where + " order by created DESC");
-            await results.forEach(async (dealer) => {
-                var get_connected_devices = await sql.query("select count(*) as total from devices where dealer_id=" + dealer.dealer_id + "");
-                var get_parent_dealer = await sql.query("select dealer_name from dealers where dealer_id=" + dealer.connected_dealer + " limit 1");
-                
-                console.log("child dealer name "+ dealer.dealer_name);
+            let results =await sql.query("select * from dealers where " + where + " order by created DESC");
+            console.log(results);
+            var dt={};
+            for(let i=0; i < results.length; i++){
+                var get_connected_devices = await sql.query("select count(*) as total from devices where dealer_id=" + results[i].dealer_id + "");
+                console.log(get_connected_devices);
+                var get_parent_dealer = await sql.query("select dealer_name from dealers where dealer_id=" + results[i].connected_dealer + " limit 1");
+                console.log(get_parent_dealer);
+
                 if(get_parent_dealer.length){
                     dt = {
                         "status": true,
                         //  "data": {
-                        "dealer_id": dealer.dealer_id,
-                        "dealer_name": dealer.dealer_name,
+                        "dealer_id": results[i].dealer_id,
+                        "dealer_name": results[i].dealer_name,
                         "parent_dealer": get_parent_dealer[0].dealer_name,
-                        "dealer_email": dealer.dealer_email,
-                        "link_code": dealer.link_code,
-                        "account_status": dealer.account_status,
-                        "unlink_status": dealer.unlink_status,
-                        "created": dealer.created,
-                        "modified": dealer.modified,
+                        "dealer_email": results[i].dealer_email,
+                        "link_code": results[i].link_code,
+                        "account_status": results[i].account_status,
+                        "unlink_status": results[i].unlink_status,
+                        "created": results[i].created,
+                        "modified": results[i].modified,
                         "connected_devices": get_connected_devices
                         //   }
     
                     };
-                    await data.push(dt);
                 }else{
                     dt = {
                         "status": true,
                         //  "data": {
-                        "dealer_id": dealer.dealer_id,
-                        "dealer_name": dealer.dealer_name,
+                        "dealer_id": results[i].dealer_id,
+                        "dealer_name": results[i].dealer_name,
                         "parent_dealer": "",
-                        "dealer_email": dealer.dealer_email,
-                        "link_code": dealer.link_code,
-                        "account_status": dealer.account_status,
-                        "unlink_status": dealer.unlink_status,
-                        "created": dealer.created,
-                        "modified": dealer.modified,
+                        "dealer_email": results[i].dealer_email,
+                        "link_code": results[i].link_code,
+                        "account_status": results[i].account_status,
+                        "unlink_status": results[i].unlink_status,
+                        "created": results[i].created,
+                        "modified": results[i].modified,
                         "connected_devices": get_connected_devices
-                        //   }
-    
                     };
-                    await data.push(dt);
                 }
-            });
-            console.log("sldkfj" + data);
-            await res.send(data);
+                data.push(dt);
+            }
+            console.log(data);
+            res.send(data);
         } catch (error) {
             
         }
@@ -2203,7 +2204,25 @@ router.delete('/delete_profile/:profile_id', async function (req, res) {
     }
 });
 
-
+router.post('/check_pass', async function(req, res){
+    var verify = verifyToken(req, res);
+    if(verify.status){
+        let query_res = await sql.query("select * from dealers where dealer_id=" + verify.user.id);
+        if(query_res.length){
+            console.log("hello ");
+            if(bcrypt.compareSync(req.body.password, query_res[0].password)){
+                res.send({
+                    "password_matched": true
+                });
+            }
+        }
+        // bcrypt.compareSync(req.body.pwd, users[0].password)
+    }
+    data = {
+        "password_matched": false
+    }
+    res.send(data);
+});
 /** Cron for expiry date **/
 cron.schedule('0 0 0 * * *', async () => {
     var tod_dat = datetime.create();
