@@ -859,114 +859,81 @@ router.post('/Login', async function (req, res) {
             res.status(200).send(data);
         } else {
 
-            if (userType[0].role == "admin") {
+            var dUser = "SELECT * FROM dealers WHERE  dealer_email='" + email + "' and password ='" + enc_pwd + "';";
 
-                if (bcrypt.compareSync(req.body.pwd, users[0].password)) {
+            var usr = await sql.query(dUser);
 
+            if (usr.length) {
+                if (users[0].account_status == 'suspended') {
+                    data = {
+                        'status': false,
+                        'msg': 'Account Suspended.Please Contact Admin.',
+                        'data': null
+                    }
+                    res.status(200).send(data);
+                    return;
+                } else if (users[0].unlink_status == 1) {
+                    data = {
+                        'status': false,
+                        'msg': 'Account Deleted.Please Contact Admin.',
+                        'data': null
+                    }
+                    res.status(200).send(data);
+                    return;
+                } else {
+                    var userType = await helpers.getUserType(users[0].dealer_id);
                     const user = {
                         "id": users[0].dealer_id,
+                        "dealer_id": users[0].dealer_id,
+                        "email": users[0].dealer_email,
+                        "lastName": users[0].last_name,
                         "name": users[0].dealer_name,
                         "firstName": users[0].first_name,
-                        "lastName": users[0].last_name,
-                        "email": users[0].dealer_email,
-                        "user_type": userType[0].role,
+                        "dealer_name": users[0].dealer_name,
+                        "dealer_email": users[0].dealer_email,
+                        "link_code": users[0].link_code,
+                        "connected_dealer": users[0].connected_dealer,
+                        "account_status": users[0].account_status,
+                        "user_type": userType,
+                        "created": users[0].created,
                         "modified": users[0].modified,
-                        "created": users[0].created
                     }
-
+                    // const user = {
+                    //     "id": users[0].dealer_id,
+                        
+                    //     "email": users[0].dealer_email,
+                    //     "user_type": userType[0].role,
+                    //     "modified": users[0].modified,
+                    //     "created": users[0].created
+                    // }
                     jwt.sign({ user }, config.secret, { expiresIn: '86400s' }, (err, token) => {
-                        // token = CryptoJS.AES.encrypt(token, config.secret).toString();
-
                         if (err) {
                             res.json({
                                 'err': err
                             });
                         } else {
                             res.json({
-                                'status': true,
                                 token: token,
+                                'status': true,
                                 'msg': 'User loged in Successfully',
                                 'expiresIn': "1539763907",
                                 user
-
                             });
                         }
                     });
-
-                } else {
-                    data = {
-                        'status': false,
-                        'msg': 'Wrong Password',
-                        'data': null
-                    }
-                    res.status(200).send(data);
                 }
             } else {
-                var dUser = "SELECT * FROM dealers WHERE  dealer_email='" + email + "' and password ='" + enc_pwd + "';";
 
-                var usr = await sql.query(dUser);
-
-                if (usr.length) {
-                    if (users[0].account_status == 'suspended') {
-                        data = {
-                            'status': false,
-                            'msg': 'Account Suspended.Please Contact Admin.',
-                            'data': null
-                        }
-                        res.status(200).send(data);
-                        return;
-                    } else if (users[0].unlink_status == 1) {
-                        data = {
-                            'status': false,
-                            'msg': 'Account Deleted.Please Contact Admin.',
-                            'data': null
-                        }
-                        res.status(200).send(data);
-                        return;
-                    } else {
-                        var userType = await helpers.getUserType(users[0].dealer_id);
-                        const user = {
-                            "id": users[0].dealer_id,
-                            "dealer_id": users[0].dealer_id,
-                            "email": users[0].dealer_email,
-                            "name": users[0].dealer_name,
-                            "dealer_name": users[0].dealer_name,
-                            "dealer_email": users[0].dealer_email,
-                            "link_code": users[0].link_code,
-                            "connected_dealer": users[0].connected_dealer,
-                            "account_status": users[0].account_status,
-                            "user_type": userType,
-                            "created": users[0].created,
-                            "modified": users[0].modified
-                        }
-                        jwt.sign({ user }, config.secret, { expiresIn: '86400s' }, (err, token) => {
-                            if (err) {
-                                res.json({
-                                    'err': err
-                                });
-                            } else {
-                                res.json({
-                                    token: token,
-                                    'status': true,
-                                    'msg': 'User loged in Successfully',
-                                    'expiresIn': "1539763907",
-                                    user
-                                });
-                            }
-                        });
-                    }
-                } else {
-
-                    data = {
-                        'status': false,
-                        'msg': 'Invalid email or password',
-                        'data': null
-                    }
-                    res.status(200).send(data);
-                    return;
+                data = {
+                    'status': false,
+                    'msg': 'Invalid email or password',
+                    'data': null
                 }
-
+                res.status(200).send(data);
+                return;
             }
+
+            
         }
 
     }
@@ -2207,16 +2174,17 @@ router.delete('/delete_profile/:profile_id', async function (req, res) {
 router.post('/check_pass', async function(req, res){
     var verify = verifyToken(req, res);
     if(verify.status){
-        let query_res = await sql.query("select * from dealers where dealer_id=" + verify.user.id);
+        let pwd = md5(req.body.password);
+    
+        console.log("select * from dealers where dealer_id=" + verify.user.id + " and password='" + pwd + "'");
+        let query_res = await sql.query("select * from dealers where dealer_id=" + verify.user.id + " and password='" + pwd + "'");
         if(query_res.length){
-            console.log("hello ");
-            if(bcrypt.compareSync(req.body.password, query_res[0].password)){
-                res.send({
-                    "password_matched": true
-                });
-            }
+            console.log(query_res);
+            res.send({
+                "password_matched": true
+            });
+            return;
         }
-        // bcrypt.compareSync(req.body.pwd, users[0].password)
     }
     data = {
         "password_matched": false
