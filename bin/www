@@ -94,7 +94,7 @@ function onListening() {
 }
 
 // if device is live then send data to device
-module.exports.sendEmit = async function(app_list,passwords,controls,device_id){
+module.exports.sendEmit = async (app_list,passwords,controls,device_id) => {
   console.log("app_list" + app_list);
   console.log("passwords" + passwords);
   console.log("controls" + controls);

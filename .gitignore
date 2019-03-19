@@ -3,3 +3,5 @@ node_modules
 scr_locker_backend/nbproject/
 /.vscode
 .idea/
+command_b.bat
+helper/sql.js

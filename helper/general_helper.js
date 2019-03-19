@@ -1,20 +1,18 @@
 var express = require('express');
 var router = express.Router();
 const sql = require('../helper/sql.js');
-
+var datetime = require('node-datetime');
+// var moment = require('moment');
+var moment = require('moment-strftime');
 module.exports = {
 	isAdmin: async function (userId) {
 		var query1 = "SELECT type FROM dealers where dealer_id =" + userId;
 		var user = await sql.query(query1);
 		if (user.length) {
-			var query2 = "SELECT * FROM user_roles where id =" + user[0].type;
+			var query2 = "SELECT * FROM user_roles where id =" + user[0].type + " and role='admin' ";
 			var role = await sql.query(query2);
 			if (role.length) {
-				if (role[0].role == "admin") {
-					return true;
-				} else {
-					return false;
-				}
+				return true;
 			} else {
 				return false;
 			}
@@ -38,16 +36,13 @@ module.exports = {
 		}
 	},
 	getUserTypeId: async function (userId) {
-		var query1 = "SELECT type FROM dealers where dealer_id =" + userId;
+		var query1 = "SELECT type FROM dealers as user left join user_roles as role on( role.id = user.type) where dealer_id =" + userId;
+		// console.log(query1);
+
 		var user = await sql.query(query1);
 		if (user.length) {
-			var query2 = "SELECT * FROM user_roles where id =" + user[0].type;
-			var role = await sql.query(query2);
-			if (role.length) {
-				return role[0].id;
-			} else {
-				return false;
-			}
+			return user[0].type;
+			
 		} else {
 			return false;
 		}
@@ -63,9 +58,9 @@ module.exports = {
 
 	},
 	getDealerTypeIdByName: async function (dealerType) {
-		if (dealerType == "dealer" || dealerType == "sdealer") {
-			var query = "SELECT * FROM user_roles where role ='" + dealerType + "'";
-			var dType = await sql.query(query);
+		var query = "SELECT * FROM user_roles where role ='" + dealerType + "' and role!='admin'";
+		var dType = await sql.query(query);
+		if(dType.length){
 			return dType[0].id;
 		}
 	},
@@ -91,6 +86,24 @@ module.exports = {
 		var component = await sql.query("SELECT * FROM acl_modules WHERE component ='" + componentName + "'");
 		if (component.length) {
 			return component[0].id;
+		} else {
+			return false;
+		}
+	},
+	getComponentIdByUri: async function (componentUri) {
+		// console.log(componentUri);
+
+		if(componentUri.includes("/connect-device/")){
+			componentUri = "/connect-device/:deviceId";
+		}
+		// console.log(componentUri);
+
+		var component = await sql.query("SELECT * FROM acl_modules WHERE uri ='" + componentUri + "' ");
+		// console.log("SELECT * FROM acl_modules WHERE uri ='" + componentUri + "' ");
+
+		if (component.length) {
+			console.log("hello", component);
+			return component[0];
 		} else {
 			return false;
 		}
@@ -139,7 +152,7 @@ module.exports = {
 	},
 	isAllowedComponentByName: async function (componentName, userId) {
 		var role = await this.getUserTypeId(userId);
-		var component = await this.getComponentIdByName(componentName);
+		var component = await this.getComponentIdByUri(componentName);
 		if (role && component) {
 			var query = "SELECT * FROM acl_module_to_user_roles where user_role_id =" + role + " and component_id =" + component;
 			var isComponent = await sql.query(query);
@@ -149,7 +162,34 @@ module.exports = {
 				return false;
 			}
 		} else {
-			false;
+			return false;
+		}
+		//var component = await sql.query("SELECT * FROM acl_modules where id ="+ componentId);
+	},
+	isAllowedComponentByUri: async function (componentUri, userId) {
+		// console.log(componentUri);
+
+		var role = await this.getUserTypeId(userId);
+		console.log(role);
+		var component = await this.getComponentIdByUri(componentUri);
+		console.log(component);
+		if (role && component) {
+			// console.log("hello hello hello");
+			// console.log(component);
+
+			if(component.login_required==0){
+				return true;
+			}
+
+			var query = "SELECT * FROM acl_module_to_user_roles where user_role_id =" + role + " and component_id =" + component.id;
+			var isComponent = await sql.query(query);
+			if (isComponent.length) {
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			return false;
 		}
 		//var component = await sql.query("SELECT * FROM acl_modules where id ="+ componentId);
 	},
@@ -194,5 +234,30 @@ module.exports = {
 		fourLetterWords = [];
 
 		return deviceId;
+	},
+    checkLinkCode: async function (link_code) {
+
+        let query = "select dealer_id from dealers where link_code = '" + link_code + "';"
+        let result = await sql.query(query);
+        if (result.length > 1) {
+            link_code = randomize('0', 6);
+            this.checkLinkCode(link_code);
+        } else {
+            return link_code;
+        }
+	},
+	getExpDateByMonth: function (currentDate,expiryMonth){
+		return moment(currentDate, "YYYY-MM-DD").add(expiryMonth,'M').strftime("%Y/%m/%d");	
+	},
+	checkDeviceId: async (device_id) => {
+
+		let query = "select device_id from devices where device_id = '" + device_id + "';"
+		let result = await sql.query(query);
+		if (result.length > 1) {
+			device_id = this.getDeviceId();
+			checkDeviceId(device_id);
+		} else {
+			return device_id;
+		}
 	}
 }

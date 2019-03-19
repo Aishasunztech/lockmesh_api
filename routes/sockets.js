@@ -90,7 +90,7 @@ module.exports.listen = async function (server) {
     }
 
     var verifySession = async (deviceId, sessionId, isWeb = false) => {
-        if (isWeb) {
+        if (isWeb !==undefined && isWeb===true) {
             return true;
         }
         var query = "select * from devices where device_id='" + deviceId + "' and session_id='" + sessionId + "'";
@@ -105,10 +105,9 @@ module.exports.listen = async function (server) {
     io.use(function (socket, next) {
         console.log("socket middleware");
         let token = socket.handshake.query.token;
+        // console.log("socket token", socket.handshake);
         let session_id = socket.id;
 
-        console.log("device_id query['device_id']: " + socket.handshake.query['device_id']);
-        // console.log(socket.handshake._query);
         var device_id = null;
         isWeb = false;
 
@@ -117,17 +116,22 @@ module.exports.listen = async function (server) {
             isWeb = socket.handshake.query['isWeb'];
         } else {
             device_id = socket.handshake._query['device_id'];
+            isWeb = socket.handshake._query['isWeb'];
         }
-
+        console.log("isWeb", isWeb);
         if (verifyToken(token)) {
             if (device_id != undefined && verifySession(device_id, session_id, isWeb)) {
                 next();
-            } else {
-                console.log("authentication error device");
+            } else if (isWeb===true){
+                console.log("m here",isWeb);
+                next();
+            } 
+            else {
+                // console.log("authentication error device");
                 return next(new Error('authentication error'));
             }
         } else {
-            console.log("authentication error token");
+            // console.log("authentication error token");
             return next(new Error('authentication error'));
         }
     });

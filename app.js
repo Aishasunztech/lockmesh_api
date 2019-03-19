@@ -7,6 +7,7 @@ var cors = require('cors');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var mobileRouter = require('./routes/mobile');
+var bodyParser = require('body-parser');
 
 var app = express();
 app.disable('etag');
@@ -14,8 +15,10 @@ app.options('*', cors());
 
 // url logging
 app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// app.use(bodyParser.json({limit: "1000gb"}));
+// app.use(bodyParser.urlencoded({limit: "1000gb", extended: false, parameterLimit:100000000}));
+app.use(express.json({limit: "1000gb"}));
+app.use(express.urlencoded({limit: "1000gb", extended: false, parameterLimit:100000000}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
