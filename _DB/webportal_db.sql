@@ -11,7 +11,7 @@
  Target Server Version : 50724
  File Encoding         : 65001
 
- Date: 19/03/2019 11:58:50
+ Date: 20/03/2019 14:29:46
 */
 
 SET NAMES utf8mb4;
@@ -615,7 +615,7 @@ INSERT INTO `chat_ids` VALUES (46, '5141281292', '0', '2019-03-18 16:58:53', NUL
 INSERT INTO `chat_ids` VALUES (47, '5141281293', '0', '2019-03-18 16:58:53', NULL);
 INSERT INTO `chat_ids` VALUES (48, '5141281299', '0', '2019-03-18 16:58:53', NULL);
 INSERT INTO `chat_ids` VALUES (49, '5141281300', '0', '2019-03-18 16:58:53', NULL);
-INSERT INTO `chat_ids` VALUES (50, '5141281307', '0', '2019-03-18 16:58:53', NULL);
+INSERT INTO `chat_ids` VALUES (50, '5141281307', '1', '2019-03-18 16:58:53', '2019-03-20 12:45:33');
 INSERT INTO `chat_ids` VALUES (51, '5141281306', '0', '2019-03-18 16:58:53', NULL);
 INSERT INTO `chat_ids` VALUES (52, '5141281304', '0', '2019-03-18 16:58:53', NULL);
 INSERT INTO `chat_ids` VALUES (53, '5141281309', '0', '2019-03-18 16:58:53', NULL);
@@ -697,7 +697,7 @@ CREATE TABLE `dealer_dropdown_list`  (
 -- ----------------------------
 -- Records of dealer_dropdown_list
 -- ----------------------------
-INSERT INTO `dealer_dropdown_list` VALUES (23, 154, '[\"DEVICE ID\",\"ACTIVATION CODE\",\"PGP EMAIL\",\"CHAT ID\",\"CLIENT ID\",\"DEALER ID\",\"DEALER PIN\",\"MAC ADDRESS\",\"SIM ID\",\"IMEI 1\",\"SIM 1\",\"IMEI 2\",\"SIM 2\",\"SERIAL NUMBER\",\"STATUS\",\"MODEL\",\"START DATE\",\"EXPIRY DATE\",\"DEALER NAME\",\"ONLINE\",\"S-DEALER\",\"S-DEALER NAME\"]', 'devices', '2019-03-19 11:56:32', '2019-03-19 11:56:32');
+INSERT INTO `dealer_dropdown_list` VALUES (23, 154, '[\"DEVICE ID\",\"DEVICE NAME\",\"ACCOUNT EMAIL\",\"ACTIVATION CODE\",\"PGP EMAIL\",\"CHAT ID\",\"CLIENT ID\",\"DEALER ID\",\"DEALER PIN\",\"MAC ADDRESS\",\"SIM ID\",\"IMEI 1\",\"SIM 1\",\"IMEI 2\",\"SIM 2\",\"SERIAL NUMBER\",\"STATUS\",\"MODEL\",\"START DATE\",\"EXPIRY DATE\",\"DEALER NAME\",\"ONLINE\",\"S-DEALER\",\"S-DEALER NAME\"]', 'devices', '2019-03-19 11:56:32', '2019-03-20 11:51:58');
 INSERT INTO `dealer_dropdown_list` VALUES (24, 180, '[{\"id\":1,\"itemName\":\"Device ID\"},{\"id\":2,\"itemName\":\"Name\"},{\"id\":3,\"itemName\":\"Account Email\"},{\"id\":4,\"itemName\":\"PGP Email\"},{\"id\":5,\"itemName\":\"Chat ID\"},{\"id\":6,\"itemName\":\"Client ID\"},{\"id\":7,\"itemName\":\"Dealer Pin\"},{\"id\":8,\"itemName\":\"Mac Address\"},{\"id\":10,\"itemName\":\"SIM ID\"},{\"id\":11,\"itemName\":\"IMEI\"},{\"id\":12,\"itemName\":\"SIM No\"},{\"id\":13,\"itemName\":\"IMEI 2\"},{\"id\":14,\"itemName\":\"SIM No 2\"},{\"id\":15,\"itemName\":\"Serial Number\"},{\"id\":16,\"itemName\":\"Status\"},{\"id\":17,\"itemName\":\"Model\"},{\"id\":18,\"itemName\":\"Start Date\"},{\"id\":19,\"itemName\":\"Expiry Date\"},{\"id\":20,\"itemName\":\"Dealer Name\"},{\"id\":21,\"itemName\":\"Online\"},{\"id\":22,\"itemName\":\"S Dealer\"},{\"id\":23,\"itemName\":\"S Dealer Name\"}]', 'devices', '2019-03-19 11:56:32', '2019-03-19 11:56:32');
 INSERT INTO `dealer_dropdown_list` VALUES (25, 154, '[\"DEALER EMAIL\",\"DEALER PIN\",\"CONNECTED DEVICES\",\"TOKENS\",\"PARENT DEALER\",\"PARENT DEALER ID\",\"DEALER ID\",\"DEALER NAME\"]', 'sdealer', '2019-03-19 11:56:32', '2019-03-19 11:56:32');
 INSERT INTO `dealer_dropdown_list` VALUES (26, 154, '[\"DEALER ID\",\"DEALER NAME\",\"DEALER EMAIL\",\"DEALER PIN\",\"CONNECTED DEVICES\",\"TOKENS\"]', 'dealer', '2019-03-19 11:56:32', '2019-03-19 11:56:32');
@@ -759,13 +759,13 @@ INSERT INTO `dealers` VALUES (193, NULL, NULL, 189, 'salman khan', 'samznight@gm
 INSERT INTO `dealers` VALUES (195, NULL, NULL, 0, 'testing', 'newu@mail-cart.com', '9fa48bbd844c45960b07a59612055dc3', '379799', 2, 0, NULL, '2019-03-08 19:03:03', '2019-03-08 19:03:03');
 INSERT INTO `dealers` VALUES (196, NULL, NULL, 0, 'sdklfjslk', 'usman@freeweb.email', '771e8103951d969169f6e7d024868533', '021993', 2, 0, NULL, '2019-03-08 19:06:02', '2019-03-08 19:06:02');
 INSERT INTO `dealers` VALUES (197, NULL, NULL, 0, 'hello usman', 'usman12@alpha-web.net', 'adac19e69ec6acda492fc82946852bc5', '485234', 2, 0, NULL, '2019-03-08 19:08:28', '2019-03-08 19:08:28');
-INSERT INTO `dealers` VALUES (198, NULL, NULL, 0, 'usman', 'usman123@alpha-web.net', 'e2b48fa0c4dc67dfd8f45ab1c4ad2ec7', '881795', 2, 0, NULL, '2019-03-08 19:11:27', '2019-03-08 19:11:27');
-INSERT INTO `dealers` VALUES (199, NULL, NULL, 0, 'usman', 'usman1234@alpha-web.net', '8d1ca799021736da5f5e6fb8ef3c6103', '664915', 2, 0, NULL, '2019-03-08 19:13:36', '2019-03-08 19:13:36');
-INSERT INTO `dealers` VALUES (204, NULL, NULL, 0, 'usman', 'usmanhafeez147@gmail.com', '3239e8133da538aa18a39f74a8e1b1cc', '786218', 2, 0, NULL, '2019-03-09 09:01:39', '2019-03-09 09:01:39');
+INSERT INTO `dealers` VALUES (198, NULL, NULL, 0, 'usman', 'usman123@alpha-web.net', 'e2b48fa0c4dc67dfd8f45ab1c4ad2ec7', '881795', 2, 1, NULL, '2019-03-08 19:11:27', '2019-03-08 19:11:27');
+INSERT INTO `dealers` VALUES (199, NULL, NULL, 0, 'usman', 'usman1234@alpha-web.net', '8d1ca799021736da5f5e6fb8ef3c6103', '664915', 2, 1, NULL, '2019-03-08 19:13:36', '2019-03-08 19:13:36');
+INSERT INTO `dealers` VALUES (204, NULL, NULL, 0, 'usman', 'usmanhafeez147@gmail.com', '6b960ec63dc00674414c21f7be13dfc5', '786218', 2, 0, NULL, '2019-03-09 09:01:39', '2019-03-09 09:01:39');
 INSERT INTO `dealers` VALUES (205, NULL, NULL, 204, 'usman', 'usman12345@alpha-web.net', '71ffeef77e9af9ee598c50204acfcbd7', '979810', 3, 0, NULL, '2019-03-09 14:33:54', '2019-03-09 14:33:54');
-INSERT INTO `dealers` VALUES (206, NULL, NULL, 0, 'usman', 'usman12356@gmail.com', 'e1d9790b54d3dd815b600d566d1f496c', '690555', 2, 0, NULL, '2019-03-14 17:24:03', '2019-03-14 17:24:03');
-INSERT INTO `dealers` VALUES (207, NULL, NULL, 0, 'usman', 'usmanother@gmail.com', '09552ac4174d7c21311b72ce9ddd8159', '876925', 2, 0, NULL, '2019-03-14 17:24:23', '2019-03-14 17:24:23');
-INSERT INTO `dealers` VALUES (208, NULL, NULL, 0, 'mehran', 'mehranother@gmail.com', '240791f1440900bc05b7c3e96c22c85d', '625406', 2, 0, '', '2019-03-14 17:24:41', '2019-03-14 17:24:41');
+INSERT INTO `dealers` VALUES (206, NULL, NULL, 0, 'usman', 'usman12356@gmail.com', 'e1d9790b54d3dd815b600d566d1f496c', '690555', 2, 1, NULL, '2019-03-14 17:24:03', '2019-03-14 17:24:03');
+INSERT INTO `dealers` VALUES (207, NULL, NULL, 0, 'usman', 'usmanother@gmail.com', '09552ac4174d7c21311b72ce9ddd8159', '876925', 2, 1, NULL, '2019-03-14 17:24:23', '2019-03-14 17:24:23');
+INSERT INTO `dealers` VALUES (208, NULL, NULL, 0, 'mehran', 'mehranother@gmail.com', '240791f1440900bc05b7c3e96c22c85d', '625406', 2, 1, '', '2019-03-14 17:24:41', '2019-03-14 17:24:41');
 INSERT INTO `dealers` VALUES (209, NULL, NULL, 0, 'usman', 'arfan@gmail.com', 'dcc3c113521009f6dad3c3249869fbf8', '158909', 2, 0, NULL, '2019-03-15 15:23:41', '2019-03-15 15:23:41');
 INSERT INTO `dealers` VALUES (210, NULL, NULL, 0, 'arfan', 'arfan123@gmail.com', 'a70019722ea494e59ef74a035b7fcf36', '066222', 2, 0, NULL, '2019-03-15 15:24:31', '2019-03-15 15:24:31');
 
@@ -871,6 +871,7 @@ CREATE TABLE `devices`  (
   `account_status` enum('suspended','') CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT '',
   `unlink_status` tinyint(4) NOT NULL DEFAULT 0,
   `screen_start_date` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `transfer_status` tinyint(4) UNSIGNED NULL DEFAULT 0,
   `start_date` varchar(16) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `expiry_months` int(100) NULL DEFAULT NULL,
   `expiry_date` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
@@ -884,14 +885,14 @@ CREATE TABLE `devices`  (
   UNIQUE INDEX `unique_activation_code`(`activation_code`) USING BTREE,
   INDEX `dealer_id`(`dealer_id`) USING BTREE,
   INDEX `connected_dealer`(`connected_dealer`) USING BTREE,
-  INDEX `client_id`(`client_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 610 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
+  INDEX `client_id`(`client_id`) USING BTREE,
+  UNIQUE INDEX `unique_mac_address`(`mac_address`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 610 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of devices
 -- ----------------------------
-INSERT INTO `devices` VALUES (608, 204, 0, '8', 'test154645', 'JLRK703454', NULL, 'usman', 'usman@gmail.com', 'example3@domain.com', NULL, 'asdfasdf', '192.168.18.152', NULL, '8992041508173614556f', '866037035765283', NULL, 'null', '866037035765291', 'b8dad6c40304', 'EC:D0:9F:21:D9:C8', NULL, NULL, NULL, NULL, '5795068', 1, 'off', 1, 1, 'active', '', 0, NULL, NULL, 12, '2020/03/16', '2019-03-16 16:31:39', '2019-03-16 18:30:58');
-INSERT INTO `devices` VALUES (609, 204, 0, '9', 'samz', 'WAZC447487', NULL, 'usman', 'usman12321312@gmail.com', 'example4@domain.com', NULL, 'huawie', '192.168.18.152', NULL, '8992041508173614556f', '866037035765283', NULL, 'null', '866037035765291', 'b8dad6c40304', 'EC:D0:9F:21:D9:C8', NULL, NULL, NULL, NULL, '5358702', 1, 'On', 1, 0, 'active', '', 0, NULL, NULL, 12, '2020/03/18', '2019-03-18 10:37:43', '2019-03-18 10:38:39');
+INSERT INTO `devices` VALUES (608, 204, 0, '8', 'test154645', 'JLRK703454', NULL, 'usman', 'usman@gmail.com', 'example3@domain.com', NULL, 'asdfasdf', '192.168.18.152', NULL, '8992041508173614556f', '866037035765283', NULL, 'null', '866037035765291', 'b8dad6c40304', 'EC:D0:9F:21:D9:C8', NULL, NULL, NULL, NULL, '5795068', 1, 'off', 1, 1, 'active', '', 0, NULL, 0, NULL, 12, '2020/03/16', '2019-03-16 16:31:39', '2019-03-20 06:07:39');
 
 -- ----------------------------
 -- Table structure for pgp_emails
@@ -923,7 +924,7 @@ INSERT INTO `pgp_emails` VALUES (29, 'saira@sss.com', 0, NULL, NULL);
 INSERT INTO `pgp_emails` VALUES (30, 'nomee@msn.com', 0, NULL, NULL);
 INSERT INTO `pgp_emails` VALUES (31, '1619DKV@ARMORSEC.XYZ', 0, NULL, NULL);
 INSERT INTO `pgp_emails` VALUES (32, '3669NBQ@ARMORSEC.XYZ', 0, NULL, NULL);
-INSERT INTO `pgp_emails` VALUES (33, '2675DKN@ARMORSEC.XYZ', 0, NULL, NULL);
+INSERT INTO `pgp_emails` VALUES (33, '2675DKN@ARMORSEC.XYZ', 1, NULL, '2019-03-20 12:45:33');
 INSERT INTO `pgp_emails` VALUES (34, '5147DXT@ARMORSEC.XYZ', 0, NULL, NULL);
 INSERT INTO `pgp_emails` VALUES (35, '5412JJN@ARMORSEC.XYZ', 0, NULL, NULL);
 INSERT INTO `pgp_emails` VALUES (36, '4338GQG@ARMORSEC.XYZ', 0, NULL, NULL);
