@@ -457,7 +457,7 @@ router.post('/add/dealer', async function (req, res) {
         var pageType = req.body.pageType;
         // console.log("pageType: " + pageType);
 
-        if (userType == 'sdealer' || (userType == 'dealer' && pageType == 'dealer')) {
+        if (userType == SDEALER || (userType == DEALER && pageType == DEALER)) {
             data = {
                 "status": false,
                 "msg": "invalid operation",
@@ -466,9 +466,9 @@ router.post('/add/dealer', async function (req, res) {
         }
         let sdealerDealerId = 0;
 
-        if (userType == 'admin' && pageType == 'sdealer') {
+        if (userType == ADMIN && pageType == SDEALER) {
             sdealerDealerId = req.body.dealerId;
-        } else if (userType == 'dealer' && pageType == 'sdealer') {
+        } else if (userType == DEALER && pageType == SDEALER) {
             sdealerDealerId = loggedInuid;
         }
         //console.log("dealerId: " + dealerId);
@@ -514,13 +514,25 @@ router.post('/add/dealer', async function (req, res) {
             sql.query(sql1, function (error, rows) {
                 if (error) throw error;
 
-                var html = 'Your login details are : <br> ' +
+                var html = '';
+                if(pageType === DEALER){
+
+                    html = 'Your login details are : <br> ' +
                     'Email : ' + dealerEmail + '<br> ' +
                     'Password : ' + dealer_pwd + '<br> ' +
                     'Dealer id : ' + rows.insertId + '<br> ' +
                     'Dealer Pin : ' + link_code + '.<br> ' +
                     'Below is the link to login : <br> http://www.lockmesh.com <br>';
-                console.log(html);
+                } else {
+                    html = 'Your login details are : <br> ' +
+                    'Email : ' + dealerEmail + '<br> ' +
+                    'Password : ' + dealer_pwd + '<br> ' +
+                    'S-Dealer id : ' + rows.insertId + '<br> ' +
+                    'S-Dealer Pin : ' + link_code + '.<br> ' +
+                    'Below is the link to login : <br> http://www.lockmesh.com <br>';
+                }
+                
+
                 sendEmail("Account Registration", html, dealerEmail, async function (errors, response) {
                     if (error) {
                         res.send("Email could not sent due to error: " + errors);
@@ -2030,6 +2042,26 @@ router.get('/get_apps/:device_id', async function (req, res) {
     }
 });
 
+router.get('default_apps', function(req, res){
+    var verify = verifyToken(req, res);
+    if(verify['status']!==undefined && verify.status === true){
+        var query = 'SELECT apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon from default_apps as apps_info ';
+        // console.log(query);
+        sql.query(query, async (error, apps) => {
+            if (error) {
+                throw Error("Query Expection");
+            }
+            
+            res.send({
+                status: true,
+                app_list: apps,
+                
+            });
+
+        });
+
+    }
+})
 
 router.post('/apply_settings/:device_id', async function (req, res) {
     try {
