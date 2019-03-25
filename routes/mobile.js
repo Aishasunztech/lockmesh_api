@@ -83,8 +83,6 @@ router.post('/login', async function (req, resp) {
 
     var linkCode = req.body.link_code;
     var mac_address = req.body.mac_address;
-    console.log("linkcode: " + linkCode);
-    console.log("macaddress: " + mac_address);
     var data;
     //console.log(linkCode);
     if (linkCode != undefined && linkCode != null) {
@@ -162,14 +160,13 @@ router.post('/login', async function (req, resp) {
                 } else {
 
                     let {imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address} = getDeviceInfo(req);
-                    console.log("this is inof", {imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address});
-                    let device_id = helpers.getDeviceId();
-                    device_id = await helpers.checkDeviceId(device_id);
-                    console.log("device_id", device_id);
+                    console.log("this is info ", {imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address});
+                    
+                    console.log("device_id", res[0].device_id);
+                    
                     let expiry_date = helpers.getExpDateByMonth(new Date(),res[0].expiry_months);
-                    var updateDevice = "UPDATE devices set activation_status=1, device_id='"+ device_id +"', ip_address = '" + ip + "', simno = '" + simNo1 + "', online = 'On', imei='"+ imei1+"', imei2='"+imei2+"', serial_number='"+ serial_number +"', mac_address='"+ mac_address +"', unlink_status = 0 , simno2 = '" + simNo2 + "', expiry_date='"+ expiry_date +"' , device_status=1 where device_id='"+ res[0].device_id +"'";
+                    var updateDevice = "UPDATE devices set activation_status=1, ip_address = '" + ip + "', simno = '" + simNo1 + "', online = 'On', imei='"+ imei1+"', imei2='"+imei2+"', serial_number='"+ serial_number +"', mac_address='"+ mac_address +"', unlink_status = 0 , simno2 = '" + simNo2 + "', expiry_date='"+ expiry_date +"' , device_status=1 where device_id='"+ res[0].device_id +"'";
                     let updatedDevice = await sql.query(updateDevice);
-                    console.log("after updation", updatedDevice);
 
                     const device = {
                         'dId': dealer[0].dealer_id,
