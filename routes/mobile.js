@@ -470,7 +470,11 @@ router.post('/getstatus', async function (req, resp) {
                         "msg": "Device activated.",
                         "dealer_id": res[0].dealer_id,
                         "expiry_date": '',
-                        "device_id": res[0].device_id
+                        "device_id": res[0].device_id,
+                        "chat_id": res[0].chat_id,
+                        "pgp_email": res[0].pgp_email,
+                        "sim_id": res[0].sim_id
+
 
                     };
                     resp.send(data);
@@ -480,7 +484,11 @@ router.post('/getstatus', async function (req, resp) {
                         "msg": "Device activated.",
                         "dealer_id": res[0].dealer_id,
                         "expiry_date": res[0].expiry_date,
-                        "device_id": res[0].device_id
+                        "device_id": res[0].device_id,
+                        "chat_id": res[0].chat_id,
+                        "pgp_email": res[0].pgp_email,
+                        "sim_id": res[0].sim_id
+
                     };
                     resp.send(data);
                 }
