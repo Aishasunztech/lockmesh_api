@@ -1297,16 +1297,23 @@ router.put('/updateProfile/:id', function (req, res) {
 // });
 
 /** Unlink Device  **/
-router.post('/unlink/:id', function (req, res) {
+router.post('/unlink/:id', async function (req, res) {
     var verify = verifyToken(req, res);
     var device_id = req.params.id;
 
     if (verify.status !== undefined && verify.status == true) {
         console.log('unlinked');
         if (!empty(device_id)) {
-            var sql1 = "update devices set dealer_id = 0, s_dealer = '' , status = '' , online = 'off' , device_status = 0 , start_date= '', expiry_date= '' , unlink_status=1 where device_id = '" + device_id + "'";
+            let query = "SELECT activation_code from devices where device_id = '" + device_id + "'";
+            let result = sql.query(query);
 
-            console.log(sql1);
+            if(result[0].activation_code !== null){
+                var sql1 = "update devices set dealer_id = 0, activation_status=0, s_dealer = '' , status = '' , online = 'off' , device_status = 0 , start_date= '', expiry_date= '' , unlink_status=1 where device_id = '" + device_id + "'";                
+            } else {
+
+                var sql1 = "update devices set dealer_id = 0, s_dealer = '' , status = '' , online = 'off' , device_status = 0 , start_date= '', expiry_date= '' , unlink_status=1 where device_id = '" + device_id + "'";
+            }
+
             var rest = sql.query(sql1, function (error, results) {
                 if (error) throw error;
                 console.log(results);
@@ -1543,10 +1550,11 @@ router.post('/resetpwd', async function (req, res) {
             var result = await sql.query(query);
             if (result.length) {
                 // console.log('error');
-                var subject = "Password Change";
                 if (isReset) {
+                    var subject = "Password Reset";
                     var message = 'Your login details are : <br> Email : ' + email + '<br> Password : ' + newpwd + '<br> Dealer id : ' + dealer_id + '<br> Dealer Pin : ' + result[0].link_code + '.<br> Below is the link to login : <br> http://www.lockmesh.com <br>';
                 } else {
+                    var subject = "Password Change";
                     var message = 'You have changed your password in your Lockmesh.com account. <br><br> This is just to inform you about the activity. If it was not you, please immediately contact your provider to reset the password.';
                 }
 
@@ -1966,6 +1974,12 @@ router.get('/connect/:device_id', async function (req, res) {
                         "account_status": results[0].account_status,
                         "device_status": results[0].device_status,
                         "activation_status": results[0].activation_status,
+                        "activation_code": results[0].activation_code,
+                        "serial_number": results[0].serial_number,
+                        "online": results[0].online,
+                        "s_dealer": results[0].s_dealer,
+                        "s_dealer_name": results[0].s_dealer_name,
+                        "device_name": results[0].name,
                         // "start_date": datetime.create(results[0].start_date).format('m-d-Y'),
                         // "expiry_date": datetime.create(results[0].expiry_date).format('m-d-Y'),
                         "start_date": results[0].start_date,
@@ -2542,6 +2556,7 @@ router.post('/import/:fieldName', async (req, res) => {
                         let error = false;
                         parsedData.forEach(async (row) => {
                             if (row.chat_id) {
+
                                 let result = await sql.query("INSERT IGNORE into chat_ids (chat_id) value ('" + row.chat_id + "')");
                                 console.log(result);
                             } else {
@@ -2569,9 +2584,12 @@ router.post('/import/:fieldName', async (req, res) => {
                         let error = false;
                         parsedData.forEach(async (row) => {
                             if (row.pgp_email) {
-                                let result = await sql.query("INSERT IGNORE into pgp_emails (pgp_email) value ('" + row.pgp_email + "')");
+                                let email = helpers.validateEmail(row.pgp_email);
+                                if(email){
+                                    let result = await sql.query("INSERT IGNORE into pgp_emails (pgp_email) value ('" + row.pgp_email + "')");
+                                    console.log(result);
+                                }
 
-                                console.log(result);
                             } else {
                                 error = true;
                             }
@@ -2694,6 +2712,7 @@ router.get('/get_sim_ids', async (req, res) => {
     }
 });
 
+
 router.get('/get_chat_ids', async (req, res) => {
     var verify = verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
@@ -2725,17 +2744,17 @@ router.get('/get_pgp_emails', async (req, res) => {
 
 router.post('/addApk', function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
-
-    // var verify = verifyToken(req, res);
+    
+     var verify = verifyToken(req, res);
+   //  console.log('verify', verify.status);
     let filename = "";
-    // if (verify.status !== undefined && verify.status == true) {
+     if (verify.status !== undefined && verify.status == true) {
         var storage = multer.diskStorage({
             destination: function (req, file, callback) {
                 callback(null, './uploads');
             },
+
             filename: function (req, file, callback) {
-
-
                 console.log("file.fieldname", file.fieldname);
                 if (file.fieldname == "logo") {
                     filename = file.fieldname + '-' + Date.now() + '.jpg';
@@ -2748,7 +2767,6 @@ router.post('/addApk', function (req, res) {
                     callback(null, file.fieldname + '-' + Date.now() + '.apk');
                 }
                 console.log('file name', filename)
-
             }
         });
         let fileUploaded = false;
@@ -2831,12 +2849,11 @@ router.post('/addApk', function (req, res) {
 
             // }
         });
-    // }
+     }
 });
 
 router.post('/upload', function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
-
     var verify = verifyToken(req, res);
 
     if (verify.status == true) {

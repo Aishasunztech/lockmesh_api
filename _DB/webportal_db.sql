@@ -11,7 +11,7 @@
  Target Server Version : 50724
  File Encoding         : 65001
 
- Date: 25/03/2019 10:56:33
+ Date: 26/03/2019 09:51:27
 */
 
 SET NAMES utf8mb4;
@@ -762,7 +762,7 @@ CREATE TABLE `dealers`  (
   INDEX `type`(`type`) USING BTREE,
   INDEX `connected_dealer`(`connected_dealer`) USING BTREE,
   CONSTRAINT `dealers_ibfk_1` FOREIGN KEY (`type`) REFERENCES `user_roles` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 211 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 213 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Records of dealers
@@ -783,6 +783,8 @@ INSERT INTO `dealers` VALUES (207, NULL, NULL, 0, 'usman', 'usmanother@gmail.com
 INSERT INTO `dealers` VALUES (208, NULL, NULL, 0, 'mehran', 'mehranother@gmail.com', '240791f1440900bc05b7c3e96c22c85d', '625406', 2, 1, '', '2019-03-14 17:24:41', '2019-03-14 17:24:41');
 INSERT INTO `dealers` VALUES (209, NULL, NULL, 0, 'usman', 'arfan@gmail.com', 'dcc3c113521009f6dad3c3249869fbf8', '158909', 2, 0, NULL, '2019-03-15 15:23:41', '2019-03-15 15:23:41');
 INSERT INTO `dealers` VALUES (210, NULL, NULL, 0, 'arfan', 'arfan123@gmail.com', 'a70019722ea494e59ef74a035b7fcf36', '066222', 2, 0, NULL, '2019-03-15 15:24:31', '2019-03-15 15:24:31');
+INSERT INTO `dealers` VALUES (211, NULL, NULL, 0, 'usman', 'usman@network-source.com', 'b72de234d766978b5cbd1c69f0bb36c3', '468068', 2, 0, NULL, '2019-03-25 17:36:33', '2019-03-25 17:36:33');
+INSERT INTO `dealers` VALUES (212, NULL, NULL, 0, 'hamza', 'hamza.dawood007@gmail.com', '0928f359f64fce4f4ac0548d95f75c2b', '482361', 2, 0, NULL, '2019-03-25 17:39:17', '2019-03-25 17:39:17');
 
 -- ----------------------------
 -- Table structure for default_apps
@@ -1343,7 +1345,7 @@ CREATE TABLE `devices`  (
 -- ----------------------------
 -- Records of devices
 -- ----------------------------
-INSERT INTO `devices` VALUES (610, 204, 0, '5141281323', 'test154645', 'QURI804171', NULL, 'usman', 'usman123@gmail.com', '599NGT@TITANSECURE.BIZ', NULL, 'undefined', '192.168.1.106', NULL, '8992041508173614556f', '866037035765283', NULL, 'null', '866037035765291', 'b8dad6c40304', 'EC:D0:9F:21:D9:C8', NULL, NULL, NULL, NULL, '8901361', 1, 'off', 1, 0, 'active', '', 0, NULL, 0, NULL, 6, '2019/09/21', '2019-03-21 13:41:50', '2019-03-21 13:54:17');
+INSERT INTO `devices` VALUES (610, 0, 0, '5141281323', 'test154645', 'QURI804171', NULL, 'usman', 'usman123@gmail.com', '599NGT@TITANSECURE.BIZ', NULL, 'undefined', '192.168.1.106', NULL, '8992041508173614556f', '866037035765283', NULL, 'null', '866037035765291', 'b8dad6c40304', 'EC:D0:9F:21:D9:C8', '', NULL, NULL, NULL, '8901361', 1, 'off', 0, 0, '', '', 1, NULL, 0, '', 6, '', '2019-03-21 13:41:50', '2019-03-25 14:40:57');
 
 -- ----------------------------
 -- Table structure for pgp_emails
@@ -1357,7 +1359,7 @@ CREATE TABLE `pgp_emails`  (
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `unique_pgp_emails`(`pgp_email`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 92 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = MyISAM AUTO_INCREMENT = 93 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of pgp_emails
@@ -1434,6 +1436,7 @@ INSERT INTO `pgp_emails` VALUES (88, '358GTR@TITANSECURE.BIZ', 0, NULL, NULL);
 INSERT INTO `pgp_emails` VALUES (89, '349VFT@TITANSECURE.BIZ', 0, NULL, NULL);
 INSERT INTO `pgp_emails` VALUES (90, '791BFT@TITANSECURE.BIZ', 0, NULL, NULL);
 INSERT INTO `pgp_emails` VALUES (91, '599NGT@TITANSECURE.BIZ', 1, NULL, '2019-03-21 13:41:50');
+INSERT INTO `pgp_emails` VALUES (92, 'example@domain.com', 0, NULL, NULL);
 
 -- ----------------------------
 -- Table structure for profiles
@@ -1511,8 +1514,8 @@ CREATE TABLE `sim_ids`  (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `sim_id` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `used` tinyint(4) NOT NULL DEFAULT 0,
-  `start_date` datetime(0) NULL DEFAULT NULL,
-  `expiry_date` datetime(0) NULL DEFAULT NULL,
+  `start_date` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `expiry_date` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
