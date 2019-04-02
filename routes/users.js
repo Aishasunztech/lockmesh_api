@@ -2751,63 +2751,23 @@ router.post('/addApk', function (req, res) {
             },
 
             filename: function (req, file, callback) {
-                console.log("file.fieldname", file.fieldname);
-                if (file.fieldname == "logo") {
+
+                var filetypes = /jpeg|jpg|apk|png/;
+                
+                var mimetype = filetypes.test(file.mimetype);
+                
+                if (file.mimetype === 'application/vnd.android.package-archive' && file.fieldname == "apk") {
+                    filename = file.fieldname + '-' + Date.now() + '.apk';
+                    callback(null, file.fieldname + '-' + Date.now() + '.apk');
+                } else if (mimetype && file.fieldname == "logo") {
                     filename = file.fieldname + '-' + Date.now() + '.jpg';
-                    callback(null, file.fieldname + '-' + Date.now() + '.jpg');
-                } else if (file.fieldname == "apk") {
-                    filename = file.fieldname + '-' + Date.now() + '.apk';
-                    callback(null, file.fieldname + '-' + Date.now() + '.apk');
+                    callback(null, filename);
                 } else {
-                    filename = file.fieldname + '-' + Date.now() + '.apk';
-                    callback(null, file.fieldname + '-' + Date.now() + '.apk');
+                    callback("Error: File upload only supports the following filetypes - " );
                 }
-                console.log('file name', filename)
             }
         });
-        let fileUploaded = false;
 
-        var fileFilter = function (req, file, callback) {
-            var filetypes = /jpeg|jpg|apk|png/;
-            var mimetype = true
-            // if (file.mimetype === 'application/vnd.android.package-archive') {
-            //     var mimetype = false;
-            //     var ext = file.originalname.split(".");
-            //     console.log('ext', ext);
-            //     // if (ext.length === 2) {
-            //         console.log('apk length', ext.length);
-            //     // }
-
-            // } else {
-            //     var mimetype = filetypes.test(file.mimetype);
-            //     var ext = file.originalname.split(".");
-            //     console.log('ext', ext);
-            //     if (mimetype) {
-            //         if (ext.length === 2) {
-            //             mimetype = true
-            //             console.log('logo length', ext.length);
-            //         } else {
-            //             mimetype = false;
-            //         }
-            //     }
-
-            // }
-
-            var extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-            console.log('mim');
-            console.log(file.mimetype);
-            console.log('extname');
-            console.log(extname);
-            console.log("here");
-            if (mimetype) {
-                console.log("validated");
-                fileUploaded = true;
-                return callback(null, true);
-
-            } else {
-                callback("Error: File upload only supports the following filetypes - " + filetypes);
-            }
-        }
 
         var upload = multer({
             // fileFilter: fileFilter,
@@ -2824,23 +2784,23 @@ router.post('/addApk', function (req, res) {
         upload(req, res, function (err) {
             console.log("error", err);
             // console.log("fileUploaded:" + fileUploaded);
-            // if (err) {
-            //     return res.end("Error while Uploading");
-            // } else {
+            if (err) {
+                return res.end("Error while Uploading");
+            }
 
-            // if (fileUploaded) {
+            if (filename!="") {
+                data = {
+                    "status": true,
+                    "msg": 'Uploaded Successfully',
+                    "fileName": filename
+                };
 
-            // } else {
-            //     data = {
-            //         "status": false,
-            //         "msg": "Error while Uploading",
-            //     };
-            // }
-            data = {
-                "status": true,
-                "msg": 'Uploaded Successfully',
-                "fileName": filename
-            };
+            } else {
+                data = {
+                    "status": false,
+                    "msg": "Error while Uploading",
+                };
+            }
             res.send(data);
 
             // }
