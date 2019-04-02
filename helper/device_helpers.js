@@ -130,12 +130,12 @@ module.exports = {
 
         var getQuery = "select id from devices where device_id='" + deviceId + "'";
         // console.log(getQuery);
-        
-        let response =await sql.query(getQuery);
+
+        let response = await sql.query(getQuery);
         var updateQuery = "update devices set is_sync=1 where device_id='" + deviceId + "'";
         await sql.query(updateQuery);
         if (response.length) {
-           return response[0];
+            return response[0];
         } else {
             // console.log("hellow");
         }
@@ -188,5 +188,36 @@ module.exports = {
             }
         }
         return false;
+    },
+    checkStatus: function (results) {
+        console.log("helleo results", results)
+        let deviceData = results.map((results) => {
+
+            if (results.status === 'active' && (results.account_status === '' || results.account_status === null) && results.unlink_status === 0 && (results.device_status === 1 || results.device_status === '1')) {
+                results.finalStatus = 'Activated'
+            }
+            else if (results.status === 'expired') {
+                results.finalStatus = 'Expired';
+            } else if ((results.device_status === '0' || results.device_status === 0) && (results.unlink_status === '0' || results.unlink_status === 0) && (results.activation_status === null || results.activation_status === '')) {
+                results.finalStatus = 'Pending activation';
+            } else if ((results.device_status === '0' || results.device_status === 0) && (results.unlink_status === '0' || results.unlink_status === 0) && (results.activation_status === 0)) {
+                results.finalStatus = 'Pre-activated';
+            } else if ((results.unlink_status === '1' || results.unlink_status === 1) && (results.device_status === 0 || results.device_status === '0')) {
+                // console.log("hello unlinked");
+                results.finalStatus = 'Unlinked';
+            } else if (results.account_status === 'suspended') {
+                results.finalStatus = 'Suspended';
+            } else {
+                results.finalStatus = 'N/A';
+            }
+            return results
+
+        })
+        data = {
+            "status": true,
+            "data": deviceData
+        };
+        return data
+
     }
 }
