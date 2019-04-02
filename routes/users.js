@@ -2962,8 +2962,9 @@ router.get('/apklist', function (req, res) {
 
             } else {
                 data = {
-                    "status": false,
-                    "msg": "No result found"
+                    status: false,
+                    msg: "No result found",
+                    list: []
                 }
                 res.send(data);
             }
