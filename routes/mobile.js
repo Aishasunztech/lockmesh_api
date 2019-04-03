@@ -668,26 +668,25 @@ router.get("/getApk/:apk", (req, res) => {
 
 /** Get status of device (active,expired,inactive) **/
 router.post('/accountstatus', async function (req, res) {
-    var imei = req.body.imei;
+    var serial_number = req.body.serial_number;
     var mac = req.body.mac;
     var data;
-    console.log('imei : ' + imei);
+    console.log('serial_number : ' + serial_number);
     console.log('mac : ' + mac);
 
-    if (empty(imei) || empty(mac)) {
+    if (empty(serial_number) || empty(mac)) {
         data = {
             "status": false,
         }
         res.send(data);
     } else {
-        var deviceQuery = "select * from devices where mac_address = '" + mac + "' ";
-        // OR imei = '"+ imei +"'
-
+        var deviceQuery = "select * from devices where mac_address = '" + mac + "' OR serial_number = '"+ serial_number +"'";
+        // 
         var device = await sql.query(deviceQuery);
         //reslts 
         if (device.length > 0) {
             var user_acc = await sql.query("SELECT * FROM usr_acc where device_id = " + device[0].id);
-            if(user_acc.length){
+            if(user_acc.length > 0){
                 
                 // get user account device status
                 let deviceStatus = device_helpers.checkStatus(user_acc[0]);
