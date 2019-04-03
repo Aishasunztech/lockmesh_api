@@ -210,7 +210,7 @@ module.exports = {
             status = 'N/A';
         }
 
-        return status
+        return status;
 
     },
     getPgpEmails: async (result) => {

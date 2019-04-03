@@ -1381,16 +1381,14 @@ router.post('/suspend/:id', async function (req, res) {
     var tod_dat = datetime.create();
     var formatted_dt = tod_dat.format('Y-m-d H:M:S');
 
-
     if (verify.status !== undefined && verify.status == true) {
-        var sql2 = "select * from devices where device_id = '" + device_id + "'";
+        var sql2 = "select * from usr_acc where device_id = '" + device_id + "'";
         var gtres = await sql.query(sql2);
-
 
         if (!empty(device_id)) {
             if (gtres[0].expiry_date == '' || gtres[0].expiry_date == null) {
 
-                var sql1 = "update devices set account_status='suspended' where device_id = '" + device_id + "'";
+                var sql1 = "update usr_acc set account_status='suspended' where device_id = '" + device_id + "'";
 
                 var rest = sql.query(sql1, function (error, results) {
                     if (error) throw error;
@@ -1400,31 +1398,35 @@ router.post('/suspend/:id', async function (req, res) {
                             "msg": "Account not suspended.Please try again."
                         }
                     } else {
-                        console.log('successfully suspended');
+                       
                         data = {
                             "status": true,
                             "msg": "Account suspended successfully."
                         }
 
                     }
+                  
                     require("../bin/www").sendDeviceStatus(gtres[0].device_id, "suspended");
                     res.send(data);
                 });
 
             } else {
 
-                if (gtres[0].expiry_date >= formatted_dt) {
 
-                    var sql1 = "update devices set account_status='suspended' where device_id = '" + device_id + "'";
+                if (gtres[0].expiry_date >= formatted_dt) {
+            
+                    var sql1 = "update usr_acc set account_status='suspended' where device_id = '" + device_id + "'";
 
                     var rest = sql.query(sql1, function (error, results) {
                         if (error) throw error;
                         if (results.affectedRows == 0) {
+                         
                             data = {
                                 "status": false,
                                 "msg": "Account not suspended.Please try again."
                             }
                         } else {
+
 
                             require("../bin/www").sendDeviceStatus(gtres[0].device_id, "suspended");
 
@@ -1466,14 +1468,14 @@ router.post('/activate/:id', async function (req, res) {
     var formatted_dt = tod_dat.format('Y-m-d H:M:S');
 
     if (verify.status !== undefined && verify.status == true) {
-        var sql2 = "select * from devices where device_id = '" + device_id + "'";
+        var sql2 = "select * from usr_acc where device_id = '" + device_id + "'";
         var gtres = await sql.query(sql2);
 
         if (!empty(device_id)) {
 
             if (gtres[0].expiry_date == '' || gtres[0].expiry_date == null) {
 
-                var sql1 = "update devices set account_status='' where device_id = '" + device_id + "'";
+                var sql1 = "update usr_acc set account_status='' where device_id = '" + device_id + "'";
 
                 var rest = sql.query(sql1, function (error, results) {
                     if (error) throw error;
@@ -1497,7 +1499,7 @@ router.post('/activate/:id', async function (req, res) {
 
                 if (gtres[0].expiry_date > formatted_dt) {
 
-                    var sql1 = "update devices set account_status='' where device_id = '" + device_id + "'";
+                    var sql1 = "update usr_acc set account_status='' where device_id = '" + device_id + "'";
 
                     var rest = sql.query(sql1, function (error, results) {
                         if (error) throw error;
@@ -1967,13 +1969,14 @@ router.get('/connect/:device_id', async function (req, res) {
             console.log("userId", userId);
             //  console.log(verify.user);
             let usertype = await helpers.getUserType(userId);
-            let where = "dvc.id = '" + req.params.device_id + "'";
+            let where = "devices.device_id = '" + req.params.device_id + "'";
 
             if (usertype != "admin") {
                 where = where + " and dealer_id=" + userId;
             }
             console.log("where: " + where);
-            sql.query("select dvc.*, usr_acc.*, pgp_emails.pgp_email, chat_ids.chat_id from devices as dvc  join usr_acc on dvc.id = usr_acc.device_id left join pgp_emails on pgp_emails.user_acc_id = usr_acc.id join chat_ids on chat_ids.user_acc_id = usr_acc.id where " + where, async function (error, results) {
+            sql.query("select devices.*  ," +usr_acc_query_text+ ", dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id where " + where, async function (error, results) {
+                        
                 if (error) throw error;
                 console.log('rslt done', results.length);
                 if (results.length == 0) {
@@ -2010,8 +2013,6 @@ router.get('/connect/:device_id', async function (req, res) {
                         "activation_code": results[0].activation_code,
                         "serial_number": results[0].serial_number,
                         "online": results[0].online,
-                        "s_dealer": results[0].s_dealer,
-                        "s_dealer_name": results[0].s_dealer_name,
                         "device_name": results[0].name,
                         // "start_date": datetime.create(results[0].start_date).format('m-d-Y'),
                         // "expiry_date": datetime.create(results[0].expiry_date).format('m-d-Y'),
@@ -2020,6 +2021,7 @@ router.get('/connect/:device_id', async function (req, res) {
                         "online": results[0].online,
                         "is_sync": results[0].is_sync,
                         'unlink_status': results[0].unlink_status,
+                        'usr_device_id':results[0].usr_device_id
                     };
                     if (dealer_details.length) {
                         data.link_code = dealer_details[0].link_code;
@@ -2030,7 +2032,7 @@ router.get('/connect/:device_id', async function (req, res) {
                     }
                 }
 
-                console.log('data is ', data)
+               // console.log('data is ', data)
 
                 res.send(data);
             });
@@ -2042,6 +2044,25 @@ router.get('/connect/:device_id', async function (req, res) {
         }
     }
 });
+
+
+router.get('/get_usr_acc_id/:device_id', async function (req, res) {
+    var verify = verifyToken(req, res);
+
+    if (verify.status !== undefined && verify.status == true) {
+        //console.log('id is the ', req.params);
+
+        let query = "select usr_acc.id from usr_acc left join devices on devices.id=usr_acc.device_id where devices.device_id='"+ req.params.device_id +"'";
+
+       await sql.query(query, async (error, rslt) => {
+           // console.log(query, 'rslt id ', rslt)
+           res.send({
+            status: true,
+            user_acount_id: rslt[0].id,
+        });
+        })
+    }
+})
 
 /** Get Device Details of Dealers (Connect Page) **/
 router.get('/get_apps/:device_id', async function (req, res) {
@@ -2173,7 +2194,6 @@ router.post('/apply_settings/:device_id', async function (req, res) {
         throw Error(error.message);
     }
 
-
 });
 
 router.post('/get_profiles', async function (req, res) {
@@ -2182,32 +2202,30 @@ router.post('/get_profiles', async function (req, res) {
         let userId = verify.user.id;
         let userType = await helpers.getUserType(userId);
         let profileType = "";
-        let where = "";
+        let where = "where";
         let isValid = true;
-
+// console.log('d_id', req.body.device_id);
         if (req.body.device_id != undefined && req.body.device_id != '' && req.body.device_id != null) {
-            profileType = "history";
-            where = where + " device_id='" + req.body.device_id + "' AND type= '" + profileType + "' ";
+            where = where + " user_acc_id='" + req.body.device_id + "'";
 
         } else {
-            where = where + " type!='history' ";
+            where = "";
         }
-
-        if (userType != ADMIN) {
-            if (userType == DEALER) {
-                where = where + " AND ((type='profile' AND dealer_id=" + userId + ") OR type='policy')";
-            } else {
-                let connected_dealer = verify.user.connected_dealer;
-                if (connected_dealer != undefined && connected_dealer != '' && connected_dealer != null && connected_dealer != 0) {
-                    where = where + " AND ((type='profile' AND dealer_id=" + connected_dealer + ") OR type='policy')";
-                } else {
-                    isValid = false;
-                }
-            }
-        }
+        // if (userType != ADMIN) {
+        //     if (userType == DEALER) {
+        //         where = where + " AND ((type='profile' AND dealer_id=" + userId + ") OR type='policy')";
+        //     } else {
+        //         let connected_dealer = verify.user.connected_dealer;
+        //         if (connected_dealer != undefined && connected_dealer != '' && connected_dealer != null && connected_dealer != 0) {
+        //             where = where + " AND ((type='profile' AND dealer_id=" + connected_dealer + ") OR type='policy')";
+        //         } else {
+        //             isValid = false;
+        //         }
+        //     }
+        // }
         // console.log(where);
         if (isValid) {
-            let query = "SELECT * FROM device_history where " + where;
+            let query = "SELECT * FROM device_history " + where;
             console.log("getprofiles query", query);
             sql.query(query, (error, result) => {
                 data = {
@@ -2228,6 +2246,60 @@ router.post('/get_profiles', async function (req, res) {
     }
 
 });
+
+// router.post('/get_profiles', async function (req, res) {
+//     var verify = verifyToken(req, res);
+//     if (verify.status === true) {
+//         let userId = verify.user.id;
+//         let userType = await helpers.getUserType(userId);
+//         let profileType = "";
+//         let where = "";
+//         let isValid = true;
+// // console.log('d_id', req.body.device_id);
+//         if (req.body.device_id != undefined && req.body.device_id != '' && req.body.device_id != null) {
+//             profileType = "history";
+//             where = where + " user_acc_id='" + req.body.device_id + "' AND type= '" + profileType + "' ";
+
+//         } else {
+//             where = where + " type!='history' ";
+//         }
+
+//         if (userType != ADMIN) {
+//             if (userType == DEALER) {
+//                 where = where + " AND ((type='profile' AND dealer_id=" + userId + ") OR type='policy')";
+//             } else {
+//                 let connected_dealer = verify.user.connected_dealer;
+//                 if (connected_dealer != undefined && connected_dealer != '' && connected_dealer != null && connected_dealer != 0) {
+//                     where = where + " AND ((type='profile' AND dealer_id=" + connected_dealer + ") OR type='policy')";
+//                 } else {
+//                     isValid = false;
+//                 }
+//             }
+//         }
+//         // console.log(where);
+//         if (isValid) {
+//             let query = "SELECT * FROM device_history where " + where;
+//             console.log("getprofiles query", query);
+//             sql.query(query, (error, result) => {
+//                 console.log("now reslt", result);
+//                 data = {
+//                     "status": true,
+//                     "msg": 'successful',
+//                     "profiles": result
+//                 };
+//                 res.send(data);
+//             });
+
+//         } else {
+//             data = {
+//                 "status": false,
+//                 "msg": 'Invalid User'
+//             };
+//             res.send(data);
+//         }
+//     }
+
+// });
 
 /** Save Dropdown Items Dealers/Sub Dealers **/
 router.post('/dealer/dropdown', async function (req, res) {
