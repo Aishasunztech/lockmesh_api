@@ -398,10 +398,11 @@ router.get('/devices', function (req, res) {
                 where_con = 'AND dvc.dealer_id = ' + verify.user.id + ' ';
             }
         }
-        console.log("hello where", where_con);
-        sql.query('select dvc.* , dl.link_code , dl.dealer_name from devices as dvc left join dealers as dl on dvc.dealer_id = dl.dealer_id where transfer_status=0 ' + where_con + ' order by dvc.id DESC', function (error, results, fields) {
-            if (error) throw error;
 
+        console.log("hello where", where_con);
+        sql.query('select devices.*  ,usr_acc.* , dealers.dealer_name , pgp_emails.pgp_email,chat_ids.chat_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id where usr_acc.transfer_status = 0 ' + where_con + ' order by devices.id DESC', function (error, results, fields) {
+            if (error) throw error;
+        
             data = {
                 "status": true,
                 "data": results
@@ -421,13 +422,13 @@ router.get('/new/devices', function (req, res) {
         if (verify.user.user_type !== 'admin') {
             if (verify.user.user_type === 'dealer') {
                 console.log('done of dealer', verify.user.id)
-                where_con = 'AND (dvc.dealer_id =' + verify.user.id + ' OR dvc.connected_dealer =' + verify.user.id + ')';
+                where_con = 'AND (dealers.dealer_id =' + verify.user.id + ' OR dealers.connected_dealer =' + verify.user.id + ')';
             } else {
-                where_con = 'AND dvc.dealer_id = ' + verify.user.id + ' ';
+                where_con = 'AND dealers.dealer_id = ' + verify.user.id + ' ';
             }
         }
 
-        sql.query('select dvc.* , dl.link_code , dl.dealer_name from devices as dvc left join dealers as dl on dvc.dealer_id = dl.dealer_id WHERE ((dvc.device_status=0 OR dvc.device_status="0") AND (dvc.unlink_status=0 OR dvc.unlink_status="0") AND (dvc.activation_status IS NULL)) ' + where_con + ' order by dvc.id DESC', function (error, results, fields) {
+        sql.query('select devices.*  ,usr_acc.* from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id where ((usr_acc.device_status=0 OR usr_acc.device_status="0") AND (usr_acc.unlink_status=0 OR usr_acc.unlink_status="0") AND (usr_acc.activation_status IS NULL)) ' + where_con + ' order by devices.id DESC', function (error, results, fields) {
             if (error) throw error;
             data = {
                 "status": true,
@@ -1932,17 +1933,17 @@ router.get('/connect/:device_id', async function (req, res) {
         if (!empty(req.params.device_id)) {
             let userId = verify.user.id;
             console.log("userId", userId);
-            console.log(verify.user);
+          //  console.log(verify.user);
             let usertype = await helpers.getUserType(userId);
-            let where = "device_id = '" + req.params.device_id + "'";
+            let where = "dvc.id = '" + req.params.device_id + "'";
 
             if (usertype != "admin") {
                 where = where + " and dealer_id=" + userId;
             }
             console.log("where: " + where);
-            sql.query("select * from devices where " + where, async function (error, results) {
+            sql.query("select dvc.*, usr_acc.*, pgp_emails.pgp_email, chat_ids.chat_id from devices as dvc  join usr_acc on dvc.id = usr_acc.device_id left join pgp_emails on pgp_emails.user_acc_id = usr_acc.id join chat_ids on chat_ids.user_acc_id = usr_acc.id where " + where, async function (error, results) {
                 if (error) throw error;
-                //console.log(results.length);
+                console.log('rslt done',results.length);
                 if (results.length == 0) {
                     data = {
                         "status": false,
@@ -1953,7 +1954,7 @@ router.get('/connect/:device_id', async function (req, res) {
                     let dealer_details = await sql.query(query);
                     data = {
                         "name": results[0].name,
-                        "email": results[0].email,
+                        "email": results[0].account_email,
                         "device_id": results[0].device_id,
                         "client_id": results[0].client_id,
                         "pgp_email": results[0].pgp_email,
@@ -1996,6 +1997,8 @@ router.get('/connect/:device_id', async function (req, res) {
                         data.dealer_name = "";
                     }
                 }
+
+                console.log('data is ', data)
 
                 res.send(data);
             });
