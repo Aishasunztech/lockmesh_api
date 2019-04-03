@@ -165,7 +165,7 @@ module.exports = {
             fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
                 if(err) throw(err);
             });
-            
+
         } else if (typeof app.icon === 'string'){
             console.log("icon was in string type");
             // var bytes = app.icon.split(",");
@@ -219,5 +219,47 @@ module.exports = {
 
         return status;
 
-    }
+    },
+    getPgpEmails: async (result) => {
+        let query = "SELECT pgp_email FROM pgp_emails WHERE user_acc_id = '" + result.id + "'"
+        let results = await sql.query(query);
+        if (results.length) {
+            console.log(results[0].pgp_email);
+            return results[0].pgp_email
+        }
+        else {
+            return 'N/A'
+        }
+    },
+    getSimids: async (result) => {
+        let query = "SELECT sim_id FROM sim_ids WHERE device_id = '" + result.usr_device_id + "'"
+        let results = await sql.query(query);
+        if (results.length) {
+
+            console.log(results[0].sim_id);
+            return results[0].sim_id
+        } else {
+
+            return 'N/A'
+        }
+    },
+    getChatids: async (result) => {
+        let query = "SELECT chat_id FROM chat_ids WHERE user_acc_id = '" + result.id + "'"
+        let results = await sql.query(query);
+        if (results.length) {
+
+            console.log(results[0].chat_id);
+            return results[0].chat_id
+        } else {
+
+            return 'N/A'
+        }
+    },
+    // getDealerdata: async (result) => {
+    //     let query = "SELECT dealer_name,connected_dealer  FROM dealers WHERE user_acc_id = '" + result.dealer_id + "'"
+    //     let results = await sql.query(query);
+    //     if (results.length) {
+    //         return results[0]
+    //     } 
+    // }
 }
