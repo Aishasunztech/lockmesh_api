@@ -42,7 +42,6 @@ module.exports = {
         // console.log("djknjkfnjkafak");
         let deviceData = await this.getDeviceByDeviceId(deviceId);
 
-        // console.log("djknjkfnjkafak" + deviceData);
 
         if (deviceData != null) {
             // console.log("insertApps device_id:" + deviceData.id);
@@ -68,13 +67,11 @@ module.exports = {
 
     insertOrUpdateSettings: async function (settings, device_id) {
         try {
-            // console.log("update or insert settings");
+            console.log("update or insert settings");
             // console.log(settings);
             var updateQuery = "REPLACE into tbl_device_settings (device_id, settings) value ('" + device_id + "', '" + settings + "')";
             await sql.query(updateQuery, async function (error, row) {
-                if (error) {
-                    console.log(error);
-                }
+                if (error) throw(error);
 
                 // console.log("check setting update:");
                 // console.log(updateQuery);
@@ -103,8 +100,7 @@ module.exports = {
         }
     },
     insertOrUpdateApps: async function (appId, deviceId, guest, encrypted, enable) {
-        // console.log("update or insert");
-        // console.log("appId:" + appId);
+        
         try {
             var updateQuery = "update user_apps set guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + " where device_id=" + deviceId + " and app_id=" + appId + "";
             sql.query(updateQuery, async function (error, row) {
@@ -128,21 +124,20 @@ module.exports = {
     getDeviceByDeviceId: async function (deviceId) {
         // console.log("getDevice: " + deviceId);
 
-        var getQuery = "select id from devices where device_id='" + deviceId + "'";
+        var getQuery = "select * from devices where device_id='" + deviceId + "'";
         // console.log(getQuery);
-
         let response = await sql.query(getQuery);
-        var updateQuery = "update devices set is_sync=1 where device_id='" + deviceId + "'";
-        await sql.query(updateQuery);
         if (response.length) {
+            var updateQuery = "update devices set is_sync=1 where device_id='" + deviceId + "'";
+            await sql.query(updateQuery);
             return response[0];
         } else {
-            // console.log("hellow");
+            console.log("device not connected may be deleted");
         }
 
     },
     getOriginalIdByDeviceId: async function (deviceId) {
-        var getQuery = "select * from devices where device_id='" + deviceId + "'";
+        var getQuery = "select id from devices where device_id='" + deviceId + "'";
         let res = await sql.query(getQuery);
         if (res.length > 0) {
 
@@ -151,26 +146,38 @@ module.exports = {
             return false;
         }
     },
+    getUsrAccIDbyDvcId: async (dvc_id) =>{
+        var usrAcc = "SELECT id FROM usr_acc WHERE device_id = " + dvc_id;
+        let res = await sql.query(usrAcc);
+        if(res.length > 0){
+            return res[0].id;
+        } else {
+            return false;
+        }
+    },
     uploadIconFile: function (app, iconName) {
         // let base64Data = "data:image/png;base64,"+ btoa(icon);
-        if (app.icon != undefined) {
+        if (app.icon != undefined && typeof app.icon != 'string') {
             // console.log("icon is available");
-            if (typeof app.icon != 'string') {
-                // console.log("uploading icon");
-                var base64Data = Buffer.from(app.icon).toString("base64");
+            // console.log("uploading icon");
+            var base64Data = Buffer.from(app.icon).toString("base64");
 
-                fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
-                    console.log(err);
-                });
-            } else {
-                console.log("icon was in string type");
-                // var bytes = app.icon.split(",");
-                // var base64Data = Buffer.from(icon).toString("base64");
+            fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
+                if(err) throw(err);
+            });
 
-                // fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
-                //     console.log(err);
-                // });
-            }
+        } else if (typeof app.icon === 'string'){
+            console.log("icon was in string type");
+            // var bytes = app.icon.split(",");
+            // var base64Data = Buffer.from(icon).toString("base64");
+
+            // fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
+            //     console.log(err);
+            // });
+        
+
+        } else {
+
         }
 
         return "icon_" + iconName + ".png"

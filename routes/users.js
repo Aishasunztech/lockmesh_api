@@ -693,7 +693,7 @@ router.get('/dealers/:pageName', async function (req, res) {
                         var get_parent_dealer = await sql.query("select dealer_id, dealer_name from dealers where dealer_id=" + results[i].connected_dealer + " limit 1");
                         console.log(get_parent_dealer);
                     }
-                    var get_connected_devices = await sql.query("select count(*) as total from devices where dealer_id='" + results[i].dealer_id + "'");
+                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].dealer_id + "'");
 
                     dt = {
                         "status": true,
