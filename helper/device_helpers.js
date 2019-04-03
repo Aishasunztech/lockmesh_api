@@ -189,35 +189,28 @@ module.exports = {
         }
         return false;
     },
-    checkStatus: function (results) {
-        console.log("helleo results", results)
-        let deviceData = results.map((results) => {
+    checkStatus: function (device) {
+        let status = "";
 
-            if (results.status === 'active' && (results.account_status === '' || results.account_status === null) && results.unlink_status === 0 && (results.device_status === 1 || results.device_status === '1')) {
-                results.finalStatus = 'Activated'
-            }
-            else if (results.status === 'expired') {
-                results.finalStatus = 'Expired';
-            } else if ((results.device_status === '0' || results.device_status === 0) && (results.unlink_status === '0' || results.unlink_status === 0) && (results.activation_status === null || results.activation_status === '')) {
-                results.finalStatus = 'Pending activation';
-            } else if ((results.device_status === '0' || results.device_status === 0) && (results.unlink_status === '0' || results.unlink_status === 0) && (results.activation_status === 0)) {
-                results.finalStatus = 'Pre-activated';
-            } else if ((results.unlink_status === '1' || results.unlink_status === 1) && (results.device_status === 0 || results.device_status === '0')) {
-                // console.log("hello unlinked");
-                results.finalStatus = 'Unlinked';
-            } else if (results.account_status === 'suspended') {
-                results.finalStatus = 'Suspended';
-            } else {
-                results.finalStatus = 'N/A';
-            }
-            return results
+        if (device.status === 'active' && (device.account_status === '' || device.account_status === null) && device.unlink_status === 0 && (device.device_status === 1 || device.device_status === '1')) {
+            status = 'Activated'
+        }
+        else if (device.status === 'expired') {
+            status = 'Expired';
+        } else if ((device.device_status === '0' || device.device_status === 0) && (device.unlink_status === '0' || device.unlink_status === 0) && (device.activation_status === null || device.activation_status === '')) {
+            status = 'Pending activation';
+        } else if ((device.device_status === '0' || device.device_status === 0) && (device.unlink_status === '0' || device.unlink_status === 0) && (device.activation_status === 0)) {
+            status = 'Pre-activated';
+        } else if ((device.unlink_status === '1' || device.unlink_status === 1) && (device.device_status === 0 || device.device_status === '0')) {
+            // console.log("hello unlinked");
+            status = 'Unlinked';
+        } else if (device.account_status === 'suspended') {
+            status = 'Suspended';
+        } else {
+            status = 'N/A';
+        }
 
-        })
-        data = {
-            "status": true,
-            "data": deviceData
-        };
-        return data
+        return status
 
     }
 }
