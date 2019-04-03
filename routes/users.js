@@ -1018,7 +1018,7 @@ router.put('/new/device', async (req, res) => {
                                 await sql.query(usr_acc_Query)
                                 let updateChatIds = 'update chat_ids set user_acc_id = ' + usr_acc_id + ', used=1 where chat_id ="' + chat_id + '"';
                                 await sql.query(updateChatIds);
-                                let updateSimIds = 'update sim_ids set device_id = ' + device_id + ' used=1 where sim_id ="' + sim_id + '"';
+                                let updateSimIds = 'update sim_ids set device_id = ' + device_id + ', used=1 where sim_id ="' + sim_id + '"';
                                 await sql.query(updateSimIds)
                                 let updatePgpEmails = 'update pgp_emails set user_acc_id = ' + usr_acc_id + ', used=1 where pgp_email ="' + pgp_email + '"';
                                 await sql.query(updatePgpEmails);
@@ -1398,14 +1398,14 @@ router.post('/suspend/:id', async function (req, res) {
                             "msg": "Account not suspended.Please try again."
                         }
                     } else {
-                       
+
                         data = {
                             "status": true,
                             "msg": "Account suspended successfully."
                         }
 
                     }
-                  
+
                     require("../bin/www").sendDeviceStatus(gtres[0].device_id, "suspended");
                     res.send(data);
                 });
@@ -1414,13 +1414,13 @@ router.post('/suspend/:id', async function (req, res) {
 
 
                 if (gtres[0].expiry_date >= formatted_dt) {
-            
+
                     var sql1 = "update usr_acc set account_status='suspended' where device_id = '" + device_id + "'";
 
                     var rest = sql.query(sql1, function (error, results) {
                         if (error) throw error;
                         if (results.affectedRows == 0) {
-                         
+
                             data = {
                                 "status": false,
                                 "msg": "Account not suspended.Please try again."
@@ -1975,8 +1975,8 @@ router.get('/connect/:device_id', async function (req, res) {
                 where = where + " and dealer_id=" + userId;
             }
             console.log("where: " + where);
-            sql.query("select devices.*  ," +usr_acc_query_text+ ", dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id where " + where, async function (error, results) {
-                        
+            sql.query("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id where " + where, async function (error, results) {
+
                 if (error) throw error;
                 console.log('rslt done', results.length);
                 if (results.length == 0) {
@@ -2021,7 +2021,7 @@ router.get('/connect/:device_id', async function (req, res) {
                         "online": results[0].online,
                         "is_sync": results[0].is_sync,
                         'unlink_status': results[0].unlink_status,
-                        'usr_device_id':results[0].usr_device_id
+                        'usr_device_id': results[0].usr_device_id
                     };
                     if (dealer_details.length) {
                         data.link_code = dealer_details[0].link_code;
@@ -2032,7 +2032,7 @@ router.get('/connect/:device_id', async function (req, res) {
                     }
                 }
 
-               // console.log('data is ', data)
+                // console.log('data is ', data)
 
                 res.send(data);
             });
@@ -2052,14 +2052,14 @@ router.get('/get_usr_acc_id/:device_id', async function (req, res) {
     if (verify.status !== undefined && verify.status == true) {
         //console.log('id is the ', req.params);
 
-        let query = "select usr_acc.id from usr_acc left join devices on devices.id=usr_acc.device_id where devices.device_id='"+ req.params.device_id +"'";
+        let query = "select usr_acc.id from usr_acc left join devices on devices.id=usr_acc.device_id where devices.device_id='" + req.params.device_id + "'";
 
-       await sql.query(query, async (error, rslt) => {
-           // console.log(query, 'rslt id ', rslt)
-           res.send({
-            status: true,
-            user_acount_id: rslt[0].id,
-        });
+        await sql.query(query, async (error, rslt) => {
+            // console.log(query, 'rslt id ', rslt)
+            res.send({
+                status: true,
+                user_acount_id: rslt[0].id,
+            });
         })
     }
 })
@@ -2204,7 +2204,7 @@ router.post('/get_profiles', async function (req, res) {
         let profileType = "";
         let where = "where";
         let isValid = true;
-// console.log('d_id', req.body.device_id);
+        // console.log('d_id', req.body.device_id);
         if (req.body.device_id != undefined && req.body.device_id != '' && req.body.device_id != null) {
             where = where + " user_acc_id='" + req.body.device_id + "'";
 
