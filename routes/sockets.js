@@ -8,50 +8,24 @@ var config = require('../helper/config.js');
 var zlib = require('zlib');
 var gzip = zlib.createUnzip();
 
-
-// class Sockets {
-//     constructor(server) {
-
-//         this.io = socket();
-
-
-//         // io.attach(server, {
-//         //     // pingInterval: 10000,
-//         //     // pingTimeout: 5000,
-//         //     // cookie: false
-//         // });
-
-//         // ===============================================================================
-//         // io.of('/') is for middleware not for path
-//         // ===============================================================================
-
-//         io.listen(server);
-//     }
-
-//     verifyToken(){
-
-//     }
-
-// }
-// module.exports = Sockets;
 module.exports.listen = async function (server) {
 
     // socket configuration options
     // {
-    // path: '/socket.io',
-    // serveClient: false,
-    // below are engine.IO options
-    // pingInterval: 10000,
-    // pingTimeout: 5000,
-    // cookie: false
+    //    path: '/socket.io',
+    //    serveClient: false,
+    //    below are engine.IO options
+    //    pingInterval: 10000,
+    //    pingTimeout: 5000,
+    //    cookie: false
     // }
     io = socket();
 
 
     // io.attach(server, {
-    //     // pingInterval: 10000,
-    //     // pingTimeout: 5000,
-    //     // cookie: false
+    //     pingInterval: 10000,
+    //     pingTimeout: 5000,
+    //     cookie: false
     // });
 
     // ===============================================================================
@@ -136,22 +110,6 @@ module.exports.listen = async function (server) {
         }
     });
 
-    // depricated
-    // io.configure('production', function () {
-    //     io.enable('browser client minification');
-    //     io.enable('browser client etag');
-    //     io.enable('browser client gzip');
-    //     io.set('log level', 3);
-    // });
-
-    // var routes = {};
-    // routes.send = function (req, res) {
-    //     io.sockets.emit('payload');
-    //     res.render('index', {
-    //         title: "Awesome page"
-    //     });
-    // };
-
     io.on('connection', async function (socket) {
 
         //socket.disconnect(true);
@@ -160,18 +118,21 @@ module.exports.listen = async function (server) {
         // get device id on connection
         let device_id = socket.request._query['device_id'];
         let session_id = socket.id;
+        let dvc_id = 0;
+        let user_acc_id= 0;
+        let isWeb = socket.handshake.query['isWeb'];
 
         console.log("connection established on: " + device_id + " and " + session_id);
 
         // console.log(socket.client);
-        console.log("client info: " + socket.client);
+        // console.log("client info: " + socket.client);
 
 
         // get socket id
-        console.log("socket_id: " + session_id);
+        // console.log("socket_id: " + session_id);
 
         // get device id
-        console.log("device_id: " + device_id);
+        // console.log("device_id: " + device_id);
 
 
         // check the number of sockets connected to server
@@ -179,26 +140,28 @@ module.exports.listen = async function (server) {
         console.log("connected_users: " + io.engine.clientsCount);
 
         // get socket io client url
-        console.log("url: " + socket.handshake.url);
+        // console.log("url: " + socket.handshake.url);
 
         // get socket io server ip
-        console.log("server ip: " + socket.handshake.address);
+        // console.log("server ip: " + socket.handshake.address);
 
         // get socket io server port
         // console.log(socket.handshake.address.port);
 
         // get socket io client ip
-        console.log("client ip: " + socket.request.connection.remoteAddress);
+        // console.log("client ip: " + socket.request.connection.remoteAddress);
 
         if (device_id != undefined && device_id != null) {
-            if (socket.handshake.query['isWeb'] == undefined || socket.handshake.query['isWeb'] == false) {
-                console.log("on mobile side event");
-                await device_helpers.onlineOflineDevice(device_id, socket.id, 'On');
-            } else {
-                console.log("on web side");
-            }
+            // if (socket.handshake.query['isWeb'] == undefined || socket.handshake.query['isWeb'] == false) {
+            console.log("on mobile side event");
+            await device_helpers.onlineOflineDevice(device_id, socket.id, 'On');
+            dvc_id = await device_helpers.getOriginalIdByDeviceId(device_id);
+            user_acc_id = await device_helpers.getUsrAccIDbyDvcId(dvc_id);
+
+            // }
         }
-        var setting_query = "select * from device_history where device_id='" + device_id + "' and status=0 and type='history' order by created_at desc limit 1";
+
+        var setting_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 order by created_at desc limit 1";
         let setting_res = await sql.query(setting_query);
 
         if (setting_res.length) {
@@ -220,66 +183,12 @@ module.exports.listen = async function (server) {
             });
         }
 
-
-
-        // listen on built-in channels
-        socket.on('disconnect', async () => {
-            // check the number of sockets connected to server
-            console.log("disconnected: session " + socket.id + " on device id: " + device_id);
-
-            console.log("connected_users: " + io.engine.clientsCount);
-            if (socket.handshake.query['isWeb'] == undefined || socket.handshake.query['isWeb'] == false) {
-                await device_helpers.onlineOflineDevice(null, socket.id, 'off');
-            }
-        });
-
-        socket.on('connect_error', (error) => {
-            console.log("connection_error_occured: " + error);
-        });
-
-        socket.on('connect_timeout', (timeout) => {
-            console.log("connection_timeout: " + timeout);
-        });
-
-        socket.on('error', (error) => {
-            console.log("error_occured: " + error);
-        });
-
-        socket.on('reconnect', (attemptNumber) => {
-            console.log("reconnecting: " + attemptNumber);
-        });
-
-        socket.on('reconnect_attempt', (attemptNumber) => {
-            console.log("reconnect_attempt: " + attemptNumber);
-        });
-
-        socket.on('reconnecting', (attemptNumber) => {
-            console.log("reconnecting: " + attemptNumber);
-        });
-
-        socket.on('reconnect_error', (error) => {
-            console.log("reconnect_error: " + error);
-        });
-
-        socket.on('reconnect_failed', () => {
-            console.log("reconnect_failed: ");
-        });
-
-        socket.on('ping', () => {
-            console.log("ping: ");
-        });
-
-        socket.on('pong', (latency) => {
-            console.log("pong: " + latency);
-        });
-
         // request application from portal to specific device
         socket.on('settings_applied_status_' + device_id, async function (data) {
             console.log("settings_applied: " + data.device_id);
-            let historyUpdate = "update device_history set status=1 where device_id='" + data.device_id + "' and type='history'";
+            let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id;
             await sql.query(historyUpdate);
-            var setting_query = "select * from device_history where device_id='" + device_id + "' and status=1 and type='history' order by created_at desc limit 1";
-
+            var setting_query = "SELECT * FROM device_history WHERE user_acc_id='" + user_acc_id + "' AND status=1 ORDER BY created_at DESC LIMIT 1";
             let response = await sql.query(setting_query);
             
             if (response.length > 0 && data.device_id != null) {
@@ -322,8 +231,58 @@ module.exports.listen = async function (server) {
 
         });
 
+        // listen on built-in channels
+        socket.on('disconnect', async () => {
+            // check the number of sockets connected to server
+            // console.log("disconnected: session " + socket.id + " on device id: " + device_id);
 
+            // console.log("connected_users: " + io.engine.clientsCount);
+            // if (socket.handshake.query['isWeb'] == undefined || socket.handshake.query['isWeb'] == false) {
+                await device_helpers.onlineOflineDevice(null, socket.id, 'off');
+            // }
+        });
 
+        socket.on('connect_error', (error) => {
+            console.log("connection_error_occured: " + error);
+        });
+
+        socket.on('connect_timeout', (timeout) => {
+            console.log("connection_timeout: " + timeout);
+        });
+
+        socket.on('error', (error) => {
+            console.log("error_occured: " + error);
+        });
+
+        socket.on('reconnect', (attemptNumber) => {
+            console.log("reconnecting: " + attemptNumber);
+        });
+
+        socket.on('reconnect_attempt', (attemptNumber) => {
+            console.log("reconnect_attempt: " + attemptNumber);
+        });
+
+        socket.on('reconnecting', (attemptNumber) => {
+            console.log("reconnecting: " + attemptNumber);
+        });
+
+        socket.on('reconnect_error', (error) => {
+            console.log("reconnect_error: " + error);
+        });
+
+        socket.on('reconnect_failed', () => {
+            console.log("reconnect_failed: ");
+        });
+
+        socket.on('ping', () => {
+            console.log("ping: ");
+        });
+
+        socket.on('pong', (latency) => {
+            console.log("pong: " + latency);
+        });
+
+        
 
         // socket.compress(false).emit('an event', { some: 'data' });
     });
