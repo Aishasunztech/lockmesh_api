@@ -219,5 +219,8 @@ module.exports = {
         };
         return data
 
+    },
+    validateEmails: ()=>{
+        
     }
 }
