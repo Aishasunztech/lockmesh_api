@@ -277,6 +277,17 @@ module.exports = {
 		} else {
 			return false;
 		}
+	},
+	getDealerStatus: (dealer) => {
+		if ((dealer.account_status === '' || dealer.account_status === null) && (dealer.unlink_status === 0)) {
+            return 'active';
+        } else if (dealer.unlink_status === 1) {
+            return "unlinked";
+        } else if (dealer.account_status === 'suspended') {
+            return 'suspended';
+        } else {
+            return 'N/A';
+        }
 	}
 
 }
