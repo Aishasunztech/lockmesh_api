@@ -400,7 +400,7 @@ router.get('/devices', function (req, res) {
         }
 
         console.log("hello where", where_con);
-        sql.query('select devices.*  ,' +usr_acc_query_text+ ', dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id where usr_acc.transfer_status = 0 ' + where_con + ' order by devices.id DESC', function (error, results, fields) {
+        sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id where usr_acc.transfer_status = 0 ' + where_con + ' order by devices.id DESC', function (error, results, fields) {
             if (error) throw error;
             console.log("user data list " , results)
             data = {
@@ -428,7 +428,7 @@ router.get('/new/devices', function (req, res) {
             }
         }
 
-        sql.query('select devices.*  ,'+ usr_acc_query_text+' , dealers.dealer_name ,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id  WHERE ((usr_acc.device_status=0 OR usr_acc.device_status="0") AND (usr_acc.unlink_status=0 OR usr_acc.unlink_status="0") AND (usr_acc.activation_status IS NULL)) ' + where_con + ' order by devices.id DESC', function (error, results, fields) {
+        sql.query('select devices.*  ,' + usr_acc_query_text + ' , dealers.dealer_name ,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id  WHERE ((usr_acc.device_status=0 OR usr_acc.device_status="0") AND (usr_acc.unlink_status=0 OR usr_acc.unlink_status="0") AND (usr_acc.activation_status IS NULL)) ' + where_con + ' order by devices.id DESC', function (error, results, fields) {
             if (error) throw error;
             data = {
                 "status": true,
@@ -920,7 +920,7 @@ router.put('/new/device', async (req, res) => {
         let dealer_id = req.body.dealer_id;
         let connected_dealer = req.body.connected_dealer;
         let usr_acc_id = req.body.usr_acc_id;
-
+        let usr_device_id = req.body.usr_device_id
         let policy_id = req.body.policy_id;
 
         // let s_dealer_id = req.body.s_dealer;
@@ -948,15 +948,15 @@ router.put('/new/device', async (req, res) => {
             var checkDevice = "SELECT * from devices WHERE device_id = '" + device_id + "' ";
             let checkDealer = "SELECT * from dealers where dealer_id =" + dealer_id;
 
-            // let checkUniquePgp = "SELECT * from pgp_emails WHERE pgp_email= '" + pgp_email + "' AND user_acc_id != ''"
-            // sql.query(checkUniquePgp,async (error, success) => {
-            //     if (success.length) {
-            //         res.send({
-            //             status: false,
-            //             "msg": "Pgp Email already taken"
-            //         });
-            //     }
-            // })
+            let checkUniquePgp = "SELECT * from pgp_emails WHERE pgp_email= '" + pgp_email + "' AND user_acc_id != ''"
+            sql.query(checkUniquePgp, async function (error, success) {
+                if (success.length) {
+                    res.send({
+                        status: false,
+                        "msg": "Pgp Email already taken"
+                    });
+                }
+            })
 
             // let checkConnectedDealer = "SELECT * from dealers where dealer_id =" + connected_dealer;
 
@@ -965,7 +965,7 @@ router.put('/new/device', async (req, res) => {
             if (loggedDealerType === SDEALER) {
                 checkDevice = checkDevice + " AND dealer_id = " + loggedDealerId;
             } else if (loggedDealerType === DEALER) {
-                checkDevice = checkDevice + " AND (dealer_id = " + loggedDealerId + " OR connected_dealer = " + loggedDealerId + " )";
+                checkDevice = checkDevice + " AND (dealer_id = " + loggedDealerId + " OR prnt_dlr_id = " + loggedDealerId + " )";
             }
             else if (loggedDealerType === ADMIN) {
                 checkDevice = checkDevice;
@@ -981,7 +981,7 @@ router.put('/new/device', async (req, res) => {
             // console.log(checkDevice);
             sql.query(checkDevice, async function (error, rows) {
                 if (rows.length) {
-                    let checkUnique = "SELECT usr_acc.* from usr_acc WHERE account_email= '" + device_email + "' AND deviceId != '" + device_id + "'"
+                    let checkUnique = "SELECT usr_acc.* from usr_acc WHERE account_email= '" + device_email + "' AND device_id != '" + device_id + "'"
                     sql.query(checkUnique, async (error, success) => {
                         if (success.length) {
                             res.send({
@@ -995,33 +995,33 @@ router.put('/new/device', async (req, res) => {
 
                                 // let common_Query = "UPDATE devices set name = '" + device_name + "', email = '" + device_email + "', pgp_email='" + pgp_email + "', chat_id='" + chat_id + "', sim_id='" + sim_id + "', client_id ='" + client_id + "', model = '" + req.body.model + "'"
                                 // let common_Query2 = " status = '" + status + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' where device_id = '" + device_id + "'";
-                                let common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "'"
+                                common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "'"
                                 // let common_Query2 = " status = '" + status + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' where device_id = '" + device_id + "'";
-                                let usr_acc_Query = "UPDATE usr_acc set account_email = '" + device_email + "' status = '" + status + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' where device_id = '" + device_id + "' s_dealer=" + dealer_id + ", s_dealer_name='" + dealer[0].dealer_name + "' WHERE device_id = '" + device_id + "'"
+                                usr_acc_Query = "UPDATE usr_acc set account_email = '" + device_email + "', status = '" + status + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' s_dealer=" + dealer_id + ", s_dealer_name='" + dealer[0].dealer_name + "' WHERE device_id = '" + usr_device_id + "'"
                                 // 
                                 // let sql1 = common_Query + ", s_dealer_name = '" + rslt1[0].dealer_name + "', s_dealer = '" + req.body.s_dealer + "'" + common_Query2;
                                 sql1 = common_Query + usr_acc_Query;
                                 console.log(sql1);
                             } else {
 
-                                let common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "';"
-                                let usr_acc_Query = "UPDATE usr_acc set account_email = '" + device_email + "' status = '" + status + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' where device_id = '" + device_id + "' WHERE device_id = '" + device_id + "'"
-                                // 
+                                common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE device_id = '" + device_id + "'"
+                                usr_acc_Query = "UPDATE usr_acc set account_email = '" + device_email + "', status = '" + status + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' WHERE device_id = '" + usr_device_id + "'"
                                 // let sql1 = common_Query + ", s_dealer_name = '" + rslt1[0].dealer_name + "', s_dealer = '" + req.body.s_dealer + "'" + common_Query2;
                                 sql1 = common_Query + usr_acc_Query
                                 console.log(sql1);
                             }
 
 
-                            sql.query(sql1, async function (error, result) {
-                                let updateChatIds = 'update chat_ids set used=1 where chat_id ="' + chat_id + '"';
+                            sql.query(common_Query, async function (error, result) {
+                                await sql.query(usr_acc_Query)
+                                let updateChatIds = 'update chat_ids set user_acc_id = ' + usr_acc_id + ', used=1 where chat_id ="' + chat_id + '"';
                                 await sql.query(updateChatIds);
                                 let updateSimIds = 'update sim_ids set used=1 where sim_id ="' + sim_id + '"';
                                 await sql.query(updateSimIds)
-                                let updatePgpEmails = 'update pgp_emails set used=1 where pgp_email ="' + pgp_email + '"';
+                                let updatePgpEmails = 'update pgp_emails set user_acc_id = ' + usr_acc_id + ', used=1 where pgp_email ="' + pgp_email + '"';
                                 await sql.query(updatePgpEmails);
 
-                                var slctquery = "select * from devices where device_id = '" + device_id + "'";
+                                var slctquery = 'select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id where devices.device_id = ' + device_id + '  order by devices.id DESC';
                                 console.log(slctquery);
                                 rsltq = await sql.query(slctquery);
                                 console.log(rsltq);
@@ -1029,8 +1029,6 @@ router.put('/new/device', async (req, res) => {
                                 if (policy_id !== undefined && policy_id !== '' && policy_id !== null) {
                                     var slctpolicy = "select * from device_history where id = " + policy_id + "";
                                     policy_obj = await sql.query(slctpolicy);
-
-
                                     var insertQuery = "INSERT INTO device_history ( device_id, app_list, setting, controls, passwords, type, status ) "
                                         + " VALUES('" + device_id + "', '" + policy_obj[0].app_list + "', '" + policy_obj[0].setting + "', '" + policy_obj[0].controls + "', '" + policy_obj[0].passwords + "', 'history', 0 ) "
 
@@ -1089,6 +1087,8 @@ router.put('/edit/devices', async function (req, res) {
             let device_email = req.body.email;
             let client_id = req.body.client_id;
             let model = req.body.model;
+            let usr_acc_id = req.body.usr_acc_id;
+            let usr_device_id = req.body.usr_device_id
 
             // let s_dealer_id = req.body.s_dealer;
             let start_date = req.body.start_date;
@@ -1118,13 +1118,13 @@ router.put('/edit/devices', async function (req, res) {
 
             // let dealer = await sql.query(checkDealer);
 
-            var checkDevice = "SELECT start_date from devices WHERE device_id = '" + device_id + "' ";
+            var checkDevice = "SELECT start_date from usr_acc WHERE device_id = '" + usr_device_id + "' ";
             if (loggedDealerType === SDEALER) {
                 checkDevice = checkDevice + " AND dealer_id = " + loggedDealerId;
             } else if (loggedDealerType === DEALER) {
-                checkDevice = checkDevice + " AND (dealer_id = " + loggedDealerId + " OR connected_dealer = " + loggedDealerId + " )";
+                checkDevice = checkDevice + " AND (dealer_id = " + loggedDealerId + " OR prnt_dlr_id = " + loggedDealerId + " )";
             } else if (loggedDealerType === ADMIN) {
-
+                checkDevice = checkDevice;
             } else {
                 res.send({
                     status: false,
@@ -1135,21 +1135,24 @@ router.put('/edit/devices', async function (req, res) {
             console.log(checkDevice);
             sql.query(checkDevice, async function (error, rows) {
                 if (rows.length) {
-                    let checkUnique = "SELECT * from devices WHERE (email= '" + device_email + "' OR pgp_email='" + pgp_email + "') AND device_id != '" + device_id + "'"
-                    sql.query(checkUnique, async (error, success) => {
+                    let checkUniquePgp = "SELECT * from pgp_emails WHERE pgp_email= '" + pgp_email + "' AND user_acc_id != '' AND user_acc_id != '" + usr_acc_id + "'"
+                    // let checkUnique = "SELECT usr_acc.* from usr_acc WHERE account_email= '" + device_email + "' AND device_id != '" + device_id + "'"
+                    sql.query(checkUniquePgp, async (error, success) => {
                         if (success.length) {
                             res.send({
                                 status: false,
-                                "msg": "Account Email or PGP email already taken"
+                                "msg": "PGP email already taken"
                             });
                         } else {
-                            let common_Query = "UPDATE devices set name = '" + device_name + "', email = '" + device_email + "', pgp_email='" + pgp_email + "',  chat_id='" + chat_id + "', sim_id='" + sim_id + "', client_id ='" + client_id + "', model = '" + model + "'"
-                            let common_Query2 = ", status = '" + status + "', expiry_date = '" + expiry_date + "' where device_id = '" + device_id + "'";
+                            common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE device_id = '" + device_id + "'"
+                            usr_acc_Query = "UPDATE usr_acc set status = '" + status + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' WHERE device_id = '" + usr_device_id + "'"
+                            // let sql1 = common_Query + ", s_dealer_name = '" + rslt1[0].dealer_name + "', s_dealer = '" + req.body.s_dealer + "'" + common_Query2;
 
-                            let sql1 = common_Query + common_Query2;
+                            // let sql1 = common_Query + common_Query2;
                             //console.log('empty');
-                            console.log(sql1);
-                            sql.query(sql1, async function (error, row) {
+                            // console.log(sql1);
+                            sql.query(common_Query, async function (error, row) {
+                                await sql.query(usr_acc_Query);
                                 let updateChatIds = 'update chat_ids set used=1 where chat_id ="' + chat_id + '"';
                                 await sql.query(updateChatIds);
                                 let updateSimIds = 'update sim_ids set used=1 where sim_id ="' + sim_id + '"';
@@ -1157,7 +1160,7 @@ router.put('/edit/devices', async function (req, res) {
                                 let updatePgpEmails = 'update pgp_emails set used=1 where pgp_email ="' + pgp_email + '"';
                                 await sql.query(updatePgpEmails);
 
-                                var slctquery = "select * from devices where device_id = '" + device_id + "'";
+                                var slctquery = "select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id where devices.device_id = '" + device_id + "'";
                                 console.log(slctquery);
                                 rsltq = await sql.query(slctquery);
                                 console.log(rsltq);
@@ -1956,7 +1959,7 @@ router.get('/connect/:device_id', async function (req, res) {
         if (!empty(req.params.device_id)) {
             let userId = verify.user.id;
             console.log("userId", userId);
-          //  console.log(verify.user);
+            //  console.log(verify.user);
             let usertype = await helpers.getUserType(userId);
             let where = "devices.device_id = '" + req.params.device_id + "'";
 
@@ -1967,7 +1970,7 @@ router.get('/connect/:device_id', async function (req, res) {
             sql.query("select devices.*  ," +usr_acc_query_text+ ", dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id where " + where, async function (error, results) {
                         
                 if (error) throw error;
-                console.log('rslt done',results[0]);
+                console.log('rslt done', results.length);
                 if (results.length == 0) {
                     data = {
                         "status": false,

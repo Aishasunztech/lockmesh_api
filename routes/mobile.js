@@ -14,6 +14,7 @@ var md5 = require('md5');
 var fs = require("fs");
 const nodemailer = require('nodemailer');
 var moment = require('moment-strftime');
+const device_helpers = require('../helper/device_helpers.js');
 
 /** SMTP Email **/
 var smtpTransport = nodemailer.createTransport({
@@ -329,7 +330,7 @@ router.post('/linkdevice', async function (req, resp) {
 
     var reslt = verifyToken(req, resp);
     var dId = req.body.dId;
-    var connected_dealer = req.body.connected_dealer;
+    var connected_dealer = (req.body.connected_dealer === undefined || req.body.connected_dealer === null)?0: req.body.connected_dealer;
     // var deviceId = uniqid.process();
     var imei = req.body.imei;
     var ip = req.body.ip;
@@ -344,35 +345,50 @@ router.post('/linkdevice', async function (req, resp) {
     var simNo1 = simNo[0] ? simNo[0] : null;
     var simNo2 = simNo[1] ? simNo[1] : null;
 
-
-
     var device_id = helpers.getDeviceId();
 
     var deviceId = await checkDeviceId(device_id);
 
     if (reslt.status == true) {
-        var sql1 = "SELECT * FROM devices WHERE  mac_address='" + mac_address + "'";
-        var res = await sql.query(sql1);
-        var sql2 = "select * from dealers where dealer_id = " + dId;
-        let res2 = await sql.query(sql2);
+        var deviceQ = "SELECT * FROM devices WHERE  mac_address='" + mac_address + "' OR serial_number='"+ serial_number +"'";
+        var device = await sql.query(deviceQ);
+        // res = device
+
+        var dealerQ = "select * from dealers where dealer_id = " + dId;
+        let dealer = await sql.query(dealerQ);
+        // res2 = dealer
         // console.log("mysql ",res2[0].dealer_email);
 
-        if (res2.length) {
-            sendEmail("New Device Request", "You have a new device request", res2[0].dealer_email, function (error, response) {
+        if (dealer.length) {
+            sendEmail("New Device Request", "You have a new device request", dealer[0].dealer_email, function (error, response) {
                 if (error) {
                     console.log("email sending error", error);
                 } else {
                     console.log("email sent", response);
                 }
             });
+            // let dealerStatus = helpers.getDealerStatus(dealer[0]);
 
-            if (res.length > 0) {
+            if (device.length > 0) {
                 // console.log('yes');
-                if (res[0].unlink_status == 1) {
+                let deviceStatus = device_helpers.checkStatus(device[0]);
+                if(deviceStatus == "Unlinked"){
 
-                    var sql3 = "update devices set link_code='" + res2[0].link_code + "', dealer_id = '" + dId + "', ip_address = '" + ip + "', simno = '" + simNo1 + "', online = 'On', unlink_status = 0 , simno2 = '" + simNo2 + "' where mac_address = '" + mac_address + "'";
+                    var user_acc = await sql.query("SELECT * FROM usr_acc WHERE device_id=" + device[0].id);
+                    var link_acc = "";
+                    var updateDviceQ = "UPDATE devices set ip_address = '" + ip + "', simno = '" + simNo1 + "', online = 'On' , simno2 = '" + simNo2 + "' where id=" + device[0].id;
+                    // , unlink_status = 0
+                    var updateDevice = await sql.query(updateDviceQ);
 
-                    sql.query(sql3, function (error, rows) {
+                    if(user_acc.length){
+
+                        var link_acc = "update usr_acc set link_code='" + dealer[0].link_code + "', dealer_id = '" + dId + "', prnt_dlr_id="+ connected_dealer +", unlink_status = 0 where mac_address = '" + mac_address + "'";
+
+                    } else {
+                        var link_acc = "INSERT INTO user_acc  (device_id, link_code, dealer_id, prnt_dlr_id, unlink_status) value ("+ device.id +", " + dealer[0].link_code +", '" + dId + "',"+ connected_dealer +", 0) ";
+                    }
+                    
+                    sql.query(link_acc, function (error, rows) {
                         //response.end(JSON.stringify(rows));
                         if (error) throw error;
 
@@ -381,41 +397,50 @@ router.post('/linkdevice', async function (req, resp) {
                             "msg": "Device linked."
                         });
                     });
-
-
                 } else {
-
                     resp.json({
                         "status": true,
                         "msg": "Device already linked"
                     });
                 }
+                
+                // if (device[0].unlink_status == 1) {
+                // } else {
+                // }
 
 
-            } else if (connected_dealer != 0) {
-                sql.query('INSERT INTO devices (dealer_id, link_code, connected_dealer, device_id, imei, imei2, ip_address, simno, simno2, serial_number, mac_address, online) values(?,?,?,?,?,?,?,?,?,?,?,?)', [dId, res2[0].link_code, connected_dealer, deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, 'On'], function (error, rows) {
-                    //response.end(JSON.stringify(rows));
-                    if (error) throw error;
-
-                    resp.json({
-                        "status": true,
-                        "data": rows
-
-                    });
-
-                });
             } else {
-                sql.query('INSERT INTO devices (dealer_id, link_code, device_id, imei,imei2, ip_address, simno, simno2, serial_number, mac_address, online) values(?,?,?,?,?,?,?,?,?,?,?)', [dId, res2[0].link_code, deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, 'On'], function (error, rows) {
-                    //response.end(JSON.stringify(rows));
-                    if (error) throw error;
+                let insertDevice = "INSERT INTO devices (device_id, imei, imei2, ip_address, simno, simno2, serial_number, mac_address, online) values(?,?,?,?,?,?,?,?,?)";
+                sql.query(insertDevice,[deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, 'On' ], function(error, deviceRes){
+                    if(error){
+                        throw Error(error);
+                    }
+                    let dvc_id = deviceRes.insertId;
+                    let insertUserAcc = "";
+                    let values;
+                    console.log("dealers", dealer[0].dealer_id);
+                    if(connected_dealer!==0){
 
-                    resp.json({
-                        "status": true,
-                        "data": rows
+                        insertUserAcc = "INSERT INTO usr_acc (device_id, dealer_id, link_code, prnt_dlr_id) values(?,?,?,?)";
+                        values = [dvc_id, dealer[0].dealer_id, dealer[0].link_code,connected_dealer];
+                    } else {
+                        insertUserAcc = "INSERT INTO usr_acc (device_id, dealer_id, link_code) values(?,?,?,?)";
+                        values = [dvc_id, dealer[0].dealer_id, dealer[0].link_code];
+                    }
+
+                    sql.query(insertUserAcc, values, function (error, rows) {
+                        if (error) throw error;
+
+                        resp.json({
+                            "status": true,
+                            "data": rows
+
+                        });
 
                     });
 
                 });
+                
             }
 
         } else {
@@ -435,47 +460,35 @@ router.post('/getstatus', async function (req, resp) {
     var reslt = verifyToken(req, resp);
 
     if (reslt.status == true) {
-        var sql1 = "SELECT * FROM devices WHERE  mac_address= '" + mac + "'";
+        var deviceQ = "SELECT * FROM devices WHERE  mac_address= '" + mac + "' OR imei = '"+ imei+"'";
         //console.log(sql1);
 
-        var res = await sql.query(sql1);
-
+        var device = await sql.query(deviceQ);
+        // res
         //console.log(res[0].device_status);
-        if (res.length > 0) {
-            if (res[0].device_status == 0) {
-                if (res[0].unlink_status == 1) {
+        if (device.length > 0) {
+            let userAcc = await sql.query("SELECT * FROM usr_acc WHERE device_id="+ device[0].id);
+            if(userAcc.length){
+                let deviceStatus = device_helpers.checkStatus(userAcc[0]);
+                if(deviceStatus === "Unlinked"){
                     data = {
                         "status": -1,
                         "msg": "Device Unlinked.",
-                        "dealer_id": res[0].dealer_id,
-                        "device_id": res[0].device_id
+                        "dealer_id": userAcc[0].dealer_id,
+                        "device_id": device[0].device_id
                     };
-                } else {
-                    data = {
-                        "status": 0,
-                        "msg": "Processing.",
-                        "dealer_id": res[0].dealer_id,
-                        "device_id": res[0].device_id
-                    };
-
-                }
-
-                resp.send(data);
-
-            } else {
-
-                if (res[0].expiry_date == null || res[0].expiry_date == '') {
+                    resp.send(data);
+                    return;
+                } else if (userAcc[0].expiry_date == null || userAcc[0].expiry_date == '') {
                     data = {
                         "status": 1,
                         "msg": "Device activated.",
-                        "dealer_id": res[0].dealer_id,
+                        "dealer_id": userAcc[0].dealer_id,
                         "expiry_date": '',
-                        "device_id": res[0].device_id,
-                        "chat_id": res[0].chat_id,
-                        "pgp_email": res[0].pgp_email,
-                        "sim_id": res[0].sim_id
-
-
+                        "device_id": device[0].device_id,
+                        // "chat_id": userAcc[0].chat_id,
+                        // "pgp_email": res[0].pgp_email,
+                        // "sim_id": res[0].sim_id
                     };
                     resp.send(data);
                 } else {
@@ -485,15 +498,39 @@ router.post('/getstatus', async function (req, resp) {
                         "dealer_id": res[0].dealer_id,
                         "expiry_date": res[0].expiry_date,
                         "device_id": res[0].device_id,
-                        "chat_id": res[0].chat_id,
-                        "pgp_email": res[0].pgp_email,
-                        "sim_id": res[0].sim_id
-
+                        // "chat_id": res[0].chat_id,
+                        // "pgp_email": res[0].pgp_email,
+                        // "sim_id": res[0].sim_id
                     };
                     resp.send(data);
                 }
-
+                
             }
+
+
+            // if (res[0].device_status == 0) {
+            //     if (res[0].unlink_status == 1) {
+            //         data = {
+            //             "status": -1,
+            //             "msg": "Device Unlinked.",
+            //             "dealer_id": res[0].dealer_id,
+            //             "device_id": res[0].device_id
+            //         };
+            //     } else {
+            //         data = {
+            //             "status": 0,
+            //             "msg": "Processing.",
+            //             "dealer_id": res[0].dealer_id,
+            //             "device_id": res[0].device_id
+            //         };
+
+            //     }
+
+            //     resp.send(data);
+
+            // } else {
+
+            // }
         } else {
             data = {
                 "status": -1,
@@ -643,100 +680,184 @@ router.post('/accountstatus', async function (req, res) {
         }
         res.send(data);
     } else {
-        var sqls1 = "select * from devices where mac_address = '" + mac + "'";
-        console.log(sqls1);
-        var reslts = await sql.query(sqls1);
-        console.log('length : ' + reslts.length);
-        if (reslts.length > 0) {
-            if (reslts[0].dealer_id != 0) {
-                var sqls2 = "select * from dealers where dealer_id = '" + reslts[0].dealer_id + "'";
-                var reslts2 = await sql.query(sqls2);
+        var deviceQuery = "select * from devices where mac_address = '" + mac + "' ";
+        // OR imei = '"+ imei +"'
 
-                if (reslts2[0].account_status == 'suspended') {
-                    data = {
-                        "status": false,
-                        "msg": "Dealer Suspended.Contact Admin."
+        var device = await sql.query(deviceQuery);
+        //reslts 
+        if (device.length > 0) {
+            var user_acc = await sql.query("SELECT * FROM usr_acc where device_id = " + device[0].id);
+            if(user_acc.length){
+                
+                // get user account device status
+                let deviceStatus = device_helpers.checkStatus(user_acc[0]);
+
+                if (user_acc[0].dealer_id !== 0 && user_acc.dealer_id !== null) {
+                    
+                    var dealerQuery = "select * from dealers where dealer_id = '" + user_acc[0].dealer_id + "'";
+                    var dealer = await sql.query(dealerQuery);
+                    // reslts2 
+                    if(dealer.length > 0){
+                        let dealerStatus = helpers.getDealerStatus(dealer[0]);
+    
+                        if (dealerStatus === 'suspended') {
+                            data = {
+                                "status": false,
+                                "msg": "Dealer Suspended.Contact Admin."
+                            }
+                            res.send(data);
+                            return;
+                        } else if (dealerStatus == "unlinked") {
+                            data = {
+                                "status": false,
+                                "msg": "Dealer Not found.Contact Admin."
+                            }
+                            res.send(data);
+                            return;
+                        } else {
+        
+                            // if (reslts[0].device_status == 0 && (reslts[0].status == '' || reslts[0].status == null) && (reslts[0].account_status == '' || reslts[0].account_status == null)) {
+                            
+                            if (deviceStatus === "Pending activation"){
+                                data = {
+                                    "status": true,
+                                    "msg": "pending"
+                                }
+                                res.send(data);
+                                return;
+                            } else if (deviceStatus === "Activated"){
+                                data = {
+                                    "status": true,
+                                    "msg": "account active"
+                                }
+                                res.send(data);
+                                return;
+                            } else if (deviceStatus === "Suspended"){
+                                data = {
+                                    "status": false,
+                                    "msg": "account suspended"
+                                }
+                                res.send(data);
+                                return;
+                            } else if (deviceStatus === "Expired"){
+        
+                                data = {
+                                    "status": false,
+                                    "msg": "account expired"
+                                }
+                                res.send(data);
+                                return;
+                            }
+        
+                            // if (user_acc[0].device_status == 0 && helpers.checkNullStatus(user_acc[0]) && helpers.checkNullUserAccountStatus(user_acc[0])) {
+                            //     data = {
+                            //         "status": true,
+                            //         "msg": "pending"
+                            //     }
+                            //     res.send(data);
+                            //     return;
+                            // }else if (user_acc[0].status == 'active' && helpers.checkNullUserAccountStatus(user_acc[0])) {
+                            //     data = {
+                            //         "status": true,
+                            //         "msg": "account active"
+                            //     }
+                            //     res.send(data);
+                            //     return;
+                            // } else if (user_acc[0].account_status == 'suspended') {
+                            //     data = {
+                            //         "status": false,
+                            //         "msg": "account suspended"
+                            //     }
+                            //     res.send(data);
+                            //     return;
+                            // } else if (user_acc[0].status == 'expired') {
+                            //     data = {
+                            //         "status": false,
+                            //         "msg": "account expired"
+                            //     }
+                            //     res.send(data);
+                            //     return;
+                            // }
+                            
+        
+                        }
+                    } else {
+                        data = {
+                            "status": false,
+                            "msg": "Dealer Not found.Contact Admin."
+                        }
+                        res.send(data);
+                        return;
                     }
-                    res.send(data);
-                } else if (reslts2[0].unlink_status == 1) {
-                    data = {
-                        "status": false,
-                        "msg": "Dealer Not found.Contact Admin."
-                    }
-                    res.send(data);
                 } else {
-                    if (reslts[0].device_status == 0 && (reslts[0].status == '' || reslts[0].status == null) && (reslts[0].account_status == '' || reslts[0].account_status == null)) {
-                        console.log('hello');
+
+                    if (deviceStatus === "Pending activation"){
                         data = {
                             "status": true,
                             "msg": "pending"
                         }
                         res.send(data);
                         return;
-                    }
-
-                    if (reslts[0].status == 'active' && (reslts[0].account_status == '' || reslts[0].account_status == null)) {
+                    } else if (deviceStatus === "Activated"){
                         data = {
                             "status": true,
                             "msg": "account active"
                         }
                         res.send(data);
-
-                    } else {
-                        if (reslts[0].account_status == 'suspended') {
-                            data = {
-                                "status": false,
-                                "msg": "account suspended"
-                            }
-                            res.send(data);
-                        }
-
-                        if (reslts[0].status == 'expired') {
-                            data = {
-                                "status": false,
-                                "msg": "account expired"
-                            }
-                        }
-                        res.send(data);
-                    }
-
-                }
-            } else {
-                if (reslts[0].device_status == 0 && (reslts[0].status == '' || reslts[0].status == null) && (reslts[0].account_status == '' || reslts[0].account_status == null)) {
-                    console.log('hello');
-                    data = {
-                        "status": true,
-                        "msg": "pending"
-                    }
-                    res.send(data);
-                    return;
-                }
-
-                if (reslts[0].status == 'active' && (reslts[0].account_status == '' || reslts[0].account_status == null)) {
-                    data = {
-                        "status": true,
-                        "msg": "account active"
-                    }
-                    res.send(data);
-
-                } else {
-                    if (reslts[0].account_status == 'suspended') {
+                        return;
+                    } else if (deviceStatus === "Suspended"){
                         data = {
                             "status": false,
                             "msg": "account suspended"
                         }
                         res.send(data);
-                    }
-                    if (reslts[0].status == 'expired') {
+                        return;
+                    } else if (deviceStatus === "Expired"){
+
                         data = {
                             "status": false,
                             "msg": "account expired"
                         }
+                        res.send(data);
+                        return;
                     }
-                    res.send(data);
-                }
 
-            }
+                    // if (reslts[0].device_status == 0 && (reslts[0].status == '' || reslts[0].status == null) && (reslts[0].account_status == '' || reslts[0].account_status == null)) {
+                    //     console.log('hello');
+                    //     data = {
+                    //         "status": true,
+                    //         "msg": "pending"
+                    //     }
+                    //     res.send(data);
+                    //     return;
+                    // } else if (reslts[0].status == 'active' && (reslts[0].account_status == '' || reslts[0].account_status == null)) {
+                    //     data = {
+                    //         "status": true,
+                    //         "msg": "account active"
+                    //     }
+                    //     res.send(data);
+    
+                    // } else {
+                    //     if (reslts[0].account_status == 'suspended') {
+                    //         data = {
+                    //             "status": false,
+                    //             "msg": "account suspended"
+                    //         }
+                    //         res.send(data);
+                    //     }
+                    //     if (reslts[0].status == 'expired') {
+                    //         data = {
+                    //             "status": false,
+                    //             "msg": "account expired"
+                    //         }
+                    //     }
+                    //     res.send(data);
+                    // }
+    
+                }
+            } else {
+
+            }    
 
         } else {
             data = {
