@@ -9,7 +9,7 @@ const sqlPool = mysql.createPool({
     host: 'localhost',
     user: 'root',
     password: '',
-    database: 'lokmesh',
+    database: 'lockmesh_db',
     supportBigNumbers: true,
     bigNumberStrings: true,
     dateStrings : true

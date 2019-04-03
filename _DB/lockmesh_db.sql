@@ -11,7 +11,7 @@
  Target Server Version : 50724
  File Encoding         : 65001
 
- Date: 29/03/2019 11:08:29
+ Date: 02/04/2019 16:13:26
 */
 
 SET NAMES utf8mb4;
@@ -137,30 +137,12 @@ CREATE TABLE `apk_details`  (
   `delete_status` tinyint(4) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `id`(`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 29 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 30 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of apk_details
 -- ----------------------------
-INSERT INTO `apk_details` VALUES (10, 'Asdfsfadfafds', 'logo-1541742769793.jpg', 'apk-1542148768616.apk', NULL, NULL, 'Off', '2018-11-13 22:39:42', '2019-03-24 07:02:33', 1);
-INSERT INTO `apk_details` VALUES (11, 'Barry', 'logo-1551716361712.jpg', 'apk-1542172518850.apk', NULL, NULL, 'Off', '2018-11-14 05:15:24', '2019-03-28 17:26:43', 0);
-INSERT INTO `apk_details` VALUES (12, 'barry', 'logo-1541742769793.jpg', 'apk-1542172972010.apk', NULL, NULL, 'Off', '2018-11-14 05:17:47', '2019-02-18 18:35:43', 1);
-INSERT INTO `apk_details` VALUES (13, 'test', 'logo-1541742769793.jpg', 'apk-1542172673064.apk', NULL, NULL, 'Off', '2018-11-14 05:17:56', '2019-02-16 10:55:04', 1);
-INSERT INTO `apk_details` VALUES (14, 'hello', 'logo-1544793519925.jpg', 'apk-1544793519931.apk', NULL, NULL, 'Off', '2018-12-14 18:18:41', '2019-03-28 17:26:51', 0);
-INSERT INTO `apk_details` VALUES (15, 'hello', 'logo-1547271136553.jpg', 'apk-1547271138509.apk', NULL, NULL, 'Off', '2019-01-12 05:32:18', '2019-02-15 17:05:45', 1);
-INSERT INTO `apk_details` VALUES (16, 'hello', 'logo-1547271161142.jpg', 'apk-1547271163347.apk', NULL, NULL, 'Off', '2019-01-12 05:32:43', '2019-02-15 17:05:40', 1);
-INSERT INTO `apk_details` VALUES (17, 'Marco', 'logo-1547397288311.jpg', 'apk-1547397289373.apk', NULL, NULL, 'On', '2019-01-13 16:34:50', '2019-02-11 16:47:35', 1);
-INSERT INTO `apk_details` VALUES (18, 'Wechat', 'logo-1548822163674.jpg', 'apk-1548822163676.apk', NULL, NULL, 'On', '2019-01-30 04:23:14', '2019-02-21 14:56:44', 1);
-INSERT INTO `apk_details` VALUES (19, 'testing', 'logo-1553410489405.jpg', 'apk-1553410603648.apk', 'basic', NULL, 'Off', '2019-03-24 06:56:58', '2019-03-28 17:26:52', 0);
-INSERT INTO `apk_details` VALUES (20, 'testing other', 'logo-1553410639746.jpg', 'apk-1553410660560.apk', 'basic', NULL, 'On', '2019-03-24 06:57:50', '2019-03-26 13:10:20', 1);
-INSERT INTO `apk_details` VALUES (21, 'testing', 'logo-1553413554912.jpg', 'apk-1553413558736.apk', 'basic', NULL, 'On', '2019-03-24 07:46:08', '2019-03-26 13:10:17', 1);
-INSERT INTO `apk_details` VALUES (22, 'salman', 'logo-1553427603720.jpg', 'apk-1553427588183.apk', 'basic', NULL, 'On', '2019-03-24 11:40:11', '2019-03-26 13:10:13', 1);
-INSERT INTO `apk_details` VALUES (23, 'sam2', 'logo-1553427690591.jpg', 'apk-1553427649262.apk', 'basic', NULL, 'Off', '2019-03-24 11:41:35', '2019-03-28 17:26:52', 0);
-INSERT INTO `apk_details` VALUES (24, 'mdm test', 'logo-1553592755200.jpg', 'apk-1553592732468.apk', 'basic', NULL, 'Off', '2019-03-26 09:32:38', '2019-03-26 11:01:29', 1);
-INSERT INTO `apk_details` VALUES (25, 'mdm test', 'logo-1553592755200.jpg', 'apk-1553592732468.apk', 'basic', NULL, 'Off', '2019-03-26 09:32:53', '2019-03-26 11:01:32', 1);
-INSERT INTO `apk_details` VALUES (26, 'test barry', 'logo-1553598140140.jpg', 'apk-1553598119884.apk', 'basic', NULL, 'Off', '2019-03-26 11:02:26', '2019-03-26 11:02:26', 0);
-INSERT INTO `apk_details` VALUES (27, 'usman hafeez', 'logo-1553605931155.jpg', 'apk-1553605944520.apk', 'basic', NULL, 'Off', '2019-03-26 13:12:32', '2019-03-26 13:12:32', 0);
-INSERT INTO `apk_details` VALUES (28, 'samz', 'logo-1553605961963.jpg', 'apk-1553606042874.apk', 'basic', NULL, 'Off', '2019-03-26 13:20:49', '2019-03-26 13:20:49', 0);
+INSERT INTO `apk_details` VALUES (29, 'new file added', 'logo-1554200258055.jpg', 'apk-1554200217607.apk', 'basic', NULL, 'On', '2019-04-02 15:17:59', '2019-04-02 15:20:52', 0);
 
 -- ----------------------------
 -- Table structure for apps_info
@@ -176,7 +158,7 @@ CREATE TABLE `apps_info`  (
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `unique_name_constraints`(`unique_name`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 6409 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Table structure for chat_ids
@@ -193,7 +175,7 @@ CREATE TABLE `chat_ids`  (
   UNIQUE INDEX `chat_id_unique`(`chat_id`) USING BTREE,
   INDEX `user_acc_id`(`user_acc_id`) USING BTREE,
   CONSTRAINT `chat_ids_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 82 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for dealer_dropdown_list
@@ -211,7 +193,7 @@ CREATE TABLE `dealer_dropdown_list`  (
   INDEX `dealer_id`(`dealer_id`) USING BTREE,
   INDEX `id_2`(`id`) USING BTREE,
   CONSTRAINT `dealer_dropdown_list_ibfk_1` FOREIGN KEY (`dealer_id`) REFERENCES `dealers` (`dealer_id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 36 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 85 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Table structure for dealer_pagination
@@ -227,7 +209,7 @@ CREATE TABLE `dealer_pagination`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `dealer_id`(`dealer_id`) USING BTREE,
   CONSTRAINT `dealer_pagination_ibfk_1` FOREIGN KEY (`dealer_id`) REFERENCES `dealers` (`dealer_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for dealers
@@ -253,15 +235,12 @@ CREATE TABLE `dealers`  (
   INDEX `type`(`type`) USING BTREE,
   INDEX `connected_dealer`(`connected_dealer`) USING BTREE,
   CONSTRAINT `dealers_ibfk_1` FOREIGN KEY (`type`) REFERENCES `user_roles` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 220 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 222 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of dealers
 -- ----------------------------
 INSERT INTO `dealers` VALUES (154, 'Neha', 'Kashyap', 0, 'admin', 'admin@gmail.com', 'e6e061838856bf47e1de730719fb2609', '', 1, 0, NULL, '2019-02-08 09:50:04', '2019-02-08 09:50:04');
-INSERT INTO `dealers` VALUES (217, NULL, NULL, 0, 'usman hafeez', 'usmanhafeez147@gmail.com', '71788a846854deda78affcc13b5f49b9', '668721', 2, 0, NULL, '2019-03-27 05:23:56', '2019-03-27 05:23:56');
-INSERT INTO `dealers` VALUES (218, NULL, NULL, 0, 'saira', 'sairznight@gmail.com', '7ecb80232a1901be4131acad2930c6b4', '543353', 2, 0, NULL, '2019-03-27 05:29:02', '2019-03-27 05:29:02');
-INSERT INTO `dealers` VALUES (219, NULL, NULL, 0, 'zaid', 'zaid@vortexapp.ca', '88bcc2d6654b515014ca8559316c103c', '146545', 2, 0, NULL, '2019-03-27 16:52:52', '2019-03-27 16:52:52');
 
 -- ----------------------------
 -- Table structure for default_apps
@@ -277,7 +256,7 @@ CREATE TABLE `default_apps`  (
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `unique_name_constraints`(`unique_name`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 6880 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for device_history
@@ -295,7 +274,7 @@ CREATE TABLE `device_history`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `user_acc_id`(`user_acc_id`) USING BTREE,
   CONSTRAINT `device_history_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 521 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for devices
@@ -304,6 +283,7 @@ DROP TABLE IF EXISTS `devices`;
 CREATE TABLE `devices`  (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `device_id` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `name` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `session_id` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `model` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `ip_address` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
@@ -339,7 +319,7 @@ CREATE TABLE `pgp_emails`  (
   UNIQUE INDEX `unique_pgp_emails`(`pgp_email`) USING BTREE,
   INDEX `user_acc_id`(`user_acc_id`) USING BTREE,
   CONSTRAINT `pgp_emails_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 93 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for policy
@@ -369,7 +349,7 @@ CREATE TABLE `screen_lock_devices`  (
   `start_date` varchar(60) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `end_date` varchar(60) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   PRIMARY KEY (`dev_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 48 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for sim_ids
@@ -388,7 +368,7 @@ CREATE TABLE `sim_ids`  (
   UNIQUE INDEX `sim_id_UNIQUE`(`sim_id`) USING BTREE,
   INDEX `device_id`(`device_id`) USING BTREE,
   CONSTRAINT `sim_ids_ibfk_1` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for tbl_device_settings
@@ -500,8 +480,8 @@ CREATE TABLE `usr_acc`  (
   `device_id` int(11) NULL DEFAULT NULL,
   `account_name` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `account_email` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
-  `dealer_id` int(11) NOT NULL DEFAULT 0,
-  `prnt_dlr_id` int(11) NOT NULL DEFAULT 0,
+  `dealer_id` int(11) NULL DEFAULT 0,
+  `prnt_dlr_id` int(11) NULL DEFAULT 0,
   `link_code` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `client_id` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `start_date` varchar(16) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
@@ -525,7 +505,7 @@ CREATE TABLE `usr_acc`  (
   CONSTRAINT `usr_acc_ibfk_1` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `usr_acc_ibfk_2` FOREIGN KEY (`dealer_id`) REFERENCES `dealers` (`dealer_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `usr_acc_ibfk_3` FOREIGN KEY (`prnt_dlr_id`) REFERENCES `dealers` (`dealer_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Table structure for usr_acc_profile
@@ -547,5 +527,11 @@ CREATE TABLE `usr_acc_profile`  (
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- View structure for userstat
+-- ----------------------------
+DROP VIEW IF EXISTS `userstat`;
+CREATE ALGORITHM = UNDEFINED DEFINER = `root`@`localhost` SQL SECURITY DEFINER VIEW `userstat` AS select `devices`.`id` AS `device_id`,`usr_acc`.`id` AS `acc_id`,`dealers`.`dealer_name` AS `dealer_name`,`pgp_emails`.`pgp_email` AS `pgp_email`,`chat_ids`.`chat_id` AS `chat_id`,`sim_ids`.`sim_id` AS `sim_id` from (((((`devices` join `usr_acc` on((`devices`.`id` = `usr_acc`.`device_id`))) join `dealers` on((`dealers`.`dealer_id` = `usr_acc`.`dealer_id`))) left join `pgp_emails` on((`pgp_emails`.`user_acc_id` = `usr_acc`.`id`))) left join `chat_ids` on((`chat_ids`.`user_acc_id` = `usr_acc`.`id`))) left join `sim_ids` on((`sim_ids`.`device_id` = `usr_acc`.`device_id`))) where (`usr_acc`.`transfer_status` = 0);
 
 SET FOREIGN_KEY_CHECKS = 1;

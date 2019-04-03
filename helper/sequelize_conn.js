@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize');
 
 // Option 1: Passing parameters separately
-const sequelize_conn = new Sequelize('webportal_db', 'root', '', {
+const sequelize_conn = new Sequelize('lockmesh_db', 'root', '', {
   host: 'localhost',
   dialect: 'mysql',
 
