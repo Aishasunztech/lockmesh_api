@@ -212,8 +212,5 @@ module.exports = {
 
         return status;
 
-    },
-    validateEmails: ()=>{
-        
     }
 }
