@@ -53,5 +53,7 @@ sqlPool.getConnection((err, connection) => {
     return
 });
 
+
+
 sqlPool.query = util.promisify(sqlPool.query); // Magic happens here.
 module.exports = sqlPool;
