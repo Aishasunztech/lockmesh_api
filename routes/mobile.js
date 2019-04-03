@@ -643,62 +643,65 @@ router.post('/accountstatus', async function (req, res) {
         }
         res.send(data);
     } else {
-        var sqls1 = "select * from devices where mac_address = '" + mac + "'";
-        console.log(sqls1);
-        var reslts = await sql.query(sqls1);
-        console.log('length : ' + reslts.length);
-        if (reslts.length > 0) {
-            if (reslts[0].dealer_id != 0) {
-                var sqls2 = "select * from dealers where dealer_id = '" + reslts[0].dealer_id + "'";
-                var reslts2 = await sql.query(sqls2);
-
-                if (reslts2[0].account_status == 'suspended') {
+        var deviceQuery = "select * from devices where mac_address = '" + mac + "' OR imei = '"+ imei +"'";
+        var device = await sql.query(deviceQuery);
+        //reslts 
+        if (device.length > 0) {
+            var user_acc = await sql.query("SELECT * FROM usr_acc where device_id = " + device[0].id);
+            
+            if (user_acc[0].dealer_id !== 0 && user_acc.dealer_id !== null) {
+                
+                var dealerQuery = "select * from dealers where dealer_id = '" + user_acc[0].dealer_id + "'";
+                var dealer = await sql.query(dealerQuery);
+                // reslts2 
+                if (dealer[0].account_status == 'suspended') {
                     data = {
                         "status": false,
                         "msg": "Dealer Suspended.Contact Admin."
                     }
                     res.send(data);
-                } else if (reslts2[0].unlink_status == 1) {
+                    return;
+                } else if (dealer[0].unlink_status == 1) {
                     data = {
                         "status": false,
                         "msg": "Dealer Not found.Contact Admin."
                     }
                     res.send(data);
+                    return;
                 } else {
-                    if (reslts[0].device_status == 0 && (reslts[0].status == '' || reslts[0].status == null) && (reslts[0].account_status == '' || reslts[0].account_status == null)) {
-                        console.log('hello');
+
+                    // if (reslts[0].device_status == 0 && (reslts[0].status == '' || reslts[0].status == null) && (reslts[0].account_status == '' || reslts[0].account_status == null)) {
+                    
+                    if (user_acc[0].device_status == 0 && helpers.checkNullStatus(user_acc[0]) && helpers.checkNullUserAccountStatus(user_acc[0])) {
                         data = {
                             "status": true,
                             "msg": "pending"
                         }
                         res.send(data);
                         return;
-                    }
-
-                    if (reslts[0].status == 'active' && (reslts[0].account_status == '' || reslts[0].account_status == null)) {
+                    }else if (user_acc[0].status == 'active' && helpers.checkNullUserAccountStatus(user_acc[0])) {
                         data = {
                             "status": true,
                             "msg": "account active"
                         }
                         res.send(data);
-
-                    } else {
-                        if (reslts[0].account_status == 'suspended') {
-                            data = {
-                                "status": false,
-                                "msg": "account suspended"
-                            }
-                            res.send(data);
-                        }
-
-                        if (reslts[0].status == 'expired') {
-                            data = {
-                                "status": false,
-                                "msg": "account expired"
-                            }
+                        return;
+                    } else if (user_acc[0].account_status == 'suspended') {
+                        data = {
+                            "status": false,
+                            "msg": "account suspended"
                         }
                         res.send(data);
+                        return;
+                    } else if (user_acc[0].status == 'expired') {
+                        data = {
+                            "status": false,
+                            "msg": "account expired"
+                        }
+                        res.send(data);
+                        return;
                     }
+                    
 
                 }
             } else {
