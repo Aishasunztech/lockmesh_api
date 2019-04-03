@@ -1333,18 +1333,19 @@ router.put('/updateProfile/:id', function (req, res) {
 router.post('/unlink/:id', async function (req, res) {
     var verify = verifyToken(req, res);
     var device_id = req.params.id;
+   // console.log('unlink data ', device_id);
 
     if (verify.status !== undefined && verify.status == true) {
-        console.log('unlinked');
+        console.log('unlinked' , device_id);
         if (!empty(device_id)) {
-            let query = "SELECT activation_code from devices where device_id = '" + device_id + "'";
-            let result = sql.query(query);
+            let query = "SELECT activation_code from usr_acc where device_id = '" + device_id + "'";
+            let result = await sql.query(query);
 
             if (result[0].activation_code !== null) {
-                var sql1 = "update devices set dealer_id = 0, activation_status=0, s_dealer = '' , status = '' , online = 'off' , device_status = 0 , start_date= '', expiry_date= '' , unlink_status=1 where device_id = '" + device_id + "'";
+                var sql1 = "update usr_acc set dealer_id = 0, activation_status=0, status = '' , device_status = 0 , start_date= '', expiry_date= '' , unlink_status=1 where device_id = '" + device_id + "'";
             } else {
 
-                var sql1 = "update devices set dealer_id = 0, s_dealer = '' , status = '' , online = 'off' , device_status = 0 , start_date= '', expiry_date= '' , unlink_status=1 where device_id = '" + device_id + "'";
+                var sql1 = "update usr_acc set dealer_id = 0, status = '' , device_status = 0 , start_date= '', expiry_date= '' , unlink_status=1 where device_id = '" + device_id + "'";
             }
 
             var rest = sql.query(sql1, function (error, results) {
@@ -1372,6 +1373,7 @@ router.post('/unlink/:id', async function (req, res) {
             }
         }
     }
+    console.log('dddddddd',data)
 });
 
 /** Suspend Account Devices / client **/
@@ -1975,7 +1977,7 @@ router.get('/connect/:device_id', async function (req, res) {
                 where = where + " and dealer_id=" + userId;
             }
             console.log("where: " + where);
-            sql.query("select devices.*  ," +usr_acc_query_text+ ", dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id where " + where, async function (error, results) {
+            sql.query("select devices.*  ," +usr_acc_query_text+ ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id where " + where, async function (error, results) {
                         
                 if (error) throw error;
                 console.log('rslt done', results.length);
@@ -1992,15 +1994,15 @@ router.get('/connect/:device_id', async function (req, res) {
                         "email": results[0].account_email,
                         "device_id": results[0].device_id,
                         "client_id": results[0].client_id,
-                        "pgp_email": results[0].pgp_email,
-                        "chat_id": results[0].chat_id,
+                        // "pgp_email": results[0].pgp_email,
+                        // "chat_id": results[0].chat_id,
                         "simno2": results[0].simno2,
                         "imei2": results[0].imei2,
                         "dealer_id": results[0].dealer_id,
                         "model": results[0].model,
                         "imei": results[0].imei,
                         "mac_address": results[0].mac_address,
-                        "sim_id": results[0].sim_id,
+                       // "sim_id": results[0].sim_id,
                         "simno": results[0].simno,
                         "serial_number": results[0].serial_number,
                         "ip_address": results[0].ip_address,
@@ -2023,6 +2025,11 @@ router.get('/connect/:device_id', async function (req, res) {
                         'unlink_status': results[0].unlink_status,
                         'usr_device_id':results[0].usr_device_id
                     };
+                    data.finalStatus = device_helpers.checkStatus(results[0]);
+                    data.pgp_email = await device_helpers.getPgpEmails(results[0]);
+                    data.sim_id = await device_helpers.getSimids(results[0]);
+                    data.chat_id = await device_helpers.getChatids(results[0]);
+
                     if (dealer_details.length) {
                         data.link_code = dealer_details[0].link_code;
                         data.dealer_name = dealer_details[0].dealer_name;
