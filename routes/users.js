@@ -398,6 +398,7 @@ router.get('/devices', function (req, res) {
                 where_con = 'AND usr_acc.dealer_id = ' + verify.user.id + ' ';
             }
         }
+
         console.log("hello where", where_con);
         sql.query('select devices.*  ,' +usr_acc_query_text+ ', dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id where usr_acc.transfer_status = 0 ' + where_con + ' order by devices.id DESC', function (error, results, fields) {
             if (error) throw error;
@@ -1949,17 +1950,17 @@ router.get('/connect/:device_id', async function (req, res) {
         if (!empty(req.params.device_id)) {
             let userId = verify.user.id;
             console.log("userId", userId);
-            console.log(verify.user);
+          //  console.log(verify.user);
             let usertype = await helpers.getUserType(userId);
-            let where = "device_id = '" + req.params.device_id + "'";
+            let where = "dvc.id = '" + req.params.device_id + "'";
 
             if (usertype != "admin") {
                 where = where + " and dealer_id=" + userId;
             }
             console.log("where: " + where);
-            sql.query("select * from devices where " + where, async function (error, results) {
+            sql.query("select dvc.*, usr_acc.*, pgp_emails.pgp_email, chat_ids.chat_id from devices as dvc  join usr_acc on dvc.id = usr_acc.device_id left join pgp_emails on pgp_emails.user_acc_id = usr_acc.id join chat_ids on chat_ids.user_acc_id = usr_acc.id where " + where, async function (error, results) {
                 if (error) throw error;
-                //console.log(results.length);
+                console.log('rslt done',results.length);
                 if (results.length == 0) {
                     data = {
                         "status": false,
@@ -1970,7 +1971,7 @@ router.get('/connect/:device_id', async function (req, res) {
                     let dealer_details = await sql.query(query);
                     data = {
                         "name": results[0].name,
-                        "email": results[0].email,
+                        "email": results[0].account_email,
                         "device_id": results[0].device_id,
                         "client_id": results[0].client_id,
                         "pgp_email": results[0].pgp_email,
@@ -2013,6 +2014,8 @@ router.get('/connect/:device_id', async function (req, res) {
                         data.dealer_name = "";
                     }
                 }
+
+                console.log('data is ', data)
 
                 res.send(data);
             });
@@ -2772,63 +2775,23 @@ router.post('/addApk', function (req, res) {
             },
 
             filename: function (req, file, callback) {
-                console.log("file.fieldname", file.fieldname);
-                if (file.fieldname == "logo") {
+
+                var filetypes = /jpeg|jpg|apk|png/;
+                
+                var mimetype = filetypes.test(file.mimetype);
+                
+                if (file.mimetype === 'application/vnd.android.package-archive' && file.fieldname == "apk") {
+                    filename = file.fieldname + '-' + Date.now() + '.apk';
+                    callback(null, file.fieldname + '-' + Date.now() + '.apk');
+                } else if (mimetype && file.fieldname == "logo") {
                     filename = file.fieldname + '-' + Date.now() + '.jpg';
-                    callback(null, file.fieldname + '-' + Date.now() + '.jpg');
-                } else if (file.fieldname == "apk") {
-                    filename = file.fieldname + '-' + Date.now() + '.apk';
-                    callback(null, file.fieldname + '-' + Date.now() + '.apk');
+                    callback(null, filename);
                 } else {
-                    filename = file.fieldname + '-' + Date.now() + '.apk';
-                    callback(null, file.fieldname + '-' + Date.now() + '.apk');
+                    callback("Error: File upload only supports the following filetypes - " );
                 }
-                console.log('file name', filename)
             }
         });
-        let fileUploaded = false;
 
-        var fileFilter = function (req, file, callback) {
-            var filetypes = /jpeg|jpg|apk|png/;
-            var mimetype = true
-            // if (file.mimetype === 'application/vnd.android.package-archive') {
-            //     var mimetype = false;
-            //     var ext = file.originalname.split(".");
-            //     console.log('ext', ext);
-            //     // if (ext.length === 2) {
-            //         console.log('apk length', ext.length);
-            //     // }
-
-            // } else {
-            //     var mimetype = filetypes.test(file.mimetype);
-            //     var ext = file.originalname.split(".");
-            //     console.log('ext', ext);
-            //     if (mimetype) {
-            //         if (ext.length === 2) {
-            //             mimetype = true
-            //             console.log('logo length', ext.length);
-            //         } else {
-            //             mimetype = false;
-            //         }
-            //     }
-
-            // }
-
-            var extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-            console.log('mim');
-            console.log(file.mimetype);
-            console.log('extname');
-            console.log(extname);
-            console.log("here");
-            if (mimetype) {
-                console.log("validated");
-                fileUploaded = true;
-                return callback(null, true);
-
-            } else {
-                callback("Error: File upload only supports the following filetypes - " + filetypes);
-            }
-        }
 
         var upload = multer({
             // fileFilter: fileFilter,
@@ -2845,23 +2808,23 @@ router.post('/addApk', function (req, res) {
         upload(req, res, function (err) {
             console.log("error", err);
             // console.log("fileUploaded:" + fileUploaded);
-            // if (err) {
-            //     return res.end("Error while Uploading");
-            // } else {
+            if (err) {
+                return res.end("Error while Uploading");
+            }
 
-            // if (fileUploaded) {
+            if (filename!="") {
+                data = {
+                    "status": true,
+                    "msg": 'Uploaded Successfully',
+                    "fileName": filename
+                };
 
-            // } else {
-            //     data = {
-            //         "status": false,
-            //         "msg": "Error while Uploading",
-            //     };
-            // }
-            data = {
-                "status": true,
-                "msg": 'Uploaded Successfully',
-                "fileName": filename
-            };
+            } else {
+                data = {
+                    "status": false,
+                    "msg": "Error while Uploading",
+                };
+            }
             res.send(data);
 
             // }
@@ -2983,8 +2946,9 @@ router.get('/apklist', function (req, res) {
 
             } else {
                 data = {
-                    "status": false,
-                    "msg": "No result found"
+                    status: false,
+                    msg: "No result found",
+                    list: []
                 }
                 res.send(data);
             }

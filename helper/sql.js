@@ -9,7 +9,7 @@ const sqlPool = mysql.createPool({
     host: 'localhost',
     user: 'root',
     password: '',
-    database: 'lokmesh_db',
+    database: 'lockmesh_db',
     supportBigNumbers: true,
     bigNumberStrings: true,
     dateStrings : true
@@ -52,6 +52,8 @@ sqlPool.getConnection((err, connection) => {
     if (connection) connection.release()
     return
 });
+
+
 
 sqlPool.query = util.promisify(sqlPool.query); // Magic happens here.
 module.exports = sqlPool;
