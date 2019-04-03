@@ -11,7 +11,7 @@
  Target Server Version : 50724
  File Encoding         : 65001
 
- Date: 02/04/2019 16:13:26
+ Date: 03/04/2019 18:37:46
 */
 
 SET NAMES utf8mb4;
@@ -158,7 +158,46 @@ CREATE TABLE `apps_info`  (
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `unique_name_constraints`(`unique_name`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 141 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of apps_info
+-- ----------------------------
+INSERT INTO `apps_info` VALUES (1, 'com.android.contactsContacts', 'Contacts', 'com.android.contacts', 'icon_Contacts.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (2, 'com.android.chromeChrome', 'Chrome', 'com.android.chrome', 'icon_Chrome.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (3, 'com.android.deskclockClock', 'Clock', 'com.android.deskclock', 'icon_Clock.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (4, 'com.android.dialerPhone', 'Phone', 'com.android.dialer', 'icon_Phone.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (5, 'com.google.android.apps.messagingMessages', 'Messages', 'com.google.android.apps.messaging', 'icon_Messages.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (6, 'com.google.android.apps.photosPhotos', 'Photos', 'com.google.android.apps.photos', 'icon_Photos.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (7, 'com.google.android.apps.tachyonDuo', 'Duo', 'com.google.android.apps.tachyon', 'icon_Duo.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (8, 'com.google.android.calendarCalendar', 'Calendar', 'com.google.android.calendar', 'icon_Calendar.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (9, 'com.android.soundrecorderSound Recorder', 'Sound Recorder', 'com.android.soundrecorder', 'icon_Sound Recorder.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (10, 'com.android.musicMusic', 'Music', 'com.android.music', 'icon_Music.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (11, 'com.google.android.gmGmail', 'Gmail', 'com.google.android.gm', 'icon_Gmail.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (12, 'com.google.android.musicPlay Music', 'Play Music', 'com.google.android.music', 'icon_Play Music.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (13, 'com.google.android.youtubeYouTube', 'YouTube', 'com.google.android.youtube', 'icon_YouTube.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (14, 'com.mediatek.cameraCamera', 'Camera', 'com.mediatek.camera', 'icon_Camera.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (15, 'com.android.wifiappWifiApp', 'WifiApp', 'com.android.wifiapp', 'icon_WifiApp.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (16, 'com.adups.fotaWireless Update', 'Wireless Update', 'com.adups.fota', 'icon_Wireless Update.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (17, 'com.android.calculator2Calculator', 'Calculator', 'com.android.calculator2', 'icon_Calculator.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (18, 'com.android.vendingPlay Store', 'Play Store', 'com.android.vending', 'icon_Play Store.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (19, 'com.android.settingsSettings', 'Settings', 'com.android.settings', 'icon_Settings.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (20, 'com.android.fmradioFM Radio', 'FM Radio', 'com.android.fmradio', 'icon_FM Radio.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (21, 'com.android.qr_codescanQRCode Scan', 'QRCode Scan', 'com.android.qr_codescan', 'icon_QRCode Scan.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (22, 'com.android.stkSIM Toolkit', 'SIM Toolkit', 'com.android.stk', 'icon_SIM Toolkit.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (23, 'com.android.systemmanagerSystem Manager', 'System Manager', 'com.android.systemmanager', 'icon_System Manager.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (24, 'com.google.android.apps.nbu.filesFiles', 'Files', 'com.google.android.apps.nbu.files', 'icon_Files.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (25, 'com.google.android.googlequicksearchboxGoogle', 'Google', 'com.google.android.googlequicksearchbox', 'icon_Google.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (26, 'com.google.android.apps.docsDrive', 'Drive', 'com.google.android.apps.docs', 'icon_Drive.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (27, 'com.google.android.apps.mapsMaps', 'Maps', 'com.google.android.apps.maps', 'icon_Maps.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (28, 'com.mediatek.emcameraEmCamera', 'EmCamera', 'com.mediatek.emcamera', 'icon_EmCamera.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (29, 'com.mediatek.mtkloggerMTKLogger', 'MTKLogger', 'com.mediatek.mtklogger', 'icon_MTKLogger.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (30, 'com.android.myapplicationMy Application', 'My Application', 'com.android.myapplication', 'icon_My Application.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (31, 'com.android.myapplication8My Application8', 'My Application8', 'com.android.myapplication8', 'icon_My Application8.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (32, 'com.example.whatsappmarketingWhatsapp Marketing', 'Whatsapp Marketing', 'com.example.whatsappmarketing', 'icon_Whatsapp Marketing.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (33, 'com.sunnatMy Application', 'My Application', 'com.sunnat', 'icon_My Application.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (34, 'com.sunztech.vpnSunzTech Vpn', 'SunzTech Vpn', 'com.sunztech.vpn', 'icon_SunzTech Vpn.png', '2019-04-03 17:59:42', NULL);
+INSERT INTO `apps_info` VALUES (35, 'com.vortexlocker.appScreen Locker', 'Screen Locker', 'com.vortexlocker.app', 'icon_Screen Locker.png', '2019-04-03 17:59:42', NULL);
 
 -- ----------------------------
 -- Table structure for chat_ids
@@ -193,7 +232,15 @@ CREATE TABLE `dealer_dropdown_list`  (
   INDEX `dealer_id`(`dealer_id`) USING BTREE,
   INDEX `id_2`(`id`) USING BTREE,
   CONSTRAINT `dealer_dropdown_list_ibfk_1` FOREIGN KEY (`dealer_id`) REFERENCES `dealers` (`dealer_id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 85 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 89 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of dealer_dropdown_list
+-- ----------------------------
+INSERT INTO `dealer_dropdown_list` VALUES (85, 154, '[\"ACTIONS\"]', 'apk', '2019-04-02 16:14:22', '2019-04-02 16:14:22');
+INSERT INTO `dealer_dropdown_list` VALUES (86, 154, '[\"DEVICE ID\",\"STATUS\",\"DEVICE NAME\",\"ACCOUNT EMAIL\",\"ACTIVATION CODE\",\"PGP EMAIL\",\"CHAT ID\",\"CLIENT ID\",\"DEALER ID\",\"DEALER PIN\",\"MAC ADDRESS\",\"SIM ID\",\"IMEI 1\",\"SIM 1\",\"IMEI 2\",\"SIM 2\",\"SERIAL NUMBER\",\"MODEL\",\"START DATE\",\"EXPIRY DATE\",\"DEALER NAME\",\"ONLINE\",\"S-DEALER\",\"S-DEALER NAME\"]', 'devices', '2019-04-02 16:18:12', '2019-04-03 18:36:18');
+INSERT INTO `dealer_dropdown_list` VALUES (87, 154, '[\"DEALER ID\",\"DEALER NAME\",\"DEALER EMAIL\",\"DEALER PIN\",\"CONNECTED DEVICES\",\"TOKENS\"]', 'dealer', '2019-04-03 15:23:12', '2019-04-03 18:33:42');
+INSERT INTO `dealer_dropdown_list` VALUES (88, 154, '[\"ACTIONS\"]', 'sdealer', '2019-04-03 15:23:15', '2019-04-03 18:33:39');
 
 -- ----------------------------
 -- Table structure for dealer_pagination
@@ -209,7 +256,13 @@ CREATE TABLE `dealer_pagination`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `dealer_id`(`dealer_id`) USING BTREE,
   CONSTRAINT `dealer_pagination_ibfk_1` FOREIGN KEY (`dealer_id`) REFERENCES `dealers` (`dealer_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of dealer_pagination
+-- ----------------------------
+INSERT INTO `dealer_pagination` VALUES (4, 154, 10, 'devices', '2019-04-02 16:18:12', '2019-04-02 16:18:12');
+INSERT INTO `dealer_pagination` VALUES (5, 154, 10, 'dealer', '2019-04-03 15:23:13', '2019-04-03 15:23:13');
 
 -- ----------------------------
 -- Table structure for dealers
@@ -235,12 +288,13 @@ CREATE TABLE `dealers`  (
   INDEX `type`(`type`) USING BTREE,
   INDEX `connected_dealer`(`connected_dealer`) USING BTREE,
   CONSTRAINT `dealers_ibfk_1` FOREIGN KEY (`type`) REFERENCES `user_roles` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 222 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 223 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of dealers
 -- ----------------------------
 INSERT INTO `dealers` VALUES (154, 'Neha', 'Kashyap', 0, 'admin', 'admin@gmail.com', 'e6e061838856bf47e1de730719fb2609', '', 1, 0, NULL, '2019-02-08 09:50:04', '2019-02-08 09:50:04');
+INSERT INTO `dealers` VALUES (222, NULL, NULL, 0, 'usman hafeez', 'usmanhafeez147@gmail.com', '56b49b0545d3692fa55363d5d59e3635', '433523', 2, 0, NULL, '2019-04-03 15:23:26', '2019-04-03 15:23:26');
 
 -- ----------------------------
 -- Table structure for default_apps
@@ -302,7 +356,12 @@ CREATE TABLE `devices`  (
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `device_id`(`device_id`) USING BTREE,
   UNIQUE INDEX `unique_mac_address`(`mac_address`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 626 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 636 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of devices
+-- ----------------------------
+INSERT INTO `devices` VALUES (635, 'QBEP609949', NULL, NULL, NULL, '192.168.18.160', NULL, '354444076298332', NULL, '354444076298340', 'VSP1001901S00431', '00:27:15:2E:8E:BD', NULL, 'off', 1, NULL, '2019-04-03 17:01:26', '2019-04-03 18:26:17');
 
 -- ----------------------------
 -- Table structure for pgp_emails
@@ -451,7 +510,46 @@ CREATE TABLE `user_apps`  (
   INDEX `app_id`(`app_id`) USING BTREE,
   CONSTRAINT `user_apps_ibfk_1` FOREIGN KEY (`app_id`) REFERENCES `apps_info` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `user_apps_ibfk_2` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 36 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of user_apps
+-- ----------------------------
+INSERT INTO `user_apps` VALUES (1, 635, 3, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (2, 635, 5, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (3, 635, 4, 1, 0, 1, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (4, 635, 1, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (5, 635, 2, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (6, 635, 8, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (7, 635, 6, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (8, 635, 7, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (9, 635, 9, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (10, 635, 10, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (11, 635, 11, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (12, 635, 14, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (13, 635, 13, 1, 0, 1, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (14, 635, 12, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (15, 635, 17, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (16, 635, 15, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (17, 635, 21, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (18, 635, 22, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (19, 635, 19, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (20, 635, 20, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (21, 635, 16, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (22, 635, 24, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (23, 635, 18, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (24, 635, 23, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (25, 635, 31, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (26, 635, 30, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (27, 635, 32, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (28, 635, 26, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (29, 635, 25, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (30, 635, 28, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (31, 635, 29, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (32, 635, 33, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (33, 635, 27, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (34, 635, 34, 1, 0, 0, '2019-04-03 17:59:42', NULL);
+INSERT INTO `user_apps` VALUES (35, 635, 35, 0, 1, 1, '2019-04-03 17:59:42', NULL);
 
 -- ----------------------------
 -- Table structure for user_roles
@@ -503,9 +601,13 @@ CREATE TABLE `usr_acc`  (
   INDEX `dealer_id`(`dealer_id`) USING BTREE,
   INDEX `prnt_dealer_id`(`prnt_dlr_id`) USING BTREE,
   CONSTRAINT `usr_acc_ibfk_1` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `usr_acc_ibfk_2` FOREIGN KEY (`dealer_id`) REFERENCES `dealers` (`dealer_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `usr_acc_ibfk_3` FOREIGN KEY (`prnt_dlr_id`) REFERENCES `dealers` (`dealer_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
+  CONSTRAINT `usr_acc_ibfk_2` FOREIGN KEY (`dealer_id`) REFERENCES `dealers` (`dealer_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- Records of usr_acc
+-- ----------------------------
+INSERT INTO `usr_acc` VALUES (9, 635, NULL, NULL, 222, 0, '433523', NULL, NULL, NULL, NULL, NULL, '', 0, NULL, '', 0, 0, NULL, NULL, '2019-04-03 17:01:26', '2019-04-03 17:10:45');
 
 -- ----------------------------
 -- Table structure for usr_acc_profile
