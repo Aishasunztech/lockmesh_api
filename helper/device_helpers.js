@@ -71,7 +71,7 @@ module.exports = {
             // console.log(settings);
             var updateQuery = "REPLACE into tbl_device_settings (device_id, settings) value ('" + device_id + "', '" + settings + "')";
             await sql.query(updateQuery, async function (error, row) {
-                if (error) throw(error);
+                if (error) throw (error);
 
                 // console.log("check setting update:");
                 // console.log(updateQuery);
@@ -100,7 +100,7 @@ module.exports = {
         }
     },
     insertOrUpdateApps: async function (appId, deviceId, guest, encrypted, enable) {
-        
+
         try {
             var updateQuery = "update user_apps set guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + " where device_id=" + deviceId + " and app_id=" + appId + "";
             sql.query(updateQuery, async function (error, row) {
@@ -146,10 +146,10 @@ module.exports = {
             return false;
         }
     },
-    getUsrAccIDbyDvcId: async (dvc_id) =>{
+    getUsrAccIDbyDvcId: async (dvc_id) => {
         var usrAcc = "SELECT id FROM usr_acc WHERE device_id = " + dvc_id;
         let res = await sql.query(usrAcc);
-        if(res.length > 0){
+        if (res.length > 0) {
             return res[0].id;
         } else {
             return false;
@@ -163,10 +163,10 @@ module.exports = {
             var base64Data = Buffer.from(app.icon).toString("base64");
 
             fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
-                if(err) throw(err);
+                if (err) throw (err);
             });
 
-        } else if (typeof app.icon === 'string'){
+        } else if (typeof app.icon === 'string') {
             console.log("icon was in string type");
             // var bytes = app.icon.split(",");
             // var base64Data = Buffer.from(icon).toString("base64");
@@ -174,7 +174,7 @@ module.exports = {
             // fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
             //     console.log(err);
             // });
-        
+
 
         } else {
 
@@ -216,7 +216,6 @@ module.exports = {
         } else {
             status = 'N/A';
         }
-
         return status;
 
     },
@@ -224,7 +223,6 @@ module.exports = {
         let query = "SELECT pgp_email FROM pgp_emails WHERE user_acc_id = '" + result.id + "'"
         let results = await sql.query(query);
         if (results.length) {
-            console.log(results[0].pgp_email);
             return results[0].pgp_email
         }
         else {
@@ -232,14 +230,11 @@ module.exports = {
         }
     },
     getSimids: async (result) => {
-        let query = "SELECT sim_id FROM sim_ids WHERE device_id = '" + result.usr_device_id + "'"
+        let query = "SELECT sim_id FROM sim_ids WHERE user_acc_id = '" + result.id + "'"
         let results = await sql.query(query);
         if (results.length) {
-
-            console.log(results[0].sim_id);
             return results[0].sim_id
         } else {
-
             return 'N/A'
         }
     },
@@ -247,11 +242,8 @@ module.exports = {
         let query = "SELECT chat_id FROM chat_ids WHERE user_acc_id = '" + result.id + "'"
         let results = await sql.query(query);
         if (results.length) {
-
-            console.log(results[0].chat_id);
             return results[0].chat_id
         } else {
-
             return 'N/A'
         }
     },

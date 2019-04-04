@@ -1,17 +1,17 @@
 /*
  Navicat Premium Data Transfer
 
- Source Server         : localhost
+ Source Server         : New Connection
  Source Server Type    : MySQL
- Source Server Version : 50724
+ Source Server Version : 100138
  Source Host           : localhost:3306
  Source Schema         : lockmesh_db
 
  Target Server Type    : MySQL
- Target Server Version : 50724
+ Target Server Version : 100138
  File Encoding         : 65001
 
- Date: 04/04/2019 11:14:46
+ Date: 04/04/2019 10:26:40
 */
 
 SET NAMES utf8mb4;
@@ -133,7 +133,7 @@ CREATE TABLE `apk_details`  (
   `package_name` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
   `status` enum('Off','On') CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL DEFAULT 'Off',
   `created` datetime(0) NULL DEFAULT NULL,
-  `modified` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
+  `modified` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0),
   `delete_status` tinyint(4) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `id`(`id`) USING BTREE
@@ -154,11 +154,11 @@ CREATE TABLE `apps_info`  (
   `label` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `package_name` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `icon` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
-  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `unique_name_constraints`(`unique_name`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 141 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 36 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Records of apps_info
@@ -208,13 +208,13 @@ CREATE TABLE `chat_ids`  (
   `user_acc_id` int(11) NULL DEFAULT NULL,
   `chat_id` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `used` tinyint(4) NOT NULL DEFAULT 0,
-  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
+  `updated_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `chat_id_unique`(`chat_id`) USING BTREE,
   INDEX `user_acc_id`(`user_acc_id`) USING BTREE,
-  CONSTRAINT `chat_ids_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+  CONSTRAINT `chat_ids_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for dealer_dropdown_list
@@ -225,14 +225,14 @@ CREATE TABLE `dealer_dropdown_list`  (
   `dealer_id` int(11) NOT NULL,
   `selected_items` mediumtext CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
   `type` enum('devices','dealer','sdealer','apk') CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL DEFAULT 'devices',
-  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
+  `updated_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `id`(`id`) USING BTREE,
   INDEX `dealer_id`(`dealer_id`) USING BTREE,
   INDEX `id_2`(`id`) USING BTREE,
   CONSTRAINT `dealer_dropdown_list_ibfk_1` FOREIGN KEY (`dealer_id`) REFERENCES `dealers` (`dealer_id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 89 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
+) ENGINE = InnoDB AUTO_INCREMENT = 91 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
 
 -- ----------------------------
 -- Records of dealer_dropdown_list
@@ -241,6 +241,8 @@ INSERT INTO `dealer_dropdown_list` VALUES (85, 154, '[\"ACTIONS\"]', 'apk', '201
 INSERT INTO `dealer_dropdown_list` VALUES (86, 154, '[\"DEVICE ID\",\"STATUS\",\"DEVICE NAME\",\"ACCOUNT EMAIL\",\"ACTIVATION CODE\",\"PGP EMAIL\",\"CHAT ID\",\"CLIENT ID\",\"DEALER ID\",\"DEALER PIN\",\"MAC ADDRESS\",\"SIM ID\",\"IMEI 1\",\"SIM 1\",\"IMEI 2\",\"SIM 2\",\"SERIAL NUMBER\",\"MODEL\",\"START DATE\",\"EXPIRY DATE\",\"DEALER NAME\",\"ONLINE\",\"S-DEALER\",\"S-DEALER NAME\"]', 'devices', '2019-04-02 16:18:12', '2019-04-03 18:36:18');
 INSERT INTO `dealer_dropdown_list` VALUES (87, 154, '[\"DEALER ID\",\"DEALER NAME\",\"DEALER EMAIL\",\"DEALER PIN\",\"CONNECTED DEVICES\",\"TOKENS\"]', 'dealer', '2019-04-03 15:23:12', '2019-04-03 18:33:42');
 INSERT INTO `dealer_dropdown_list` VALUES (88, 154, '[\"ACTIONS\"]', 'sdealer', '2019-04-03 15:23:15', '2019-04-03 18:33:39');
+INSERT INTO `dealer_dropdown_list` VALUES (89, 154, '[\"DEALER ID\",\"DEALER NAME\",\"DEALER EMAIL\",\"DEALER PIN\",\"CONNECTED DEVICES\",\"TOKENS\"]', '', '2019-04-04 09:47:22', '2019-04-04 09:48:00');
+INSERT INTO `dealer_dropdown_list` VALUES (90, 223, '[\"ACTIONS\"]', 'devices', '2019-04-04 09:49:21', '2019-04-04 09:49:21');
 
 -- ----------------------------
 -- Table structure for dealer_pagination
@@ -251,18 +253,19 @@ CREATE TABLE `dealer_pagination`  (
   `dealer_id` int(10) NOT NULL,
   `record_per_page` int(10) NOT NULL,
   `type` enum('devices','dealer','sdealer','apk') CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL DEFAULT 'devices',
-  `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
+  `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+  `updated_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `dealer_id`(`dealer_id`) USING BTREE,
   CONSTRAINT `dealer_pagination_ibfk_1` FOREIGN KEY (`dealer_id`) REFERENCES `dealers` (`dealer_id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 7 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of dealer_pagination
 -- ----------------------------
 INSERT INTO `dealer_pagination` VALUES (4, 154, 10, 'devices', '2019-04-02 16:18:12', '2019-04-02 16:18:12');
 INSERT INTO `dealer_pagination` VALUES (5, 154, 10, 'dealer', '2019-04-03 15:23:13', '2019-04-03 15:23:13');
+INSERT INTO `dealer_pagination` VALUES (6, 223, 10, 'devices', '2019-04-04 09:49:21', '2019-04-04 09:49:21');
 
 -- ----------------------------
 -- Table structure for dealers
@@ -288,13 +291,14 @@ CREATE TABLE `dealers`  (
   INDEX `type`(`type`) USING BTREE,
   INDEX `connected_dealer`(`connected_dealer`) USING BTREE,
   CONSTRAINT `dealers_ibfk_1` FOREIGN KEY (`type`) REFERENCES `user_roles` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 223 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 224 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of dealers
 -- ----------------------------
 INSERT INTO `dealers` VALUES (154, 'Neha', 'Kashyap', 0, 'admin', 'admin@gmail.com', 'e6e061838856bf47e1de730719fb2609', '', 1, 0, NULL, '2019-02-08 09:50:04', '2019-02-08 09:50:04');
 INSERT INTO `dealers` VALUES (222, NULL, NULL, 0, 'usman hafeez', 'usmanhafeez147@gmail.com', '56b49b0545d3692fa55363d5d59e3635', '433523', 2, 0, NULL, '2019-04-03 15:23:26', '2019-04-03 15:23:26');
+INSERT INTO `dealers` VALUES (223, NULL, NULL, 0, 'Hamza Dawood', 'hamza.dawood007@gmail.com', 'c2106f81187713fb2dac9f4c98d44b9c', '630886', 2, 0, NULL, '2019-04-04 09:48:00', '2019-04-04 09:48:00');
 
 -- ----------------------------
 -- Table structure for default_apps
@@ -306,7 +310,7 @@ CREATE TABLE `default_apps`  (
   `label` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `package_name` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `icon` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
-  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `unique_name_constraints`(`unique_name`) USING BTREE
@@ -323,7 +327,7 @@ CREATE TABLE `device_history`  (
   `setting` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
   `controls` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
   `status` tinyint(4) NOT NULL DEFAULT 0,
-  `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `user_acc_id`(`user_acc_id`) USING BTREE,
@@ -347,12 +351,12 @@ CREATE TABLE `devices`  (
   `imei2` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `serial_number` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `mac_address` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `reject_status` int(11) NULL DEFAULT 0,
   `fcm_token` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `online` enum('On','off') CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL DEFAULT 'off',
   `is_sync` tinyint(4) NOT NULL DEFAULT 0,
   `screen_start_date` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
-  `reject_status` tinyint(4) NOT NULL DEFAULT 0,
-  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `device_id`(`device_id`) USING BTREE,
@@ -362,7 +366,7 @@ CREATE TABLE `devices`  (
 -- ----------------------------
 -- Records of devices
 -- ----------------------------
-INSERT INTO `devices` VALUES (635, 'QBEP609949', 'usman hafeez', NULL, 'huawie', '192.168.18.160', NULL, '354444076298332', NULL, '354444076298340', 'VSP1001901S00431', '00:27:15:2E:8E:BD', NULL, 'off', 1, NULL, 0, '2019-04-03 17:01:26', '2019-04-03 18:41:11');
+INSERT INTO `devices` VALUES (635, 'QBEP609949', NULL, NULL, NULL, '192.168.18.160', NULL, '354444076298332', NULL, '354444076298340', 'VSP1001901S00431', '00:27:15:2E:8E:BD', 0, NULL, 'off', 1, NULL, '2019-04-03 17:01:26', '2019-04-03 18:26:17');
 
 -- ----------------------------
 -- Table structure for pgp_emails
@@ -373,78 +377,18 @@ CREATE TABLE `pgp_emails`  (
   `user_acc_id` int(11) NULL DEFAULT NULL,
   `pgp_email` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `used` tinyint(4) NOT NULL DEFAULT 0,
-  `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
+  `created_at` timestamp(0) NULL DEFAULT NULL,
+  `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `unique_pgp_emails`(`pgp_email`) USING BTREE,
   INDEX `user_acc_id`(`user_acc_id`) USING BTREE,
-  CONSTRAINT `pgp_emails_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE = InnoDB AUTO_INCREMENT = 124 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+  CONSTRAINT `pgp_emails_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of pgp_emails
 -- ----------------------------
-INSERT INTO `pgp_emails` VALUES (63, NULL, '955MNH@TITANSECURE.BIZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (64, NULL, '358GTR@TITANSECURE.BIZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (65, NULL, '599NGT@TITANSECURE.BIZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (66, NULL, '791BFT@TITANSECURE.BIZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (67, NULL, '5438DNE@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (68, NULL, '2675DKN@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (69, NULL, '1619DKV@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (70, NULL, '3754ZUB@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (71, NULL, '4338GQG@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (72, NULL, '5147DXT@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (73, NULL, '349VFT@TITANSECURE.BIZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (74, NULL, '3669NBQ@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (75, NULL, '8244SRE@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (76, NULL, '5412JJN@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (77, NULL, '4134PTE@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (78, NULL, '2954PAJ@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (79, NULL, '6845YAY@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (80, NULL, '7992PFY@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (81, NULL, '4967GCM@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (82, NULL, '5373SAJ@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (83, NULL, '1233NPX@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (84, NULL, '7921MKT@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (85, NULL, '2188PBW@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (86, NULL, '2535MPM@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (87, NULL, '4254PMS@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (88, NULL, '4511AXM@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (89, NULL, '4437CZC@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (90, NULL, '8729YAM@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (91, NULL, '7497CXZ@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (92, NULL, '5464NJF@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (93, NULL, '6362MBN@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (94, NULL, '5752CXB@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (95, NULL, '9498NBS@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (96, NULL, '3789NZU@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (97, NULL, '9643NZE@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (98, NULL, '9347SKJ@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (99, NULL, '8837ZRE@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (100, NULL, '7245BCB@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (101, NULL, '9279GBS@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (102, NULL, '1747BBV@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (103, NULL, '4288DXZ@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (104, NULL, '2474VJS@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (105, NULL, '1976JSN@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (106, NULL, '1879TWV@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (107, NULL, '2458VZC@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (108, NULL, '1842WKX@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (109, NULL, '5225CHG@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (110, NULL, '4337VZF@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (111, NULL, '5734TXZ@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (112, NULL, '4763XEK@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (113, NULL, '2196GNW@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (114, NULL, '8931APD@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (115, NULL, '8478YXA@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (116, NULL, '9437TPJ@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (117, NULL, '4347HVE@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (118, NULL, '5945VEC@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (119, NULL, '2583AUF@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (120, NULL, '7574XDR@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (121, NULL, '8497KRA@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (122, NULL, '6497NVE@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
-INSERT INTO `pgp_emails` VALUES (123, NULL, '3371GCF@ARMORSEC.XYZ', 0, '2019-04-04 11:12:02', '2019-04-04 11:12:02');
+INSERT INTO `pgp_emails` VALUES (1, NULL, 'testing@gmail.com', 0, '2019-04-04 09:50:13', '2019-04-04 09:50:15');
 
 -- ----------------------------
 -- Table structure for policy
@@ -459,7 +403,7 @@ CREATE TABLE `policy`  (
   `controls` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
   `delete_status` tinyint(4) NOT NULL DEFAULT 0,
   `passwords` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
-  `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
@@ -487,13 +431,13 @@ CREATE TABLE `sim_ids`  (
   `used` tinyint(4) NOT NULL DEFAULT 0,
   `start_date` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `expiry_date` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
-  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `sim_id_UNIQUE`(`sim_id`) USING BTREE,
   INDEX `device_id`(`user_acc_id`) USING BTREE,
-  CONSTRAINT `sim_ids_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc_profile` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+  CONSTRAINT `sim_ids_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for tbl_device_settings
@@ -503,7 +447,7 @@ CREATE TABLE `tbl_device_settings`  (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `device_id` varchar(10) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `settings` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
-  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `device_setting_id`(`device_id`) USING BTREE
@@ -551,7 +495,7 @@ CREATE TABLE `transferred_profiles`  (
   `start_date` varchar(16) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `expiry_months` int(100) NULL DEFAULT NULL,
   `expiry_date` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
-  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = MyISAM AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
@@ -567,7 +511,7 @@ CREATE TABLE `user_apps`  (
   `guest` tinyint(4) NOT NULL DEFAULT 0,
   `encrypted` tinyint(4) NOT NULL DEFAULT 0,
   `enable` tinyint(4) NOT NULL DEFAULT 0,
-  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `primary_key`(`id`) USING BTREE,
@@ -652,7 +596,7 @@ CREATE TABLE `usr_acc`  (
   `expiry_months` int(100) NULL DEFAULT NULL,
   `expiry_date` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `activation_code` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
-  `status` enum('expired','active','') CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL DEFAULT '',
+  `status` enum('expired','active','') CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL DEFAULT 'active',
   `device_status` tinyint(4) NOT NULL DEFAULT 0,
   `activation_status` tinyint(4) NULL DEFAULT NULL,
   `account_status` enum('suspended','') CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT '',
@@ -660,7 +604,7 @@ CREATE TABLE `usr_acc`  (
   `transfer_status` tinyint(4) UNSIGNED NULL DEFAULT 0,
   `dealer_name` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `prnt_dlr_name` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
-  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `device_id`(`device_id`) USING BTREE,
@@ -673,7 +617,7 @@ CREATE TABLE `usr_acc`  (
 -- ----------------------------
 -- Records of usr_acc
 -- ----------------------------
-INSERT INTO `usr_acc` VALUES (9, 635, NULL, 'usman@gmail.com', 222, 0, '433523', NULL, '2019/04/03', NULL, '2020/04/03', NULL, 'active', 1, NULL, '', 0, 0, NULL, NULL, '2019-04-03 17:01:26', '2019-04-03 18:41:11');
+INSERT INTO `usr_acc` VALUES (9, 635, NULL, NULL, 222, 0, '433523', NULL, NULL, NULL, NULL, NULL, '', 0, NULL, '', 0, 0, NULL, NULL, '2019-04-03 17:01:26', '2019-04-03 17:10:45');
 
 -- ----------------------------
 -- Table structure for usr_acc_profile
@@ -691,9 +635,15 @@ CREATE TABLE `usr_acc_profile`  (
   `passwords` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
   `type` enum('policy','profile','history') CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL DEFAULT 'history',
   `status` tinyint(4) NOT NULL DEFAULT 0,
-  `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
+
+-- ----------------------------
+-- View structure for userstat
+-- ----------------------------
+DROP VIEW IF EXISTS `userstat`;
+CREATE ALGORITHM = UNDEFINED SQL SECURITY DEFINER VIEW `userstat` AS select `devices`.`id` AS `device_id`,`usr_acc`.`id` AS `acc_id`,`dealers`.`dealer_name` AS `dealer_name`,`pgp_emails`.`pgp_email` AS `pgp_email`,`chat_ids`.`chat_id` AS `chat_id`,`sim_ids`.`sim_id` AS `sim_id` from (((((`devices` join `usr_acc` on((`devices`.`id` = `usr_acc`.`device_id`))) join `dealers` on((`dealers`.`dealer_id` = `usr_acc`.`dealer_id`))) left join `pgp_emails` on((`pgp_emails`.`user_acc_id` = `usr_acc`.`id`))) left join `chat_ids` on((`chat_ids`.`user_acc_id` = `usr_acc`.`id`))) left join `sim_ids` on((`sim_ids`.`device_id` = `usr_acc`.`device_id`))) where (`usr_acc`.`transfer_status` = 0); ;
 
 SET FOREIGN_KEY_CHECKS = 1;
