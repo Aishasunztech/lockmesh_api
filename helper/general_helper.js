@@ -3,7 +3,9 @@ var router = express.Router();
 const sql = require('../helper/sql.js');
 var datetime = require('node-datetime');
 // var moment = require('moment');
+// import ADMIN from "../constants/Application";
 var moment = require('moment-strftime');
+var Constants = require('../constants/Application');
 module.exports = {
 	isAdmin: async function (userId) {
 		var query1 = "SELECT type FROM dealers where dealer_id =" + userId;
@@ -280,11 +282,11 @@ module.exports = {
 	},
 	getDealerStatus: (dealer) => {
 		if ((dealer.account_status === '' || dealer.account_status === null) && (dealer.unlink_status === 0)) {
-            return 'active';
+            return Constants.DEALER_ACTIVE;
         } else if (dealer.unlink_status === 1) {
-            return "unlinked";
+            return Constants.DEALER_UNLINKED;
         } else if (dealer.account_status === 'suspended') {
-            return 'suspended';
+            return Constants.DEALER_SUSPENDED;
         } else {
             return 'N/A';
         }

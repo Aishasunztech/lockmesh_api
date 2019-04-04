@@ -4,7 +4,10 @@ const sql = require('../helper/sql.js');
 // var upload = multer({ dest: 'uploads/' });
 var fs = require("fs");
 var path = require('path');
-let usr_acc_query_text = "usr_acc.id,usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name";
+
+// let usr_acc_query_text = "usr_acc.id,usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name";
+
+var Constants = require('../constants/Application');
 
 module.exports = {
     onlineOflineDevice: async function (deviceId = null, sessionId, status) {
@@ -231,19 +234,22 @@ module.exports = {
         let status = "";
 
         if (device.status === 'active' && (device.account_status === '' || device.account_status === null) && device.unlink_status === 0 && (device.device_status === 1 || device.device_status === '1')) {
-            status = 'Activated'
+            status = Constants.DEVICE_ACTIVATED
         }
         else if (device.status === 'expired') {
-            status = 'Expired';
+            // status = 'Expired';
+            status = Constants.DEVICE_EXPIRED;
         } else if ((device.device_status === '0' || device.device_status === 0) && (device.unlink_status === '0' || device.unlink_status === 0) && (device.activation_status === null || device.activation_status === '')) {
-            status = 'Pending activation';
+            // status = 'Pending activation';
+            status = Constants.DEVICE_PENDING_ACTIVATION;
         } else if ((device.device_status === '0' || device.device_status === 0) && (device.unlink_status === '0' || device.unlink_status === 0) && (device.activation_status === 0)) {
-            status = 'Pre-activated';
+            status = Constants.DEVICE_PRE_ACTIVATION;
         } else if ((device.unlink_status === '1' || device.unlink_status === 1) && (device.device_status === 0 || device.device_status === '0')) {
-            // console.log("hello unlinked");
-            status = 'Unlinked';
+            // status = 'Unlinked';
+            status = Constants.DEVICE_UNLINKED;
         } else if (device.account_status === 'suspended') {
-            status = 'Suspended';
+            // status = 'Suspended';
+            status = Constants.DEVICE_SUSPENDED;
         } else {
             status = 'N/A';
         }
