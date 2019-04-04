@@ -177,7 +177,7 @@ router.post('/login', async function (req, resp) {
                     
                     await sql.query(updateDevice);
                     await sql.query(updateAccount);
-                    let device_id = device_helpers.getDvcIDByDeviceID(usrAcc[0].device_id)
+                    let device_id = await device_helpers.getDvcIDByDeviceID(usrAcc[0].device_id)
                     const device = {
                         'dId': dealer[0].dealer_id,
                         'dealer_pin': dealer[0].link_code,
@@ -221,7 +221,7 @@ router.post('/login', async function (req, resp) {
             }
             resp.send(data);
         } else {
-            let usr_acc = device_helpers.getUserAccByDvcId(device[0].id);
+            let usr_acc = await device_helpers.getUserAccByDvcId(device[0].id);
             let deviceStatus = device_helpers.checkStatus(usr_acc);
 
             if (deviceStatus == "Unlinked") {
@@ -471,23 +471,24 @@ router.post('/getstatus', async function (req, resp) {
         // res
         //console.log(res[0].device_status);
         if (device.length > 0) {
-            let userAcc = await sql.query("SELECT * FROM usr_acc WHERE device_id="+ device[0].id);
+            // let userAcc = await sql.query("SELECT * FROM usr_acc WHERE device_id="+ device[0].id);
+            let userAcc = await device_helpers.getUserAccByDvcId(device[0].id);
             if(userAcc.length){
                 let deviceStatus = device_helpers.checkStatus(userAcc[0]);
                 if(deviceStatus === "Unlinked"){
                     data = {
                         "status": -1,
                         "msg": "Device Unlinked.",
-                        "dealer_id": userAcc[0].dealer_id,
+                        "dealer_id": userAcc.dealer_id,
                         "device_id": device[0].device_id
                     };
                     resp.send(data);
                     return;
-                } else if (userAcc[0].expiry_date == null || userAcc[0].expiry_date == '') {
+                } else if (userAcc.expiry_date == null || userAcc.expiry_date == '') {
                     data = {
                         "status": 1,
                         "msg": "Device activated.",
-                        "dealer_id": userAcc[0].dealer_id,
+                        "dealer_id": userAcc.dealer_id,
                         "expiry_date": '',
                         "device_id": device[0].device_id,
                         // "chat_id": userAcc[0].chat_id,
@@ -499,9 +500,9 @@ router.post('/getstatus', async function (req, resp) {
                     data = {
                         "status": 1,
                         "msg": "Device activated.",
-                        "dealer_id": res[0].dealer_id,
-                        "expiry_date": res[0].expiry_date,
-                        "device_id": res[0].device_id,
+                        "dealer_id": userAcc.dealer_id,
+                        "expiry_date": usrAcc.expiry_date,
+                        "device_id": device[0].device_id,
                         // "chat_id": res[0].chat_id,
                         // "pgp_email": res[0].pgp_email,
                         // "sim_id": res[0].sim_id
