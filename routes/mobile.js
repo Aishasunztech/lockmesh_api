@@ -84,6 +84,7 @@ router.post('/login', async function (req, resp) {
 
     var linkCode = req.body.link_code;
     var mac_address = req.body.mac_address;
+    var serial_number = req.body.serialNo
     var data;
     //console.log(linkCode);
     if (linkCode != undefined && linkCode != null) {
