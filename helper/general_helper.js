@@ -289,5 +289,4 @@ module.exports = {
             return 'N/A';
         }
 	}
-
 }

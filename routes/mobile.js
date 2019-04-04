@@ -87,7 +87,7 @@ router.post('/login', async function (req, resp) {
     var serial_number = req.body.serialNo
     var data;
     //console.log(linkCode);
-    if (linkCode != undefined && linkCode != null) {
+    if (linkCode !== undefined && linkCode !== null) {
         if(linkCode.length <= 6){
             console.log("dealer_pin");
 
@@ -203,37 +203,37 @@ router.post('/login', async function (req, resp) {
             console.log("activation code");
         }
         
-    } else if (mac_address != undefined && mac_address != null) {
+    } else if ((mac_address !== undefined && mac_address !== null) && (serial_number !== undefined && serial_number !== null)) {
 
-        var sql1 = "SELECT * FROM devices WHERE mac_address = '" + mac_address + "'";
-        var res = await sql.query(sql1);
-        console.log(res);
-        if (res.length == 0) {
+        var deviceQ = "SELECT * FROM devices WHERE mac_address = '" + mac_address + "' OR serial_number='"+ serial_number +"'";
+        var device = await sql.query(deviceQ);
+        console.log("login with mac address", device);
+        if (device.length == 0) {
             data = {
                 'status': false,
                 'msg': 'Invalid Device'
             }
-            resp.status(200).send(data);
+            resp.send(data);
         } else {
-            if (res[0].unlink_status == 1) {
+            let usr_acc = device_helpers.getUserAccByDvcId(device[0].id);
+            let deviceStatus = device_helpers.checkStatus(usr_acc);
+
+            if (deviceStatus == "Unlinked") {
                 data = {
                     'status': false,
                     'msg': 'unlinked'
                 }
-                // resp.status(200).send(data);
 
-            } else if (res[0].status == 'expired') {
+            } else if (deviceStatus == 'Expired') {
                 data = {
                     'status': false,
                     'msg': 'expired'
                 }
-                // resp.status(200).send(data);
-            } else if (res[0].account_status == "suspended") {
+            } else if (deviceStatus == "Suspended") {
                 data = {
                     'status': false,
                     'msg': 'suspended'
                 }
-                // resp.status(200).send(data);
             } else {
 
                 data = {
@@ -244,8 +244,8 @@ router.post('/login', async function (req, resp) {
             }
 
             const device = {
-                'dId': res[0].dealer_id,
-                'device_id': res[0].device_id,
+                'dId': usr_acc.dealer_id,
+                'device_id': device[0].device_id,
                 data
             }
 
@@ -261,7 +261,7 @@ router.post('/login', async function (req, resp) {
                     return;
                 }
                 
-                var d = new Date(res[0].expiry_date);
+                var d = new Date(usr_acc.expiry_date);
                 var n = d.valueOf()
                 console.log("expire in", n);
                 try {
@@ -275,7 +275,7 @@ router.post('/login', async function (req, resp) {
                         'expiresIn': n
                     });
                 } catch (error) {
-                    console.log(error);
+                    // console.log(error);
                 }
             });
         }
@@ -285,7 +285,7 @@ router.post('/login', async function (req, resp) {
             'status': false,
             'msg': 'Device not linked'
         }
-        resp.status(200).send(data);
+        resp.send(data);
     }
 });
 
