@@ -11,7 +11,7 @@
  Target Server Version : 50724
  File Encoding         : 65001
 
- Date: 04/04/2019 11:12:31
+ Date: 04/04/2019 11:14:46
 */
 
 SET NAMES utf8mb4;
@@ -695,11 +695,5 @@ CREATE TABLE `usr_acc_profile`  (
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Compact;
-
--- ----------------------------
--- View structure for userstat
--- ----------------------------
-DROP VIEW IF EXISTS `userstat`;
-CREATE ALGORITHM = UNDEFINED DEFINER = `root`@`localhost` SQL SECURITY DEFINER VIEW `userstat` AS select `devices`.`id` AS `device_id`,`usr_acc`.`id` AS `acc_id`,`dealers`.`dealer_name` AS `dealer_name`,`pgp_emails`.`pgp_email` AS `pgp_email`,`chat_ids`.`chat_id` AS `chat_id`,`sim_ids`.`sim_id` AS `sim_id` from (((((`devices` join `usr_acc` on((`devices`.`id` = `usr_acc`.`device_id`))) join `dealers` on((`dealers`.`dealer_id` = `usr_acc`.`dealer_id`))) left join `pgp_emails` on((`pgp_emails`.`user_acc_id` = `usr_acc`.`id`))) left join `chat_ids` on((`chat_ids`.`user_acc_id` = `usr_acc`.`id`))) left join `sim_ids` on((`sim_ids`.`device_id` = `usr_acc`.`device_id`))) where (`usr_acc`.`transfer_status` = 0);
 
 SET FOREIGN_KEY_CHECKS = 1;
