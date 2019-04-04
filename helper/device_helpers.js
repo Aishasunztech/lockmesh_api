@@ -156,6 +156,27 @@ module.exports = {
             return false;
         }
     },
+	getUserAccByDeviceId: async (deviceId) => {
+        var device = await sql.query("SELECT * FROM devices WHERE device_id='"+ deviceId+"'");
+        if(device.length){
+            var usrAcc = await sql.query("SELECT * FROM usr_acc WHERE device_id =" + device[0].id);
+            if(usrAcc.length){
+                return usrAcc[0];
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    },
+    getUserAccByDvcId: async (dvcId) => {
+        var usrAcc = await sql.query("SELECT * FROM usr_acc WHERE device_id =" + dvcId);
+        if(usrAcc.length){
+            return usrAcc[0];
+        } else {
+            return false;
+        }
+	},
     uploadIconFile: function (app, iconName) {
         // let base64Data = "data:image/png;base64,"+ btoa(icon);
         if (app.icon != undefined && typeof app.icon != 'string') {
