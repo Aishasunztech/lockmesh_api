@@ -216,7 +216,6 @@ module.exports = {
         } else {
             status = 'N/A';
         }
-
         return status;
 
     },
@@ -224,7 +223,6 @@ module.exports = {
         let query = "SELECT pgp_email FROM pgp_emails WHERE user_acc_id = '" + result.id + "'"
         let results = await sql.query(query);
         if (results.length) {
-            console.log(results[0].pgp_email);
             return results[0].pgp_email
         }
         else {
@@ -235,11 +233,8 @@ module.exports = {
         let query = "SELECT sim_id FROM sim_ids WHERE device_id = '" + result.usr_device_id + "'"
         let results = await sql.query(query);
         if (results.length) {
-
-            console.log(results[0].sim_id);
             return results[0].sim_id
         } else {
-
             return 'N/A'
         }
     },
@@ -247,11 +242,8 @@ module.exports = {
         let query = "SELECT chat_id FROM chat_ids WHERE user_acc_id = '" + result.id + "'"
         let results = await sql.query(query);
         if (results.length) {
-
-            console.log(results[0].chat_id);
             return results[0].chat_id
         } else {
-
             return 'N/A'
         }
     },
