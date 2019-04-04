@@ -139,7 +139,6 @@ router.post('/login', async function (req, resp) {
                                 token: token,
                                 'status': true,
                                 'data': device,
-                                'expiresIn': "1539763907"
                             });
                         }
                     });
@@ -202,7 +201,6 @@ router.post('/login', async function (req, resp) {
                                 token: token,
                                 'status': true,
                                 'data': device,
-                                'expiresIn': "1539763907"
                             });
                         }
                     });
