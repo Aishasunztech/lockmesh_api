@@ -1156,19 +1156,23 @@ router.put('/edit/devices', async function (req, res) {
                             // console.log(sql1);
                             sql.query(common_Query, async function (error, row) {
                                 await sql.query(usr_acc_Query);
-                                let updateChatIds = 'update chat_ids set used=1 where chat_id ="' + chat_id + '"';
+                                let updateChatIds = 'update chat_ids set user_acc_id = "' + usr_acc_id + '", used=1 where chat_id ="' + chat_id + '"';
                                 await sql.query(updateChatIds);
-                                let updateSimIds = 'update sim_ids set used=1 where sim_id ="' + sim_id + '"';
+                                let updateSimIds = 'update sim_ids set user_acc_id = "' + usr_acc_id + '",  used=1 where sim_id ="' + sim_id + '"';
                                 await sql.query(updateSimIds)
-                                let updatePgpEmails = 'update pgp_emails set used=1 where pgp_email ="' + pgp_email + '"';
+                                let updatePgpEmails = 'update pgp_emails set user_acc_id = "' + usr_acc_id + '",  used=1 where pgp_email ="' + pgp_email + '"';
                                 await sql.query(updatePgpEmails);
 
-                                var slctquery = "select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id where devices.device_id = '" + device_id + "'";
-                                console.log(slctquery);
+                                var slctquery = "select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id where devices.device_id = '" + device_id + "'";
+                                // console.log(slctquery);
                                 rsltq = await sql.query(slctquery);
-                                console.log(rsltq);
+                                // console.log(rsltq);
                                 for (var i = 0; i < rsltq.length; i++) {
                                     rsltq[i].finalStatus = device_helpers.checkStatus(rsltq[i])
+                                    rsltq[i].pgp_email = await device_helpers.getPgpEmails(rsltq[i])
+                                    rsltq[i].sim_id = await device_helpers.getSimids(rsltq[i])
+                                    rsltq[i].chat_id = await device_helpers.getChatids(rsltq[i])
+                                    // dealerData = await device_helpers.getDealerdata(results[i]);
                                 }
 
                                 data = {
