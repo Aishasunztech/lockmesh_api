@@ -235,8 +235,7 @@ module.exports = {
 
         if (device.status === 'active' && (device.account_status === '' || device.account_status === null) && device.unlink_status === 0 && (device.device_status === 1 || device.device_status === '1')) {
             status = Constants.DEVICE_ACTIVATED
-        }
-        else if (device.status === 'expired') {
+        } else if (device.status === 'expired') {
             // status = 'Expired';
             status = Constants.DEVICE_EXPIRED;
         } else if ((device.device_status === '0' || device.device_status === 0) && (device.unlink_status === '0' || device.unlink_status === 0) && (device.activation_status === null || device.activation_status === '')) {
