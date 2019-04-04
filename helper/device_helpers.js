@@ -4,6 +4,7 @@ const sql = require('../helper/sql.js');
 // var upload = multer({ dest: 'uploads/' });
 var fs = require("fs");
 var path = require('path');
+let usr_acc_query_text = "usr_acc.id,usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name";
 
 module.exports = {
     onlineOflineDevice: async function (deviceId = null, sessionId, status) {
@@ -254,4 +255,20 @@ module.exports = {
     //         return results[0]
     //     } 
     // }
+
+    // getDeviceDetail: async (device_id, user_type)=> {
+    //     sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "'+device_id+'"', async function (error, results, fields) {
+    //         if (error) throw error;
+    //         if(results.length){
+    //             results[0].finalStatus = device_helper.checkStatus(results[0])
+    //             results[0].pgp_email = await device_helper.getPgpEmails(results[0])
+    //             results[0].sim_id = await device_helper.getSimids(results[0])
+    //             results[0].chat_id = await device_helpergetChatids(results[0])
+    //             // dealerData = await getDealerdata(results[i]);
+    //             return results[0];
+    //         }
+  
+    // })
+
+   // }
 }
