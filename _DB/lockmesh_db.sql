@@ -11,7 +11,7 @@
  Target Server Version : 50724
  File Encoding         : 65001
 
- Date: 03/04/2019 19:11:55
+ Date: 04/04/2019 10:33:55
 */
 
 SET NAMES utf8mb4;
@@ -327,7 +327,7 @@ CREATE TABLE `device_history`  (
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `user_acc_id`(`user_acc_id`) USING BTREE,
-  CONSTRAINT `device_history_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+  CONSTRAINT `device_history_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
@@ -351,6 +351,7 @@ CREATE TABLE `devices`  (
   `online` enum('On','off') CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL DEFAULT 'off',
   `is_sync` tinyint(4) NOT NULL DEFAULT 0,
   `screen_start_date` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `reject_status` tinyint(4) NOT NULL DEFAULT 0,
   `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
@@ -361,7 +362,7 @@ CREATE TABLE `devices`  (
 -- ----------------------------
 -- Records of devices
 -- ----------------------------
-INSERT INTO `devices` VALUES (635, 'QBEP609949', 'usman hafeez', NULL, 'huawie', '192.168.18.160', NULL, '354444076298332', NULL, '354444076298340', 'VSP1001901S00431', '00:27:15:2E:8E:BD', NULL, 'off', 1, NULL, '2019-04-03 17:01:26', '2019-04-03 18:41:11');
+INSERT INTO `devices` VALUES (635, 'QBEP609949', 'usman hafeez', NULL, 'huawie', '192.168.18.160', NULL, '354444076298332', NULL, '354444076298340', 'VSP1001901S00431', '00:27:15:2E:8E:BD', NULL, 'off', 1, NULL, 0, '2019-04-03 17:01:26', '2019-04-03 18:41:11');
 
 -- ----------------------------
 -- Table structure for pgp_emails
@@ -481,7 +482,7 @@ CREATE TABLE `screen_lock_devices`  (
 DROP TABLE IF EXISTS `sim_ids`;
 CREATE TABLE `sim_ids`  (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `device_id` int(11) NULL DEFAULT NULL,
+  `user_acc_id` int(11) NULL DEFAULT NULL,
   `sim_id` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `used` tinyint(4) NOT NULL DEFAULT 0,
   `start_date` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
@@ -490,8 +491,8 @@ CREATE TABLE `sim_ids`  (
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `sim_id_UNIQUE`(`sim_id`) USING BTREE,
-  INDEX `device_id`(`device_id`) USING BTREE,
-  CONSTRAINT `sim_ids_ibfk_1` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+  INDEX `device_id`(`user_acc_id`) USING BTREE,
+  CONSTRAINT `sim_ids_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc_profile` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
