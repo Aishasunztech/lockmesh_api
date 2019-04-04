@@ -147,18 +147,18 @@ router.post('/login', async function (req, resp) {
             }
 
         }else if(linkCode.length >= 7){
-            var sql2 = "SELECT * FROM devices WHERE activation_code='" + linkCode + "'";
-            var res = await sql.query(sql2);
-            if (res.length === 0){
+            var usrAccQ = "SELECT * FROM user_acc WHERE activation_code='" + linkCode + "'";
+            var usrAcc = await sql.query(usrAccQ);
+            if (usrAcc.length === 0){
                 data = {
                     'status': false,
                     'msg': 'Invalid activation code'
                 }
                 resp.send(data);
             } else {
-                var sql3 = "SELECT * FROM dealers WHERE dealer_id = '" + res[0].dealer_id + "'";
-                var dealer = await sql.query(sql3);
-                
+                var dealerQ = "SELECT * FROM dealers WHERE dealer_id = " + usrAcc[0].dealer_id ;
+                var dealer = await sql.query(dealerQ);
+
                 if (dealer[0].unlink_status == 1 || dealer[0].account_status == 'suspended') {
                     data = {
                         'status': false,
@@ -171,18 +171,20 @@ router.post('/login', async function (req, resp) {
                     let {imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address} = getDeviceInfo(req);
                     console.log("this is info ", {imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address});
                     
-                    console.log("device_id", res[0].device_id);
                     
-                    let expiry_date = helpers.getExpDateByMonth(new Date(),res[0].expiry_months);
-                    var updateDevice = "UPDATE devices set activation_status=1, ip_address = '" + ip + "', simno = '" + simNo1 + "', online = 'On', imei='"+ imei1+"', imei2='"+imei2+"', serial_number='"+ serial_number +"', mac_address='"+ mac_address +"', unlink_status = 0 , simno2 = '" + simNo2 + "', expiry_date='"+ expiry_date +"' , device_status=1 where device_id='"+ res[0].device_id +"'";
-                    let updatedDevice = await sql.query(updateDevice);
-
+                    let expiry_date = helpers.getExpDateByMonth(new Date(),usrAcc[0].expiry_months);
+                    var updateDevice = "UPDATE devices set  ip_address = '" + ip + "', simno = '" + simNo1 + "', online = 'On', imei='"+ imei1+"', imei2='"+imei2+"', serial_number='"+ serial_number +"', mac_address='"+ mac_address +"' , simno2 = '" + simNo2 + "' where id='"+ usrAcc[0].device_id +"'";                    
+                    var updateAccount = "UPDATE usr_acc set activation_status=1, expiry_date='"+ expiry_date +"', device_status=1, unlink_status = 0 WHERE id = " + userAcc[0].id;
+                    
+                    await sql.query(updateDevice);
+                    await sql.query(updateAccount);
+                    let device_id = device_helpers.getDvcIDByDeviceID(usrAcc[0].device_id)
                     const device = {
                         'dId': dealer[0].dealer_id,
                         'dealer_pin': dealer[0].link_code,
                         'connected_dealer': dealer[0].connected_dealer,
                         'type': await helpers.getUserTypeByTypeId(dealer[0].type),
-                        'device_id': res[0].device_id
+                        'device_id': device_id
                     }
 
                     jwt.sign({
@@ -195,7 +197,6 @@ router.post('/login', async function (req, resp) {
                                 'err': err
                             });
                         } else {
-                            console.log("preactivation response",device);
 
                             resp.json({
                                 token: token,
@@ -368,7 +369,7 @@ router.post('/linkdevice', async function (req, resp) {
         // console.log("mysql ",res2[0].dealer_email);
 
         if (dealer.length) {
-            
+
             sendEmail("New Device Request", "You have a new device request", dealer[0].dealer_email, function (error, response) {
                 if (error) throw error;
             });

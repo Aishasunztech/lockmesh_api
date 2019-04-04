@@ -39,6 +39,15 @@ module.exports = {
         }
         return null;
     },
+    getDvcIDByDeviceID: async (deviceId) => {
+        let deviceQ = "SELECT device_id FROM devices WHERE id=" + deviceId;
+        let device = await sql.query(deviceQ);
+        if(device.length){
+            return device[0].device_id;
+        } else {
+            return false;
+        }
+    },
     insertApps: async function (apps, deviceId) {
         // console.log("djknjkfnjkafak");
         let deviceData = await this.getDeviceByDeviceId(deviceId);
