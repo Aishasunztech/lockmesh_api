@@ -71,7 +71,7 @@ module.exports = {
             // console.log(settings);
             var updateQuery = "REPLACE into tbl_device_settings (device_id, settings) value ('" + device_id + "', '" + settings + "')";
             await sql.query(updateQuery, async function (error, row) {
-                if (error) throw(error);
+                if (error) throw (error);
 
                 // console.log("check setting update:");
                 // console.log(updateQuery);
@@ -100,7 +100,7 @@ module.exports = {
         }
     },
     insertOrUpdateApps: async function (appId, deviceId, guest, encrypted, enable) {
-        
+
         try {
             var updateQuery = "update user_apps set guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + " where device_id=" + deviceId + " and app_id=" + appId + "";
             sql.query(updateQuery, async function (error, row) {
@@ -146,10 +146,10 @@ module.exports = {
             return false;
         }
     },
-    getUsrAccIDbyDvcId: async (dvc_id) =>{
+    getUsrAccIDbyDvcId: async (dvc_id) => {
         var usrAcc = "SELECT id FROM usr_acc WHERE device_id = " + dvc_id;
         let res = await sql.query(usrAcc);
-        if(res.length > 0){
+        if (res.length > 0) {
             return res[0].id;
         } else {
             return false;
@@ -163,10 +163,10 @@ module.exports = {
             var base64Data = Buffer.from(app.icon).toString("base64");
 
             fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
-                if(err) throw(err);
+                if (err) throw (err);
             });
 
-        } else if (typeof app.icon === 'string'){
+        } else if (typeof app.icon === 'string') {
             console.log("icon was in string type");
             // var bytes = app.icon.split(",");
             // var base64Data = Buffer.from(icon).toString("base64");
@@ -174,7 +174,7 @@ module.exports = {
             // fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
             //     console.log(err);
             // });
-        
+
 
         } else {
 
@@ -230,7 +230,7 @@ module.exports = {
         }
     },
     getSimids: async (result) => {
-        let query = "SELECT sim_id FROM sim_ids WHERE device_id = '" + result.usr_device_id + "'"
+        let query = "SELECT sim_id FROM sim_ids WHERE user_acc_id = '" + result.id + "'"
         let results = await sql.query(query);
         if (results.length) {
             return results[0].sim_id
