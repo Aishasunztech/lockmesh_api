@@ -89,31 +89,38 @@ router.post('/login', async function (req, resp) {
     //console.log(linkCode);
     if (linkCode !== undefined && linkCode !== null) {
         if(linkCode.length <= 6){
-            console.log("dealer_pin");
 
-            var sql1 = "SELECT * FROM dealers WHERE link_code = '" + linkCode + "'";
-            var res = await sql.query(sql1);
-            if (res.length == 0) {
+            var dealerQ = "SELECT * FROM dealers WHERE link_code = '" + linkCode + "'";
+            var dealer = await sql.query(dealerQ);
+            if (dealer.length == 0) {
                 data = {
                     'status': false,
                     'msg': 'Invalid link code'
                 }
-                resp.status(200).send(data);
+                resp.send(data);
             } else {
-                if (res[0].unlink_status == 1 || res[0].account_status == 'suspended') {
+                let dealerStatus = helpers.getDealerStatus(dealer[0]);
+
+                if (dealerStatus==="suspended") {
                     data = {
                         'status': false,
                         'msg': 'Dealer Suspended, Contact Admin'
                     }
-                    resp.status(200).send(data);
+                    resp.send(data);
 
+                } else if (dealerStatus === "unlinked") {
+                    data = {
+                        'status': false,
+                        'msg': 'Dealer Suspended, Contact Admin'
+                    }
+                    resp.send(data);
                 } else {
 
                     const device = {
-                        'dId': res[0].dealer_id,
-                        'dealer_pin': res[0].link_code,
-                        'connected_dealer': res[0].connected_dealer,
-                        'type': await helpers.getUserTypeByTypeId(res[0].type)
+                        'dId': dealer[0].dealer_id,
+                        'dealer_pin': dealer[0].link_code,
+                        'connected_dealer': dealer[0].connected_dealer,
+                        'type': await helpers.getUserTypeByTypeId(dealer[0].type)
                     }
 
                     jwt.sign({
@@ -361,12 +368,9 @@ router.post('/linkdevice', async function (req, resp) {
         // console.log("mysql ",res2[0].dealer_email);
 
         if (dealer.length) {
+            
             sendEmail("New Device Request", "You have a new device request", dealer[0].dealer_email, function (error, response) {
-                if (error) {
-                    console.log("email sending error", error);
-                } else {
-                    console.log("email sent", response);
-                }
+                if (error) throw error;
             });
             // let dealerStatus = helpers.getDealerStatus(dealer[0]);
 
