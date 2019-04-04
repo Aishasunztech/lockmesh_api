@@ -11,7 +11,7 @@
  Target Server Version : 50724
  File Encoding         : 65001
 
- Date: 04/04/2019 10:33:55
+ Date: 04/04/2019 11:06:14
 */
 
 SET NAMES utf8mb4;
@@ -213,7 +213,7 @@ CREATE TABLE `chat_ids`  (
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `chat_id_unique`(`chat_id`) USING BTREE,
   INDEX `user_acc_id`(`user_acc_id`) USING BTREE,
-  CONSTRAINT `chat_ids_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+  CONSTRAINT `chat_ids_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
@@ -378,7 +378,7 @@ CREATE TABLE `pgp_emails`  (
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `unique_pgp_emails`(`pgp_email`) USING BTREE,
   INDEX `user_acc_id`(`user_acc_id`) USING BTREE,
-  CONSTRAINT `pgp_emails_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+  CONSTRAINT `pgp_emails_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE = InnoDB AUTO_INCREMENT = 63 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
