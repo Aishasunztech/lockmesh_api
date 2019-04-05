@@ -2148,7 +2148,7 @@ router.get('/connect/:device_id', async function (req, res) {
                         "is_sync": results[0].is_sync,
                         'unlink_status': results[0].unlink_status,
                         'usr_device_id': results[0].usr_device_id,
-                        'usr_acc_id': results[0].id
+                        'id': results[0].id
                     };
                     data.finalStatus = device_helpers.checkStatus(results[0]);
                     data.pgp_email = await device_helpers.getPgpEmails(results[0]);
