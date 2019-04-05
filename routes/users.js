@@ -1397,10 +1397,10 @@ router.post('/unlink/:id', async function (req, res) {
             let result = await sql.query(query);
 
             if (result[0].activation_code !== null) {
-                var sql1 = "update usr_acc set dealer_id = 0, activation_status=0, status = '' , device_status = 0 , start_date= '', expiry_date= '' , unlink_status=1 where device_id = '" + device_id + "'";
+                var sql1 = "update usr_acc set dealer_id = null, activation_status=0, status = '' , device_status = 0 , start_date= '', expiry_date= '' , unlink_status=1 where device_id = '" + device_id + "'";
             } else {
 
-                var sql1 = "update usr_acc set dealer_id = 0, status = '' , device_status = 0 , start_date= '', expiry_date= '' , unlink_status=1 where device_id = '" + device_id + "'";
+                var sql1 = "update usr_acc set dealer_id = null, status = '' , device_status = 0 , start_date= '', expiry_date= '' , unlink_status=1 where device_id = '" + device_id + "'";
             }
 
             var rest = sql.query(sql1, function (error, results) {
