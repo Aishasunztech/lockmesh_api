@@ -61,16 +61,6 @@ function sendEmail(subject, message, to, callback) {
     // console.log("hello smtp", smtpTransport);
     smtpTransport.sendMail(mailOptions, cb);
 }
-/* GET users listing. */
-router.get('/', function (req, res, next) {
-    // let query = "UPDATE user_apps set guest=0 WHERE id = 5037";
-    // let result = UserApps.findAll().then((result) => {
-    //     res.send(result);
-    // });
-    // console.log(result);
-    // res.send(result);
-    // let result =
-});
 
 
 /*Check For Token in the header */
@@ -108,8 +98,28 @@ var verifyToken = function (req, res) {
     return ath;
 }
 
-/*****User Login*****/
 
+/* GET users listing. */
+router.get('/', function (req, res, next) {
+    // let query = "UPDATE user_apps set guest=0 WHERE id = 5037";
+    // let result = UserApps.findAll().then((result) => {
+    //     res.send(result);
+    // });
+    // console.log(result);
+    // res.send(result);
+    // let result =
+});
+
+router.get('/test', async function (req, res) {
+    var componentAllowed = await helpers.isAllowedComponent(1, 155);
+    console.log(componentAllowed);
+    res.send({
+        status: true,
+        allowed: componentAllowed
+    });
+});
+
+/*****User Login*****/
 router.post('/login', async function (req, res) {
     var email = req.body.demail;
     var pwd = req.body.pwd;
@@ -227,59 +237,52 @@ router.post('/login', async function (req, res) {
 
 /*****User Registration*****/
 router.post('/Signup', async function (req, res) {
-    var firstName = req.body.firstName;
-    var lastName = req.body.lastName;
-    var email = req.body.email;
+    // var firstName = req.body.firstName;
+    // var lastName = req.body.lastName;
+    // var email = req.body.email;
 
-    var upass = ' ';
-    var data = '';
+    // var upass = ' ';
+    // var data = '';
 
-    //hash the password
-    const saltRounds = 10;
-    var salt = bcrypt.genSaltSync(saltRounds);
-    var upass = bcrypt.hashSync(req.body.upass, salt);
+    // //hash the password
+    // const saltRounds = 10;
+    // var salt = bcrypt.genSaltSync(saltRounds);
+    // var upass = bcrypt.hashSync(req.body.upass, salt);
 
-    var user = await sql.query("SELECT * FROM users WHERE email = '" + email + "'");
+    // var user = await sql.query("SELECT * FROM users WHERE email = '" + email + "'");
 
-    console.log(user.length);
-    if (user.length > 0) {
-        data = {
-            'status': false,
-            'msg': 'User Already Registered.Please use another email id.',
-            'data': {
-                'userId': user[0].id
-            }
-        }
+    // console.log(user.length);
+    // if (user.length > 0) {
+    //     data = {
+    //         'status': false,
+    //         'msg': 'User Already Registered.Please use another email id.',
+    //         'data': {
+    //             'userId': user[0].id
+    //         }
+    //     }
 
-        res.status(200).send(data);
-    } else {
-        var sql2 = "INSERT INTO users (firstName, lastName, email, password, modified, created)";
-        sql2 += " values('" + firstName + "','" + lastName + "', '" + email + "' ,'" + upass + "', NOW(), NOW())";
+    //     res.status(200).send(data);
+    // } else {
+    //     var sql2 = "INSERT INTO users (firstName, lastName, email, password, modified, created)";
+    //     sql2 += " values('" + firstName + "','" + lastName + "', '" + email + "' ,'" + upass + "', NOW(), NOW())";
 
-        var userInsrt = await sql.query(sql2);
+    //     var userInsrt = await sql.query(sql2);
 
-        data = {
-            'status': true,
-            'msg': 'User has been registered successfully',
-            'data': {
-                'userId': userInsrt.insertId
-            }
-        }
-        res.status(200).send(data);
-    }
+    //     data = {
+    //         'status': true,
+    //         'msg': 'User has been registered successfully',
+    //         'data': {
+    //             'userId': userInsrt.insertId
+    //         }
+    //     }
+    //     res.status(200).send(data);
+    // }
 
 });
 
 
 
-router.get('/test', async function (req, res) {
-    var componentAllowed = await helpers.isAllowedComponent(1, 155);
-    console.log(componentAllowed);
-    res.send({
-        status: true,
-        allowed: componentAllowed
-    });
-});
+
 
 router.get('/get_allowed_components', async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
