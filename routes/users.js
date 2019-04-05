@@ -2088,11 +2088,12 @@ router.post('/dealer/undo', async function (req, res) {
 
 /** Get Device Details of Dealers (Connect Page) **/
 router.get('/connect/:device_id', async function (req, res) {
+    console.log('api check is caled')
     var verify = verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         if (!empty(req.params.device_id)) {
             let userId = verify.user.id;
-            console.log("userId", userId);
+           // console.log("userId", userId);
             //  console.log(verify.user);
             let usertype = await helpers.getUserType(userId);
             let where = "devices.device_id = '" + req.params.device_id + "'";
@@ -2100,20 +2101,20 @@ router.get('/connect/:device_id', async function (req, res) {
             if (usertype != "admin") {
                 where = where + " and dealer_id=" + userId;
             }
-            console.log("where: " + where);
-            sql.query("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id where " + where, async function (error, results) {
+           // console.log("where: " + where);
+           await sql.query("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id where " + where, async function (error, results) {
 
                 if (error) throw error;
-                console.log('rslt done', results.length);
+               // console.log('rslt done', results);
                 if (results.length == 0) {
-                    data = {
+                    _data = {
                         "status": false,
                         "msg": "No details found"
                     };
                 } else {
                     var query = "select * from dealers where dealer_id =" + results[0].dealer_id;
                     let dealer_details = await sql.query(query);
-                    data = {
+                    device_data = {
                         "name": results[0].name,
                         "account_email": results[0].account_email,
                         "device_id": results[0].device_id,
@@ -2150,30 +2151,38 @@ router.get('/connect/:device_id', async function (req, res) {
                         'usr_device_id': results[0].usr_device_id,
                         'id': results[0].id
                     };
-                    data.finalStatus = device_helpers.checkStatus(results[0]);
-                    data.pgp_email = await device_helpers.getPgpEmails(results[0]);
-                    data.sim_id = await device_helpers.getSimids(results[0]);
-                    data.chat_id = await device_helpers.getChatids(results[0]);
+                    device_data.finalStatus = device_helpers.checkStatus(results[0]);
+                    device_data.pgp_email = await device_helpers.getPgpEmails(results[0]);
+                    device_data.sim_id = await device_helpers.getSimids(results[0]);
+                    device_data.chat_id = await device_helpers.getChatids(results[0]);
 
                     if (dealer_details.length) {
-                        data.link_code = dealer_details[0].link_code;
-                        data.dealer_name = dealer_details[0].dealer_name;
+                        device_data.link_code = dealer_details[0].link_code;
+                        device_data.dealer_name = dealer_details[0].dealer_name;
                     } else {
-                        data.link_code = 0;
-                        data.dealer_name = "";
+                        device_data.link_code = 0;
+                        device_data.dealer_name = "";
                     }
+
+                    _data = {
+                        "status": true,
+                        "msg": "success",
+                        "data": device_data
+                    };
                 }
 
-                // console.log('data is ', data)
 
-                res.send(data);
+               //  console.log('data is ', data)
+
+               res.send(_data);
             });
         } else {
-            data = {
+            _data = {
                 "status": false,
                 "msg": "Device not found"
             };
         }
+        res.send(_data);
     }
 });
 
@@ -2363,7 +2372,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
             else if(type === 'history'){
     
                     var applyQuery = "insert into device_history (user_acc_id, app_list, setting, controls) values ('" + usr_acc_id + "','" + app_list + "', null, '" + controls + "')";
-                    console.log('query insert', applyQuery);
+                  //  console.log('query insert', applyQuery);
                     // console.log(applyQuery);
                     await sql.query(applyQuery, async function (err, rslts) {
     
@@ -2405,7 +2414,7 @@ router.post('/get_profiles', async function (req, res) {
         let userId = verify.user.id;
         let userType = await helpers.getUserType(userId);
         let user_acc_id = await device_helpers.getUserAccountId(req.body.device_id);
-        console.log('user id si', user_acc_id);
+       // console.log('user id si', user_acc_id);
         let where = "where";
         let isValid = true;
         // console.log('d_id', user_acc_id);
@@ -2418,8 +2427,10 @@ router.post('/get_profiles', async function (req, res) {
       
         if (isValid) {
             let query = "SELECT * FROM usr_acc_profile " + where;
-           // console.log("getprofiles query", query);
+          
+            // console.log("getprofiles query", query);
             sql.query(query, (error, result) => {
+              //  console.log('profile',result)
                 data = {
                     "status": true,
                     "msg": 'successful',
@@ -2445,7 +2456,7 @@ router.post('/get_policies', async function (req, res) {
         let userId = verify.user.id;
         let userType = await helpers.getUserType(userId);
         let user_acc_id = await device_helpers.getUserAccountId(req.body.device_id);
-        console.log('user id si', user_acc_id);
+     //   console.log('user id si', user_acc_id);
         let where = "where";
         let isValid = true;
         // console.log('d_id', user_acc_id);
@@ -2457,13 +2468,13 @@ router.post('/get_policies', async function (req, res) {
         }
       
         if (isValid) {
-            let query = "SELECT * FROM policy " + where;
-           // console.log("getprofiles query", query);
+            let query = "SELECT * FROM policy ";
             sql.query(query, (error, result) => {
+              //  console.log(query,'policy',result)
                 data = {
                     "status": true,
                     "msg": 'successful',
-                    "profiles": result
+                    "policies": result
                 };
                 res.send(data);
             });
@@ -2485,7 +2496,7 @@ router.post('/get_device_history', async function (req, res) {
         let userId = verify.user.id;
         let userType = await helpers.getUserType(userId);
         let user_acc_id = await device_helpers.getUserAccountId(req.body.device_id);
-        console.log('user id si', user_acc_id);
+       // console.log('user id si', user_acc_id);
         let where = "where";
         let isValid = true;
         // console.log('d_id', user_acc_id);
@@ -2510,7 +2521,7 @@ router.post('/get_device_history', async function (req, res) {
         // console.log(where);
         if (isValid) {
             let query = "SELECT * FROM device_history " + where;
-            console.log("getprofiles query", query);
+           // console.log("getprofiles query", query);
             sql.query(query, (error, result) => {
                 data = {
                     "status": true,
