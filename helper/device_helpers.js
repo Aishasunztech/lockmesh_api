@@ -283,6 +283,16 @@ module.exports = {
             return 'N/A'
         }
     },
+
+    getUserAccountId: async (device_id) => {
+        let query = "select usr_acc.id from usr_acc left join devices on devices.id=usr_acc.device_id where devices.device_id='" + device_id + "'"
+        let results = await sql.query(query);
+        if (results.length) {
+            return results[0].id
+        } else {
+            return ''
+        }
+    },
     // getDealerdata: async (result) => {
     //     let query = "SELECT dealer_name,connected_dealer  FROM dealers WHERE user_acc_id = '" + result.dealer_id + "'"
     //     let results = await sql.query(query);

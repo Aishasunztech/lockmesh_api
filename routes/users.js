@@ -2183,7 +2183,6 @@ router.get('/get_usr_acc_id/:device_id', async function (req, res) {
 
     if (verify.status !== undefined && verify.status == true) {
         //console.log('id is the ', req.params);
-
         let query = "select usr_acc.id from usr_acc left join devices on devices.id=usr_acc.device_id where devices.device_id='" + req.params.device_id + "'";
 
         await sql.query(query, async (error, rslt) => {
@@ -2398,17 +2397,100 @@ router.post('/apply_settings/:device_id', async function (req, res) {
 
 });
 
+
+
 router.post('/get_profiles', async function (req, res) {
     var verify = verifyToken(req, res);
     if (verify.status === true) {
         let userId = verify.user.id;
         let userType = await helpers.getUserType(userId);
-        let profileType = "";
+        let user_acc_id = await device_helpers.getUserAccountId(req.body.device_id);
+        console.log('user id si', user_acc_id);
         let where = "where";
         let isValid = true;
-        // console.log('d_id', req.body.device_id);
-        if (req.body.device_id != undefined && req.body.device_id != '' && req.body.device_id != null) {
-            where = where + " user_acc_id='" + req.body.device_id + "'";
+        // console.log('d_id', user_acc_id);
+        if (user_acc_id != undefined && user_acc_id != '' && user_acc_id != null) {
+            where = where + " user_acc_id='" + user_acc_id + "'";
+
+        } else {
+            where = "";
+        }
+      
+        if (isValid) {
+            let query = "SELECT * FROM usr_acc_profile " + where;
+           // console.log("getprofiles query", query);
+            sql.query(query, (error, result) => {
+                data = {
+                    "status": true,
+                    "msg": 'successful',
+                    "profiles": result
+                };
+                res.send(data);
+            });
+
+        } else {
+            data = {
+                "status": false,
+                "msg": 'Invalid User'
+            };
+            res.send(data);
+        }
+    }
+
+});
+
+router.post('/get_policies', async function (req, res) {
+    var verify = verifyToken(req, res);
+    if (verify.status === true) {
+        let userId = verify.user.id;
+        let userType = await helpers.getUserType(userId);
+        let user_acc_id = await device_helpers.getUserAccountId(req.body.device_id);
+        console.log('user id si', user_acc_id);
+        let where = "where";
+        let isValid = true;
+        // console.log('d_id', user_acc_id);
+        if (user_acc_id != undefined && user_acc_id != '' && user_acc_id != null) {
+            where = where + " user_acc_id='" + user_acc_id + "'";
+
+        } else {
+            where = "";
+        }
+      
+        if (isValid) {
+            let query = "SELECT * FROM policy " + where;
+           // console.log("getprofiles query", query);
+            sql.query(query, (error, result) => {
+                data = {
+                    "status": true,
+                    "msg": 'successful',
+                    "profiles": result
+                };
+                res.send(data);
+            });
+
+        } else {
+            data = {
+                "status": false,
+                "msg": 'Invalid User'
+            };
+            res.send(data);
+        }
+    }
+
+});
+
+router.post('/get_device_history', async function (req, res) {
+    var verify = verifyToken(req, res);
+    if (verify.status === true) {
+        let userId = verify.user.id;
+        let userType = await helpers.getUserType(userId);
+        let user_acc_id = await device_helpers.getUserAccountId(req.body.device_id);
+        console.log('user id si', user_acc_id);
+        let where = "where";
+        let isValid = true;
+        // console.log('d_id', user_acc_id);
+        if (user_acc_id != undefined && user_acc_id != '' && user_acc_id != null) {
+            where = where + " user_acc_id='" + user_acc_id + "'";
 
         } else {
             where = "";
