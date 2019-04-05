@@ -766,7 +766,7 @@ router.post('/create/device_profile', async function (req, res) {
             var checkDealer = "SELECT * FROM dealers WHERE dealer_id = " + dealer_id;
 
             var insertDevice = "INSERT INTO devices (device_id, name, model ";
-           
+
             var values = ") VALUES ('" + device_id + "','" + name + "', '" + model + "'";
             // var values = ") VALUES ('" + activation_code + "', '" + name + "', '" + client_id + "', '" + chat_id + "', '" + model + "', '" + email + "', '" + pgp_email + "', " + exp_month + ", " + dealer_id + ", 0, 0 ";
             sql.query(checkDealer, async (error, response) => {
@@ -786,13 +786,13 @@ router.post('/create/device_profile', async function (req, res) {
                         // var insertDevice = "INSERT INTO devices ( activation_code, name, client_id, chat_id, model, email, pgp_email, expiry_months, dealer_id, device_status, activation_status ";
                         var User_acc_values = ") VALUES ('" + dvc_id + "', '" + activation_code + "', '" + client_id + "', '" + email + "',  " + exp_month + ", " + dealer_id + ", 0, 0 )";
                         insertUser_acc = insertUser_acc + User_acc_values;
-                       
-                        if(resp.affectedRows){
+
+                        if (resp.affectedRows) {
                             sql.query(insertUser_acc, async (err, resp) => {
-                                
+
                                 if (err) throw (err);
                                 let user_acc_id = resp.insertId;
-        
+
                                 console.log("affectedRows", resp.affectedRows);
                                 if (resp.affectedRows) {
                                     let updateChatIds = 'update chat_ids set used=1, user_acc_id="' + user_acc_id + '" where chat_id ="' + chat_id + '"';
@@ -814,41 +814,41 @@ router.post('/create/device_profile', async function (req, res) {
 
                                         await sql.query(insertQuery);
                                     }
-        
+
                                     var slctquery = "select * from devices where device_id = '" + device_id + "'";
                                     console.log(slctquery);
                                     rsltq = await sql.query(slctquery);
 
-                                    sql.query("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name, dealers.connected_dealer from devices left join usr_acc on devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 and devices.device_id='"+ device_id +"'", async function (error, results, fields) {
+                                    sql.query("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name, dealers.connected_dealer from devices left join usr_acc on devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 and devices.device_id='" + device_id + "'", async function (error, results, fields) {
 
                                         if (error) throw error;
                                         console.log("user data list ", results)
-                                      
-                                            results[0].finalStatus = device_helpers.checkStatus(results[0])
-                                            results[0].pgp_email = await device_helpers.getPgpEmails(results[0])
-                                            results[0].sim_id = await device_helpers.getSimids(results[0])
-                                            results[0].chat_id = await device_helpers.getChatids(results[0])
-                                            
-                                            // dealerData = await device_helpers.getDealerdata(results[i]);
 
-                                            data = {
-                                                "status": true,
-                                                "msg": 'Record Inserted successfully.',
-                                                "data": results
-                                            };
-                
-                                            res.send({
-                                                status: true,
-                                                data: data
-                                            })
-                                            return;
-                                
-                                            
+                                        results[0].finalStatus = device_helpers.checkStatus(results[0])
+                                        results[0].pgp_email = await device_helpers.getPgpEmails(results[0])
+                                        results[0].sim_id = await device_helpers.getSimids(results[0])
+                                        results[0].chat_id = await device_helpers.getChatids(results[0])
+
+                                        // dealerData = await device_helpers.getDealerdata(results[i]);
+
+                                        data = {
+                                            "status": true,
+                                            "msg": 'Record Inserted successfully.',
+                                            "data": results
+                                        };
+
+                                        res.send({
+                                            status: true,
+                                            data: data
+                                        })
+                                        return;
+
+
                                     })
-        
-        
-                                     console.log('devices f', results);
-                                   
+
+
+                                    console.log('devices f', results);
+
                                 } else {
                                     res.send({
                                         status: false,
@@ -1444,7 +1444,7 @@ router.post('/suspend/:id', async function (req, res) {
 
         if (!empty(device_id)) {
 
-            let resDevice = null; 
+            let resDevice = null;
 
             if (gtres[0].expiry_date == '' || gtres[0].expiry_date == null) {
 
@@ -1453,18 +1453,18 @@ router.post('/suspend/:id', async function (req, res) {
                 var rest = sql.query(sql1, async function (error, results) {
                     if (error) throw error;
                     if (results.affectedRows == 0) {
-                        
+
 
                         data = {
                             "status": false,
                             "msg": "Account not suspended.Please try again."
                         }
                     } else {
-                        sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "'+device_id+'"', async function (error, resquery, fields) {
+                        sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
                             if (error) throw error;
-                        console.log('lolo else', resquery[0])
+                            console.log('lolo else', resquery[0])
 
-                            if(resquery.length){
+                            if (resquery.length){
                                 resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
                                 resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
                                 resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
@@ -1476,17 +1476,17 @@ router.post('/suspend/:id', async function (req, res) {
                                     "msg": "Account suspended successfully."
                                 }
 
-                                  require("../bin/www").sendDeviceStatus(gtres[0].device_id, "suspended");
+                                require("../bin/www").sendDeviceStatus(gtres[0].device_id, "suspended");
 
 
                                 res.send(data);
-                                
+
                             }
                         })
 
                     }
 
-                   
+
                 });
 
             } else {
@@ -1506,10 +1506,10 @@ router.post('/suspend/:id', async function (req, res) {
                         } else {
 
                             require("../bin/www").sendDeviceStatus(gtres[0].device_id, "suspended");
-                            
-                           sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "'+device_id+'"', async function (error, resquery, fields) {
+
+                            sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "'+device_id+'"', async function (error, resquery, fields) {
                                 if (error) throw error;
-                            console.log('lolo else', resquery[0])
+                                console.log('lolo else', resquery[0])
 
                                 if(resquery.length){
                                     resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
@@ -1526,11 +1526,11 @@ router.post('/suspend/:id', async function (req, res) {
                                     res.send(data);
                                 }
                             })
-                           
+
 
 
                         }
-                        
+
                     });
 
                 } else {
@@ -1579,11 +1579,11 @@ router.post('/activate/:id', async function (req, res) {
                             "msg": "Device not activated.Please try again."
                         }
                     } else {
-                        sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "'+device_id+'"', async function (error, resquery, fields) {
+                        sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
                             if (error) throw error;
-                        console.log('lolo else', resquery[0])
+                            console.log('lolo else', resquery[0])
 
-                            if(resquery.length){
+                            if (resquery.length) {
                                 resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
                                 resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
                                 resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
@@ -1597,12 +1597,12 @@ router.post('/activate/:id', async function (req, res) {
                                 }
 
                                 res.send(data);
-                                
+
                             }
-                        })   
+                        })
 
                     }
-            
+
                 });
 
             } else {
@@ -1619,11 +1619,11 @@ router.post('/activate/:id', async function (req, res) {
                                 "msg": "Device not activated.Please try again."
                             }
                         } else {
-                            sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "'+device_id+'"', async function (error, resquery, fields) {
+                            sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
                                 if (error) throw error;
-                            console.log('lolo else', resquery[0])
-    
-                                if(resquery.length){
+                                console.log('lolo else', resquery[0])
+
+                                if (resquery.length) {
                                     resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
                                     resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
                                     resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
@@ -1635,14 +1635,14 @@ router.post('/activate/:id', async function (req, res) {
                                         "status": true,
                                         "msg": "Device activated successfully."
                                     }
-    
+
                                     res.send(data);
-                                    
+
                                 }
                             })
 
                         }
-                      
+
                     });
 
                 } else {
@@ -2115,7 +2115,7 @@ router.get('/connect/:device_id', async function (req, res) {
                     let dealer_details = await sql.query(query);
                     data = {
                         "name": results[0].name,
-                        "email": results[0].account_email,
+                        "account_email": results[0].account_email,
                         "device_id": results[0].device_id,
                         "client_id": results[0].client_id,
                         // "pgp_email": results[0].pgp_email,
@@ -2148,7 +2148,7 @@ router.get('/connect/:device_id', async function (req, res) {
                         "is_sync": results[0].is_sync,
                         'unlink_status': results[0].unlink_status,
                         'usr_device_id': results[0].usr_device_id,
-                        'usr_acc_id': results[0].id
+                        'id': results[0].id
                     };
                     data.finalStatus = device_helpers.checkStatus(results[0]);
                     data.pgp_email = await device_helpers.getPgpEmails(results[0]);
