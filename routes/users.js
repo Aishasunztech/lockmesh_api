@@ -2373,7 +2373,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
     
                     var applyQuery = "insert into device_history (user_acc_id, app_list, setting, controls) values ('" + usr_acc_id + "','" + app_list + "', null, '" + controls + "')";
                   //  console.log('query insert', applyQuery);
-                    // console.log(applyQuery);
+                     console.log(applyQuery);
                     await sql.query(applyQuery, async function (err, rslts) {
     
                         // if (type == "history") {
@@ -2382,7 +2382,8 @@ router.post('/apply_settings/:device_id', async function (req, res) {
                         //     if (isOnline) {
                         //         require("../bin/www").sendEmit(app_list, passwords, controls, device_id);
                         //     }
-                        // }
+                        // } 
+                        console.log('reslut aplly ', rslts)
                         if(rslts.affectedRows){
                             data = {
                                 "status": true,
