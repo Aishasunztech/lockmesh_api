@@ -124,17 +124,6 @@ module.exports.listen = async function (server) {
 
         console.log("connection established on: " + device_id + " and " + session_id);
 
-        // console.log(socket.client);
-        // console.log("client info: " + socket.client);
-
-
-        // get socket id
-        // console.log("socket_id: " + session_id);
-
-        // get device id
-        // console.log("device_id: " + device_id);
-
-
         // check the number of sockets connected to server
         // console.log(io.sockets.sockets.length);
         console.log("connected_users: " + io.engine.clientsCount);
