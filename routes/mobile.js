@@ -211,7 +211,7 @@ router.post('/login', async function (req, resp) {
 
         var deviceQ = "SELECT * FROM devices WHERE mac_address = '" + mac_address + "' OR serial_number='"+ serial_number +"'";
         var device = await sql.query(deviceQ);
-        console.log("login with mac address", device);
+        console.log("login with mac address", device[0].id);
         if (device.length == 0) {
             data = {
                 'status': false,
@@ -247,14 +247,14 @@ router.post('/login', async function (req, resp) {
 
             }
 
-            const device = {
+            const dvc = {
                 'dId': usr_acc.dealer_id,
                 'device_id': device[0].device_id,
                 data
             }
 
             jwt.sign({
-                device
+                dvc
             }, config.secret, {
                 expiresIn: '86400s'
             }, (err, token) => {
@@ -392,7 +392,7 @@ router.post('/linkdevice', async function (req, resp) {
                         var link_acc = "update usr_acc set link_code='" + dealer[0].link_code + "', dealer_id = '" + dId + "', prnt_dlr_id="+ connected_dealer +", unlink_status = 0 where mac_address = '" + mac_address + "'";
 
                     } else {
-                        var link_acc = "INSERT INTO user_acc  (device_id, link_code, dealer_id, prnt_dlr_id, unlink_status) value ("+ device.id +", " + dealer[0].link_code +", '" + dId + "',"+ connected_dealer +", 0) ";
+                        var link_acc = "INSERT INTO usr_acc  (device_id, link_code, dealer_id, prnt_dlr_id, unlink_status) value ("+ device.id +", " + dealer[0].link_code +", '" + dId + "',"+ connected_dealer +", 0) ";
                     }
                     
                     sql.query(link_acc, function (error, rows) {
