@@ -23,8 +23,8 @@ var fs = require("fs");
 
 var helpers = require('../helper/general_helper.js');
 const device_helpers = require('../helper/device_helpers.js');
-const UserApps = require('../models/UserApps');
-const Devices = require('../models/Devices');
+// const UserApps = require('../models/UserApps');
+// const Devices = require('../models/Devices');
 
 const ADMIN = "admin";
 const DEALER = "dealer";
