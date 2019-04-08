@@ -144,7 +144,7 @@ router.post('/login', async function (req, resp) {
             }
 
         }else if(linkCode.length >= 7){
-            var usrAccQ = "SELECT * FROM user_acc WHERE activation_code='" + linkCode + "'";
+            var usrAccQ = "SELECT * FROM usr_acc WHERE activation_code='" + linkCode + "'";
             var usrAcc = await sql.query(usrAccQ);
             if (usrAcc.length === 0){
                 data = {
@@ -171,7 +171,7 @@ router.post('/login', async function (req, resp) {
                     
                     let expiry_date = helpers.getExpDateByMonth(new Date(),usrAcc[0].expiry_months);
                     var updateDevice = "UPDATE devices set  ip_address = '" + ip + "', simno = '" + simNo1 + "', online = 'On', imei='"+ imei1+"', imei2='"+imei2+"', serial_number='"+ serial_number +"', mac_address='"+ mac_address +"' , simno2 = '" + simNo2 + "' where id='"+ usrAcc[0].device_id +"'";                    
-                    var updateAccount = "UPDATE usr_acc set activation_status=1, expiry_date='"+ expiry_date +"', device_status=1, unlink_status = 0 WHERE id = " + userAcc[0].id;
+                    var updateAccount = "UPDATE usr_acc set activation_status=1, expiry_date='"+ expiry_date +"', device_status=1, unlink_status = 0 WHERE id = " + usrAcc[0].id;
                     
                     await sql.query(updateDevice);
                     await sql.query(updateAccount);
@@ -252,7 +252,7 @@ router.post('/login', async function (req, resp) {
                 'device_id': device[0].device_id,
                 data
             }
-
+            console.log("this is device", dvc);
             jwt.sign({
                 dvc
             }, config.secret, {
@@ -275,7 +275,7 @@ router.post('/login', async function (req, resp) {
                         'status': data.status,
                         'msg': data.msg,
                         'dId': device.dId,
-                        'device_id': device.device_id,
+                        'device_id': dvc.device_id,
                         'expiresIn': n
                     });
                 } catch (error) {
