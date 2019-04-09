@@ -83,6 +83,8 @@ router.post('/login', async function (req, resp) {
     var linkCode = req.body.link_code;
     var mac_address = req.body.macAddr;
     var serial_number = req.body.serialNo
+    console.log("mac_address", mac_address);
+    console.log("serial_number", serial_number);
     var data;
     //console.log(linkCode);
     if (linkCode !== undefined && linkCode !== null) {
@@ -211,7 +213,6 @@ router.post('/login', async function (req, resp) {
 
         var deviceQ = "SELECT * FROM devices WHERE mac_address = '" + mac_address + "' OR serial_number='"+ serial_number +"'";
         var device = await sql.query(deviceQ);
-        console.log("login with mac address", device[0].id);
         if (device.length == 0) {
             data = {
                 'status': false,
