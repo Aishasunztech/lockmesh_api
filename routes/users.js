@@ -2278,6 +2278,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
         var verify = verifyToken(req, res);
         if (verify.status !== undefined && verify.status == true) {
             let device_id = req.params.device_id;
+
             let type = req.body.type;
             let name = req.body.name;
             let dealer_id = verify.user.id;
@@ -2331,8 +2332,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
                     };
                     res.send(data);
                 }
-            }
-            else if (type === 'policy') {
+            } else if (type === 'policy') {
                 var query = "select id from policy where policy_name = '" + name + "'";
                 let result = await sql.query(query);
 
@@ -2367,26 +2367,23 @@ router.post('/apply_settings/:device_id', async function (req, res) {
                     };
                     res.send(data);
                 }
-            }
-            else if (type === 'history') {
+            } else if (type === 'history') {
 
                 var applyQuery = "insert into device_history (user_acc_id, app_list, setting, controls) values ('" + usr_acc_id + "','" + app_list + "', null, '" + controls + "')";
                 //  console.log('query insert', applyQuery);
                 console.log(applyQuery);
                 await sql.query(applyQuery, async function (err, rslts) {
 
-                    // if (type == "history") {
-                    //     let isOnline = await device_helpers.isDeviceOnline(device_id);
-                    //     // console.log("isOnline: " + isOnline);
-                    //     if (isOnline) {
-                    //         require("../bin/www").sendEmit(app_list, passwords, controls, device_id);
-                    //     }
-                    // } 
-                    console.log('reslut aplly ', rslts)
+                    let isOnline = await device_helpers.isDeviceOnline(device_id);
+                    // console.log("isOnline: " + isOnline);
+                    if (isOnline) {
+                        require("../bin/www").sendEmit(app_list, passwords, controls, device_id);
+                    }
+           
                     if (rslts.affectedRows) {
                         data = {
                             "status": true,
-                            "msg": 'Policy Saved Successfully',
+                            "msg": 'Settings Applied Successfully',
                         };
                         res.send(data);
                     } else {

@@ -202,12 +202,12 @@ module.exports = {
 
         } else if (typeof app.icon === 'string') {
             console.log("icon was in string type");
-            // var bytes = app.icon.split(",");
-            // var base64Data = Buffer.from(icon).toString("base64");
+            var bytes = app.icon.split(",");
+            var base64Data = Buffer.from(bytes).toString("base64");
 
-            // fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
-            //     console.log(err);
-            // });
+            fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
+                console.log(err);
+            });
 
 
         } else {

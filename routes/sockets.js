@@ -145,7 +145,9 @@ module.exports.listen = async function (server) {
             console.log("on mobile side event");
             await device_helpers.onlineOflineDevice(device_id, socket.id, 'On');
             dvc_id = await device_helpers.getOriginalIdByDeviceId(device_id);
+            console.log("dvc_id", dvc_id);
             user_acc_id = await device_helpers.getUsrAccIDbyDvcId(dvc_id);
+            console.log("user_acc_id", user_acc_id);
 
             // }
         }
@@ -155,11 +157,11 @@ module.exports.listen = async function (server) {
 
         if (setting_res.length) {
             console.log("app_list" + setting_res[0].app_list);
-            console.log("passwords" + setting_res[0].passwords);
-            console.log("controls" + setting_res[0].controls);
+            // console.log("passwords" + setting_res[0].passwords);
+            // console.log("controls" + setting_res[0].controls);
 
             socket.emit('get_applied_settings_' + device_id, {
-                device_id: setting_res[0].device_id,
+                device_id: device_id,
                 app_list: (setting_res[0].app_list == null || setting_res[0].app_list == '') ? '[]' : setting_res[0].app_list,
                 passwords: (setting_res[0].passwords ==null || setting_res[0].passwords == '')? '{}' : setting_res[0].passwords,
                 settings: (setting_res[0].controls == null || setting_res[0].controls == '') ? '{}' : setting_res[0].controls,
