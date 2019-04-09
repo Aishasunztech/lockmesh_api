@@ -2348,7 +2348,7 @@ router.get('/get_apps/:device_id', async function (req, res) {
                             res.send({
                                 status: true,
                                 app_list: apps,
-                                controls: JSON.parse(controls[0].settings)
+                                controls: JSON.parse(controls[0].permissions)
                             });
                         } else {
                             res.send({
