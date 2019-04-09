@@ -69,7 +69,7 @@ module.exports = {
                 // console.log(query);
                 await sql.query(query);
 
-                await this.getApp(app.uniqueName, deviceData.id, app.guest, app.encrypted, app.enable);
+                await this.getApp(app.uniqueName, deviceData.id, app.guest, app.encrypted, app.enable, app.extension);
 
             });
         } else {
@@ -96,36 +96,31 @@ module.exports = {
         }
 
     },
-    getApp: async function (uniqueName, device_id, guest, encrypted, enable) {
+    getApp: async function (uniqueName, device_id, guest, encrypted, enable, extension) {
         // console.log("hello world: " + uniqueName);
         // console.log("device_id: " + device_id);
         // console.log("hello world: " + guest);
         // console.log("hello world: " + encrypted);
         // console.log("hello world: " + enable);
+        console.log("hello world: ", extension);
         var query = "select id from apps_info where unique_name='" + uniqueName + "' limit 1";
         // console.log(query);
         let response = await sql.query(query);
         if (response.length) {
-            await this.insertOrUpdateApps(response[0].id, device_id, guest, encrypted, enable);
+            await this.insertOrUpdateApps(response[0].id, device_id, guest, encrypted, enable, extension);
         } else {
             // console.log("app not found");
             return false;
         }
     },
-    insertOrUpdateApps: async function (appId, deviceId, guest, encrypted, enable) {
+    insertOrUpdateApps: async function (appId, deviceId, guest, encrypted, enable, extension) {
 
         try {
-            var updateQuery = "update user_apps set guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + " where device_id=" + deviceId + " and app_id=" + appId + "";
+            var updateQuery = "update user_apps set guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + ", extension= " + extension + "  where device_id=" + deviceId + " and app_id=" + appId + "";
             sql.query(updateQuery, async function (error, row) {
-                // console.log("app updated:");
-                // console.log(updateQuery);
-                // console.log(row.affectedRows);    
                 if (row != undefined && row.affectedRows == 0) {
-                    // console.log("app_setting_inserted");
-                    var insertQuery = "insert into user_apps ( device_id, app_id, guest, encrypted, enable) values (" + deviceId + "," + appId + "," + guest + "," + encrypted + "," + enable + ")";
+                    var insertQuery = "insert into user_apps ( device_id, app_id, guest, encrypted, enable, extension) values (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + ", "+extension+")";
                     await sql.query(insertQuery);
-                } else {
-                    // console.log("app_setting_updated");
                 }
             });
 
