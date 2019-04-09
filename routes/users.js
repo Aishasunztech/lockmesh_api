@@ -1554,6 +1554,123 @@ router.post('/suspend/:id', async function (req, res) {
 
 });
 
+
+router.post('/UnflagDevice/:id', async function (req, res) {
+    var verify = verifyToken(req, res);
+    var device_id = req.params.id;
+    if (verify.status !== undefined && verify.status == true) {
+
+        if (!empty(device_id)) {
+            var sql1 = "update devices set flagged= '' where id='" + device_id + "'";
+            var rest = sql.query(sql1, async function (error, results) {
+                if (error) throw error;
+                else if (results.affectedRows == 0) {
+                    data = {
+                        "status": false,
+                        "msg": "Device not Unflagged.Please try again."
+                    }
+                    res.send(data);
+                } else {
+                    await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
+                        if (error) throw error;
+                        console.log('lolo else', resquery[0])
+
+                        if (resquery.length) {
+                            resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
+                            resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
+                            resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
+                            resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
+                            // dealerData = await getDealerdata(res[i]);
+                            data = {
+                                "data": resquery[0],
+                                "status": true,
+                                "msg": "Device Unflagged successfully."
+                            }
+                        }
+                        res.send(data);
+                    })
+
+                }
+            });
+
+        }
+
+    } else {
+
+        data = {
+            "status": false,
+            "msg": "Device Is not unflagged.Please try again"
+        }
+        res.send(data);
+    }
+})
+
+router.post('/flagDevice/:id', async function (req, res) {
+    var verify = verifyToken(req, res);
+    var device_id = req.params.id;
+    var option = req.body.data
+    console.log(option);
+    if (verify.status !== undefined && verify.status == true) {
+        var sql2 = "select flagged from devices where id = '" + device_id + "'";
+        var gtres = await sql.query(sql2);
+        if (!empty(device_id)) {
+
+            if (gtres[0].flagged === '' || gtres[0].flagged === 'null' || gtres[0].flagged === null) {
+                var sql1 = "update devices set flagged='" + option + "' where id = '" + device_id + "'";
+                console.log(sql1);
+                await sql.query(sql1)
+                var sql1 = "update usr_acc set account_status='suspended' where device_id = '" + device_id + "'";
+
+                var rest = sql.query(sql1, async function (error, results) {
+                    if (error) throw error;
+                    if (results.affectedRows == 0) {
+                        data = {
+                            "status": false,
+                            "msg": "Device not Flagged.Please try again."
+                        }
+                    } else {
+                        require("../bin/www").sendDeviceStatus(gtres[0].device_id, "suspended");
+
+                        sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
+                            if (error) throw error;
+                            console.log('lolo else', resquery[0])
+
+                            if (resquery.length) {
+                                resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
+                                resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
+                                resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
+                                resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
+                                // dealerData = await getDealerdata(res[i]);
+                                data = {
+                                    "data": resquery[0],
+                                    "status": true,
+                                    "msg": "Device Falgged successfully."
+                                }
+
+                                res.send(data);
+                            }
+                        })
+                    }
+                });
+
+            } else {
+                data = {
+                    "status": false,
+                    "msg": "Device Already Flagged"
+                }
+                res.send(data);
+            }
+
+        } else {
+            data = {
+                "status": false,
+                "msg": "Invalid Device."
+            }
+            res.send(data);
+        }
+    }
+})
+
 /** Activate Device **/
 router.post('/activate/:id', async function (req, res) {
     var verify = verifyToken(req, res);
@@ -2147,6 +2264,7 @@ router.get('/connect/:device_id', async function (req, res) {
                         "expiry_date": results[0].expiry_date,
                         "online": results[0].online,
                         "is_sync": results[0].is_sync,
+                        "flagged": results[0].flagged,
                         'unlink_status': results[0].unlink_status,
                         'usr_device_id': results[0].usr_device_id,
                         'id': results[0].id
