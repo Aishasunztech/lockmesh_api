@@ -2335,8 +2335,8 @@ router.get('/get_apps/:device_id', async function (req, res) {
                         throw Error("Query Expection");
                     }
                     // console.log("apps length" + apps.length);
-                    var query1 = 'SELECT * from tbl_device_settings where device_id ="' + req.params.device_id + '" limit 1';
-
+                    var query1 = 'SELECT * from user_app_permission  limit 1';
+                    // where device_id ="' + req.params.device_id + '"
 
                     sql.query(query1, async (error, controls) => {
                         if (error) {
@@ -2348,7 +2348,7 @@ router.get('/get_apps/:device_id', async function (req, res) {
                             res.send({
                                 status: true,
                                 app_list: apps,
-                                controls: JSON.parse(controls[0].settings)
+                                controls: JSON.parse(controls[0].permissions)
                             });
                         } else {
                             res.send({
