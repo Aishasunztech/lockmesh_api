@@ -164,7 +164,7 @@ module.exports.listen = async function (server) {
                 device_id: device_id,
                 app_list: (setting_res[0].app_list == null || setting_res[0].app_list == '') ? '[]' : setting_res[0].app_list,
                 passwords: (setting_res[0].passwords ==null || setting_res[0].passwords == '')? '{}' : setting_res[0].passwords,
-                settings: (setting_res[0].controls == null || setting_res[0].controls == '') ? '{}' : setting_res[0].controls,
+                settings: (setting_res[0].permissions == null || setting_res[0].permissions == '') ? '{}' : setting_res[0].permissions,
                 status: true
             });
         } else {
@@ -185,12 +185,14 @@ module.exports.listen = async function (server) {
             if (response.length > 0 && data.device_id != null) {
                 let app_list = JSON.parse(response[0].app_list);
 
-                console.log("insertings applications");
-                console.log(response[0].app_list);
+                // console.log("insertings applications");
+                // console.log(response[0].app_list);
+
                 console.log("inserting setiings");
-                console.log(response[0].controls);
+                console.log(response[0].permissions);
+                
                 await device_helpers.insertApps(app_list, data.device_id);
-                await device_helpers.insertOrUpdateSettings(response[0].controls, data.device_id);
+                await device_helpers.insertOrUpdateSettings(response[0].permissions, data.device_id);
             }
 
 
@@ -214,12 +216,12 @@ module.exports.listen = async function (server) {
 
         });
 
-        socket.on('sendSettings_' + device_id, async (settings) => {
+        socket.on('sendSettings_' + device_id, async (permissions) => {
             console.log('getting device settings from ' + device_id);
-            let device_settings = settings;
-            await device_helpers.insertOrUpdateSettings(device_settings, device_id);
-            console.log('settings inserted or updated');
-
+            let device_permissions = permissions;
+            console.log("device permissions", device_permissions)
+            await device_helpers.insertOrUpdateSettings(device_settings, dvc_id);
+            
         });
 
         // listen on built-in channels

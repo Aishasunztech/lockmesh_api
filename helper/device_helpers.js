@@ -78,11 +78,11 @@ module.exports = {
 
     },
 
-    insertOrUpdateSettings: async function (settings, device_id) {
+    insertOrUpdateSettings: async function (permissions, device_id) {
         try {
             console.log("update or insert settings");
             // console.log(settings);
-            var updateQuery = "REPLACE into tbl_device_settings (device_id, settings) value ('" + device_id + "', '" + settings + "')";
+            var updateQuery = "REPLACE into user_app_permissions (device_id, permissions) value ('" + device_id + "', '" + permissions + "')";
             await sql.query(updateQuery, async function (error, row) {
                 if (error) throw (error);
 
