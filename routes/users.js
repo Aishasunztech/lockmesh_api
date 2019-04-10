@@ -668,12 +668,13 @@ router.post('/add/dealer', async function (req, res) {
 });
 
 
-/*Get all dealers*/
+/*Get dealers*/
 router.get('/dealers/:pageName', async function (req, res) {
     var verify = verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
-        console.log("userType: " + verify.user.user_type);
         let where = "";
+        console.log("pageName", req.params.pageName);
+        console.log("userType: " + verify.user.user_type);
 
         if (verify.user.user_type == "admin") {
             var role = await helpers.getDealerTypeIdByName(req.params.pageName);
@@ -724,6 +725,60 @@ router.get('/dealers/:pageName', async function (req, res) {
     }
 });
 
+/*Get All Dealers */
+router.get('/dealers', async function (req, res) {
+    var verify = verifyToken(req, res);
+    if (verify.status !== undefined && verify.status == true) {
+        console.log("userType: " + verify.user.user_type);
+
+        if (verify.user.user_type == "admin") {
+            var role = await helpers.getuserTypeIdByName(verify.user.user_type);
+            console.log("role id", role);
+            sql.query("select * from dealers where type!=" + role + " order by created DESC", async function (error, results) {
+                if (error) throw error;
+
+                var data = [];
+                for (var i = 0; i < results.length; i++) {
+                    if (results[i].connected_dealer != 0 && results[i].connected_dealer != '' && results[i].connected_dealer != '0') {
+                        var get_parent_dealer = await sql.query("select dealer_id, dealer_name from dealers where dealer_id=" + results[i].connected_dealer + " limit 1");
+                        console.log(get_parent_dealer);
+                    }
+                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].dealer_id + "'");
+
+                    dt = {
+                        "status": true,
+                        "dealer_id": results[i].dealer_id,
+                        "dealer_name": results[i].dealer_name,
+                        "dealer_email": results[i].dealer_email,
+                        "link_code": results[i].link_code,
+                        "account_status": results[i].account_status,
+                        "unlink_status": results[i].unlink_status,
+                        "created": results[i].created,
+                        "modified": results[i].modified,
+                        "connected_devices": get_connected_devices
+                    };
+
+                    if (get_parent_dealer != undefined && get_parent_dealer.length > 0) {
+                        dt.parent_dealer = get_parent_dealer[0].dealer_name;
+                        dt.parent_dealer_id = get_parent_dealer[0].dealer_id;
+                    } else {
+                        dt.parent_dealer = "";
+                        dt.parent_dealer_id = "";
+                    }
+
+                    data.push(dt);
+                }
+                res.send(data);
+            });
+        } else {
+           res.send({
+               status: true,
+               message: "forbidden access"
+           })
+        }
+            
+    }
+});
 
 /***Add devices (not using) ***/
 router.post('/create/device_profile', async function (req, res) {
