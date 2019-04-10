@@ -3521,8 +3521,8 @@ router.get('/apklist', async function (req, res) {
                 let dealerCount = await helpers.dealerCount(adminRoleId);
                 console.log("dealer count", dealerCount)
                 for (var i = 0; i < results.length; i++) {
-                    let permissions = JSON.parse(results[i].dealers)
-                    let permissionCount = permissions.length;
+                    let permissions = (results[i].dealers!==undefined && results[i].dealers !==null)?JSON.parse(results[i].dealers):'[]';
+                    let permissionCount = (permissions!==undefined && permissions !==null && permissions !== '[]')?permissions.length:0;
                     let permissionC = ((dealerCount == permissionCount) && (permissionCount>0))? "All": permissionCount.toString();
                     dta = {
                         "apk_id": results[i].id,
