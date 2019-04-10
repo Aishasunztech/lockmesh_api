@@ -3767,9 +3767,10 @@ router.delete('/delete_profile/:profile_id', async function (req, res) {
 
 // check prviouse password
 router.post('/check_pass', async function (req, res) {
+    console.log(req.body);
     var verify = verifyToken(req, res);
     if (verify.status) {
-        let pwd = md5(req.body.password);
+        let pwd = md5(req.body.user.password);
 
         let query_res = await sql.query("select * from dealers where dealer_id=" + verify.user.id + " and password='" + pwd + "'");
         if (query_res.length) {
