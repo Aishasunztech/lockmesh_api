@@ -20,6 +20,7 @@ var XLSX = require('xlsx');
 const url = require('url');
 var path = require('path');
 var fs = require("fs");
+var Constants = require('../constants/Application');
 
 var helpers = require('../helper/general_helper.js');
 const device_helpers = require('../helper/device_helpers.js');
@@ -3507,24 +3508,30 @@ router.post('/upload', function (req, res) {
 
 /** Get Apk List Admin Panel **/
 
-router.get('/apklist', function (req, res) {
+router.get('/apklist', async function (req, res) {
     var verify = verifyToken(req, res);
 
     if (verify.status !== undefined && verify.status == true) {
-        sql.query("select * from apk_details where delete_status=0 order by id ASC", function (error, results) {
+        sql.query("select * from apk_details where delete_status=0 order by id ASC", async function (error, results) {
             if (error) throw error;
 
             var data = [];
             if (results.length > 0) {
-
+                let adminRoleId= await helpers.getuserTypeIdByName(Constants.ADMIN);
+                let dealerCount = await helpers.dealerCount(adminRoleId);
+                console.log("dealer count", dealerCount)
                 for (var i = 0; i < results.length; i++) {
-
+                    let permissions = JSON.parse(results[i].dealers)
+                    let permissionCount = permissions.length;
+                    let permissionC = ((dealerCount == permissionCount) && (permissionCount>0))? "All": permissionCount.toString();
                     dta = {
                         "apk_id": results[i].id,
                         "apk_name": results[i].app_name,
                         "logo": results[i].logo,
                         "apk": results[i].apk,
+                        "permissions": permissions,
                         "apk_status": results[i].status,
+                        "permission_count": permissionC,
                         "deleteable": (results[i].apk_type == "permanent") ? false : true
                     }
                     data.push(dta);
@@ -3548,6 +3555,32 @@ router.get('/apklist', function (req, res) {
 
     }
 });
+
+/** Save Permissions**/
+router.post('/save_permissions', async function (req, res) {
+    var verify = verifyToken(req, res);
+
+    if (verify.status !== undefined && verify.status == true) {
+        let apkId = req.body.apkId;
+        let dealers = req.body.dealers;
+        let updateAPKQ = "UPDATE apk_details set dealers = '" + dealers + "' WHERE id=" + apkId;
+        sql.query(updateAPKQ, async (error, result) => {
+            if(error) throw(error);
+            
+            if(result.affectedRows){
+                res.send({
+                    status: true,
+                    msg: "Permission saved successfully"
+                })
+            } else {
+                res.send({
+                    status: false,
+                    msg: "Permission couldn't be saved"
+                })
+            }
+        });
+    }
+})
 
 /** Toggle Apk Admin Panel (On / Off) **/
 
