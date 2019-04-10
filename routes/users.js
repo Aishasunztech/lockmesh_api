@@ -1553,7 +1553,59 @@ router.post('/suspend/:id', async function (req, res) {
     }
 
 });
+router.post('/wipe/:id', async function (req, res) {
+    var verify = verifyToken(req, res);
+    var device_id = req.params.id;
+    if (verify.status !== undefined && verify.status == true) {
+        var sql2 = "select * from devices where id = '" + device_id + "'";
+        var gtres = await sql.query(sql2);
+        if (!empty(device_id)) {
 
+            var sql1 = "update usr_acc set wipe_status='wipe' where device_id = '" + device_id + "'";
+            console.log(sql1);
+            var rest = sql.query(sql1, async function (error, results) {
+                if (error) throw error;
+                if (results.affectedRows == 0) {
+                    data = {
+                        "status": false,
+                        "msg": "Device not wiped.Please try again."
+                    }
+                    res.send(data);
+                } else {
+                    require("../bin/www").sendDeviceStatus(gtres[0].device_id, "wiped");
+
+                    sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
+                        if (error) throw error;
+                        console.log('lolo else', resquery[0])
+
+                        if (resquery.length) {
+                            resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
+                            resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
+                            resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
+                            resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
+                            // dealerData = await getDealerdata(res[i]);
+                            data = {
+                                "data": resquery[0],
+                                "status": true,
+                                "msg": "Device Wiped successfully."
+                            }
+                            res.send(data);
+                        }
+                    })
+                }
+            });
+
+
+
+        } else {
+            data = {
+                "status": false,
+                "msg": "Invalid Device."
+            }
+            res.send(data);
+        }
+    }
+})
 
 router.post('/UnflagDevice/:id', async function (req, res) {
     var verify = verifyToken(req, res);
@@ -2497,7 +2549,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
                     if (isOnline) {
                         require("../bin/www").sendEmit(app_list, passwords, controls, device_id);
                     }
-           
+
                     if (rslts.affectedRows) {
                         data = {
                             "status": true,
