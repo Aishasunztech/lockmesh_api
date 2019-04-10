@@ -239,14 +239,14 @@ router.post('/login', async function (req, resp) {
                     'status': false,
                     'msg': 'suspended'
                 }
-
-            } else if (device[0].wipe_status == "wipe") {
-                data = {
-                    'status': false,
-                    'msg': 'wipe'
-                }
-
             }
+            // } else if (device[0].wipe_status == "wipe") {
+            //     data = {
+            //         'status': false,
+            //         'msg': 'wipe'
+            //     }
+
+            // }
             else {
 
                 data = {
