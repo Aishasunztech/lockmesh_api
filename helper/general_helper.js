@@ -66,6 +66,7 @@ module.exports = {
 			return dType[0].id;
 		}
 	},
+	
 	getAllUserTypes: async function () {
 		var query = "SELECT * FROM user_roles";
 		var userRoles = await sql.query(query);
@@ -167,6 +168,16 @@ module.exports = {
 			return false;
 		}
 		//var component = await sql.query("SELECT * FROM acl_modules where id ="+ componentId);
+	},
+	dealerCount:async (adminRoleId) => {
+		
+		var query = "SELECT COUNT(*) as dealer_count FROM dealers WHERE type !=" + adminRoleId;
+		let res = await sql.query(query);
+		if(res.length){
+			return res[0].dealer_count;
+		} else {
+			return false;
+		}
 	},
 	isAllowedComponentByUri: async function (componentUri, userId) {
 		// console.log(componentUri);
@@ -290,5 +301,15 @@ module.exports = {
         } else {
             return 'N/A';
         }
-	}
+	},
+	getuserTypeIdByName: async function (userType) {
+		console.log(userType);
+		var query = "SELECT * FROM user_roles where role ='" + userType + "'";
+		var dType = await sql.query(query);
+		if(dType.length){
+			return dType[0].id;
+		} else {
+			return false;
+		} 
+	},
 }
