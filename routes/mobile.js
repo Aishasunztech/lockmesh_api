@@ -848,32 +848,39 @@ router.post('/accountstatus', async function (req, res) {
                     }
                 } else {
 
-                    if (deviceStatus === "Pending activation") {
+                    if (deviceStatus === Constants.DEVICE_PENDING_ACTIVATION) {
                         data = {
                             "status": true,
                             "msg": "pending"
                         }
                         res.send(data);
                         return;
-                    } else if (deviceStatus === "Activated") {
+                    } else if (deviceStatus === Constants.DEVICE_ACTIVATED) {
                         data = {
                             "status": true,
                             "msg": "account active"
                         }
                         res.send(data);
                         return;
-                    } else if (deviceStatus === "Suspended") {
+                    } else if (deviceStatus === Constants.DEVICE_SUSPENDED) {
                         data = {
                             "status": false,
                             "msg": "account suspended"
                         }
                         res.send(data);
                         return;
-                    } else if (deviceStatus === "Expired") {
+                    } else if (deviceStatus === Constants.DEVICE_EXPIRED) {
 
                         data = {
                             "status": false,
                             "msg": "account expired"
+                        }
+                        res.send(data);
+                        return;
+                    } else if (deviceStatus === Constants.DEVICE_UNLINKED){
+                        data = {
+                            "status": false,
+                            "msg": "account unlinked"
                         }
                         res.send(data);
                         return;
