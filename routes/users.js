@@ -3616,6 +3616,26 @@ router.post('/save_permissions', async function (req, res) {
         let apkId = req.body.apkId;
         let dealers = req.body.dealers;
         let updateAPKQ = "UPDATE apk_details set dealers = '" + dealers + "' WHERE id=" + apkId;
+        
+        let parsedDealers = JSON.parse(dealers);
+        if(parsedDealers.length){
+            let deleteNotIn = "DELETE FROM dealer_apks WHERE dealer_id NOT IN (" + parsedDealers.join() +") AND apk_id = " + apkId;
+            // console.log(deleteNotIn);
+            await sql.query(deleteNotIn);
+            let insertQuery = "INSERT IGNORE INTO dealer_apks (dealer_id, apk_id) VALUES ";
+
+            let insertOrIgnore = ' '
+            for(let i=0; i< parsedDealers.length; i++){
+                if(i===parsedDealers.length-1){
+                    insertOrIgnore = insertOrIgnore + "("+ parsedDealers[i] +","+ apkId +")"
+                } else{
+                    insertOrIgnore = insertOrIgnore + "("+ parsedDealers[i] +","+ apkId +"),"
+                }
+            }
+            await sql.query(insertQuery + insertOrIgnore);
+            // console.log(insertQuery + insertOrIgnore);
+        }
+        
         sql.query(updateAPKQ, async (error, result) => {
             if(error) throw(error);
             
