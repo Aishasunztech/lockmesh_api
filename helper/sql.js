@@ -6,7 +6,7 @@ const sqlPool = mysql.createPool({
     //connectTimeout: 60 * 60 * 1000,
     //aquireTimeout: 60 * 60 * 1000,
     //timeout: 60 * 60 * 1000,
-    host: '134.209.124.196',
+    host: '142.93.102.239',
     user: 'root',
     password: 'DAtabase$435$',
     database: 'lockmesh_db',
