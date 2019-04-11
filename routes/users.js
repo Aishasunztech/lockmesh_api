@@ -772,12 +772,12 @@ router.get('/dealers', async function (req, res) {
                 res.send(data);
             });
         } else {
-           res.send({
-               status: true,
-               message: "forbidden access"
-           })
+            res.send({
+                status: true,
+                message: "forbidden access"
+            })
         }
-            
+
     }
 });
 
@@ -1088,20 +1088,18 @@ router.put('/new/device', async (req, res) => {
 
                                 // let common_Query = "UPDATE devices set name = '" + device_name + "', email = '" + device_email + "', pgp_email='" + pgp_email + "', chat_id='" + chat_id + "', sim_id='" + sim_id + "', client_id ='" + client_id + "', model = '" + req.body.model + "'"
                                 // let common_Query2 = " status = '" + status + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' where device_id = '" + device_id + "'";
-                                common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "'"
+                                common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE id = '" + usr_device_id + "'"
                                 // let common_Query2 = " status = '" + status + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' where device_id = '" + device_id + "'";
-                                usr_acc_Query = "UPDATE usr_acc set account_email = '" + device_email + "', status = '" + status + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' s_dealer=" + dealer_id + ", s_dealer_name='" + dealer[0].dealer_name + "' WHERE device_id = '" + usr_device_id + "'"
+                                usr_acc_Query = "UPDATE usr_acc set account_email = '" + device_email + "', status = '" + status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "', prnt_dlr_id=" + dealer_id + ", prnt_dlr_name='" + dealer[0].dealer_name + "' WHERE device_id = '" + usr_device_id + "'"
                                 // 
                                 // let sql1 = common_Query + ", s_dealer_name = '" + rslt1[0].dealer_name + "', s_dealer = '" + req.body.s_dealer + "'" + common_Query2;
-                                sql1 = common_Query + usr_acc_Query;
-                                console.log(sql1);
+                                console.log("UPafet Quety", usr_acc_Query);
                             } else {
 
-                                common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE device_id = '" + device_id + "'"
-                                usr_acc_Query = "UPDATE usr_acc set account_email = '" + device_email + "', status = '" + status + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' WHERE device_id = '" + usr_device_id + "'"
+                                common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE id = '" + usr_device_id + "'"
+                                usr_acc_Query = "UPDATE usr_acc set account_email = '" + device_email + "', status = '" + status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' WHERE device_id = '" + usr_device_id + "'"
                                 // let sql1 = common_Query + ", s_dealer_name = '" + rslt1[0].dealer_name + "', s_dealer = '" + req.body.s_dealer + "'" + common_Query2;
-                                sql1 = common_Query + usr_acc_Query
-                                console.log(sql1);
+                                console.log("UPafet Quety", usr_acc_Query);
                             }
 
 
@@ -1109,12 +1107,12 @@ router.put('/new/device', async (req, res) => {
                                 await sql.query(usr_acc_Query)
                                 let updateChatIds = 'update chat_ids set user_acc_id = ' + usr_acc_id + ', used=1 where chat_id ="' + chat_id + '"';
                                 await sql.query(updateChatIds);
-                                let updateSimIds = 'update sim_ids set device_id = ' + device_id + ', used=1 where sim_id ="' + sim_id + '"';
+                                let updateSimIds = 'update sim_ids set user_acc_id = ' + usr_acc_id + ', used=1 where sim_id ="' + sim_id + '"';
                                 await sql.query(updateSimIds)
                                 let updatePgpEmails = 'update pgp_emails set user_acc_id = ' + usr_acc_id + ', used=1 where pgp_email ="' + pgp_email + '"';
                                 await sql.query(updatePgpEmails);
 
-                                var slctquery = "select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id where devices.device_id = '" + device_id + "'";
+                                var slctquery = "select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.user_acc_id = usr_acc.device_id where devices.device_id = '" + device_id + "'";
                                 console.log(slctquery);
                                 rsltq = await sql.query(slctquery);
                                 console.log(rsltq);
@@ -1242,7 +1240,7 @@ router.put('/edit/devices', async function (req, res) {
                             });
                         } else {
                             common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE device_id = '" + device_id + "'"
-                            usr_acc_Query = "UPDATE usr_acc set status = '" + status + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' WHERE device_id = '" + usr_device_id + "'"
+                            usr_acc_Query = "UPDATE usr_acc set status = '" + status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' WHERE device_id = '" + usr_device_id + "'"
                             // let sql1 = common_Query + ", s_dealer_name = '" + rslt1[0].dealer_name + "', s_dealer = '" + req.body.s_dealer + "'" + common_Query2;
 
                             // let sql1 = common_Query + common_Query2;
@@ -1321,7 +1319,9 @@ router.put('/delete/:device_id', function (req, res) {
             }
             console.log("delete where ", 'DELETE FROM devices WHERE device_id ="' + [req.params.device_id])
             if (req.body.dealer_id === loggedUserId || req.body.prnt_dlr_id === loggedUserId || userType === ADMIN) {
-                sql.query('UPDATE devices set reject_status = 1 WHERE device_id ="' + [req.params.device_id] + '"', function (error, results, fields) {
+                sql.query('UPDATE devices set reject_status = 1 WHERE device_id ="' + [req.params.device_id] + '"', async function (error, results, fields) {
+                    let usr_device_id = await device_helpers.getOriginalIdByDeviceId(req.params.device_id);
+                    sql.query("UPDATE usr_acc set unlink_status = 1 WHERE device_id = '" + usr_device_id + "'")
                     //response.end(JSON.stringify(rows));
                     console.log(results);
                     if (error) throw error;
@@ -3569,13 +3569,13 @@ router.get('/apklist', async function (req, res) {
 
             var data = [];
             if (results.length > 0) {
-                let adminRoleId= await helpers.getuserTypeIdByName(Constants.ADMIN);
+                let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
                 let dealerCount = await helpers.dealerCount(adminRoleId);
                 console.log("dealer count", dealerCount)
                 for (var i = 0; i < results.length; i++) {
-                    let permissions = (results[i].dealers!==undefined && results[i].dealers !==null)?JSON.parse(results[i].dealers):'[]';
-                    let permissionCount = (permissions!==undefined && permissions !==null && permissions !== '[]')?permissions.length:0;
-                    let permissionC = ((dealerCount == permissionCount) && (permissionCount>0))? "All": permissionCount.toString();
+                    let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : '[]';
+                    let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
+                    let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
                     dta = {
                         "apk_id": results[i].id,
                         "apk_name": results[i].app_name,
@@ -3617,9 +3617,9 @@ router.post('/save_permissions', async function (req, res) {
         let dealers = req.body.dealers;
         let updateAPKQ = "UPDATE apk_details set dealers = '" + dealers + "' WHERE id=" + apkId;
         sql.query(updateAPKQ, async (error, result) => {
-            if(error) throw(error);
-            
-            if(result.affectedRows){
+            if (error) throw (error);
+
+            if (result.affectedRows) {
                 res.send({
                     status: true,
                     msg: "Permission saved successfully"
