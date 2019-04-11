@@ -3638,11 +3638,29 @@ router.post('/save_permissions', async function (req, res) {
         
         sql.query(updateAPKQ, async (error, result) => {
             if (error) throw (error);
+            let permissionC = [];
+          let rslt = await sql.query("select dealers from apk_details where id='"+ apkId +"' order by id ASC")
+           if(rslt.length){
+        console.log(rslt,' do ti ');
+            if(rslt !== undefined && rslt !== null){
+                let permission = JSON.parse(rslt[0].dealers);
 
+                if(permission !== undefined && permission !== null && permission !== '[]'){
+                    let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                    let dealerCount = await helpers.dealerCount(adminRoleId);
+                  permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
+
+                }
+            }
+
+          ;
+          
+        }
             if (result.affectedRows) {
                 res.send({
                     status: true,
-                    msg: "Permission saved successfully"
+                    msg: "Permission saved successfully",
+                    permission_count: permissionC,
                 })
             } else {
                 res.send({
