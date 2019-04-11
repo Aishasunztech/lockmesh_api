@@ -607,7 +607,7 @@ router.delete('/unlink/:mac', async function (req, res) {
     //console.log(req);
     if (reslt.status == true) {
         if (!empty(req.params.mac)) {
-            var query = "UPDATE `devices` SET unlink_status=1, dealer_id=0 WHERE `imei` = '" + req.params.mac + "'";
+            var query = "UPDATE `usr_acc` SET unlink_status=1, dealer_id=0 WHERE `imei` = '" + req.params.mac + "'";
 
             await sql.query(query);
             data = {
