@@ -804,6 +804,13 @@ router.post('/accountstatus', async function (req, res) {
                                 }
                                 res.send(data);
                                 return;
+                            } else if (deviceStatus === Constants.DEVICE_UNLINKED){
+                                data = {
+                                    "status": false,
+                                    "msg": "account unlinked"
+                                }
+                                res.send(data);
+                                return;
                             }
 
                             // if (user_acc[0].device_status == 0 && helpers.checkNullStatus(user_acc[0]) && helpers.checkNullUserAccountStatus(user_acc[0])) {
