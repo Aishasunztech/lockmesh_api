@@ -1,4 +1,4 @@
-module.exports={
+module.exports = {
     ADMIN: "admin",
     DEALER: "dealer",
     SDEALER: "sdealer",
@@ -6,12 +6,12 @@ module.exports={
     DEALER_SUSPENDED: "suspended",
     DEALER_UNLINKED: "unlinked",
 
-    DEVICE_ACTIVATED: "Activated",
+    DEVICE_ACTIVATED: "Active",
     DEVICE_SUSPENDED: "Suspended",
     DEVICE_EXPIRED: "Expired",
     DEVICE_UNLINKED: "Unlinked",
     DEVICE_PENDING_ACTIVATION: "Pending activation",
     DEVICE_PRE_ACTIVATION: "Pre-activated",
 
-    
+
 }
