@@ -3634,6 +3634,10 @@ router.post('/save_permissions', async function (req, res) {
             }
             await sql.query(insertQuery + insertOrIgnore);
             // console.log(insertQuery + insertOrIgnore);
+        } else {
+            let deleteAll = "DELETE FROM dealer_apks WHERE apk_id = " + apkId;
+            // console.log(deleteNotIn);
+            await sql.query(deleteAll);
         }
         
         sql.query(updateAPKQ, async (error, result) => {
