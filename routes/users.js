@@ -389,16 +389,22 @@ router.get('/get_user', async function (req, res) {
 
 
 /**GET all the devices**/
-router.get('/devices', function (req, res) {
+router.get('/devices', async function (req, res) {
     var verify = verifyToken(req, res);
     var where_con = '';
-
+    var newArray = [];
     if (verify.status !== undefined && verify.status == true) {
         if (verify.user.user_type !== 'admin') {
             if (verify.user.user_type === 'dealer') {
                 where_con = 'AND (usr_acc.dealer_id =' + verify.user.id + ' OR usr_acc.prnt_dlr_id =' + verify.user.id + ')';
+                let query = "SELECT * From acc_action_history WHERE action = 'UNLINK' && dealer_id = '" + verify.user.id + "'";
+                console.log(query);
+                newArray = await sql.query(query)
             } else {
                 where_con = 'AND usr_acc.dealer_id = ' + verify.user.id + ' ';
+                let query = "SELECT * From acc_action_history WHERE action = 'UNLINK' && dealer_id = '" + verify.user.id + "'";
+                console.log(query);
+                newArray = await sql.query(query)
             }
         }
 
@@ -414,9 +420,10 @@ router.get('/devices', function (req, res) {
                 results[i].chat_id = await device_helpers.getChatids(results[i])
                 // dealerData = await device_helpers.getDealerdata(results[i]);
             }
+            let finalResult = [...results, ...newArray]
             data = {
                 "status": true,
-                "data": results
+                "data": finalResult
             };
             res.send(data);
         });
@@ -1444,7 +1451,8 @@ router.put('/updateProfile/:id', function (req, res) {
 router.post('/unlink/:id', async function (req, res) {
     var verify = verifyToken(req, res);
     var device_id = req.params.id;
-    // console.log('unlink data ', device_id);
+    // var device_data = req.body.data
+    // console.log('unlink data ', req.body, 'device ID', device_id);
 
     if (verify.status !== undefined && verify.status == true) {
         console.log('unlinked', device_id);
@@ -1468,6 +1476,7 @@ router.post('/unlink/:id', async function (req, res) {
                         "msg": "Device not unlinked."
                     }
                 } else {
+                    device_helpers.SaveActionHistory(req.body.device, 'unlink')
                     require("../bin/www").sendDeviceStatus(device_id, "unlinked", true);
                     data = {
                         "status": true,
@@ -1484,7 +1493,7 @@ router.post('/unlink/:id', async function (req, res) {
             }
         }
     }
-    // console.log('dddddddd', data)
+    console.log('dddddddd', data)
 });
 
 /** Suspend Account Devices / client **/
@@ -2355,9 +2364,13 @@ router.get('/connect/:device_id', async function (req, res) {
                         // "sim_id": results[0].sim_id,
                         "simno": results[0].simno,
                         "serial_number": results[0].serial_number,
+                        "session_id": results[0].session_id,
+                        "fcm_token": results[0].fcm_token,
+                        "screen_start_date": results[0].fcm_token,
+                        "reject_status": results[0].reject_status,
                         "ip_address": results[0].ip_address,
-                        "s_dealer": results[0].s_dealer,
-                        "s_dealer_name": results[0].s_dealer_name,
+                        "prnt_dlr_id": results[0].prnt_dlr_id,
+                        "prnt_dlr_name": results[0].prnt_dlr_name,
                         "status": results[0].status,
                         "account_status": results[0].account_status,
                         "device_status": results[0].device_status,
@@ -2370,10 +2383,12 @@ router.get('/connect/:device_id', async function (req, res) {
                         // "expiry_date": datetime.create(results[0].expiry_date).format('m-d-Y'),
                         "start_date": results[0].start_date,
                         "expiry_date": results[0].expiry_date,
+                        "expiry_months": results[0].expiry_months,
                         "online": results[0].online,
                         "is_sync": results[0].is_sync,
                         "flagged": results[0].flagged,
                         'unlink_status': results[0].unlink_status,
+                        'transfer_status': results[0].transfer_status,
                         'usr_device_id': results[0].usr_device_id,
                         'id': results[0].id
                     };
@@ -3326,7 +3341,7 @@ router.get('/export/:fieldName', async (req, res) => {
 router.get('/get_sim_ids', async (req, res) => {
     var verify = verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
-        let query = "select * from sim_ids where used=0";
+        let query = "select * from sim_ids where used=0 AND user_acc_id IS NULL";
         sql.query(query, (error, resp) => {
             res.send({
                 status: false,
@@ -3341,7 +3356,7 @@ router.get('/get_sim_ids', async (req, res) => {
 router.get('/get_chat_ids', async (req, res) => {
     var verify = verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
-        let query = "select * from chat_ids where used=0";
+        let query = "select * from chat_ids where used=0 AND user_acc_id IS NULL";
         sql.query(query, (error, resp) => {
             res.send({
                 status: false,
@@ -3355,7 +3370,7 @@ router.get('/get_chat_ids', async (req, res) => {
 router.get('/get_pgp_emails', async (req, res) => {
     var verify = verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
-        let query = "select * from pgp_emails where used=0";
+        let query = "select * from pgp_emails where used=0 AND user_acc_id IS NULL ";
         sql.query(query, (error, resp) => {
             res.send({
                 status: false,
