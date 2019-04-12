@@ -45,7 +45,7 @@ module.exports = {
     getDvcIDByDeviceID: async (deviceId) => {
         let deviceQ = "SELECT device_id FROM devices WHERE id=" + deviceId;
         let device = await sql.query(deviceQ);
-        if(device.length){
+        if (device.length) {
             return device[0].device_id;
         } else {
             return false;
@@ -119,7 +119,7 @@ module.exports = {
             var updateQuery = "update user_apps set guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + ", extension= " + extension + "  where device_id=" + deviceId + " and app_id=" + appId + "";
             sql.query(updateQuery, async function (error, row) {
                 if (row != undefined && row.affectedRows == 0) {
-                    var insertQuery = "insert into user_apps ( device_id, app_id, guest, encrypted, enable, extension) values (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + ", "+extension+")";
+                    var insertQuery = "insert into user_apps ( device_id, app_id, guest, encrypted, enable, extension) values (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + ", " + extension + ")";
                     await sql.query(insertQuery);
                 }
             });
@@ -163,11 +163,11 @@ module.exports = {
             return false;
         }
     },
-	getUserAccByDeviceId: async (deviceId) => {
-        var device = await sql.query("SELECT * FROM devices WHERE device_id='"+ deviceId+"'");
-        if(device.length){
+    getUserAccByDeviceId: async (deviceId) => {
+        var device = await sql.query("SELECT * FROM devices WHERE device_id='" + deviceId + "'");
+        if (device.length) {
             var usrAcc = await sql.query("SELECT * FROM usr_acc WHERE device_id =" + device[0].id);
-            if(usrAcc.length){
+            if (usrAcc.length) {
                 return usrAcc[0];
             } else {
                 return false;
@@ -178,12 +178,12 @@ module.exports = {
     },
     getUserAccByDvcId: async (dvcId) => {
         var usrAcc = await sql.query("SELECT * FROM usr_acc WHERE device_id =" + dvcId);
-        if(usrAcc.length){
+        if (usrAcc.length) {
             return usrAcc[0];
         } else {
             return false;
         }
-	},
+    },
     uploadIconFile: function (app, iconName) {
         // let base64Data = "data:image/png;base64,"+ btoa(icon);
         if (app.icon != undefined && typeof app.icon != 'string') {
@@ -307,8 +307,22 @@ module.exports = {
     //             // dealerData = await getDealerdata(results[i]);
     //             return results[0];
     //         }
-  
+
     // })
 
-   // }
+    // }
+    SaveActionHistory: async (device, action) => {
+
+        console.log("hello here is data to store in history ", device);
+        // let query = "INSERT INTO acc_action_history (action,device_id,device_name,session_id,model,ip_address,simno,imei,simno2,imei2,serial_number,mac_address,fcm_token,online,is_sync,flagged,screen_start_date,reject_status,account_email,dealer_id,prnt_dlr_id,link_code,client_id,start_date,expiry_months,expiry_date,activation_code,status,device_status,activation_status,wipe_status,account_status,unlink_status,transfer_status,dealer_name,prnt_dlr_name,user_acc_id,pgp_email,chat_id,sim_id) VALUES (" + action + ")"
+        let query = "INSERT INTO acc_action_history (action,device_id,device_name,session_id,model,ip_address,simno,imei,simno2,imei2,serial_number,mac_address,fcm_token,online,is_sync,flagged,screen_start_date,reject_status,account_email,dealer_id,prnt_dlr_id,link_code,client_id,start_date,expiry_months,expiry_date,activation_code,status,device_status,activation_status,wipe_status,account_status,unlink_status,transfer_status,dealer_name,prnt_dlr_name,user_acc_id,pgp_email,chat_id,sim_id,finalStatus) VALUES ('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','" + device.online + "','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + device.prnt_dlr_id + "','" + device.link_code + "','" + device.client_id + "','','" + device.expiry_months + "','','" + device.activation_code + "','',0,0,'" + device.wipe_status + "','" + device.account_status + "',1,'" + device.transfer_status + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','Unlinked')"
+        // console.log(query);
+        await sql.query(query)
+        // let results = await sql.query(query);
+        // if (results.length) {
+        //     return results[0].id
+        // } else {
+        //     return ''
+        // }
+    },
 }
