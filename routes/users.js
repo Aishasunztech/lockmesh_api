@@ -175,6 +175,7 @@ router.post('/login', async function (req, res) {
                     return;
                 } else {
                     var userType = await helpers.getUserType(users[0].dealer_id);
+                    console.log('object data is ', users[0]);
                     const user = {
                         "id": users[0].dealer_id,
                         "dealer_id": users[0].dealer_id,
@@ -190,6 +191,7 @@ router.post('/login', async function (req, res) {
                         "user_type": userType,
                         "created": users[0].created,
                         "modified": users[0].modified,
+                        "token": null
                     }
                     // const user = {
                     //     "id": users[0].dealer_id,
