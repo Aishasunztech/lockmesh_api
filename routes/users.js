@@ -1091,7 +1091,7 @@ router.put('/new/device', async (req, res) => {
                                 "msg": "Account Email OR PGP Email already taken"
                             });
                         }
-                        else if (dealer_id !== 0) {
+                        else if (dealer_id !== 0 && dealer_id !== null) {
 
                             if (connected_dealer !== 0) {
 
