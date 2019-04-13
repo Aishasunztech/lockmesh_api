@@ -100,7 +100,7 @@ router.post('/login', async function (req, resp) {
                 resp.send(data);
             } else {
                 let dealerStatus = helpers.getDealerStatus(dealer[0]);
-                console.log("dealer status", dealerStatus);
+                // console.log("dealer status", dealerStatus);
                 if (dealerStatus === Constants.DEALER_SUSPENDED) {
                     data = {
                         'status': false,
@@ -601,22 +601,38 @@ router.post('/getstatus', async function (req, resp) {
 
 /** Stop linking Device / Delete device MDM **/
 
-router.delete('/unlink/:mac', async function (req, res) {
+router.delete('/unlink/:macAddr/:serialNo', async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
     var reslt = verifyToken(req, res);
     //console.log(req);
+    let mac_address = req.params.macAddr;
+    let serial_number = req.params.serialNo;
+    // console.log("mac_address", mac_address);
+    // console.log("serialNo", serial_number);
     if (reslt.status == true) {
-        if (!empty(req.params.mac)) {
-            var query = "UPDATE `usr_acc` SET unlink_status=1, dealer_id=0 WHERE `imei` = '" + req.params.mac + "'";
+        if (!empty(mac_address) || !empty(serial_number)) {
+            let deviceQ = "SELECT id FROM devices WHERE mac_address='" + mac_address + "' OR serial_number='" + serial_number + "'";
+            sql.query(deviceQ, async function(error, resp){
+                if(error) throw(error);
+                if(resp.length){
+                    var query = "UPDATE usr_acc SET unlink_status=1, dealer_id=0 WHERE device_id = '" + resp[0].id + "'";
 
-            await sql.query(query);
-            data = {
-                "status": true,
-                "msg": "Device Unlinked successfully"
-            };
-            res.send(data);
-
-
+                    await sql.query(query);
+                    data = {
+                        "status": true,
+                        "msg": "Device Unlinked successfully"
+                    };
+                    res.send(data);
+                } else {
+                    data = {
+                        "status": false,
+                        "msg": "Invalid device"
+                    };
+                    res.send(data);
+                    return;
+                }
+            });
+           
         } else {
             data = {
                 "status": false,
