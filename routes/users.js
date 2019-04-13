@@ -3599,7 +3599,7 @@ router.get('/apklist', async function (req, res) {
                 let dealerCount = await helpers.dealerCount(adminRoleId);
                 console.log("dealer count", dealerCount)
                 for (var i = 0; i < results.length; i++) {
-                    let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : '[]';
+                    let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
                     let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
                     let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
                     dta = {
