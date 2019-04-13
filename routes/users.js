@@ -390,6 +390,7 @@ router.get('/get_user', async function (req, res) {
 
 /**GET all the devices**/
 router.get('/devices', async function (req, res) {
+
     var verify = verifyToken(req, res);
     var where_con = '';
     var newArray = [];
@@ -397,12 +398,12 @@ router.get('/devices', async function (req, res) {
         if (verify.user.user_type !== 'admin') {
             if (verify.user.user_type === 'dealer') {
                 where_con = 'AND (usr_acc.dealer_id =' + verify.user.id + ' OR usr_acc.prnt_dlr_id =' + verify.user.id + ')';
-                let query = "SELECT * From acc_action_history WHERE action = 'UNLINK' && dealer_id = '" + verify.user.id + "'";
+                let query = "SELECT * From acc_action_history WHERE action = '" + Constants.DEVICE_UNLINKED + "' && dealer_id = '" + verify.user.id + "'";
                 console.log(query);
                 newArray = await sql.query(query)
             } else {
                 where_con = 'AND usr_acc.dealer_id = ' + verify.user.id + ' ';
-                let query = "SELECT * From acc_action_history WHERE action = 'UNLINK' && dealer_id = '" + verify.user.id + "'";
+                let query = "SELECT * From acc_action_history WHERE action = '" + Constants.DEVICE_UNLINKED + "' && dealer_id = '" + verify.user.id + "'";
                 console.log(query);
                 newArray = await sql.query(query)
             }
@@ -421,6 +422,12 @@ router.get('/devices', async function (req, res) {
                 // dealerData = await device_helpers.getDealerdata(results[i]);
             }
             let finalResult = [...results, ...newArray]
+            // console.log(Object.keys(finalResult[0]));
+            // console.log(Object.values(finalResult[0]));
+            let data123 = await helpers.getAllRecordbyDeviceId('UHLZ092101')
+            console.log("return data", data123);
+            // console.log("Here is data",await helpers.getAllRecordbyDeviceId(finalResult[0].id));
+            // device_helpers.getQueryOfInsert(finalResult[0])
             data = {
                 "status": true,
                 "data": finalResult
@@ -1476,7 +1483,7 @@ router.post('/unlink/:id', async function (req, res) {
                         "msg": "Device not unlinked."
                     }
                 } else {
-                    device_helpers.SaveActionHistory(req.body.device, 'unlink')
+                    device_helpers.SaveActionHistory(req.body.device, Constants.DEVICE_UNLINKED)
                     require("../bin/www").sendDeviceStatus(device_id, "unlinked", true);
                     data = {
                         "status": true,
