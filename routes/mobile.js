@@ -389,7 +389,7 @@ router.post('/linkdevice', async function (req, resp) {
                     if (deviceStatus == Constants.DEVICE_UNLINKED) {
     
                         var link_acc = "";
-                        var updateDviceQ = "UPDATE devices set ip_address = '" + ip + "', simno = '" + simNo1 + "', online = 'On' , simno2 = '" + simNo2 + "' where id=" + device[0].id;
+                        var updateDviceQ = "UPDATE devices set ip_address = '" + ip + "', simno = '" + simNo1 + "', online = 'On' , simno2 = '" + simNo2 + "', reject_status=0  where id=" + device[0].id;
                         // , unlink_status = 0
                         var updateDevice = await sql.query(updateDviceQ);
     

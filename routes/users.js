@@ -1102,7 +1102,7 @@ router.put('/new/device', async (req, res) => {
                                 usr_acc_Query = "UPDATE usr_acc set account_email = '" + device_email + "', status = '" + status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "', prnt_dlr_id=" + dealer_id + ", prnt_dlr_name='" + dealer[0].dealer_name + "' WHERE device_id = '" + usr_device_id + "'"
                                 // 
                                 // let sql1 = common_Query + ", s_dealer_name = '" + rslt1[0].dealer_name + "', s_dealer = '" + req.body.s_dealer + "'" + common_Query2;
-                                console.log("UPafet Quety", usr_acc_Query);
+                                // console.log("UPafet Quety", usr_acc_Query);
                             } else {
 
                                 common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE id = '" + usr_device_id + "'"
