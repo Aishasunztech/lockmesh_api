@@ -3453,6 +3453,8 @@ router.post('/addApk', function (req, res) {
                     filename = file.fieldname + '-' + Date.now() + '.apk';
                     callback(null, file.fieldname + '-' + Date.now() + '.apk');
                 } else {
+                    // console.log("pkgName",helpers.getPackageName(file));
+
                     filename = file.fieldname + '-' + Date.now() + '.apk';
                     callback(null, file.fieldname + '-' + Date.now() + '.apk');
                 }
@@ -3461,47 +3463,6 @@ router.post('/addApk', function (req, res) {
         });
         let fileUploaded = false;
 
-        var fileFilter = function (req, file, callback) {
-            var filetypes = /jpeg|jpg|apk|png/;
-            var mimetype = true
-            // if (file.mimetype === 'application/vnd.android.package-archive') {
-            //     var mimetype = false;
-            //     var ext = file.originalname.split(".");
-            //     console.log('ext', ext);
-            //     // if (ext.length === 2) {
-            //         console.log('apk length', ext.length);
-            //     // }
-
-            // } else {
-            //     var mimetype = filetypes.test(file.mimetype);
-            //     var ext = file.originalname.split(".");
-            //     console.log('ext', ext);
-            //     if (mimetype) {
-            //         if (ext.length === 2) {
-            //             mimetype = true
-            //             console.log('logo length', ext.length);
-            //         } else {
-            //             mimetype = false;
-            //         }
-            //     }
-
-            // }
-
-            var extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-            console.log('mim');
-            console.log(file.mimetype);
-            console.log('extname');
-            console.log(extname);
-            console.log("here");
-            if (mimetype) {
-                console.log("validated");
-                fileUploaded = true;
-                return callback(null, true);
-
-            } else {
-                callback("Error: File upload only supports the following filetypes - " + filetypes);
-            }
-        }
 
         var upload = multer({
             // fileFilter: fileFilter,
