@@ -3531,58 +3531,6 @@ router.post('/upload', function (req, res) {
     }
 });
 
-/** Upload Apk Admin Panel **/
-// router.post('/upload', function (req, res) {
-//     res.setHeader('Content-Type', 'multipart/form-data');
-
-//     var verify = verifyToken(req, res);
-
-//     if (verify.status == true) {
-//         var storage = multer.diskStorage({
-//             destination: function (req, file, callback) {
-//                 callback(null, './uploads');
-//             },
-//             filename: function (req, file, callback) {
-//                 console.log("file.fieldname", file.filename);
-//                 if (file.fieldname == "logo") {
-//                     callback(null, file.fieldname + '-' + Date.now() + '.jpg');
-//                 }
-//                 if (file.fieldname == "apk") {
-
-//                     callback(null, file.fieldname + '-' + Date.now() + '.apk');
-//                 }
-
-//             }
-//         });
-
-//         var upload = multer({ storage: storage }).fields([{ name: 'logo', maxCount: 1 }, { name: 'apk', maxCount: 1 }]);
-
-//         upload(req, res, function (err) {
-
-//             if (err) {
-//                 return res.end("Error uploading file.");
-//             } else {
-
-
-//                 var fname = req.files.logo;
-//                 var faname = req.files.apk;
-
-
-//                 sql.query("insert into apk_details (app_name,logo,apk,created) values ('" + req.body.name + "' , '" + fname[0].filename + "' , '" + faname[0].filename + "', NOW())", function (err, rslts) {
-
-//                     if (err) throw err;
-//                     data = {
-//                         "status": true,
-//                         "msg": "Apk is uploaded"
-
-//                     };
-//                     res.send(data);
-//                 });
-//             }
-//         });
-//     }
-// });
-
 
 /** Get Apk List Admin Panel **/
 
