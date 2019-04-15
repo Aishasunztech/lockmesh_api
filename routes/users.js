@@ -30,7 +30,7 @@ const device_helpers = require('../helper/device_helpers.js');
 const ADMIN = "admin";
 const DEALER = "dealer";
 const SDEALER = "sdealer";
-let usr_acc_query_text = "usr_acc.id,usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name"
+let usr_acc_query_text = "usr_acc.id,usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,del_status"
 // var CryptoJS = require("crypto-js");
 // var io = require("../bin/www");
 
@@ -98,6 +98,7 @@ var verifyToken = function (req, res) {
     }
     return ath;
 }
+
 
 
 /* GET users listing. */
@@ -413,7 +414,7 @@ router.get('/devices', async function (req, res) {
 
         // console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 ' + where_con + ' order by devices.id DESC');
         // sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id where usr_acc.transfer_status = 0 ' + where_con + ' order by devices.id DESC', function (error, results, fields) {
-        sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 ' + where_con + ' order by devices.id DESC', async function (error, results, fields) {
+        sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0' + where_con + ' order by devices.id DESC', async function (error, results, fields) {
 
             if (error) throw error;
             for (var i = 0; i < results.length; i++) {
@@ -2564,6 +2565,62 @@ router.get('default_apps', function (req, res) {
     }
 })
 
+
+router.put('/deleteUnlinkDevice', async function (req, res) {
+    try {
+        var verify = verifyToken(req, res);
+        if (verify.status !== undefined && verify.status == true) {
+            let insertError = 0;
+            let NotDeleted = [];
+            let deletedDevices = [];
+           
+          //  console.log('data for delte ', req.body.devices);
+            for (let device of req.body.devices) {
+                let statusChangeQuery = "UPDATE usr_acc SET del_status='" + 1 + "' WHERE device_id='" + device.usr_device_id + "'";
+                console.log(statusChangeQuery);
+                console.log('devie is ', device);
+              let resp = await sql.query(statusChangeQuery)
+                
+                    console.log('response query is', resp);
+                    if (resp.affectedRows) {
+                        deletedDevices.push(device.usr_device_id);
+                        console.log('status Updated');
+                      await device_helpers.saveActionHistory(device, Constants.UNLINK_DEVICE_DELETE);
+
+                    }
+                    else {
+                        insertError += 1;
+                        NotDeleted.push(device.device_id)
+                    }
+            }
+            console.log('eror', insertError);
+            console.log('delte degicve', deletedDevices);
+            if (insertError === 0) {
+                data = {
+                    'status': true,
+                    'msg': 'Deleted Successfully',
+                    'data': deletedDevices
+                }
+                res.send(data);
+            }
+            else{
+                
+                data={
+                    'status': false,
+                    'msg': NotDeleted.toString() + ' Not Deleted, Try Again!'
+                }
+                res.send(data);
+            }
+        }
+
+
+    } catch (error) {
+        throw Error(error.message);
+    }
+})
+
+
+
 router.post('/apply_settings/:device_id', async function (req, res) {
     try {
         var verify = verifyToken(req, res);
@@ -2591,6 +2648,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
             }
 
             if (type === 'profile') {
+                console.log('action type', type);
                 var query = "select id from usr_acc_profile where profile_name = '" + name + "'";
                 let result = await sql.query(query);
 
@@ -2616,6 +2674,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
                         };
                         res.send(data);
                     });
+
                 } else {
                     data = {
                         "status": false,
@@ -2624,6 +2683,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
                     res.send(data);
                 }
             } else if (type === 'policy') {
+                console.log('action type polocy', type);
                 var query = "select id from policy where policy_name = '" + name + "'";
                 let result = await sql.query(query);
 
@@ -2633,7 +2693,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
                     // console.log(applyQuery);
 
                     await sql.query(applyQuery, async function (err, rslts) {
-
+                        if (err) throw err;
                         // if (type == "history") {
                         //     let isOnline = await device_helpers.isDeviceOnline(device_id);
                         //     // console.log("isOnline: " + isOnline);
@@ -2641,6 +2701,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
                         //         require("../bin/www").sendEmit(app_list, passwords, controls, device_id);
                         //     }
                         // }
+                        console.log('resluts id ', rslts);
                         if (rslts.affectedRows) {
                             data = {
                                 "status": true,
