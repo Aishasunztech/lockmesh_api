@@ -427,7 +427,7 @@ router.get('/devices', async function (req, res) {
             // console.log(Object.keys(finalResult[0]));
             // console.log(Object.values(finalResult[0]));
             // let data123 = await helpers.getAllRecordbyDeviceId('UHLZ092101')
-            // device_helpers.SaveActionHistory(finalResult[1], Constants.DEVICE_UNLINKED)
+            // device_helpers.saveActionHistory(finalResult[1], Constants.DEVICE_UNLINKED)
             // console.log("return data", data123);
             // console.log("Here is data",await helpers.getAllRecordbyDeviceId(finalResult[0].id));
             // device_helpers.getQueryOfInsert(finalResult[0])
@@ -1485,7 +1485,7 @@ router.post('/unlink/:id', async function (req, res) {
                         "msg": "Device not unlinked."
                     }
                 } else {
-                    device_helpers.SaveActionHistory(req.body.device, Constants.DEVICE_UNLINKED)
+                    device_helpers.saveActionHistory(req.body.device, Constants.DEVICE_UNLINKED)
                     require("../bin/www").sendDeviceStatus(device_id, "unlinked", true);
                     data = {
                         "status": true,
@@ -1549,7 +1549,7 @@ router.post('/suspend/:id', async function (req, res) {
                                     "status": true,
                                     "msg": "Account suspended successfully."
                                 }
-
+                                device_helpers.saveActionHistory(resquery[0], Constants.DEVICE_SUSPENDED)
                                 require("../bin/www").sendDeviceStatus(gtres[0].device_id, "suspended");
 
 
@@ -1596,7 +1596,7 @@ router.post('/suspend/:id', async function (req, res) {
                                         "status": true,
                                         "msg": "Account suspended successfully."
                                     }
-
+                                    device_helpers.saveActionHistory(resquery[0], Constants.DEVICE_SUSPENDED)
                                     res.send(data);
                                 }
                             })
@@ -1687,7 +1687,7 @@ router.post('/UnflagDevice/:id', async function (req, res) {
     if (verify.status !== undefined && verify.status == true) {
 
         if (!empty(device_id)) {
-            var sql1 = "update devices set flagged= '' where id='" + device_id + "'";
+            var sql1 = "update devices set flagged= '' where device_id='" + device_id + "'";
             var rest = sql.query(sql1, async function (error, results) {
                 if (error) throw error;
                 else if (results.affectedRows == 0) {
@@ -1697,7 +1697,7 @@ router.post('/UnflagDevice/:id', async function (req, res) {
                     }
                     res.send(data);
                 } else {
-                    await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
+                    await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.device_id= "' + device_id + '"', async function (error, resquery, fields) {
                         if (error) throw error;
                         console.log('lolo else', resquery[0])
 
@@ -1708,11 +1708,12 @@ router.post('/UnflagDevice/:id', async function (req, res) {
                             resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                             // dealerData = await getDealerdata(res[i]);
                             data = {
-                                "data": resquery[0],
+                                // "data": resquery[0],
                                 "status": true,
                                 "msg": "Device Unflagged successfully."
                             }
                         }
+                        device_helpers.saveActionHistory(resquery[0], Constants.DEVICE_UNFLAGGED)
                         res.send(data);
                     })
 
@@ -1747,37 +1748,35 @@ router.post('/flagDevice/:id', async function (req, res) {
                 await sql.query(sql1)
                 var sql1 = "update usr_acc set account_status='suspended' where device_id = '" + device_id + "'";
 
-                var rest = sql.query(sql1, async function (error, results) {
-                    if (error) throw error;
-                    if (results.affectedRows == 0) {
-                        data = {
-                            "status": false,
-                            "msg": "Device not Flagged.Please try again."
-                        }
-                    } else {
-                        require("../bin/www").sendDeviceStatus(gtres[0].device_id, "suspended");
-
-                        sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
-                            if (error) throw error;
-                            console.log('lolo else', resquery[0])
-
-                            if (resquery.length) {
-                                resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
-                                resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
-                                resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
-                                resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
-                                // dealerData = await getDealerdata(res[i]);
-                                data = {
-                                    "data": resquery[0],
-                                    "status": true,
-                                    "msg": "Device Falgged successfully."
-                                }
-
-                                res.send(data);
-                            }
-                        })
+                let results = await sql.query(sql1)
+                if (results.affectedRows == 0) {
+                    data = {
+                        "status": false,
+                        "msg": "Device not Flagged.Please try again."
                     }
-                });
+                } else {
+                    require("../bin/www").sendDeviceStatus(gtres[0].device_id, "suspended");
+
+                    let resquery = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"')
+                    // console.log('lolo else', resquery)
+                    // console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"');
+                    if (resquery.length) {
+                        resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
+                        resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
+                        resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
+                        resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
+                        // dealerData = await getDealerdata(res[i]);
+                        device_helpers.saveActionHistory(resquery[0], Constants.DEVICE_FLAGGED)
+                        // console.log(resquery[0]);
+                        data = {
+                            "data": resquery[0],
+                            "status": true,
+                            "msg": "Device Flagged successfully."
+                        }
+
+                        res.send(data);
+                    }
+                }
 
             } else {
                 data = {
@@ -1838,7 +1837,7 @@ router.post('/activate/:id', async function (req, res) {
                                     "status": true,
                                     "msg": "Device activated successfully."
                                 }
-
+                                device_helpers.saveActionHistory(resquery[0], Constants.DEVICE_ACTIVATED)
                                 res.send(data);
 
                             }
@@ -1878,7 +1877,7 @@ router.post('/activate/:id', async function (req, res) {
                                         "status": true,
                                         "msg": "Device activated successfully."
                                     }
-
+                                    device_helpers.saveActionHistory(resquery[0], Constants.DEVICE_ACTIVATED)
                                     res.send(data);
 
                                 }
