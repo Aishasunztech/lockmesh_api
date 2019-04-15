@@ -369,56 +369,6 @@ router.post('/check_component', async function (req, res) {
 
 /** is_admin **/
 
-router.get('/get_user', async function (req, res) {
-    res.setHeader('Content-Type', 'application/json');
-
-    var verify = verifyToken(req, res);
-    try {
-        if (verify['status'] !== undefined && verify.status == true) {
-
-            var userId = verify.user.id;
-
-            let query = "select * from dealers where dealer_id =" + userId;
-            let user = await sql.query(query);
-
-            if (user.length) {
-
-                const usr = {
-                    "id": user[0].dealer_id,
-                    "dealer_id": user[0].dealer_id,
-                    "email": user[0].dealer_email,
-                    "lastName": user[0].last_name,
-                    "name": user[0].dealer_name,
-                    "firstName": user[0].first_name,
-                    "dealer_name": user[0].dealer_name,
-                    "dealer_email": user[0].dealer_email,
-                    "link_code": user[0].link_code,
-                    "connected_dealer": user[0].connected_dealer,
-                    "account_status": user[0].account_status,
-                    "user_type": verify.user.user_type,
-                    "created": user[0].created,
-                    "modified": user[0].modified,
-                }
-
-                res.json({
-                    'status': true,
-                    'msg': '',
-                    user: usr
-                });
-            } else {
-                res.send({
-                    status: false,
-                    msg: "authentication failed"
-                });
-            }
-            // var result = await helpers.isAllowedComponentByName(componentName, userId);
-
-        }
-    } catch (error) {
-        console.log(error);
-    }
-});
-
 
 /**GET all the devices**/
 router.get('/devices', async function (req, res) {
