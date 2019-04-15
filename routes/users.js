@@ -3891,15 +3891,15 @@ router.post('/check_pass', async function (req, res) {
 cron.schedule('0 0 0 * * *', async () => {
     var tod_dat = datetime.create();
     var formatted_dt = tod_dat.format('Y-m-d H:M:S');
-    var sqll = "select * from devices where device_status = 1";
-    var results = await sql.query(sqll);
+    var userAccQ = "select * from usr_acc where device_status = 1";
+    var results = await sql.query(userAccQ);
 
     for (var i = 0; i < results.length; i++) {
 
-        if (formatted_dt == results[i].expiry_date || formatted_dt > results[i].expiry_date) {
-            var update_sqll = "update devices set status = 'expired' where device_id ='" + results[i].device_id + "'";
+        if (formatted_dt >= results[i].expiry_date) {
+            var updateUsrAcc = "update usr_acc set status = 'expired' where device_id ='" + results[i].device_id + "'";
 
-            sql.query(update_sqll, function (error, results) {
+            sql.query(updateUsrAcc, function (error, results) {
                 if (error) throw error;
                 if (results.affectedRows == 0) {
                     console.log('not done');
