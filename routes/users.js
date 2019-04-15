@@ -3890,7 +3890,7 @@ router.post('/check_pass', async function (req, res) {
 /** Cron for expiry date **/
 cron.schedule('0 0 0 * * *', async () => {
     var tod_dat = datetime.create();
-    var formatted_dt = tod_dat.format('Y-m-d H:M:S');
+    var formatted_dt = tod_dat.format('Y/m/d');
     var userAccQ = "select * from usr_acc where device_status = 1";
     var results = await sql.query(userAccQ);
 
