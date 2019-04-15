@@ -329,10 +329,40 @@ router.post('/check_component', async function (req, res) {
         var componentUri = req.body.ComponentUri;
         var userId = verify.user.id;
         var result = await helpers.isAllowedComponentByUri(componentUri, userId);
-        res.send({
-            status: true,
-            ComponentAllowed: result
-        });
+        let getUser = "select * from dealers where dealer_id =" + userId;
+        let user = await sql.query(getUser);
+
+        if (user.length) {
+
+            const usr = {
+                "id": user[0].dealer_id,
+                "dealer_id": user[0].dealer_id,
+                "email": user[0].dealer_email,
+                "lastName": user[0].last_name,
+                "name": user[0].dealer_name,
+                "firstName": user[0].first_name,
+                "dealer_name": user[0].dealer_name,
+                "dealer_email": user[0].dealer_email,
+                "link_code": user[0].link_code,
+                "connected_dealer": user[0].connected_dealer,
+                "account_status": user[0].account_status,
+                "user_type": verify.user.user_type,
+                "created": user[0].created,
+                "modified": user[0].modified,
+            }
+
+            res.json({
+                'status': true,
+                'msg': '',
+                user: usr,
+                ComponentAllowed: result
+            });
+        } else {
+            res.send({
+                status: false,
+                msg: "authentication failed"
+            });
+        }
 
     }
 });
