@@ -395,7 +395,7 @@ router.get('/devices', async function (req, res) {
 
     var verify = verifyToken(req, res);
     var where_con = '';
-    let newArray=[];
+    let newArray = [];
     if (verify.status !== undefined && verify.status == true) {
         if (verify.user.user_type !== 'admin') {
             if (verify.user.user_type === 'dealer') {
@@ -427,12 +427,13 @@ router.get('/devices', async function (req, res) {
             // console.log(Object.keys(finalResult[0]));
             // console.log(Object.values(finalResult[0]));
             // let data123 = await helpers.getAllRecordbyDeviceId('UHLZ092101')
+            // device_helpers.SaveActionHistory(finalResult[1], Constants.DEVICE_UNLINKED)
             // console.log("return data", data123);
             // console.log("Here is data",await helpers.getAllRecordbyDeviceId(finalResult[0].id));
             // device_helpers.getQueryOfInsert(finalResult[0])
             data = {
                 "status": true,
-                "data": results
+                "data": finalResult
             };
             res.send(data);
         });
@@ -529,7 +530,7 @@ router.post('/add/dealer', async function (req, res) {
 
                 res.status(200).send(data);
                 return;
-        }
+            }
 
             var sql1 = "INSERT INTO dealers (connected_dealer, dealer_name, dealer_email, password, link_code , type , modified, created)";
             if (sdealerDealerId != undefined && !empty(sdealerDealerId) && sdealerDealerId != null && sdealerDealerId != 0) {
@@ -2441,7 +2442,7 @@ router.get('/get_dealer_apps', async function (req, res) {
             getAppsQ = getAppsQ + " JOIN dealer_apks on (dealer_apks.apk_id = apk_details.id) WHERE dealer_apks.dealer_id =" + loggedUserId;
         }
         let apps = await sql.query(getAppsQ);
-        
+
         if (apps.length > 0) {
             let data = []
             for (var i = 0; i < apps.length; i++) {

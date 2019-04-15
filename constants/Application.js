@@ -12,6 +12,6 @@ module.exports = {
     DEVICE_UNLINKED: "Unlinked",
     DEVICE_PENDING_ACTIVATION: "Pending activation",
     DEVICE_PRE_ACTIVATION: "Pre-activated",
-
+    UNLINK_DEVICE_DELETE: "Delete"
 
 }
