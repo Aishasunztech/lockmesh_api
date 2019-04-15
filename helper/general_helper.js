@@ -6,6 +6,8 @@ var datetime = require('node-datetime');
 // import ADMIN from "../constants/Application";
 var moment = require('moment-strftime');
 var Constants = require('../constants/Application');
+let usr_acc_query_text = "usr_acc.id,usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name"
+const device_helpers = require('./device_helpers');
 module.exports = {
 	isAdmin: async function (userId) {
 		var query1 = "SELECT type FROM dealers where dealer_id =" + userId;
@@ -44,7 +46,7 @@ module.exports = {
 		var user = await sql.query(query1);
 		if (user.length) {
 			return user[0].type;
-			
+
 		} else {
 			return false;
 		}
@@ -62,11 +64,11 @@ module.exports = {
 	getDealerTypeIdByName: async function (dealerType) {
 		var query = "SELECT * FROM user_roles where role ='" + dealerType + "' and role!='admin'";
 		var dType = await sql.query(query);
-		if(dType.length){
+		if (dType.length) {
 			return dType[0].id;
 		}
 	},
-	
+
 	getAllUserTypes: async function () {
 		var query = "SELECT * FROM user_roles";
 		var userRoles = await sql.query(query);
@@ -96,7 +98,7 @@ module.exports = {
 	getComponentIdByUri: async function (componentUri) {
 		// console.log(componentUri);
 
-		if(componentUri.includes("/connect-device/")){
+		if (componentUri.includes("/connect-device/")) {
 			componentUri = "/connect-device/:deviceId";
 		}
 		// console.log(componentUri);
@@ -169,11 +171,11 @@ module.exports = {
 		}
 		//var component = await sql.query("SELECT * FROM acl_modules where id ="+ componentId);
 	},
-	dealerCount:async (adminRoleId) => {
-		
+	dealerCount: async (adminRoleId) => {
+
 		var query = "SELECT COUNT(*) as dealer_count FROM dealers WHERE type !=" + adminRoleId;
 		let res = await sql.query(query);
-		if(res.length){
+		if (res.length) {
 			return res[0].dealer_count;
 		} else {
 			return false;
@@ -190,7 +192,7 @@ module.exports = {
 			// console.log("hello hello hello");
 			// console.log(component);
 
-			if(component.login_required==0){
+			if (component.login_required == 0) {
 				return true;
 			}
 
@@ -248,19 +250,19 @@ module.exports = {
 
 		return deviceId;
 	},
-    checkLinkCode: async function (link_code) {
+	checkLinkCode: async function (link_code) {
 
-        let query = "select dealer_id from dealers where link_code = '" + link_code + "';"
-        let result = await sql.query(query);
-        if (result.length > 1) {
-            link_code = randomize('0', 6);
-            this.checkLinkCode(link_code);
-        } else {
-            return link_code;
-        }
+		let query = "select dealer_id from dealers where link_code = '" + link_code + "';"
+		let result = await sql.query(query);
+		if (result.length > 1) {
+			link_code = randomize('0', 6);
+			this.checkLinkCode(link_code);
+		} else {
+			return link_code;
+		}
 	},
-	getExpDateByMonth: function (currentDate,expiryMonth){
-		return moment(currentDate, "YYYY-MM-DD").add(expiryMonth,'M').strftime("%Y/%m/%d");	
+	getExpDateByMonth: function (currentDate, expiryMonth) {
+		return moment(currentDate, "YYYY-MM-DD").add(expiryMonth, 'M').strftime("%Y/%m/%d");
 	},
 	checkDeviceId: async (device_id) => {
 
@@ -278,14 +280,14 @@ module.exports = {
 		return re.test(String(email).toLowerCase());
 	},
 	checkNullStatus: (userAcc) => {
-		if(userAcc.status === '' || userAcc.status===null){
+		if (userAcc.status === '' || userAcc.status === null) {
 			return true;
 		} else {
 			return false;
 		}
 	},
 	checkNullUserAccountStatus: (userAcc) => {
-		if(userAcc.account_status === '' || userAcc.account_status===null){
+		if (userAcc.account_status === '' || userAcc.account_status === null) {
 			return true;
 		} else {
 			return false;
@@ -293,23 +295,64 @@ module.exports = {
 	},
 	getDealerStatus: (dealer) => {
 		if ((dealer.account_status === '' || dealer.account_status === null) && (dealer.unlink_status === 0)) {
-            return Constants.DEALER_ACTIVE;
-        } else if (dealer.unlink_status === 1) {
-            return Constants.DEALER_UNLINKED;
-        } else if (dealer.account_status === 'suspended') {
-            return Constants.DEALER_SUSPENDED;
-        } else {
-            return 'N/A';
-        }
+			return Constants.DEALER_ACTIVE;
+		} else if (dealer.unlink_status === 1) {
+			return Constants.DEALER_UNLINKED;
+		} else if (dealer.account_status === 'suspended') {
+			return Constants.DEALER_SUSPENDED;
+		} else {
+			return 'N/A';
+		}
 	},
 	getuserTypeIdByName: async function (userType) {
 		console.log(userType);
 		var query = "SELECT * FROM user_roles where role ='" + userType + "'";
 		var dType = await sql.query(query);
-		if(dType.length){
+		if (dType.length) {
 			return dType[0].id;
 		} else {
 			return false;
-		} 
+		}
 	},
+	getAllRecordbyDeviceId: async function (device_id) {
+		// console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.id = ' + device_id)
+		let results = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE devices.device_id = "' + device_id + '"');
+		if (results.length) {
+			results[0].finalStatus = device_helpers.checkStatus(results[0])
+			results[0].pgp_email = await device_helpers.getPgpEmails(results[0])
+			results[0].sim_id = await device_helpers.getSimids(results[0])
+			results[0].chat_id = await device_helpers.getChatids(results[0])
+			return results[0]
+		}
+		else {
+			return [];
+		}
+	},
+	getPackageName: async function(apkBlobAsByteArray) {
+		// Unzipping zip blob
+		var zip = new JSZip(apkBlobAsByteArray);
+
+		// Getting AndroidManifest.xml and decompress it
+		var androidCompress = zip.files['AndroidManifest.xml'];
+		var androidNonCompress = androidCompress._data.getContent();
+
+		// Reading to content to a searchable string
+		var packageNameArray = [];
+		var textArray = String(androidNonCompress).split(',');
+		for (var i = 0, len = textArray.length; i < len; i++) {
+			if (textArray[i] !== 0) {
+				packageNameArray.push(textArray[i]);
+			}
+		}
+
+		// Searching for package name
+		var startPattern = 'manifest';
+		var androidText = String.fromCharCode.apply(null, packageNameArray).toString().toLowerCase();
+		var packageName = androidText.substring(androidText.indexOf(startPattern) +
+			startPattern.length, androidText.indexOf('uses'));
+		// Remove version from package name
+		packageName = packageName.substring(0, packageName.indexOf(packageName.match(/\d+/)[0]));
+
+		return packageName;
+	}
 }
