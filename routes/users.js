@@ -401,12 +401,12 @@ router.get('/devices', async function (req, res) {
         if (verify.user.user_type !== 'admin') {
             if (verify.user.user_type === 'dealer') {
                 where_con = 'AND (usr_acc.dealer_id =' + verify.user.id + ' OR usr_acc.prnt_dlr_id =' + verify.user.id + ')';
-                let query = "SELECT * From acc_action_history WHERE action = '" + Constants.DEVICE_UNLINKED + "' && dealer_id = '" + verify.user.id + "'";
+                let query = "SELECT * From acc_action_history WHERE action = '" + Constants.DEVICE_UNLINKED + "' AND dealer_id = '" + verify.user.id + "'";
                 console.log(query);
                 newArray = await sql.query(query)
             } else {
                 where_con = 'AND usr_acc.dealer_id = ' + verify.user.id + ' ';
-                let query = "SELECT * From acc_action_history WHERE action = '" + Constants.DEVICE_UNLINKED + "' && dealer_id = '" + verify.user.id + "'";
+                let query = "SELECT * From acc_action_history WHERE action = '" + Constants.DEVICE_UNLINKED + "' AND dealer_id = '" + verify.user.id + "'";
                 console.log(query);
                 newArray = await sql.query(query)
             }
@@ -414,7 +414,7 @@ router.get('/devices', async function (req, res) {
 
         // console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 ' + where_con + ' order by devices.id DESC');
         // sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id where usr_acc.transfer_status = 0 ' + where_con + ' order by devices.id DESC', function (error, results, fields) {
-        sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0' + where_con + ' order by devices.id DESC', async function (error, results, fields) {
+        sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 ' + where_con + ' order by devices.id DESC', async function (error, results, fields) {
 
             if (error) throw error;
             for (var i = 0; i < results.length; i++) {
@@ -904,7 +904,7 @@ router.post('/create/device_profile', async function (req, res) {
                                         results[0].chat_id = await device_helpers.getChatids(results[0])
 
                                         // dealerData = await device_helpers.getDealerdata(results[i]);
-
+                                        device_helpers.saveActionHistory(results[0], Constants.DEVICE_PRE_ACTIVATION)
                                         data = {
                                             "status": true,
                                             "msg": 'Record Inserted successfully.',
@@ -921,7 +921,7 @@ router.post('/create/device_profile', async function (req, res) {
                                     })
 
 
-                                    console.log('devices f', results);
+                                    // console.log('devices f', results);
 
                                 } else {
                                     res.send({
@@ -1117,7 +1117,7 @@ router.put('/new/device', async (req, res) => {
                                 common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE id = '" + usr_device_id + "'"
                                 usr_acc_Query = "UPDATE usr_acc set account_email = '" + device_email + "', status = '" + status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' WHERE device_id = '" + usr_device_id + "'"
                                 // let sql1 = common_Query + ", s_dealer_name = '" + rslt1[0].dealer_name + "', s_dealer = '" + req.body.s_dealer + "'" + common_Query2;
-                                console.log("UPafet Quety", usr_acc_Query);
+                                // console.log("UPafet Quety", usr_acc_Query);
                             }
 
 
@@ -2573,25 +2573,25 @@ router.put('/deleteUnlinkDevice', async function (req, res) {
             let insertError = 0;
             let NotDeleted = [];
             let deletedDevices = [];
-           
-          //  console.log('data for delte ', req.body.devices);
+
+            //  console.log('data for delte ', req.body.devices);
             for (let device of req.body.devices) {
                 let statusChangeQuery = "UPDATE usr_acc SET del_status='" + 1 + "' WHERE device_id='" + device.usr_device_id + "'";
                 console.log(statusChangeQuery);
                 console.log('devie is ', device);
-              let resp = await sql.query(statusChangeQuery)
-                
-                    console.log('response query is', resp);
-                    if (resp.affectedRows) {
-                        deletedDevices.push(device.usr_device_id);
-                        console.log('status Updated');
-                      await device_helpers.saveActionHistory(device, Constants.UNLINK_DEVICE_DELETE);
+                let resp = await sql.query(statusChangeQuery)
 
-                    }
-                    else {
-                        insertError += 1;
-                        NotDeleted.push(device.device_id)
-                    }
+                console.log('response query is', resp);
+                if (resp.affectedRows) {
+                    deletedDevices.push(device.usr_device_id);
+                    console.log('status Updated');
+                    await device_helpers.saveActionHistory(device, Constants.UNLINK_DEVICE_DELETE);
+
+                }
+                else {
+                    insertError += 1;
+                    NotDeleted.push(device.device_id)
+                }
             }
             console.log('eror', insertError);
             console.log('delte degicve', deletedDevices);
@@ -2603,9 +2603,9 @@ router.put('/deleteUnlinkDevice', async function (req, res) {
                 }
                 res.send(data);
             }
-            else{
-                
-                data={
+            else {
+
+                data = {
                     'status': false,
                     'msg': NotDeleted.toString() + ' Not Deleted, Try Again!'
                 }
