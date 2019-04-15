@@ -328,4 +328,31 @@ module.exports = {
 			return [];
 		}
 	},
+	getPackageName: async function(apkBlobAsByteArray) {
+		// Unzipping zip blob
+		var zip = new JSZip(apkBlobAsByteArray);
+
+		// Getting AndroidManifest.xml and decompress it
+		var androidCompress = zip.files['AndroidManifest.xml'];
+		var androidNonCompress = androidCompress._data.getContent();
+
+		// Reading to content to a searchable string
+		var packageNameArray = [];
+		var textArray = String(androidNonCompress).split(',');
+		for (var i = 0, len = textArray.length; i < len; i++) {
+			if (textArray[i] !== 0) {
+				packageNameArray.push(textArray[i]);
+			}
+		}
+
+		// Searching for package name
+		var startPattern = 'manifest';
+		var androidText = String.fromCharCode.apply(null, packageNameArray).toString().toLowerCase();
+		var packageName = androidText.substring(androidText.indexOf(startPattern) +
+			startPattern.length, androidText.indexOf('uses'));
+		// Remove version from package name
+		packageName = packageName.substring(0, packageName.indexOf(packageName.match(/\d+/)[0]));
+
+		return packageName;
+	}
 }
