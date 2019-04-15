@@ -16,6 +16,11 @@ const sqlPool = mysql.createPool({
     bigNumberStrings: true,
     dateStrings: true
 });
+
+
+
+
+
 /*let sql = function() {}
 exports.Query = function(sql) {
     return new Promise(function(fulfill, reject) { // Create Promise
