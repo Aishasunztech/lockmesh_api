@@ -3417,6 +3417,8 @@ router.post('/addApk', function (req, res) {
 
     var verify = verifyToken(req, res);
     //  console.log('verify', verify.status);
+    let fileUploaded = false;
+
     let filename = "";
     if (verify.status !== undefined && verify.status == true) {
         var storage = multer.diskStorage({
@@ -3425,27 +3427,24 @@ router.post('/addApk', function (req, res) {
             },
 
             filename: function (req, file, callback) {
-                console.log("file.fieldname", file.fieldname);
+                let mimetype = file.mimetype;
+                console.log("mimetype", mimetype);
+                
                 if (file.fieldname == "logo") {
+                    fileUploaded = true;
                     filename = file.fieldname + '-' + Date.now() + '.jpg';
                     callback(null, file.fieldname + '-' + Date.now() + '.jpg');
-                } else if (file.fieldname == "apk") {
+                } else if (file.fieldname === "apk" && mimetype === "application/vnd.android.package-archive") {
+                    fileUploaded = true;
                     filename = file.fieldname + '-' + Date.now() + '.apk';
                     callback(null, file.fieldname + '-' + Date.now() + '.apk');
                 } else {
-                    // console.log("pkgName",helpers.getPackageName(file));
-
-                    filename = file.fieldname + '-' + Date.now() + '.apk';
-                    callback(null, file.fieldname + '-' + Date.now() + '.apk');
+                    callback("file not supported");
                 }
-                console.log('file name', filename)
             }
         });
-        let fileUploaded = false;
-
-
+        
         var upload = multer({
-            // fileFilter: fileFilter,
             storage: storage,
             limits: { fileSize: "50mb" }
         }).fields([{
@@ -3457,28 +3456,25 @@ router.post('/addApk', function (req, res) {
         }]);
 
         upload(req, res, function (err) {
-            console.log("error", err);
-            // console.log("fileUploaded:" + fileUploaded);
-            // if (err) {
-            //     return res.end("Error while Uploading");
-            // } else {
+            if (err) {
+                return res.end("Error while Uploading");
+            } 
 
-            // if (fileUploaded) {
-
-            // } else {
-            //     data = {
-            //         "status": false,
-            //         "msg": "Error while Uploading",
-            //     };
-            // }
-            data = {
-                "status": true,
-                "msg": 'Uploaded Successfully',
-                "fileName": filename
-            };
+            if (fileUploaded) {
+                data = {
+                    "status": true,
+                    "msg": 'Uploaded Successfully',
+                    "fileName": filename
+                };
+            } else {
+                data = {
+                    "status": false,
+                    "msg": "Error while Uploading",
+                };
+            }
+            
             res.send(data);
 
-            // }
         });
     }
 });
