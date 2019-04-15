@@ -176,6 +176,8 @@ router.post('/login', async function (req, res) {
                     return;
                 } else {
                     var userType = await helpers.getUserType(users[0].dealer_id);
+                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].dealer_id + "'");
+
                     console.log('object data is ', users[0]);
                     const user = {
                         "id": users[0].dealer_id,
@@ -188,6 +190,7 @@ router.post('/login', async function (req, res) {
                         "dealer_email": users[0].dealer_email,
                         "link_code": users[0].link_code,
                         "connected_dealer": users[0].connected_dealer,
+                        "connected_devices": get_connected_devices,
                         "account_status": users[0].account_status,
                         "user_type": userType,
                         "created": users[0].created,
