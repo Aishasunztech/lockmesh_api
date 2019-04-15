@@ -6,14 +6,21 @@ const sqlPool = mysql.createPool({
     //connectTimeout: 60 * 60 * 1000,
     //aquireTimeout: 60 * 60 * 1000,
     //timeout: 60 * 60 * 1000,
-    host: '142.93.102.239',
+   // host: '142.93.102.239',
+   host: 'localhost',
     user: 'root',
-    password: 'DAtabase$435$',
+    password: '',
+   // password: 'DAtabase$435$',
     database: 'lockmesh_db',
     supportBigNumbers: true,
     bigNumberStrings: true,
     dateStrings: true
 });
+
+
+
+
+
 /*let sql = function() {}
 exports.Query = function(sql) {
     return new Promise(function(fulfill, reject) { // Create Promise
