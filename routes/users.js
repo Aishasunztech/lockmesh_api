@@ -2596,7 +2596,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
 
                 if (result.length == 0 || name == '') {
                     var applyQuery = "insert into usr_acc_profile (profile_name, user_acc_id, app_list, setting, controls,passwords, type) values ('" + name + "', " + usr_acc_id + ",'" + app_list + "', null, '" + controls + "', '" + passwords + "', '" + type + "')";
-                    console.log('query insert', applyQuery);
+                    // console.log('query insert', applyQuery);
                     // console.log(applyQuery);
 
                     await sql.query(applyQuery, async function (err, rslts) {
