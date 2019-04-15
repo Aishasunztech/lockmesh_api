@@ -395,7 +395,7 @@ router.get('/devices', async function (req, res) {
 
     var verify = verifyToken(req, res);
     var where_con = '';
-
+    let newArray=[];
     if (verify.status !== undefined && verify.status == true) {
         if (verify.user.user_type !== 'admin') {
             if (verify.user.user_type === 'dealer') {
