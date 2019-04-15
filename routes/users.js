@@ -333,65 +333,45 @@ router.post('/check_component', async function (req, res) {
         var componentUri = req.body.ComponentUri;
         var userId = verify.user.id;
         var result = await helpers.isAllowedComponentByUri(componentUri, userId);
-        res.send({
-            status: true,
-            ComponentAllowed: result
-        });
+        let getUser = "select * from dealers where dealer_id =" + userId;
+        let user = await sql.query(getUser);
+
+        if (user.length) {
+
+            const usr = {
+                "id": user[0].dealer_id,
+                "dealer_id": user[0].dealer_id,
+                "email": user[0].dealer_email,
+                "lastName": user[0].last_name,
+                "name": user[0].dealer_name,
+                "firstName": user[0].first_name,
+                "dealer_name": user[0].dealer_name,
+                "dealer_email": user[0].dealer_email,
+                "link_code": user[0].link_code,
+                "connected_dealer": user[0].connected_dealer,
+                "account_status": user[0].account_status,
+                "user_type": verify.user.user_type,
+                "created": user[0].created,
+                "modified": user[0].modified,
+            }
+
+            res.json({
+                'status': true,
+                'msg': '',
+                user: usr,
+                ComponentAllowed: result
+            });
+        } else {
+            res.send({
+                status: false,
+                msg: "authentication failed"
+            });
+        }
 
     }
 });
 
 /** is_admin **/
-
-router.get('/get_user', async function (req, res) {
-    res.setHeader('Content-Type', 'application/json');
-
-    var verify = verifyToken(req, res);
-    try {
-        if (verify['status'] !== undefined && verify.status == true) {
-
-            var userId = verify.user.id;
-
-            let query = "select * from dealers where dealer_id =" + userId;
-            let user = await sql.query(query);
-
-            if (user.length) {
-
-                const usr = {
-                    "id": user[0].dealer_id,
-                    "dealer_id": user[0].dealer_id,
-                    "email": user[0].dealer_email,
-                    "lastName": user[0].last_name,
-                    "name": user[0].dealer_name,
-                    "firstName": user[0].first_name,
-                    "dealer_name": user[0].dealer_name,
-                    "dealer_email": user[0].dealer_email,
-                    "link_code": user[0].link_code,
-                    "connected_dealer": user[0].connected_dealer,
-                    "account_status": user[0].account_status,
-                    "user_type": verify.user.user_type,
-                    "created": user[0].created,
-                    "modified": user[0].modified,
-                }
-
-                res.json({
-                    'status': true,
-                    'msg': '',
-                    user: usr
-                });
-            } else {
-                res.send({
-                    status: false,
-                    msg: "authentication failed"
-                });
-            }
-            // var result = await helpers.isAllowedComponentByName(componentName, userId);
-
-        }
-    } catch (error) {
-        console.log(error);
-    }
-});
 
 
 /**GET all the devices**/
@@ -2657,7 +2637,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
 
                 if (result.length == 0 || name == '') {
                     var applyQuery = "insert into usr_acc_profile (profile_name, user_acc_id, app_list, setting, controls,passwords, type) values ('" + name + "', " + usr_acc_id + ",'" + app_list + "', null, '" + controls + "', '" + passwords + "', '" + type + "')";
-                    console.log('query insert', applyQuery);
+                    // console.log('query insert', applyQuery);
                     // console.log(applyQuery);
 
                     await sql.query(applyQuery, async function (err, rslts) {
@@ -3501,6 +3481,8 @@ router.post('/addApk', function (req, res) {
 
     var verify = verifyToken(req, res);
     //  console.log('verify', verify.status);
+    let fileUploaded = false;
+
     let filename = "";
     if (verify.status !== undefined && verify.status == true) {
         var storage = multer.diskStorage({
@@ -3509,27 +3491,24 @@ router.post('/addApk', function (req, res) {
             },
 
             filename: function (req, file, callback) {
-                console.log("file.fieldname", file.fieldname);
+                let mimetype = file.mimetype;
+                console.log("mimetype", mimetype);
+                
                 if (file.fieldname == "logo") {
+                    fileUploaded = true;
                     filename = file.fieldname + '-' + Date.now() + '.jpg';
                     callback(null, file.fieldname + '-' + Date.now() + '.jpg');
-                } else if (file.fieldname == "apk") {
+                } else if (file.fieldname === "apk" && mimetype === "application/vnd.android.package-archive") {
+                    fileUploaded = true;
                     filename = file.fieldname + '-' + Date.now() + '.apk';
                     callback(null, file.fieldname + '-' + Date.now() + '.apk');
                 } else {
-                    // console.log("pkgName",helpers.getPackageName(file));
-
-                    filename = file.fieldname + '-' + Date.now() + '.apk';
-                    callback(null, file.fieldname + '-' + Date.now() + '.apk');
+                    callback("file not supported");
                 }
-                console.log('file name', filename)
             }
         });
-        let fileUploaded = false;
-
-
+        
         var upload = multer({
-            // fileFilter: fileFilter,
             storage: storage,
             limits: { fileSize: "50mb" }
         }).fields([{
@@ -3541,28 +3520,25 @@ router.post('/addApk', function (req, res) {
         }]);
 
         upload(req, res, function (err) {
-            console.log("error", err);
-            // console.log("fileUploaded:" + fileUploaded);
-            // if (err) {
-            //     return res.end("Error while Uploading");
-            // } else {
+            if (err) {
+                return res.end("Error while Uploading");
+            } 
 
-            // if (fileUploaded) {
-
-            // } else {
-            //     data = {
-            //         "status": false,
-            //         "msg": "Error while Uploading",
-            //     };
-            // }
-            data = {
-                "status": true,
-                "msg": 'Uploaded Successfully',
-                "fileName": filename
-            };
+            if (fileUploaded) {
+                data = {
+                    "status": true,
+                    "msg": 'Uploaded Successfully',
+                    "fileName": filename
+                };
+            } else {
+                data = {
+                    "status": false,
+                    "msg": "Error while Uploading",
+                };
+            }
+            
             res.send(data);
 
-            // }
         });
     }
 });
@@ -3954,16 +3930,16 @@ router.post('/check_pass', async function (req, res) {
 /** Cron for expiry date **/
 cron.schedule('0 0 0 * * *', async () => {
     var tod_dat = datetime.create();
-    var formatted_dt = tod_dat.format('Y-m-d H:M:S');
-    var sqll = "select * from devices where device_status = 1";
-    var results = await sql.query(sqll);
+    var formatted_dt = tod_dat.format('Y/m/d');
+    var userAccQ = "select * from usr_acc where device_status = 1";
+    var results = await sql.query(userAccQ);
 
     for (var i = 0; i < results.length; i++) {
 
-        if (formatted_dt == results[i].expiry_date || formatted_dt > results[i].expiry_date) {
-            var update_sqll = "update devices set status = 'expired' where device_id ='" + results[i].device_id + "'";
+        if (formatted_dt >= results[i].expiry_date) {
+            var updateUsrAcc = "update usr_acc set status = 'expired' where device_id ='" + results[i].device_id + "'";
 
-            sql.query(update_sqll, function (error, results) {
+            sql.query(updateUsrAcc, function (error, results) {
                 if (error) throw error;
                 if (results.affectedRows == 0) {
                     console.log('not done');
