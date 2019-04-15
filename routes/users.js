@@ -176,7 +176,7 @@ router.post('/login', async function (req, res) {
                     return;
                 } else {
                     var userType = await helpers.getUserType(users[0].dealer_id);
-                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].dealer_id + "'");
+                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + users[0].dealer_id + "'");
 
                     console.log('object data is ', users[0]);
                     const user = {
@@ -298,31 +298,11 @@ router.get('/get_allowed_components', async function (req, res) {
     if (verify['status'] !== undefined && verify.status == true) {
 
 
-        // const user = {
-        //     "id": users[0].dealer_id,
-        //     "dealer_id": users[0].dealer_id,
-        //     "email": users[0].dealer_email,
-        //     "lastName": users[0].last_name,
-        //     "name": users[0].dealer_name,
-        //     "firstName": users[0].first_name,
-        //     "dealer_name": users[0].dealer_name,
-        //     "dealer_email": users[0].dealer_email,
-        //     "link_code": users[0].link_code,
-        //     "connected_dealer": users[0].connected_dealer,
-        //     "account_status": users[0].account_status,
-        //     "user_type": userType,
-        //     "created": users[0].created,
-        //     "modified": users[0].modified,
-        // }
-        // var result = await helpers.isAllowedComponentByName(componentName, userId);
-
-        // res.send({
-        //     status:true,
-        //     componentAllowed:result
-        // });
+        
 
     }
 });
+
 
 
 router.post('/check_component', async function (req, res) {
@@ -335,6 +315,9 @@ router.post('/check_component', async function (req, res) {
         var result = await helpers.isAllowedComponentByUri(componentUri, userId);
         let getUser = "select * from dealers where dealer_id =" + userId;
         let user = await sql.query(getUser);
+        var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + userId + "'");
+
+        
 
         if (user.length) {
 
@@ -349,6 +332,7 @@ router.post('/check_component', async function (req, res) {
                 "dealer_email": user[0].dealer_email,
                 "link_code": user[0].link_code,
                 "connected_dealer": user[0].connected_dealer,
+                "connected_devices": get_connected_devices,
                 "account_status": user[0].account_status,
                 "user_type": verify.user.user_type,
                 "created": user[0].created,
