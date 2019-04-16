@@ -1390,7 +1390,9 @@ router.post('/unlink/:id', async function (req, res) {
     // console.log('unlink data ', device_id);
 
     if (verify.status !== undefined && verify.status == true) {
-        console.log('unlinked', device_id);
+        let dvcId= await device_helpers.getDvcIDByDeviceID(device_id);
+        console.log('unlinked: ', dvcId);
+
         if (!empty(device_id)) {
             let query = "SELECT activation_code from usr_acc where device_id = '" + device_id + "'";
             let result = await sql.query(query);
@@ -1412,7 +1414,7 @@ router.post('/unlink/:id', async function (req, res) {
                     }
                 } else {
                     device_helpers.saveActionHistory(req.body.device, Constants.DEVICE_UNLINKED)
-                    require("../bin/www").sendDeviceStatus(device_id, "unlinked", true);
+                    require("../bin/www").sendDeviceStatus(dvcId, "unlinked", true);
                     data = {
                         "status": true,
                         "msg": "Device unlinked successfully."
@@ -2256,7 +2258,7 @@ router.post('/dealer/undo', async function (req, res) {
 
 /** Get Device Details of Dealers (Connect Page) **/
 router.get('/connect/:device_id', async function (req, res) {
-    console.log('api check is caled')
+    // console.log('api check is caled')
     var verify = verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         if (!empty(req.params.device_id)) {

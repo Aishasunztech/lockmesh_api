@@ -60,12 +60,12 @@ module.exports = {
             // console.log("insertApps device_id:" + deviceData.id);
             // console.log(apps);
             apps.forEach(async (app) => {
-                // console.log("inserting app:" + app.uniqueName);
+                console.log("inserting app:" + app.uniqueName);
 
                 let iconName = this.uploadIconFile(app, app.label);
                 // console.log("iconName: " + iconName);
 
-                var query = "insert ignore into apps_info (unique_name,label,package_name,icon) values ('" + app.uniqueName + "','" + app.label + "','" + app.packageName + "','" + iconName + "')";
+                var query = "insert ignore into apps_info (unique_name, label, package_name, icon) values ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "')";
                 // console.log(query);
                 await sql.query(query);
 
@@ -73,7 +73,7 @@ module.exports = {
 
             });
         } else {
-            // console.log("hello world");
+            console.log("device not connected may be deleted");
         }
 
     },
@@ -82,7 +82,7 @@ module.exports = {
         try {
             console.log("update or insert settings");
             // console.log(settings);
-            var updateQuery = "REPLACE into user_app_permissions (device_id, permissions) value ('" + device_id + "', '" + permissions + "')";
+            var updateQuery = "REPLACE into user_app_permissions (device_id, permissions) VALUE ('" + device_id + "', '" + permissions + "')";
             await sql.query(updateQuery, async function (error, row) {
                 if (error) throw (error);
 
@@ -102,7 +102,7 @@ module.exports = {
         // console.log("hello world: " + guest);
         // console.log("hello world: " + encrypted);
         // console.log("hello world: " + enable);
-        console.log("hello world: ", extension);
+        // console.log("hello world: ", extension);
         var query = "select id from apps_info where unique_name='" + uniqueName + "' limit 1";
         // console.log(query);
         let response = await sql.query(query);
@@ -126,6 +126,8 @@ module.exports = {
 
         } catch (error) {
             console.log(error);
+            throw error;
+
         }
 
     },
@@ -141,6 +143,7 @@ module.exports = {
             return response[0];
         } else {
             console.log("device not connected may be deleted");
+            return null;
         }
 
     },
