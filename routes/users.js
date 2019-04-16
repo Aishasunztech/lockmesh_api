@@ -2663,7 +2663,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
 
                 if (result.length == 0 || name == '') {
                     var applyQuery = "insert into policy (policy_name, app_list, setting, controls,passwords) values ('" + name + "','" + app_list + "', null, '" + controls + "', '" + passwords + "')";
-                    console.log('query insert', applyQuery);
+                    // console.log('query insert', applyQuery);
                     // console.log(applyQuery);
 
                     await sql.query(applyQuery, async function (err, rslts) {
@@ -2697,7 +2697,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
 
                 var applyQuery = "insert into device_history (user_acc_id, app_list, setting, controls) values ('" + usr_acc_id + "','" + app_list + "', null, '" + controls + "')";
                 //  console.log('query insert', applyQuery);
-                console.log(applyQuery);
+                // console.log(applyQuery);
                 await sql.query(applyQuery, async function (err, rslts) {
 
                     let isOnline = await device_helpers.isDeviceOnline(device_id);
@@ -2706,7 +2706,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
                         require("../bin/www").sendEmit(app_list, passwords, controls, device_id);
                     }
 
-                    if (rslts.affectedRows) {
+                    if (rslts) {
                         data = {
                             "status": true,
                             "msg": 'Settings Applied Successfully',
