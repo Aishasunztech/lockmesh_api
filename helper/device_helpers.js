@@ -60,13 +60,13 @@ module.exports = {
             // console.log("insertApps device_id:" + deviceData.id);
             // console.log(apps);
             apps.forEach(async (app) => {
-                console.log("inserting app:" + app.uniqueName);
+                // console.log("inserting app:" + app.uniqueName);
 
                 let iconName = this.uploadIconFile(app, app.label);
                 // console.log("iconName: " + iconName);
 
                 var query = "insert ignore into apps_info (unique_name, label, package_name, icon) values ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "')";
-                // console.log(query);
+                console.log(query);
                 await sql.query(query);
 
                 await this.getApp(app.uniqueName, deviceData.id, app.guest, app.encrypted, app.enable, app.extension);
@@ -98,7 +98,7 @@ module.exports = {
     },
     getApp: async function (uniqueName, device_id, guest, encrypted, enable, extension) {
         // console.log("hello world: " + uniqueName);
-        // console.log("device_id: " + device_id);
+        console.log("device_id: " + device_id);
         // console.log("hello world: " + guest);
         // console.log("hello world: " + encrypted);
         // console.log("hello world: " + enable);
