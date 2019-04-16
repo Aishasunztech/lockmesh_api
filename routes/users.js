@@ -244,65 +244,18 @@ router.post('/login', async function (req, res) {
 
 /*****User Registration*****/
 router.post('/Signup', async function (req, res) {
-    // var firstName = req.body.firstName;
-    // var lastName = req.body.lastName;
-    // var email = req.body.email;
-
-    // var upass = ' ';
-    // var data = '';
-
-    // //hash the password
-    // const saltRounds = 10;
-    // var salt = bcrypt.genSaltSync(saltRounds);
-    // var upass = bcrypt.hashSync(req.body.upass, salt);
-
-    // var user = await sql.query("SELECT * FROM users WHERE email = '" + email + "'");
-
-    // console.log(user.length);
-    // if (user.length > 0) {
-    //     data = {
-    //         'status': false,
-    //         'msg': 'User Already Registered.Please use another email id.',
-    //         'data': {
-    //             'userId': user[0].id
-    //         }
-    //     }
-
-    //     res.status(200).send(data);
-    // } else {
-    //     var sql2 = "INSERT INTO users (firstName, lastName, email, password, modified, created)";
-    //     sql2 += " values('" + firstName + "','" + lastName + "', '" + email + "' ,'" + upass + "', NOW(), NOW())";
-
-    //     var userInsrt = await sql.query(sql2);
-
-    //     data = {
-    //         'status': true,
-    //         'msg': 'User has been registered successfully',
-    //         'data': {
-    //             'userId': userInsrt.insertId
-    //         }
-    //     }
-    //     res.status(200).send(data);
-    // }
 
 });
-
-
-
 
 
 router.get('/get_allowed_components', async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
-
+    
     var verify = verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status == true) {
-
-
         
-
     }
 });
-
 
 
 router.post('/check_component', async function (req, res) {
@@ -316,8 +269,6 @@ router.post('/check_component', async function (req, res) {
         let getUser = "select * from dealers where dealer_id =" + userId;
         let user = await sql.query(getUser);
         var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + userId + "'");
-
-        
 
         if (user.length) {
 
@@ -356,7 +307,14 @@ router.post('/check_component', async function (req, res) {
 });
 
 /** is_admin **/
+router.get('/is_admin', async function(req, res){
 
+});
+
+/** get_user_type **/
+router.get('/user_type', async function(req, res){
+
+});
 
 /**GET all the devices**/
 router.get('/devices', async function (req, res) {
