@@ -309,7 +309,7 @@ router.post('/check_component', async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
 
     var verify = verifyToken(req, res);
-    if (verify.status !== undefined && verify.status == true) {
+    if (verify['status'] !== undefined && verify.status == true) {
         var componentUri = req.body.ComponentUri;
         var userId = verify.user.id;
         var result = await helpers.isAllowedComponentByUri(componentUri, userId);
