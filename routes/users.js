@@ -2468,10 +2468,17 @@ router.get('/get_apps/:device_id', async function (req, res) {
     var verify = verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         if (!empty(req.params.device_id)) {
-            var query = 'SELECT user_apps.*, apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon from user_apps LEFT JOIN apps_info on user_apps.app_id = apps_info.id LEFT JOIN devices on user_apps.device_id=devices.id where devices.device_id ="' + req.params.device_id + '"';
+            // var query = 'SELECT user_apps.*, apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon from user_apps LEFT JOIN apps_info on user_apps.app_id = apps_info.id LEFT JOIN devices on user_apps.device_id=devices.id where devices.device_id ="' + req.params.device_id + '"';
             // console.log(query);
+            var getAppsQ = "SELECT user_apps.id, user_apps.device_id, user_apps.app_id, user_apps.guest, user_apps.encrypted, user_apps.`enable`, " +
+            " apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon , apps_info.extension, apps_info.extension_id" + 
+            " FROM user_apps" +
+            " LEFT JOIN apps_info on user_apps.app_id = apps_info.id" + 
+            " LEFT JOIN devices on user_apps.device_id=devices.id" + 
+            " WHERE devices.device_id = '"+ req.params.device_id +"'"
+            // console.log("hello", getAppsQ);
             try {
-                sql.query(query, async (error, apps) => {
+                sql.query(getAppsQ, async (error, apps) => {
                     if (error) {
                         throw Error("Query Expection");
                     }
