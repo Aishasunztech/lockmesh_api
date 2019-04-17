@@ -7,6 +7,7 @@ module.exports = {
     DEALER_UNLINKED: "unlinked",
 
     DEVICE_ACTIVATED: "Active",
+    DEVICE_TRIAL: "Trial",
     DEVICE_SUSPENDED: "Suspended",
     DEVICE_EXPIRED: "Expired",
     DEVICE_UNLINKED: "Unlinked",
