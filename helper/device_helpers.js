@@ -80,7 +80,7 @@ module.exports = {
 
     insertOrUpdateSettings: async function (permissions, device_id) {
         try {
-            console.log("update or insert settings");
+            // console.log("update or insert settings");
             // console.log(settings);
             var updateQuery = "REPLACE into user_app_permissions (device_id, permissions) VALUE ('" + device_id + "', '" + permissions + "')";
             await sql.query(updateQuery, async function (error, row) {
