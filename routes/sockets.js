@@ -157,8 +157,6 @@ module.exports.listen = async function (server) {
 
         if (setting_res.length) {
             console.log("app_list" + setting_res[0].app_list);
-            // console.log("passwords" + setting_res[0].passwords);
-            // console.log("controls" + setting_res[0].controls);
 
             socket.emit('get_applied_settings_' + device_id, {
                 device_id: device_id,
