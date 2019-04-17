@@ -66,7 +66,7 @@ module.exports = {
                 // console.log("iconName: " + iconName);
 
                 var query = "insert ignore into apps_info (unique_name, label, package_name, icon) values ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "')";
-                console.log(query);
+                // console.log(query);
                 await sql.query(query);
 
                 await this.getApp(app.uniqueName, deviceData.id, app.guest, app.encrypted, app.enable, app.extension);
@@ -117,7 +117,7 @@ module.exports = {
 
         try {
             var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + ", extension=" + extension + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
-            console.log("update query", updateQuery);
+            // console.log("update query", updateQuery);
             sql.query(updateQuery, async function (error, row) {
                 // console.log("this is", row);
                 if (row != undefined && row.affectedRows === 0) {
