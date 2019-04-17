@@ -14,6 +14,7 @@ module.exports = {
     DEVICE_PRE_ACTIVATION: "Pre-activated",
     UNLINK_DEVICE_DELETE: "Delete",
     DEVICE_FLAGGED: "Flagged",
-    DEVICE_UNFLAGGED: "Unflagged"
+    DEVICE_UNFLAGGED: "Unflagged",
+    DEVICE_ACCEPT: "Accept Device"
 
 }
