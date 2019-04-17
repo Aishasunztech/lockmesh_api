@@ -53,7 +53,7 @@ var verifyToken = function (req, res) {
 
         // verifies secret and checks exp
         jwt.verify(token, config.secret, function (err, decoded) {
-            console.log(err);
+            // console.log(err);
             if (err) {
                 return res.json({
                     success: false,
@@ -83,8 +83,8 @@ router.post('/login', async function (req, resp) {
     var linkCode = req.body.link_code;
     var mac_address = req.body.macAddr;
     var serial_number = req.body.serialNo
-    console.log("mac_address", mac_address);
-    console.log("serial_number", serial_number);
+    // console.log("mac_address", mac_address);
+    // console.log("serial_number", serial_number);
     var data;
     //console.log(linkCode);
     if (linkCode !== undefined && linkCode !== null) {
@@ -168,7 +168,7 @@ router.post('/login', async function (req, resp) {
                 } else {
 
                     let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = getDeviceInfo(req);
-                    console.log("this is info ", { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address });
+                    // console.log("this is info ", { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address });
 
 
                     let expiry_date = helpers.getExpDateByMonth(new Date(), usrAcc[0].expiry_months);
@@ -206,7 +206,7 @@ router.post('/login', async function (req, resp) {
                         });
                 }
             }
-            console.log("activation code");
+            // console.log("activation code");
         }
 
     } else if ((mac_address !== undefined && mac_address !== null) && (serial_number !== undefined && serial_number !== null)) {
@@ -261,7 +261,7 @@ router.post('/login', async function (req, resp) {
                 'device_id': device[0].device_id,
                 data
             }
-            console.log("this is device", dvc);
+            // console.log("this is device", dvc);
             jwt.sign({
                 dvc
             }, config.secret, {
@@ -276,7 +276,7 @@ router.post('/login', async function (req, resp) {
 
                     var d = new Date(usr_acc.expiry_date);
                     var n = d.valueOf()
-                    console.log("expire in", n);
+                    // console.log("expire in", n);
                     try {
 
                         resp.json({
@@ -341,7 +341,7 @@ function getDeviceInfo(req) {
 /** Link Device MDM **/
 router.post('/linkdevice', async function (req, resp) {
     //res.setHeader('Content-Type', 'application/json');
-    console.log("/linkdevice");
+    // console.log("/linkdevice");
 
     var reslt = verifyToken(req, resp);
     var dId = req.body.dId;
@@ -372,7 +372,7 @@ router.post('/linkdevice', async function (req, resp) {
         // console.log("link device dealer id", dId);
         var dealerQ = "select * from dealers where dealer_id = " + dId;
         let dealer = await sql.query(dealerQ);
-        console.log("dealer query", dealer)
+        // console.log("dealer query", dealer)
         // res2 = dealer
 
         if (dealer.length) {
@@ -480,16 +480,16 @@ router.post('/getstatus', async function (req, resp) {
         //console.log(sql1);
 
         var device = await sql.query(deviceQ);
-        console.log("my device", device);
+        // console.log("my device", device);
         // res
         //console.log(res[0].device_status);
         if (device.length > 0) {
             // let userAcc = await sql.query("SELECT * FROM usr_acc WHERE device_id="+ device[0].id);
             let userAcc = await device_helpers.getUserAccByDvcId(device[0].id);
-            console.log("get usr account by device id", userAcc);
+            // console.log("get usr account by device id", userAcc);
             if (userAcc) {
                 let deviceStatus = device_helpers.checkStatus(userAcc);
-                console.log("device_status get_status", deviceStatus);
+                // console.log("device_status get_status", deviceStatus);
 
                 if (userAcc.device_status == 0) {
                     if (userAcc.unlink_status == 1) {
@@ -744,8 +744,8 @@ router.post('/accountstatus', async function (req, res) {
     var serial_number = req.body.serialNo;
     var mac = req.body.macAddr;
     var data;
-    console.log('serial_number : ' + serial_number);
-    console.log('mac : ' + mac);
+    // console.log('serial_number : ' + serial_number);
+    // console.log('mac : ' + mac);
 
     if (empty(serial_number) || empty(mac)) {
         data = {
@@ -763,7 +763,7 @@ router.post('/accountstatus', async function (req, res) {
 
                 // get user account device status
                 let deviceStatus = device_helpers.checkStatus(user_acc[0]);
-                console.log("device_status accountstatus", deviceStatus);
+                // console.log("device_status accountstatus", deviceStatus);
 
                 if (user_acc[0].dealer_id !== 0 && user_acc[0].dealer_id !== null) {
                     

@@ -1,11 +1,16 @@
 module.exports = {
+
+    // ACL
     ADMIN: "admin",
     DEALER: "dealer",
     SDEALER: "sdealer",
+
+    // dealers
     DEALER_ACTIVE: "active",
     DEALER_SUSPENDED: "suspended",
     DEALER_UNLINKED: "unlinked",
 
+    // devices
     DEVICE_ACTIVATED: "Active",
     DEVICE_SUSPENDED: "Suspended",
     DEVICE_EXPIRED: "Expired",
@@ -14,6 +19,23 @@ module.exports = {
     DEVICE_PRE_ACTIVATION: "Pre-activated",
     UNLINK_DEVICE_DELETE: "Delete",
     DEVICE_FLAGGED: "Flagged",
-    DEVICE_UNFLAGGED: "Unflagged"
+    DEVICE_UNFLAGGED: "Unflagged",
 
+    // sockets
+    GET_SYNC_STATUS: "get_sync_status_",
+    GET_APPLIED_STATUS: "get_applied_settings_",
+    SETTING_APPLIED_STATUS: "settings_applied_status_",
+    SEND_APPS: "sendApps_",
+    SEND_EXTENSIONS: "sendExtensions_",
+    SEND_SETTINGS: "sendSettings_",
+    DISCONNECT: "disconnect",
+    CONNECT_TIMEOUT: "connect_timeout",
+    ERROR: "error",
+    RECONNECT: "reconnect",
+    RECONNECT_ATTEMPT: "reconnect_attempt",
+    RECONNECTING: "reconnecting",
+    RECONNECTING_ERROR: "reconnect_error",
+    RECONNECT_FAILED: "reconnect_failed",
+    PING: "ping",
+    PONG: "pong",
 }

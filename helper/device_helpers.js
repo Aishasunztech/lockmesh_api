@@ -42,6 +42,15 @@ module.exports = {
         }
         return null;
     },
+    getDeviceSyncStatus: async function (dvcId) {
+        var deviceQ = "SELECT is_sync FROM devices WHERE device_id ='" + dvcId + "'";
+        let res = await sql.query(deviceQ);
+        // console.log(res);
+        if (res.length) {
+            return (res[0].is_sync == 1) ? true : false;
+        }
+        return null;
+    },
     getDvcIDByDeviceID: async (deviceId) => {
         let deviceQ = "SELECT device_id FROM devices WHERE id=" + deviceId;
         let device = await sql.query(deviceQ);
@@ -61,15 +70,12 @@ module.exports = {
             // console.log(apps);
             apps.forEach(async (app) => {
                 // console.log("inserting app:" + app.uniqueName);
-
                 let iconName = this.uploadIconFile(app, app.label);
                 // console.log("iconName: " + iconName);
-
-                var query = "insert ignore into apps_info (unique_name, label, package_name, icon) values ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "')";
-                // console.log(query);
+                var query = "INSERT IGNORE INTO apps_info (unique_name, label, package_name, icon, extension) values ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + ")";
+                // console.log("helloo: ",query);
                 await sql.query(query);
-
-                await this.getApp(app.uniqueName, deviceData.id, app.guest, app.encrypted, app.enable, app.extension);
+                await this.getApp(app.uniqueName, deviceData.id, app.guest, app.encrypted, app.enable);
 
             });
         } else {
@@ -77,7 +83,31 @@ module.exports = {
         }
 
     },
+    insertExtensions: async function (extensions, deviceId) {
+        let deviceData = await this.getDeviceByDeviceId(deviceId);
 
+        extensions.forEach(async (app) => {
+            
+            let getPrntExt = "SELECT id FROM apps_info WHERE unique_name='" + app.uniqueName + "' AND (extesnion=1 OR extension=true)";
+            let extension = await sql.query(getPrntExt);
+            if (extension.length) {     
+                console.log("parent uniqueName: ", app.uniqueName);
+                console.log("child uniqueName: ", app.uniqueExtension);
+                console.log("label:", app.label);
+                console.log("icon:", app.icon);
+                console.log("guest: ", app.guest);
+                console.log("encrytped: ", app.encrypted);
+                
+                let iconName = this.uploadIconFile(app, app.label);
+
+                var query = "INSERT IGNORE INTO apps_info (unique_name, label, icon, extension, extension_id) VALUES ('" + app.uniqueExtension + "', '" + app.label + "', '" + iconName + "', 1, "+ extension[0].id +")";
+                console.log("helloo:",query);
+                await sql.query(query);
+
+                // await this.getApp(app.uniqueName, deviceData.id, app.guest, app.encrypted, app.enable);
+            }
+        });
+    },
     insertOrUpdateSettings: async function (permissions, device_id) {
         try {
             // console.log("update or insert settings");
@@ -96,7 +126,11 @@ module.exports = {
         }
 
     },
-    getApp: async function (uniqueName, device_id, guest, encrypted, enable, extension) {
+    deviceSynced: async function (deviceId) {
+        var updateQuery = "update devices set is_sync=1 where device_id='" + deviceId + "'";
+        await sql.query(updateQuery);
+    },
+    getApp: async function (uniqueName, device_id, guest, encrypted, enable) {
         // console.log("hello world: " + uniqueName);
         // console.log("device_id: " + device_id);
         // console.log("hello world: " + guest);
@@ -107,21 +141,21 @@ module.exports = {
         // console.log(query);
         let response = await sql.query(query);
         if (response.length) {
-            await this.insertOrUpdateApps(response[0].id, device_id, guest, encrypted, enable, extension);
+            await this.insertOrUpdateApps(response[0].id, device_id, guest, encrypted, enable);
         } else {
             // console.log("app not found");
             return false;
         }
     },
-    insertOrUpdateApps: async function (appId, deviceId, guest, encrypted, enable, extension) {
+    insertOrUpdateApps: async function (appId, deviceId, guest, encrypted, enable) {
 
         try {
-            var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + ", extension=" + extension + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
+            var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
             // console.log("update query", updateQuery);
             sql.query(updateQuery, async function (error, row) {
                 // console.log("this is", row);
                 if (row != undefined && row.affectedRows === 0) {
-                    var insertQuery = "insert into user_apps ( device_id, app_id, guest, encrypted, enable, extension) values (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + ", " + extension + ")";
+                    var insertQuery = "insert into user_apps ( device_id, app_id, guest, encrypted, enable) values (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + ")";
                     await sql.query(insertQuery);
                 }
             });
@@ -140,8 +174,6 @@ module.exports = {
         // console.log(getQuery);
         let response = await sql.query(getQuery);
         if (response.length) {
-            var updateQuery = "update devices set is_sync=1 where device_id='" + deviceId + "'";
-            await sql.query(updateQuery);
             return response[0];
         } else {
             console.log("device not connected may be deleted");

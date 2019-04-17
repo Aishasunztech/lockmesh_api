@@ -64,7 +64,7 @@ module.exports.listen = async function (server) {
     }
 
     var verifySession = async (deviceId, sessionId, isWeb = false) => {
-        if (isWeb !==undefined && isWeb===true) {
+        if (isWeb !== undefined && isWeb === true) {
             return true;
         }
         var query = "select * from devices where device_id='" + deviceId + "' and session_id='" + sessionId + "'";
@@ -96,10 +96,10 @@ module.exports.listen = async function (server) {
         if (verifyToken(token)) {
             if (device_id != undefined && verifySession(device_id, session_id, isWeb)) {
                 next();
-            } else if (isWeb===true){
-                console.log("m here",isWeb);
+            } else if (isWeb === true) {
+                console.log("m here", isWeb);
                 next();
-            } 
+            }
             else {
                 // console.log("authentication error device");
                 return next(new Error('authentication error'));
@@ -119,7 +119,9 @@ module.exports.listen = async function (server) {
         let device_id = socket.request._query['device_id'];
         let session_id = socket.id;
         let dvc_id = 0;
-        let user_acc_id= 0;
+        let user_acc_id = 0;
+        let is_sync = false;
+
         let isWeb = socket.handshake.query['isWeb'];
 
         console.log("connection established on: " + device_id + " and " + session_id);
@@ -143,11 +145,24 @@ module.exports.listen = async function (server) {
         if (device_id != undefined && device_id != null) {
             // if (socket.handshake.query['isWeb'] == undefined || socket.handshake.query['isWeb'] == false) {
             console.log("on mobile side event");
+            console.log("device_id: ", device_id);
+
             await device_helpers.onlineOflineDevice(device_id, socket.id, 'On');
             dvc_id = await device_helpers.getOriginalIdByDeviceId(device_id);
-            console.log("dvc_id", dvc_id);
+            console.log("dvc_id: ", dvc_id);
+            is_sync = await device_helpers.getDeviceSyncStatus(device_id);
+            console.log("is_sync:", is_sync);
             user_acc_id = await device_helpers.getUsrAccIDbyDvcId(dvc_id);
-            console.log("user_acc_id", user_acc_id);
+            console.log("user_acc_id: ", user_acc_id);
+            
+            socket.emit("get_sync_status_" + device_id, {
+                device_id: device_id,
+                apps_status: false,
+                extensions_status: false,
+                settings_status: false,
+                is_sync: (is_sync==1)?true:false,
+            });
+            
 
             // }
         }
@@ -161,7 +176,7 @@ module.exports.listen = async function (server) {
             socket.emit('get_applied_settings_' + device_id, {
                 device_id: device_id,
                 app_list: (setting_res[0].app_list == null || setting_res[0].app_list == '') ? '[]' : setting_res[0].app_list,
-                passwords: (setting_res[0].passwords ==null || setting_res[0].passwords == '')? '{}' : setting_res[0].passwords,
+                passwords: (setting_res[0].passwords == null || setting_res[0].passwords == '') ? '{}' : setting_res[0].passwords,
                 settings: (setting_res[0].permissions == null || setting_res[0].permissions == '') ? '{}' : setting_res[0].permissions,
                 status: true
             });
@@ -174,12 +189,12 @@ module.exports.listen = async function (server) {
 
         // request application from portal to specific device
         socket.on('settings_applied_status_' + device_id, async function (data) {
-            console.log("settings_applied: " + data.device_id);
+            console.log("settings_applied: " + device_id);
             let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id;
             await sql.query(historyUpdate);
             var setting_query = "SELECT * FROM device_history WHERE user_acc_id='" + user_acc_id + "' AND status=1 ORDER BY created_at DESC LIMIT 1";
             let response = await sql.query(setting_query);
-            
+
             if (response.length > 0 && data.device_id != null) {
                 let app_list = JSON.parse(response[0].app_list);
 
@@ -188,48 +203,73 @@ module.exports.listen = async function (server) {
 
                 console.log("inserting setiings");
                 console.log(response[0].permissions);
-                
-                await device_helpers.insertApps(app_list, data.device_id);
-                await device_helpers.insertOrUpdateSettings(response[0].permissions, data.device_id);
-            }
 
+                await device_helpers.insertApps(app_list, device_id);
+                await device_helpers.insertOrUpdateSettings(response[0].permissions, device_id);
+            }
 
         });
 
 
         socket.on('sendApps_' + device_id, async (apps) => {
             console.log("get applications event: " + device_id);
+            try {
+                // console.log(apps);
+                let applications = JSON.parse(apps);
+                // console.log("syncing device");
+                await device_helpers.insertApps(applications, device_id);
+                // console.log("device synced");
+                socket.emit("get_sync_status_" + device_id, {
+                    device_id: device_id,
+                    apps_status: true,
+                    extensions_status: false,
+                    settings_status: false,
+                    is_sync: false,
+                });
+            } catch (error) {
+                console.log(error);
+            }
 
-            let applications = JSON.parse(apps);
+        });
 
-            console.log("application_lenght: " + applications.length);
-            console.log("syncing device");
-
-            await device_helpers.insertApps(applications, device_id);
-            console.log("device synced");
-            socket.emit("get_sync_status_" + device_id, {
-                is_sync: true,
-                device_id: device_id
-            });
-
+        socket.on('sendExtensions_' + device_id, async (extensions) => {
+            console.log("get extension event: " + device_id);
+            // console.log("extensions: ", extensions);
+            let extension_apps = JSON.parse(extensions);
+            await device_helpers.insertExtensions(extension_apps, device_id);
+            // socket.emit("get_sync_status_" + device_id, {
+            //     device_id: device_id,
+            //     apps_status: true,
+            //     extensions_status: true,
+            //     settings_status: false,
+            //     is_sync: false,
+            // });
         });
 
         socket.on('sendSettings_' + device_id, async (permissions) => {
             console.log('getting device settings from ' + device_id);
             let device_permissions = permissions;
             console.log("device permissions", device_permissions)
+            
             await device_helpers.insertOrUpdateSettings(device_settings, dvc_id);
             
+            await device_helpers.deviceSynced(device_id);
+
+            socket.emit("get_sync_status_" + device_id, {
+                device_id: device_id,
+                apps_status: true,
+                extensions_status: true,
+                settings_status: true,
+                is_sync: true,
+            });
         });
 
         // listen on built-in channels
         socket.on('disconnect', async () => {
             // check the number of sockets connected to server
             // console.log("disconnected: session " + socket.id + " on device id: " + device_id);
-
-            // console.log("connected_users: " + io.engine.clientsCount);
             // if (socket.handshake.query['isWeb'] == undefined || socket.handshake.query['isWeb'] == false) {
-                await device_helpers.onlineOflineDevice(null, socket.id, 'off');
+            await device_helpers.onlineOflineDevice(null, socket.id, 'off');
             // }
         });
 
@@ -272,8 +312,6 @@ module.exports.listen = async function (server) {
         socket.on('pong', (latency) => {
             console.log("pong: " + latency);
         });
-
-        
 
         // socket.compress(false).emit('an event', { some: 'data' });
     });
