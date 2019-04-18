@@ -21,6 +21,7 @@ const url = require('url');
 var path = require('path');
 var fs = require("fs");
 var Constants = require('../constants/Application');
+var moment = require('moment-strftime');
 
 var helpers = require('../helper/general_helper.js');
 const device_helpers = require('../helper/device_helpers.js');
@@ -250,10 +251,10 @@ router.post('/Signup', async function (req, res) {
 
 router.get('/get_allowed_components', async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
-    
+
     var verify = verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status == true) {
-        
+
     }
 });
 
@@ -302,17 +303,16 @@ router.post('/check_component', async function (req, res) {
                 msg: "authentication failed"
             });
         }
-
     }
 });
 
 /** is_admin **/
-router.get('/is_admin', async function(req, res){
+router.get('/is_admin', async function (req, res) {
 
 });
 
 /** get_user_type **/
-router.get('/user_type', async function(req, res){
+router.get('/user_type', async function (req, res) {
 
 });
 
@@ -326,12 +326,12 @@ router.get('/devices', async function (req, res) {
         if (verify.user.user_type !== 'admin') {
             if (verify.user.user_type === 'dealer') {
                 where_con = 'AND (usr_acc.dealer_id =' + verify.user.id + ' OR usr_acc.prnt_dlr_id =' + verify.user.id + ')';
-                let query = "SELECT * From acc_action_history WHERE action = '" + Constants.DEVICE_UNLINKED + "' AND dealer_id = '" + verify.user.id + "'";
+                let query = "SELECT * From acc_action_history WHERE action = 'UNLINK' AND dealer_id = '" + verify.user.id + "' AND del_status IS NULL";
                 console.log(query);
                 newArray = await sql.query(query)
             } else {
                 where_con = 'AND usr_acc.dealer_id = ' + verify.user.id + ' ';
-                let query = "SELECT * From acc_action_history WHERE action = '" + Constants.DEVICE_UNLINKED + "' AND dealer_id = '" + verify.user.id + "'";
+                let query = "SELECT * From acc_action_history WHERE action = 'UNLINK' AND dealer_id = '" + verify.user.id + "' AND del_status IS NULL";
                 console.log(query);
                 newArray = await sql.query(query)
             }
@@ -715,10 +715,35 @@ router.get('/dealers', async function (req, res) {
                 res.send(data);
             });
         } else {
-            res.send({
-                status: true,
-                message: "forbidden access"
-            })
+
+            var role = await helpers.getuserTypeIdByName(verify.user.user_type);
+            console.log("role id", role);
+            sql.query("select * from dealers where connected_dealer = '" + verify.user.id + "' AND  type = 3 order by created DESC", async function (error, results) {
+                if (error) throw error;
+                // console.log("select * from dealers where connected_dealer = '" + verify.user.id + "' AND  type = 2 order by created DESC");
+                var data = [];
+                console.log(results);
+                for (var i = 0; i < results.length; i++) {
+
+                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].id + "'");
+
+                    dt = {
+                        "status": true,
+                        "dealer_id": results[i].dealer_id,
+                        "dealer_name": results[i].dealer_name,
+                        "dealer_email": results[i].dealer_email,
+                        "link_code": results[i].link_code,
+                        "account_status": results[i].account_status,
+                        "unlink_status": results[i].unlink_status,
+                        "created": results[i].created,
+                        "modified": results[i].modified,
+                        "connected_devices": get_connected_devices
+                    };
+                    data.push(dt);
+                }
+                console.log("Dealers Data", data);
+                res.send(data);
+            });
         }
 
     }
@@ -740,6 +765,16 @@ router.post('/create/device_profile', async function (req, res) {
         var email = req.body.email
         var pgp_email = req.body.pgp_email;
         var start_date = req.body.start_date;
+        console.log("Start Date", start_date);
+        if (req.body.expiry_date == 0) {
+            console.log(req.body.expiry_date);
+            var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
+            var expiry_date = moment(trailDate).format("YYYY/MM/DD")
+            console.log(expiry_date);
+        } else {
+            let exp_month = req.body.expiry_date;
+            var expiry_date = helpers.getExpDateByMonth(start_date, exp_month);
+        }
         var exp_month = req.body.expiry_date;
         var dealer_id = verify.user.dealer_id;
         var sim_id = req.body.sim_id ? req.body.sim_id : '';
@@ -781,11 +816,11 @@ router.post('/create/device_profile', async function (req, res) {
                         if (err) throw (err);
                         console.log("inserted id", resp.insertId);
                         let dvc_id = resp.insertId;
-                        var insertUser_acc = "INSERT INTO usr_acc (device_id, activation_code, client_id , account_email,expiry_months, dealer_id, device_status, activation_status  "
+                        var insertUser_acc = "INSERT INTO usr_acc (device_id, activation_code, client_id , account_email,expiry_months, dealer_id, device_status, activation_status, expiry_date "
                         // var insertDevice = "INSERT INTO devices ( activation_code, name, client_id, chat_id, model, email, pgp_email, expiry_months, dealer_id, device_status, activation_status ";
-                        var User_acc_values = ") VALUES ('" + dvc_id + "', '" + activation_code + "', '" + client_id + "', '" + email + "',  " + exp_month + ", " + dealer_id + ", 0, 0 )";
+                        var User_acc_values = ") VALUES ('" + dvc_id + "', '" + activation_code + "', '" + client_id + "', '" + email + "',  " + exp_month + ", " + dealer_id + ", 0, 0 ,'" + expiry_date + "')";
                         insertUser_acc = insertUser_acc + User_acc_values;
-
+                        console.log(insertUser_acc);
                         if (resp.affectedRows) {
                             sql.query(insertUser_acc, async (err, resp) => {
 
@@ -972,19 +1007,27 @@ router.put('/new/device', async (req, res) => {
         let sim_id = (req.body.sim_id == undefined) ? '' : req.body.sim_id;
         let chat_id = (req.body.chat_id == undefined) ? '' : req.body.chat_id;
         let pgp_email = (req.body.pgp_email == undefined) ? '' : req.body.pgp_email;
-
+        var trial_status = 0
 
         let start_date = req.body.start_date;
-
-        if (req.body.expiry_date == '' || req.body.expiry_date == null || req.body.expiry_date == 0) {
+        if (req.body.expiry_date === '' || req.body.expiry_date === null) {
             var status = 'expired';
-        } else {
+        } else if (req.body.expiry_date == 0) {
+            var status = 'trial';
+            trial_status = 1;
+            // req.body.expiry_date = 
+        }
+        else {
             var status = 'active';
         }
-
-        let exp_month = req.body.expiry_date;
-        var expiry_date = helpers.getExpDateByMonth(start_date, exp_month);
-
+        if (req.body.expiry_date == 0) {
+            var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
+            var expiry_date = moment(trailDate).format("YYYY/MM/DD")
+        } else {
+            let exp_month = req.body.expiry_date;
+            var expiry_date = helpers.getExpDateByMonth(start_date, exp_month);
+        }
+        // console.log(expiry_date);
         // console.log(device_id);
         if (!empty(device_id)) {
 
@@ -1033,14 +1076,14 @@ router.put('/new/device', async (req, res) => {
                                 // let common_Query2 = " status = '" + status + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' where device_id = '" + device_id + "'";
                                 common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE id = '" + usr_device_id + "'"
                                 // let common_Query2 = " status = '" + status + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' where device_id = '" + device_id + "'";
-                                usr_acc_Query = "UPDATE usr_acc set account_email = '" + device_email + "', status = '" + status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "', prnt_dlr_id=" + dealer_id + ", prnt_dlr_name='" + dealer[0].dealer_name + "' WHERE device_id = '" + usr_device_id + "'"
+                                usr_acc_Query = "UPDATE usr_acc set account_email = '" + device_email + "', status = '" + status + "',trial_status = '" + trial_status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "', prnt_dlr_id=" + dealer_id + ", prnt_dlr_name='" + dealer[0].dealer_name + "' WHERE device_id = '" + usr_device_id + "'"
                                 // 
                                 // let sql1 = common_Query + ", s_dealer_name = '" + rslt1[0].dealer_name + "', s_dealer = '" + req.body.s_dealer + "'" + common_Query2;
                                 // console.log("UPafet Quety", usr_acc_Query);
                             } else {
 
                                 common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE id = '" + usr_device_id + "'"
-                                usr_acc_Query = "UPDATE usr_acc set account_email = '" + device_email + "', status = '" + status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' WHERE device_id = '" + usr_device_id + "'"
+                                usr_acc_Query = "UPDATE usr_acc set account_email = '" + device_email + "', status = '" + status + "',trial_status = '" + trial_status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' WHERE device_id = '" + usr_device_id + "'"
                                 // let sql1 = common_Query + ", s_dealer_name = '" + rslt1[0].dealer_name + "', s_dealer = '" + req.body.s_dealer + "'" + common_Query2;
                                 // console.log("UPafet Quety", usr_acc_Query);
                             }
@@ -1071,7 +1114,7 @@ router.put('/new/device', async (req, res) => {
                                 for (var i = 0; i < rsltq.length; i++) {
                                     rsltq[i].finalStatus = device_helpers.checkStatus(rsltq[i])
                                 }
-
+                                // device_helpers.saveActionHistory(rslts[0], Constants.DEVICE_ACCEPT)
                                 data = {
                                     "status": true,
                                     "msg": 'Record updated successfully.',
@@ -1138,17 +1181,20 @@ router.put('/edit/devices', async function (req, res) {
 
             var d = new Date(req.body.start_date);
 
-            if (req.body.expiry_date == '') {
+            if (req.body.expiry_date === '' || req.body.expiry_date === null) {
                 var status = 'expired';
-            } else {
+            } else if (req.body.expiry_date == 0) {
+                var status = 'trial';
+            }
+            else {
                 var status = 'active';
             }
-
-            let mnth2 = req.body.expiry_date;
-
-
-            var expiry_date = helpers.getExpDateByMonth(req.body.start_date, mnth2);
-
+            if (req.body.expiry_date == 0) {
+                var expiry_date = req.body.expiry_date
+            } else {
+                let exp_month = req.body.expiry_date;
+                var expiry_date = helpers.getExpDateByMonth(start_date, exp_month);
+            }
             // console.log('month', g_months, 'year', g_years);
             console.log('date now', expiry_date);
 
@@ -1182,8 +1228,13 @@ router.put('/edit/devices', async function (req, res) {
                                 "msg": "PGP email already taken"
                             });
                         } else {
-                            common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE device_id = '" + device_id + "'"
-                            usr_acc_Query = "UPDATE usr_acc set status = '" + status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' WHERE device_id = '" + usr_device_id + "'"
+                            common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE device_id = '" + device_id + "'";
+                            if (expiry_date == 0) {
+
+                                usr_acc_Query = "UPDATE usr_acc set status = '" + status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' WHERE device_id = '" + usr_device_id + "'"
+                            } else {
+                                usr_acc_Query = "UPDATE usr_acc set status = '" + status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' WHERE device_id = '" + usr_device_id + "'"
+                            }
                             // let sql1 = common_Query + ", s_dealer_name = '" + rslt1[0].dealer_name + "', s_dealer = '" + req.body.s_dealer + "'" + common_Query2;
 
                             // let sql1 = common_Query + common_Query2;
@@ -1197,12 +1248,10 @@ router.put('/edit/devices', async function (req, res) {
                                 await sql.query(updateSimIds)
                                 let updatePgpEmails = 'update pgp_emails set user_acc_id = "' + usr_acc_id + '",  used=1 where pgp_email ="' + pgp_email + '"';
                                 await sql.query(updatePgpEmails)
-                                if (pgp_email !== prevPGP) {
-                                    let updatePrevPgp = 'update pgp_emails set user_acc_id = null,  used=0 where pgp_email ="' + prevPGP + '"';
-                                    sql.query(updatePrevPgp)
-                                }
-
-
+                                // if (pgp_email !== prevPGP) {
+                                //     let updatePrevPgp = 'update pgp_emails set user_acc_id = null,  used=0 where pgp_email ="' + prevPGP + '"';
+                                //     sql.query(updatePrevPgp)
+                                // }
                                 var slctquery = "select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id where devices.device_id = '" + device_id + "'";
                                 // console.log(slctquery);
                                 rsltq = await sql.query(slctquery);
@@ -1387,10 +1436,12 @@ router.put('/updateProfile/:id', function (req, res) {
 router.post('/unlink/:id', async function (req, res) {
     var verify = verifyToken(req, res);
     var device_id = req.params.id;
-    // console.log('unlink data ', device_id);
+    var pgp_email = req.body.device.pgp_email;
+    var chat_id = req.body.device.chat_id;
+    var sim_id = req.body.device.sim_id;
 
     if (verify.status !== undefined && verify.status == true) {
-        let dvcId= await device_helpers.getDvcIDByDeviceID(device_id);
+        let dvcId = await device_helpers.getDvcIDByDeviceID(device_id);
         console.log('unlinked: ', dvcId);
 
         if (!empty(device_id)) {
@@ -1478,7 +1529,7 @@ router.post('/suspend/:id', async function (req, res) {
                                     "msg": "Account suspended successfully."
                                 }
                                 device_helpers.saveActionHistory(resquery[0], Constants.DEVICE_SUSPENDED)
-                                require("../bin/www").sendDeviceStatus(gtres[0].device_id, "suspended");
+                                require("../bin/www").sendDeviceStatus(resquery[0].device_id, "suspended");
 
 
                                 res.send(data);
@@ -1507,7 +1558,6 @@ router.post('/suspend/:id', async function (req, res) {
                             }
                         } else {
 
-                            require("../bin/www").sendDeviceStatus(gtres[0].device_id, "suspended");
 
                             sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
                                 if (error) throw error;
@@ -1525,6 +1575,7 @@ router.post('/suspend/:id', async function (req, res) {
                                         "msg": "Account suspended successfully."
                                     }
                                     device_helpers.saveActionHistory(resquery[0], Constants.DEVICE_SUSPENDED)
+                                    require("../bin/www").sendDeviceStatus(resquery[0].device_id, "suspended");
                                     res.send(data);
                                 }
                             })
@@ -1666,7 +1717,7 @@ router.post('/flagDevice/:id', async function (req, res) {
     var option = req.body.data
     console.log(option);
     if (verify.status !== undefined && verify.status == true) {
-        var sql2 = "select flagged from devices where id = '" + device_id + "'";
+        var sql2 = "select * from devices where id = '" + device_id + "'";
         var gtres = await sql.query(sql2);
         if (!empty(device_id)) {
 
@@ -1759,7 +1810,7 @@ router.post('/activate/:id', async function (req, res) {
                                 resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
                                 resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                                 // dealerData = await getDealerdata(res[i]);
-                                require("../bin/www").sendDeviceStatus(gtres[0].device_id, "active", true);
+                                require("../bin/www").sendDeviceStatus(resquery[0].device_id, "active", true);
                                 data = {
                                     "data": resquery[0],
                                     "status": true,
@@ -1799,7 +1850,7 @@ router.post('/activate/:id', async function (req, res) {
                                     resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
                                     resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                                     // dealerData = await getDealerdata(res[i]);
-                                    require("../bin/www").sendDeviceStatus(gtres[0].device_id, "active", true);
+                                    require("../bin/www").sendDeviceStatus(resquery[0].device_id, "active", true);
                                     data = {
                                         "data": resquery[0],
                                         "status": true,
@@ -2431,11 +2482,11 @@ router.get('/get_apps/:device_id', async function (req, res) {
             // var query = 'SELECT user_apps.*, apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon from user_apps LEFT JOIN apps_info on user_apps.app_id = apps_info.id LEFT JOIN devices on user_apps.device_id=devices.id where devices.device_id ="' + req.params.device_id + '"';
             // console.log(query);
             var getAppsQ = "SELECT user_apps.id, user_apps.device_id, user_apps.app_id, user_apps.guest, user_apps.encrypted, user_apps.`enable`, " +
-            " apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon , apps_info.extension, apps_info.extension_id" + 
-            " FROM user_apps" +
-            " LEFT JOIN apps_info on user_apps.app_id = apps_info.id" + 
-            " LEFT JOIN devices on user_apps.device_id=devices.id" + 
-            " WHERE devices.device_id = '"+ req.params.device_id +"'"
+                " apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon , apps_info.extension, apps_info.extension_id" +
+                " FROM user_apps" +
+                " LEFT JOIN apps_info on user_apps.app_id = apps_info.id" +
+                " LEFT JOIN devices on user_apps.device_id=devices.id" +
+                " WHERE devices.device_id = '" + req.params.device_id + "'"
             // console.log("hello", getAppsQ);
             try {
                 sql.query(getAppsQ, async (error, apps) => {
@@ -2508,18 +2559,22 @@ router.put('/deleteUnlinkDevice', async function (req, res) {
             let NotDeleted = [];
             let deletedDevices = [];
 
+            // console.log(req.body);
             //  console.log('data for delte ', req.body.devices);
             for (let device of req.body.devices) {
-                let statusChangeQuery = "UPDATE usr_acc SET del_status='" + 1 + "' WHERE device_id='" + device.usr_device_id + "'";
+                let device_id = await device_helpers.getIDByStringDeviceID(device.device_id)
+                let statusChangeQuery = "UPDATE usr_acc SET del_status='" + 1 + "' WHERE device_id='" + device_id + "'";
                 console.log(statusChangeQuery);
-                console.log('devie is ', device);
                 let resp = await sql.query(statusChangeQuery)
 
                 console.log('response query is', resp);
                 if (resp.affectedRows) {
-                    deletedDevices.push(device.usr_device_id);
+                    deletedDevices.push(device_id);
                     console.log('status Updated');
-                    await device_helpers.saveActionHistory(device, Constants.UNLINK_DEVICE_DELETE);
+                    let deleteHistoryQuery = "UPDATE acc_action_history SET del_status='1' WHERE device_id='" + device.device_id + "' AND dealer_id = '" + verify.user.id + "' AND action = 'UNLINK'";
+                    console.log(deleteHistoryQuery);
+                    await sql.query(deleteHistoryQuery)
+                    // await device_helpers.saveActionHistory(device, Constants.UNLINK_DEVICE_DELETE);
 
                 }
                 else {
@@ -2658,10 +2713,9 @@ router.post('/apply_settings/:device_id', async function (req, res) {
             } else if (type === 'history') {
 
                 var applyQuery = "insert into device_history (user_acc_id, app_list,passwords, controls) values ('" + usr_acc_id + "','" + app_list + "', '" + passwords + "', '" + controls + "')";
-                //   console.log('query insert', applyQuery);
                 // console.log(applyQuery);
                 await sql.query(applyQuery, async function (err, rslts) {
-                    if(err){
+                    if (err) {
                         throw err;
                     }
 
@@ -3449,7 +3503,7 @@ router.post('/addApk', function (req, res) {
             filename: function (req, file, callback) {
                 let mimetype = file.mimetype;
                 console.log("mimetype", mimetype);
-                
+
                 if (file.fieldname == "logo") {
                     fileUploaded = true;
                     filename = file.fieldname + '-' + Date.now() + '.jpg';
@@ -3463,7 +3517,7 @@ router.post('/addApk', function (req, res) {
                 }
             }
         });
-        
+
         var upload = multer({
             storage: storage,
             limits: { fileSize: "50mb" }
@@ -3478,7 +3532,7 @@ router.post('/addApk', function (req, res) {
         upload(req, res, function (err) {
             if (err) {
                 return res.end("Error while Uploading");
-            } 
+            }
 
             if (fileUploaded) {
                 data = {
@@ -3492,7 +3546,7 @@ router.post('/addApk', function (req, res) {
                     "msg": "Error while Uploading",
                 };
             }
-            
+
             res.send(data);
 
         });
@@ -3532,49 +3586,103 @@ router.post('/upload', function (req, res) {
 
 router.get('/apklist', async function (req, res) {
     var verify = verifyToken(req, res);
-
+    var data = [];
     if (verify.status !== undefined && verify.status == true) {
-        sql.query("select * from apk_details where delete_status=0 order by id ASC", async function (error, results) {
-            if (error) throw error;
+        if (verify.user.user_type === ADMIN) {
+            sql.query("select * from apk_details where delete_status=0 order by id ASC", async function (error, results) {
+                if (error) throw error;
 
-            var data = [];
-            if (results.length > 0) {
-                let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
-                let dealerCount = await helpers.dealerCount(adminRoleId);
-                console.log("dealer count", dealerCount)
-                for (var i = 0; i < results.length; i++) {
-                    let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
-                    let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
-                    let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
-                    dta = {
-                        "apk_id": results[i].id,
-                        "apk_name": results[i].app_name,
-                        "logo": results[i].logo,
-                        "apk": results[i].apk,
-                        "permissions": permissions,
-                        "apk_status": results[i].status,
-                        "permission_count": permissionC,
-                        "deleteable": (results[i].apk_type == "permanent") ? false : true
+                if (results.length > 0) {
+                    let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                    let dealerCount = await helpers.dealerCount(adminRoleId);
+                    console.log("dealer count", dealerCount)
+                    for (var i = 0; i < results.length; i++) {
+                        let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
+                        let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
+                        let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                        dta = {
+                            "apk_id": results[i].id,
+                            "apk_name": results[i].app_name,
+                            "logo": results[i].logo,
+                            "apk": results[i].apk,
+                            "permissions": permissions,
+                            "apk_status": results[i].status,
+                            "permission_count": permissionC,
+                            "deleteable": (results[i].apk_type == "permanent") ? false : true
+                        }
+                        data.push(dta);
                     }
-                    data.push(dta);
+
+                    return res.json({
+                        status: true,
+                        success: true,
+                        list: data
+                    });
+
+                } else {
+                    data = {
+                        status: false,
+                        msg: "No result found",
+                        list: []
+                    }
+                    res.send(data);
                 }
 
-                return res.json({
-                    status: true,
-                    success: true,
-                    list: data
-                });
+            });
+        }
+        else if (verify.user.user_type === DEALER) {
+            sql.query("select dealer_apks.* ,apk_details.* from dealer_apks left join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "'", async function (error, results) {
+                if (error) throw error;
+                if (results.length > 0) {
+                    let dealerRole = await helpers.getuserTypeIdByName(Constants.DEALER);
+                    console.log("Role", dealerRole);
 
-            } else {
-                data = {
-                    status: false,
-                    msg: "No result found",
-                    list: []
+                    let sdealerList = await sql.query("select count(*) as dealer_count ,dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                    console.log(sdealerList);
+                    let dealerCount = sdealerList[0].dealer_count;
+                    console.log("dealer_count ", dealerCount);
+                    for (var i = 0; i < results.length; i++) {
+                        let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
+                        let Sdealerpermissions = permissions.filter(function (item) {
+                            for (let i = 0; i < sdealerList.length; i++) {
+                                if (item === sdealerList[i].dealer_id) {
+                                    return item
+                                }
+                            }
+                        })
+                        console.log(Sdealerpermissions);
+                        let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
+                        let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                        dta = {
+                            "apk_id": results[i].id,
+                            "apk_name": results[i].app_name,
+                            "logo": results[i].logo,
+                            "apk": results[i].apk,
+                            "permissions": Sdealerpermissions,
+                            "apk_status": results[i].status,
+                            "permission_count": permissionC,
+                            // "deleteable": (results[i].apk_type == "permanent") ? false : true
+                        }
+                        data.push(dta);
+                    }
+
+                    return res.json({
+                        status: true,
+                        success: true,
+                        list: data
+                    });
+
+                } else {
+                    data = {
+                        status: false,
+                        msg: "No result found",
+                        list: []
+                    }
+                    res.send(data);
                 }
-                res.send(data);
-            }
+            });
+        }
 
-        });
 
     }
 });
@@ -3582,64 +3690,174 @@ router.get('/apklist', async function (req, res) {
 /** Save Permissions**/
 router.post('/save_permissions', async function (req, res) {
     var verify = verifyToken(req, res);
-
+    var action = req.body.action
+    // console.log(req.body.action);
     if (verify.status !== undefined && verify.status == true) {
         let apkId = req.body.apkId;
         let dealers = req.body.dealers;
-        let updateAPKQ = "UPDATE apk_details set dealers = '" + dealers + "' WHERE id=" + apkId;
-
-        let parsedDealers = JSON.parse(dealers);
-        if (parsedDealers.length) {
-            let deleteNotIn = "DELETE FROM dealer_apks WHERE dealer_id NOT IN (" + parsedDealers.join() + ") AND apk_id = " + apkId;
-            // console.log(deleteNotIn);
-            await sql.query(deleteNotIn);
-            let insertQuery = "INSERT IGNORE INTO dealer_apks (dealer_id, apk_id) VALUES ";
-
-            let insertOrIgnore = ' '
+        let prevPermissions = await sql.query("select dealers from apk_details WHERE id = " + apkId);
+        let prevParsDealers = JSON.parse(prevPermissions[0].dealers)
+        if (action === 'save') {
+            var parsedDealers = JSON.parse(dealers);
             for (let i = 0; i < parsedDealers.length; i++) {
-                if (i === parsedDealers.length - 1) {
-                    insertOrIgnore = insertOrIgnore + "(" + parsedDealers[i] + "," + apkId + ")"
-                } else {
-                    insertOrIgnore = insertOrIgnore + "(" + parsedDealers[i] + "," + apkId + "),"
+                if (prevParsDealers.indexOf(parsedDealers[i]) === -1) {
+                    prevParsDealers.push(parsedDealers[i])
                 }
             }
-            await sql.query(insertQuery + insertOrIgnore);
-            // console.log(insertQuery + insertOrIgnore);
-        }
+            let parsedCombineArray = JSON.stringify(prevParsDealers)
+            let updateAPKQ = "UPDATE apk_details set dealers = '" + parsedCombineArray + "' WHERE id=" + apkId;
 
-        sql.query(updateAPKQ, async (error, result) => {
-            if (error) throw (error);
-            let permissionC = [];
-            let rslt = await sql.query("select dealers from apk_details where id='" + apkId + "' order by id ASC")
-            if (rslt.length) {
-                console.log(rslt, ' do ti ');
-                if (rslt !== undefined && rslt !== null) {
-                    let permission = JSON.parse(rslt[0].dealers);
+            if (prevParsDealers.length) {
+                let deleteNotIn = "DELETE FROM dealer_apks WHERE dealer_id NOT IN (" + prevParsDealers.join() + ") AND apk_id = " + apkId;
+                // console.log(deleteNotIn);
+                await sql.query(deleteNotIn);
+                let insertQuery = "INSERT IGNORE INTO dealer_apks (dealer_id, apk_id) VALUES ";
 
-                    if (permission !== undefined && permission !== null && permission !== '[]') {
-                        let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
-                        let dealerCount = await helpers.dealerCount(adminRoleId);
-                        permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
-
+                let insertOrIgnore = ' '
+                for (let i = 0; i < prevParsDealers.length; i++) {
+                    if (i === prevParsDealers.length - 1) {
+                        insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + ")"
+                    } else {
+                        insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + "),"
                     }
                 }
-
-                ;
-
+                await sql.query(insertQuery + insertOrIgnore);
+                // console.log(insertQuery + insertOrIgnore);
             }
-            if (result.affectedRows) {
-                res.send({
-                    status: true,
-                    msg: "Permission saved successfully",
-                    permission_count: permissionC,
-                })
-            } else {
-                res.send({
-                    status: false,
-                    msg: "Permission couldn't be saved"
-                })
+
+            sql.query(updateAPKQ, async (error, result) => {
+                if (error) throw (error);
+                let permissionC = [];
+                let rslt = await sql.query("select dealers from apk_details where id='" + apkId + "' order by id ASC")
+                if (rslt.length) {
+                    if (rslt !== undefined && rslt !== null) {
+                        let permission = JSON.parse(rslt[0].dealers);
+                        console.log("Verify user id", verify.user.user_type);
+                        if (verify.user.user_type === Constants.ADMIN) {
+                            if (permission !== undefined && permission !== null && permission !== '[]') {
+                                let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                                let dealerCount = await helpers.dealerCount(adminRoleId);
+                                permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
+
+                            }
+                        }
+                        else if (verify.user.user_type === Constants.DEALER) {
+                            let sdealerList = await sql.query("select count(*) as dealer_count ,dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                            let dealerCount = sdealerList[0].dealer_count;
+                            console.log("dasda", dealerCount);
+                            let Sdealerpermissions = permission.filter(function (item) {
+                                for (let i = 0; i < sdealerList.length; i++) {
+                                    if (item === sdealerList[i].dealer_id) {
+                                        return item
+                                    }
+                                }
+                            })
+                            console.log("sadasdsad", Sdealerpermissions);
+                            let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
+                            permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                        }
+                    };
+                }
+                if (result.affectedRows) {
+                    res.send({
+                        status: true,
+                        msg: "Permission saved successfully",
+                        permission_count: permissionC,
+                    })
+                } else {
+                    res.send({
+                        status: false,
+                        msg: "Permission couldn't be saved"
+                    })
+                }
+            });
+        }
+        else {
+            console.log(dealers);
+            dealers = JSON.parse(dealers);
+            for (let i = 0; i < dealers.length; i++) {
+                var index = prevParsDealers.indexOf(dealers[i]);
+                console.log("array index", index);
+                if (index > -1) {
+                    prevParsDealers.splice(index, 1);
+                }
             }
-        });
+            console.log(prevParsDealers);
+            let toDeleteDealers = (prevParsDealers.length > 0) ? prevParsDealers.join() : '""';
+
+            let updateAPKQ = "UPDATE apk_details set dealers = '" + JSON.stringify(prevParsDealers) + "' WHERE id=" + apkId;
+            if (dealers.length) {
+                let deleteNotIn = "DELETE FROM dealer_apks WHERE dealer_id NOT IN (" + toDeleteDealers + ") AND apk_id = " + apkId;
+                console.log(deleteNotIn);
+                await sql.query(deleteNotIn);
+                if (prevParsDealers.length > 0) {
+                    let insertQuery = "INSERT IGNORE INTO dealer_apks (dealer_id, apk_id) VALUES";
+
+                    let insertOrIgnore = ' '
+                    for (let i = 0; i < prevParsDealers.length; i++) {
+                        if (i === prevParsDealers.length - 1) {
+                            insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + ")"
+                        } else {
+                            insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + "),"
+                        }
+                    }
+                    console.log(insertQuery + insertOrIgnore);
+                    await sql.query(insertQuery + insertOrIgnore);
+
+                }
+                // console.log(insertQuery + insertOrIgnore);
+            }
+
+            sql.query(updateAPKQ, async (error, result) => {
+                if (error) throw (error);
+                let permissionC = [];
+                let rslt = await sql.query("select dealers from apk_details where id='" + apkId + "' order by id ASC")
+                if (rslt.length) {
+                    console.log(rslt, ' do ti ');
+                    if (rslt !== undefined && rslt !== null) {
+                        let permission = JSON.parse(rslt[0].dealers);
+                        console.log("Verify user id", verify.user.user_type);
+                        if (verify.user.user_type === Constants.ADMIN) {
+                            if (permission !== undefined && permission !== null && permission !== '[]') {
+                                let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                                let dealerCount = await helpers.dealerCount(adminRoleId);
+                                permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
+
+                            }
+                        }
+                        else if (verify.user.user_type === Constants.DEALER) {
+                            let sdealerList = await sql.query("select count(*) as dealer_count ,dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                            let dealerCount = sdealerList[0].dealer_count;
+                            console.log("dasda", dealerCount);
+                            let Sdealerpermissions = permission.filter(function (item) {
+                                for (let i = 0; i < sdealerList.length; i++) {
+                                    if (item === sdealerList[i].dealer_id) {
+                                        return item
+                                    }
+                                }
+                            })
+                            console.log("sadasdsad", Sdealerpermissions);
+                            let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
+                            permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                        }
+                    };
+
+                }
+                if (result.affectedRows) {
+                    res.send({
+                        status: true,
+                        msg: "Permission Removed successfully",
+                        permission_count: permissionC,
+                    })
+                } else {
+                    res.send({
+                        status: false,
+                        msg: "Permission couldn't be saved"
+                    })
+                }
+            });
+
+        }
     }
 })
 
@@ -3894,7 +4112,7 @@ cron.schedule('0 0 0 * * *', async () => {
 
         if (formatted_dt >= results[i].expiry_date) {
             var updateUsrAcc = "update usr_acc set status = 'expired' where device_id ='" + results[i].device_id + "'";
-
+            var dvcID = await device_helpers.getDvcIDByDeviceID(results[i].device_id);
             sql.query(updateUsrAcc, function (error, results) {
                 if (error) throw error;
                 if (results.affectedRows == 0) {
@@ -3902,7 +4120,7 @@ cron.schedule('0 0 0 * * *', async () => {
                 } else {
                     try {
                         console.log('expired');
-                        require("../bin/www").sendDeviceStatus(results[i].device_id, "expired", true);
+                        require("../bin/www").sendDeviceStatus(dvcID, "expired", true);
                     } catch (error) {
                         console.log(error);
                     }

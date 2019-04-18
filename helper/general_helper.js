@@ -328,7 +328,7 @@ module.exports = {
 			return [];
 		}
 	},
-	getPackageName: async function(apkBlobAsByteArray) {
+	getPackageName: async function (apkBlobAsByteArray) {
 		// Unzipping zip blob
 		var zip = new JSZip(apkBlobAsByteArray);
 
