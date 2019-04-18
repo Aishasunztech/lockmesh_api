@@ -12,6 +12,7 @@ module.exports = {
 
     // devices
     DEVICE_ACTIVATED: "Active",
+    DEVICE_TRIAL: "Trial",
     DEVICE_SUSPENDED: "Suspended",
     DEVICE_EXPIRED: "Expired",
     DEVICE_UNLINKED: "Unlinked",
@@ -20,6 +21,7 @@ module.exports = {
     UNLINK_DEVICE_DELETE: "Delete",
     DEVICE_FLAGGED: "Flagged",
     DEVICE_UNFLAGGED: "Unflagged",
+    DEVICE_ACCEPT: "Accept Device",
 
     // sockets
     GET_SYNC_STATUS: "get_sync_status_",

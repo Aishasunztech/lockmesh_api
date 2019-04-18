@@ -384,21 +384,21 @@ router.post('/linkdevice', async function (req, resp) {
 
             if (device.length > 0) {
                 var user_acc = await device_helpers.getUserAccByDvcId(device[0].id);
-                if(user_acc){
+                if (user_acc) {
                     let deviceStatus = device_helpers.checkStatus(user_acc);
                     if (deviceStatus == Constants.DEVICE_UNLINKED) {
-    
+
                         var link_acc = "";
                         var updateDviceQ = "UPDATE devices set ip_address = '" + ip + "', simno = '" + simNo1 + "', online = 'On' , simno2 = '" + simNo2 + "', reject_status=0  where id=" + device[0].id;
                         // , unlink_status = 0
                         var updateDevice = await sql.query(updateDviceQ);
-    
+
                         var link_acc = "update usr_acc set link_code='" + dealer[0].link_code + "', dealer_id = '" + dId + "', prnt_dlr_id=" + connected_dealer + ", unlink_status = 0 where device_id = " + device[0].id;
-    
+
                         sql.query(link_acc, function (error, rows) {
                             //response.end(JSON.stringify(rows));
                             if (error) throw error;
-    
+
                             resp.json({
                                 "status": true,
                                 "msg": "Device linked."
@@ -423,8 +423,8 @@ router.post('/linkdevice', async function (req, resp) {
                             "msg": "Device linked."
                         });
                     });
-                } 
-                
+                }
+
             } else {
                 let insertDevice = "INSERT INTO devices (device_id, imei, imei2, ip_address, simno, simno2, serial_number, mac_address, online) values(?,?,?,?,?,?,?,?,?)";
                 sql.query(insertDevice, [deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, 'On'], function (error, deviceRes) {
@@ -612,9 +612,9 @@ router.delete('/unlink/:macAddr/:serialNo', async function (req, res) {
     if (reslt.status == true) {
         if (!empty(mac_address) || !empty(serial_number)) {
             let deviceQ = "SELECT id FROM devices WHERE mac_address='" + mac_address + "' OR serial_number='" + serial_number + "'";
-            sql.query(deviceQ, async function(error, resp){
-                if(error) throw(error);
-                if(resp.length){
+            sql.query(deviceQ, async function (error, resp) {
+                if (error) throw (error);
+                if (resp.length) {
                     var query = "UPDATE usr_acc SET unlink_status=1, dealer_id=null WHERE device_id = '" + resp[0].id + "'";
 
                     await sql.query(query);
@@ -632,7 +632,7 @@ router.delete('/unlink/:macAddr/:serialNo', async function (req, res) {
                     return;
                 }
             });
-           
+
         } else {
             data = {
                 "status": false,
@@ -766,7 +766,7 @@ router.post('/accountstatus', async function (req, res) {
                 // console.log("device_status accountstatus", deviceStatus);
 
                 if (user_acc[0].dealer_id !== 0 && user_acc[0].dealer_id !== null) {
-                    
+
                     var dealerQuery = "select * from dealers where dealer_id = '" + user_acc[0].dealer_id + "'";
                     var dealer = await sql.query(dealerQuery);
                     // reslts2 
@@ -820,7 +820,7 @@ router.post('/accountstatus', async function (req, res) {
                                 }
                                 res.send(data);
                                 return;
-                            } else if (deviceStatus === Constants.DEVICE_UNLINKED){
+                            } else if (deviceStatus === Constants.DEVICE_UNLINKED) {
                                 data = {
                                     "status": true,
                                     "msg": "account unlinked"
@@ -829,7 +829,7 @@ router.post('/accountstatus', async function (req, res) {
                                 return;
                             }
 
-                           
+
                         }
                     } else {
                         data = {
@@ -840,7 +840,7 @@ router.post('/accountstatus', async function (req, res) {
                         return;
                     }
                 } else {
-                    
+
                     if (deviceStatus === Constants.DEVICE_PENDING_ACTIVATION) {
                         data = {
                             "status": true,
@@ -870,7 +870,7 @@ router.post('/accountstatus', async function (req, res) {
                         }
                         res.send(data);
                         return;
-                    } else if (deviceStatus === Constants.DEVICE_UNLINKED){
+                    } else if (deviceStatus === Constants.DEVICE_UNLINKED) {
                         data = {
                             "status": true,
                             "msg": "account unlinked"
@@ -879,7 +879,7 @@ router.post('/accountstatus', async function (req, res) {
                         return;
                     }
 
-                    
+
                 }
             } else {
                 data = {
