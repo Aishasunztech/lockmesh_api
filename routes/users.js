@@ -326,12 +326,12 @@ router.get('/devices', async function (req, res) {
         if (verify.user.user_type !== 'admin') {
             if (verify.user.user_type === 'dealer') {
                 where_con = 'AND (usr_acc.dealer_id =' + verify.user.id + ' OR usr_acc.prnt_dlr_id =' + verify.user.id + ')';
-                let query = "SELECT * From acc_action_history WHERE action = '" + Constants.DEVICE_UNLINKED + "' AND dealer_id = '" + verify.user.id + "'";
+                let query = "SELECT * From acc_action_history WHERE action = 'UNLINK' AND dealer_id = '" + verify.user.id + "' AND del_status IS NULL";
                 console.log(query);
                 newArray = await sql.query(query)
             } else {
                 where_con = 'AND usr_acc.dealer_id = ' + verify.user.id + ' ';
-                let query = "SELECT * From acc_action_history WHERE action = '" + Constants.DEVICE_UNLINKED + "' AND dealer_id = '" + verify.user.id + "'";
+                let query = "SELECT * From acc_action_history WHERE action = 'UNLINK' AND dealer_id = '" + verify.user.id + "' AND del_status IS NULL";
                 console.log(query);
                 newArray = await sql.query(query)
             }
@@ -1181,9 +1181,12 @@ router.put('/edit/devices', async function (req, res) {
 
             var d = new Date(req.body.start_date);
 
-            if (req.body.expiry_date == '') {
+            if (req.body.expiry_date === '' || req.body.expiry_date === null) {
                 var status = 'expired';
-            } else {
+            } else if (req.body.expiry_date == 0) {
+                var status = 'trial';
+            }
+            else {
                 var status = 'active';
             }
             if (req.body.expiry_date == 0) {
@@ -1225,8 +1228,13 @@ router.put('/edit/devices', async function (req, res) {
                                 "msg": "PGP email already taken"
                             });
                         } else {
-                            common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE device_id = '" + device_id + "'"
-                            usr_acc_Query = "UPDATE usr_acc set status = '" + status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' WHERE device_id = '" + usr_device_id + "'"
+                            common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE device_id = '" + device_id + "'";
+                            if (expiry_date == 0) {
+
+                                usr_acc_Query = "UPDATE usr_acc set status = '" + status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' WHERE device_id = '" + usr_device_id + "'"
+                            } else {
+                                usr_acc_Query = "UPDATE usr_acc set status = '" + status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' WHERE device_id = '" + usr_device_id + "'"
+                            }
                             // let sql1 = common_Query + ", s_dealer_name = '" + rslt1[0].dealer_name + "', s_dealer = '" + req.body.s_dealer + "'" + common_Query2;
 
                             // let sql1 = common_Query + common_Query2;
@@ -2551,17 +2559,21 @@ router.put('/deleteUnlinkDevice', async function (req, res) {
             let NotDeleted = [];
             let deletedDevices = [];
 
+            // console.log(req.body);
             //  console.log('data for delte ', req.body.devices);
             for (let device of req.body.devices) {
-                let statusChangeQuery = "UPDATE usr_acc SET del_status='" + 1 + "' WHERE device_id='" + device.usr_device_id + "'";
+                let device_id = await device_helpers.getIDByStringDeviceID(device.device_id)
+                let statusChangeQuery = "UPDATE usr_acc SET del_status='" + 1 + "' WHERE device_id='" + device_id + "'";
                 console.log(statusChangeQuery);
-                console.log('devie is ', device);
                 let resp = await sql.query(statusChangeQuery)
 
                 console.log('response query is', resp);
                 if (resp.affectedRows) {
-                    deletedDevices.push(device.usr_device_id);
+                    deletedDevices.push(device_id);
                     console.log('status Updated');
+                    let deleteHistoryQuery = "UPDATE acc_action_history SET del_status='1' WHERE device_id='" + device.device_id + "' AND dealer_id = '" + verify.user.id + "' AND action = 'UNLINK'";
+                    console.log(deleteHistoryQuery);
+                    await sql.query(deleteHistoryQuery)
                     // await device_helpers.saveActionHistory(device, Constants.UNLINK_DEVICE_DELETE);
 
                 }
