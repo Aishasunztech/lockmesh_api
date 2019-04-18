@@ -169,9 +169,12 @@ router.post('/login', async function (req, resp) {
 
                     let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = getDeviceInfo(req);
                     // console.log("this is info ", { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address });
-
-
-                    let expiry_date = helpers.getExpDateByMonth(new Date(), usrAcc[0].expiry_months);
+                    if (usrAcc[0].expiry_months = 0) {
+                        var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
+                        var expiry_date = moment(trailDate).format("YYYY/MM/DD")
+                    } else {
+                        var expiry_date = helpers.getExpDateByMonth(new Date(), usrAcc[0].expiry_months);
+                    }
                     var updateDevice = "UPDATE devices set  ip_address = '" + ip + "', simno = '" + simNo1 + "', online = 'On', imei='" + imei1 + "', imei2='" + imei2 + "', serial_number='" + serial_number + "', mac_address='" + mac_address + "' , simno2 = '" + simNo2 + "' where id='" + usrAcc[0].device_id + "'";
                     var updateAccount = "UPDATE usr_acc set activation_status=1, status='active', expiry_date='" + expiry_date + "', device_status=1, unlink_status = 0 WHERE id = " + usrAcc[0].id;
 

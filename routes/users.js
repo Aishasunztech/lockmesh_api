@@ -3455,12 +3455,38 @@ router.get('/get_sim_ids', async (req, res) => {
         });
     }
 });
+router.get('/get_used_sim_ids', async (req, res) => {
+    var verify = verifyToken(req, res);
+    if (verify['status'] !== undefined && verify.status === true) {
+        let query = "select * from sim_ids where used=1";
+        sql.query(query, (error, resp) => {
+            res.send({
+                status: false,
+                msg: "data success",
+                data: resp
+            });
+        });
+    }
+});
 
 
 router.get('/get_chat_ids', async (req, res) => {
     var verify = verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from chat_ids where used=0";
+        sql.query(query, (error, resp) => {
+            res.send({
+                status: false,
+                msg: "data success",
+                data: resp
+            });
+        });
+    }
+});
+router.get('/get_used_chat_ids', async (req, res) => {
+    var verify = verifyToken(req, res);
+    if (verify['status'] !== undefined && verify.status === true) {
+        let query = "select * from chat_ids where used=1";
         sql.query(query, (error, resp) => {
             res.send({
                 status: false,
@@ -3482,6 +3508,107 @@ router.get('/get_pgp_emails', async (req, res) => {
                 data: resp
             });
         });
+    }
+});
+router.get('/get_used_pgp_emails', async (req, res) => {
+    var verify = verifyToken(req, res);
+    if (verify['status'] !== undefined && verify.status === true) {
+        let query = "select * from pgp_emails where used=1";
+        sql.query(query, (error, resp) => {
+            res.send({
+                status: false,
+                msg: "data success",
+                data: resp
+            });
+        });
+    }
+});
+router.get('/get_used_sim_ids', async (req, res) => {
+    var verify = verifyToken(req, res);
+    if (verify['status'] !== undefined && verify.status === true) {
+        let query = "select * from sim_ids where used=1";
+        sql.query(query, (error, resp) => {
+            res.send({
+                status: false,
+                msg: "data success",
+                data: resp
+            });
+        });
+    }
+});
+router.get('/get_used_chat_ids', async (req, res) => {
+    var verify = verifyToken(req, res);
+    if (verify['status'] !== undefined && verify.status === true) {
+        let query = "select * from chat_ids where used=1";
+        sql.query(query, (error, resp) => {
+            res.send({
+                status: false,
+                msg: "data success",
+                data: resp
+            });
+        });
+    }
+});
+router.post('/releaseCSV/:fieldName', async (req, res) => {
+    var verify = verifyToken(req, res);
+    var fieldName = req.params.fieldName
+    var ids = req.body.ids
+    if (verify['status'] !== undefined && verify.status === true) {
+        console.log(fieldName, ids);
+        if (fieldName === 'pgp_email') {
+            let query = "UPDATE pgp_emails set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
+            console.log(query);
+            sql.query(query, (error, resp) => {
+                if (error) throw error
+                if (resp.affectedRows) {
+                    res.send({
+                        status: false,
+                        msg: " Released Successfully",
+                    });
+                } else {
+                    res.send({
+                        status: false,
+                        msg: " Released Successfully",
+                    });
+                }
+            });
+        }
+        else if (fieldName === 'sim_id') {
+            let query = "UPDATE sim_ids set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
+            console.log(query);
+            sql.query(query, (error, resp) => {
+                if (error) throw error
+                if (resp.affectedRows) {
+                    res.send({
+                        status: false,
+                        msg: " Released Successfully",
+                    });
+                } else {
+                    res.send({
+                        status: false,
+                        msg: " Released Successfully",
+                    });
+                }
+            });
+        }
+        else if (fieldName === 'chat_id') {
+            let query = "UPDATE chat_ids set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
+            console.log(query);
+            sql.query(query, (error, resp) => {
+                if (error) throw error
+                if (resp.affectedRows) {
+                    res.send({
+                        status: false,
+                        msg: " Released Successfully",
+                    });
+                } else {
+                    res.send({
+                        status: false,
+                        msg: " Released Successfully",
+                    });
+                }
+            });
+        }
     }
 });
 // upload test apk
