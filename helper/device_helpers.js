@@ -12,13 +12,13 @@ var Constants = require('../constants/Application');
 module.exports = {
     onlineOflineDevice: async function (deviceId = null, sessionId, status) {
         if (deviceId != null) {
-            var query = "update devices set session_id='" + sessionId + "', online='" + status + "' where device_id='" + deviceId + "';";
+            var query = "UPDATE devices SET session_id='" + sessionId + "', online='" + status + "' WHERE device_id='" + deviceId + "';";
             let res = await sql.query(query);
             if (res) {
                 return true;
             }
         } else {
-            var query = "update devices set online = '" + status + "', session_id=null where session_id='" + sessionId.replace(/['"]+/g, '') + "'";
+            var query = "UPDATE devices SET online = '" + status + "', session_id=null WHERE session_id='" + sessionId.replace(/['"]+/g, '') + "'";
             let res = await sql.query(query);
             if (res) {
                 return true;
@@ -27,7 +27,7 @@ module.exports = {
         return false;
     },
     getSessionIdByDeviceId: async function (deviceId) {
-        var query = "select session_id from devices where device_id ='" + deviceId + "';";
+        var query = "SELECT session_id FROM devices WHERE device_id ='" + deviceId + "';";
         let res = await sql.query(query);
         if (res.length) {
             return res;
@@ -35,7 +35,7 @@ module.exports = {
         return null;
     },
     getDeviceIdBySessionId: async function (sessionId) {
-        var query = "select device_id from devices where session_id ='" + sessionId + "';";
+        var query = "SELECT device_id FROM devices WHERE session_id ='" + sessionId + "';";
         let res = await sql.query(query);
         if (res.length) {
             return res;
@@ -103,8 +103,8 @@ module.exports = {
                 var query = "INSERT IGNORE INTO apps_info (unique_name, label, icon, extension, extension_id) VALUES ('" + app.uniqueExtension + "', '" + app.label + "', '" + iconName + "', 1, "+ extension[0].id +")";
                 console.log("helloo:",query);
                 await sql.query(query);
-
-                // await this.getApp(app.uniqueName, deviceData.id, app.guest, app.encrypted, app.enable);
+                console.log("inserting extension")
+                await this.getApp(app.uniqueName, deviceData.id, app.guest, app.encrypted, true);
             }
         });
     },
@@ -112,7 +112,7 @@ module.exports = {
         try {
             // console.log("update or insert settings");
             // console.log(settings);
-            var updateQuery = "REPLACE into user_app_permissions (device_id, permissions) VALUE ('" + device_id + "', '" + permissions + "')";
+            var updateQuery = "REPLACE INTO user_app_permissions (device_id, permissions) VALUE ('" + device_id + "', '" + permissions + "')";
             await sql.query(updateQuery, async function (error, row) {
                 if (error) throw (error);
 
@@ -127,18 +127,17 @@ module.exports = {
 
     },
     deviceSynced: async function (deviceId) {
-        var updateQuery = "update devices set is_sync=1 where device_id='" + deviceId + "'";
+        var updateQuery = "UPDATE devices set is_sync=1 WHERE device_id='" + deviceId + "'";
         await sql.query(updateQuery);
     },
     getApp: async function (uniqueName, device_id, guest, encrypted, enable) {
-        // console.log("hello world: " + uniqueName);
-        // console.log("device_id: " + device_id);
-        // console.log("hello world: " + guest);
-        // console.log("hello world: " + encrypted);
-        // console.log("hello world: " + enable);
-        // console.log("hello world: ", extension);
-        var query = "select id from apps_info where unique_name='" + uniqueName + "' limit 1";
-        // console.log(query);
+        console.log("hello world: " + uniqueName);
+        console.log("device_id: " + device_id);
+        console.log("hello world: " + guest);
+        console.log("hello world: " + encrypted);
+        console.log("hello world: " + enable);
+        var query = "SELECT id FROM apps_info WHERE unique_name='" + uniqueName + "' limit 1";
+        console.log(query);
         let response = await sql.query(query);
         if (response.length) {
             await this.insertOrUpdateApps(response[0].id, device_id, guest, encrypted, enable);
@@ -155,7 +154,7 @@ module.exports = {
             sql.query(updateQuery, async function (error, row) {
                 // console.log("this is", row);
                 if (row != undefined && row.affectedRows === 0) {
-                    var insertQuery = "insert into user_apps ( device_id, app_id, guest, encrypted, enable) values (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + ")";
+                    var insertQuery = "INSERT INTO user_apps ( device_id, app_id, guest, encrypted, enable) VALUES (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + ")";
                     await sql.query(insertQuery);
                 }
             });
@@ -170,7 +169,7 @@ module.exports = {
     getDeviceByDeviceId: async function (deviceId) {
         // console.log("getDevice: " + deviceId);
 
-        var getQuery = "select * from devices where device_id='" + deviceId + "'";
+        var getQuery = "SELECT * FROM devices WHERE device_id='" + deviceId + "'";
         // console.log(getQuery);
         let response = await sql.query(getQuery);
         if (response.length) {
@@ -182,7 +181,7 @@ module.exports = {
 
     },
     getOriginalIdByDeviceId: async function (deviceId) {
-        var getQuery = "select id from devices where device_id='" + deviceId + "'";
+        var getQuery = "SELECT id FROM devices WHERE device_id='" + deviceId + "'";
         let res = await sql.query(getQuery);
         if (res.length > 0) {
 
@@ -250,7 +249,7 @@ module.exports = {
 
     },
     isDeviceOnline: async function (device_id) {
-        let query = "select online from devices where device_id='" + device_id + "'";
+        let query = "SELECT online FROM devices WHERE device_id='" + device_id + "'";
         let res = await sql.query(query);
         // console.log(res);
         if (res.length) {
@@ -317,7 +316,7 @@ module.exports = {
     },
 
     getUserAccountId: async (device_id) => {
-        let query = "select usr_acc.id from usr_acc left join devices on devices.id=usr_acc.device_id where devices.device_id='" + device_id + "'"
+        let query = "SELECT usr_acc.id from usr_acc left join devices on devices.id=usr_acc.device_id where devices.device_id='" + device_id + "'"
         let results = await sql.query(query);
         if (results.length) {
             return results[0].id
@@ -334,7 +333,7 @@ module.exports = {
     // }
 
     // getDeviceDetail: async (device_id, user_type)=> {
-    //     sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "'+device_id+'"', async function (error, results, fields) {
+    //     sql.query('SELECT devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "'+device_id+'"', async function (error, results, fields) {
     //         if (error) throw error;
     //         if(results.length){
     //             results[0].finalStatus = device_helper.checkStatus(results[0])

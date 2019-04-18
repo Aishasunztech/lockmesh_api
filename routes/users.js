@@ -2561,7 +2561,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
         if (verify.status !== undefined && verify.status == true) {
             let device_id = req.params.device_id;
 
-            console.log('body is', req.body);
+            // console.log('body is', req.body);
 
             let type = req.body.type;
             let name = req.body.name;
@@ -2619,7 +2619,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
                     res.send(data);
                 }
             } else if (type === 'policy') {
-                console.log('action type polocy', type);
+                // console.log('action type polocy', type);
                 var query = "select id from policy where policy_name = '" + name + "'";
                 let result = await sql.query(query);
 
@@ -2637,7 +2637,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
                         //         require("../bin/www").sendEmit(app_list, passwords, controls, device_id);
                         //     }
                         // }
-                        console.log('resluts id ', rslts);
+                        // console.log('resluts id ', rslts);
                         if (rslts.affectedRows) {
                             data = {
                                 "status": true,
@@ -2658,7 +2658,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
             } else if (type === 'history') {
 
                 var applyQuery = "insert into device_history (user_acc_id, app_list,passwords, controls) values ('" + usr_acc_id + "','" + app_list + "', '" + passwords + "', '" + controls + "')";
-                  console.log('query insert', applyQuery);
+                //   console.log('query insert', applyQuery);
                 // console.log(applyQuery);
                 await sql.query(applyQuery, async function (err, rslts) {
                     if(err){
