@@ -2442,6 +2442,39 @@ router.get('/get_apps/:device_id', async function (req, res) {
                     if (error) {
                         throw Error("Query Expection");
                     }
+                    console.log('app list is ', apps);
+                    let Extension = [];
+                    for(let item of apps){
+                        let subExtension = [];
+                      
+                        if(item.extension === 1 && item.extension_id === 0){
+                             
+                            Extension.push(item);
+                        }    
+                    }
+
+                    let newExtlist = [];
+                    for(let ext of Extension){
+                        let subExtension = [];
+                        
+                            for(let item of apps){
+                                console.log(ext.app_id, item.extension_id);
+                                if(ext.app_id === item.extension_id){
+                                    subExtension.push(ext);
+                                }
+                            }
+                            
+                            
+                        newExtlist.push({
+                            uniqueName: ext.uniqueName,
+                            guest:ext.guest,
+                            encrypted: ext.encrypted,
+                            enable:ext.enable,
+                            label: ext.label,
+                            subExtension: subExtension
+
+                        })
+                    }
                     // console.log("apps length" + apps.length);
                     var query1 = 'SELECT * from user_app_permissions';
                     // where device_id ="' + req.params.device_id + '"
@@ -2456,13 +2489,15 @@ router.get('/get_apps/:device_id', async function (req, res) {
                             res.send({
                                 status: true,
                                 app_list: apps,
-                                controls: JSON.parse(controls[0].permissions)
+                                controls: JSON.parse(controls[0].permissions),
+                                extensions: newExtlist
                             });
                         } else {
                             res.send({
                                 status: true,
                                 app_list: apps,
-                                controls: controls
+                                controls: controls,
+                                extensions: newExtlist
                             });
                         }
                     });
