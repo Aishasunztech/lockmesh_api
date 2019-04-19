@@ -2616,7 +2616,7 @@ router.put('/deleteUnlinkDevice', async function (req, res) {
                 if (resp.affectedRows) {
                     deletedDevices.push(device_id);
                     console.log('status Updated');
-                    let deleteHistoryQuery = "UPDATE acc_action_history SET del_status='1' WHERE device_id='" + device.device_id + "' AND dealer_id = '" + verify.user.id + "' AND action = 'UNLINK'";
+                    let deleteHistoryQuery = "UPDATE acc_action_history SET del_status='1' WHERE device_id='" + device.device_id + "' AND dealer_id = '" + verify.user.id + "' AND (action = 'UNLINK' OR action = 'PRE-ACTIVATED')";
                     console.log(deleteHistoryQuery);
                     await sql.query(deleteHistoryQuery)
                     // await device_helpers.saveActionHistory(device, Constants.UNLINK_DEVICE_DELETE);
