@@ -2493,7 +2493,7 @@ router.get('/get_apps/:device_id', async function (req, res) {
                     if (error) {
                         throw Error("Query Expection");
                     }
-                    console.log('app list is ', apps);
+                    // console.log('app list is ', apps);
                     let Extension = [];
                     for(let item of apps){
                         let subExtension = [];
@@ -3033,7 +3033,7 @@ router.post('/dealer/dropdown', async function (req, res) {
 });
 
 router.post('/dealer/postPagination', async function (req, res) {
-    console.log("Working")
+    // console.log("Working")
     var verify = verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         console.log(verify.status, "verify")

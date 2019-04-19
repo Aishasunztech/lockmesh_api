@@ -94,10 +94,14 @@ module.exports = {
     },
     insertExtensions: async function (extensions, deviceId) {
         let deviceData = await this.getDeviceByDeviceId(deviceId);
+        console.log("my extensions", extensions.toString());
 
         extensions.forEach(async (app) => {
-            
-            let getPrntExt = "SELECT id FROM apps_info WHERE unique_name='" + app.uniqueName + "' AND (extesnion=1 OR extension=true)";
+            console.log("ext object", app.uniqueName);
+
+            let getPrntExt = "SELECT id FROM apps_info WHERE unique_name='" + app.uniqueName + "' AND (extension=1 OR extension=true)";
+            console.log("extension query", getPrntExt);
+
             let extension = await sql.query(getPrntExt);
             if (extension.length) {     
                 console.log("parent uniqueName: ", app.uniqueName);
@@ -237,7 +241,7 @@ module.exports = {
             var base64Data = Buffer.from(app.icon).toString("base64");
 
             fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
-                if (err) throw (err);
+                if (err) console.log (err);
             });
 
         } else if (typeof app.icon === 'string') {
