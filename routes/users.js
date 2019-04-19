@@ -2495,42 +2495,42 @@ router.get('/get_apps/:device_id', async function (req, res) {
                     }
                     console.log('app list is ', apps);
                     let Extension = [];
-                    for(let item of apps){
+                    for (let item of apps) {
                         let subExtension = [];
-                      
-                        if(item.extension === 1 && item.extension_id === 0){
-                             
+
+                        if (item.extension === 1 && item.extension_id === 0) {
+
                             Extension.push(item);
-                        }    
+                        }
                     }
 
                     let newExtlist = [];
-                    for(let ext of Extension){
+                    for (let ext of Extension) {
                         let subExtension = [];
-                        
-                            for(let item of apps){
-                                console.log(ext.app_id, item.extension_id);
-                                if(ext.app_id === item.extension_id){
-                                    subExtension.push({
-                                        uniqueName: ext.uniqueName,
-                                        uniqueExtension: item.uniqueName,
-                                        guest: item.guest,
-                                        label: item.label,
-                                        icon: item.icon,
-                                        encrypted: item.encrypted,
-                                        id: item.id,
-                                        device_id: item.device_id,
-                                        app_id: item.app_id
-                                    });
-                                }
+
+                        for (let item of apps) {
+                            console.log(ext.app_id, item.extension_id);
+                            if (ext.app_id === item.extension_id) {
+                                subExtension.push({
+                                    uniqueName: ext.uniqueName,
+                                    uniqueExtension: item.uniqueName,
+                                    guest: item.guest,
+                                    label: item.label,
+                                    icon: item.icon,
+                                    encrypted: item.encrypted,
+                                    id: item.id,
+                                    device_id: item.device_id,
+                                    app_id: item.app_id
+                                });
                             }
-                            
-                            
+                        }
+
+
                         newExtlist.push({
                             uniqueName: ext.uniqueName,
-                            guest:ext.guest,
+                            guest: ext.guest,
                             encrypted: ext.encrypted,
-                            enable:ext.enable,
+                            enable: ext.enable,
                             label: ext.label,
                             subExtension: subExtension
 
@@ -2677,8 +2677,8 @@ router.post('/apply_settings/:device_id', async function (req, res) {
 
             let controls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
             // console.log("controls: " + controls);
-            let subExtension2 = (subExtension == undefined) ? '' : JSON.stringify(subExtension );
-             console.log("subExtension: " , subExtension);
+            let subExtension2 = (subExtension == undefined) ? '' : JSON.stringify(subExtension);
+            console.log("subExtension: ", subExtension);
 
             if (type == "profile" || type == "policy") device_id = '';
             if (type == "history") {
@@ -2760,7 +2760,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
                 }
             } else if (type === 'history') {
 
-                var applyQuery = "insert into device_history (user_acc_id, app_list,passwords, controls, permissions) values ('" + usr_acc_id + "','" + app_list + "', '" + passwords + "', '" + controls + "','"+subExtension2+"')";
+                var applyQuery = "insert into device_history (user_acc_id, app_list,passwords, controls, permissions) values ('" + usr_acc_id + "','" + app_list + "', '" + passwords + "', '" + controls + "','" + subExtension2 + "')";
                 // console.log(applyQuery);
                 await sql.query(applyQuery, async function (err, rslts) {
                     if (err) {
@@ -3602,57 +3602,73 @@ router.post('/releaseCSV/:fieldName', async (req, res) => {
     var fieldName = req.params.fieldName
     var ids = req.body.ids
     if (verify['status'] !== undefined && verify.status === true) {
-        console.log(fieldName, ids);
+        // console.log(fieldName, ids);
         if (fieldName === 'pgp_email') {
             let query = "UPDATE pgp_emails set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
-            console.log(query);
+            // console.log(query);
             sql.query(query, (error, resp) => {
                 if (error) throw error
                 if (resp.affectedRows) {
-                    res.send({
-                        status: false,
-                        msg: " Released Successfully",
+                    let query = "select * from pgp_emails where used=1";
+                    sql.query(query, (error, resp) => {
+                        res.send({
+                            status: true,
+                            type: 'pgp',
+                            msg: "CSV Released Successfully.",
+                            data: resp
+                        });
                     });
                 } else {
                     res.send({
                         status: false,
-                        msg: " Released Successfully",
+                        msg: "CSV Not Released.",
                     });
                 }
             });
         }
         else if (fieldName === 'sim_id') {
             let query = "UPDATE sim_ids set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
-            console.log(query);
+            // console.log(query);
             sql.query(query, (error, resp) => {
                 if (error) throw error
                 if (resp.affectedRows) {
-                    res.send({
-                        status: false,
-                        msg: " Released Successfully",
+                    let query = "select * from sim_ids where used=1";
+                    sql.query(query, (error, resp) => {
+                        res.send({
+                            status: true,
+                            type: 'sim',
+                            msg: "CSV Released Successfully.",
+                            data: resp
+                        });
                     });
                 } else {
                     res.send({
-                        status: false,
-                        msg: " Released Successfully",
+                        status: true,
+                        msg: "CSV Not Released.",
                     });
                 }
             });
         }
         else if (fieldName === 'chat_id') {
             let query = "UPDATE chat_ids set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
-            console.log(query);
+            // console.log(query);
             sql.query(query, (error, resp) => {
                 if (error) throw error
                 if (resp.affectedRows) {
-                    res.send({
-                        status: false,
-                        msg: " Released Successfully",
+
+                    let query = "select * from chat_ids where used=1";
+                    sql.query(query, (error, resp) => {
+                        res.send({
+                            status: true,
+                            type: 'chat',
+                            msg: "CSV Released Successfully.",
+                            data: resp
+                        });
                     });
                 } else {
                     res.send({
                         status: false,
-                        msg: " Released Successfully",
+                        msg: "CSV Not Released.",
                     });
                 }
             });
