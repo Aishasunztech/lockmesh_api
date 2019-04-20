@@ -394,10 +394,11 @@ router.post('/linkdevice', async function (req, resp) {
                         var link_acc = "";
                         var updateDviceQ = "UPDATE devices set ip_address = '" + ip + "', simno = '" + simNo1 + "', online = 'On' , simno2 = '" + simNo2 + "', reject_status=0  where id=" + device[0].id;
                         // , unlink_status = 0
+                        // console.log(updateDviceQ);
                         var updateDevice = await sql.query(updateDviceQ);
 
                         var link_acc = "update usr_acc set link_code='" + dealer[0].link_code + "', dealer_id = '" + dId + "', prnt_dlr_id=" + connected_dealer + ", unlink_status = 0 where device_id = " + device[0].id;
-
+                        // console.log(link_acc);
                         sql.query(link_acc, function (error, rows) {
                             //response.end(JSON.stringify(rows));
                             if (error) throw error;
@@ -431,6 +432,7 @@ router.post('/linkdevice', async function (req, resp) {
             } else {
                 let insertDevice = "INSERT INTO devices (device_id, imei, imei2, ip_address, simno, simno2, serial_number, mac_address, online) values(?,?,?,?,?,?,?,?,?)";
                 sql.query(insertDevice, [deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, 'On'], function (error, deviceRes) {
+                    // console.log("Insert Query" , insertDevice, [deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, 'On']);
                     if (error) {
                         throw Error(error);
                     }
@@ -763,10 +765,9 @@ router.post('/accountstatus', async function (req, res) {
         if (device.length > 0) {
             var user_acc = await sql.query("SELECT * FROM usr_acc where device_id = " + device[0].id);
             if (user_acc.length > 0) {
-
                 // get user account device status
                 let deviceStatus = device_helpers.checkStatus(user_acc[0]);
-                // console.log("device_status accountstatus", deviceStatus);
+                console.log("device_status accountstatus", deviceStatus);
 
                 if (user_acc[0].dealer_id !== 0 && user_acc[0].dealer_id !== null) {
 
@@ -808,7 +809,15 @@ router.post('/accountstatus', async function (req, res) {
                                 }
                                 res.send(data);
                                 return;
-                            } else if (deviceStatus === Constants.DEVICE_SUSPENDED) {
+                            } else if (deviceStatus === Constants.DEVICE_PRE_ACTIVATION) {
+                                data = {
+                                    "status": true,
+                                    "msg": "account Pre-activated"
+                                }
+                                res.send(data);
+                                return;
+                            }
+                            else if (deviceStatus === Constants.DEVICE_SUSPENDED) {
                                 data = {
                                     "status": false,
                                     "msg": "account suspended"

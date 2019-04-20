@@ -154,15 +154,15 @@ module.exports.listen = async function (server) {
             console.log("is_sync:", is_sync);
             user_acc_id = await device_helpers.getUsrAccIDbyDvcId(dvc_id);
             console.log("user_acc_id: ", user_acc_id);
-            
+
             socket.emit("get_sync_status_" + device_id, {
                 device_id: device_id,
                 apps_status: false,
                 extensions_status: false,
                 settings_status: false,
-                is_sync: (is_sync==1)?true:false,
+                is_sync: (is_sync == 1) ? true : false,
             });
-            
+
 
             // }
         }
@@ -171,13 +171,14 @@ module.exports.listen = async function (server) {
         let setting_res = await sql.query(setting_query);
 
         if (setting_res.length) {
-            console.log("app_list" + setting_res[0].app_list);
+            // console.log("Extensions" + setting_res[0].permissions);
 
             socket.emit('get_applied_settings_' + device_id, {
                 device_id: device_id,
                 app_list: (setting_res[0].app_list == null || setting_res[0].app_list == '') ? '[]' : setting_res[0].app_list,
                 passwords: (setting_res[0].passwords == null || setting_res[0].passwords == '') ? '{}' : setting_res[0].passwords,
-                settings: (setting_res[0].permissions == null || setting_res[0].permissions == '') ? '{}' : setting_res[0].permissions,
+                settings: '{}',
+                extension_list: (setting_res[0].permissions == null || setting_res[0].permissions == '') ? '[]' : setting_res[0].permissions,
                 status: true
             });
         } else {
@@ -198,8 +199,8 @@ module.exports.listen = async function (server) {
             if (response.length > 0 && data.device_id != null) {
                 let app_list = JSON.parse(response[0].app_list);
 
-                // console.log("insertings applications");
-                // console.log(response[0].app_list);
+                console.log("insertings applications");
+                console.log(response[0].app_list);
 
                 console.log("inserting setiings");
                 console.log(response[0].permissions);
@@ -214,7 +215,7 @@ module.exports.listen = async function (server) {
         socket.on('sendApps_' + device_id, async (apps) => {
             try {
                 console.log("get applications event: ", device_id);
-                // console.log(apps);
+                console.log(apps);
                 let applications = JSON.parse(apps);
                 // console.log("syncing device");
                 await device_helpers.insertApps(applications, device_id);
@@ -250,9 +251,9 @@ module.exports.listen = async function (server) {
             console.log('getting device settings from ' + device_id);
             let device_permissions = permissions;
             console.log("device permissions", device_permissions)
-            
+
             // await device_helpers.insertOrUpdateSettings(device_settings, dvc_id);
-            
+
             await device_helpers.deviceSynced(device_id);
 
             socket.emit("get_sync_status_" + device_id, {

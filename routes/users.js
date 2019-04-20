@@ -383,6 +383,7 @@ router.get('/new/devices', function (req, res) {
         }
 
         sql.query('select devices.*  ,' + usr_acc_query_text + ' from devices left join usr_acc on  devices.id = usr_acc.device_id WHERE ((usr_acc.device_status=0 OR usr_acc.device_status="0") AND (usr_acc.unlink_status=0 OR usr_acc.unlink_status="0") AND (usr_acc.activation_status IS NULL)) AND devices.reject_status = 0 ' + where_con + ' order by devices.id DESC', function (error, results, fields) {
+            // console.log('select devices.*  ,' + usr_acc_query_text + ' from devices left join usr_acc on  devices.id = usr_acc.device_id WHERE ((usr_acc.device_status=0 OR usr_acc.device_status="0") AND (usr_acc.unlink_status=0 OR usr_acc.unlink_status="0") AND (usr_acc.activation_status IS NULL)) AND devices.reject_status = 0 ' + where_con + ' order by devices.id DESC');
             if (error) throw error;
             data = {
                 "status": true,
@@ -1531,13 +1532,13 @@ router.post('/unlink/:id', async function (req, res) {
             let result = await sql.query(query);
 
             if (result[0].activation_code !== null) {
-                var sql1 = "update usr_acc set dealer_id = null, activation_status=0, status = '' , device_status = 0 , start_date= '', expiry_date= '' , unlink_status=1 where device_id = '" + device_id + "'";
+                var sql1 = "update usr_acc set dealer_id = null, activation_status=null, status = '' , device_status = 0 , start_date= '', expiry_date= '' , unlink_status=1 where device_id = '" + device_id + "'";
             } else {
 
                 var sql1 = "update usr_acc set dealer_id = null, status = '' , device_status = 0 , start_date= '', expiry_date= '' , unlink_status=1 where device_id = '" + device_id + "'";
             }
 
-            var rest = sql.query(sql1, function (error, results) {
+            var rest = sql.query(sql1, async function (error, results) {
                 if (error) throw error;
                 console.log(results);
                 if (results.affectedRows == 0) {
@@ -1546,6 +1547,9 @@ router.post('/unlink/:id', async function (req, res) {
                         "msg": "Device not unlinked."
                     }
                 } else {
+                    var sqlDevice = "update devices set is_sync where id = '" + device_id + "'";
+                    await sql.query(sqlDevice);
+
                     device_helpers.saveActionHistory(req.body.device, Constants.DEVICE_UNLINKED)
                     require("../bin/www").sendDeviceStatus(dvcId, "unlinked", true);
                     data = {
@@ -2569,7 +2573,7 @@ router.get('/get_apps/:device_id', async function (req, res) {
                 " LEFT JOIN apps_info on user_apps.app_id = apps_info.id" +
                 " LEFT JOIN devices on user_apps.device_id=devices.id" +
                 " WHERE devices.device_id = '" + req.params.device_id + "'"
-            // console.log("hello", getAppsQ);
+            console.log("hello", getAppsQ);
             try {
                 sql.query(getAppsQ, async (error, apps) => {
                     if (error) {
@@ -2577,9 +2581,10 @@ router.get('/get_apps/:device_id', async function (req, res) {
                     }
                     // console.log('app list is ', apps);
                     let Extension = [];
+                    let onlyApps = [];
                     for (let item of apps) {
                         let subExtension = [];
-
+                        // console.log("extenstion id", item.extension_id);
                         if (item.extension === 1 && item.extension_id === 0) {
 
                             Extension.push(item);
@@ -2591,7 +2596,7 @@ router.get('/get_apps/:device_id', async function (req, res) {
                         let subExtension = [];
 
                         for (let item of apps) {
-                            console.log(ext.app_id, item.extension_id);
+                            // console.log(ext.app_id, item.extension_id);
                             if (ext.app_id === item.extension_id) {
                                 subExtension.push({
                                     uniqueName: ext.uniqueName,
@@ -2604,6 +2609,9 @@ router.get('/get_apps/:device_id', async function (req, res) {
                                     device_id: item.device_id,
                                     app_id: item.app_id
                                 });
+                            }
+                            else if (item.extension == 0 || item.visible == 1) {
+                                onlyApps.push(item)
                             }
                         }
 
@@ -2631,14 +2639,14 @@ router.get('/get_apps/:device_id', async function (req, res) {
 
                             res.send({
                                 status: true,
-                                app_list: apps,
+                                app_list: onlyApps,
                                 controls: JSON.parse(controls[0].permissions),
                                 extensions: newExtlist
                             });
                         } else {
                             res.send({
                                 status: true,
-                                app_list: apps,
+                                app_list: onlyApps,
                                 controls: controls,
                                 extensions: newExtlist
                             });
@@ -2842,7 +2850,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
                 }
             } else if (type === 'history') {
 
-                var applyQuery = "insert into device_history (user_acc_id, app_list,passwords, controls, permissions) values ('" + usr_acc_id + "','" + app_list + "', '" + passwords + "', '" + controls + "','" + subExtension2 + "')";
+                var applyQuery = "insert into device_history (user_acc_id, app_list, passwords, controls, permissions) values ('" + usr_acc_id + "','" + app_list + "', '" + passwords + "', '" + controls + "','" + subExtension2 + "')";
                 // console.log(applyQuery);
                 await sql.query(applyQuery, async function (err, rslts) {
                     if (err) {
@@ -2850,9 +2858,10 @@ router.post('/apply_settings/:device_id', async function (req, res) {
                     }
 
                     let isOnline = await device_helpers.isDeviceOnline(device_id);
+                    let permissions = subExtension2;
                     // console.log("isOnline: " + isOnline);
                     if (isOnline) {
-                        require("../bin/www").sendEmit(app_list, passwords, controls, device_id);
+                        require("../bin/www").sendEmit(app_list, passwords, controls, permissions, device_id);
                     }
 
                     if (rslts) {
@@ -4359,7 +4368,6 @@ router.post('/check_pass', async function (req, res) {
     var verify = verifyToken(req, res);
     if (verify.status) {
         let pwd = md5(req.body.user.password);
-
         let query_res = await sql.query("select * from dealers where dealer_id=" + verify.user.id + " and password='" + pwd + "'");
         if (query_res.length) {
             res.send({
