@@ -354,5 +354,65 @@ module.exports = {
 		packageName = packageName.substring(0, packageName.indexOf(packageName.match(/\d+/)[0]));
 
 		return packageName;
+	},
+	saveLogin: async function (user, loginClient, type, status){
+		let insertQ = "INSERT INTO login_history ";
+		let commonFields = " token, expiresin, ip_address, logged_in_client, type, status ";
+		let values = " VALUES ( ";
+		let commonValues = " '"+ user.token +"', '"+ user.expiresIn +"', '"+ user.ip_address +"', '"+ loginClient +"', '"+ type +"', " + status + " ";
+
+		if(loginClient === Constants.DEVICE){
+			if(type === Constants.SOCKET){
+				insertQ = insertQ + " (device_id, socket_id, "+ commonFields +" ) ";
+				values = values + " '" + user.device_id + "', '" + user.socket_id + "', " + commonValues +" ) "
+			} else if (type === Constants.TOKEN){
+				insertQ = insertQ + " (device_id, "+ commonFields +" ) ";
+				values = values + " '" + user.device_id + "', " + commonValues +" ) ";
+			}
+		} else {
+			if(type === Constants.SOCKET){
+				insertQ = insertQ + " (dealer_id, socket_id, "+ commonFields +" ) ";
+				values = values + " '" + user.dealer_id + "', '" + user.socket_id + "', " + commonValues +" ) "
+			} else if (type === Constants.TOKEN){
+				insertQ = insertQ + " (dealer_id, "+ commonFields +" ) ";
+				values = values + " '" + user.dealer_id + "', " + commonValues +" ) ";
+			}
+		}
+		console.log(insertQ + values);
+	},
+	getLoginByToken: async function (token){
+		let loginQ = "SELECT * from login_history WHERE token ='"+ token +"'";
+		let res =await sql.query(loginQ);
+		if(res.length){
+			return res[0];
+		} else {
+			return false;
+		}
+	},
+	getLoginByDealerID: async function (dealerId){
+		let loginQ = "SELECT * from login_history WHERE dealer_id ='"+ dealerId +"'";
+		let res =await sql.query(loginQ);
+		if(res.length){
+			return res[0];
+		} else {
+			return false;
+		}
+	},
+	getLoginByDeviceID: async function (deviceId){
+		let loginQ = "SELECT * from login_history WHERE device_id ='"+ deviceId +"'";
+		let res =await sql.query(loginQ);
+		if(res.length){
+			return res[0];
+		} else {
+			return false;
+		}
+	},
+	expireLoginByToken: async function (token){
+		let loginQ = "UPDATE login_history SET status=0 WHERE token='"+ token +"'";
+		sql.query(loginQ);
+	},
+	expireAllLogin: async function (){
+		let loginQ = "UPDATE login_history SET status=0";
+		sql.query(loginQ);
 	}
 }

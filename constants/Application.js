@@ -4,7 +4,10 @@ module.exports = {
     ADMIN: "admin",
     DEALER: "dealer",
     SDEALER: "sdealer",
-
+    DEVICE: 'device',
+    SOCKET: 'socket',
+    TOKEN: "token",
+    
     // dealers
     DEALER_ACTIVE: "active",
     DEALER_SUSPENDED: "suspended",

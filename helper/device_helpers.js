@@ -157,11 +157,11 @@ module.exports = {
     insertOrUpdateApps: async function (appId, deviceId, guest, encrypted, enable) {
 
         try {
-            console.log("appId:", appId);
-            console.log("deviceId:", deviceId);
-            console.log("guest:", guest);
-            console.log("encrrypted:", encrypted);
-            console.log("enable:", enable);
+            // console.log("appId:", appId);
+            // console.log("deviceId:", deviceId);
+            // console.log("guest:", guest);
+            // console.log("encrrypted:", encrypted);
+            // console.log("enable:", enable);
 
             var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
             // console.log("update query", updateQuery);

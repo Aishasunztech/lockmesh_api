@@ -130,9 +130,9 @@ router.post('/login', async function (req, res) {
     var data = '';
 
     //check for if email is already registered
-    var sql1 = "SELECT * FROM dealers WHERE dealer_email = '" + email + "' limit 1";
-
-    var users = await sql.query(sql1);
+    var userQ = "SELECT * FROM dealers WHERE dealer_email = '" + email + "' limit 1";
+    var users = await sql.query(userQ);
+    
     if (users.length == 0) {
         data = {
             'status': false,
