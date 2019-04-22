@@ -2627,8 +2627,8 @@ router.get('/get_apps/:device_id', async function (req, res) {
                         })
                     }
                     // console.log("apps length" + apps.length);
-                    var query1 = 'SELECT * from user_app_permissions';
-                    // where device_id ="' + req.params.device_id + '"
+                    var query1 = 'SELECT * from user_app_permissions where device_id ="' + req.params.device_id + '" limit 1';
+                    // 
 
                     sql.query(query1, async (error, controls) => {
                         if (error) {
