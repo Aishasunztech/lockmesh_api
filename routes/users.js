@@ -104,13 +104,8 @@ var verifyToken = function (req, res) {
 
 /* GET users listing. */
 router.get('/', function (req, res, next) {
-    // let query = "UPDATE user_apps set guest=0 WHERE id = 5037";
-    // let result = UserApps.findAll().then((result) => {
-    //     res.send(result);
-    // });
-    // console.log(result);
-    // res.send(result);
-    // let result =
+    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    res.send(ip);
 });
 
 router.get('/test', async function (req, res) {
@@ -178,8 +173,9 @@ router.post('/login', async function (req, res) {
                 } else {
                     var userType = await helpers.getUserType(users[0].dealer_id);
                     var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + users[0].dealer_id + "'");
+                    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+                    // console.log('object data is ', users[0]);
 
-                    console.log('object data is ', users[0]);
                     const user = {
                         "id": users[0].dealer_id,
                         "dealer_id": users[0].dealer_id,
@@ -196,7 +192,7 @@ router.post('/login', async function (req, res) {
                         "user_type": userType,
                         "created": users[0].created,
                         "modified": users[0].modified,
-                        "token": null
+                        "ip_address": ip
                     }
                     
                     jwt.sign({
@@ -212,7 +208,7 @@ router.post('/login', async function (req, res) {
                                 user.expiresIn = config.expiresIn;
                                 user.token = token;
                                 helpers.saveLogin(user, userType, Constants.TOKEN, 1);
-                                
+
                                 res.json({
                                     token: token,
                                     'status': true,

@@ -305,9 +305,6 @@ router.post('/login', async function (req, resp) {
     }
 });
 
-
-
-
 async function checkDeviceId(device_id) {
 
     let query = "select device_id from devices where device_id = '" + device_id + "';"
