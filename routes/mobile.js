@@ -157,56 +157,60 @@ router.post('/login', async function (req, resp) {
             } else {
                 var dealerQ = "SELECT * FROM dealers WHERE dealer_id = " + usrAcc[0].dealer_id;
                 var dealer = await sql.query(dealerQ);
+                if (dealer.length) {
+                    if (dealer[0].unlink_status == 1 || dealer[0].account_status == 'suspended') {
+                        data = {
+                            'status': false,
+                            'msg': 'Dealer Suspended, Contact Admin'
+                        }
+                        resp.status(200).send(data);
 
-                if (dealer[0].unlink_status == 1 || dealer[0].account_status == 'suspended') {
-                    data = {
-                        'status': false,
-                        'msg': 'Dealer Suspended, Contact Admin'
-                    }
-                    resp.status(200).send(data);
-
-                } else {
-
-                    let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = getDeviceInfo(req);
-                    // console.log("this is info ", { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address });
-                    if (usrAcc[0].expiry_months = 0) {
-                        var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
-                        var expiry_date = moment(trailDate).format("YYYY/MM/DD")
                     } else {
-                        var expiry_date = helpers.getExpDateByMonth(new Date(), usrAcc[0].expiry_months);
+
+                        let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = getDeviceInfo(req);
+                        // console.log("this is info ", { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address });
+                        if (usrAcc[0].expiry_months = 0) {
+                            var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
+                            var expiry_date = moment(trailDate).format("YYYY/MM/DD")
+                        } else {
+                            var expiry_date = helpers.getExpDateByMonth(new Date(), usrAcc[0].expiry_months);
+                        }
+                        var updateDevice = "UPDATE devices set  ip_address = '" + ip + "', simno = '" + simNo1 + "', online = 'On', imei='" + imei1 + "', imei2='" + imei2 + "', serial_number='" + serial_number + "', mac_address='" + mac_address + "' , simno2 = '" + simNo2 + "' where id='" + usrAcc[0].device_id + "'";
+                        var updateAccount = "UPDATE usr_acc set activation_status=1, status='active', expiry_date='" + expiry_date + "', device_status=1, unlink_status = 0 WHERE id = " + usrAcc[0].id;
+
+                        await sql.query(updateDevice);
+                        await sql.query(updateAccount);
+                        let device_id = await device_helpers.getDvcIDByDeviceID(usrAcc[0].device_id)
+                        const device = {
+                            'dId': dealer[0].dealer_id,
+                            'dealer_pin': dealer[0].link_code,
+                            'connected_dealer': dealer[0].connected_dealer,
+                            'type': await helpers.getUserTypeByTypeId(dealer[0].type),
+                            'device_id': device_id
+                        }
+
+                        jwt.sign({
+                            device
+                        }, config.secret, {
+                                expiresIn: '86400s'
+                            }, (err, token) => {
+                                if (err) {
+                                    resp.json({
+                                        'err': err
+                                    });
+                                } else {
+
+                                    resp.json({
+                                        token: token,
+                                        'status': true,
+                                        'data': device,
+                                    });
+                                }
+                            });
                     }
-                    var updateDevice = "UPDATE devices set  ip_address = '" + ip + "', simno = '" + simNo1 + "', online = 'On', imei='" + imei1 + "', imei2='" + imei2 + "', serial_number='" + serial_number + "', mac_address='" + mac_address + "' , simno2 = '" + simNo2 + "' where id='" + usrAcc[0].device_id + "'";
-                    var updateAccount = "UPDATE usr_acc set activation_status=1, status='active', expiry_date='" + expiry_date + "', device_status=1, unlink_status = 0 WHERE id = " + usrAcc[0].id;
+                }
+                else {
 
-                    await sql.query(updateDevice);
-                    await sql.query(updateAccount);
-                    let device_id = await device_helpers.getDvcIDByDeviceID(usrAcc[0].device_id)
-                    const device = {
-                        'dId': dealer[0].dealer_id,
-                        'dealer_pin': dealer[0].link_code,
-                        'connected_dealer': dealer[0].connected_dealer,
-                        'type': await helpers.getUserTypeByTypeId(dealer[0].type),
-                        'device_id': device_id
-                    }
-
-                    jwt.sign({
-                        device
-                    }, config.secret, {
-                            expiresIn: '86400s'
-                        }, (err, token) => {
-                            if (err) {
-                                resp.json({
-                                    'err': err
-                                });
-                            } else {
-
-                                resp.json({
-                                    token: token,
-                                    'status': true,
-                                    'data': device,
-                                });
-                            }
-                        });
                 }
             }
             // console.log("activation code");
