@@ -2766,6 +2766,8 @@ router.post('/apply_settings/:device_id', async function (req, res) {
             // console.log("controls: " + passwords);
 
             let controls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
+            let systemControls = (req.body.controls == undefined) ? '' : JSON.stringify(req.body.controls);
+           
             // console.log("controls: " + controls);
             let subExtension2 = (subExtension == undefined) ? '' : JSON.stringify(subExtension);
             console.log("subExtension: ", subExtension);
@@ -2850,7 +2852,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
                 }
             } else if (type === 'history') {
 
-                var applyQuery = "insert into device_history (user_acc_id, app_list, passwords, controls, permissions) values ('" + usr_acc_id + "','" + app_list + "', '" + passwords + "', '" + controls + "','" + subExtension2 + "')";
+                var applyQuery = "insert into device_history (user_acc_id, app_list, passwords, controls, permissions) values ('" + usr_acc_id + "','" + app_list + "', '" + passwords + "', '" + systemControls + "','" + subExtension2 + "')";
                 // console.log(applyQuery);
                 await sql.query(applyQuery, async function (err, rslts) {
                     if (err) {
