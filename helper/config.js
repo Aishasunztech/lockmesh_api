@@ -1,4 +1,5 @@
 
 module.exports = {
-  'secret': 'kepitsecretwithauth!@#'
+  secret: 'kepitsecretwithauth!@#',
+  expiresIn: '86400s'
 };

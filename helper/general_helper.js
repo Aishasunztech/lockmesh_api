@@ -378,7 +378,8 @@ module.exports = {
 				values = values + " '" + user.dealer_id + "', " + commonValues +" ) ";
 			}
 		}
-		console.log(insertQ + values);
+		// console.log();
+		await sql.query(insertQ + values)
 	},
 	getLoginByToken: async function (token){
 		let loginQ = "SELECT * from login_history WHERE token ='"+ token +"'";

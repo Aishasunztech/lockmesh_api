@@ -132,7 +132,7 @@ router.post('/login', async function (req, res) {
     //check for if email is already registered
     var userQ = "SELECT * FROM dealers WHERE dealer_email = '" + email + "' limit 1";
     var users = await sql.query(userQ);
-    
+
     if (users.length == 0) {
         data = {
             'status': false,
@@ -198,29 +198,26 @@ router.post('/login', async function (req, res) {
                         "modified": users[0].modified,
                         "token": null
                     }
-                    // const user = {
-                    //     "id": users[0].dealer_id,
-
-                    //     "email": users[0].dealer_email,
-                    //     "user_type": userType[0].role,
-                    //     "modified": users[0].modified,
-                    //     "created": users[0].created
-                    // }
+                    
                     jwt.sign({
                         user
                     }, config.secret, {
-                            expiresIn: '86400s'
+                            expiresIn: config.expiresIn
                         }, (err, token) => {
                             if (err) {
                                 res.json({
                                     'err': err
                                 });
                             } else {
+                                user.expiresIn = config.expiresIn;
+                                user.token = token;
+                                helpers.saveLogin(user, userType, Constants.TOKEN, 1);
+                                
                                 res.json({
                                     token: token,
                                     'status': true,
                                     'msg': 'User loged in Successfully',
-                                    'expiresIn': "1539763907",
+                                    'expiresIn': config.expiresIn,
                                     user
                                 });
                             }
