@@ -31,7 +31,7 @@ const device_helpers = require('../helper/device_helpers.js');
 const ADMIN = "admin";
 const DEALER = "dealer";
 const SDEALER = "sdealer";
-let usr_acc_query_text = "usr_acc.id,usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,del_status"
+let usr_acc_query_text = "usr_acc.id,usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity"
 // var CryptoJS = require("crypto-js");
 // var io = require("../bin/www");
 
@@ -322,6 +322,7 @@ router.get('/devices', async function (req, res) {
     var verify = verifyToken(req, res);
     var where_con = '';
     let newArray = [];
+    // console.log("user data", verify.user);
     if (verify.status !== undefined && verify.status == true) {
         if (verify.user.user_type !== 'admin') {
             if (verify.user.user_type === 'dealer') {
@@ -759,7 +760,7 @@ router.post('/create/device_profile', async function (req, res) {
         var activation_code = randomize('0', 7);
         let device_id = helpers.getDeviceId();
         device_id = await helpers.checkDeviceId(device_id);
-        console.log("device_id", device_id);
+        // console.log("device_id", device_id);
         var name = req.body.name;
         var client_id = req.body.client_id;
         var chat_id = req.body.chat_id ? req.body.chat_id : '';
@@ -767,13 +768,16 @@ router.post('/create/device_profile', async function (req, res) {
         var email = req.body.email
         var pgp_email = req.body.pgp_email;
         var start_date = req.body.start_date;
+        var note = req.body.note;
+        var validity = req.body.validity;
         var duplicate = req.body.duplicate ? req.body.duplicate : 0;
-
+        // validityDay = moment(new Date(), "YYYY/MM/DD").add(validityDay, 'days');
+        // var validity = moment(validityDay).format("YYYY/MM/DD")
         if (req.body.expiry_date == 0) {
-            console.log(req.body.expiry_date);
+            // console.log(req.body.expiry_date);
             var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
             var expiry_date = moment(trailDate).format("YYYY/MM/DD")
-            console.log(expiry_date);
+            // console.log(expiry_date);
         } else {
             let exp_month = req.body.expiry_date;
             var expiry_date = helpers.getExpDateByMonth(start_date, exp_month);
@@ -795,73 +799,77 @@ router.post('/create/device_profile', async function (req, res) {
             let chat_ids = await sql.query(chatIds);
             let simIds = "SELECT sim_id from sim_ids WHERE used=0";
             let sim_ids = await sql.query(simIds);
-            for (let i = 0; i < duplicate; i++) {
-                let activationCode = randomize('0', 7);
-                let deviceId = helpers.getDeviceId();
-                let chat_id = (chat_ids[i]) ? chat_ids[i].chat_id : null;
-                let sim_id = (sim_ids[i]) ? sim_ids[i].sim_id : null;
-                let pgp_email = (pgp_emails[i]) ? pgp_emails[i].pgp_email : null;
-                // console.log(pgp_emails[i].pgp_email, chat_ids[i].chat_id, sim_isim_id, activationCode, deviceId);
+            let activationCodes = []
+            let deviceIds = []
+            const abd = async () => {
+                for (let i = 0; i < duplicate; i++) {
+                    let activationCode = randomize('0', 7);
+                    let deviceId = helpers.getDeviceId();
+                    activationCodes.push(activationCode);
+                    deviceIds.push("'" + deviceId + "'");
+                    let chat_id = (chat_ids[i]) ? chat_ids[i].chat_id : null;
+                    let sim_id = (sim_ids[i]) ? sim_ids[i].sim_id : null;
+                    let pgp_email = (pgp_emails[i]) ? pgp_emails[i].pgp_email : null;
+                    // console.log(pgp_emails[i].pgp_email, chat_ids[i].chat_id, sim_isim_id, activationCode, deviceId);
 
-                var insertDevice = "INSERT INTO devices (device_id ) VALUES ('" + deviceId + "')";
-                let resp = await sql.query(insertDevice)
-                console.log("inserted id", resp.insertId);
-                let dvc_id = resp.insertId;
-                var insertUser_acc = "INSERT INTO usr_acc (device_id, activation_code, expiry_months, dealer_id, device_status, activation_status, expiry_date "
-                var User_acc_values = ") VALUES ('" + dvc_id + "', '" + activationCode + "',  " + exp_month + ", " + dealer_id + ", 0, 0 ,'" + expiry_date + "')";
-                insertUser_acc = insertUser_acc + User_acc_values;
-                if (resp.affectedRows) {
-                    let resps = await sql.query(insertUser_acc)
-                    let user_acc_id = resps.insertId;
-                    console.log("affectedRows", resps.affectedRows);
-                    if (resps.affectedRows) {
-                        let updateChatIds = 'update chat_ids set used=1, user_acc_id="' + user_acc_id + '" where chat_id ="' + chat_id + '"';
-                        await sql.query(updateChatIds);
-                        let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + user_acc_id + '" where sim_id ="' + sim_id + '"';
-                        await sql.query(updateSimIds)
-                        let updatePgpEmails = 'update pgp_emails set used=1, user_acc_id="' + user_acc_id + '" where pgp_email ="' + pgp_email + '"';
-                        await sql.query(updatePgpEmails);
-                        if (policy_id !== '') {
-                            var slctpolicy = "select * from device_history where id = " + policy_id + "";
-                            policy_obj = await sql.query(slctpolicy);
-                            // console.log('policy ', policy_obj);
-                            policy_obj[0].dealer_id = dealer_id;
-                            policy_obj[0].status = 0;
-                            policy_obj[0].type = 'history';
+                    var insertDevice = "INSERT INTO devices (device_id ) VALUES ('" + deviceId + "')";
+                    let resp = await sql.query(insertDevice)
+                    // console.log("inserted id", resp.insertId);
+                    let dvc_id = resp.insertId;
+                    var insertUser_acc = "INSERT INTO usr_acc (device_id, activation_code, expiry_months, dealer_id, device_status, activation_status, expiry_date,note,validity "
+                    var User_acc_values = ") VALUES ('" + dvc_id + "', '" + activationCode + "',  " + exp_month + ", " + dealer_id + ", 0, 0 ,'" + expiry_date + "','" + note + "','" + validity + "')";
+                    insertUser_acc = insertUser_acc + User_acc_values;
+                    if (resp.insertId) {
+                        let resps = await sql.query(insertUser_acc)
+                        let user_acc_id = resps.insertId;
+                        // console.log("affectedRows", resps.affectedRows);
+                        if (resps.affectedRows) {
+                            let updateChatIds = 'update chat_ids set used=1, user_acc_id="' + user_acc_id + '" where chat_id ="' + chat_id + '"';
+                            await sql.query(updateChatIds);
+                            let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + user_acc_id + '" where sim_id ="' + sim_id + '"';
+                            await sql.query(updateSimIds)
+                            let updatePgpEmails = 'update pgp_emails set used=1, user_acc_id="' + user_acc_id + '" where pgp_email ="' + pgp_email + '"';
+                            await sql.query(updatePgpEmails);
+                            if (policy_id !== '') {
+                                var slctpolicy = "select * from device_history where id = " + policy_id + "";
+                                policy_obj = await sql.query(slctpolicy);
+                                // console.log('policy ', policy_obj);
+                                policy_obj[0].dealer_id = dealer_id;
+                                policy_obj[0].status = 0;
+                                policy_obj[0].type = 'history';
 
-                            var insertQuery = "INSERT INTO device_history ( user_acc_id, app_list, setting, controls, status ) "
-                                + " VALUES('" + user_acc_id + "', '" + policy_obj[0].app_list + "', '" + policy_obj[0].setting + "', '" + policy_obj[0].controls + "', 0 ) "
+                                var insertQuery = "INSERT INTO device_history ( user_acc_id, app_list, setting, controls, status ) "
+                                    + " VALUES('" + user_acc_id + "', '" + policy_obj[0].app_list + "', '" + policy_obj[0].setting + "', '" + policy_obj[0].controls + "', 0 ) "
 
-                            await sql.query(insertQuery);
+                                await sql.query(insertQuery);
+                            }
                         }
-                        var slctquery = "select * from devices where device_id = '" + deviceId + "'";
-                        console.log(slctquery);
-                        rsltq = await sql.query(slctquery);
-
-                        let results = await sql.query("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name, dealers.connected_dealer from devices left join usr_acc on devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 and devices.device_id='" + deviceId + "'")
-                        console.log("user data list ", results)
-
-                        results[0].finalStatus = device_helpers.checkStatus(results[0])
-                        results[0].pgp_email = await device_helpers.getPgpEmails(results[0])
-                        results[0].sim_id = await device_helpers.getSimids(results[0])
-                        results[0].chat_id = await device_helpers.getChatids(results[0])
-
-                        // dealerData = await device_helpers.getDealerdata(results[i]);
-                        // device_helpers.saveActionHistory(results[0], Constants.DEVICE_PRE_ACTIVATION)
-                        dataStag.push(results[0])
-                        console.log("Here is Stagged data", dataStag);
 
                     }
 
                 }
+            }
+            await abd()
+            html = 'Amount of activation codes : ' + activationCodes.length + '<br> ' + 'Activation Codes are following : <br>' + activationCodes.join("<br>") + '.<br> ';
 
+            sendEmail("Activation codes successfuly generated.", html, verify.user.dealer_email);
+            // console.log("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name, dealers.connected_dealer from devices left join usr_acc on devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 and devices.device_id IN (" + deviceIds.join() + ")");
+            var slctquery = "select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id where devices.device_id IN (" + deviceIds.join() + ")";
+            // console.log(slctquery);
+            rsltq = await sql.query(slctquery);
+            // console.log(rsltq);
+            for (var i = 0; i < rsltq.length; i++) {
+                rsltq[i].finalStatus = device_helpers.checkStatus(rsltq[i])
+                rsltq[i].pgp_email = await device_helpers.getPgpEmails(rsltq[i])
+                rsltq[i].sim_id = await device_helpers.getSimids(rsltq[i])
+                rsltq[i].chat_id = await device_helpers.getChatids(rsltq[i])
+                await device_helpers.saveActionHistory(rsltq[i], Constants.DEVICE_PRE_ACTIVATION);
             }
             data = {
                 "status": true,
-                "msg": 'Record Inserted successfully.',
-                "data": dataStag
+                "msg": 'Pre-activations added succcessfully.Email sends to your account.',
+                "data": rsltq
             };
-            console.log("Here is data", data);
             res.send({
                 status: true,
                 data: data
@@ -900,9 +908,9 @@ router.post('/create/device_profile', async function (req, res) {
                             if (err) throw (err);
                             console.log("inserted id", resp.insertId);
                             let dvc_id = resp.insertId;
-                            var insertUser_acc = "INSERT INTO usr_acc (device_id, activation_code, client_id , account_email,expiry_months, dealer_id, device_status, activation_status, expiry_date "
+                            var insertUser_acc = "INSERT INTO usr_acc (device_id, activation_code, client_id , account_email,expiry_months, dealer_id, device_status, activation_status, expiry_date , note,validity  "
                             // var insertDevice = "INSERT INTO devices ( activation_code, name, client_id, chat_id, model, email, pgp_email, expiry_months, dealer_id, device_status, activation_status ";
-                            var User_acc_values = ") VALUES ('" + dvc_id + "', '" + activation_code + "', '" + client_id + "', '" + email + "',  " + exp_month + ", " + dealer_id + ", 0, 0 ,'" + expiry_date + "')";
+                            var User_acc_values = ") VALUES ('" + dvc_id + "', '" + activation_code + "', '" + client_id + "', '" + email + "',  " + exp_month + ", " + dealer_id + ", 0, 0 ,'" + expiry_date + "','" + note + "','" + validity + "')";
                             insertUser_acc = insertUser_acc + User_acc_values;
                             console.log(insertUser_acc);
                             if (resp.affectedRows) {
@@ -951,7 +959,7 @@ router.post('/create/device_profile', async function (req, res) {
                                             device_helpers.saveActionHistory(results[0], Constants.DEVICE_PRE_ACTIVATION)
                                             data = {
                                                 "status": true,
-                                                "msg": 'Record Inserted successfully.',
+                                                "msg": 'Pre-activation added succcessfully.',
                                                 "data": results
                                             };
 
@@ -1253,7 +1261,8 @@ router.put('/edit/devices', async function (req, res) {
             let usr_acc_id = req.body.usr_acc_id;
             let usr_device_id = req.body.usr_device_id;
             let prevPGP = req.body.prevPGP
-
+            let finalStatus = req.body.finalStatus
+            console.log(finalStatus);
             // let s_dealer_id = req.body.s_dealer;
             let start_date = req.body.start_date;
             // let expiray_date = req.body.expiray_date;
@@ -1268,6 +1277,9 @@ router.put('/edit/devices', async function (req, res) {
                 var status = 'expired';
             } else if (req.body.expiry_date == 0) {
                 var status = 'trial';
+            }
+            else if (finalStatus === Constants.DEVICE_PRE_ACTIVATION) {
+                var status = ''
             }
             else {
                 var status = 'active';
@@ -1312,14 +1324,22 @@ router.put('/edit/devices', async function (req, res) {
                             });
                         } else {
                             common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE device_id = '" + device_id + "'";
-                            if (expiry_date == 0) {
+                            if (finalStatus !== Constants.DEVICE_PRE_ACTIVATION) {
+                                if (expiry_date == 0) {
 
-                                usr_acc_Query = "UPDATE usr_acc set status = '" + status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' WHERE device_id = '" + usr_device_id + "'"
+                                    usr_acc_Query = "UPDATE usr_acc set status = '" + status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' WHERE device_id = '" + usr_device_id + "'"
+                                } else {
+                                    usr_acc_Query = "UPDATE usr_acc set status = '" + status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' WHERE device_id = '" + usr_device_id + "'"
+                                }
                             } else {
-                                usr_acc_Query = "UPDATE usr_acc set status = '" + status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' WHERE device_id = '" + usr_device_id + "'"
+                                if (expiry_date == 0) {
+                                    usr_acc_Query = "UPDATE usr_acc set account_email = '" + req.body.email + "' status = '" + status + "',client_id = '" + client_id + "', device_status = 0, unlink_status=0 ,  start_date = '" + start_date + "' WHERE device_id = '" + usr_device_id + "'"
+                                } else {
+                                    usr_acc_Query = "UPDATE usr_acc set account_email = '" + req.body.email + "',status = '" + status + "',client_id = '" + client_id + "', device_status = 0, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' WHERE device_id = '" + usr_device_id + "'"
+                                }
                             }
-                            // let sql1 = common_Query + ", s_dealer_name = '" + rslt1[0].dealer_name + "', s_dealer = '" + req.body.s_dealer + "'" + common_Query2;
 
+                            // let sql1 = common_Query + ", s_dealer_name = '" + rslt1[0].dealer_name + "', s_dealer = '" + req.body.s_dealer + "'" + common_Query2;
                             // let sql1 = common_Query + common_Query2;
                             //console.log('empty');
                             // console.log(sql1);
@@ -1331,10 +1351,15 @@ router.put('/edit/devices', async function (req, res) {
                                 await sql.query(updateSimIds)
                                 let updatePgpEmails = 'update pgp_emails set user_acc_id = "' + usr_acc_id + '",  used=1 where pgp_email ="' + pgp_email + '"';
                                 await sql.query(updatePgpEmails)
-                                // if (pgp_email !== prevPGP) {
-                                //     let updatePrevPgp = 'update pgp_emails set user_acc_id = null,  used=0 where pgp_email ="' + prevPGP + '"';
-                                //     sql.query(updatePrevPgp)
-                                // }
+
+                                if (finalStatus === Constants.DEVICE_PRE_ACTIVATION) {
+                                    if (pgp_email !== prevPGP) {
+                                        let updatePrevPgp = 'update pgp_emails set user_acc_id = null,  used=0 where pgp_email ="' + prevPGP + '"';
+                                        sql.query(updatePrevPgp)
+
+                                    }
+                                }
+
                                 var slctquery = "select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id where devices.device_id = '" + device_id + "'";
                                 // console.log(slctquery);
                                 rsltq = await sql.query(slctquery);
@@ -1547,7 +1572,7 @@ router.post('/unlink/:id', async function (req, res) {
                         "msg": "Device not unlinked."
                     }
                 } else {
-                    var sqlDevice = "update devices set is_sync where id = '" + device_id + "'";
+                    var sqlDevice = "update devices set is_sync = 0 where id = '" + device_id + "'";
                     await sql.query(sqlDevice);
 
                     device_helpers.saveActionHistory(req.body.device, Constants.DEVICE_UNLINKED)
@@ -2693,21 +2718,26 @@ router.put('/deleteUnlinkDevice', async function (req, res) {
             let insertError = 0;
             let NotDeleted = [];
             let deletedDevices = [];
-
-            // console.log(req.body);
+            let action = req.body.action
+            // console.log(action);
             //  console.log('data for delte ', req.body.devices);
             for (let device of req.body.devices) {
                 let device_id = await device_helpers.getIDByStringDeviceID(device.device_id)
+                // let user_acc_id = await device_helpers.getUsrAccIDbyDvcId(device_id)
                 let statusChangeQuery = "UPDATE usr_acc SET del_status='" + 1 + "' WHERE device_id='" + device_id + "'";
-                console.log(statusChangeQuery);
+                // console.log(statusChangeQuery);
                 let resp = await sql.query(statusChangeQuery)
-
-                console.log('response query is', resp);
+                // console.log('response query is', resp);
                 if (resp.affectedRows) {
+                    if (action == 'pre-active') {
+                        await sql.query("UPDATE pgp_emails set user_acc_id = null , used = 0 where pgp_email ='" + device.pgp_email + "'")
+                        await sql.query("UPDATE chat_ids set user_acc_id = null , used = 0 where chat_id ='" + device.chat_id + "'")
+                        await sql.query("UPDATE sim_ids set user_acc_id = null , used = 0 where sim_id ='" + device.sim_id + "'")
+                    }
                     deletedDevices.push(device_id);
-                    console.log('status Updated');
+                    // console.log('status Updated');
                     let deleteHistoryQuery = "UPDATE acc_action_history SET del_status='1' WHERE device_id='" + device.device_id + "' AND dealer_id = '" + verify.user.id + "' AND (action = 'UNLINK' OR action = 'PRE-ACTIVATED')";
-                    console.log(deleteHistoryQuery);
+                    // console.log(deleteHistoryQuery);
                     await sql.query(deleteHistoryQuery)
                     // await device_helpers.saveActionHistory(device, Constants.UNLINK_DEVICE_DELETE);
 
@@ -2717,8 +2747,6 @@ router.put('/deleteUnlinkDevice', async function (req, res) {
                     NotDeleted.push(device.device_id)
                 }
             }
-            console.log('eror', insertError);
-            console.log('delte degicve', deletedDevices);
             if (insertError === 0) {
                 data = {
                     'status': true,
