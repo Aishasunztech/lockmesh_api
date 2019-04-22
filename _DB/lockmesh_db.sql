@@ -1,17 +1,17 @@
 /*
  Navicat Premium Data Transfer
 
- Source Server         : lockmesh_live
+ Source Server         : localhost
  Source Server Type    : MySQL
- Source Server Version : 100313
- Source Host           : 134.209.124.196:3306
+ Source Server Version : 50724
+ Source Host           : localhost:3306
  Source Schema         : lockmesh_db
 
  Target Server Type    : MySQL
- Target Server Version : 100313
+ Target Server Version : 50724
  File Encoding         : 65001
 
- Date: 18/04/2019 11:06:22
+ Date: 22/04/2019 13:50:41
 */
 
 SET NAMES utf8mb4;
@@ -23,7 +23,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS `acc_action_history`;
 CREATE TABLE `acc_action_history`  (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `action` enum('DELETE','SUSPEND','UNLINK','EXPIRED','ACTIVE','FLAGGED','UNFLAGGED','TRANSFER') CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
+  `action` enum('DELETE','SUSPENDED','UNLINK','EXPIRED','ACTIVE','FLAGGED','UNFLAGGED','TRANSFER','PRE_ACTIVATED') CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `device_id` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `device_name` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `session_id` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
@@ -66,7 +66,7 @@ CREATE TABLE `acc_action_history`  (
   `sim_id` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `del_status` tinyint(4) NULL DEFAULT NULL,
   `finalStatus` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
-  `created_at` timestamp(0) NOT NULL DEFAULT current_timestamp(0) ON UPDATE CURRENT_TIMESTAMP(0),
+  `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 7 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
@@ -74,7 +74,7 @@ CREATE TABLE `acc_action_history`  (
 -- ----------------------------
 -- Records of acc_action_history
 -- ----------------------------
-INSERT INTO `acc_action_history` VALUES (6, 'UNLINK', 'OCSP875142', 'BCP100', 'null', 'null', '192.168.0.103', '8985219131642221554f', '496953409506566', 'null', '014705682480304', '0123456789ABCDEF', '00:A0:4D:9F:BD:D0', 'null', 'off', 1, '', 'null', 0, NULL, 'hhh@hhh.com', 225, 0, '610192', 'null', 'null', 6, '', '', '', 0, 0, 'undefined', '', 1, 0, 'Barry', 'null', 22, '599NGT@TITANSECURE.BIZ', 'N/A', 'N/A', NULL, 'Unlinked', '2019-04-12 11:09:13', '2019-04-12 11:09:13');
+INSERT INTO `acc_action_history` VALUES (6, 'UNLINK', 'OCSP875142', 'BCP100', 'null', 'null', '192.168.0.103', '8985219131642221554f', '496953409506566', 'null', '014705682480304', '0123456789ABCDEF', '00:A0:4D:9F:BD:D0', 'null', 'off', 1, '', 'null', 0, NULL, 'hhh@hhh.com', 225, 0, '610192', 'null', 'null', 6, '', '', '', 0, 0, 'undefined', '', 1, 0, 'Barry', 'null', 22, '599NGT@TITANSECURE.BIZ', 'N/A', 'N/A', NULL, 'Unlinked', '2019-04-18 06:32:15', '2019-04-18 06:32:15');
 
 -- ----------------------------
 -- Table structure for acl_module_actions
@@ -119,7 +119,7 @@ CREATE TABLE `acl_module_to_user_roles`  (
   INDEX `component_id`(`component_id`) USING BTREE,
   CONSTRAINT `acl_module_to_user_roles_ibfk_1` FOREIGN KEY (`user_role_id`) REFERENCES `user_roles` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `acl_module_to_user_roles_ibfk_2` FOREIGN KEY (`component_id`) REFERENCES `acl_modules` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 50 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 51 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of acl_module_to_user_roles
@@ -146,6 +146,7 @@ INSERT INTO `acl_module_to_user_roles` VALUES (46, 1, 39);
 INSERT INTO `acl_module_to_user_roles` VALUES (47, 1, 40);
 INSERT INTO `acl_module_to_user_roles` VALUES (48, 2, 39);
 INSERT INTO `acl_module_to_user_roles` VALUES (49, 2, 33);
+INSERT INTO `acl_module_to_user_roles` VALUES (50, 2, 40);
 
 -- ----------------------------
 -- Table structure for acl_modules
@@ -199,18 +200,19 @@ CREATE TABLE `apk_details`  (
   `dealers` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
   `status` enum('Off','On') CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL DEFAULT 'Off',
   `created` datetime(0) NULL DEFAULT NULL,
-  `modified` timestamp(0) NULL DEFAULT current_timestamp(0) ON UPDATE CURRENT_TIMESTAMP(0),
+  `modified` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
   `delete_status` tinyint(4) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `id`(`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 32 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 36 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of apk_details
 -- ----------------------------
-INSERT INTO `apk_details` VALUES (29, 'new file added', 'logo-1554958561193.jpg', 'apk-1554200217607.apk', 'basic', NULL, '[226,225,224,223,222]', 'On', '2019-04-02 15:17:59', '2019-04-13 10:00:12', 0);
+INSERT INTO `apk_details` VALUES (29, 'new file added', 'logo-1554958561193.jpg', 'apk-1554200217607.apk', 'basic', NULL, '[226,225,224,223,222]', 'On', '2019-04-02 15:17:59', '2019-04-18 06:31:42', 0);
 INSERT INTO `apk_details` VALUES (30, 'usman hafeez', 'logo-1554898498235.jpg', 'apk-1554898502524.apk', 'basic', NULL, '[224,223,222]', 'On', '2019-04-10 12:15:06', '2019-04-13 11:15:15', 0);
 INSERT INTO `apk_details` VALUES (31, 'test ak', 'logo-1555155160891.jpg', 'apk-1555155180487.apk', 'basic', NULL, NULL, 'Off', '2019-04-13 11:33:04', '2019-04-13 11:33:04', 0);
+INSERT INTO `apk_details` VALUES (35, 'whatsapp', 'undefined', 'undefined', 'basic', NULL, NULL, 'On', '2019-04-22 05:33:19', '2019-04-22 05:33:24', 1);
 
 -- ----------------------------
 -- Table structure for apps_info
@@ -223,35 +225,49 @@ CREATE TABLE `apps_info`  (
   `package_name` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
   `icon` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
   `extension` tinyint(4) NULL DEFAULT 0,
+  `visible` tinyint(4) NOT NULL DEFAULT 1,
+  `default_app` tinyint(4) NOT NULL DEFAULT 0,
   `extension_id` int(11) NULL DEFAULT 0,
-  `created_at` timestamp(0) NOT NULL DEFAULT current_timestamp(0),
+  `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `unique_name_constraints`(`unique_name`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 3831 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 5633 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of apps_info
 -- ----------------------------
-INSERT INTO `apps_info` VALUES (3793, 'com.android.browserBrowser', 'Browser', 'com.android.browser', 'icon_Browser.png', 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `apps_info` VALUES (3794, 'com.android.calendarCalendar', 'Calendar', 'com.android.calendar', 'icon_Calendar.png', 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `apps_info` VALUES (3795, 'com.android.soundrecorderSound Recorder', 'Sound Recorder', 'com.android.soundrecorder', 'icon_Sound Recorder.png', 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `apps_info` VALUES (3796, 'com.mediatek.cameraCamera', 'Camera', 'com.mediatek.camera', 'icon_Camera.png', 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `apps_info` VALUES (3797, 'com.android.musicMusic', 'Music', 'com.android.music', 'icon_Music.png', 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `apps_info` VALUES (3798, 'com.android.deskclockClock', 'Clock', 'com.android.deskclock', 'icon_Clock.png', 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `apps_info` VALUES (3799, 'com.android.calculator2Calculator', 'Calculator', 'com.android.calculator2', 'icon_Calculator.png', 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `apps_info` VALUES (3800, 'com.android.quicksearchboxSearch', 'Search', 'com.android.quicksearchbox', 'icon_Search.png', 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `apps_info` VALUES (3801, 'com.android.mmsMessaging', 'Messaging', 'com.android.mms', 'icon_Messaging.png', 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `apps_info` VALUES (3802, 'com.android.contactsContacts', 'Contacts', 'com.android.contacts', 'icon_Contacts.png', 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `apps_info` VALUES (3803, 'com.android.emailEmail', 'Email', 'com.android.email', 'icon_Email.png', 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `apps_info` VALUES (3804, 'com.android.gallery3dGallery', 'Gallery', 'com.android.gallery3d', 'icon_Gallery.png', 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `apps_info` VALUES (3805, 'com.mediatek.systemupdateSystem software updates', 'System software updates', 'com.mediatek.systemupdate', 'icon_System software updates.png', 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `apps_info` VALUES (3806, 'com.vortexlocker.appScreen Locker', 'Screen Locker', 'com.vortexlocker.app', 'icon_Screen Locker.png', 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `apps_info` VALUES (3807, 'com.rim.mobilefusion.clientUEM Client', 'UEM Client', 'com.rim.mobilefusion.client', 'icon_UEM Client.png', 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `apps_info` VALUES (3808, 'com.android.settingsSettings', 'Settings', 'com.android.settings', 'icon_Settings.png', 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `apps_info` VALUES (3809, 'com.android.stkSIM Toolkit', 'SIM Toolkit', 'com.android.stk', 'icon_SIM Toolkit.png', 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `apps_info` VALUES (3810, 'com.secureSetting.SecureSettingsMainSecure Settings', 'Secure Settings', 'com.secureSetting.SecureSettingsMain', 'icon_Secure Settings.png', 1, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `apps_info` VALUES (3811, 'com.android.dialerPhone', 'Phone', 'com.android.dialer', 'icon_Phone.png', 0, 0, '2019-04-17 18:00:36', NULL);
+INSERT INTO `apps_info` VALUES (4649, 'com.android.musicMusic', 'Music', 'com.android.music', 'icon_Music.png', 0, 1, 0, 0, '2019-04-22 12:49:21', NULL);
+INSERT INTO `apps_info` VALUES (4650, 'com.secureSetting.SecureSettingsMainSecure Settings', 'Secure Settings', 'com.secureSetting.SecureSettingsMain', 'icon_Secure Settings.png', 1, 1, 0, 0, '2019-04-22 12:49:21', NULL);
+INSERT INTO `apps_info` VALUES (4651, 'com.android.browserBrowser', 'Browser', 'com.android.browser', 'icon_Browser.png', 0, 1, 0, 0, '2019-04-22 12:49:21', NULL);
+INSERT INTO `apps_info` VALUES (4652, 'com.android.calendarCalendar', 'Calendar', 'com.android.calendar', 'icon_Calendar.png', 0, 1, 0, 0, '2019-04-22 12:49:21', NULL);
+INSERT INTO `apps_info` VALUES (4653, 'com.android.contactsContacts', 'Contacts', 'com.android.contacts', 'icon_Contacts.png', 0, 1, 0, 0, '2019-04-22 12:49:21', NULL);
+INSERT INTO `apps_info` VALUES (4654, 'com.android.deskclockClock', 'Clock', 'com.android.deskclock', 'icon_Clock.png', 0, 1, 0, 0, '2019-04-22 12:49:21', NULL);
+INSERT INTO `apps_info` VALUES (4655, 'com.android.dialerPhone', 'Phone', 'com.android.dialer', 'icon_Phone.png', 0, 1, 0, 0, '2019-04-22 12:49:21', NULL);
+INSERT INTO `apps_info` VALUES (4656, 'com.android.emailEmail', 'Email', 'com.android.email', 'icon_Email.png', 0, 1, 0, 0, '2019-04-22 12:49:21', NULL);
+INSERT INTO `apps_info` VALUES (4657, 'com.android.gallery3dGallery', 'Gallery', 'com.android.gallery3d', 'icon_Gallery.png', 0, 1, 0, 0, '2019-04-22 12:49:21', NULL);
+INSERT INTO `apps_info` VALUES (4658, 'com.android.mmsMessaging', 'Messaging', 'com.android.mms', 'icon_Messaging.png', 0, 1, 0, 0, '2019-04-22 12:49:21', NULL);
+INSERT INTO `apps_info` VALUES (4659, 'com.android.settingsSettings', 'Settings', 'com.android.settings', 'icon_Settings.png', 0, 0, 0, 0, '2019-04-22 12:49:21', NULL);
+INSERT INTO `apps_info` VALUES (4660, 'com.android.soundrecorderSound Recorder', 'Sound Recorder', 'com.android.soundrecorder', 'icon_Sound Recorder.png', 0, 1, 0, 0, '2019-04-22 12:49:21', NULL);
+INSERT INTO `apps_info` VALUES (4661, 'com.mediatek.cameraCamera', 'Camera', 'com.mediatek.camera', 'icon_Camera.png', 0, 1, 0, 0, '2019-04-22 12:49:21', NULL);
+INSERT INTO `apps_info` VALUES (4662, 'com.android.calculator2Calculator', 'Calculator', 'com.android.calculator2', 'icon_Calculator.png', 0, 1, 0, 0, '2019-04-22 12:49:21', NULL);
+INSERT INTO `apps_info` VALUES (4663, 'com.android.quicksearchboxSearch', 'Search', 'com.android.quicksearchbox', 'icon_Search.png', 0, 1, 0, 0, '2019-04-22 12:49:21', NULL);
+INSERT INTO `apps_info` VALUES (4664, 'com.android.stkSIM Toolkit', 'SIM Toolkit', 'com.android.stk', 'icon_SIM Toolkit.png', 0, 1, 0, 0, '2019-04-22 12:49:21', NULL);
+INSERT INTO `apps_info` VALUES (4665, 'com.mediatek.systemupdateSystem software updates', 'System software updates', 'com.mediatek.systemupdate', 'icon_System software updates.png', 0, 1, 0, 0, '2019-04-22 12:49:21', NULL);
+INSERT INTO `apps_info` VALUES (4666, 'com.rim.mobilefusion.clientUEM Client', 'UEM Client', 'com.rim.mobilefusion.client', 'icon_UEM Client.png', 0, 1, 0, 0, '2019-04-22 12:49:21', NULL);
+INSERT INTO `apps_info` VALUES (4667, 'com.titanlocker.secureTitan Locker', 'Titan Locker', 'com.titanlocker.secure', 'icon_Titan Locker.png', 0, 1, 1, 0, '2019-04-22 12:49:21', NULL);
+INSERT INTO `apps_info` VALUES (4668, 'com.secureSetting.SecureSettingsMainSecure SettingsBattery', 'Battery', NULL, 'icon_Battery.png', 1, 1, 0, 4650, '2019-04-22 12:49:22', NULL);
+INSERT INTO `apps_info` VALUES (4669, 'com.secureSetting.SecureSettingsMainSecure Settingswi-fi', 'wi-fi', NULL, 'icon_wi-fi.png', 1, 1, 0, 4650, '2019-04-22 12:49:22', NULL);
+INSERT INTO `apps_info` VALUES (4670, 'com.secureSetting.SecureSettingsMainSecure SettingsBluetooth', 'Bluetooth', NULL, 'icon_Bluetooth.png', 1, 1, 0, 4650, '2019-04-22 12:49:22', NULL);
+INSERT INTO `apps_info` VALUES (4671, 'com.secureSetting.SecureSettingsMainSecure SettingsSIM Cards', 'SIM Cards', NULL, 'icon_SIM Cards.png', 1, 1, 0, 4650, '2019-04-22 12:49:22', NULL);
+INSERT INTO `apps_info` VALUES (4672, 'com.secureSetting.SecureSettingsMainSecure SettingsData Roaming', 'Data Roaming', NULL, 'icon_Data Roaming.png', 1, 1, 0, 4650, '2019-04-22 12:49:22', NULL);
+INSERT INTO `apps_info` VALUES (4673, 'com.secureSetting.SecureSettingsMainSecure SettingsMobile Data', 'Mobile Data', NULL, 'icon_Mobile Data.png', 1, 1, 0, 4650, '2019-04-22 12:49:22', NULL);
+INSERT INTO `apps_info` VALUES (4674, 'com.secureSetting.SecureSettingsMainSecure SettingsHotspot', 'Hotspot', NULL, 'icon_Hotspot.png', 1, 1, 0, 4650, '2019-04-22 12:49:22', NULL);
+INSERT INTO `apps_info` VALUES (4675, 'com.secureSetting.SecureSettingsMainSecure SettingsFinger Print + Lock', 'Finger Print + Lock', NULL, 'icon_Finger Print + Lock.png', 1, 1, 0, 4650, '2019-04-22 12:49:22', NULL);
+INSERT INTO `apps_info` VALUES (4676, 'com.secureSetting.SecureSettingsMainSecure SettingsBrightness', 'Brightness', NULL, 'icon_Brightness.png', 1, 1, 0, 4650, '2019-04-22 12:49:22', NULL);
+INSERT INTO `apps_info` VALUES (4677, 'com.secureSetting.SecureSettingsMainSecure SettingsSleep', 'Sleep', NULL, 'icon_Sleep.png', 1, 1, 0, 4650, '2019-04-22 12:49:22', NULL);
+INSERT INTO `apps_info` VALUES (4678, 'com.secureSetting.SecureSettingsMainSecure SettingsSound', 'Sound', NULL, 'icon_Sound.png', 1, 1, 0, 4650, '2019-04-22 12:49:22', NULL);
+INSERT INTO `apps_info` VALUES (4679, 'com.secureSetting.SecureSettingsMainSecure SettingsDate & Time', 'Date & Time', NULL, 'icon_Date & Time.png', 1, 1, 0, 4650, '2019-04-22 12:49:22', NULL);
 
 -- ----------------------------
 -- Table structure for chat_ids
@@ -262,7 +278,7 @@ CREATE TABLE `chat_ids`  (
   `user_acc_id` int(11) NULL DEFAULT NULL,
   `chat_id` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `used` tinyint(4) NOT NULL DEFAULT 0,
-  `created_at` timestamp(0) NULL DEFAULT current_timestamp(0),
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `chat_id_unique`(`chat_id`) USING BTREE,
@@ -280,7 +296,7 @@ CREATE TABLE `dealer_apks`  (
   `apk_id` int(11) NOT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `unique_dealer_id_apk_id`(`dealer_id`, `apk_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 295 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 312 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of dealer_apks
@@ -304,21 +320,21 @@ CREATE TABLE `dealer_dropdown_list`  (
   `dealer_id` int(11) NOT NULL,
   `selected_items` mediumtext CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
   `type` enum('devices','dealer','sdealer','apk') CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL DEFAULT 'devices',
-  `created_at` timestamp(0) NULL DEFAULT current_timestamp(0),
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `id`(`id`) USING BTREE,
   INDEX `dealer_id`(`dealer_id`) USING BTREE,
   INDEX `id_2`(`id`) USING BTREE,
   CONSTRAINT `dealer_dropdown_list_ibfk_1` FOREIGN KEY (`dealer_id`) REFERENCES `dealers` (`dealer_id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 103 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 104 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of dealer_dropdown_list
 -- ----------------------------
 INSERT INTO `dealer_dropdown_list` VALUES (85, 154, '[\"APP STATUS\",\"APK\",\"APP NAME\",\"APP LOGO\"]', 'apk', '2019-04-02 16:14:22', '2019-04-08 15:16:34');
 INSERT INTO `dealer_dropdown_list` VALUES (86, 154, '[\"DEVICE ID\",\"FLAGGED\",\"STATUS\",\"MODE\",\"DEVICE NAME\",\"ACCOUNT EMAIL\",\"ACTIVATION CODE\",\"PGP EMAIL\",\"CHAT ID\",\"CLIENT ID\",\"DEALER ID\",\"DEALER PIN\",\"MAC ADDRESS\",\"SIM ID\",\"IMEI 1\",\"SIM 1\",\"IMEI 2\",\"SIM 2\",\"SERIAL NUMBER\",\"MODEL\",\"START DATE\",\"EXPIRY DATE\",\"DEALER NAME\",\"S-DEALER\",\"S-DEALER NAME\"]', 'devices', '2019-04-02 16:18:12', '2019-04-16 13:46:24');
-INSERT INTO `dealer_dropdown_list` VALUES (87, 154, '[\"DEALER ID\",\"DEALER NAME\",\"DEALER EMAIL\",\"DEALER PIN\",\"DEVICES\",\"TOKENS\"]', 'dealer', '2019-04-03 15:23:12', '2019-04-13 07:05:35');
+INSERT INTO `dealer_dropdown_list` VALUES (87, 154, '[\"DEALER ID\",\"DEALER NAME\",\"DEALER EMAIL\",\"DEALER PIN\",\"DEVICES\",\"TOKENS\",\"PARENT DEALER\",\"PARENT DEALER ID\"]', 'dealer', '2019-04-03 15:23:12', '2019-04-18 07:09:01');
 INSERT INTO `dealer_dropdown_list` VALUES (88, 154, '[\"ACTIONS\"]', 'sdealer', '2019-04-03 15:23:15', '2019-04-15 09:43:03');
 INSERT INTO `dealer_dropdown_list` VALUES (89, 222, '[\"DEVICE ID\",\"STATUS\",\"DEVICE NAME\",\"ACCOUNT EMAIL\",\"ACTIVATION CODE\",\"PGP EMAIL\",\"CHAT ID\",\"CLIENT ID\",\"DEALER ID\",\"DEALER PIN\",\"MAC ADDRESS\",\"SIM ID\",\"IMEI 1\",\"SIM 1\",\"IMEI 2\",\"SIM 2\",\"SERIAL NUMBER\",\"MODEL\",\"START DATE\",\"EXPIRY DATE\",\"DEALER NAME\",\"ONLINE\",\"S-DEALER\",\"S-DEALER NAME\"]', 'devices', '2019-04-08 12:11:22', '2019-04-08 12:12:08');
 INSERT INTO `dealer_dropdown_list` VALUES (90, 222, '[\"ACTIONS\"]', 'sdealer', '2019-04-08 12:13:36', NULL);
@@ -334,6 +350,7 @@ INSERT INTO `dealer_dropdown_list` VALUES (99, 226, '[\"DEVICE ID\",\"FLAGGED\",
 INSERT INTO `dealer_dropdown_list` VALUES (100, 225, '[\"DEVICE ID\",\"FLAGGED\",\"STATUS\",\"DEVICE NAME\",\"ACCOUNT EMAIL\",\"ACTIVATION CODE\",\"PGP EMAIL\",\"CHAT ID\",\"CLIENT ID\",\"DEALER ID\",\"DEALER PIN\",\"MAC ADDRESS\",\"SIM ID\",\"IMEI 1\",\"SIM 1\",\"IMEI 2\",\"SIM 2\",\"SERIAL NUMBER\",\"MODEL\",\"START DATE\",\"EXPIRY DATE\",\"DEALER NAME\",\"ONLINE\",\"S-DEALER\",\"S-DEALER NAME\"]', 'devices', '2019-04-12 10:20:43', '2019-04-12 11:08:03');
 INSERT INTO `dealer_dropdown_list` VALUES (101, 225, '[\"DEALER ID\",\"DEALER NAME\",\"DEALER EMAIL\",\"DEALER PIN\",\"CONNECTED DEVICES\",\"TOKENS\",\"PARENT DEALER\",\"PARENT DEALER ID\"]', 'sdealer', '2019-04-12 11:19:59', '2019-04-12 11:20:03');
 INSERT INTO `dealer_dropdown_list` VALUES (102, 225, '[\"DEALER ID\",\"DEALER NAME\",\"DEALER EMAIL\",\"DEALER PIN\",\"CONNECTED DEVICES\",\"TOKENS\",\"PARENT DEALER\",\"PARENT DEALER ID\"]', 'sdealer', '2019-04-12 11:20:00', '2019-04-12 11:20:03');
+INSERT INTO `dealer_dropdown_list` VALUES (103, 225, '[\"APP STATUS\",\"APK\",\"APP NAME\",\"APP LOGO\"]', 'apk', '2019-04-18 06:30:34', '2019-04-18 06:30:37');
 
 -- ----------------------------
 -- Table structure for dealer_pagination
@@ -344,7 +361,7 @@ CREATE TABLE `dealer_pagination`  (
   `dealer_id` int(10) NOT NULL,
   `record_per_page` int(10) NOT NULL,
   `type` enum('devices','dealer','sdealer','apk') CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL DEFAULT 'devices',
-  `created_at` timestamp(0) NOT NULL DEFAULT current_timestamp(0),
+  `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `dealer_id`(`dealer_id`) USING BTREE,
@@ -354,7 +371,7 @@ CREATE TABLE `dealer_pagination`  (
 -- ----------------------------
 -- Records of dealer_pagination
 -- ----------------------------
-INSERT INTO `dealer_pagination` VALUES (4, 154, 10, 'devices', '2019-04-02 16:18:12', '2019-04-11 12:19:46');
+INSERT INTO `dealer_pagination` VALUES (4, 154, 100, 'devices', '2019-04-02 16:18:12', '2019-04-18 12:17:53');
 INSERT INTO `dealer_pagination` VALUES (5, 154, 10, 'dealer', '2019-04-03 15:23:13', '2019-04-03 15:23:13');
 INSERT INTO `dealer_pagination` VALUES (6, 222, 10, 'devices', '2019-04-08 12:11:22', NULL);
 INSERT INTO `dealer_pagination` VALUES (7, 154, 10, 'apk', '2019-04-08 16:18:47', NULL);
@@ -390,7 +407,7 @@ CREATE TABLE `dealers`  (
   INDEX `type`(`type`) USING BTREE,
   INDEX `connected_dealer`(`connected_dealer`) USING BTREE,
   CONSTRAINT `dealers_ibfk_1` FOREIGN KEY (`type`) REFERENCES `user_roles` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 227 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 228 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of dealers
@@ -401,6 +418,7 @@ INSERT INTO `dealers` VALUES (223, NULL, NULL, 0, 'Barry', 'barrybarrygood@hotma
 INSERT INTO `dealers` VALUES (224, NULL, NULL, 0, 'zaid', 'zaid@vortexapp.ca', 'e920be62c02a7d5549be410f1f31366b', '417695', 2, 0, NULL, '2019-04-10 21:06:51', '2019-04-10 21:06:51');
 INSERT INTO `dealers` VALUES (225, NULL, NULL, 0, 'Hamza Dawood', 'hamza.dawood007@gmail.com', '6fc6be5e9df393f5a184c74b2c48ef70', '541763', 2, 0, NULL, '2019-04-11 10:39:50', '2019-04-11 10:39:50');
 INSERT INTO `dealers` VALUES (226, NULL, NULL, 0, 'Arfan ali', 'arawan77rb@gmail.com', 'c3c6b034a0622448ec602efda5c0964f', '262165', 2, 0, NULL, '2019-04-12 07:10:40', '2019-04-12 07:10:40');
+INSERT INTO `dealers` VALUES (227, NULL, NULL, 225, 'Hamza123', 'hamza.jutt004@gmail.com', 'e43a2b055b93736a42bcf71f257398ec', '753909', 3, 0, NULL, '2019-04-18 06:31:19', '2019-04-18 06:31:19');
 
 -- ----------------------------
 -- Table structure for default_apps
@@ -412,7 +430,7 @@ CREATE TABLE `default_apps`  (
   `label` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `package_name` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `icon` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
-  `created_at` timestamp(0) NULL DEFAULT current_timestamp(0),
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `unique_name_constraints`(`unique_name`) USING BTREE
@@ -430,17 +448,21 @@ CREATE TABLE `device_history`  (
   `controls` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
   `permissions` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
   `status` tinyint(4) NOT NULL DEFAULT 0,
-  `created_at` timestamp(0) NOT NULL DEFAULT current_timestamp(0),
+  `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `user_acc_id`(`user_acc_id`) USING BTREE,
   CONSTRAINT `device_history_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION
-) ENGINE = InnoDB AUTO_INCREMENT = 72 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 76 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of device_history
 -- ----------------------------
 INSERT INTO `device_history` VALUES (71, 25, '[{\"id\":57,\"app_id\":40,\"guest\":true,\"encrypted\":false,\"enable\":true,\"label\":\"Clock\",\"uniqueName\":\"com.android.deskclockClock\",\"icon\":\"icon_Clock.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.deskclock\"},{\"id\":58,\"app_id\":37,\"guest\":true,\"encrypted\":false,\"enable\":true,\"label\":\"Browser\",\"uniqueName\":\"com.android.browserBrowser\",\"icon\":\"icon_Browser.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.browser\"},{\"id\":59,\"app_id\":39,\"guest\":true,\"encrypted\":false,\"enable\":true,\"label\":\"Contacts\",\"uniqueName\":\"com.android.contactsContacts\",\"icon\":\"icon_Contacts.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.contacts\"},{\"id\":60,\"app_id\":38,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Sound Recorder\",\"uniqueName\":\"com.android.soundrecorderSound Recorder\",\"icon\":\"icon_Sound Recorder.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.soundrecorder\"},{\"id\":61,\"app_id\":36,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Calendar\",\"uniqueName\":\"com.android.calendarCalendar\",\"icon\":\"icon_Calendar.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.calendar\"},{\"id\":62,\"app_id\":44,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Cell Broadcasts\",\"uniqueName\":\"com.android.cellbroadcastreceiverCell Broadcasts\",\"icon\":\"icon_Cell Broadcasts.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.cellbroadcastreceiver\"},{\"id\":63,\"app_id\":54,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Email\",\"uniqueName\":\"com.android.emailEmail\",\"icon\":\"icon_Email.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.email\"},{\"id\":64,\"app_id\":42,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Phone\",\"uniqueName\":\"com.android.dialerPhone\",\"icon\":\"icon_Phone.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.dialer\"},{\"id\":65,\"app_id\":43,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Calculator\",\"uniqueName\":\"com.android.calculator2Calculator\",\"icon\":\"icon_Calculator.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.calculator2\"},{\"id\":66,\"app_id\":53,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Music\",\"uniqueName\":\"com.android.musicMusic\",\"icon\":\"icon_Music.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.music\"},{\"id\":67,\"app_id\":41,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Camera\",\"uniqueName\":\"com.mediatek.cameraCamera\",\"icon\":\"icon_Camera.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.mediatek.camera\"},{\"id\":68,\"app_id\":55,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Messaging\",\"uniqueName\":\"com.android.mmsMessaging\",\"icon\":\"icon_Messaging.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.mms\"},{\"id\":69,\"app_id\":46,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Search\",\"uniqueName\":\"com.android.quicksearchboxSearch\",\"icon\":\"icon_Search.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.quicksearchbox\"},{\"id\":70,\"app_id\":45,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"FM Radio\",\"uniqueName\":\"com.android.fmradioFM Radio\",\"icon\":\"icon_FM Radio.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.fmradio\"},{\"id\":71,\"app_id\":47,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"SIM Toolkit\",\"uniqueName\":\"com.android.stkSIM Toolkit\",\"icon\":\"icon_SIM Toolkit.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.stk\"},{\"id\":72,\"app_id\":52,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Gallery\",\"uniqueName\":\"com.android.gallery3dGallery\",\"icon\":\"icon_Gallery.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.gallery3d\"},{\"id\":73,\"app_id\":48,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"System software updates\",\"uniqueName\":\"com.mediatek.systemupdateSystem software updates\",\"icon\":\"icon_System software updates.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.mediatek.systemupdate\"},{\"id\":74,\"app_id\":50,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"UEM Client\",\"uniqueName\":\"com.rim.mobilefusion.clientUEM Client\",\"icon\":\"icon_UEM Client.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.rim.mobilefusion.client\"},{\"id\":75,\"app_id\":51,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Screen Locker\",\"uniqueName\":\"com.vortexlocker.appScreen Locker\",\"icon\":\"icon_Screen Locker.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.vortexlocker.app\"},{\"id\":76,\"app_id\":56,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Settings\",\"uniqueName\":\"com.android.settingsSettings\",\"icon\":\"icon_Settings.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.settings\"},{\"id\":77,\"app_id\":49,\"guest\":true,\"encrypted\":false,\"enable\":true,\"label\":\"Launcher Changer\",\"uniqueName\":\"com.launcher.changeLauncher Changer\",\"icon\":\"icon_Launcher Changer.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.launcher.change\"},{\"id\":78,\"app_id\":78,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"VPN 2017\",\"uniqueName\":\"com.wxy.vpn2017VPN 2017\",\"icon\":\"icon_VPN 2017.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.wxy.vpn2017\"}]', '{\"admin_password\":null,\"guest_password\":null,\"encrypted_password\":null,\"duress_password\":null}', '{}', NULL, 0, '2019-04-17 17:51:17', NULL);
+INSERT INTO `device_history` VALUES (72, 25, '[{\"id\":57,\"app_id\":40,\"guest\":true,\"encrypted\":false,\"enable\":true,\"label\":\"Clock\",\"uniqueName\":\"com.android.deskclockClock\",\"icon\":\"icon_Clock.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.deskclock\"},{\"id\":58,\"app_id\":37,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Browser\",\"uniqueName\":\"com.android.browserBrowser\",\"icon\":\"icon_Browser.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.browser\"},{\"id\":59,\"app_id\":39,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Contacts\",\"uniqueName\":\"com.android.contactsContacts\",\"icon\":\"icon_Contacts.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.contacts\"},{\"id\":60,\"app_id\":38,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Sound Recorder\",\"uniqueName\":\"com.android.soundrecorderSound Recorder\",\"icon\":\"icon_Sound Recorder.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.soundrecorder\"},{\"id\":61,\"app_id\":36,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Calendar\",\"uniqueName\":\"com.android.calendarCalendar\",\"icon\":\"icon_Calendar.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.calendar\"},{\"id\":62,\"app_id\":44,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Cell Broadcasts\",\"uniqueName\":\"com.android.cellbroadcastreceiverCell Broadcasts\",\"icon\":\"icon_Cell Broadcasts.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.cellbroadcastreceiver\"},{\"id\":63,\"app_id\":54,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Email\",\"uniqueName\":\"com.android.emailEmail\",\"icon\":\"icon_Email.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.email\"},{\"id\":64,\"app_id\":42,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Phone\",\"uniqueName\":\"com.android.dialerPhone\",\"icon\":\"icon_Phone.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.dialer\"},{\"id\":65,\"app_id\":43,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Calculator\",\"uniqueName\":\"com.android.calculator2Calculator\",\"icon\":\"icon_Calculator.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.calculator2\"},{\"id\":66,\"app_id\":53,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Music\",\"uniqueName\":\"com.android.musicMusic\",\"icon\":\"icon_Music.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.music\"},{\"id\":67,\"app_id\":41,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Camera\",\"uniqueName\":\"com.mediatek.cameraCamera\",\"icon\":\"icon_Camera.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.mediatek.camera\"},{\"id\":68,\"app_id\":55,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Messaging\",\"uniqueName\":\"com.android.mmsMessaging\",\"icon\":\"icon_Messaging.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.mms\"},{\"id\":69,\"app_id\":46,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Search\",\"uniqueName\":\"com.android.quicksearchboxSearch\",\"icon\":\"icon_Search.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.quicksearchbox\"},{\"id\":70,\"app_id\":45,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"FM Radio\",\"uniqueName\":\"com.android.fmradioFM Radio\",\"icon\":\"icon_FM Radio.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.fmradio\"},{\"id\":71,\"app_id\":47,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"SIM Toolkit\",\"uniqueName\":\"com.android.stkSIM Toolkit\",\"icon\":\"icon_SIM Toolkit.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.stk\"},{\"id\":72,\"app_id\":52,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Gallery\",\"uniqueName\":\"com.android.gallery3dGallery\",\"icon\":\"icon_Gallery.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.gallery3d\"},{\"id\":73,\"app_id\":48,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"System software updates\",\"uniqueName\":\"com.mediatek.systemupdateSystem software updates\",\"icon\":\"icon_System software updates.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.mediatek.systemupdate\"},{\"id\":74,\"app_id\":50,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"UEM Client\",\"uniqueName\":\"com.rim.mobilefusion.clientUEM Client\",\"icon\":\"icon_UEM Client.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.rim.mobilefusion.client\"},{\"id\":75,\"app_id\":51,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Screen Locker\",\"uniqueName\":\"com.vortexlocker.appScreen Locker\",\"icon\":\"icon_Screen Locker.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.vortexlocker.app\"},{\"id\":76,\"app_id\":56,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Settings\",\"uniqueName\":\"com.android.settingsSettings\",\"icon\":\"icon_Settings.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.settings\"},{\"id\":77,\"app_id\":49,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Launcher Changer\",\"uniqueName\":\"com.launcher.changeLauncher Changer\",\"icon\":\"icon_Launcher Changer.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.launcher.change\"},{\"id\":78,\"app_id\":78,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"VPN 2017\",\"uniqueName\":\"com.wxy.vpn2017VPN 2017\",\"icon\":\"icon_VPN 2017.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.wxy.vpn2017\"}]', '{\"admin_password\":null,\"guest_password\":null,\"encrypted_password\":null,\"duress_password\":null}', '{}', NULL, 0, '2019-04-18 07:57:55', NULL);
+INSERT INTO `device_history` VALUES (73, 25, '[{\"id\":57,\"app_id\":40,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Clock\",\"uniqueName\":\"com.android.deskclockClock\",\"icon\":\"icon_Clock.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.deskclock\"},{\"id\":58,\"app_id\":37,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Browser\",\"uniqueName\":\"com.android.browserBrowser\",\"icon\":\"icon_Browser.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.browser\"},{\"id\":59,\"app_id\":39,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Contacts\",\"uniqueName\":\"com.android.contactsContacts\",\"icon\":\"icon_Contacts.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.contacts\"},{\"id\":60,\"app_id\":38,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Sound Recorder\",\"uniqueName\":\"com.android.soundrecorderSound Recorder\",\"icon\":\"icon_Sound Recorder.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.soundrecorder\"},{\"id\":61,\"app_id\":36,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Calendar\",\"uniqueName\":\"com.android.calendarCalendar\",\"icon\":\"icon_Calendar.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.calendar\"},{\"id\":62,\"app_id\":44,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Cell Broadcasts\",\"uniqueName\":\"com.android.cellbroadcastreceiverCell Broadcasts\",\"icon\":\"icon_Cell Broadcasts.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.cellbroadcastreceiver\"},{\"id\":63,\"app_id\":54,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Email\",\"uniqueName\":\"com.android.emailEmail\",\"icon\":\"icon_Email.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.email\"},{\"id\":64,\"app_id\":42,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Phone\",\"uniqueName\":\"com.android.dialerPhone\",\"icon\":\"icon_Phone.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.dialer\"},{\"id\":65,\"app_id\":43,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Calculator\",\"uniqueName\":\"com.android.calculator2Calculator\",\"icon\":\"icon_Calculator.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.calculator2\"},{\"id\":66,\"app_id\":53,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Music\",\"uniqueName\":\"com.android.musicMusic\",\"icon\":\"icon_Music.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.music\"},{\"id\":67,\"app_id\":41,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Camera\",\"uniqueName\":\"com.mediatek.cameraCamera\",\"icon\":\"icon_Camera.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.mediatek.camera\"},{\"id\":68,\"app_id\":55,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Messaging\",\"uniqueName\":\"com.android.mmsMessaging\",\"icon\":\"icon_Messaging.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.mms\"},{\"id\":69,\"app_id\":46,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Search\",\"uniqueName\":\"com.android.quicksearchboxSearch\",\"icon\":\"icon_Search.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.quicksearchbox\"},{\"id\":70,\"app_id\":45,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"FM Radio\",\"uniqueName\":\"com.android.fmradioFM Radio\",\"icon\":\"icon_FM Radio.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.fmradio\"},{\"id\":71,\"app_id\":47,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"SIM Toolkit\",\"uniqueName\":\"com.android.stkSIM Toolkit\",\"icon\":\"icon_SIM Toolkit.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.stk\"},{\"id\":72,\"app_id\":52,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Gallery\",\"uniqueName\":\"com.android.gallery3dGallery\",\"icon\":\"icon_Gallery.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.gallery3d\"},{\"id\":73,\"app_id\":48,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"System software updates\",\"uniqueName\":\"com.mediatek.systemupdateSystem software updates\",\"icon\":\"icon_System software updates.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.mediatek.systemupdate\"},{\"id\":74,\"app_id\":50,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"UEM Client\",\"uniqueName\":\"com.rim.mobilefusion.clientUEM Client\",\"icon\":\"icon_UEM Client.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.rim.mobilefusion.client\"},{\"id\":75,\"app_id\":51,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Screen Locker\",\"uniqueName\":\"com.vortexlocker.appScreen Locker\",\"icon\":\"icon_Screen Locker.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.vortexlocker.app\"},{\"id\":76,\"app_id\":56,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Settings\",\"uniqueName\":\"com.android.settingsSettings\",\"icon\":\"icon_Settings.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.settings\"},{\"id\":77,\"app_id\":49,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Launcher Changer\",\"uniqueName\":\"com.launcher.changeLauncher Changer\",\"icon\":\"icon_Launcher Changer.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.launcher.change\"},{\"id\":78,\"app_id\":78,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"VPN 2017\",\"uniqueName\":\"com.wxy.vpn2017VPN 2017\",\"icon\":\"icon_VPN 2017.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.wxy.vpn2017\"}]', '{\"admin_password\":null,\"guest_password\":null,\"encrypted_password\":null,\"duress_password\":null}', '{}', NULL, 0, '2019-04-18 07:58:45', NULL);
+INSERT INTO `device_history` VALUES (74, 25, '[{\"id\":57,\"app_id\":40,\"guest\":false,\"encrypted\":true,\"enable\":true,\"label\":\"Clock\",\"uniqueName\":\"com.android.deskclockClock\",\"icon\":\"icon_Clock.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.deskclock\"},{\"id\":58,\"app_id\":37,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Browser\",\"uniqueName\":\"com.android.browserBrowser\",\"icon\":\"icon_Browser.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.browser\"},{\"id\":59,\"app_id\":39,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Contacts\",\"uniqueName\":\"com.android.contactsContacts\",\"icon\":\"icon_Contacts.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.contacts\"},{\"id\":60,\"app_id\":38,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Sound Recorder\",\"uniqueName\":\"com.android.soundrecorderSound Recorder\",\"icon\":\"icon_Sound Recorder.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.soundrecorder\"},{\"id\":61,\"app_id\":36,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Calendar\",\"uniqueName\":\"com.android.calendarCalendar\",\"icon\":\"icon_Calendar.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.calendar\"},{\"id\":62,\"app_id\":44,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Cell Broadcasts\",\"uniqueName\":\"com.android.cellbroadcastreceiverCell Broadcasts\",\"icon\":\"icon_Cell Broadcasts.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.cellbroadcastreceiver\"},{\"id\":63,\"app_id\":54,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Email\",\"uniqueName\":\"com.android.emailEmail\",\"icon\":\"icon_Email.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.email\"},{\"id\":64,\"app_id\":42,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Phone\",\"uniqueName\":\"com.android.dialerPhone\",\"icon\":\"icon_Phone.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.dialer\"},{\"id\":65,\"app_id\":43,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Calculator\",\"uniqueName\":\"com.android.calculator2Calculator\",\"icon\":\"icon_Calculator.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.calculator2\"},{\"id\":66,\"app_id\":53,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Music\",\"uniqueName\":\"com.android.musicMusic\",\"icon\":\"icon_Music.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.music\"},{\"id\":67,\"app_id\":41,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Camera\",\"uniqueName\":\"com.mediatek.cameraCamera\",\"icon\":\"icon_Camera.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.mediatek.camera\"},{\"id\":68,\"app_id\":55,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Messaging\",\"uniqueName\":\"com.android.mmsMessaging\",\"icon\":\"icon_Messaging.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.mms\"},{\"id\":69,\"app_id\":46,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Search\",\"uniqueName\":\"com.android.quicksearchboxSearch\",\"icon\":\"icon_Search.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.quicksearchbox\"},{\"id\":70,\"app_id\":45,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"FM Radio\",\"uniqueName\":\"com.android.fmradioFM Radio\",\"icon\":\"icon_FM Radio.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.fmradio\"},{\"id\":71,\"app_id\":47,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"SIM Toolkit\",\"uniqueName\":\"com.android.stkSIM Toolkit\",\"icon\":\"icon_SIM Toolkit.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.stk\"},{\"id\":72,\"app_id\":52,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Gallery\",\"uniqueName\":\"com.android.gallery3dGallery\",\"icon\":\"icon_Gallery.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.gallery3d\"},{\"id\":73,\"app_id\":48,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"System software updates\",\"uniqueName\":\"com.mediatek.systemupdateSystem software updates\",\"icon\":\"icon_System software updates.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.mediatek.systemupdate\"},{\"id\":74,\"app_id\":50,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"UEM Client\",\"uniqueName\":\"com.rim.mobilefusion.clientUEM Client\",\"icon\":\"icon_UEM Client.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.rim.mobilefusion.client\"},{\"id\":75,\"app_id\":51,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Screen Locker\",\"uniqueName\":\"com.vortexlocker.appScreen Locker\",\"icon\":\"icon_Screen Locker.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.vortexlocker.app\"},{\"id\":76,\"app_id\":56,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Settings\",\"uniqueName\":\"com.android.settingsSettings\",\"icon\":\"icon_Settings.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.settings\"},{\"id\":77,\"app_id\":49,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Launcher Changer\",\"uniqueName\":\"com.launcher.changeLauncher Changer\",\"icon\":\"icon_Launcher Changer.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.launcher.change\"},{\"id\":78,\"app_id\":78,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"VPN 2017\",\"uniqueName\":\"com.wxy.vpn2017VPN 2017\",\"icon\":\"icon_VPN 2017.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.wxy.vpn2017\"}]', '{\"admin_password\":null,\"guest_password\":null,\"encrypted_password\":null,\"duress_password\":null}', '{}', NULL, 0, '2019-04-18 08:13:29', NULL);
+INSERT INTO `device_history` VALUES (75, 25, '[{\"id\":61,\"app_id\":36,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Calendar\",\"uniqueName\":\"com.android.calendarCalendar\",\"icon\":\"icon_Calendar.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.calendar\"},{\"id\":58,\"app_id\":37,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Browser\",\"uniqueName\":\"com.android.browserBrowser\",\"icon\":\"icon_Browser.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.browser\"},{\"id\":60,\"app_id\":38,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Sound Recorder\",\"uniqueName\":\"com.android.soundrecorderSound Recorder\",\"icon\":\"icon_Sound Recorder.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.soundrecorder\"},{\"id\":59,\"app_id\":39,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Contacts\",\"uniqueName\":\"com.android.contactsContacts\",\"icon\":\"icon_Contacts.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.contacts\"},{\"id\":57,\"app_id\":40,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Clock\",\"uniqueName\":\"com.android.deskclockClock\",\"icon\":\"icon_Clock.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.deskclock\"},{\"id\":67,\"app_id\":41,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Camera\",\"uniqueName\":\"com.mediatek.cameraCamera\",\"icon\":\"icon_Camera.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.mediatek.camera\"},{\"id\":64,\"app_id\":42,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Phone\",\"uniqueName\":\"com.android.dialerPhone\",\"icon\":\"icon_Phone.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.dialer\"},{\"id\":65,\"app_id\":43,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Calculator\",\"uniqueName\":\"com.android.calculator2Calculator\",\"icon\":\"icon_Calculator.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.calculator2\"},{\"id\":62,\"app_id\":44,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Cell Broadcasts\",\"uniqueName\":\"com.android.cellbroadcastreceiverCell Broadcasts\",\"icon\":\"icon_Cell Broadcasts.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.cellbroadcastreceiver\"},{\"id\":70,\"app_id\":45,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"FM Radio\",\"uniqueName\":\"com.android.fmradioFM Radio\",\"icon\":\"icon_FM Radio.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.fmradio\"},{\"id\":69,\"app_id\":46,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Search\",\"uniqueName\":\"com.android.quicksearchboxSearch\",\"icon\":\"icon_Search.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.quicksearchbox\"},{\"id\":71,\"app_id\":47,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"SIM Toolkit\",\"uniqueName\":\"com.android.stkSIM Toolkit\",\"icon\":\"icon_SIM Toolkit.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.stk\"},{\"id\":73,\"app_id\":48,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"System software updates\",\"uniqueName\":\"com.mediatek.systemupdateSystem software updates\",\"icon\":\"icon_System software updates.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.mediatek.systemupdate\"},{\"id\":77,\"app_id\":49,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Launcher Changer\",\"uniqueName\":\"com.launcher.changeLauncher Changer\",\"icon\":\"icon_Launcher Changer.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.launcher.change\"},{\"id\":74,\"app_id\":50,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"UEM Client\",\"uniqueName\":\"com.rim.mobilefusion.clientUEM Client\",\"icon\":\"icon_UEM Client.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.rim.mobilefusion.client\"},{\"id\":75,\"app_id\":51,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Screen Locker\",\"uniqueName\":\"com.vortexlocker.appScreen Locker\",\"icon\":\"icon_Screen Locker.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.vortexlocker.app\"},{\"id\":72,\"app_id\":52,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Gallery\",\"uniqueName\":\"com.android.gallery3dGallery\",\"icon\":\"icon_Gallery.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.gallery3d\"},{\"id\":66,\"app_id\":53,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Music\",\"uniqueName\":\"com.android.musicMusic\",\"icon\":\"icon_Music.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.music\"},{\"id\":63,\"app_id\":54,\"guest\":true,\"encrypted\":true,\"enable\":false,\"label\":\"Email\",\"uniqueName\":\"com.android.emailEmail\",\"icon\":\"icon_Email.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.email\"},{\"id\":68,\"app_id\":55,\"guest\":true,\"encrypted\":false,\"enable\":false,\"label\":\"Messaging\",\"uniqueName\":\"com.android.mmsMessaging\",\"icon\":\"icon_Messaging.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.mms\"},{\"id\":76,\"app_id\":56,\"guest\":true,\"encrypted\":false,\"enable\":false,\"label\":\"Settings\",\"uniqueName\":\"com.android.settingsSettings\",\"icon\":\"icon_Settings.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.settings\"},{\"id\":78,\"app_id\":78,\"guest\":true,\"encrypted\":false,\"enable\":false,\"label\":\"VPN 2017\",\"uniqueName\":\"com.wxy.vpn2017VPN 2017\",\"icon\":\"icon_VPN 2017.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.wxy.vpn2017\"},{\"id\":79,\"app_id\":2861,\"guest\":false,\"encrypted\":false,\"enable\":false,\"label\":\"SecureMenu\",\"uniqueName\":\"com.secureSetting.SecureSettingsMainSecure Settings\",\"icon\":\"Settings.png\",\"extension\":1,\"extension_id\":0,\"packageName\":\"com.secureSetting.SecureSettingsMainSecure Settings\"}]', '{\"admin_password\":null,\"guest_password\":null,\"encrypted_password\":null,\"duress_password\":null}', '{}', '[]', 0, '2019-04-20 13:20:29', NULL);
 
 -- ----------------------------
 -- Table structure for devices
@@ -465,7 +487,7 @@ CREATE TABLE `devices`  (
   `flagged` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT '',
   `screen_start_date` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `reject_status` tinyint(4) NOT NULL DEFAULT 0,
-  `created_at` timestamp(0) NULL DEFAULT current_timestamp(0),
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `device_id`(`device_id`) USING BTREE,
@@ -475,12 +497,14 @@ CREATE TABLE `devices`  (
 -- ----------------------------
 -- Records of devices
 -- ----------------------------
-INSERT INTO `devices` VALUES (636, 'OCSP875142', 'BCP100', NULL, 'null', '192.168.0.103', '8985219131642221554f', '496953409506566', 'null', '014705682480304', '0123456789ABCDEF', '00:A0:4D:9F:BD:D0', NULL, 'off', 1, '', NULL, 0, '2019-04-10 09:47:46', '2019-04-11 10:29:33');
+INSERT INTO `devices` VALUES (636, 'OCSP875142', 'BCP100', NULL, 'null', '192.168.1.107', 'null', '496953409506566', 'null', '014705682480304', '0123456789ABCDEF', '00:A0:4D:9F:BD:D0', NULL, 'On', 1, '', NULL, 0, '2019-04-10 09:47:46', '2019-04-19 21:56:19');
 INSERT INTO `devices` VALUES (637, 'VSGV427807', 'BCP100', NULL, 'null', '192.168.0.128', NULL, '354444076296294', NULL, '354444076296302', 'VSP1001901S00329', '00:27:15:2C:ED:27', NULL, 'On', 0, '', NULL, 1, '2019-04-10 21:07:15', '2019-04-10 21:23:10');
 INSERT INTO `devices` VALUES (638, 'UHLZ092101', 'BCP', NULL, 'undefined', '192.168.0.156', 'null', '354444076292574', 'null', '354444076292582', 'VSP1001901S00143', '00:27:15:B5:5B:12', NULL, 'off', 1, '', NULL, 0, '2019-04-10 21:12:15', '2019-04-10 22:05:59');
 INSERT INTO `devices` VALUES (639, 'BGWR419008', 'BCP4', NULL, 'undefined', '192.168.0.146', 'null', '354444076295114', 'null', '354444076295122', 'VSP1001901S00270', '00:27:15:6D:DA:60', NULL, 'off', 1, '', NULL, 0, '2019-04-10 23:35:14', '2019-04-16 16:20:33');
 INSERT INTO `devices` VALUES (640, 'NEEQ709111', 'hamza', NULL, 'asdas', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'off', 0, '', NULL, 0, '2019-04-12 11:53:12', NULL);
-INSERT INTO `devices` VALUES (643, 'ZRFZ693526', 'usman', '7CEiIiRPc1Lb8TOKAAAA', 'huawie', '192.168.18.160', NULL, '354444076298332', NULL, '354444076298340', 'VSP1001901S00431', '00:27:15:2E:8E:BD', NULL, 'On', 0, '', NULL, 0, '2019-04-17 16:54:12', '2019-04-17 18:04:23');
+INSERT INTO `devices` VALUES (641, 'RFCH946574', 'fasfa', NULL, 'asdas', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'off', 0, '', NULL, 0, '2019-04-18 06:33:05', NULL);
+INSERT INTO `devices` VALUES (642, 'DEQM506647', 'vortext test', NULL, 'vortext100', '192.168.18.160', NULL, '354444076298332', NULL, '354444076298340', 'VSP1001901S00431', '00:27:15:2E:8E:BD', NULL, 'off', 0, '', NULL, 0, '2019-04-18 09:46:51', '2019-04-19 09:45:17');
+INSERT INTO `devices` VALUES (643, 'YISC356974', 'usman', 'QZP3pyDACZIHCYAeAAAD', 'null', '192.168.1.145', '8992042306182528852f', '354444076293150', '8992042306182528811f', '354444076293168', 'VSP1001901S00172', '00:27:15:3D:FF:C8', NULL, 'On', 0, '', NULL, 0, '2019-04-22 11:54:10', '2019-04-22 13:50:05');
 
 -- ----------------------------
 -- Table structure for pgp_emails
@@ -491,7 +515,7 @@ CREATE TABLE `pgp_emails`  (
   `user_acc_id` int(11) NULL DEFAULT NULL,
   `pgp_email` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `used` tinyint(4) NOT NULL DEFAULT 0,
-  `created_at` timestamp(0) NOT NULL DEFAULT current_timestamp(0),
+  `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `unique_pgp_emails`(`pgp_email`) USING BTREE,
@@ -504,23 +528,23 @@ CREATE TABLE `pgp_emails`  (
 -- ----------------------------
 INSERT INTO `pgp_emails` VALUES (125, NULL, '358GTR@TITANSECURE.BIZ', 1, '2019-04-08 10:58:08', '2019-04-08 12:11:56');
 INSERT INTO `pgp_emails` VALUES (126, 22, '599NGT@TITANSECURE.BIZ', 1, '2019-04-08 10:58:08', '2019-04-10 09:47:46');
-INSERT INTO `pgp_emails` VALUES (127, NULL, '349VFT@TITANSECURE.BIZ', 0, '2019-04-08 10:58:08', NULL);
-INSERT INTO `pgp_emails` VALUES (128, NULL, '791BFT@TITANSECURE.BIZ', 1, '2019-04-08 10:58:08', '2019-04-16 18:14:43');
+INSERT INTO `pgp_emails` VALUES (127, 27, '349VFT@TITANSECURE.BIZ', 1, '2019-04-08 10:58:08', '2019-04-18 06:33:05');
+INSERT INTO `pgp_emails` VALUES (128, 29, '791BFT@TITANSECURE.BIZ', 1, '2019-04-08 10:58:08', '2019-04-22 11:56:31');
 INSERT INTO `pgp_emails` VALUES (129, NULL, '1619DKV@ARMORSEC.XYZ', 0, '2019-04-08 10:58:08', NULL);
-INSERT INTO `pgp_emails` VALUES (130, NULL, '5438DNE@ARMORSEC.XYZ', 1, '2019-04-08 10:58:08', '2019-04-16 19:03:30');
-INSERT INTO `pgp_emails` VALUES (131, NULL, '2675DKN@ARMORSEC.XYZ', 1, '2019-04-08 10:58:08', '2019-04-16 19:18:24');
-INSERT INTO `pgp_emails` VALUES (132, NULL, '3754ZUB@ARMORSEC.XYZ', 1, '2019-04-08 10:58:08', '2019-04-16 19:26:29');
-INSERT INTO `pgp_emails` VALUES (133, NULL, '4338GQG@ARMORSEC.XYZ', 1, '2019-04-08 10:58:08', '2019-04-16 19:22:26');
+INSERT INTO `pgp_emails` VALUES (130, NULL, '5438DNE@ARMORSEC.XYZ', 0, '2019-04-08 10:58:08', NULL);
+INSERT INTO `pgp_emails` VALUES (131, 28, '2675DKN@ARMORSEC.XYZ', 1, '2019-04-08 10:58:08', '2019-04-19 05:37:55');
+INSERT INTO `pgp_emails` VALUES (132, NULL, '3754ZUB@ARMORSEC.XYZ', 0, '2019-04-08 10:58:08', NULL);
+INSERT INTO `pgp_emails` VALUES (133, NULL, '4338GQG@ARMORSEC.XYZ', 0, '2019-04-08 10:58:08', NULL);
 INSERT INTO `pgp_emails` VALUES (134, NULL, '3669NBQ@ARMORSEC.XYZ', 0, '2019-04-08 10:58:08', NULL);
-INSERT INTO `pgp_emails` VALUES (135, NULL, '5147DXT@ARMORSEC.XYZ', 1, '2019-04-08 10:58:08', '2019-04-17 12:36:48');
-INSERT INTO `pgp_emails` VALUES (136, NULL, '8244SRE@ARMORSEC.XYZ', 1, '2019-04-08 10:58:08', '2019-04-17 11:32:16');
+INSERT INTO `pgp_emails` VALUES (135, NULL, '5147DXT@ARMORSEC.XYZ', 0, '2019-04-08 10:58:08', NULL);
+INSERT INTO `pgp_emails` VALUES (136, NULL, '8244SRE@ARMORSEC.XYZ', 0, '2019-04-08 10:58:08', NULL);
 INSERT INTO `pgp_emails` VALUES (137, NULL, '5412JJN@ARMORSEC.XYZ', 0, '2019-04-08 10:58:08', NULL);
 INSERT INTO `pgp_emails` VALUES (138, NULL, '4134PTE@ARMORSEC.XYZ', 0, '2019-04-08 10:58:09', NULL);
 INSERT INTO `pgp_emails` VALUES (139, NULL, '2954PAJ@ARMORSEC.XYZ', 0, '2019-04-08 10:58:09', NULL);
-INSERT INTO `pgp_emails` VALUES (140, 29, '6845YAY@ARMORSEC.XYZ', 1, '2019-04-08 10:58:09', '2019-04-17 16:55:10');
+INSERT INTO `pgp_emails` VALUES (140, NULL, '6845YAY@ARMORSEC.XYZ', 0, '2019-04-08 10:58:09', NULL);
 INSERT INTO `pgp_emails` VALUES (141, NULL, '7992PFY@ARMORSEC.XYZ', 0, '2019-04-08 10:58:09', NULL);
 INSERT INTO `pgp_emails` VALUES (142, NULL, '4967GCM@ARMORSEC.XYZ', 0, '2019-04-08 10:58:09', NULL);
-INSERT INTO `pgp_emails` VALUES (143, NULL, '5373SAJ@ARMORSEC.XYZ', 1, '2019-04-08 10:58:09', '2019-04-17 11:04:01');
+INSERT INTO `pgp_emails` VALUES (143, 29, '5373SAJ@ARMORSEC.XYZ', 1, '2019-04-08 10:58:09', '2019-04-22 12:36:40');
 INSERT INTO `pgp_emails` VALUES (144, NULL, '1233NPX@ARMORSEC.XYZ', 0, '2019-04-08 10:58:09', NULL);
 INSERT INTO `pgp_emails` VALUES (145, NULL, '7921MKT@ARMORSEC.XYZ', 0, '2019-04-08 10:58:09', NULL);
 INSERT INTO `pgp_emails` VALUES (146, NULL, '2188PBW@ARMORSEC.XYZ', 0, '2019-04-08 10:58:09', NULL);
@@ -553,7 +577,7 @@ INSERT INTO `pgp_emails` VALUES (172, NULL, '5734TXZ@ARMORSEC.XYZ', 0, '2019-04-
 INSERT INTO `pgp_emails` VALUES (173, NULL, '4763XEK@ARMORSEC.XYZ', 0, '2019-04-08 10:58:09', NULL);
 INSERT INTO `pgp_emails` VALUES (174, NULL, '2196GNW@ARMORSEC.XYZ', 0, '2019-04-08 10:58:09', NULL);
 INSERT INTO `pgp_emails` VALUES (175, NULL, '8931APD@ARMORSEC.XYZ', 0, '2019-04-08 10:58:09', NULL);
-INSERT INTO `pgp_emails` VALUES (176, NULL, '8478YXA@ARMORSEC.XYZ', 1, '2019-04-08 10:58:09', '2019-04-17 11:30:21');
+INSERT INTO `pgp_emails` VALUES (176, NULL, '8478YXA@ARMORSEC.XYZ', 0, '2019-04-08 10:58:09', NULL);
 INSERT INTO `pgp_emails` VALUES (177, NULL, '9437TPJ@ARMORSEC.XYZ', 0, '2019-04-08 10:58:09', NULL);
 INSERT INTO `pgp_emails` VALUES (178, NULL, '4347HVE@ARMORSEC.XYZ', 0, '2019-04-08 10:58:09', NULL);
 INSERT INTO `pgp_emails` VALUES (179, NULL, '5945VEC@ARMORSEC.XYZ', 0, '2019-04-08 10:58:09', NULL);
@@ -568,7 +592,7 @@ INSERT INTO `pgp_emails` VALUES (184, NULL, '3371GCF@ARMORSEC.XYZ', 0, '2019-04-
 -- ----------------------------
 DROP TABLE IF EXISTS `policy`;
 CREATE TABLE `policy`  (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `policy_name` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `policy_note` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `app_list` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
@@ -576,10 +600,10 @@ CREATE TABLE `policy`  (
   `controls` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
   `delete_status` tinyint(4) NOT NULL DEFAULT 0,
   `passwords` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
-  `created_at` timestamp(0) NOT NULL DEFAULT current_timestamp(0),
+  `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for screen_lock_devices
@@ -604,13 +628,32 @@ CREATE TABLE `sim_ids`  (
   `used` tinyint(4) NOT NULL DEFAULT 0,
   `start_date` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `expiry_date` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
-  `created_at` timestamp(0) NULL DEFAULT current_timestamp(0),
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `sim_id_UNIQUE`(`sim_id`) USING BTREE,
   INDEX `device_id`(`user_acc_id`) USING BTREE,
   CONSTRAINT `sim_ids_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE SET NULL ON UPDATE SET NULL
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for tbl_device_settings
+-- ----------------------------
+DROP TABLE IF EXISTS `tbl_device_settings`;
+CREATE TABLE `tbl_device_settings`  (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `device_id` varchar(10) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `settings` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `device_setting_id`(`device_id`) USING BTREE
+) ENGINE = MyISAM AUTO_INCREMENT = 423 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of tbl_device_settings
+-- ----------------------------
+INSERT INTO `tbl_device_settings` VALUES (422, 'TSJN209300', '{}', '2019-04-09 16:05:34', NULL);
 
 -- ----------------------------
 -- Table structure for transferred_profiles
@@ -654,7 +697,7 @@ CREATE TABLE `transferred_profiles`  (
   `start_date` varchar(16) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `expiry_months` int(100) NULL DEFAULT NULL,
   `expiry_date` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
-  `created_at` timestamp(0) NULL DEFAULT current_timestamp(0),
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = MyISAM AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
@@ -667,11 +710,16 @@ CREATE TABLE `user_app_permissions`  (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `device_id` int(11) NULL DEFAULT 0,
   `permissions` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
-  `created_at` timestamp(0) NULL DEFAULT current_timestamp(0),
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `device_setting_id`(`device_id`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 423 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = MyISAM AUTO_INCREMENT = 498 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of user_app_permissions
+-- ----------------------------
+INSERT INTO `user_app_permissions` VALUES (497, 643, '{\"bluetooth_status\":false,\"call_status\":false,\"hotspot_status\":false,\"screenshot_status\":false,\"wifi_status\":true}', '2019-04-22 13:50:11', NULL);
 
 -- ----------------------------
 -- Table structure for user_apps
@@ -685,37 +733,49 @@ CREATE TABLE `user_apps`  (
   `encrypted` tinyint(4) NOT NULL DEFAULT 0,
   `enable` tinyint(4) NOT NULL DEFAULT 0,
   `extension` tinyint(4) NOT NULL DEFAULT 0,
-  `created_at` timestamp(0) NULL DEFAULT current_timestamp(0),
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `primary_key`(`id`) USING BTREE,
   UNIQUE INDEX `user_unique_apps`(`device_id`, `app_id`) USING BTREE,
   INDEX `device_id`(`device_id`) USING BTREE,
   INDEX `app_id`(`app_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 139 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 428 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of user_apps
 -- ----------------------------
-INSERT INTO `user_apps` VALUES (120, 643, 3795, 1, 0, 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `user_apps` VALUES (121, 643, 3793, 1, 0, 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `user_apps` VALUES (122, 643, 3796, 1, 0, 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `user_apps` VALUES (123, 643, 3798, 1, 0, 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `user_apps` VALUES (124, 643, 3799, 1, 0, 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `user_apps` VALUES (125, 643, 3801, 1, 0, 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `user_apps` VALUES (126, 643, 3797, 1, 0, 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `user_apps` VALUES (127, 643, 3802, 1, 0, 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `user_apps` VALUES (128, 643, 3800, 1, 0, 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `user_apps` VALUES (129, 643, 3794, 1, 0, 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `user_apps` VALUES (130, 643, 3805, 1, 0, 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `user_apps` VALUES (131, 643, 3803, 1, 0, 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `user_apps` VALUES (132, 643, 3806, 0, 1, 1, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `user_apps` VALUES (133, 643, 3807, 0, 1, 1, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `user_apps` VALUES (134, 643, 3804, 1, 0, 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `user_apps` VALUES (135, 643, 3808, 1, 0, 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `user_apps` VALUES (136, 643, 3809, 1, 0, 0, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `user_apps` VALUES (137, 643, 3810, 1, 1, 1, 0, '2019-04-17 18:00:36', NULL);
-INSERT INTO `user_apps` VALUES (138, 643, 3811, 1, 0, 0, 0, '2019-04-17 18:00:36', NULL);
+INSERT INTO `user_apps` VALUES (397, 643, 4649, 1, 0, 0, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (398, 643, 4650, 1, 1, 1, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (399, 643, 4657, 1, 0, 0, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (400, 643, 4652, 1, 0, 0, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (401, 643, 4653, 1, 0, 0, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (402, 643, 4654, 1, 0, 0, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (403, 643, 4655, 1, 0, 0, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (404, 643, 4651, 1, 0, 0, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (405, 643, 4656, 1, 0, 0, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (406, 643, 4658, 1, 0, 0, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (407, 643, 4659, 0, 0, 0, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (408, 643, 4664, 1, 0, 0, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (409, 643, 4660, 1, 0, 0, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (410, 643, 4662, 1, 0, 0, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (411, 643, 4663, 1, 0, 0, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (412, 643, 4661, 1, 0, 0, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (413, 643, 4667, 0, 1, 1, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (414, 643, 4665, 1, 0, 0, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (415, 643, 4666, 0, 1, 0, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (416, 643, 4668, 0, 0, 1, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (417, 643, 4677, 0, 0, 1, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (418, 643, 4671, 0, 0, 1, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (419, 643, 4672, 0, 0, 1, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (420, 643, 4673, 0, 0, 1, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (421, 643, 4674, 0, 0, 1, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (422, 643, 4676, 0, 0, 1, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (423, 643, 4675, 0, 0, 1, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (424, 643, 4670, 0, 0, 1, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (425, 643, 4678, 0, 0, 1, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (426, 643, 4669, 0, 0, 1, 0, '2019-04-22 12:49:22', NULL);
+INSERT INTO `user_apps` VALUES (427, 643, 4679, 0, 0, 1, 0, '2019-04-22 12:49:22', NULL);
 
 -- ----------------------------
 -- Table structure for user_roles
@@ -763,7 +823,7 @@ CREATE TABLE `usr_acc`  (
   `prnt_dlr_name` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `del_status` tinyint(4) NULL DEFAULT 0,
   `trial_status` tinyint(4) NULL DEFAULT 0,
-  `created_at` timestamp(0) NULL DEFAULT current_timestamp(0),
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `device_id`(`device_id`) USING BTREE,
@@ -776,11 +836,14 @@ CREATE TABLE `usr_acc`  (
 -- ----------------------------
 -- Records of usr_acc
 -- ----------------------------
-INSERT INTO `usr_acc` VALUES (22, 636, NULL, 'hhh@hhh.com', NULL, 0, NULL, 'null', '', 6, '', '4247339', '', 0, 0, 'wipe', '', 1, 0, NULL, NULL, 0, 0, '2019-04-10 09:47:46', '2019-04-12 10:22:35');
+INSERT INTO `usr_acc` VALUES (22, 636, NULL, 'hhh@hhh.com', 222, 0, '433523', 'null', '', 6, '', '4247339', '', 0, 0, 'wipe', '', 0, 0, NULL, NULL, 1, 0, '2019-04-10 09:47:46', '2019-04-19 21:56:19');
 INSERT INTO `usr_acc` VALUES (23, 637, NULL, NULL, 224, 0, '417695', NULL, NULL, NULL, NULL, NULL, '', 0, NULL, NULL, '', 0, 0, NULL, NULL, 0, 0, '2019-04-10 21:07:15', NULL);
 INSERT INTO `usr_acc` VALUES (24, 638, NULL, 'zaid@zaid.com', NULL, 0, NULL, 'undefined', '', 6, '', '7802345', '', 0, 0, 'wipe', '', 1, 0, NULL, NULL, 0, 0, '2019-04-10 21:12:15', '2019-04-10 22:08:03');
 INSERT INTO `usr_acc` VALUES (25, 639, NULL, 'zaid@canadaworldapps.com', 224, 0, '417695', 'N/A', '2019/04/16', 6, '2020/04/16', '9170111', 'active', 1, NULL, 'wipe', '', 0, 0, NULL, NULL, 0, 0, '2019-04-10 23:35:14', '2019-04-16 16:26:57');
 INSERT INTO `usr_acc` VALUES (26, 640, NULL, 'hamza@gmail.com', 225, 0, NULL, 'adasd', NULL, 3, NULL, '1414300', '', 0, 0, NULL, '', 0, 0, NULL, NULL, 0, 0, '2019-04-12 11:53:12', NULL);
+INSERT INTO `usr_acc` VALUES (27, 641, NULL, 'asd@gmail.com', 225, 0, NULL, 'adasd', NULL, 0, '2019/04/25', '9275599', '', 0, 0, NULL, '', 0, 0, NULL, NULL, 0, 0, '2019-04-18 06:33:05', NULL);
+INSERT INTO `usr_acc` VALUES (28, 642, NULL, 'vortextest@gmail.com', NULL, 222, '433523', '12542', '', NULL, '', NULL, '', 0, NULL, NULL, '', 1, 0, NULL, 'usman hafeez', 0, 0, '2019-04-18 09:46:51', '2019-04-19 09:45:16');
+INSERT INTO `usr_acc` VALUES (29, 643, NULL, 'usman1231@gmail.com', 222, 0, '433523', 'null', '2019/04/22', NULL, '2019/07/22', NULL, 'active', 1, NULL, NULL, '', 0, 0, NULL, NULL, 0, 0, '2019-04-22 11:54:10', '2019-04-22 12:36:40');
 
 -- ----------------------------
 -- Table structure for usr_acc_profile
@@ -798,7 +861,7 @@ CREATE TABLE `usr_acc_profile`  (
   `passwords` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
   `type` enum('policy','profile','history') CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL DEFAULT 'history',
   `status` tinyint(4) NOT NULL DEFAULT 0,
-  `created_at` timestamp(0) NOT NULL DEFAULT current_timestamp(0),
+  `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
