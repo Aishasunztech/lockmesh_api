@@ -11,7 +11,7 @@
  Target Server Version : 50724
  File Encoding         : 65001
 
- Date: 22/04/2019 13:50:41
+ Date: 22/04/2019 14:19:05
 */
 
 SET NAMES utf8mb4;
@@ -232,7 +232,7 @@ CREATE TABLE `apps_info`  (
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `unique_name_constraints`(`unique_name`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 5633 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 9616 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of apps_info
@@ -504,7 +504,27 @@ INSERT INTO `devices` VALUES (639, 'BGWR419008', 'BCP4', NULL, 'undefined', '192
 INSERT INTO `devices` VALUES (640, 'NEEQ709111', 'hamza', NULL, 'asdas', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'off', 0, '', NULL, 0, '2019-04-12 11:53:12', NULL);
 INSERT INTO `devices` VALUES (641, 'RFCH946574', 'fasfa', NULL, 'asdas', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'off', 0, '', NULL, 0, '2019-04-18 06:33:05', NULL);
 INSERT INTO `devices` VALUES (642, 'DEQM506647', 'vortext test', NULL, 'vortext100', '192.168.18.160', NULL, '354444076298332', NULL, '354444076298340', 'VSP1001901S00431', '00:27:15:2E:8E:BD', NULL, 'off', 0, '', NULL, 0, '2019-04-18 09:46:51', '2019-04-19 09:45:17');
-INSERT INTO `devices` VALUES (643, 'YISC356974', 'usman', 'QZP3pyDACZIHCYAeAAAD', 'null', '192.168.1.145', '8992042306182528852f', '354444076293150', '8992042306182528811f', '354444076293168', 'VSP1001901S00172', '00:27:15:3D:FF:C8', NULL, 'On', 0, '', NULL, 0, '2019-04-22 11:54:10', '2019-04-22 13:50:05');
+INSERT INTO `devices` VALUES (643, 'YISC356974', 'usman', NULL, 'null', '192.168.1.145', '8992042306182528852f', '354444076293150', '8992042306182528811f', '354444076293168', 'VSP1001901S00172', '00:27:15:3D:FF:C8', NULL, 'off', 0, '', NULL, 0, '2019-04-22 11:54:10', '2019-04-22 14:16:19');
+
+-- ----------------------------
+-- Table structure for login_history
+-- ----------------------------
+DROP TABLE IF EXISTS `login_history`;
+CREATE TABLE `login_history`  (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `dealer_id` int(11) NULL DEFAULT NULL,
+  `socket_id` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `token` varchar(500) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `expiresin` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `ip_address` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `mac_address` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `logged_in_client` enum('dealer','admin','device','sdealer') CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `type` enum('socket','token') CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT 'token',
+  `status` tinyint(4) NOT NULL DEFAULT 0,
+  `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = MyISAM AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for pgp_emails
@@ -714,12 +734,12 @@ CREATE TABLE `user_app_permissions`  (
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `device_setting_id`(`device_id`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 498 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = MyISAM AUTO_INCREMENT = 2342 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of user_app_permissions
 -- ----------------------------
-INSERT INTO `user_app_permissions` VALUES (497, 643, '{\"bluetooth_status\":false,\"call_status\":false,\"hotspot_status\":false,\"screenshot_status\":false,\"wifi_status\":true}', '2019-04-22 13:50:11', NULL);
+INSERT INTO `user_app_permissions` VALUES (2341, 643, '{\"bluetooth_status\":false,\"call_status\":false,\"hotspot_status\":false,\"screenshot_status\":false,\"wifi_status\":true}', '2019-04-22 14:05:10', NULL);
 
 -- ----------------------------
 -- Table structure for user_apps
