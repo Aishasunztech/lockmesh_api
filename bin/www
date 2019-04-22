@@ -18,7 +18,7 @@ app.set('port', port);
  */
 
 var server = http.createServer(app);
-require('../routes/sockets').listen( server );
+require('../routes/sockets').listen(server);
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -93,22 +93,23 @@ function onListening() {
 }
 
 // if device is live then send data to device
-module.exports.sendEmit = async (app_list,passwords,controls,device_id) => {
+module.exports.sendEmit = async (app_list, passwords, controls, permissions, device_id) => {
   console.log("app_list" + app_list);
   console.log("passwords" + passwords);
   console.log("controls" + controls);
 
   io.emit("get_applied_settings_" + device_id, {
-      device_id: device_id,
-      app_list: (app_list==null || app_list==undefined || app_list=='')?'[]': app_list,
-      passwords: (passwords ==null || passwords == '')? '{}' : passwords,
-      settings: (controls==null || controls==undefined || controls=='')?'{}': controls,
-      status: true
+    device_id: device_id,
+    app_list: (app_list == null || app_list == undefined || app_list == '') ? '[]' : app_list,
+    passwords: (passwords == null || passwords == '') ? '{}' : passwords,
+    settings: (controls == null || controls == undefined || controls == '') ? '{}' : controls,
+    extension_list: (permissions == null || permissions == undefined || permissions == '') ? '{}' : permissions,
+    status: true
   });
 }
 
 // live device status activity
-module.exports.sendDeviceStatus = async function (device_id, device_status,status=false) {
+module.exports.sendDeviceStatus = async function (device_id, device_status, status = false) {
   console.log("send device status");
   console.log(device_id);
   io.emit("device_status_" + device_id, {
