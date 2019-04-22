@@ -88,7 +88,7 @@ var verifyToken = function (req, res) {
                         req.decoded = decoded;
                         req.decoded.status = true;
                         ath = decoded;
-                        console.log(ath);
+                        // console.log(ath);
 
                     // } else {
                     //     ath.status = false;
