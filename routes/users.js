@@ -64,33 +64,51 @@ function sendEmail(subject, message, to, callback) {
     smtpTransport.sendMail(mailOptions, cb);
 }
 
-
 /*Check For Token in the header */
 var verifyToken = function (req, res) {
-    // check header or url parameters or post parameters for token
     var ath;
     var token = req.headers['authorization'];
     //console.log(token);
-
     if (token) {
-        // token = CryptoJS.AES.decrypt(token.replace(/['"]+/g, ''), config.secret).toString();
-        // console.log("middleware");
-        // console.log(token);
 
-        jwt.verify(token, config.secret, function (err, decoded) {
+        jwt.verify(token, config.secret, async function (err, decoded) {
             if (err) {
+                ath.status = false;
+
                 return res.json({
                     success: false,
                     msg: 'Failed to authenticate token.'
                 });
             } else {
                 // if everything is good, save to request for use in other routes
-                req.decoded = decoded;
-                req.decoded.status = true;
-                ath = decoded;
+                // let result = await helpers.getLoginByToken(token);
+                // console.log("decoding", result);
+                // if(result){
+                    // if(result.status === true || result.status === 1){
+                        req.decoded = decoded;
+                        req.decoded.status = true;
+                        ath = decoded;
+                        console.log(ath);
+
+                    // } else {
+                    //     ath.status = false;
+                    //     return res.json({
+                    //         success: false,
+                    //         msg: 'Failed to authenticate token.'
+                    //     });
+                    // }
+                // } else {
+                //     ath.status = false;
+                //     return res.json({
+                //         success: false,
+                //         msg: 'Failed to authenticate token.'
+                //     });
+                // } 
+                
             }
         });
     } else {
+        ath.status = false;
         // if there is no token return an error
         return res.status(403).send({
             success: false,
@@ -245,7 +263,7 @@ router.post('/Signup', async function (req, res) {
 router.get('/get_allowed_components', async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
 
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status == true) {
 
     }
@@ -255,7 +273,7 @@ router.get('/get_allowed_components', async function (req, res) {
 router.post('/check_component', async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
 
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status == true) {
         var componentUri = req.body.ComponentUri;
         var userId = verify.user.id;
@@ -312,7 +330,7 @@ router.get('/user_type', async function (req, res) {
 /**GET all the devices**/
 router.get('/devices', async function (req, res) {
 
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     var where_con = '';
     let newArray = [];
     if (verify.status !== undefined && verify.status == true) {
@@ -361,11 +379,11 @@ router.get('/devices', async function (req, res) {
 
 
 /**GET New the devices**/
-router.get('/new/devices', function (req, res) {
-    var verify = verifyToken(req, res);
+router.get('/new/devices', async function (req, res) {
+    var verify = await verifyToken(req, res);
     var where_con = '';
 
-    if (verify.status !== undefined && verify.status == true) {
+    if (verify['status'] !== undefined && verify.status == true) {
         if (verify.user.user_type !== 'admin') {
             if (verify.user.user_type === 'dealer') {
                 // console.log('done of dealer', verify.user.id)
@@ -392,7 +410,7 @@ router.post('/add/dealer', async function (req, res) {
 
     res.setHeader('Content-Type', 'application/json');
 
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
 
     if (verify.status !== undefined && verify.status == true) {
         var dealerName = req.body.name;
@@ -608,7 +626,7 @@ router.post('/add/dealer', async function (req, res) {
 
 /*Get dealers*/
 router.get('/dealers/:pageName', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         let where = "";
         console.log("pageName", req.params.pageName);
@@ -665,7 +683,7 @@ router.get('/dealers/:pageName', async function (req, res) {
 
 /*Get All Dealers */
 router.get('/dealers', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         console.log("userType: " + verify.user.user_type);
 
@@ -746,7 +764,7 @@ router.get('/dealers', async function (req, res) {
 /***Add devices (not using) ***/
 router.post('/create/device_profile', async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         var dataStag = [];
         var activation_code = randomize('0', 7);
@@ -985,7 +1003,7 @@ router.post('/create/device_profile', async function (req, res) {
 
 router.post('/transfer/device_profile', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
         let loggedDealerId = verify.user.id;
         let loggedDealerType = verify.user.user_type;
@@ -1061,7 +1079,7 @@ router.post('/transfer/device_profile', async (req, res) => {
 
 router.put('/new/device', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
         let loggedDealerId = verify.user.id;
         let loggedDealerType = verify.user.user_type;
@@ -1226,7 +1244,7 @@ router.put('/new/device', async (req, res) => {
 /**UPDATE Devices details**/
 router.put('/edit/devices', async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
 
     if (verify['status'] !== undefined && verify.status == true) {
 
@@ -1370,10 +1388,10 @@ router.put('/edit/devices', async function (req, res) {
 });
 
 /**Devices record delete**/
-router.put('/delete/:device_id', function (req, res) {
+router.put('/delete/:device_id', async function (req, res) {
 
     console.log(req.body);
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
 
     if (verify.status !== undefined && verify.status == true) {
         if (!empty(req.params.device_id)) {
@@ -1422,10 +1440,10 @@ router.put('/delete/:device_id', function (req, res) {
 
 
 /**UPDATE Profile details  **/
-router.put('/updateProfile/:id', function (req, res) {
+router.put('/updateProfile/:id', async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
 
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         console.log('body data', req.body);
         sql.query('UPDATE dealers SET `dealer_name` = ? where `dealer_id` = ?', [req.body.name, req.body.dealerId], function (error, rows, status) {
@@ -1510,7 +1528,7 @@ router.put('/updateProfile/:id', function (req, res) {
 
 /** Unlink Device  **/
 router.post('/unlink/:id', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     var device_id = req.params.id;
     var pgp_email = req.body.device.pgp_email;
     var chat_id = req.body.device.chat_id;
@@ -1565,7 +1583,7 @@ router.post('/unlink/:id', async function (req, res) {
 
 /** Suspend Account Devices / client **/
 router.post('/suspend/:id', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     var device_id = req.params.id;
     var tod_dat = datetime.create();
     var formatted_dt = tod_dat.format('Y-m-d H:M:S');
@@ -1686,7 +1704,7 @@ router.post('/suspend/:id', async function (req, res) {
 
 });
 router.post('/wipe/:id', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     var device_id = req.params.id;
     if (verify.status !== undefined && verify.status == true) {
         var sql2 = "select * from devices where id = '" + device_id + "'";
@@ -1740,7 +1758,7 @@ router.post('/wipe/:id', async function (req, res) {
 })
 
 router.post('/UnflagDevice/:id', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     var device_id = req.params.id;
     if (verify.status !== undefined && verify.status == true) {
 
@@ -1791,7 +1809,7 @@ router.post('/UnflagDevice/:id', async function (req, res) {
 })
 
 router.post('/flagDevice/:id', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     var device_id = req.params.id;
     var option = req.body.data
     console.log(option);
@@ -1856,7 +1874,7 @@ router.post('/flagDevice/:id', async function (req, res) {
 
 /** Activate Device **/
 router.post('/activate/:id', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     var device_id = req.params.id;
     var tod_dat = datetime.create();
     var formatted_dt = tod_dat.format('Y-m-d H:M:S');
@@ -1971,7 +1989,7 @@ router.post('/activate/:id', async function (req, res) {
 /** Reset password dealers (Admin Panel) **/
 router.post('/resetpwd', async function (req, res) {
 
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     var isReset = false;
     if (verify.status !== undefined && verify.status == true) {
         console.log('body data');
@@ -2074,7 +2092,7 @@ router.post('/resetpwd', async function (req, res) {
 /** Edit Dealer (Admin panel) **/
 
 router.put('/edit/dealers', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     var name = req.body.name;
     var email = req.body.email;
     var dealer_id = req.body.dealer_id;
@@ -2138,9 +2156,9 @@ router.put('/edit/dealers', async function (req, res) {
 
 /** Delete Dealer from admin Panel**/
 
-router.post('/dealer/delete/', function (req, res) {
+router.post('/dealer/delete/', async function (req, res) {
 
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     var dealer_id = req.body.dealer_id;
 
     if (verify.status !== undefined && verify.status == true) {
@@ -2193,7 +2211,7 @@ router.post('/dealer/delete/', function (req, res) {
 
 /** Suspend Dealer **/
 router.post('/dealer/suspend', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     let dealer_id = req.body.dealer_id;
 
     console.log('user statur', verify.status);
@@ -2251,7 +2269,7 @@ router.post('/dealer/suspend', async function (req, res) {
 
 /** Activate Dealer **/
 router.post('/dealer/activate', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     var dealer_id = req.body.dealer_id;
 
     if (verify.status !== undefined && verify.status == true) {
@@ -2302,8 +2320,8 @@ router.post('/dealer/activate', async function (req, res) {
 
 
 /** Get all S Dealers of Dealers**/
-router.get('/sdealers/:dealer_id', function (req, res) {
-    var verify = verifyToken(req, res);
+router.get('/sdealers/:dealer_id', async function (req, res) {
+    var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         sql.query("select * from dealers where connected_dealer = '" + req.params.dealer_id + "' and type='sdealer' order by created DESC", async function (error, results) {
             if (error) throw error;
@@ -2339,7 +2357,7 @@ router.get('/sdealers/:dealer_id', function (req, res) {
 /** Undo Dealer / S Dealer **/
 
 router.post('/dealer/undo', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     var dealer_id = req.body.dealer_id;
 
     if (verify.status !== undefined && verify.status == true) {
@@ -2389,7 +2407,7 @@ router.post('/dealer/undo', async function (req, res) {
 /** Get Device Details of Dealers (Connect Page) **/
 router.get('/connect/:device_id', async function (req, res) {
     // console.log('api check is caled')
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         if (!empty(req.params.device_id)) {
             let userId = verify.user.id;
@@ -2489,7 +2507,7 @@ router.get('/connect/:device_id', async function (req, res) {
 
 /** Get logged in Dealer permitted apps  **/
 router.get('/get_dealer_apps', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         let loggedUserId = verify.user.id;
         let loggedUserType = verify.user.user_type;
@@ -2537,7 +2555,7 @@ router.get('/get_dealer_apps', async function (req, res) {
 });
 
 router.get('/get_usr_acc_id/:device_id', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
 
     if (verify.status !== undefined && verify.status == true) {
         //console.log('id is the ', req.params);
@@ -2555,7 +2573,7 @@ router.get('/get_usr_acc_id/:device_id', async function (req, res) {
 
 /** Get Device Details of Dealers (Connect Page) **/
 router.get('/get_apps/:device_id', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         if (!empty(req.params.device_id)) {
             // var query = 'SELECT user_apps.*, apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon from user_apps LEFT JOIN apps_info on user_apps.app_id = apps_info.id LEFT JOIN devices on user_apps.device_id=devices.id where devices.device_id ="' + req.params.device_id + '"';
@@ -2657,8 +2675,8 @@ router.get('/get_apps/:device_id', async function (req, res) {
     }
 });
 
-router.get('default_apps', function (req, res) {
-    var verify = verifyToken(req, res);
+router.get('default_apps', async function (req, res) {
+    var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
         var query = 'SELECT apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon from default_apps as apps_info ';
         // console.log(query);
@@ -2681,7 +2699,7 @@ router.get('default_apps', function (req, res) {
 
 router.put('/deleteUnlinkDevice', async function (req, res) {
     try {
-        var verify = verifyToken(req, res);
+        var verify = await verifyToken(req, res);
         if (verify.status !== undefined && verify.status == true) {
             let insertError = 0;
             let NotDeleted = [];
@@ -2740,7 +2758,7 @@ router.put('/deleteUnlinkDevice', async function (req, res) {
 
 router.post('/apply_settings/:device_id', async function (req, res) {
     try {
-        var verify = verifyToken(req, res);
+        var verify = await verifyToken(req, res);
         if (verify.status !== undefined && verify.status == true) {
             let device_id = req.params.device_id;
 
@@ -2883,7 +2901,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
 
 
 router.post('/get_profiles', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify.status === true) {
         let userId = verify.user.id;
         let userType = await helpers.getUserType(userId);
@@ -2925,7 +2943,7 @@ router.post('/get_profiles', async function (req, res) {
 });
 
 router.post('/get_policies', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify.status === true) {
         let userId = verify.user.id;
         let userType = await helpers.getUserType(userId);
@@ -2965,7 +2983,7 @@ router.post('/get_policies', async function (req, res) {
 });
 
 router.post('/get_device_history', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify.status === true) {
         let userId = verify.user.id;
         let userType = await helpers.getUserType(userId);
@@ -3072,7 +3090,7 @@ router.post('/get_device_history', async function (req, res) {
 
 /** Save Dropdown Items Dealers/Sub Dealers **/
 router.post('/dealer/dropdown', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         var selected_items = req.body.selected_items;
         var dropdownType = req.body.pageName;
@@ -3118,7 +3136,7 @@ router.post('/dealer/dropdown', async function (req, res) {
 
 router.post('/dealer/postPagination', async function (req, res) {
     // console.log("Working")
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         console.log(verify.status, "verify")
         var selectedValue = req.body.selectedValue;
@@ -3164,7 +3182,7 @@ router.post('/dealer/postPagination', async function (req, res) {
 });
 
 router.get('/dealer/getPagination/:dropdownType', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     // console.log('done or not');
     if (verify.status !== undefined && verify.status == true) {
         // console.log('data from req', req.params.dropdownType);
@@ -3198,7 +3216,7 @@ router.get('/dealer/getPagination/:dropdownType', async function (req, res) {
 
 /** Get Dropdown Selected Items **/
 router.get('/dealer/gtdropdown/:dropdownType', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     // console.log('done or not');
     if (verify.status !== undefined && verify.status == true) {
         // console.log('data from req', req.params.dropdownType);
@@ -3240,7 +3258,7 @@ router.get('/dealer/gtdropdown/:dropdownType', async function (req, res) {
 
 /** Dealer and S Dealer Info **/
 router.get('/getinfo', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         var getinfo = "select * from dealers where dealer_id='" + verify.user.id + "'";
 
@@ -3273,7 +3291,7 @@ router.get('/getinfo', async function (req, res) {
 
 /** Save Dropdown Items Admin **/
 router.post('/admin/dropdown', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         //  console.log(req.body.selected_items);
         if (!empty(req.body.selected_items)) {
@@ -3303,7 +3321,7 @@ router.post('/admin/dropdown', async function (req, res) {
 
 /** Get Dropdown Selected Items **/
 router.get('/admin/gtdropdown', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         sql.query("select * from users where email = 'admin@gmail.com' and role = 'admin'", function (err, rslts) {
             if (rslts.length == 0) {
@@ -3341,7 +3359,7 @@ router.get('/admin/gtdropdown', async function (req, res) {
 router.post('/import/:fieldName', async (req, res) => {
     res.setHeader('Content-Type', 'multipart/form-data');
 
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         res.setHeader('Content-Type', 'multipart/form-data');
         let filename = '';
@@ -3498,7 +3516,7 @@ router.post('/import/:fieldName', async (req, res) => {
 });
 
 router.get('/export/:fieldName', async (req, res) => {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
         console.log("exporting data");
         let fieldName = req.params.fieldName;
@@ -3575,7 +3593,7 @@ router.get('/export/:fieldName', async (req, res) => {
 });
 
 router.get('/get_sim_ids', async (req, res) => {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from sim_ids where used=0";
         sql.query(query, (error, resp) => {
@@ -3588,7 +3606,7 @@ router.get('/get_sim_ids', async (req, res) => {
     }
 });
 router.get('/get_used_sim_ids', async (req, res) => {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from sim_ids where used=1";
         sql.query(query, (error, resp) => {
@@ -3603,7 +3621,7 @@ router.get('/get_used_sim_ids', async (req, res) => {
 
 
 router.get('/get_chat_ids', async (req, res) => {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from chat_ids where used=0";
         sql.query(query, (error, resp) => {
@@ -3616,7 +3634,7 @@ router.get('/get_chat_ids', async (req, res) => {
     }
 });
 router.get('/get_used_chat_ids', async (req, res) => {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from chat_ids where used=1";
         sql.query(query, (error, resp) => {
@@ -3630,7 +3648,7 @@ router.get('/get_used_chat_ids', async (req, res) => {
 });
 
 router.get('/get_pgp_emails', async (req, res) => {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from pgp_emails where used=0";
         sql.query(query, (error, resp) => {
@@ -3643,7 +3661,7 @@ router.get('/get_pgp_emails', async (req, res) => {
     }
 });
 router.get('/get_used_pgp_emails', async (req, res) => {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from pgp_emails where used=1";
         sql.query(query, (error, resp) => {
@@ -3656,7 +3674,7 @@ router.get('/get_used_pgp_emails', async (req, res) => {
     }
 });
 router.get('/get_used_sim_ids', async (req, res) => {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from sim_ids where used=1";
         sql.query(query, (error, resp) => {
@@ -3669,7 +3687,7 @@ router.get('/get_used_sim_ids', async (req, res) => {
     }
 });
 router.get('/get_used_chat_ids', async (req, res) => {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from chat_ids where used=1";
         sql.query(query, (error, resp) => {
@@ -3682,7 +3700,7 @@ router.get('/get_used_chat_ids', async (req, res) => {
     }
 });
 router.post('/releaseCSV/:fieldName', async (req, res) => {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     var fieldName = req.params.fieldName
     var ids = req.body.ids
     if (verify['status'] !== undefined && verify.status === true) {
@@ -3761,10 +3779,10 @@ router.post('/releaseCSV/:fieldName', async (req, res) => {
 });
 // upload test apk
 
-router.post('/addApk', function (req, res) {
+router.post('/addApk', async function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
 
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     //  console.log('verify', verify.status);
     let fileUploaded = false;
 
@@ -3828,9 +3846,9 @@ router.post('/addApk', function (req, res) {
     }
 });
 
-router.post('/upload', function (req, res) {
+router.post('/upload', async function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
 
     if (verify.status == true) {
         console.log('form data');
@@ -3860,7 +3878,7 @@ router.post('/upload', function (req, res) {
 /** Get Apk List Admin Panel **/
 
 router.get('/apklist', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     var data = [];
     if (verify.status !== undefined && verify.status == true) {
         if (verify.user.user_type === ADMIN) {
@@ -3964,7 +3982,7 @@ router.get('/apklist', async function (req, res) {
 
 /** Save Permissions**/
 router.post('/save_permissions', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     var action = req.body.action
     // console.log(req.body.action);
     if (verify.status !== undefined && verify.status == true) {
@@ -4138,8 +4156,8 @@ router.post('/save_permissions', async function (req, res) {
 
 /** Toggle Apk Admin Panel (On / Off) **/
 
-router.post('/toggle', function (req, res) {
-    var verify = verifyToken(req, res);
+router.post('/toggle', async function (req, res) {
+    var verify = await verifyToken(req, res);
 
     if (verify.status !== undefined && verify.status == true) {
 
@@ -4192,9 +4210,9 @@ router.get("/getFile/:file", (req, res) => {
 
 
 /** Edit Apk (Admin panel) **/
-router.post('/edit/apk', function (req, res) {
+router.post('/edit/apk', async function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
 
     if (verify.status !== undefined && verify.status == true) {
         sql.query("update apk_details set app_name = '" + req.body.name + "', logo = '" + req.body.logo + "', apk = '" + req.body.apk + "', modified = NOW() where id = '" + req.body.apk_id + "'", function (err, rslts) {
@@ -4266,9 +4284,9 @@ router.post('/edit/apk', function (req, res) {
 
 
 /**Delete Apk**/
-router.post('/apk/delete', function (req, res) {
+router.post('/apk/delete', async function (req, res) {
 
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
 
     if (verify.status !== undefined && verify.status == true) {
         if (!empty(req.body.apk_id)) {
@@ -4318,7 +4336,7 @@ router.post('/apk/delete', function (req, res) {
 
 
 router.delete('/delete_profile/:profile_id', async function (req, res) {
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
 
     if (verify.status !== undefined && verify.status == true) {
         if (!empty(req.params.profile_id)) {
@@ -4358,7 +4376,7 @@ router.delete('/delete_profile/:profile_id', async function (req, res) {
 // check prviouse password
 router.post('/check_pass', async function (req, res) {
     console.log(req.body);
-    var verify = verifyToken(req, res);
+    var verify = await verifyToken(req, res);
     if (verify.status) {
         let pwd = md5(req.body.user.password);
         let query_res = await sql.query("select * from dealers where dealer_id=" + verify.user.id + " and password='" + pwd + "'");

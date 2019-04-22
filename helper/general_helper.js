@@ -393,6 +393,7 @@ module.exports = {
 	getLoginByDealerID: async function (dealerId){
 		let loginQ = "SELECT * from login_history WHERE dealer_id ='"+ dealerId +"'";
 		let res =await sql.query(loginQ);
+		console.log("resrserse", res);
 		if(res.length){
 			return res[0];
 		} else {
