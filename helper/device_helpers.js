@@ -76,14 +76,14 @@ module.exports = {
 
         if (deviceData != null) {
             // console.log("insertApps device_id:" + deviceData.id);
-            // console.log(apps);
+            // console.log("isvisible",apps);
             apps.forEach(async (app) => {
-                console.log("App Visible:" + app.visible);
+                console.log("default App", app.defaultApp);
+
                 let iconName = this.uploadIconFile(app, app.label);
-                // console.log("iconName: " + iconName);
-                var query = "INSERT IGNORE INTO apps_info (unique_name, label, package_name, icon, extension ,visible) values ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , 1)";
-                // console.log("helloo: ",query);
+                var query = "INSERT IGNORE INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app) VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , "+ app.visible +", "+ app.defaultApp +")";
                 await sql.query(query);
+
                 await this.getApp(app.uniqueName, deviceData.id, app.guest, app.encrypted, app.enable);
 
             });
@@ -107,7 +107,7 @@ module.exports = {
                 console.log("parent uniqueName: ", app.uniqueName);
                 console.log("child uniqueName: ", app.uniqueExtension);
                 console.log("label:", app.label);
-                console.log("icon:", app.icon);
+                // console.log("icon:", app.icon);
                 console.log("guest: ", app.guest);
                 console.log("encrytped: ", app.encrypted);
 
