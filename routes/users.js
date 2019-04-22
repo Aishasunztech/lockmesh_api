@@ -122,8 +122,21 @@ var verifyToken = function (req, res) {
 
 /* GET users listing. */
 router.get('/', function (req, res, next) {
-    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    res.send(ip);
+    // let queries = fs.readFileSync(path.join(__dirname, '../_DB/lockmesh_db.sql'), { encoding: "UTF-8" }).split(";\n");
+    // for (let query of queries) {
+    //     query = query.trim();
+    //     if (query.length !== 0 && !query.match(/\/\*/)) {
+           
+    //         // connection.query(query, function (err, sets, fields) {
+    //     //     if (err) {
+    //     //     console.log(`Importing failed for Mysql Database  - Query:${query}`);
+    //     //     } else {
+    //     //     console.log(`Importing Mysql Database  - Query:${query}`);
+    //     //     }
+    //     // });
+    //     }
+    // }
+    // res.send(queries);
 });
 
 router.get('/test', async function (req, res) {
@@ -278,9 +291,9 @@ router.post('/check_component', async function (req, res) {
         var componentUri = req.body.ComponentUri;
         var userId = verify.user.id;
         var result = await helpers.isAllowedComponentByUri(componentUri, userId);
-        let getUser = "select * from dealers where dealer_id =" + userId;
+        let getUser = "SELECT * from dealers where dealer_id =" + userId;
         let user = await sql.query(getUser);
-        var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + userId + "'");
+        var get_connected_devices = await sql.query("SELECT count(*) as total from usr_acc where dealer_id='" + userId + "'");
 
         if (user.length) {
 
@@ -453,10 +466,11 @@ router.post('/add/dealer', async function (req, res) {
             length: 10,
             numbers: true
         });
-        console.log("dealer_pwd: " + dealer_pwd);
+        // console.log("dealer_pwd: " + dealer_pwd);
+
 
         var enc_pwd = md5(dealer_pwd); //encryted pwd
-        console.log("encrypted password" + enc_pwd);
+        // console.log("encrypted password" + enc_pwd);
         if (!empty(dealerEmail) && !empty(dealerName)) {
             var dealer = await sql.query("SELECT * FROM dealers WHERE dealer_email = '" + dealerEmail + "'");
 
