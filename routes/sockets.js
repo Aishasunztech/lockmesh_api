@@ -200,10 +200,10 @@ module.exports.listen = async function (server) {
                 let app_list = JSON.parse(response[0].app_list);
 
                 console.log("insertings applications");
-                console.log(response[0].app_list);
+                // console.log(response[0].app_list);
 
                 console.log("inserting setiings");
-                console.log(response[0].permissions);
+                // console.log(response[0].permissions);
 
                 await device_helpers.insertApps(app_list, device_id);
                 await device_helpers.insertOrUpdateSettings(response[0].permissions, device_id);
@@ -215,7 +215,7 @@ module.exports.listen = async function (server) {
         socket.on('sendApps_' + device_id, async (apps) => {
             try {
                 console.log("get applications event: ", device_id);
-                console.log(apps);
+                // console.log(apps);
                 let applications = JSON.parse(apps);
                 // console.log("syncing device");
                 await device_helpers.insertApps(applications, device_id);
@@ -247,12 +247,12 @@ module.exports.listen = async function (server) {
             });
         });
 
-        socket.on('sendSettings_' + device_id, async (permissions) => {
+        socket.on('sendSettings_' + device_id, async (controls) => {
             console.log('getting device settings from ' + device_id);
-            let device_permissions = permissions;
-            // console.log("device permissions", device_permissions)
+            console.log("device controls", controls)
+            // let device_permissions = permissions;
 
-            // await device_helpers.insertOrUpdateSettings(device_settings, dvc_id);
+            await device_helpers.insertOrUpdateSettings(controls, dvc_id);
 
             await device_helpers.deviceSynced(device_id);
 

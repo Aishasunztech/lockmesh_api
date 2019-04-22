@@ -123,15 +123,10 @@ module.exports = {
     },
     insertOrUpdateSettings: async function (permissions, device_id) {
         try {
-            // console.log("update or insert settings");
-            // console.log(settings);
             var updateQuery = "REPLACE INTO user_app_permissions (device_id, permissions) VALUE ('" + device_id + "', '" + permissions + "')";
             await sql.query(updateQuery, async function (error, row) {
                 if (error) throw (error);
 
-                // console.log("check setting update:");
-                // console.log(updateQuery);
-                // console.log(row);
 
             });
         } catch (error) {
@@ -171,7 +166,7 @@ module.exports = {
             var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
             // console.log("update query", updateQuery);
             sql.query(updateQuery, async function (error, row) {
-                console.log("this is", row);
+                // console.log("this is", row);
                 if (row != undefined && row.affectedRows === 0) {
                     var insertQuery = "INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + ")";
                     await sql.query(insertQuery);
