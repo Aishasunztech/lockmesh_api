@@ -250,7 +250,7 @@ module.exports.listen = async function (server) {
         socket.on('sendSettings_' + device_id, async (permissions) => {
             console.log('getting device settings from ' + device_id);
             let device_permissions = permissions;
-            console.log("device permissions", device_permissions)
+            // console.log("device permissions", device_permissions)
 
             // await device_helpers.insertOrUpdateSettings(device_settings, dvc_id);
 

@@ -173,7 +173,7 @@ module.exports = {
             sql.query(updateQuery, async function (error, row) {
                 console.log("this is", row);
                 if (row != undefined && row.affectedRows === 0) {
-                    var insertQuery = "INSERT INTO user_apps ( device_id, app_id, guest, encrypted, enable) VALUES (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + ")";
+                    var insertQuery = "INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + ")";
                     await sql.query(insertQuery);
                 }
             });
