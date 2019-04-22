@@ -252,7 +252,7 @@ module.exports.listen = async function (server) {
             console.log("device controls", controls)
             // let device_permissions = permissions;
 
-            await device_helpers.insertOrUpdateSettings(controls, dvc_id);
+            await device_helpers.insertOrUpdateSettings(controls, device_id);
 
             await device_helpers.deviceSynced(device_id);
 
