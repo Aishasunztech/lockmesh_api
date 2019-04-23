@@ -3894,11 +3894,11 @@ router.post('/addApk', async function (req, res) {
                             msg: 'Uploaded Successfully',
                             fileName: filename,
                             versionCode: helpers.getAPKVersionCode(file),
-                            versionName: helpers.getAPKVersionName(file),
-                            packageName: helpers.getAPKPackageName(file),
-                            details: helpers.getAPKDetails(file),
+                            
                         };
                     } catch (error) {
+                        console.log(error);
+                        
                         data = {
                             status: false,
                             msg: "Error while Uploading",
@@ -3934,21 +3934,12 @@ router.post('/upload', async function (req, res) {
                 let apk = req.body.apk;
                 let apk_name = req.body.name;
                 let logo = req.body.logo;
-                let versionCode = req.body.versionCode;
-                let versionName = req.body.versionName;
-                let packageName = req.body.packageName;
-                let details = JSON.stringify(req.body.details);
                 let file = path.join(__dirname, "../uploads/" + apk);
+                let versionCode = helpers.getAPKVersionCode(file);
+                let versionName = helpers.getAPKVersionName(file);
+                let packageName = helpers.getAPKPackageName(file);
+                let details = JSON.stringify(helpers.getAPKDetails(file));
 
-                // data = {
-                //     status: true,
-                //     msg: 'Uploaded Successfully',
-                //     fileName: filename,
-                //     versionCode: helpers.getAPKVersionCode(file),
-                //     versionName: helpers.getAPKVersionName(file),
-                //     packageName: helpers.getAPKPackageName(file),
-                //     details: helpers.getAPKDetails(file),
-                // };
                 sql.query("INSERT INTO apk_details (app_name, logo, apk, version_code, version_name, package_name, details) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + versionCode + "', '" + versionName + "', '" + packageName + "','" + details + "')", function (err, rslts) {
 
                     if (err) throw err;
@@ -4352,59 +4343,6 @@ router.post('/edit/apk', async function (req, res) {
     }
 
 });
-
-
-
-
-// router.post('/edit/apk', function (req, res) {
-//     res.setHeader('Content-Type', 'multipart/form-data');
-//     var verify = verifyToken(req, res);
-
-//     if (verify.status == true) {
-//         var storage = multer.diskStorage({
-//             destination: function (req, file, callback) {
-//                 callback(null, './uploads');
-//             },
-//             filename: function (req, file, callback) {
-//                 if (file.fieldname == "logo") {
-//                     callback(null, file.fieldname + '-' + Date.now() + '.jpg');
-//                 }
-//                 if (file.fieldname == "apk") {
-
-//                     callback(null, file.fieldname + '-' + Date.now() + '.apk');
-//                 }
-
-//             }
-//         });
-
-//         var upload = multer({ storage: storage }).fields([{ name: 'logo', maxCount: 1 }, { name: 'apk', maxCount: 1 }]);
-
-//         upload(req, res, function (err) {
-
-//             if (err) {
-//                 return res.end("Error uploading file.");
-//             } else {
-
-
-//                 var fname = req.files.logo;
-//                 var faname = req.files.apk;
-
-
-//                 sql.query("update apk_details set app_name = '" + req.body.name + "', logo = '" + fname[0].filename + "', apk = '" + faname[0].filename + "', modified = NOW() where id = '" + req.body.apk_id + "'", function (err, rslts) {
-
-//                     if (err) throw err;
-//                     data = {
-//                         "status": true,
-//                         "msg": "Record Updated"
-
-//                     };
-//                     res.send(data);
-//                 });
-//             }
-//         });
-//     }
-
-// });
 
 
 /**Delete Apk**/
