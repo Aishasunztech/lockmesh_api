@@ -2544,8 +2544,10 @@ router.get('/connect/:device_id', async function (req, res) {
     }
 });
 
+
 /** Get logged in Dealer permitted apps  **/
 router.get('/get_dealer_apps', async function (req, res) {
+    // console.log('apoi recivedx')
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         let loggedUserId = verify.user.id;
@@ -2575,6 +2577,7 @@ router.get('/get_dealer_apps', async function (req, res) {
                 }
                 data.push(dta);
             }
+            // console.log('api response is ', data)
 
             return res.json({
                 status: true,
@@ -2588,6 +2591,7 @@ router.get('/get_dealer_apps', async function (req, res) {
                 msg: "No result found",
                 list: []
             }
+           
             res.send(data);
         }
     }
@@ -2607,6 +2611,84 @@ router.get('/get_usr_acc_id/:device_id', async function (req, res) {
                 user_acount_id: rslt[0].id,
             });
         })
+    }
+})
+
+router.get('/get_app_permissions/', async function (req, res) {
+    var verify = await verifyToken(req, res);
+
+    if (verify.status !== undefined && verify.status == true) {
+        //console.log('id is the ', req.params);
+        let loggedUserType = verify.user.user_type;
+        if (loggedUserType !== Constants.ADMIN) {
+        let query = "select * from apps_info";
+
+        await sql.query(query, async (error, apps) => {
+             console.log(query, 'rslt  ', apps);
+            if(error) throw error;
+
+            let Extension = [];
+            let onlyApps = [];
+            for (let item of apps) {
+                let subExtension = [];
+                // console.log("extenstion id", item.extension_id);
+                if (item.extension === 1 && item.extension_id === 0) {
+                    console.log('main', item)
+                    Extension.push(item);
+                }
+
+                if (item.extension == 0 || item.visible == 1) {
+                    onlyApps.push(item)
+                }
+            }
+
+            let newExtlist = [];
+            for (let ext of Extension) {
+                let subExtension = [];
+
+                for (let item of apps) {
+                     console.log(ext.id, item.extension_id);
+                    if (ext.id === item.extension_id) {
+                console.log('sub ext item', item)
+                        
+                        subExtension.push({
+                            uniqueName: ext.uniqueName,
+                            uniqueExtension: item.uniqueName,
+                            guest: item.guest,
+                            label: item.label,
+                            icon: item.icon,
+                            encrypted: item.encrypted,
+                            id: item.id,
+                            device_id: item.device_id,
+                            app_id: item.id
+                        });
+                    }
+                  
+                }
+
+                console.log('sub ext', subExtension)
+
+                newExtlist.push({
+                    uniqueName: ext.uniqueName,
+                    guest: ext.guest,
+                    encrypted: ext.encrypted,
+                    enable: ext.enable,
+                    label: ext.label,
+                    subExtension: subExtension
+
+                })
+            }
+
+            console.log('daa is ', newExtlist)
+            
+
+            res.send({
+                status: true,
+                extensions: newExtlist,
+                appPermissions: onlyApps
+            });
+        })
+    }
     }
 })
 
@@ -2665,7 +2747,6 @@ router.get('/get_apps/:device_id', async function (req, res) {
                             }
                         }
 
-
                         newExtlist.push({
                             uniqueName: ext.uniqueName,
                             guest: ext.guest,
@@ -2693,6 +2774,8 @@ router.get('/get_apps/:device_id', async function (req, res) {
                                 controls: JSON.parse(controls[0].permissions),
                                 extensions: newExtlist
                             });
+                            
+
                         } else {
                             res.send({
                                 status: true,
