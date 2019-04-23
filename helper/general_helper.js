@@ -339,11 +339,12 @@ module.exports = {
 		let res = JSON.parse(JSON.stringify(manifest));
 		return res.package
 	},
-	getAPKVersionCode: async function (filePath){
+	getAPKVersionCode: function (filePath){
 		var reader = ApkReader.readFile(filePath);
-		var manifest = await reader.readManifestSync();
+		var manifest = reader.readManifestSync();
 		let res = JSON.parse(JSON.stringify(manifest));
-		return res.versionCode
+		// console.log(res);
+		return res.versionName
 
 		// util.inspect(manifest, {depth:null});
 		

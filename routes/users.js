@@ -122,26 +122,30 @@ var verifyToken = function (req, res) {
 
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
-    if (fs.existsSync(path.join(__dirname, "../uploads/apk-1541743825834.apk"))) {
-        // Do something
-        const versionCode =await helpers.getAPKVersionCode(path.join(__dirname, "../uploads/apk-1541743825834.apk"));
-        res.send({versionCode});
+    res.send({
+        file: path.join(__dirname, "../uploads/apk-titanlocker.apk")
+    })
+   
+    // if (fs.existsSync(path.join(__dirname, "../uploads/apk-1541743825834.apk"))) {
+    //     // Do something
+    //     const versionCode =await helpers.getAPKVersionCode(path.join(__dirname, "../uploads/apk-1541743825834.apk"));
+    //     res.send({versionCode});
 
-    } else {
-        res.send({
-            "status": false,
-            "msg": "file not found"
-        })
-    }
+    // } else {
+    //     res.send({
+    //         "status": false,
+    //         "msg": "file not found"
+    //     })
+    // }
 });
 
 router.get('/test', async function (req, res) {
-    var componentAllowed = await helpers.isAllowedComponent(1, 155);
-    console.log(componentAllowed);
-    res.send({
-        status: true,
-        allowed: componentAllowed
-    });
+    // var componentAllowed = await helpers.isAllowedComponent(1, 155);
+    // console.log(componentAllowed);
+    // res.send({
+    //     status: true,
+    //     allowed: componentAllowed
+    // });
 });
 
 /*****User Login*****/
@@ -2710,26 +2714,26 @@ router.get('/get_apps/:device_id', async function (req, res) {
     }
 });
 
-router.get('default_apps', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    if (verify['status'] !== undefined && verify.status === true) {
-        var query = 'SELECT apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon from default_apps as apps_info ';
-        // console.log(query);
-        sql.query(query, async (error, apps) => {
-            if (error) {
-                throw Error("Query Expection");
-            }
+// router.get('default_apps', async function (req, res) {
+//     var verify = await verifyToken(req, res);
+//     if (verify['status'] !== undefined && verify.status === true) {
+//         var query = 'SELECT apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon from default_apps as apps_info ';
+//         // console.log(query);
+//         sql.query(query, async (error, apps) => {
+//             if (error) {
+//                 throw Error("Query Expection");
+//             }
 
-            res.send({
-                status: true,
-                app_list: apps,
+//             res.send({
+//                 status: true,
+//                 app_list: apps,
 
-            });
+//             });
 
-        });
+//         });
 
-    }
-})
+//     }
+// })
 
 
 router.put('/deleteUnlinkDevice', async function (req, res) {

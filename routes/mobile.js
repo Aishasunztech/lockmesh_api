@@ -729,6 +729,52 @@ router.get('/apklist', async function (req, res) {
     });
 });
 
+
+router.get('/getUpdate/:version/:uniqueName', async (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    if (fs.existsSync(path.join(__dirname, "../uploads/"+ req.params.uniqueName +".apk"))) {
+        console.log(req.params.uniqueName);
+        console.log(req.params.version);
+        // Do something
+        const versionCode = helpers.getAPKVersionCode(path.join(__dirname, "../uploads/"+ req.params.uniqueName +".apk"));
+        
+        console.log("res", {
+            status: true,
+            apk_url: "apk-TitanLocker-v4.63.apk"
+        });
+
+        res.send({
+            apk_status: true,
+            apk_url: "apk-TitanLocker-v4.63.apk"
+        });
+        // if(versionCode){
+            
+        //     console.log("code version", versionCode);
+        //     // if(req.param.version < versionCode){
+                
+        //     // } else {
+        //     //     res.send({
+        //     //         status:false,
+        //     //         msg: "file not found"
+        //     //     })
+
+        //     // }
+        // } else {
+        //     res.send({
+        //         status:false,
+        //         msg: "file not found"
+        //     })
+        // }
+        // res.send({versionCode});
+
+    } else {
+        res.send({
+            "status": false,
+            "msg": "file not found"
+        })
+    }
+});
+
 /** Get Apk **/
 router.get("/getApk/:apk", (req, res) => {
 
