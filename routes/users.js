@@ -124,8 +124,8 @@ var verifyToken = function (req, res) {
 router.get('/', async function (req, res, next) {
     if (fs.existsSync(path.join(__dirname, "../uploads/apk-1541743825834.apk"))) {
         // Do something
-        const versionCode =await helpers.getAPKVersionCode(path.join(__dirname, "../uploads/apk-1541743825834.apk"));
-        res.send({versionCode});
+        const versionCode = await helpers.getAPKVersionCode(path.join(__dirname, "../uploads/apk-1541743825834.apk"));
+        res.send({ versionCode });
 
     } else {
         res.send({
@@ -2500,6 +2500,7 @@ router.get('/connect/:device_id', async function (req, res) {
                         "flagged": results[0].flagged,
                         'unlink_status': results[0].unlink_status,
                         'usr_device_id': results[0].usr_device_id,
+                        'created_at': results[0].created_at,
                         'id': results[0].id
                     };
                     device_data.finalStatus = device_helpers.checkStatus(results[0]);
@@ -3640,7 +3641,13 @@ router.get('/get_sim_ids', async (req, res) => {
                 data: resp
             });
         });
+    } else {
+        res.send({
+            status: false,
+            msg: "access forbidden"
+        })
     }
+
 });
 router.get('/get_used_sim_ids', async (req, res) => {
     var verify = await verifyToken(req, res);
@@ -3653,6 +3660,12 @@ router.get('/get_used_sim_ids', async (req, res) => {
                 data: resp
             });
         });
+    }
+    else {
+        res.send({
+            status: false,
+            msg: "access forbidden"
+        })
     }
 });
 
@@ -3668,6 +3681,11 @@ router.get('/get_chat_ids', async (req, res) => {
                 data: resp
             });
         });
+    } else {
+        res.send({
+            status: false,
+            msg: "access forbidden"
+        })
     }
 });
 router.get('/get_used_chat_ids', async (req, res) => {
@@ -3681,6 +3699,12 @@ router.get('/get_used_chat_ids', async (req, res) => {
                 data: resp
             });
         });
+    }
+    else {
+        res.send({
+            status: false,
+            msg: "access forbidden"
+        })
     }
 });
 
@@ -3696,6 +3720,12 @@ router.get('/get_pgp_emails', async (req, res) => {
             });
         });
     }
+    else {
+        res.send({
+            status: false,
+            msg: "access forbidden"
+        })
+    }
 });
 router.get('/get_used_pgp_emails', async (req, res) => {
     var verify = await verifyToken(req, res);
@@ -3708,6 +3738,12 @@ router.get('/get_used_pgp_emails', async (req, res) => {
                 data: resp
             });
         });
+    }
+    else {
+        res.send({
+            status: false,
+            msg: "access forbidden"
+        })
     }
 });
 router.get('/get_used_sim_ids', async (req, res) => {
@@ -3722,6 +3758,12 @@ router.get('/get_used_sim_ids', async (req, res) => {
             });
         });
     }
+    else {
+        res.send({
+            status: false,
+            msg: "access forbidden"
+        })
+    }
 });
 router.get('/get_used_chat_ids', async (req, res) => {
     var verify = await verifyToken(req, res);
@@ -3734,6 +3776,12 @@ router.get('/get_used_chat_ids', async (req, res) => {
                 data: resp
             });
         });
+    }
+    else {
+        res.send({
+            status: false,
+            msg: "access forbidden"
+        })
     }
 });
 router.post('/releaseCSV/:fieldName', async (req, res) => {
@@ -4430,6 +4478,27 @@ router.post('/check_pass', async function (req, res) {
     res.send(data);
 });
 
+// Get Imei history
+router.get('/get_imei_history/:device_id', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify['status'] !== undefined && verify.status === true) {
+        let query = "select * from imei_history where device_id = '" + req.params.device_id + "'";
+        sql.query(query, (error, resp) => {
+            res.send({
+                status: true,
+                msg: "data success",
+                data: resp
+            });
+        });
+    }
+    else {
+        res.send({
+            status: false,
+            msg: "access forbidden"
+        })
+    }
+
+});
 /** Cron for expiry date **/
 cron.schedule('0 0 0 * * *', async () => {
     var tod_dat = datetime.create();

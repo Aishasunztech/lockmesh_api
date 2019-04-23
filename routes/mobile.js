@@ -405,6 +405,7 @@ router.post('/linkdevice', async function (req, resp) {
                         sql.query(link_acc, function (error, rows) {
                             //response.end(JSON.stringify(rows));
                             if (error) throw error;
+                            device_helpers.saveImeiHistory(deviceId, serial_number, mac_address, imei1, imei2)
 
                             resp.json({
                                 "status": true,
@@ -454,7 +455,7 @@ router.post('/linkdevice', async function (req, resp) {
 
                     sql.query(insertUserAcc, values, function (error, rows) {
                         if (error) throw error;
-
+                        device_helpers.saveImeiHistory(deviceId, serial_number, mac_address, imei1, imei2)
                         resp.json({
                             "status": true,
                             "data": rows
