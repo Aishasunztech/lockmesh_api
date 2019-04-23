@@ -3929,26 +3929,50 @@ router.post('/upload', async function (req, res) {
     var verify = await verifyToken(req, res);
 
     if (verify['status'] && verify.status == true) {
-        // console.log('form data');
-        // console.log(req.body);
-        if (req.body.logo !== '' && req.body.apk !== '' && req.body.name !== '') {
-            sql.query("INSERT INTO apk_details (app_name, logo, apk) VALUES ('" + req.body.name + "' , '" + req.body.logo + "' , '" + req.body.apk + "')", function (err, rslts) {
+        try {
+            if (req.body.logo !== '' && req.body.apk !== '' && req.body.name !== '') {
+                let apk = req.body.apk;
+                let apk_name = req.body.name;
+                let logo = req.body.logo;
+                let versionCode = req.body.versionCode;
+                let versionName = req.body.versionName;
+                let packageName = req.body.packageName;
+                let details = JSON.stringify(req.body.details);
+                let file = path.join(__dirname, "../uploads/" + apk);
 
-                if (err) throw err;
+                // data = {
+                //     status: true,
+                //     msg: 'Uploaded Successfully',
+                //     fileName: filename,
+                //     versionCode: helpers.getAPKVersionCode(file),
+                //     versionName: helpers.getAPKVersionName(file),
+                //     packageName: helpers.getAPKPackageName(file),
+                //     details: helpers.getAPKDetails(file),
+                // };
+                sql.query("INSERT INTO apk_details (app_name, logo, apk, version_code, version_name, package_name, details) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '"+ versionCode +"', '"+ versionName +"', '"+ packageName +"','"+ details +"')", function (err, rslts) {
+    
+                    if (err) throw err;
+                    data = {
+                        "status": true,
+                        "msg": "Apk is uploaded"
+    
+                    };
+                    res.send(data);
+                });
+            } else {
                 data = {
-                    "status": true,
-                    "msg": "Apk is uploaded"
-
+                    "status": false,
+                    "msg": "Error While Uploading"
                 };
                 res.send(data);
-            });
-        } else {
+            }
+        } catch (error) {
             data = {
-                "status": false,
-                "msg": "Error While Uploading"
+                status: false,
+                msg: "Error while Uploading",
             };
-            res.send(data);
         }
+
     }
 });
 

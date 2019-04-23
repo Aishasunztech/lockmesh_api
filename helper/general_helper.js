@@ -331,9 +331,9 @@ module.exports = {
 			return [];
 		}
 	},
-	getAPKPackageName: async function (filePath) {
+	getAPKPackageName: function (filePath) {
 		var reader = ApkReader.readFile(filePath);
-		var manifest = await reader.readManifestSync();
+		var manifest = reader.readManifestSync();
 		let res = JSON.parse(JSON.stringify(manifest));
 		return res.package
 	},
@@ -342,9 +342,9 @@ module.exports = {
 			var reader = ApkReader.readFile(filePath);
 			console.log(reader);
 			var manifest = reader.readManifestSync();
-			let apk = util.inspect(manifest, {depth:null});
-			let res = JSON.parse(JSON.stringify(apk));
-			return res.versionName
+			// let apk = util.inspect(manifest, {depth:null});
+			let res = JSON.parse(JSON.stringify(manifest));
+			return res.versionCode
 		} catch(e){
 			throw(e);
 		}
@@ -354,8 +354,8 @@ module.exports = {
 		try {
 			var reader = ApkReader.readFile(filePath);
 			var manifest = reader.readManifestSync();
-			let apk = util.inspect(manifest, {depth:null});
-			let res = JSON.parse(JSON.stringify(apk));
+			// let apk = util.inspect(manifest, {depth:null});
+			let res = JSON.parse(JSON.stringify(manifest));
 			return res.versionName;
 		} catch(e){
 			throw(e);
@@ -366,8 +366,8 @@ module.exports = {
 		try {
 			var reader = ApkReader.readFile(filePath);
 			var manifest = reader.readManifestSync();
-			let apk = util.inspect(manifest, {depth:null});
-			let res = JSON.parse(JSON.stringify(apk));
+			// let apk = util.inspect(manifest, {depth:null});
+			let res = JSON.parse(JSON.stringify(manifest));
 			return res;
 		} catch(e){
 			throw(e);
