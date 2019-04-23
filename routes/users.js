@@ -3949,13 +3949,13 @@ router.post('/upload', async function (req, res) {
                 //     packageName: helpers.getAPKPackageName(file),
                 //     details: helpers.getAPKDetails(file),
                 // };
-                sql.query("INSERT INTO apk_details (app_name, logo, apk, version_code, version_name, package_name, details) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '"+ versionCode +"', '"+ versionName +"', '"+ packageName +"','"+ details +"')", function (err, rslts) {
-    
+                sql.query("INSERT INTO apk_details (app_name, logo, apk, version_code, version_name, package_name, details) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + versionCode + "', '" + versionName + "', '" + packageName + "','" + details + "')", function (err, rslts) {
+
                     if (err) throw err;
                     data = {
                         "status": true,
                         "msg": "Apk is uploaded"
-    
+
                     };
                     res.send(data);
                 });
@@ -4316,17 +4316,39 @@ router.post('/edit/apk', async function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
     var verify = await verifyToken(req, res);
 
-    if (verify.status !== undefined && verify.status == true) {
-        sql.query("update apk_details set app_name = '" + req.body.name + "', logo = '" + req.body.logo + "', apk = '" + req.body.apk + "', modified = NOW() where id = '" + req.body.apk_id + "'", function (err, rslts) {
+    try {
+        if (req.body.logo !== '' && req.body.apk !== '' && req.body.name !== '') {
+            let apk = req.body.apk;
+            let apk_name = req.body.name;
+            let logo = req.body.logo;
+            let file = path.join(__dirname, "../uploads/" + apk);
 
-            if (err) throw err;
+            let versionCode = helpers.getAPKVersionCode(file);
+            let versionName = helpers.getAPKVersionName(file);
+            let packageName = helpers.getAPKPackageName(file);
+            let details = JSON.stringify(helpers.getAPKDetails(file));
+            sql.query("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "'  where id = '" + req.body.apk_id + "'", function (err, rslts) {
+
+                if (err) throw err;
+                data = {
+                    "status": true,
+                    "msg": "Record Updated"
+
+                };
+                res.send(data);
+            });
+        } else {
             data = {
-                "status": true,
-                "msg": "Record Updated"
-
+                "status": false,
+                "msg": "Error While Uploading"
             };
             res.send(data);
-        });
+        }
+    } catch (error) {
+        data = {
+            status: false,
+            msg: "Error while Uploading",
+        };
     }
 
 });
