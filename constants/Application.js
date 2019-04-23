@@ -43,4 +43,8 @@ module.exports = {
     RECONNECT_FAILED: "reconnect_failed",
     PING: "ping",
     PONG: "pong",
+
+    // apk
+    APK: "apk",
+    LOGO: "logo",
 }

@@ -109,9 +109,8 @@ module.exports = {
 
 		var component = await sql.query("SELECT * FROM acl_modules WHERE uri ='" + componentUri + "' ");
 		// console.log("SELECT * FROM acl_modules WHERE uri ='" + componentUri + "' ");
-
 		if (component.length) {
-			console.log("hello", component);
+			// console.log("hello", component);
 			return component[0];
 		} else {
 			return false;
@@ -189,9 +188,9 @@ module.exports = {
 		// console.log(componentUri);
 
 		var role = await this.getUserTypeId(userId);
-		console.log(role);
+		// console.log(role);
 		var component = await this.getComponentIdByUri(componentUri);
-		console.log(component);
+		// console.log(component);
 		if (role && component) {
 			// console.log("hello hello hello");
 			// console.log(component);
@@ -332,22 +331,48 @@ module.exports = {
 			return [];
 		}
 	},
-	getPackageName: async function (apkBlobAsByteArray) {
-		package
+	getAPKPackageName: async function (filePath) {
 		var reader = ApkReader.readFile(filePath);
 		var manifest = await reader.readManifestSync();
 		let res = JSON.parse(JSON.stringify(manifest));
 		return res.package
 	},
 	getAPKVersionCode: function (filePath){
-		var reader = ApkReader.readFile(filePath);
-		var manifest = reader.readManifestSync();
-		let res = JSON.parse(JSON.stringify(manifest));
-		// console.log(res);
-		return res.versionName
+		try {
+			var reader = ApkReader.readFile(filePath);
+			console.log(reader);
+			var manifest = reader.readManifestSync();
+			let apk = util.inspect(manifest, {depth:null});
+			let res = JSON.parse(JSON.stringify(apk));
+			return res.versionName
+		} catch(e){
+			throw(e);
+		}
 
-		// util.inspect(manifest, {depth:null});
+	},
+	getAPKVersionName: function (filePath){
+		try {
+			var reader = ApkReader.readFile(filePath);
+			var manifest = reader.readManifestSync();
+			let apk = util.inspect(manifest, {depth:null});
+			let res = JSON.parse(JSON.stringify(apk));
+			return res.versionName;
+		} catch(e){
+			throw(e);
+		}
 		
+	},
+	getAPKDetails: function (filePath){
+		try {
+			var reader = ApkReader.readFile(filePath);
+			var manifest = reader.readManifestSync();
+			let apk = util.inspect(manifest, {depth:null});
+			let res = JSON.parse(JSON.stringify(apk));
+			return res;
+		} catch(e){
+			throw(e);
+		}
+
 	},
 	saveLogin: async function (user, loginClient, type, status){
 		let insertQ = "INSERT INTO login_history ";
@@ -387,7 +412,7 @@ module.exports = {
 	getLoginByDealerID: async function (dealerId){
 		let loginQ = "SELECT * from login_history WHERE dealer_id ='"+ dealerId +"'";
 		let res =await sql.query(loginQ);
-		console.log("resrserse", res);
+		// console.log("resrserse", res);
 		if(res.length){
 			return res[0];
 		} else {
