@@ -8,6 +8,10 @@ var moment = require('moment-strftime');
 var Constants = require('../constants/Application');
 let usr_acc_query_text = "usr_acc.id,usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name"
 const device_helpers = require('./device_helpers');
+var util = require('util')
+var ApkReader = require('node-apk-parser')
+
+
 module.exports = {
 	isAdmin: async function (userId) {
 		var query1 = "SELECT type FROM dealers where dealer_id =" + userId;
@@ -328,31 +332,20 @@ module.exports = {
 		}
 	},
 	getPackageName: async function (apkBlobAsByteArray) {
-		// Unzipping zip blob
-		var zip = new JSZip(apkBlobAsByteArray);
+		package
+		var reader = ApkReader.readFile(filePath);
+		var manifest = await reader.readManifestSync();
+		let res = JSON.parse(JSON.stringify(manifest));
+		return res.package
+	},
+	getAPKVersionCode: async function (filePath){
+		var reader = ApkReader.readFile(filePath);
+		var manifest = await reader.readManifestSync();
+		let res = JSON.parse(JSON.stringify(manifest));
+		return res.versionCode
 
-		// Getting AndroidManifest.xml and decompress it
-		var androidCompress = zip.files['AndroidManifest.xml'];
-		var androidNonCompress = androidCompress._data.getContent();
-
-		// Reading to content to a searchable string
-		var packageNameArray = [];
-		var textArray = String(androidNonCompress).split(',');
-		for (var i = 0, len = textArray.length; i < len; i++) {
-			if (textArray[i] !== 0) {
-				packageNameArray.push(textArray[i]);
-			}
-		}
-
-		// Searching for package name
-		var startPattern = 'manifest';
-		var androidText = String.fromCharCode.apply(null, packageNameArray).toString().toLowerCase();
-		var packageName = androidText.substring(androidText.indexOf(startPattern) +
-			startPattern.length, androidText.indexOf('uses'));
-		// Remove version from package name
-		packageName = packageName.substring(0, packageName.indexOf(packageName.match(/\d+/)[0]));
-
-		return packageName;
+		// util.inspect(manifest, {depth:null});
+		
 	},
 	saveLogin: async function (user, loginClient, type, status) {
 		let insertQ = "INSERT INTO login_history ";

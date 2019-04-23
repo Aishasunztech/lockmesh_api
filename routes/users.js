@@ -121,22 +121,18 @@ var verifyToken = function (req, res) {
 
 
 /* GET users listing. */
-router.get('/', function (req, res, next) {
-    // let queries = fs.readFileSync(path.join(__dirname, '../_DB/lockmesh_db.sql'), { encoding: "UTF-8" }).split(";\n");
-    // for (let query of queries) {
-    //     query = query.trim();
-    //     if (query.length !== 0 && !query.match(/\/\*/)) {
+router.get('/', async function (req, res, next) {
+    if (fs.existsSync(path.join(__dirname, "../uploads/apk-1541743825834.apk"))) {
+        // Do something
+        const versionCode =await helpers.getAPKVersionCode(path.join(__dirname, "../uploads/apk-1541743825834.apk"));
+        res.send({versionCode});
 
-    //         // connection.query(query, function (err, sets, fields) {
-    //     //     if (err) {
-    //     //     console.log(`Importing failed for Mysql Database  - Query:${query}`);
-    //     //     } else {
-    //     //     console.log(`Importing Mysql Database  - Query:${query}`);
-    //     //     }
-    //     // });
-    //     }
-    // }
-    // res.send(queries);
+    } else {
+        res.send({
+            "status": false,
+            "msg": "file not found"
+        })
+    }
 });
 
 router.get('/test', async function (req, res) {
