@@ -73,7 +73,7 @@ var verifyToken = function (req, res) {
 
         jwt.verify(token, config.secret, async function (err, decoded) {
             if (err) {
-                ath.status = false;
+                // ath.status = false;
 
                 return res.json({
                     success: false,
@@ -108,7 +108,7 @@ var verifyToken = function (req, res) {
             }
         });
     } else {
-        ath.status = false;
+        // ath.status = false;
         // if there is no token return an error
         return res.status(403).send({
             success: false,
