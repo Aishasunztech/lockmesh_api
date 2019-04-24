@@ -734,7 +734,7 @@ router.get('/getUpdate/:version/:uniqueName', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     let versionName = req.params.version;
     let uniqueName = req.params.uniqueName;
-    let query = "SELECT * FROM apk_details WHERE package_name = '" + uniqueName + "' limit 1";
+    let query = "SELECT * FROM apk_details WHERE package_name = '" + uniqueName + "' AND delete_status!=1 limit 1";
     sql.query(query, function(error, response){
         // console.log("res", response);
 
