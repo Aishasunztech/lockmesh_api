@@ -732,47 +732,42 @@ router.get('/apklist', async function (req, res) {
 
 router.get('/getUpdate/:version/:uniqueName', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
-    if (fs.existsSync(path.join(__dirname, "../uploads/"+ req.params.uniqueName +".apk"))) {
-        console.log(req.params.uniqueName);
-        console.log(req.params.version);
-        // Do something
-        const versionCode = helpers.getAPKVersionCode(path.join(__dirname, "../uploads/"+ req.params.uniqueName +".apk"));
-        
-        console.log("res", {
-            status: true,
-            apk_url: "apk-TitanLocker-v4.63.apk"
-        });
+    let versionName = req.params.version;
+    let uniqueName = req.params.uniqueName;
+    let query = "SELECT * FROM apk_details WHERE package_name = '" + uniqueName + "' AND delete_status!=1 limit 1";
+    sql.query(query, function(error, response){
+        // console.log("res", response);
 
-        res.send({
-            apk_status: true,
-            apk_url: "apk-TitanLocker-v4.63.apk"
-        });
-        // if(versionCode){
-            
-        //     console.log("code version", versionCode);
-        //     // if(req.param.version < versionCode){
+        if(error) {
+            res.send({
+                status: false,
+                msg: ""
+            });
+
+        }
+        if(response.length){
+            console.log("verion name", Number(response[0].version_name));
+
+            if(Number(response[0].version_name) > versionName){
+                console.log("i am here", response[0].version_name);
                 
-        //     // } else {
-        //     //     res.send({
-        //     //         status:false,
-        //     //         msg: "file not found"
-        //     //     })
-
-        //     // }
-        // } else {
-        //     res.send({
-        //         status:false,
-        //         msg: "file not found"
-        //     })
-        // }
-        // res.send({versionCode});
-
-    } else {
-        res.send({
-            "status": false,
-            "msg": "file not found"
-        })
-    }
+                res.send({
+                    apk_status: true,
+                    apk_url: response[0].apk
+                })
+            } else {
+                res.send({
+                    apk_status: false,
+                    msg: ""
+                });
+            }
+        } else {
+            res.send({
+                apk_status: false,
+                msg: ""
+            });     
+        }
+    })
 });
 
 /** Get Apk **/
