@@ -639,6 +639,82 @@ router.post('/add/dealer', async function (req, res) {
 });
 
 
+/*** Add User ***/
+router.post('/add/user', async function (req, res) {
+
+    res.setHeader('Content-Type', 'application/json');
+
+    var verify = await verifyToken(req, res);
+
+    if (verify.status !== undefined && verify.status == true) {
+        var userName = req.body.name;
+        var loggedInuid = verify.user.id;
+        var userEmail = req.body.email;
+
+        var userId = randomize('0', 6);
+        userId = 'ID' + await helpers.checkUserId(userId)
+        var user_pwd = generator.generate({
+            length: 10,
+            numbers: true
+        });
+        var enc_pwd = md5(user_pwd); //encryted pwd
+        // console.log("encrypted password" + enc_pwd);
+        if (!empty(userEmail) && !empty(userName)) {
+            var user = await sql.query("SELECT * FROM users WHERE email = '" + userEmail + "'");
+
+            if (user.length > 0) {
+                data = {
+                    'status': false,
+                    'msg': 'User Already Registered. Please use another email.',
+                }
+                res.status(200).send(data);
+                return;
+            }
+
+            var sql1 = "INSERT INTO users (user_id, user_name, email, password, dealer_id , type)";
+            sql1 += " VALUES ('" + userId + "', '" + userName + "','" + userEmail + "', '" + enc_pwd + "','" + loggedInuid + "', 4)";
+            sql.query(sql1, function (error, rows) {
+                if (error) throw error;
+
+                var html = 'User details are : <br> ' +
+                    'User ID : ' + userId + '.<br> ' +
+                    'Name : ' + userName + '<br> ' +
+                    'Email : ' + userEmail + '<br> '
+                sendEmail("User Registration", html, verify.user.email)
+                sendEmail("User Registration", html, userEmail, async function (errors, response) {
+                    if (error) {
+                        res.send("Email could not sent due to error: " + errors);
+                    } else {
+                        //res.send("Email has been sent successfully");
+                        var user = await sql.query("SELECT * FROM users WHERE email = '" + userEmail + "'");
+                        // console.log('result add',dealer);
+                        data = {
+                            'status': true,
+                            'msg': 'User has been registered successfully.',
+                            'item_added': user,
+                        }
+                        res.status(200).send(data);
+                    }
+                });
+
+            });
+
+        } else {
+            data = {
+                'status': false,
+                'msg': 'Invalid email or name'
+            }
+            res.status(200).send(data);
+        }
+    }
+});
+
+
+
+
+
+
+
 /*Get dealers*/
 router.get('/dealers/:pageName', async function (req, res) {
     var verify = await verifyToken(req, res);
@@ -3939,11 +4015,11 @@ router.post('/addApk', async function (req, res) {
                             msg: 'Uploaded Successfully',
                             fileName: filename,
                             versionCode: helpers.getAPKVersionCode(file),
-                            
+
                         };
                     } catch (error) {
                         console.log(error);
-                        
+
                         data = {
                             status: false,
                             msg: "Error while Uploading",
@@ -4521,6 +4597,66 @@ router.get('/get_imei_history/:device_id', async function (req, res) {
     }
 
 });
+
+/*Get All users */
+router.get('/userList', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify.status !== undefined && verify.status == true) {
+
+        if (verify.user.user_type == ADMIN) {
+            var role = await helpers.getuserTypeIdByName(verify.user.user_type);
+            sql.query("select * from users order by created_at DESC", async function (error, results) {
+                if (error) throw error;
+                else {
+                    data = {
+                        "status": true,
+                        data: results
+                    }
+                    res.send(data);
+                }
+            });
+        } else if (verify.user.user_type === DEALER) {
+
+            sql.query("select dealer_id from dealers where connected_dealer = '" + verify.user.id + "' AND  type = 3 order by created DESC", async function (error, results) {
+                if (error) throw error;
+                // console.log("select * from dealers where connected_dealer = '" + verify.user.id + "' AND  type = 2 order by created DESC");
+                var data = [];
+                console.log(results);
+                for (var i = 0; i < results.length; i++) {
+
+                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].id + "'");
+
+                    dt = {
+                        "status": true,
+                        "dealer_id": results[i].dealer_id,
+                        "dealer_name": results[i].dealer_name,
+                        "dealer_email": results[i].dealer_email,
+                        "link_code": results[i].link_code,
+                        "account_status": results[i].account_status,
+                        "unlink_status": results[i].unlink_status,
+                        "created": results[i].created,
+                        "modified": results[i].modified,
+                        "connected_devices": get_connected_devices
+                    };
+                    data.push(dt);
+                }
+                console.log("Dealers Data", data);
+                res.send(data);
+            });
+        }
+        else {
+
+        }
+
+    }
+    else {
+        data = {
+            "status": false,
+        }
+        res.send(data)
+    }
+});
+
 /** Cron for expiry date **/
 cron.schedule('0 0 0 * * *', async () => {
     var tod_dat = datetime.create();

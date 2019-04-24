@@ -223,35 +223,51 @@ module.exports = {
 			return result[0].device_id
 		}
 		else {
+			var key = md5(sn + mac);
+			var num = "";
+			var str = "";
 
-			const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-			let fourLetterWords = [];
-			for (let firstLetterIndex = 0; firstLetterIndex < alphabet.length; firstLetterIndex++) {
-				for (let secondLetterIndex = 0; secondLetterIndex < alphabet.length; secondLetterIndex++) {
-					for (let thirdLetterIndex = 0; thirdLetterIndex < alphabet.length; thirdLetterIndex++) {
-						for (let fourthLetterIndex = 0; fourthLetterIndex < alphabet.length; fourthLetterIndex++) {
-							fourLetterWords.push(alphabet[firstLetterIndex] + alphabet[secondLetterIndex] + alphabet[thirdLetterIndex] + alphabet[fourthLetterIndex]);
-						}
+			for (i = 0; i < key.length; i++) {
 
+				if (isNaN(key[i])) {
+					if (str.length < 4) {
+						str += key[i];
+					}
+				} else {
+					if (num.length < 6) {
+						num += key[i];
 					}
 				}
 			}
-			// const digits = '1234567890';
-			// let sixDigitsCombination;
-
-
-			var random = Math.floor(100000 + Math.random() * 900000);
-
-
-			var randAlphabet = Math.floor(Math.random() * 456976);
-			var deviceId = fourLetterWords[randAlphabet] + random;
-
-
-			fourLetterWords = [];
-
+			var deviceId = str + num;
 			return deviceId;
 		}
+		// const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+		// let fourLetterWords = [];
+		// for (let firstLetterIndex = 0; firstLetterIndex < alphabet.length; firstLetterIndex++) {
+		// 	for (let secondLetterIndex = 0; secondLetterIndex < alphabet.length; secondLetterIndex++) {
+		// 		for (let thirdLetterIndex = 0; thirdLetterIndex < alphabet.length; thirdLetterIndex++) {
+		// 			for (let fourthLetterIndex = 0; fourthLetterIndex < alphabet.length; fourthLetterIndex++) {
+		// 				fourLetterWords.push(alphabet[firstLetterIndex] + alphabet[secondLetterIndex] + alphabet[thirdLetterIndex] + alphabet[fourthLetterIndex]);
+		// 			}
 
+		// 		}
+		// 	}
+		// }
+		// // const digits = '1234567890';
+		// // let sixDigitsCombination;
+
+
+		// var random = Math.floor(100000 + Math.random() * 900000);
+
+
+		// var randAlphabet = Math.floor(Math.random() * 456976);
+		// var deviceId = fourLetterWords[randAlphabet] + random;
+
+
+		// fourLetterWords = [];
+
+		// return deviceId;
 	},
 	checkLinkCode: async function (link_code) {
 
@@ -262,6 +278,17 @@ module.exports = {
 			this.checkLinkCode(link_code);
 		} else {
 			return link_code;
+		}
+	},
+	checkUserId: async function (userId) {
+
+		let query = "select user_id from users where user_id = '" + userId + "';"
+		let result = await sql.query(query);
+		if (result.length > 1) {
+			userId = randomize('0', 6);
+			this.checkUserId(userId);
+		} else {
+			return userId;
 		}
 	},
 	getExpDateByMonth: function (currentDate, expiryMonth) {
