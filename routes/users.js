@@ -2616,82 +2616,85 @@ router.get('/get_app_permissions', async function (req, res) {
     var verify = await verifyToken(req, res);
     console.log('get app permisiion si sdaf', verify.status)
     if (verify.status !== undefined && verify.status == true) {
-      
-            // var query = 'SELECT user_apps.*, apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon from user_apps LEFT JOIN apps_info on user_apps.app_id = apps_info.id LEFT JOIN devices on user_apps.device_id=devices.id where devices.device_id ="' + req.params.device_id + '"';
-            // console.log(query);
-            var getAppsQ = "SELECT * from apps_info"
-            // console.log("hello", getAppsQ);
-            try {
-                sql.query(getAppsQ, async (error, apps) => {
-                    if (error) {
-                        throw Error("Query Expection");
+
+        // var query = 'SELECT user_apps.*, apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon from user_apps LEFT JOIN apps_info on user_apps.app_id = apps_info.id LEFT JOIN devices on user_apps.device_id=devices.id where devices.device_id ="' + req.params.device_id + '"';
+        // console.log(query);
+        var getAppsQ = "SELECT * from apps_info"
+        // console.log("hello", getAppsQ);
+        try {
+            sql.query(getAppsQ, async (error, apps) => {
+                if (error) {
+                    throw Error("Query Expection");
+                }
+                // console.log('app list is ', apps);
+                let Extension = [];
+                let onlyApps = [];
+                for (let item of apps) {
+                    let subExtension = [];
+                    // console.log("extenstion id", item.extension_id);
+                    if (item.extension === 1 && item.extension_id === 0) {
+
+                        Extension.push(item);
                     }
-                    // console.log('app list is ', apps);
-                    let Extension = [];
-                    let onlyApps = [];
+                }
+
+                let newExtlist = [];
+                for (let ext of Extension) {
+                    let subExtension = [];
+
                     for (let item of apps) {
-                        let subExtension = [];
-                        // console.log("extenstion id", item.extension_id);
-                        if (item.extension === 1 && item.extension_id === 0) {
-
-                            Extension.push(item);
+                        // console.log(ext.app_id, item.extension_id);
+                        if (ext.id === item.extension_id) {
+                            subExtension.push({
+                                uniqueName: ext.unique_name,
+                                uniqueExtension: item.unique_name,
+                                guest: false,
+                                label: ext.label,
+                                icon: item.icon,
+                                encrypted: false,
+                                id: item.id,
+                                device_id: item.device_id,
+                                app_id: item.id
+                            });
+                        }
+                        else if (item.extension == 0 || item.visible == 1) {
+                            item.guest = false;
+                            item.encrypted = false;
+                            item.enable = false;
+                            onlyApps.push(item)
                         }
                     }
 
-                    let newExtlist = [];
-                    for (let ext of Extension) {
-                        let subExtension = [];
-
-                        for (let item of apps) {
-                            // console.log(ext.app_id, item.extension_id);
-                            if (ext.id === item.extension_id) {
-                                subExtension.push({
-                                    uniqueName: ext.unique_name,
-                                    uniqueExtension: item.unique_name,
-                                    guest: false,
-                                    label: ext.label,
-                                    icon: item.icon,
-                                    encrypted: false,
-                                    id: item.id,
-                                    device_id: item.device_id,
-                                    app_id: item.id
-                                });
-                            }
-                            else if (item.extension == 0 || item.visible == 1) {
-                                onlyApps.push(item)
-                            }
-                        }
-
-                        console.log('object', subExtension)
+                    console.log('object', subExtension)
 
 
-                        newExtlist.push({
-                            uniqueName: ext.unique_name,
-                            guest: ext.guest,
-                            encrypted: ext.encrypted,
-                            enable: ext.enable,
-                            label: ext.label,
-                            subExtension: subExtension
+                    newExtlist.push({
+                        uniqueName: ext.unique_name,
+                        guest: ext.guest,
+                        encrypted: ext.encrypted,
+                        enable: ext.enable,
+                        label: ext.label,
+                        subExtension: subExtension
 
-                        })
-                    }
+                    })
+                }
 
-                    console.log('daa is th e', newExtlist)
+                console.log('daa is th e', newExtlist)
 
 
-                    res.send({
-                        status: true,
-                        appPermissions: onlyApps,
-                        extensions: newExtlist
-                    });
+                res.send({
+                    status: true,
+                    appPermissions: onlyApps,
+                    extensions: newExtlist
+                });
 
-                })
-            } catch (error) {
-                console.error(error);
-
-            }
+            })
+        } catch (error) {
+            console.error(error);
 
         }
+
+    }
 
 });
 
@@ -2881,7 +2884,43 @@ router.put('/deleteUnlinkDevice', async function (req, res) {
     }
 })
 
+router.post('/save_policy', async function (req, res) {
+    try {
+        var verify = await verifyToken(req, res);
+        if (verify.status !== undefined && verify.status == true) {
 
+            let policy_name = req.body.data.policy_name !== undefined ? req.body.data.policy_name: null;
+            let policy_note = req.body.data.policy_note !== undefined ? req.body.data.policy_note: null;
+            let push_apps = req.body.data.push_apps !== undefined ? JSON.stringify(req.body.data.push_apps): null;
+            let app_list = req.body.data.app_list !== undefined ? JSON.stringify(req.body.data.app_list): null;
+            let secure_apps = req.body.data.secure_apps !== undefined ? JSON.stringify(req.body.data.secure_apps): null;
+            let system_permissions = req.body.data.system_permissions !== undefined ? JSON.stringify(req.body.data.system_permissions): null;
+            // console.log(policy_name, 'policy name', req.body.data)
+
+            var applyQuery = "insert into policy (policy_name,policy_note, app_list, push_apps, controls,permissions) values ('" + policy_name + "','" + policy_note + "','" + app_list + "', '"+ push_apps +"','"+ system_permissions + "', '" + secure_apps + "')";
+            // console.log('query insert', applyQuery);
+            // console.log(applyQuery);
+
+            await sql.query(applyQuery, async function (err, rslts) {
+                if (err) throw err;
+                console.log('query/........... ', applyQuery)
+
+                if (rslts.affectedRows) {
+                    data = {
+                        "status": true,
+                        "msg": 'Policy Saved Successfully',
+                        
+                    };
+                    res.send(data);
+                }
+            })
+
+        }
+    } catch (error) {
+        throw Error(error.message);
+    }
+
+});
 
 router.post('/apply_settings/:device_id', async function (req, res) {
     try {
