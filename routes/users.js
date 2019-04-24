@@ -90,6 +90,7 @@ var verifyToken = function (req, res) {
                 ath = decoded;
                 // console.log(ath);
 
+
                 // } else {
                 //     ath.status = false;
                 //     return res.json({
@@ -2610,6 +2611,90 @@ router.get('/get_usr_acc_id/:device_id', async function (req, res) {
     }
 })
 
+
+router.get('/get_app_permissions', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    console.log('get app permisiion si sdaf', verify.status)
+    if (verify.status !== undefined && verify.status == true) {
+      
+            // var query = 'SELECT user_apps.*, apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon from user_apps LEFT JOIN apps_info on user_apps.app_id = apps_info.id LEFT JOIN devices on user_apps.device_id=devices.id where devices.device_id ="' + req.params.device_id + '"';
+            // console.log(query);
+            var getAppsQ = "SELECT * from apps_info"
+            // console.log("hello", getAppsQ);
+            try {
+                sql.query(getAppsQ, async (error, apps) => {
+                    if (error) {
+                        throw Error("Query Expection");
+                    }
+                    // console.log('app list is ', apps);
+                    let Extension = [];
+                    let onlyApps = [];
+                    for (let item of apps) {
+                        let subExtension = [];
+                        // console.log("extenstion id", item.extension_id);
+                        if (item.extension === 1 && item.extension_id === 0) {
+
+                            Extension.push(item);
+                        }
+                    }
+
+                    let newExtlist = [];
+                    for (let ext of Extension) {
+                        let subExtension = [];
+
+                        for (let item of apps) {
+                            // console.log(ext.app_id, item.extension_id);
+                            if (ext.id === item.extension_id) {
+                                subExtension.push({
+                                    uniqueName: ext.unique_name,
+                                    uniqueExtension: item.unique_name,
+                                    guest: false,
+                                    label: ext.label,
+                                    icon: item.icon,
+                                    encrypted: false,
+                                    id: item.id,
+                                    device_id: item.device_id,
+                                    app_id: item.id
+                                });
+                            }
+                            else if (item.extension == 0 || item.visible == 1) {
+                                onlyApps.push(item)
+                            }
+                        }
+
+                        console.log('object', subExtension)
+
+
+                        newExtlist.push({
+                            uniqueName: ext.unique_name,
+                            guest: ext.guest,
+                            encrypted: ext.encrypted,
+                            enable: ext.enable,
+                            label: ext.label,
+                            subExtension: subExtension
+
+                        })
+                    }
+
+                    console.log('daa is th e', newExtlist)
+
+
+                    res.send({
+                        status: true,
+                        appPermissions: onlyApps,
+                        extensions: newExtlist
+                    });
+
+                })
+            } catch (error) {
+                console.error(error);
+
+            }
+
+        }
+
+});
+
 /** Get Device Details of Dealers (Connect Page) **/
 router.get('/get_apps/:device_id', async function (req, res) {
     var verify = await verifyToken(req, res);
@@ -3894,11 +3979,11 @@ router.post('/addApk', async function (req, res) {
                             msg: 'Uploaded Successfully',
                             fileName: filename,
                             versionCode: helpers.getAPKVersionCode(file),
-                            
+
                         };
                     } catch (error) {
                         console.log(error);
-                        
+
                         data = {
                             status: false,
                             msg: "Error while Uploading",
