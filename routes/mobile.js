@@ -732,6 +732,47 @@ router.get('/apklist', async function (req, res) {
     });
 });
 
+
+router.get('/getUpdate/:version/:uniqueName', async (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    let versionName = req.params.version;
+    let uniqueName = req.params.uniqueName;
+    let query = "SELECT * FROM apk_details WHERE package_name = '" + uniqueName + "' limit 1";
+    sql.query(query, function(error, response){
+        // console.log("res", response);
+
+        if(error) {
+            res.send({
+                status: false,
+                msg: ""
+            });
+
+        }
+        if(response.length){
+            console.log("verion name", Number(response[0].version_name));
+
+            if(Number(response[0].version_name) > versionName){
+                console.log("i am here", response[0].version_name);
+                
+                res.send({
+                    apk_status: true,
+                    apk_url: response[0].apk
+                })
+            } else {
+                res.send({
+                    apk_status: false,
+                    msg: ""
+                });
+            }
+        } else {
+            res.send({
+                apk_status: false,
+                msg: ""
+            });     
+        }
+    })
+});
+
 /** Get Apk **/
 router.get("/getApk/:apk", (req, res) => {
 
