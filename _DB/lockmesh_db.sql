@@ -11,7 +11,7 @@
  Target Server Version : 50724
  File Encoding         : 65001
 
- Date: 24/04/2019 14:27:52
+ Date: 24/04/2019 14:33:12
 */
 
 SET NAMES utf8mb4;
@@ -381,7 +381,7 @@ CREATE TABLE `dealer_pagination`  (
   `id` int(10) NOT NULL AUTO_INCREMENT,
   `dealer_id` int(10) NOT NULL,
   `record_per_page` int(10) NOT NULL,
-  `type` enum('devices','dealer','sdealer','apk') CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL DEFAULT 'devices',
+  `type` enum('devices','dealer','sdealer','apk','policies','users') CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL DEFAULT 'devices',
   `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
