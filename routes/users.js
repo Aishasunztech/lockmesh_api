@@ -687,11 +687,13 @@ router.post('/add/user', async function (req, res) {
                     } else {
                         //res.send("Email has been sent successfully");
                         var user = await sql.query("SELECT * FROM users WHERE email = '" + userEmail + "'");
+                        let data = await helpers.getAllRecordbyUserID(userId)
+                        user[0].devicesList = data
                         // console.log('result add',dealer);
                         data = {
                             'status': true,
                             'msg': 'User has been registered successfully.',
-                            'item_added': user,
+                            'user': user,
                         }
                         res.status(200).send(data);
                     }
@@ -2518,17 +2520,17 @@ router.post('/dealer/undo', async function (req, res) {
 
 /** Get Device Details of Dealers (Connect Page) **/
 router.get('/connect/:device_id', async function (req, res) {
-    // console.log('api check is caled')
+    console.log('api check is caled')
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         if (!empty(req.params.device_id)) {
             let userId = verify.user.id;
-            // console.log("userId", userId);
+            console.log("userId", req.params.device_id);
             //  console.log(verify.user);
             let usertype = await helpers.getUserType(userId);
             let where = "devices.device_id = '" + req.params.device_id + "'";
 
-            if (usertype != "admin") {
+            if (usertype != ADMIN) {
                 where = where + " and (usr_acc.dealer_id=" + userId + " OR usr_acc.prnt_dlr_id = " + userId + ")";
             }
             // console.log("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id where " + where);
@@ -2665,7 +2667,7 @@ router.get('/get_dealer_apps', async function (req, res) {
                 msg: "No result found",
                 list: []
             }
-           
+
             res.send(data);
         }
     }
@@ -2695,74 +2697,74 @@ router.get('/get_app_permissions/', async function (req, res) {
         //console.log('id is the ', req.params);
         let loggedUserType = verify.user.user_type;
         if (loggedUserType !== Constants.ADMIN) {
-        let query = "select * from apps_info";
+            let query = "select * from apps_info";
 
-        await sql.query(query, async (error, apps) => {
-             console.log(query, 'rslt  ', apps);
-            if(error) throw error;
+            await sql.query(query, async (error, apps) => {
+                console.log(query, 'rslt  ', apps);
+                if (error) throw error;
 
-            let Extension = [];
-            let onlyApps = [];
-            for (let item of apps) {
-                let subExtension = [];
-                // console.log("extenstion id", item.extension_id);
-                if (item.extension === 1 && item.extension_id === 0) {
-                    console.log('main', item)
-                    Extension.push(item);
-                }
-
-                if (item.extension == 0 || item.visible == 1) {
-                    onlyApps.push(item)
-                }
-            }
-
-            let newExtlist = [];
-            for (let ext of Extension) {
-                let subExtension = [];
-
+                let Extension = [];
+                let onlyApps = [];
                 for (let item of apps) {
-                     console.log(ext.id, item.extension_id);
-                    if (ext.id === item.extension_id) {
-                console.log('sub ext item', item)
-                        
-                        subExtension.push({
-                            uniqueName: ext.uniqueName,
-                            uniqueExtension: item.uniqueName,
-                            guest: item.guest,
-                            label: item.label,
-                            icon: item.icon,
-                            encrypted: item.encrypted,
-                            id: item.id,
-                            device_id: item.device_id,
-                            app_id: item.id
-                        });
+                    let subExtension = [];
+                    // console.log("extenstion id", item.extension_id);
+                    if (item.extension === 1 && item.extension_id === 0) {
+                        console.log('main', item)
+                        Extension.push(item);
                     }
-                  
+
+                    if (item.extension == 0 || item.visible == 1) {
+                        onlyApps.push(item)
+                    }
                 }
 
-                console.log('sub ext', subExtension)
+                let newExtlist = [];
+                for (let ext of Extension) {
+                    let subExtension = [];
 
-                newExtlist.push({
-                    uniqueName: ext.uniqueName,
-                    guest: ext.guest,
-                    encrypted: ext.encrypted,
-                    enable: ext.enable,
-                    label: ext.label,
-                    subExtension: subExtension
+                    for (let item of apps) {
+                        console.log(ext.id, item.extension_id);
+                        if (ext.id === item.extension_id) {
+                            console.log('sub ext item', item)
 
-                })
-            }
+                            subExtension.push({
+                                uniqueName: ext.uniqueName,
+                                uniqueExtension: item.uniqueName,
+                                guest: item.guest,
+                                label: item.label,
+                                icon: item.icon,
+                                encrypted: item.encrypted,
+                                id: item.id,
+                                device_id: item.device_id,
+                                app_id: item.id
+                            });
+                        }
 
-            console.log('daa is ', newExtlist)
-            
+                    }
 
-            res.send({
-                status: true,
-                extensions: newExtlist,
-                appPermissions: onlyApps
-            });
-        })
-    }
+                    console.log('sub ext', subExtension)
+
+                    newExtlist.push({
+                        uniqueName: ext.uniqueName,
+                        guest: ext.guest,
+                        encrypted: ext.encrypted,
+                        enable: ext.enable,
+                        label: ext.label,
+                        subExtension: subExtension
+
+                    })
+                }
+
+                console.log('daa is ', newExtlist)
+
+
+                res.send({
+                    status: true,
+                    extensions: newExtlist,
+                    appPermissions: onlyApps
+                });
+            })
+        }
     }
 })
 
@@ -2848,7 +2850,7 @@ router.get('/get_apps/:device_id', async function (req, res) {
                                 controls: JSON.parse(controls[0].permissions),
                                 extensions: newExtlist
                             });
-                            
+
 
                         } else {
                             res.send({
@@ -3164,7 +3166,7 @@ router.post('/get_policies', async function (req, res) {
         if (isValid) {
             let query = "SELECT * FROM policy ";
             sql.query(query, async (error, results) => {
-                if(results.length){
+                if (results.length) {
                     let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
                     let dealerCount = await helpers.dealerCount(adminRoleId);
 
@@ -4897,38 +4899,52 @@ router.get('/userList', async function (req, res) {
                 res.send(data);
             }
         } else if (verify.user.user_type === DEALER) {
-
-            sql.query("select dealer_id from dealers where connected_dealer = '" + verify.user.id + "' AND  type = 3 order by created DESC", async function (error, results) {
+            sql.query("select dealer_id from dealers where connected_dealer = '" + verify.user.id + "' AND  type = 3 order by created DESC", async function (error, result) {
                 if (error) throw error;
-                // console.log("select * from dealers where connected_dealer = '" + verify.user.id + "' AND  type = 2 order by created DESC");
-                var data = [];
-                console.log(results);
-                for (var i = 0; i < results.length; i++) {
-
-                    var connected_dealer = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].id + "'");
-
-                    dt = {
-                        "status": true,
-                        "dealer_id": results[i].dealer_id,
-                        "dealer_name": results[i].dealer_name,
-                        "dealer_email": results[i].dealer_email,
-                        "link_code": results[i].link_code,
-                        "account_status": results[i].account_status,
-                        "unlink_status": results[i].unlink_status,
-                        "created": results[i].created,
-                        "modified": results[i].modified,
-                        "connected_devices": get_connected_devices
-                    };
-                    data.push(dt);
+                dealer = [verify.user.id]
+                console.log(result);
+                if (result.length) {
+                    for (var i = 0; i < result.length; i++) {
+                        var sDealers_id = result[i].dealer_id;
+                        dealer.push(sDealers_id)
+                    }
                 }
-                console.log("Dealers Data", data);
-                res.send(data);
+                console.log("select * from users WHERE dealer_id IN (" + dealer.join() + ") order by created_at DESC");
+                let results = await sql.query("select * from users WHERE dealer_id IN (" + dealer.join() + ") order by created_at DESC")
+                if (results.length) {
+                    for (let i = 0; i < results.length; i++) {
+                        let data = await helpers.getAllRecordbyUserID(results[i].user_id)
+                        results[i].devicesList = data
+                    }
+                    // console.log("Devices For user", devicesData);
+                    data = {
+                        "status": true,
+                        data: {
+                            users_list: results,
+                        }
+                    }
+                    res.send(data);
+                }
             });
         }
         else {
+            let results = await sql.query("select * from users WHERE dealer_id = '" + verify.user.id + "' order by created_at DESC")
+            if (results.length) {
+                for (let i = 0; i < results.length; i++) {
+                    let data = await helpers.getAllRecordbyUserID(results[i].user_id)
+                    results[i].devicesList = data
+                }
+                // console.log("Devices For user", devicesData);
+                data = {
+                    "status": true,
+                    data: {
+                        users_list: results,
+                    }
+                }
+                res.send(data);
+            }
 
         }
-
     }
     else {
         data = {
