@@ -3143,7 +3143,7 @@ router.post('/get_profiles', async function (req, res) {
 
 });
 
-router.post('/get_policies', async function (req, res) {
+router.get('/get_policies', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status === true) {
         let userId = verify.user.id;
