@@ -3152,7 +3152,8 @@ router.post('/get_policies', async function (req, res) {
         //   console.log('user id si', user_acc_id);
         let where = "where";
         let isValid = true;
-        // console.log('d_id', user_acc_id);
+        let policies = [];
+
         if (user_acc_id != undefined && user_acc_id != '' && user_acc_id != null) {
             where = where + " user_acc_id='" + user_acc_id + "'";
 
@@ -3162,12 +3163,33 @@ router.post('/get_policies', async function (req, res) {
 
         if (isValid) {
             let query = "SELECT * FROM policy ";
-            sql.query(query, (error, result) => {
-                //  console.log(query,'policy',result)
+            sql.query(query, async (error, results) => {
+                if(results.length){
+                    let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                    let dealerCount = await helpers.dealerCount(adminRoleId);
+
+                    for (var i = 0; i < results.length; i++) {
+                        let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
+                        let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
+                        let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                        dta = {
+                            id: results[i].id,
+                            policy_name: results[i].policy_name,
+                            dealer_permission: permissions,
+                            permission_count: permissionC,
+                            app_list: results[i].apk_list,
+                            command_name: results[i].command_name,
+                            controls: results[i].controls,
+                            secure_apps: results[i].permissions
+                        }
+                        policies.push(dta);
+                    }
+                }
+
                 data = {
                     "status": true,
                     "msg": 'successful',
-                    "policies": result
+                    "policies": policies
                 };
                 res.send(data);
             });
@@ -4452,12 +4474,14 @@ router.post('/save_apk_permissions', async function (req, res) {
 
 /** Save Policy Permission **/
 router.post('/save_policy_permissions', async function (req, res) {
+    var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         var action = req.body.action
         let policyId = req.body.policyId;
         let dealers = req.body.dealers;
+        console.log('policy id', policyId);
 
-        let prevPermissions = await sql.query("select policy from apk_details WHERE id = " + policyId);
+        let prevPermissions = await sql.query("SELECT dealers FROM policy WHERE id = " + policyId);
         let prevParsDealers = JSON.parse(prevPermissions[0].dealers);
 
         if (action === 'save') {
