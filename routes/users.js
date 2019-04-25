@@ -4600,21 +4600,26 @@ router.get('/get_imei_history/:device_id', async function (req, res) {
 
 /*Get All users */
 router.get('/userList', async function (req, res) {
+    let devicesData = [];
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
-
         if (verify.user.user_type == ADMIN) {
             var role = await helpers.getuserTypeIdByName(verify.user.user_type);
-            sql.query("select * from users order by created_at DESC", async function (error, results) {
-                if (error) throw error;
-                else {
-                    data = {
-                        "status": true,
-                        data: results
-                    }
-                    res.send(data);
+            let results = await sql.query("select * from users order by created_at DESC")
+            if (results.length) {
+                for (let i = 0; i < results.length; i++) {
+                    let data = await helpers.getAllRecordbyUserID(results[i].user_id)
+                    results[i].devicesList = data
                 }
-            });
+                // console.log("Devices For user", devicesData);
+                data = {
+                    "status": true,
+                    data: {
+                        users_list: results,
+                    }
+                }
+                res.send(data);
+            }
         } else if (verify.user.user_type === DEALER) {
 
             sql.query("select dealer_id from dealers where connected_dealer = '" + verify.user.id + "' AND  type = 3 order by created DESC", async function (error, results) {
@@ -4624,7 +4629,7 @@ router.get('/userList', async function (req, res) {
                 console.log(results);
                 for (var i = 0; i < results.length; i++) {
 
-                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].id + "'");
+                    var connected_dealer = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].id + "'");
 
                     dt = {
                         "status": true,

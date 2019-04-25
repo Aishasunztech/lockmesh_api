@@ -6,7 +6,7 @@ var datetime = require('node-datetime');
 // import ADMIN from "../constants/Application";
 var moment = require('moment-strftime');
 var Constants = require('../constants/Application');
-let usr_acc_query_text = "usr_acc.id,usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name"
+let usr_acc_query_text = "usr_acc.id,usr_acc.device_id as usr_device_id,usr_acc.user_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity"
 const device_helpers = require('./device_helpers');
 var util = require('util')
 var ApkReader = require('node-apk-parser')
@@ -461,5 +461,22 @@ module.exports = {
 	expireAllLogin: async function () {
 		let loginQ = "UPDATE login_history SET status=0";
 		sql.query(loginQ);
-	}
+	},
+	getAllRecordbyUserID: async function (userID) {
+		// console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.id = ' + device_id)
+		let results = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.user_id = "' + userID + '"');
+		if (results.length) {
+			for (var i = 0; i < results.length; i++) {
+				results[i].finalStatus = device_helpers.checkStatus(results[i])
+				results[i].pgp_email = await device_helpers.getPgpEmails(results[i])
+				results[i].sim_id = await device_helpers.getSimids(results[i])
+				results[i].chat_id = await device_helpers.getChatids(results[i])
+			}
+			return results
+		}
+		else {
+			return [];
+		}
+	},
+
 }
