@@ -216,42 +216,58 @@ module.exports = {
 	},
 
 	//Helper function to get unique device_id in format like "ASGH457862" 
-	getDeviceId: function () {
-		const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-		let fourLetterWords = [];
-		for (let firstLetterIndex = 0; firstLetterIndex < alphabet.length; firstLetterIndex++) {
-			for (let secondLetterIndex = 0; secondLetterIndex < alphabet.length; secondLetterIndex++) {
-				for (let thirdLetterIndex = 0; thirdLetterIndex < alphabet.length; thirdLetterIndex++) {
-					for (let fourthLetterIndex = 0; fourthLetterIndex < alphabet.length; fourthLetterIndex++) {
-						fourLetterWords.push(alphabet[firstLetterIndex] + alphabet[secondLetterIndex] + alphabet[thirdLetterIndex] + alphabet[fourthLetterIndex]);
-					}
-
-				}
-			}
+	getDeviceId: async function (sn, mac) {
+		let sqlQuery = "SELECT device_id from devices where serial_number = '" + sn + "' OR mac_address = '" + mac + "'"
+		let result = await sql.query(sqlQuery)
+		if (result.length) {
+			return result[0].device_id
 		}
-		const digits = '1234567890';
-		let sixDigitsCombination = [];
-		for (let firstDigitIndex = 0; firstDigitIndex < digits.length; firstDigitIndex++) {
-			for (let secondDigitIndex = 0; secondDigitIndex < digits.length; secondDigitIndex++) {
-				for (let thirdDigitIndex = 0; thirdDigitIndex < digits.length; thirdDigitIndex++) {
-					for (let fourthDigitIndex = 0; fourthDigitIndex < digits.length; fourthDigitIndex++) {
-						for (let fifthDigitIndex = 0; fifthDigitIndex < digits.length; fifthDigitIndex++) {
-							for (let sixthDigitIndex = 0; sixthDigitIndex < digits.length; sixthDigitIndex++) {
-								sixDigitsCombination.push(digits[firstDigitIndex].toString() + digits[secondDigitIndex].toString() + digits[thirdDigitIndex].toString() + digits[fourthDigitIndex].toString() + digits[fifthDigitIndex].toString() + digits[sixthDigitIndex].toString());
-							}
-						}
+		else {
+			var key = md5(sn + mac);
+			var num = "";
+			var str = "";
+
+			for (i = 0; i < key.length; i++) {
+
+				if (isNaN(key[i])) {
+					if (str.length < 4) {
+						str += key[i];
+					}
+				} else {
+					if (num.length < 6) {
+						num += key[i];
 					}
 				}
 			}
+			var deviceId = str + num;
+			return deviceId;
 		}
-		var randAlphabet = Math.floor(Math.random() * 456976);
-		var randDigits = Math.floor(Math.random() * 1000000);
-		var deviceId = fourLetterWords[randAlphabet] + sixDigitsCombination[randDigits];
+		// const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+		// let fourLetterWords = [];
+		// for (let firstLetterIndex = 0; firstLetterIndex < alphabet.length; firstLetterIndex++) {
+		// 	for (let secondLetterIndex = 0; secondLetterIndex < alphabet.length; secondLetterIndex++) {
+		// 		for (let thirdLetterIndex = 0; thirdLetterIndex < alphabet.length; thirdLetterIndex++) {
+		// 			for (let fourthLetterIndex = 0; fourthLetterIndex < alphabet.length; fourthLetterIndex++) {
+		// 				fourLetterWords.push(alphabet[firstLetterIndex] + alphabet[secondLetterIndex] + alphabet[thirdLetterIndex] + alphabet[fourthLetterIndex]);
+		// 			}
 
-		sixDigitsCombination = [];
-		fourLetterWords = [];
+		// 		}
+		// 	}
+		// }
+		// // const digits = '1234567890';
+		// // let sixDigitsCombination;
 
-		return deviceId;
+
+		// var random = Math.floor(100000 + Math.random() * 900000);
+
+
+		// var randAlphabet = Math.floor(Math.random() * 456976);
+		// var deviceId = fourLetterWords[randAlphabet] + random;
+
+
+		// fourLetterWords = [];
+
+		// return deviceId;
 	},
 	checkLinkCode: async function (link_code) {
 
@@ -264,16 +280,26 @@ module.exports = {
 			return link_code;
 		}
 	},
+	checkUserId: async function (userId) {
+
+		let query = "select user_id from users where user_id = '" + userId + "';"
+		let result = await sql.query(query);
+		if (result.length > 1) {
+			userId = randomize('0', 6);
+			this.checkUserId(userId);
+		} else {
+			return userId;
+		}
+	},
 	getExpDateByMonth: function (currentDate, expiryMonth) {
 		return moment(currentDate, "YYYY-MM-DD").add(expiryMonth, 'M').strftime("%Y/%m/%d");
 	},
-	checkDeviceId: async (device_id) => {
-
-		let query = "select device_id from devices where device_id = '" + device_id + "';"
+	checkDeviceId: async (device_id, sn, mac) => {
+		let query = "SELECT device_id FROM devices WHERE device_id = '" + device_id + "';"
 		let result = await sql.query(query);
 		if (result.length > 1) {
-			device_id = this.getDeviceId();
-			checkDeviceId(device_id);
+			device_id = helpers.getDeviceId(sn, mac);
+			checkDeviceId(device_id, sn, mac);
 		} else {
 			return device_id;
 		}
@@ -337,7 +363,7 @@ module.exports = {
 		let res = JSON.parse(JSON.stringify(manifest));
 		return res.package
 	},
-	getAPKVersionCode: function (filePath){
+	getAPKVersionCode: function (filePath) {
 		try {
 			var reader = ApkReader.readFile(filePath);
 			// console.log(reader);
@@ -345,94 +371,94 @@ module.exports = {
 			// let apk = util.inspect(manifest, {depth:null});
 			let res = JSON.parse(JSON.stringify(manifest));
 			return res.versionCode
-		} catch(e){
-			throw(e);
+		} catch (e) {
+			throw (e);
 		}
 
 	},
-	getAPKVersionName: function (filePath){
+	getAPKVersionName: function (filePath) {
 		try {
 			var reader = ApkReader.readFile(filePath);
 			var manifest = reader.readManifestSync();
 			// let apk = util.inspect(manifest, {depth:null});
 			let res = JSON.parse(JSON.stringify(manifest));
 			return res.versionName;
-		} catch(e){
-			throw(e);
+		} catch (e) {
+			throw (e);
 		}
-		
+
 	},
-	getAPKDetails: function (filePath){
+	getAPKDetails: function (filePath) {
 		try {
 			var reader = ApkReader.readFile(filePath);
 			var manifest = reader.readManifestSync();
 			// let apk = util.inspect(manifest, {depth:null});
 			let res = JSON.parse(JSON.stringify(manifest));
 			return res;
-		} catch(e){
-			throw(e);
+		} catch (e) {
+			throw (e);
 		}
 
 	},
-	saveLogin: async function (user, loginClient, type, status){
+	saveLogin: async function (user, loginClient, type, status) {
 		let insertQ = "INSERT INTO login_history ";
 		let commonFields = " token, expiresin, ip_address, logged_in_client, type, status ";
 		let values = " VALUES ( ";
-		let commonValues = " '"+ user.token +"', '"+ user.expiresIn +"', '"+ user.ip_address +"', '"+ loginClient +"', '"+ type +"', " + status + " ";
+		let commonValues = " '" + user.token + "', '" + user.expiresIn + "', '" + user.ip_address + "', '" + loginClient + "', '" + type + "', " + status + " ";
 
-		if(loginClient === Constants.DEVICE){
-			if(type === Constants.SOCKET){
-				insertQ = insertQ + " (device_id, socket_id, "+ commonFields +" ) ";
-				values = values + " '" + user.device_id + "', '" + user.socket_id + "', " + commonValues +" ) "
-			} else if (type === Constants.TOKEN){
-				insertQ = insertQ + " (device_id, "+ commonFields +" ) ";
-				values = values + " '" + user.device_id + "', " + commonValues +" ) ";
+		if (loginClient === Constants.DEVICE) {
+			if (type === Constants.SOCKET) {
+				insertQ = insertQ + " (device_id, socket_id, " + commonFields + " ) ";
+				values = values + " '" + user.device_id + "', '" + user.socket_id + "', " + commonValues + " ) "
+			} else if (type === Constants.TOKEN) {
+				insertQ = insertQ + " (device_id, " + commonFields + " ) ";
+				values = values + " '" + user.device_id + "', " + commonValues + " ) ";
 			}
 		} else {
-			if(type === Constants.SOCKET){
-				insertQ = insertQ + " (dealer_id, socket_id, "+ commonFields +" ) ";
-				values = values + " '" + user.dealer_id + "', '" + user.socket_id + "', " + commonValues +" ) "
-			} else if (type === Constants.TOKEN){
-				insertQ = insertQ + " (dealer_id, "+ commonFields +" ) ";
-				values = values + " '" + user.dealer_id + "', " + commonValues +" ) ";
+			if (type === Constants.SOCKET) {
+				insertQ = insertQ + " (dealer_id, socket_id, " + commonFields + " ) ";
+				values = values + " '" + user.dealer_id + "', '" + user.socket_id + "', " + commonValues + " ) "
+			} else if (type === Constants.TOKEN) {
+				insertQ = insertQ + " (dealer_id, " + commonFields + " ) ";
+				values = values + " '" + user.dealer_id + "', " + commonValues + " ) ";
 			}
 		}
 		// console.log();
 		await sql.query(insertQ + values)
 	},
-	getLoginByToken: async function (token){
-		let loginQ = "SELECT * from login_history WHERE token ='"+ token +"'";
-		let res =await sql.query(loginQ);
-		if(res.length){
+	getLoginByToken: async function (token) {
+		let loginQ = "SELECT * from login_history WHERE token ='" + token + "'";
+		let res = await sql.query(loginQ);
+		if (res.length) {
 			return res[0];
 		} else {
 			return false;
 		}
 	},
-	getLoginByDealerID: async function (dealerId){
-		let loginQ = "SELECT * from login_history WHERE dealer_id ='"+ dealerId +"'";
-		let res =await sql.query(loginQ);
+	getLoginByDealerID: async function (dealerId) {
+		let loginQ = "SELECT * from login_history WHERE dealer_id ='" + dealerId + "'";
+		let res = await sql.query(loginQ);
 		// console.log("resrserse", res);
-		if(res.length){
+		if (res.length) {
 			return res[0];
 		} else {
 			return false;
 		}
 	},
-	getLoginByDeviceID: async function (deviceId){
-		let loginQ = "SELECT * from login_history WHERE device_id ='"+ deviceId +"'";
-		let res =await sql.query(loginQ);
-		if(res.length){
+	getLoginByDeviceID: async function (deviceId) {
+		let loginQ = "SELECT * from login_history WHERE device_id ='" + deviceId + "'";
+		let res = await sql.query(loginQ);
+		if (res.length) {
 			return res[0];
 		} else {
 			return false;
 		}
 	},
-	expireLoginByToken: async function (token){
-		let loginQ = "UPDATE login_history SET status=0 WHERE token='"+ token +"'";
+	expireLoginByToken: async function (token) {
+		let loginQ = "UPDATE login_history SET status=0 WHERE token='" + token + "'";
 		sql.query(loginQ);
 	},
-	expireAllLogin: async function (){
+	expireAllLogin: async function () {
 		let loginQ = "UPDATE login_history SET status=0";
 		sql.query(loginQ);
 	}

@@ -81,7 +81,7 @@ module.exports = {
                 console.log("default App", app.defaultApp);
 
                 let iconName = this.uploadIconFile(app, app.label);
-                var query = "INSERT IGNORE INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app) VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , "+ app.visible +", "+ app.defaultApp +")";
+                var query = "INSERT IGNORE INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app) VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , " + app.visible + ", " + app.defaultApp + ")";
                 await sql.query(query);
 
                 await this.getApp(app.uniqueName, deviceData.id, app.guest, app.encrypted, app.enable);
@@ -369,6 +369,12 @@ module.exports = {
         }
         // console.log(finalQuery);
         await sql.query(finalQuery)
+
+    },
+    saveImeiHistory: async (deviceId, sn, mac, imei1, imei2) => {
+        console.log('SAVE HISTORY');
+        let query = "INSERT INTO imei_history(device_id,serial_number,mac_address,orignal_imei1,orignal_imei2,imei1,imei2) VALUES ('" + deviceId + "','" + sn + "','" + mac + "','" + imei1 + "','" + imei2 + "','" + imei1 + "','" + imei2 + "')"
+        await sql.query(query)
 
     },
 }

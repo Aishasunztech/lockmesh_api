@@ -169,13 +169,15 @@ router.post('/login', async function (req, resp) {
 
                         let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = getDeviceInfo(req);
                         // console.log("this is info ", { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address });
+                        let NewDeviceId = helpers.getDeviceId(serial_number, mac_address)
+                        let chechedDeviceId = checkDeviceId(NewDeviceId, serial_number, mac_address)
                         if (usrAcc[0].expiry_months = 0) {
                             var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
                             var expiry_date = moment(trailDate).format("YYYY/MM/DD")
                         } else {
                             var expiry_date = helpers.getExpDateByMonth(new Date(), usrAcc[0].expiry_months);
                         }
-                        var updateDevice = "UPDATE devices set  ip_address = '" + ip + "', simno = '" + simNo1 + "', online = 'On', imei='" + imei1 + "', imei2='" + imei2 + "', serial_number='" + serial_number + "', mac_address='" + mac_address + "' , simno2 = '" + simNo2 + "' where id='" + usrAcc[0].device_id + "'";
+                        var updateDevice = "UPDATE devices set device_id = '" + chechedDeviceId + "'  ip_address = '" + ip + "', simno = '" + simNo1 + "', online = 'On', imei='" + imei1 + "', imei2='" + imei2 + "', serial_number='" + serial_number + "', mac_address='" + mac_address + "' , simno2 = '" + simNo2 + "' where id='" + usrAcc[0].device_id + "'";
                         var updateAccount = "UPDATE usr_acc set activation_status=1, status='active', expiry_date='" + expiry_date + "', device_status=1, unlink_status = 0 WHERE id = " + usrAcc[0].id;
 
                         await sql.query(updateDevice);
@@ -309,13 +311,13 @@ router.post('/login', async function (req, resp) {
     }
 });
 
-async function checkDeviceId(device_id) {
+async function checkDeviceId(device_id, sn, mac) {
 
     let query = "SELECT device_id FROM devices WHERE device_id = '" + device_id + "';"
     let result = await sql.query(query);
     if (result.length > 1) {
-        device_id = helpers.getDeviceId();
-        checkDeviceId(device_id);
+        device_id = helpers.getDeviceId(sn, mac);
+        checkDeviceId(device_id, sn, mac);
     } else {
         return device_id;
     }
@@ -364,9 +366,9 @@ router.post('/linkdevice', async function (req, resp) {
     var simNo1 = simNo[0] ? simNo[0] : null;
     var simNo2 = simNo[1] ? simNo[1] : null;
 
-    var device_id = helpers.getDeviceId();
+    var device_id = helpers.getDeviceId(serial_number, mac_address);
 
-    var deviceId = await checkDeviceId(device_id);
+    var deviceId = await checkDeviceId(device_id, serial_number, mac_address);
 
     if (reslt.status == true) {
         var deviceQ = "SELECT * FROM devices WHERE  mac_address='" + mac_address + "' OR serial_number='" + serial_number + "'";
@@ -403,6 +405,7 @@ router.post('/linkdevice', async function (req, resp) {
                         sql.query(link_acc, function (error, rows) {
                             //response.end(JSON.stringify(rows));
                             if (error) throw error;
+                            device_helpers.saveImeiHistory(deviceId, serial_number, mac_address, imei1, imei2)
 
                             resp.json({
                                 "status": true,
@@ -452,7 +455,7 @@ router.post('/linkdevice', async function (req, resp) {
 
                     sql.query(insertUserAcc, values, function (error, rows) {
                         if (error) throw error;
-
+                        device_helpers.saveImeiHistory(deviceId, serial_number, mac_address, imei1, imei2)
                         resp.json({
                             "status": true,
                             "data": rows
