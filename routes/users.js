@@ -4514,7 +4514,7 @@ router.post('/save_policy_permissions', async function (req, res) {
             sql.query(updateAPKQ, async (error, result) => {
                 if (error) throw (error);
                 let permissionC = [];
-                let rslt = await sql.query("select dealers from policy where id='" + apkId + "' order by id ASC")
+                let rslt = await sql.query("SELECT dealers FROM policy WHERE id='" + apkId + "' ORDER BY id ASC")
                 if (rslt.length) {
                     if (rslt !== undefined && rslt !== null) {
                         let permission = JSON.parse(rslt[0].dealers);
@@ -4527,7 +4527,7 @@ router.post('/save_policy_permissions', async function (req, res) {
 
                             }
                         } else if (verify.user.user_type === Constants.DEALER) {
-                            let sdealerList = await sql.query("select count(*) as dealer_count ,dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                            let sdealerList = await sql.query("SELECT COUNT(*) AS dealer_count, dealer_id FROM dealers WHERE connected_dealer = '" + verify.user.id + "'")
                             let dealerCount = sdealerList[0].dealer_count;
                             console.log("dasda", dealerCount);
                             let Sdealerpermissions = permission.filter(function (item) {
@@ -4595,7 +4595,7 @@ router.post('/save_policy_permissions', async function (req, res) {
             sql.query(updateAPKQ, async (error, result) => {
                 if (error) throw (error);
                 let permissionC = [];
-                let rslt = await sql.query("select dealers from apk_details where id='" + apkId + "' order by id ASC")
+                let rslt = await sql.query("SELECT dealers FROM apk_details WHERE id='" + apkId + "' ORDER BY id ASC")
                 if (rslt.length) {
                     console.log(rslt, ' do ti ');
                     if (rslt !== undefined && rslt !== null) {

@@ -11,7 +11,7 @@
  Target Server Version : 50724
  File Encoding         : 65001
 
- Date: 24/04/2019 15:30:30
+ Date: 25/04/2019 14:31:16
 */
 
 SET NAMES utf8mb4;
@@ -353,7 +353,7 @@ CREATE TABLE `dealer_dropdown_list`  (
 -- Records of dealer_dropdown_list
 -- ----------------------------
 INSERT INTO `dealer_dropdown_list` VALUES (85, 154, '[\"APP STATUS\",\"APK\",\"APP NAME\",\"APP LOGO\"]', 'apk', '2019-04-02 16:14:22', '2019-04-08 15:16:34');
-INSERT INTO `dealer_dropdown_list` VALUES (86, 154, '[\"DEVICE ID\",\"FLAGGED\",\"STATUS\",\"MODE\",\"DEVICE NAME\",\"ACCOUNT EMAIL\",\"ACTIVATION CODE\",\"PGP EMAIL\",\"CHAT ID\",\"CLIENT ID\",\"DEALER ID\",\"DEALER PIN\",\"MAC ADDRESS\",\"SIM ID\",\"IMEI 1\",\"SIM 1\",\"IMEI 2\",\"SIM 2\",\"SERIAL NUMBER\",\"MODEL\",\"START DATE\",\"EXPIRY DATE\",\"DEALER NAME\",\"S-DEALER\",\"S-DEALER NAME\"]', 'devices', '2019-04-02 16:18:12', '2019-04-16 13:46:24');
+INSERT INTO `dealer_dropdown_list` VALUES (86, 154, '[\"FLAGGED\",\"STATUS\",\"MODE\",\"DEVICE NAME\",\"ACCOUNT EMAIL\",\"ACTIVATION CODE\",\"PGP EMAIL\",\"CHAT ID\",\"CLIENT ID\",\"DEALER ID\",\"DEALER PIN\",\"MAC ADDRESS\",\"SIM ID\",\"IMEI 1\",\"SIM 1\",\"IMEI 2\",\"SIM 2\",\"SERIAL NUMBER\",\"MODEL\",\"START DATE\",\"EXPIRY DATE\",\"DEALER NAME\",\"S-DEALER\",\"S-DEALER NAME\"]', 'devices', '2019-04-02 16:18:12', '2019-04-25 12:07:25');
 INSERT INTO `dealer_dropdown_list` VALUES (87, 154, '[\"DEALER ID\",\"DEALER NAME\",\"DEALER EMAIL\",\"DEALER PIN\",\"DEVICES\",\"TOKENS\",\"PARENT DEALER\",\"PARENT DEALER ID\"]', 'dealer', '2019-04-03 15:23:12', '2019-04-18 07:09:01');
 INSERT INTO `dealer_dropdown_list` VALUES (88, 154, '[\"ACTIONS\"]', 'sdealer', '2019-04-03 15:23:15', '2019-04-15 09:43:03');
 INSERT INTO `dealer_dropdown_list` VALUES (89, 222, '[\"DEVICE ID\",\"STATUS\",\"DEVICE NAME\",\"ACCOUNT EMAIL\",\"ACTIVATION CODE\",\"PGP EMAIL\",\"CHAT ID\",\"CLIENT ID\",\"DEALER ID\",\"DEALER PIN\",\"MAC ADDRESS\",\"SIM ID\",\"IMEI 1\",\"SIM 1\",\"IMEI 2\",\"SIM 2\",\"SERIAL NUMBER\",\"MODEL\",\"START DATE\",\"EXPIRY DATE\",\"DEALER NAME\",\"ONLINE\",\"S-DEALER\",\"S-DEALER NAME\"]', 'devices', '2019-04-08 12:11:22', '2019-04-08 12:12:08');
@@ -404,6 +404,18 @@ INSERT INTO `dealer_pagination` VALUES (12, 225, 10, 'devices', '2019-04-11 10:4
 INSERT INTO `dealer_pagination` VALUES (13, 226, 10, 'devices', '2019-04-12 07:12:13', NULL);
 INSERT INTO `dealer_pagination` VALUES (14, 225, 10, 'sdealer', '2019-04-12 11:20:00', NULL);
 INSERT INTO `dealer_pagination` VALUES (15, 222, 30, 'policies', '2019-04-24 14:33:22', NULL);
+
+-- ----------------------------
+-- Table structure for dealer_policies
+-- ----------------------------
+DROP TABLE IF EXISTS `dealer_policies`;
+CREATE TABLE `dealer_policies`  (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `dealer_id` int(11) NOT NULL,
+  `policy_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `unique_dealer_id_apk_id`(`dealer_id`, `policy_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 295 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for dealers
@@ -577,7 +589,7 @@ CREATE TABLE `login_history`  (
   `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 9 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = MyISAM AUTO_INCREMENT = 10 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of login_history
@@ -590,6 +602,7 @@ INSERT INTO `login_history` VALUES (5, NULL, '222', NULL, 'eyJhbGciOiJIUzI1NiIsI
 INSERT INTO `login_history` VALUES (6, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImRlYWxlcl9pZCI6MTU0LCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsImxhc3ROYW1lIjoiS2FzaHlhcCIsIm5hbWUiOiJhZG1pbiIsImZpcnN0TmFtZSI6Ik5laGEiLCJkZWFsZXJfbmFtZSI6ImFkbWluIiwiZGVhbGVyX2VtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwibGlua19jb2RlIjoiIiwiY29ubmVjdGVkX2RlYWxlciI6MCwiY29ubmVjdGVkX2RldmljZXMiOlt7InRvdGFsIjoiMCJ9XSwiYWNjb3VudF9zdGF0dXMiOm51bGwsInVzZXJfdHlwZSI6ImFkbWluIiwiY3JlYXRlZCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJtb2RpZmllZCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJpcF9hZGRyZXNzIjoiOjoxIn0sImlhdCI6MTU1NjAxMzkxMywiZXhwIjoxNTU2MTAwMzEzfQ.3kHU79YgNzTMsyMfo-7uBzlLA2MILtuGA59YnfgAfMI', '86400s', '::1', NULL, 'admin', 'token', 1, '2019-04-23 15:05:13', NULL);
 INSERT INTO `login_history` VALUES (7, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImRlYWxlcl9pZCI6MTU0LCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsImxhc3ROYW1lIjoiS2FzaHlhcCIsIm5hbWUiOiJhZG1pbiIsImZpcnN0TmFtZSI6Ik5laGEiLCJkZWFsZXJfbmFtZSI6ImFkbWluIiwiZGVhbGVyX2VtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwibGlua19jb2RlIjoiIiwiY29ubmVjdGVkX2RlYWxlciI6MCwiY29ubmVjdGVkX2RldmljZXMiOlt7InRvdGFsIjoiMCJ9XSwiYWNjb3VudF9zdGF0dXMiOm51bGwsInVzZXJfdHlwZSI6ImFkbWluIiwiY3JlYXRlZCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJtb2RpZmllZCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJpcF9hZGRyZXNzIjoiOjpmZmZmOjE5Mi4xNjguMS4xMTYifSwiaWF0IjoxNTU2MDg1ODU4LCJleHAiOjE1NTYxNzIyNTh9.9SFMwYqJodP6J-IiIaaY9HYLvGaXDxwV1HaI8dZlcuQ', '86400s', '::ffff:192.168.1.116', NULL, 'admin', 'token', 1, '2019-04-24 11:04:18', NULL);
 INSERT INTO `login_history` VALUES (8, NULL, '222', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoyMjIsImRlYWxlcl9pZCI6MjIyLCJlbWFpbCI6InVzbWFuaGFmZWV6MTQ3QGdtYWlsLmNvbSIsImxhc3ROYW1lIjpudWxsLCJuYW1lIjoidXNtYW4gaGFmZWV6IiwiZmlyc3ROYW1lIjpudWxsLCJkZWFsZXJfbmFtZSI6InVzbWFuIGhhZmVleiIsImRlYWxlcl9lbWFpbCI6InVzbWFuaGFmZWV6MTQ3QGdtYWlsLmNvbSIsImxpbmtfY29kZSI6IjQzMzUyMyIsImNvbm5lY3RlZF9kZWFsZXIiOjAsImNvbm5lY3RlZF9kZXZpY2VzIjpbeyJ0b3RhbCI6IjIifV0sImFjY291bnRfc3RhdHVzIjpudWxsLCJ1c2VyX3R5cGUiOiJkZWFsZXIiLCJjcmVhdGVkIjoiMjAxOS0wNC0wMyAxNToyMzoyNiIsIm1vZGlmaWVkIjoiMjAxOS0wNC0wMyAxNToyMzoyNiIsImlwX2FkZHJlc3MiOiI6OjEifSwiaWF0IjoxNTU2MDk3MDk2LCJleHAiOjE1NTYxODM0OTZ9.X9UcPWIkjko38qs2HCWtVBiH_fas8igyEknUMD_InMw', '86400s', '::1', NULL, 'dealer', 'token', 1, '2019-04-24 14:11:36', NULL);
+INSERT INTO `login_history` VALUES (9, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImRlYWxlcl9pZCI6MTU0LCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsImxhc3ROYW1lIjoiS2FzaHlhcCIsIm5hbWUiOiJhZG1pbiIsImZpcnN0TmFtZSI6Ik5laGEiLCJkZWFsZXJfbmFtZSI6ImFkbWluIiwiZGVhbGVyX2VtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwibGlua19jb2RlIjoiIiwiY29ubmVjdGVkX2RlYWxlciI6MCwiY29ubmVjdGVkX2RldmljZXMiOlt7InRvdGFsIjoiMCJ9XSwiYWNjb3VudF9zdGF0dXMiOm51bGwsInVzZXJfdHlwZSI6ImFkbWluIiwiY3JlYXRlZCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJtb2RpZmllZCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJpcF9hZGRyZXNzIjoiOjoxIn0sImlhdCI6MTU1NjE2OTc4OSwiZXhwIjoxNTU2MjU2MTg5fQ._lJ2AcnCZlTuQ04qRA4T6sebiAlpZWcGfV14EGdPfDs', '86400s', '::1', NULL, 'admin', 'token', 1, '2019-04-25 10:23:09', NULL);
 
 -- ----------------------------
 -- Table structure for pgp_emails
@@ -679,17 +692,26 @@ DROP TABLE IF EXISTS `policy`;
 CREATE TABLE `policy`  (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `policy_name` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `command_name` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `policy_note` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `push_apps` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
   `app_list` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
   `controls` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
   `permissions` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
+  `dealer_id` int(11) NULL DEFAULT NULL,
+  `dealers` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
+  `status` tinyint(4) NULL DEFAULT 0,
   `delete_status` tinyint(4) NOT NULL DEFAULT 0,
   `passwords` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
   `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of policy
+-- ----------------------------
+INSERT INTO `policy` VALUES (1, 'test usman', '#test_usman', NULL, '', '[{\"id\":57,\"app_id\":40,\"guest\":true,\"encrypted\":false,\"enable\":true,\"label\":\"Clock\",\"uniqueName\":\"com.android.deskclockClock\",\"icon\":\"icon_Clock.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.deskclock\"},{\"id\":58,\"app_id\":37,\"guest\":true,\"encrypted\":false,\"enable\":true,\"label\":\"Browser\",\"uniqueName\":\"com.android.browserBrowser\",\"icon\":\"icon_Browser.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.browser\"},{\"id\":59,\"app_id\":39,\"guest\":true,\"encrypted\":false,\"enable\":true,\"label\":\"Contacts\",\"uniqueName\":\"com.android.contactsContacts\",\"icon\":\"icon_Contacts.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.contacts\"},{\"id\":60,\"app_id\":38,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Sound Recorder\",\"uniqueName\":\"com.android.soundrecorderSound Recorder\",\"icon\":\"icon_Sound Recorder.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.soundrecorder\"},{\"id\":61,\"app_id\":36,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Calendar\",\"uniqueName\":\"com.android.calendarCalendar\",\"icon\":\"icon_Calendar.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.calendar\"},{\"id\":62,\"app_id\":44,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Cell Broadcasts\",\"uniqueName\":\"com.android.cellbroadcastreceiverCell Broadcasts\",\"icon\":\"icon_Cell Broadcasts.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.cellbroadcastreceiver\"},{\"id\":63,\"app_id\":54,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Email\",\"uniqueName\":\"com.android.emailEmail\",\"icon\":\"icon_Email.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.email\"},{\"id\":64,\"app_id\":42,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Phone\",\"uniqueName\":\"com.android.dialerPhone\",\"icon\":\"icon_Phone.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.dialer\"},{\"id\":65,\"app_id\":43,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Calculator\",\"uniqueName\":\"com.android.calculator2Calculator\",\"icon\":\"icon_Calculator.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.calculator2\"},{\"id\":66,\"app_id\":53,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Music\",\"uniqueName\":\"com.android.musicMusic\",\"icon\":\"icon_Music.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.music\"},{\"id\":67,\"app_id\":41,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Camera\",\"uniqueName\":\"com.mediatek.cameraCamera\",\"icon\":\"icon_Camera.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.mediatek.camera\"},{\"id\":68,\"app_id\":55,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Messaging\",\"uniqueName\":\"com.android.mmsMessaging\",\"icon\":\"icon_Messaging.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.mms\"},{\"id\":69,\"app_id\":46,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Search\",\"uniqueName\":\"com.android.quicksearchboxSearch\",\"icon\":\"icon_Search.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.quicksearchbox\"},{\"id\":70,\"app_id\":45,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"FM Radio\",\"uniqueName\":\"com.android.fmradioFM Radio\",\"icon\":\"icon_FM Radio.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.fmradio\"},{\"id\":71,\"app_id\":47,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"SIM Toolkit\",\"uniqueName\":\"com.android.stkSIM Toolkit\",\"icon\":\"icon_SIM Toolkit.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.stk\"},{\"id\":72,\"app_id\":52,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Gallery\",\"uniqueName\":\"com.android.gallery3dGallery\",\"icon\":\"icon_Gallery.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.gallery3d\"},{\"id\":73,\"app_id\":48,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"System software updates\",\"uniqueName\":\"com.mediatek.systemupdateSystem software updates\",\"icon\":\"icon_System software updates.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.mediatek.systemupdate\"},{\"id\":74,\"app_id\":50,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"UEM Client\",\"uniqueName\":\"com.rim.mobilefusion.clientUEM Client\",\"icon\":\"icon_UEM Client.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.rim.mobilefusion.client\"},{\"id\":75,\"app_id\":51,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Screen Locker\",\"uniqueName\":\"com.vortexlocker.appScreen Locker\",\"icon\":\"icon_Screen Locker.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.vortexlocker.app\"},{\"id\":76,\"app_id\":56,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"Settings\",\"uniqueName\":\"com.android.settingsSettings\",\"icon\":\"icon_Settings.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.android.settings\"},{\"id\":77,\"app_id\":49,\"guest\":true,\"encrypted\":false,\"enable\":true,\"label\":\"Launcher Changer\",\"uniqueName\":\"com.launcher.changeLauncher Changer\",\"icon\":\"icon_Launcher Changer.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.launcher.change\"},{\"id\":78,\"app_id\":78,\"guest\":true,\"encrypted\":true,\"enable\":true,\"label\":\"VPN 2017\",\"uniqueName\":\"com.wxy.vpn2017VPN 2017\",\"icon\":\"icon_VPN 2017.png\",\"extension\":0,\"extension_id\":0,\"packageName\":\"com.wxy.vpn2017\"}]', NULL, NULL, NULL, NULL, 0, 0, NULL, '2019-04-24 15:33:25', '2019-04-24 15:50:25');
 
 -- ----------------------------
 -- Table structure for screen_lock_devices
