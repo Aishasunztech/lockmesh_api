@@ -192,7 +192,7 @@ router.post('/login', async function (req, resp) {
                         jwt.sign({
                             device
                         }, config.secret, {
-                                expiresIn: '86400s'
+                                expiresIn: config.expiresIn
                             }, (err, token) => {
                                 if (err) {
                                     resp.json({
