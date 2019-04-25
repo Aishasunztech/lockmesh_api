@@ -195,7 +195,7 @@ router.post('/login', async function (req, resp) {
                         jwt.sign({
                             device
                         }, config.secret, {
-                                expiresIn: '86400s'
+                                expiresIn: config.expiresIn
                             }, (err, token) => {
                                 if (err) {
                                     resp.json({
@@ -738,7 +738,7 @@ router.get('/getUpdate/:version/:uniqueName', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     let versionName = req.params.version;
     let uniqueName = req.params.uniqueName;
-    let query = "SELECT * FROM apk_details WHERE package_name = '" + uniqueName + "' limit 1";
+    let query = "SELECT * FROM apk_details WHERE package_name = '" + uniqueName + "' AND delete_status=0 limit 1";
     sql.query(query, function(error, response){
         // console.log("res", response);
 
@@ -749,10 +749,12 @@ router.get('/getUpdate/:version/:uniqueName', async (req, res) => {
             });
 
         }
-        if(response.length){
-            console.log("verion name", Number(response[0].version_name));
 
-            if(Number(response[0].version_name) > versionName){
+        if(response.length){
+            // console.log("verion name", Number(response[0].version_name));
+            // console.log("verion name", Number(versionName));
+
+            if(Number(response[0].version_name) > Number(versionName)){
                 console.log("i am here", response[0].version_name);
                 
                 res.send({
