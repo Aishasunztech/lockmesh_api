@@ -171,7 +171,7 @@ router.post('/login', async function (req, resp) {
                         // console.log("this is info ", { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address });
                         let NewDeviceId = helpers.getDeviceId(serial_number, mac_address)
                         let chechedDeviceId = checkDeviceId(NewDeviceId, serial_number, mac_address)
-                        if (usrAcc[0].expiry_months = 0) {
+                        if (usrAcc[0].expiry_months == 0) {
                             var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
                             var expiry_date = moment(trailDate).format("YYYY/MM/DD")
                         } else {
@@ -353,18 +353,7 @@ router.post('/linkdevice', async function (req, resp) {
     var dId = req.body.dId;
     var connected_dealer = (req.body.connected_dealer === undefined || req.body.connected_dealer === null) ? 0 : req.body.connected_dealer;
     // var deviceId = uniqid.process();
-    var imei = req.body.imei;
-    var ip = req.body.ip;
-    var simNo = req.body.simNo;
-    var serial_number = req.body.serialNo;
-    var mac_address = req.body.macAddr;
-
-    //geting imei's
-    var imei1 = imei[0] ? imei[0] : null;
-    var imei2 = imei[1] ? imei[1] : null;
-
-    var simNo1 = simNo[0] ? simNo[0] : null;
-    var simNo2 = simNo[1] ? simNo[1] : null;
+    let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = getDeviceInfo(req);
 
     var device_id = helpers.getDeviceId(serial_number, mac_address);
 
@@ -738,10 +727,10 @@ router.get('/getUpdate/:version/:uniqueName', async (req, res) => {
     let versionName = req.params.version;
     let uniqueName = req.params.uniqueName;
     let query = "SELECT * FROM apk_details WHERE package_name = '" + uniqueName + "' AND delete_status=0 limit 1";
-    sql.query(query, function(error, response){
+    sql.query(query, function (error, response) {
         // console.log("res", response);
 
-        if(error) {
+        if (error) {
             res.send({
                 status: false,
                 msg: ""
@@ -749,13 +738,13 @@ router.get('/getUpdate/:version/:uniqueName', async (req, res) => {
 
         }
 
-        if(response.length){
+        if (response.length) {
             // console.log("verion name", Number(response[0].version_name));
             // console.log("verion name", Number(versionName));
 
-            if(Number(response[0].version_name) > Number(versionName)){
+            if (Number(response[0].version_name) > Number(versionName)) {
                 console.log("i am here", response[0].version_name);
-                
+
                 res.send({
                     apk_status: true,
                     apk_url: response[0].apk
@@ -770,7 +759,7 @@ router.get('/getUpdate/:version/:uniqueName', async (req, res) => {
             res.send({
                 apk_status: false,
                 msg: ""
-            });     
+            });
         }
     })
 });
@@ -796,22 +785,24 @@ router.post('/accountstatus', async function (req, res) {
     var serial_number = req.body.serialNo;
     var mac = req.body.macAddr;
     var data;
-    // console.log('serial_number : ' + serial_number);
-    // console.log('mac : ' + mac);
+
+    console.log('serial_number : ' + serial_number);
+    console.log('mac : ' + mac);
 
     if (empty(serial_number) || empty(mac)) {
         data = {
-            "status": false,
+            status: false,
+            msg: "Information not provided"
         }
         res.send(data);
     } else {
         var deviceQuery = "select * from devices where mac_address = '" + mac + "' OR serial_number = '" + serial_number + "'";
         // 
         var device = await sql.query(deviceQuery);
-        //reslts 
         if (device.length > 0) {
             var user_acc = await sql.query("SELECT * FROM usr_acc where device_id = " + device[0].id);
             if (user_acc.length > 0) {
+
                 // get user account device status
                 let deviceStatus = device_helpers.checkStatus(user_acc[0]);
                 console.log("device_status accountstatus", deviceStatus);
@@ -822,136 +813,156 @@ router.post('/accountstatus', async function (req, res) {
                     var dealer = await sql.query(dealerQuery);
                     // reslts2 
                     if (dealer.length > 0) {
-                        let dealerStatus = helpers.getDealerStatus(dealer[0]);
 
-                        if (dealerStatus === 'suspended') {
-                            data = {
-                                "status": false,
-                                "msg": "Dealer Suspended.Contact Admin."
-                            }
-                            res.send(data);
-                            return;
-                        } else if (dealerStatus == "unlinked") {
-                            data = {
-                                "status": false,
-                                "msg": "Dealer Not found.Contact Admin."
-                            }
-                            res.send(data);
-                            return;
-                        } else {
-
-                            // if (reslts[0].device_status == 0 && (reslts[0].status == '' || reslts[0].status == null) && (reslts[0].account_status == '' || reslts[0].account_status == null)) {
-
-                            if (deviceStatus === Constants.DEVICE_PENDING_ACTIVATION) {
-                                data = {
-                                    "status": true,
-                                    "msg": "pending"
-                                }
-                                res.send(data);
-                                return;
-                            } else if (deviceStatus === Constants.DEVICE_ACTIVATED) {
-                                data = {
-                                    "status": true,
-                                    "msg": "account active"
-                                }
-                                res.send(data);
-                                return;
-                            } else if (deviceStatus === Constants.DEVICE_PRE_ACTIVATION) {
-                                data = {
-                                    "status": true,
-                                    "msg": "account Pre-activated"
-                                }
-                                res.send(data);
-                                return;
-                            }
-                            else if (deviceStatus === Constants.DEVICE_SUSPENDED) {
-                                data = {
-                                    "status": false,
-                                    "msg": "account suspended"
-                                }
-                                res.send(data);
-                                return;
-                            } else if (deviceStatus === Constants.DEVICE_EXPIRED) {
-
-                                data = {
-                                    "status": false,
-                                    "msg": "account expired"
-                                }
-                                res.send(data);
-                                return;
-                            } else if (deviceStatus === Constants.DEVICE_UNLINKED) {
-                                data = {
-                                    "status": true,
-                                    "msg": "account unlinked"
-                                }
-                                res.send(data);
-                                return;
-                            }
-
-
+                        const device = {
+                            dId: dealer[0].dealer_id,
+                            dealer_pin: dealer[0].link_code,
+                            connected_dealer: dealer[0].connected_dealer,
+                            type: await helpers.getUserTypeByTypeId(dealer[0].type),
+                            device_id: device[0].device_id
                         }
+
+                        jwt.sign({
+                            device
+                        }, config.secret, {
+                            expiresIn: config.expiresIn
+                        }, (err, token) => {
+
+                            if (err) {
+                                res.json({
+                                    'err': err
+                                });
+                                return;
+                            }
+
+                            let dealerStatus = helpers.getDealerStatus(dealer[0]);
+
+                            if (dealerStatus === Constants.DEALER_SUSPENDED) {
+                                data = {
+                                    status: false,
+                                    msg: "Dealer Suspended. Contact Admin.",
+                                    status_msg: dealerStatus,
+                                    device_id: device[0].device_id,
+                                    expiry_date: user_acc[0].expiry_date,
+                                    token: token
+                                }
+                                res.send(data);
+                                return;
+                            } else if (dealerStatus == Constants.DEALER_UNLINKED) {
+                                data = {
+                                    status: false,
+                                    msg: "Dealer Not found. Contact Admin.",
+                                    status_msg: dealerStatus,
+                                    device_id: device[0].device_id,
+                                    expiry_date: user_acc[0].expiry_date,
+                                    token: token
+                                }
+                                res.send(data);
+                                return;
+                            } else {
+                                // if (reslts[0].device_status == 0 && (reslts[0].status == '' || reslts[0].status == null) && (reslts[0].account_status == '' || reslts[0].account_status == null)) {
+                                if (deviceStatus === Constants.DEVICE_PENDING_ACTIVATION || deviceStatus === Constants.DEVICE_ACTIVATED || deviceStatus === Constants.DEVICE_UNLINKED) {
+                                    data = {
+                                        status: true,
+                                        msg: deviceStatus,
+                                        device_id: device[0].device_id,
+                                        expiry_date: user_acc[0].expiry_date,
+                                        token: token
+                                    }
+                                    res.send(data);
+                                    return;
+                                } else if (deviceStatus === Constants.DEVICE_SUSPENDED || deviceStatus === Constants.DEVICE_EXPIRED) {
+                                    data = {
+                                        status: false,
+                                        msg: deviceStatus,
+                                        device_id: device[0].device_id,
+                                        expiry_date: user_acc[0].expiry_date,
+                                        token: token
+                                    }
+                                    res.send(data);
+                                    return;
+                                }
+                            }
+
+                        });
+
+
                     } else {
                         data = {
                             "status": false,
-                            "msg": "Dealer Not found.Contact Admin."
+                            "msg": "Dealer Not found.Contact Admin.",
+                            "device_id": device[0].device_id,
+                            "expiry_date": user_acc[0].expiry_date
                         }
                         res.send(data);
                         return;
                     }
                 } else {
-
-                    if (deviceStatus === Constants.DEVICE_PENDING_ACTIVATION) {
-                        data = {
-                            "status": true,
-                            "msg": "pending"
-                        }
-                        res.send(data);
-                        return;
-                    } else if (deviceStatus === Constants.DEVICE_ACTIVATED) {
-                        data = {
-                            "status": true,
-                            "msg": "account active"
-                        }
-                        res.send(data);
-                        return;
-                    } else if (deviceStatus === Constants.DEVICE_SUSPENDED) {
-                        data = {
-                            "status": false,
-                            "msg": "account suspended"
-                        }
-                        res.send(data);
-                        return;
-                    } else if (deviceStatus === Constants.DEVICE_EXPIRED) {
-
-                        data = {
-                            "status": false,
-                            "msg": "account expired"
-                        }
-                        res.send(data);
-                        return;
-                    } else if (deviceStatus === Constants.DEVICE_UNLINKED) {
-                        data = {
-                            "status": true,
-                            "msg": "account unlinked"
-                        }
-                        res.send(data);
-                        return;
+                    const device = {
+                        // dId: dealer[0].dealer_id,
+                        // dealer_pin: dealer[0].link_code,
+                        // connected_dealer: dealer[0].connected_dealer,
+                        type: await helpers.getUserTypeByTypeId(dealer[0].type),
+                        device_id: device[0].device_id
                     }
+
+                    jwt.sign({
+                        device
+                    }, config.secret, {
+                        expiresIn: config.expiresIn
+                    }, (err, token) => {
+
+                        if (err) {
+                            res.json({
+                                'err': err
+                            });
+                            return;
+                        }
+                        //when devcie have no dealer id 
+                        if (deviceStatus === Constants.DEVICE_PENDING_ACTIVATION || deviceStatus === Constants.DEVICE_ACTIVATED || deviceStatus === Constants.DEVICE_UNLINKED) {
+                            data = {
+                                status: true,
+                                msg: deviceStatus,
+                                device_id: device[0].device_id,
+                                expiry_date: user_acc[0].expiry_date,
+                                token: token
+                            }
+                            res.send(data);
+                            return;
+                        } else if (deviceStatus === Constants.DEVICE_SUSPENDED || deviceStatus === Constants.DEVICE_EXPIRED) {
+                            data = {
+                                status: false,
+                                msg: deviceStatus,
+                                device_id: device[0].device_id,
+                                expiry_date: user_acc[0].expiry_date,
+                                token: token
+                            }
+                            res.send(data);
+                            return;
+                        }
+                    });
 
 
                 }
             } else {
+
                 data = {
                     "status": true,
-                    "msg": "account disabled"
+                    "msg": Constants.NEW_DEVICE,
                 }
                 res.send(data);
+
+                // data = {
+                //     "status": true,
+                //     "msg": "account disabled",
+                // }
+                // res.send(data);
             }
 
         } else {
             data = {
                 "status": true,
-                "msg": "new device"
+                "msg": Constants.NEW_DEVICE,
             }
             res.send(data);
         }

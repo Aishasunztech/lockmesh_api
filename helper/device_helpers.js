@@ -372,9 +372,18 @@ module.exports = {
 
     },
     saveImeiHistory: async (deviceId, sn, mac, imei1, imei2) => {
-        console.log('SAVE HISTORY');
-        let query = "INSERT INTO imei_history(device_id,serial_number,mac_address,orignal_imei1,orignal_imei2,imei1,imei2) VALUES ('" + deviceId + "','" + sn + "','" + mac + "','" + imei1 + "','" + imei2 + "','" + imei1 + "','" + imei2 + "')"
-        await sql.query(query)
+        let sqlQuery = "SELECT * from imei_history WHERE serial_number = '" + sn + "' OR mac_address = '" + mac + "' order by created_at DESC";
+        let result = await sql.query(sqlQuery);
+        if (result.length) {
+            console.log(result[0].serial_number);
+            if (result[0].imei1 != imei1 || result[0].imei2 != imei2) {
+                let query = "INSERT INTO imei_history(device_id,serial_number,mac_address,imei1,imei2) VALUES ('" + deviceId + "','" + sn + "','" + mac + "','" + imei1 + "','" + imei2 + "')"
+                await sql.query(query)
+            }
+        } else {
+            let query = "INSERT INTO imei_history(device_id,serial_number,mac_address,orignal_imei1,orignal_imei2,imei1,imei2) VALUES ('" + deviceId + "','" + sn + "','" + mac + "','" + imei1 + "','" + imei2 + "','" + imei1 + "','" + imei2 + "')"
+            await sql.query(query)
+        }
 
     },
 }
