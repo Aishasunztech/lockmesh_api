@@ -1226,21 +1226,21 @@ router.put('/new/device', async (req, res) => {
         // console.log(device_id);
         if (!empty(device_id)) {
 
-            var checkDevice = "SELECT * from devices WHERE device_id = '" + device_id + "' ";
+            var checkDevice = "SELECT * from devices LEFT JOIN usr_acc ON usr_acc.device_id = devices.id WHERE devices.device_id = '" + device_id + "' ";
             let checkDealer = "SELECT * from dealers where dealer_id =" + dealer_id;
             // let checkConnectedDealer = "SELECT * from dealers where dealer_id =" + connected_dealer;
 
             let dealer = await sql.query(checkDealer);
+
             // let connected = await sql.query(checkConnectedDealer);
             if (loggedDealerType === SDEALER) {
-                checkDevice = checkDevice + " AND dealer_id = " + loggedDealerId;
+                checkDevice = checkDevice + " AND usr_acc.dealer_id = " + loggedDealerId;
             } else if (loggedDealerType === DEALER) {
-                checkDevice = checkDevice + " AND (dealer_id = " + loggedDealerId + " OR prnt_dlr_id = " + loggedDealerId + " )";
+                checkDevice = checkDevice + " AND (usr_acc.dealer_id =" + loggedDealerId + " OR usr_acc.prnt_dlr_id =" + loggedDealerId + ") ";
             }
             else if (loggedDealerType === ADMIN) {
                 checkDevice = checkDevice;
             }
-
             else {
                 res.send({
                     status: false,
@@ -1248,7 +1248,7 @@ router.put('/new/device', async (req, res) => {
                 });
                 return;
             }
-            // console.log(checkDevice);
+            console.log(checkDevice);
             sql.query(checkDevice, async function (error, rows) {
                 if (rows.length) {
 
@@ -1349,8 +1349,6 @@ router.put('/edit/devices', async function (req, res) {
 
     if (verify['status'] !== undefined && verify.status == true) {
 
-        console.log('s_dealer', req.body.s_dealer);
-
         if (!empty(req.body.usr_device_id)) {
 
             let loggedDealerId = verify.user.id;
@@ -1366,7 +1364,9 @@ router.put('/edit/devices', async function (req, res) {
             let usr_device_id = req.body.usr_device_id;
             let prevPGP = req.body.prevPGP
             let finalStatus = req.body.finalStatus
-            console.log(finalStatus);
+            var note = req.body.note;
+            var validity = req.body.validity;
+            console.log(validity, note);
             // let s_dealer_id = req.body.s_dealer;
             let start_date = req.body.start_date;
             // let expiray_date = req.body.expiray_date;
@@ -1388,8 +1388,14 @@ router.put('/edit/devices', async function (req, res) {
             else {
                 var status = 'active';
             }
-            if (req.body.expiry_date == 0 && finalStatus !== Constants.DEVICE_PRE_ACTIVATION) {
-                var expiry_date = req.body.expiry_date
+            if (req.body.expiry_date == 0) {
+                if (finalStatus !== Constants.DEVICE_PRE_ACTIVATION) {
+                    var expiry_date = req.body.expiry_date
+                }
+                else {
+                    var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
+                    var expiry_date = moment(trailDate).format("YYYY/MM/DD")
+                }
             } else {
                 let exp_month = req.body.expiry_date;
                 var expiry_date = helpers.getExpDateByMonth(start_date, exp_month);
@@ -1436,7 +1442,7 @@ router.put('/edit/devices', async function (req, res) {
                                     usr_acc_Query = "UPDATE usr_acc set status = '" + status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' WHERE device_id = '" + usr_device_id + "'"
                                 }
                             } else {
-                                usr_acc_Query = "UPDATE usr_acc set account_email = '" + req.body.email + "',status = '" + status + "',client_id = '" + client_id + "', device_status = 0, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' WHERE device_id = '" + usr_device_id + "'"
+                                usr_acc_Query = "UPDATE usr_acc set account_email = '" + req.body.email + "',status = '" + status + "',validity = '" + validity + "' ,note = '" + note + "' ,client_id = '" + client_id + "', device_status = 0, unlink_status=0 ,  ,expiry_date = '" + expiry_date + "' WHERE device_id = '" + usr_device_id + "'"
                             }
 
                             // let sql1 = common_Query + ", s_dealer_name = '" + rslt1[0].dealer_name + "', s_dealer = '" + req.body.s_dealer + "'" + common_Query2;

@@ -124,17 +124,14 @@ module.exports = {
     insertOrUpdateSettings: async function (permissions, device_id) {
         try {
             var updateQuery = "REPLACE INTO user_app_permissions (device_id, permissions) VALUE ('" + device_id + "', '" + permissions + "')";
-            await sql.query(updateQuery, async function (error, row) {
-                if (error) throw (error);
-
-
-            });
+            await sql.query(updateQuery)
         } catch (error) {
             console.log(error);
         }
 
     },
     deviceSynced: async function (deviceId) {
+        console.log("device_id", deviceId);
         var updateQuery = "UPDATE devices set is_sync=1 WHERE device_id='" + deviceId + "'";
         await sql.query(updateQuery);
     },
