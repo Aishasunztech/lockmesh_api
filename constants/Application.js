@@ -7,7 +7,7 @@ module.exports = {
     DEVICE: 'device',
     SOCKET: 'socket',
     TOKEN: "token",
-    
+
     // dealers
     DEALER_ACTIVE: "active",
     DEALER_SUSPENDED: "suspended",
@@ -25,6 +25,7 @@ module.exports = {
     DEVICE_FLAGGED: "Flagged",
     DEVICE_UNFLAGGED: "Unflagged",
     DEVICE_ACCEPT: "Accept Device",
+    NEW_DEVICE: "new device",
 
     // sockets
     GET_SYNC_STATUS: "get_sync_status_",
