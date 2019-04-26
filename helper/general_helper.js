@@ -10,6 +10,7 @@ let usr_acc_query_text = "usr_acc.id,usr_acc.device_id as usr_device_id,usr_acc.
 const device_helpers = require('./device_helpers');
 var util = require('util')
 var ApkReader = require('node-apk-parser')
+var md5 = require('md5');
 
 
 module.exports = {
@@ -239,7 +240,8 @@ module.exports = {
 					}
 				}
 			}
-			var deviceId = str + num;
+			var deviceId = str.toUpperCase() + num;
+
 			return deviceId;
 		}
 		// const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
