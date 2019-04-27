@@ -352,20 +352,22 @@ router.get('/devices', async function (req, res) {
         if (verify.user.user_type !== 'admin') {
             if (verify.user.user_type === 'dealer') {
                 where_con = 'AND (usr_acc.dealer_id =' + verify.user.id + ' OR usr_acc.prnt_dlr_id =' + verify.user.id + ')';
-                let query = "SELECT * From acc_action_history WHERE action = 'UNLINK' AND dealer_id = '" + verify.user.id + "' AND del_status IS NULL";
-                console.log(query);
+                let query = "SELECT * From acc_action_history WHERE action = 'UNLINKED' AND dealer_id = '" + verify.user.id + "' AND del_status IS NULL";
                 newArray = await sql.query(query)
             } else {
                 where_con = 'AND usr_acc.dealer_id = ' + verify.user.id + ' ';
-                let query = "SELECT * From acc_action_history WHERE action = 'UNLINK' AND dealer_id = '" + verify.user.id + "' AND del_status IS NULL";
-                console.log(query);
+                let query = "SELECT * From acc_action_history WHERE action = 'UNLINKED' AND dealer_id = '" + verify.user.id + "' AND del_status IS NULL";
                 newArray = await sql.query(query)
             }
+        } else {
+            let query = "SELECT * From acc_action_history WHERE action = 'UNLINKED'";
+            newArray = await sql.query(query)
         }
 
         // console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 ' + where_con + ' order by devices.id DESC');
         // sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id where usr_acc.transfer_status = 0 ' + where_con + ' order by devices.id DESC', function (error, results, fields) {
-        sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 ' + where_con + ' order by devices.id DESC', async function (error, results, fields) {
+
+        sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 ' + where_con + ' order by devices.id DESC', async function (error, results, fields) {
 
             if (error) throw error;
             for (var i = 0; i < results.length; i++) {
@@ -1666,7 +1668,6 @@ router.post('/unlink/:id', async function (req, res) {
             if (result[0].activation_code !== null) {
                 var sql1 = "update usr_acc set dealer_id = null, activation_status=null, status = '' , device_status = 0 , start_date= '', expiry_date= '' , unlink_status=1 where device_id = '" + device_id + "'";
             } else {
-
                 var sql1 = "update usr_acc set dealer_id = null, status = '' , device_status = 0 , start_date= '', expiry_date= '' , unlink_status=1 where device_id = '" + device_id + "'";
             }
 
@@ -1679,7 +1680,11 @@ router.post('/unlink/:id', async function (req, res) {
                         "msg": "Device not unlinked."
                     }
                 } else {
-                    var sqlDevice = "update devices set is_sync = 0 where id = '" + device_id + "'";
+                    var userAccId = await device_helpers.getUsrAccIDbyDvcId(device_id)
+                    await sql.query("update pgp_emails set user_acc_id = null WHERE user_acc_id = '" + userAccId + "'");
+                    await sql.query("update chat_ids set user_acc_id = null WHERE user_acc_id = '" + userAccId + "'");
+                    await sql.query("update sim_ids set user_acc_id = null WHERE user_acc_id = '" + userAccId + "'");
+                    var sqlDevice = "update devices set serial_number = null,mac_address = null, is_sync = 0 where id = '" + device_id + "'";
                     await sql.query(sqlDevice);
 
                     device_helpers.saveActionHistory(req.body.device, Constants.DEVICE_UNLINKED)
