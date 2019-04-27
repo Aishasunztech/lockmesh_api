@@ -168,9 +168,9 @@ router.post('/login', async function (req, resp) {
                     } else {
 
                         let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = device_helpers.getDeviceInfo(req);
-                        if(!empty(mac_address) || !empty(serial_number)){
+                        if (!empty(mac_address) || !empty(serial_number)) {
                             // console.log("this is info ", { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address });
-                            let chechedDeviceId = helpers.getDeviceId(serial_number, mac_address)
+                            let chechedDeviceId = await helpers.getDeviceId(serial_number, mac_address)
                             // let chechedDeviceId = checkDeviceId(NewDeviceId, serial_number, mac_address)
                             if (usrAcc[0].expiry_months == 0) {
                                 var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
@@ -191,25 +191,25 @@ router.post('/login', async function (req, resp) {
                                 'type': await helpers.getUserTypeByTypeId(dealer[0].type),
                                 'device_id': device_id
                             }
-    
+
                             jwt.sign({
                                 device
                             }, config.secret, {
-                                expiresIn: config.expiresIn
-                            }, (err, token) => {
-                                if (err) {
-                                    resp.json({
-                                        'err': err
-                                    });
-                                } else {
-    
-                                    resp.json({
-                                        token: token,
-                                        'status': true,
-                                        'data': device,
-                                    });
-                                }
-                            });
+                                    expiresIn: config.expiresIn
+                                }, (err, token) => {
+                                    if (err) {
+                                        resp.json({
+                                            'err': err
+                                        });
+                                    } else {
+
+                                        resp.json({
+                                            token: token,
+                                            'status': true,
+                                            'data': device,
+                                        });
+                                    }
+                                });
                         } else {
                             data = {
                                 status: false,
@@ -344,44 +344,44 @@ router.post('/linkdevice', async function (req, resp) {
         let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = device_helpers.getDeviceInfo(req);
         console.log("serial no", serial_number);
         console.log("mac address", mac_address);
-        if(!empty(serial_number) && !empty(mac_address)){
+        if (!empty(serial_number) && !empty(mac_address)) {
 
             var deviceQ = "SELECT * FROM devices WHERE  mac_address='" + mac_address + "' OR serial_number='" + serial_number + "'";
             var device = await sql.query(deviceQ);
-            
+
             // console.log("device query", device);
             // console.log("link device dealer id", dId);
             var dealerQ = "select * from dealers where dealer_id = " + dId;
             let dealer = await sql.query(dealerQ);
             // console.log("dealer query", dealer)
             // res2 = dealer
-    
+
             if (dealer.length) {
-    
+
                 sendEmail("New Device Request", "You have a new device request", dealer[0].dealer_email, function (error, response) {
                     if (error) throw error;
                 });
                 // let dealerStatus = helpers.getDealerStatus(dealer[0]);
-    
+
                 if (device.length > 0) {
                     var user_acc = await device_helpers.getUserAccByDvcId(device[0].id);
                     if (user_acc) {
                         let deviceStatus = device_helpers.checkStatus(user_acc);
                         if (deviceStatus == Constants.DEVICE_UNLINKED) {
-    
+
                             var link_acc = "";
                             var updateDviceQ = "UPDATE devices set ip_address = '" + ip + "', simno = '" + simNo1 + "', online = 'On' , simno2 = '" + simNo2 + "', reject_status=0  where id=" + device[0].id;
                             // , unlink_status = 0
                             // console.log(updateDviceQ);
                             var updateDevice = await sql.query(updateDviceQ);
-    
+
                             var link_acc = "update usr_acc set link_code='" + dealer[0].link_code + "', dealer_id = '" + dId + "', prnt_dlr_id=" + connected_dealer + ", unlink_status = 0 where device_id = " + device[0].id;
                             // console.log(link_acc);
                             sql.query(link_acc, function (error, rows) {
                                 //response.end(JSON.stringify(rows));
                                 if (error) throw error;
                                 device_helpers.saveImeiHistory(deviceId, serial_number, mac_address, imei1, imei2)
-    
+
                                 resp.json({
                                     "status": true,
                                     "msg": "Device linked."
@@ -393,23 +393,23 @@ router.post('/linkdevice', async function (req, resp) {
                                 "msg": "Device already linked"
                             });
                         }
-    
+
                     } else {
                         var link_acc = "INSERT INTO usr_acc  (device_id, link_code, dealer_id, prnt_dlr_id, unlink_status) value (" + device.id + ", " + dealer[0].link_code + ", '" + dId + "'," + connected_dealer + ", 0) ";
-    
+
                         sql.query(link_acc, function (error, rows) {
                             //response.end(JSON.stringify(rows));
                             if (error) throw error;
-    
+
                             resp.json({
                                 "status": true,
                                 "msg": "Device linked."
                             });
                         });
                     }
-    
+
                 } else {
-                    var deviceId = helpers.getDeviceId(serial_number, mac_address);
+                    var deviceId = await helpers.getDeviceId(serial_number, mac_address);
                     // var deviceId = await checkDeviceId(device_id, serial_number, mac_address);
 
                     let insertDevice = "INSERT INTO devices (device_id, imei, imei2, ip_address, simno, simno2, serial_number, mac_address, online) values(?,?,?,?,?,?,?,?,?)";
@@ -423,29 +423,29 @@ router.post('/linkdevice', async function (req, resp) {
                         let values;
                         // console.log("dealer", dealer[0].dealer_id);
                         if (connected_dealer !== 0) {
-    
+
                             insertUserAcc = "INSERT INTO usr_acc (device_id, dealer_id, link_code, prnt_dlr_id) values(?,?,?,?)";
                             values = [dvc_id, dealer[0].dealer_id, dealer[0].link_code, connected_dealer];
                         } else {
                             insertUserAcc = "INSERT INTO usr_acc (device_id, dealer_id, link_code) values(?,?,?,?)";
                             values = [dvc_id, dealer[0].dealer_id, dealer[0].link_code];
                         }
-    
+
                         sql.query(insertUserAcc, values, function (error, rows) {
                             if (error) throw error;
                             device_helpers.saveImeiHistory(deviceId, serial_number, mac_address, imei1, imei2)
                             resp.json({
                                 "status": true,
                                 "data": rows
-    
+
                             });
-    
+
                         });
-    
+
                     });
-    
+
                 }
-    
+
             } else {
                 resp.send({
                     status: false,
@@ -955,9 +955,10 @@ router.post('/accountstatus', async function (req, res) {
             }
 
         } else {
+            console.log(Constants.NEW_DEVICE)
             data = {
-                "status": true,
-                "msg": Constants.NEW_DEVICE,
+                status: true,
+                msg: Constants.NEW_DEVICE,
             }
             res.send(data);
         }
