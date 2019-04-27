@@ -1661,15 +1661,8 @@ router.post('/unlink/:id', async function (req, res) {
         console.log('unlinked: ', dvcId);
 
         if (!empty(device_id)) {
-            let query = "SELECT activation_code from usr_acc where device_id = '" + device_id + "'";
-            let result = await sql.query(query);
 
-            if (result[0].activation_code !== null) {
-                var sql1 = "update usr_acc set dealer_id = null, activation_status=null, status = '' , device_status = 0 , start_date= '', expiry_date= '' , unlink_status=1 where device_id = '" + device_id + "'";
-            } else {
-                var sql1 = "update usr_acc set dealer_id = null, status = '' , device_status = 0 , start_date= '', expiry_date= '' , unlink_status=1 where device_id = '" + device_id + "'";
-            }
-
+            var sql1 = "DELETE from usr_acc  where device_id = '" + device_id + "'";
             var rest = sql.query(sql1, async function (error, results) {
                 if (error) throw error;
                 console.log(results);
@@ -1683,7 +1676,7 @@ router.post('/unlink/:id', async function (req, res) {
                     await sql.query("update pgp_emails set user_acc_id = null WHERE user_acc_id = '" + userAccId + "'");
                     await sql.query("update chat_ids set user_acc_id = null WHERE user_acc_id = '" + userAccId + "'");
                     await sql.query("update sim_ids set user_acc_id = null WHERE user_acc_id = '" + userAccId + "'");
-                    var sqlDevice = "update devices set serial_number = null,mac_address = null, is_sync = 0 where id = '" + device_id + "'";
+                    var sqlDevice = "DELETE from devices where id = '" + device_id + "'";
                     await sql.query(sqlDevice);
 
                     device_helpers.saveActionHistory(req.body.device, Constants.DEVICE_UNLINKED)
