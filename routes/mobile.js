@@ -83,8 +83,12 @@ router.post('/login', async function (req, resp) {
     var linkCode = req.body.link_code;
     var mac_address = req.body.macAddr;
     var serial_number = req.body.serialNo
+    var dateNow = new Date()
+    var start_date = moment(dateNow).format("YYYY/MM/DD")
+
     // console.log("mac_address", mac_address);
     // console.log("serial_number", serial_number);
+
     var data;
     //console.log(linkCode);
     if (linkCode !== undefined && linkCode !== null) {
@@ -179,8 +183,9 @@ router.post('/login', async function (req, resp) {
                                 var expiry_date = helpers.getExpDateByMonth(new Date(), usrAcc[0].expiry_months);
                             }
                             var updateDevice = "UPDATE devices set device_id = '" + chechedDeviceId + "', ip_address = '" + ip + "', simno = '" + simNo1 + "', online = 'On', imei='" + imei1 + "', imei2='" + imei2 + "', serial_number='" + serial_number + "', mac_address='" + mac_address + "', simno2 = '" + simNo2 + "' where id='" + usrAcc[0].device_id + "'";
-                            var updateAccount = "UPDATE usr_acc set activation_status=1, status='active', expiry_date='" + expiry_date + "', device_status=1, unlink_status = 0 WHERE id = " + usrAcc[0].id;
+                            var updateAccount = "UPDATE usr_acc set activation_status=1, status='active', expiry_date='" + expiry_date + "',  start_date='" + start_date + "',device_status=1, unlink_status = 0 WHERE id = " + usrAcc[0].id;
                             await sql.query(updateDevice);
+                            console.log(updateAccount)
                             await sql.query(updateAccount);
                             let device_id = await device_helpers.getDvcIDByDeviceID(usrAcc[0].device_id)
 
@@ -232,9 +237,10 @@ router.post('/login', async function (req, resp) {
         var deviceQ = "SELECT * FROM devices WHERE mac_address = '" + mac_address + "' OR serial_number='" + serial_number + "'";
         var device = await sql.query(deviceQ);
         if (device.length == 0) {
+            console.log("hello", "login")
             data = {
                 'status': false,
-                'msg': 'Invalid Device'
+                'msg': 'unlinked'
             }
             resp.send(data);
         } else {
@@ -314,7 +320,7 @@ router.post('/login', async function (req, resp) {
     } else {
         data = {
             'status': false,
-            'msg': 'Device not linked'
+            'msg': 'information not provided'
         }
         resp.send(data);
     }
