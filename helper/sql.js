@@ -11,7 +11,7 @@ const sqlPool = mysql.createPool({
     user: 'root',
     // password: 'DAtabase$435$',
     password: '',
-    database: 'sunztech_db',
+    database: 'lockmesh_db',
     supportBigNumbers: true,
     bigNumberStrings: true,
     dateStrings: true
