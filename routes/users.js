@@ -2557,45 +2557,7 @@ router.get('/connect/:device_id', async function (req, res) {
                 } else {
                     var query = "select * from dealers where dealer_id =" + results[0].dealer_id;
                     let dealer_details = await sql.query(query);
-                    device_data = {
-                        "name": results[0].name,
-                        "account_email": results[0].account_email,
-                        "device_id": results[0].device_id,
-                        "client_id": results[0].client_id,
-                        // "pgp_email": results[0].pgp_email,
-                        // "chat_id": results[0].chat_id,
-                        "simno2": results[0].simno2,
-                        "imei2": results[0].imei2,
-                        "dealer_id": results[0].dealer_id,
-                        "model": results[0].model,
-                        "imei": results[0].imei,
-                        "mac_address": results[0].mac_address,
-                        // "sim_id": results[0].sim_id,
-                        "simno": results[0].simno,
-                        "serial_number": results[0].serial_number,
-                        "ip_address": results[0].ip_address,
-                        "s_dealer": results[0].s_dealer,
-                        "s_dealer_name": results[0].s_dealer_name,
-                        "status": results[0].status,
-                        "account_status": results[0].account_status,
-                        "device_status": results[0].device_status,
-                        "activation_status": results[0].activation_status,
-                        "activation_code": results[0].activation_code,
-                        "serial_number": results[0].serial_number,
-                        "online": results[0].online,
-                        "device_name": results[0].name,
-                        // "start_date": datetime.create(results[0].start_date).format('m-d-Y'),
-                        // "expiry_date": datetime.create(results[0].expiry_date).format('m-d-Y'),
-                        "start_date": results[0].start_date,
-                        "expiry_date": results[0].expiry_date,
-                        "online": results[0].online,
-                        "is_sync": results[0].is_sync,
-                        "flagged": results[0].flagged,
-                        'unlink_status': results[0].unlink_status,
-                        'usr_device_id': results[0].usr_device_id,
-                        'created_at': results[0].created_at,
-                        'id': results[0].id
-                    };
+                    device_data = results[0]
                     device_data.finalStatus = device_helpers.checkStatus(results[0]);
                     device_data.pgp_email = await device_helpers.getPgpEmails(results[0]);
                     device_data.sim_id = await device_helpers.getSimids(results[0]);

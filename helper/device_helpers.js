@@ -295,7 +295,7 @@ module.exports = {
 
     },
     getPgpEmails: async (result) => {
-        let query = "SELECT pgp_email FROM pgp_emails WHERE user_acc_id = '" + result.id + "' AND used = 0"
+        let query = "SELECT pgp_email FROM pgp_emails WHERE user_acc_id = '" + result.id + "' AND used = 1"
         let results = await sql.query(query);
         if (results.length) {
             return results[0].pgp_email
@@ -305,7 +305,7 @@ module.exports = {
         }
     },
     getSimids: async (result) => {
-        let query = "SELECT sim_id FROM sim_ids WHERE user_acc_id = '" + result.id + "' AND used = 0"
+        let query = "SELECT sim_id FROM sim_ids WHERE user_acc_id = '" + result.id + "' AND used = 1"
         let results = await sql.query(query);
         if (results.length) {
             return results[0].sim_id
@@ -314,7 +314,7 @@ module.exports = {
         }
     },
     getChatids: async (result) => {
-        let query = "SELECT chat_id FROM chat_ids WHERE user_acc_id = '" + result.id + "' AND used = 0"
+        let query = "SELECT chat_id FROM chat_ids WHERE user_acc_id = '" + result.id + "' AND used = 1"
         let results = await sql.query(query);
         if (results.length) {
             return results[0].chat_id
