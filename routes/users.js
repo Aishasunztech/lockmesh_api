@@ -365,7 +365,7 @@ router.get('/devices', async function (req, res) {
 
         // console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 ' + where_con + ' order by devices.id DESC');
         // sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id where usr_acc.transfer_status = 0 ' + where_con + ' order by devices.id DESC', function (error, results, fields) {
-
+        // console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 ' + where_con + ' order by devices.id DESC');
         sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 ' + where_con + ' order by devices.id DESC', async function (error, results, fields) {
 
             if (error) throw error;
@@ -2870,11 +2870,9 @@ router.put('/deleteUnlinkDevice', async function (req, res) {
             let deletedDevices = [];
             let action = req.body.action
             // console.log(action);
-            //  console.log('data for delte ', req.body.devices);
+            // console.log('data for delte ', req.body.devices);
             for (let device of req.body.devices) {
-                let device_id = await device_helpers.getIDByStringDeviceID(device.device_id)
-                // let user_acc_id = await device_helpers.getUsrAccIDbyDvcId(device_id)
-                let statusChangeQuery = "UPDATE usr_acc SET del_status='" + 1 + "' WHERE device_id='" + device_id + "'";
+                let statusChangeQuery = "UPDATE usr_acc SET del_status='" + 1 + "' WHERE device_id='" + device.usr_device_id + "'";
                 // console.log(statusChangeQuery);
                 let resp = await sql.query(statusChangeQuery)
                 // console.log('response query is', resp);
@@ -2884,9 +2882,9 @@ router.put('/deleteUnlinkDevice', async function (req, res) {
                         await sql.query("UPDATE chat_ids set user_acc_id = null , used = 0 where chat_id ='" + device.chat_id + "'")
                         await sql.query("UPDATE sim_ids set user_acc_id = null , used = 0 where sim_id ='" + device.sim_id + "'")
                     }
-                    deletedDevices.push(device_id);
+                    deletedDevices.push(device.usr_device_id);
                     // console.log('status Updated');
-                    let deleteHistoryQuery = "UPDATE acc_action_history SET del_status='1' WHERE device_id='" + device.device_id + "' AND dealer_id = '" + verify.user.id + "' AND (action = 'UNLINK' OR action = 'PRE-ACTIVATED')";
+                    let deleteHistoryQuery = "UPDATE acc_action_history SET del_status='1' WHERE user_acc_id='" + device.id + "' AND dealer_id = '" + verify.user.id + "' AND (action = 'UNLINK' OR action = 'PRE-ACTIVATED')";
                     // console.log(deleteHistoryQuery);
                     await sql.query(deleteHistoryQuery)
                     // await device_helpers.saveActionHistory(device, Constants.UNLINK_DEVICE_DELETE);
@@ -2894,7 +2892,7 @@ router.put('/deleteUnlinkDevice', async function (req, res) {
                 }
                 else {
                     insertError += 1;
-                    NotDeleted.push(device.device_id)
+                    NotDeleted.push(device.usr_device_id)
                 }
             }
             if (insertError === 0) {
