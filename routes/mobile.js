@@ -814,7 +814,7 @@ router.post('/accountstatus', async function (req, res) {
                     // reslts2 
                     if (dealer.length > 0) {
 
-                        const device = {
+                        const dvc = {
                             dId: dealer[0].dealer_id,
                             dealer_pin: dealer[0].link_code,
                             connected_dealer: dealer[0].connected_dealer,
@@ -823,68 +823,68 @@ router.post('/accountstatus', async function (req, res) {
                         }
 
                         jwt.sign({
-                            device
+                            dvc
                         }, config.secret, {
-                            expiresIn: config.expiresIn
-                        }, (err, token) => {
+                                expiresIn: config.expiresIn
+                            }, (err, token) => {
 
-                            if (err) {
-                                res.json({
-                                    'err': err
-                                });
-                                return;
-                            }
-
-                            let dealerStatus = helpers.getDealerStatus(dealer[0]);
-
-                            if (dealerStatus === Constants.DEALER_SUSPENDED) {
-                                data = {
-                                    status: false,
-                                    msg: "Dealer Suspended. Contact Admin.",
-                                    status_msg: dealerStatus,
-                                    device_id: device[0].device_id,
-                                    expiry_date: user_acc[0].expiry_date,
-                                    token: token
-                                }
-                                res.send(data);
-                                return;
-                            } else if (dealerStatus == Constants.DEALER_UNLINKED) {
-                                data = {
-                                    status: false,
-                                    msg: "Dealer Not found. Contact Admin.",
-                                    status_msg: dealerStatus,
-                                    device_id: device[0].device_id,
-                                    expiry_date: user_acc[0].expiry_date,
-                                    token: token
-                                }
-                                res.send(data);
-                                return;
-                            } else {
-                                // if (reslts[0].device_status == 0 && (reslts[0].status == '' || reslts[0].status == null) && (reslts[0].account_status == '' || reslts[0].account_status == null)) {
-                                if (deviceStatus === Constants.DEVICE_PENDING_ACTIVATION || deviceStatus === Constants.DEVICE_ACTIVATED || deviceStatus === Constants.DEVICE_UNLINKED) {
-                                    data = {
-                                        status: true,
-                                        msg: deviceStatus,
-                                        device_id: device[0].device_id,
-                                        expiry_date: user_acc[0].expiry_date,
-                                        token: token
-                                    }
-                                    res.send(data);
+                                if (err) {
+                                    res.json({
+                                        'err': err
+                                    });
                                     return;
-                                } else if (deviceStatus === Constants.DEVICE_SUSPENDED || deviceStatus === Constants.DEVICE_EXPIRED) {
+                                }
+
+                                let dealerStatus = helpers.getDealerStatus(dealer[0]);
+
+                                if (dealerStatus === Constants.DEALER_SUSPENDED) {
                                     data = {
                                         status: false,
-                                        msg: deviceStatus,
+                                        msg: "Dealer Suspended. Contact Admin.",
+                                        status_msg: dealerStatus,
                                         device_id: device[0].device_id,
                                         expiry_date: user_acc[0].expiry_date,
                                         token: token
                                     }
                                     res.send(data);
                                     return;
+                                } else if (dealerStatus == Constants.DEALER_UNLINKED) {
+                                    data = {
+                                        status: false,
+                                        msg: "Dealer Not found. Contact Admin.",
+                                        status_msg: dealerStatus,
+                                        device_id: device[0].device_id,
+                                        expiry_date: user_acc[0].expiry_date,
+                                        token: token
+                                    }
+                                    res.send(data);
+                                    return;
+                                } else {
+                                    // if (reslts[0].device_status == 0 && (reslts[0].status == '' || reslts[0].status == null) && (reslts[0].account_status == '' || reslts[0].account_status == null)) {
+                                    if (deviceStatus === Constants.DEVICE_PENDING_ACTIVATION || deviceStatus === Constants.DEVICE_ACTIVATED || deviceStatus === Constants.DEVICE_TRIAL || deviceStatus === Constants.DEVICE_UNLINKED) {
+                                        data = {
+                                            status: true,
+                                            msg: deviceStatus,
+                                            device_id: device[0].device_id,
+                                            expiry_date: user_acc[0].expiry_date,
+                                            token: token
+                                        }
+                                        res.send(data);
+                                        return;
+                                    } else if (deviceStatus === Constants.DEVICE_SUSPENDED || deviceStatus === Constants.DEVICE_EXPIRED) {
+                                        data = {
+                                            status: false,
+                                            msg: deviceStatus,
+                                            device_id: device[0].device_id,
+                                            expiry_date: user_acc[0].expiry_date,
+                                            token: token
+                                        }
+                                        res.send(data);
+                                        return;
+                                    }
                                 }
-                            }
 
-                        });
+                            });
 
 
                     } else {
@@ -898,49 +898,49 @@ router.post('/accountstatus', async function (req, res) {
                         return;
                     }
                 } else {
-                    const device = {
+                    const dvc = {
                         // dId: dealer[0].dealer_id,
                         // dealer_pin: dealer[0].link_code,
                         // connected_dealer: dealer[0].connected_dealer,
-                        type: await helpers.getUserTypeByTypeId(dealer[0].type),
+                        // type: await helpers.getUserTypeByTypeId(dealer[0].type),
                         device_id: device[0].device_id
                     }
 
                     jwt.sign({
-                        device
+                        dvc
                     }, config.secret, {
-                        expiresIn: config.expiresIn
-                    }, (err, token) => {
+                            expiresIn: config.expiresIn
+                        }, (err, token) => {
 
-                        if (err) {
-                            res.json({
-                                'err': err
-                            });
-                            return;
-                        }
-                        //when devcie have no dealer id 
-                        if (deviceStatus === Constants.DEVICE_PENDING_ACTIVATION || deviceStatus === Constants.DEVICE_ACTIVATED || deviceStatus === Constants.DEVICE_UNLINKED) {
-                            data = {
-                                status: true,
-                                msg: deviceStatus,
-                                device_id: device[0].device_id,
-                                expiry_date: user_acc[0].expiry_date,
-                                token: token
+                            if (err) {
+                                res.json({
+                                    'err': err
+                                });
+                                return;
                             }
-                            res.send(data);
-                            return;
-                        } else if (deviceStatus === Constants.DEVICE_SUSPENDED || deviceStatus === Constants.DEVICE_EXPIRED) {
-                            data = {
-                                status: false,
-                                msg: deviceStatus,
-                                device_id: device[0].device_id,
-                                expiry_date: user_acc[0].expiry_date,
-                                token: token
+                            //when devcie have no dealer id 
+                            if (deviceStatus === Constants.DEVICE_PENDING_ACTIVATION || deviceStatus === Constants.DEVICE_ACTIVATED || deviceStatus === Constants.DEVICE_TRIAL || deviceStatus === Constants.DEVICE_UNLINKED) {
+                                data = {
+                                    status: true,
+                                    msg: deviceStatus,
+                                    device_id: device[0].device_id,
+                                    expiry_date: user_acc[0].expiry_date,
+                                    token: token
+                                }
+                                res.send(data);
+                                return;
+                            } else if (deviceStatus === Constants.DEVICE_SUSPENDED || deviceStatus === Constants.DEVICE_EXPIRED) {
+                                data = {
+                                    status: false,
+                                    msg: deviceStatus,
+                                    device_id: device[0].device_id,
+                                    expiry_date: user_acc[0].expiry_date,
+                                    token: token
+                                }
+                                res.send(data);
+                                return;
                             }
-                            res.send(data);
-                            return;
-                        }
-                    });
+                        });
 
 
                 }

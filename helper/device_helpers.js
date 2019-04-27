@@ -124,17 +124,14 @@ module.exports = {
     insertOrUpdateSettings: async function (permissions, device_id) {
         try {
             var updateQuery = "REPLACE INTO user_app_permissions (device_id, permissions) VALUE ('" + device_id + "', '" + permissions + "')";
-            await sql.query(updateQuery, async function (error, row) {
-                if (error) throw (error);
-
-
-            });
+            await sql.query(updateQuery)
         } catch (error) {
             console.log(error);
         }
 
     },
     deviceSynced: async function (deviceId) {
+        console.log("device_id", deviceId);
         var updateQuery = "UPDATE devices set is_sync=1 WHERE device_id='" + deviceId + "'";
         await sql.query(updateQuery);
     },
@@ -298,7 +295,7 @@ module.exports = {
 
     },
     getPgpEmails: async (result) => {
-        let query = "SELECT pgp_email FROM pgp_emails WHERE user_acc_id = '" + result.id + "'"
+        let query = "SELECT pgp_email FROM pgp_emails WHERE user_acc_id = '" + result.id + "' AND used = 1"
         let results = await sql.query(query);
         if (results.length) {
             return results[0].pgp_email
@@ -308,7 +305,7 @@ module.exports = {
         }
     },
     getSimids: async (result) => {
-        let query = "SELECT sim_id FROM sim_ids WHERE user_acc_id = '" + result.id + "'"
+        let query = "SELECT sim_id FROM sim_ids WHERE user_acc_id = '" + result.id + "' AND used = 1"
         let results = await sql.query(query);
         if (results.length) {
             return results[0].sim_id
@@ -317,7 +314,7 @@ module.exports = {
         }
     },
     getChatids: async (result) => {
-        let query = "SELECT chat_id FROM chat_ids WHERE user_acc_id = '" + result.id + "'"
+        let query = "SELECT chat_id FROM chat_ids WHERE user_acc_id = '" + result.id + "' AND used = 1"
         let results = await sql.query(query);
         if (results.length) {
             return results[0].chat_id
