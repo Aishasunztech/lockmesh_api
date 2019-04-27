@@ -383,4 +383,21 @@ module.exports = {
         }
 
     },
+    getDeviceInfo: (req) => {
+        var imei = req.body.imei;
+        var ip = req.body.ip;
+        var simNo = req.body.simNo;
+        var serial_number = req.body.serialNo;
+        var mac_address = req.body.macAddr;
+    
+        //geting imei's
+        var imei1 = imei[0] ? imei[0] : null;
+        var imei2 = imei[1] ? imei[1] : null;
+    
+        var simNo1 = simNo[0] ? simNo[0] : null;
+        var simNo2 = simNo[1] ? simNo[1] : null;
+        return {
+            imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address
+        }
+    }
 }
