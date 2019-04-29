@@ -2706,7 +2706,8 @@ router.get('/get_app_permissions', async function (req, res) {
                                 encrypted: item.encrypted,
                                 id: item.id,
                                 device_id: item.device_id,
-                                app_id: item.id
+                                app_id: item.id,
+                                default_app: item.default_app
                             });
                         }
 
@@ -2747,7 +2748,7 @@ router.get('/get_apps/:device_id', async function (req, res) {
             // var query = 'SELECT user_apps.*, apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon from user_apps LEFT JOIN apps_info on user_apps.app_id = apps_info.id LEFT JOIN devices on user_apps.device_id=devices.id where devices.device_id ="' + req.params.device_id + '"';
             // console.log(query);
             var getAppsQ = "SELECT user_apps.id, user_apps.device_id, user_apps.app_id, user_apps.guest, user_apps.encrypted, user_apps.`enable`, " +
-                " apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon , apps_info.extension, apps_info.extension_id" +
+                " apps_info.label,apps_info.default_app,apps_info.visible, apps_info.unique_name as uniqueName, apps_info.icon as icon , apps_info.extension, apps_info.extension_id" +
                 " FROM user_apps" +
                 " LEFT JOIN apps_info on user_apps.app_id = apps_info.id" +
                 " LEFT JOIN devices on user_apps.device_id=devices.id" +
@@ -2761,6 +2762,7 @@ router.get('/get_apps/:device_id', async function (req, res) {
                     // console.log('app list is ', apps);
                     let Extension = [];
                     let onlyApps = [];
+                    let settings = [];
                     for (let item of apps) {
                         let subExtension = [];
                         // console.log("extenstion id", item.extension_id);
@@ -2775,7 +2777,7 @@ router.get('/get_apps/:device_id', async function (req, res) {
                         let subExtension = [];
 
                         for (let item of apps) {
-                            // console.log(ext.app_id, item.extension_id);
+                             console.log(ext.app_id,' ', item.visible);
                             if (ext.app_id === item.extension_id) {
                                 subExtension.push({
                                     uniqueName: ext.uniqueName,
@@ -2786,12 +2788,18 @@ router.get('/get_apps/:device_id', async function (req, res) {
                                     encrypted: item.encrypted,
                                     id: item.id,
                                     device_id: item.device_id,
-                                    app_id: item.app_id
+                                    app_id: item.app_id,
+                                    default_app: item.default_app
                                 });
                             }
                             else if (item.extension == 0 || item.visible == 1) {
                                 onlyApps.push(item)
                             }
+                             if(item.visible == 0){
+
+                                settings.push(item)
+                            }
+                            
                         }
 
                         newExtlist.push({
@@ -2814,11 +2822,12 @@ router.get('/get_apps/:device_id', async function (req, res) {
                         }
                         if (controls.length > 0) {
                             // console.log("geting device app");
-
+                           let cntrls = JSON.parse(controls[0].permissions);
+                        //    consrols.push(settings);
                             res.send({
                                 status: true,
                                 app_list: onlyApps,
-                                controls: JSON.parse(controls[0].permissions),
+                                controls: {controls: cntrls, settings: settings},
                                 extensions: newExtlist
                             });
 
