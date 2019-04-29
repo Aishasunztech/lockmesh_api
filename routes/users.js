@@ -2817,13 +2817,13 @@ router.get('/get_apps/:device_id', async function (req, res) {
                     // console.log("apps length" + apps.length);
                     var query1 = 'SELECT * from user_app_permissions where device_id ="' + req.params.device_id + '" limit 1';
                     // 
-
+console.log('query is ', query1)
                     sql.query(query1, async (error, controls) => {
                         if (error) {
                             throw Error("Query Expection");
                         }
                         if (controls.length > 0) {
-                            // console.log("geting device app");
+                             console.log("geting device app", controls);
                            let cntrls = JSON.parse(controls[0].permissions);
                         //    consrols.push(settings);
                             res.send({
