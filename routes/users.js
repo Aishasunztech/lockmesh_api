@@ -2883,32 +2883,44 @@ router.put('/deleteUnlinkDevice', async function (req, res) {
             let NotDeleted = [];
             let deletedDevices = [];
             let action = req.body.action
-            // console.log(action);
+             console.log(req.body.devices, 'devicess sdf sd');
             // console.log('data for delte ', req.body.devices);
             for (let device of req.body.devices) {
-                let statusChangeQuery = "UPDATE usr_acc SET del_status='" + 1 + "' WHERE device_id='" + device.usr_device_id + "'";
-                // console.log(statusChangeQuery);
-                let resp = await sql.query(statusChangeQuery)
-                // console.log('response query is', resp);
-                if (resp.affectedRows) {
-                    if (action == 'pre-active') {
-                        await sql.query("UPDATE pgp_emails set user_acc_id = null , used = 0 where pgp_email ='" + device.pgp_email + "'")
-                        await sql.query("UPDATE chat_ids set user_acc_id = null , used = 0 where chat_id ='" + device.chat_id + "'")
-                        await sql.query("UPDATE sim_ids set user_acc_id = null , used = 0 where sim_id ='" + device.sim_id + "'")
+                if(action == 'unlink'){
+                    let deleteq = "UPDATE acc_action_history SET del_status='1' WHERE id='" + device.id + "' AND dealer_id = '" + verify.user.id + "' AND (action = 'UNLINKED' OR action = 'PRE-ACTIVATED')";
+                   console.log('query is ', deleteq)
+                    let resp = await sql.query(deleteq)
+                    if (resp.affectedRows) {
+                        deletedDevices.push(device.id);
+                        
                     }
-                    deletedDevices.push(device.usr_device_id);
-                    // console.log('status Updated');
-                    let deleteHistoryQuery = "UPDATE acc_action_history SET del_status='1' WHERE user_acc_id='" + device.id + "' AND dealer_id = '" + verify.user.id + "' AND (action = 'UNLINK' OR action = 'PRE-ACTIVATED')";
-                    // console.log(deleteHistoryQuery);
-                    await sql.query(deleteHistoryQuery)
-                    // await device_helpers.saveActionHistory(device, Constants.UNLINK_DEVICE_DELETE);
-
+                } else if(action == 'pre-active'){
+                    let statusChangeQuery = "UPDATE usr_acc SET del_status='" + 1 + "' WHERE device_id='" + device.usr_device_id + "'";
+                    // console.log(statusChangeQuery);
+                    let resp = await sql.query(statusChangeQuery)
+                    // console.log('response query is', resp);
+                    if (resp.affectedRows) {
+                        if (action == 'pre-active') {
+                            await sql.query("UPDATE pgp_emails set user_acc_id = null , used = 0 where pgp_email ='" + device.pgp_email + "'")
+                            await sql.query("UPDATE chat_ids set user_acc_id = null , used = 0 where chat_id ='" + device.chat_id + "'")
+                            await sql.query("UPDATE sim_ids set user_acc_id = null , used = 0 where sim_id ='" + device.sim_id + "'")
+                        } 
+                        deletedDevices.push(device.id);
+                        // console.log('status Updated');
+                        let deleteHistoryQuery = "UPDATE acc_action_history SET del_status='1' WHERE user_acc_id='" + device.id + "' AND dealer_id = '" + verify.user.id + "' AND (action = 'UNLINK' OR action = 'PRE-ACTIVATED')";
+                        // console.log(deleteHistoryQuery);
+                        await sql.query(deleteHistoryQuery)
+                        // await device_helpers.saveActionHistory(device, Constants.UNLINK_DEVICE_DELETE);
+    
+                    }
+                    else {
+                        insertError += 1;
+                        NotDeleted.push(device.id)
+                    }
                 }
-                else {
-                    insertError += 1;
-                    NotDeleted.push(device.usr_device_id)
-                }
+               
             }
+
             if (insertError === 0) {
                 data = {
                     'status': true,
