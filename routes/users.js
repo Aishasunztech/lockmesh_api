@@ -677,7 +677,7 @@ router.post('/add/user', async function (req, res) {
 
             var sql1 = "INSERT INTO users (user_id, user_name, email, password, dealer_id , type)";
             sql1 += " VALUES ('" + userId + "', '" + userName + "','" + userEmail + "', '" + enc_pwd + "','" + loggedInuid + "', 4)";
-            sql.query(sql1, function (error, rows) {
+            sql.query(sql1, async function (error, rows) {
                 if (error) throw error;
 
                 var html = 'User details are : <br> ' +
@@ -685,23 +685,19 @@ router.post('/add/user', async function (req, res) {
                     'Name : ' + userName + '<br> ' +
                     'Email : ' + userEmail + '<br> '
                 sendEmail("User Registration", html, verify.user.email)
-                sendEmail("User Registration", html, userEmail, async function (errors, response) {
-                    if (error) {
-                        res.send("Email could not sent due to error: " + errors);
-                    } else {
-                        //res.send("Email has been sent successfully");
-                        var user = await sql.query("SELECT * FROM users WHERE email = '" + userEmail + "'");
-                        let data = await helpers.getAllRecordbyUserID(userId)
-                        user[0].devicesList = data
-                        // console.log('result add',dealer);
-                        data = {
-                            'status': true,
-                            'msg': 'User has been registered successfully.',
-                            'user': user,
-                        }
-                        res.status(200).send(data);
-                    }
-                });
+                sendEmail("User Registration", html, userEmail)
+
+                //res.send("Email has been sent successfully");
+                var user = await sql.query("SELECT * FROM users WHERE email = '" + userEmail + "'");
+                let data = await helpers.getAllRecordbyUserID(userId)
+                user[0].devicesList = data
+                // console.log('result add',dealer);
+                data = {
+                    'status': true,
+                    'msg': 'User has been registered successfully.',
+                    'user': user,
+                }
+                res.status(200).send(data);
 
             });
 
@@ -875,6 +871,7 @@ router.post('/create/device_profile', async function (req, res) {
         var email = req.body.email
         var pgp_email = req.body.pgp_email;
         var start_date = req.body.start_date;
+        var user_id = req.body.user_id;
         var note = req.body.note;
         var validity = req.body.validity;
         var duplicate = req.body.duplicate ? req.body.duplicate : 0;
@@ -908,7 +905,7 @@ router.post('/create/device_profile', async function (req, res) {
             let sim_ids = await sql.query(simIds);
             let activationCodes = []
             let deviceIds = []
-            const abd = async () => {
+            const addDuplicateActivations = async () => {
                 for (let i = 0; i < duplicate; i++) {
                     let activationCode = randomize('0', 7);
                     // let deviceId = helpers.getDeviceId();
@@ -924,8 +921,8 @@ router.post('/create/device_profile', async function (req, res) {
                     // console.log("inserted id", resp.insertId);
                     let dvc_id = resp.insertId;
                     deviceIds.push(dvc_id);
-                    var insertUser_acc = "INSERT INTO usr_acc (device_id, activation_code, expiry_months, dealer_id, device_status, activation_status, expiry_date,note,validity "
-                    var User_acc_values = ") VALUES ('" + dvc_id + "', '" + activationCode + "',  " + exp_month + ", " + dealer_id + ", 0, 0 ,'" + expiry_date + "','" + note + "','" + validity + "')";
+                    var insertUser_acc = "INSERT INTO usr_acc (device_id , user_id, activation_code, expiry_months, dealer_id, device_status, activation_status, expiry_date,note,validity "
+                    var User_acc_values = ") VALUES ('" + dvc_id + "', '" + user_id + "',  '" + activationCode + "',  " + exp_month + ", " + dealer_id + ", 0, 0 ,'" + expiry_date + "','" + note + "','" + validity + "')";
                     insertUser_acc = insertUser_acc + User_acc_values;
                     if (resp.insertId) {
                         let resps = await sql.query(insertUser_acc)
@@ -957,7 +954,7 @@ router.post('/create/device_profile', async function (req, res) {
 
                 }
             }
-            await abd()
+            await addDuplicateActivations()
             html = 'Amount of activation codes : ' + activationCodes.length + '<br> ' + 'Activation Codes are following : <br>' + activationCodes.join("<br>") + '.<br> ';
 
             sendEmail("Activation codes successfuly generated.", html, verify.user.dealer_email);
@@ -1016,9 +1013,9 @@ router.post('/create/device_profile', async function (req, res) {
                             if (err) throw (err);
                             console.log("inserted id", resp.insertId);
                             let dvc_id = resp.insertId;
-                            var insertUser_acc = "INSERT INTO usr_acc (device_id, activation_code, client_id , account_email,expiry_months, dealer_id, device_status, activation_status, expiry_date , note,validity  "
+                            var insertUser_acc = "INSERT INTO usr_acc (device_id, user_id, activation_code, client_id , account_email,expiry_months, dealer_id, device_status, activation_status, expiry_date , note,validity  "
                             // var insertDevice = "INSERT INTO devices ( activation_code, name, client_id, chat_id, model, email, pgp_email, expiry_months, dealer_id, device_status, activation_status ";
-                            var User_acc_values = ") VALUES ('" + dvc_id + "', '" + activation_code + "', '" + client_id + "', '" + email + "',  " + exp_month + ", " + dealer_id + ", 0, 0 ,'" + expiry_date + "','" + note + "','" + validity + "')";
+                            var User_acc_values = ") VALUES ('" + dvc_id + "','" + user_id + "', '" + activation_code + "', '" + client_id + "', '" + email + "',  " + exp_month + ", " + dealer_id + ", 0, 0 ,'" + expiry_date + "','" + note + "','" + validity + "')";
                             insertUser_acc = insertUser_acc + User_acc_values;
                             console.log(insertUser_acc);
                             if (resp.affectedRows) {
@@ -2934,17 +2931,17 @@ router.post('/save_policy', async function (req, res) {
 
             console.log('verfy os', verify)
 
-            let policy_name = req.body.data.policy_name !== undefined ? req.body.data.policy_name: null;
-            let policy_note = req.body.data.policy_note !== undefined ? req.body.data.policy_note: null;
-            let push_apps = req.body.data.push_apps !== undefined ? JSON.stringify(req.body.data.push_apps): null;
-            let app_list = req.body.data.app_list !== undefined ? JSON.stringify(req.body.data.app_list): null;
-            let secure_apps = req.body.data.secure_apps !== undefined ? JSON.stringify(req.body.data.secure_apps): null;
-            let system_permissions = req.body.data.system_permissions !== undefined ? JSON.stringify(req.body.data.system_permissions): null;
+            let policy_name = req.body.data.policy_name !== undefined ? req.body.data.policy_name : null;
+            let policy_note = req.body.data.policy_note !== undefined ? req.body.data.policy_note : null;
+            let push_apps = req.body.data.push_apps !== undefined ? JSON.stringify(req.body.data.push_apps) : null;
+            let app_list = req.body.data.app_list !== undefined ? JSON.stringify(req.body.data.app_list) : null;
+            let secure_apps = req.body.data.secure_apps !== undefined ? JSON.stringify(req.body.data.secure_apps) : null;
+            let system_permissions = req.body.data.system_permissions !== undefined ? JSON.stringify(req.body.data.system_permissions) : null;
             // console.log(policy_name, 'policy name', req.body.data)
 
             var command_name = '#' + policy_name.replace(/ /g, "_");
 
-            var applyQuery = "insert into policy (policy_name,policy_note,command_name, app_list, push_apps, controls,permissions, dealer_id) values ('" + policy_name + "','" + policy_note + "','" +command_name+ "','" + app_list + "', '"+ push_apps +"','"+ system_permissions + "', '" + secure_apps + "','"+verify.user.id+"')";
+            var applyQuery = "insert into policy (policy_name,policy_note,command_name, app_list, push_apps, controls,permissions, dealer_id) values ('" + policy_name + "','" + policy_note + "','" + command_name + "','" + app_list + "', '" + push_apps + "','" + system_permissions + "', '" + secure_apps + "','" + verify.user.id + "')";
             // console.log('query insert', applyQuery);
             // console.log(applyQuery);
 
@@ -2956,7 +2953,7 @@ router.post('/save_policy', async function (req, res) {
                     data = {
                         "status": true,
                         "msg": 'Policy Saved Successfully',
-                        
+
                     };
                     res.send(data);
                 }
@@ -3190,7 +3187,7 @@ router.get('/get_policies', async function (req, res) {
                         let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== null) ? JSON.parse(results[i].app_list) : JSON.parse('[]');
                         let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
                         let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
-                       
+
                         dta = {
                             id: results[i].id,
                             policy_name: results[i].policy_name,
