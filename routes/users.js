@@ -2779,7 +2779,7 @@ router.get('/get_apps/:device_id', async function (req, res) {
                         let subExtension = [];
 
                         for (let item of apps) {
-                             console.log(ext.app_id,' ', item.visible);
+                            //  console.log(ext.app_id,' ', item.visible);
                             if (ext.app_id === item.extension_id) {
                                 subExtension.push({
                                     uniqueName: ext.uniqueName,

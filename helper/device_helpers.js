@@ -78,10 +78,10 @@ module.exports = {
             // console.log("insertApps device_id:" + deviceData.id);
             // console.log("isvisible",apps);
             apps.forEach(async (app) => {
-                console.log("default App", app.defaultApp);
-
+                let default_app = (app.defaultApp !== undefined) ? app.defaultApp : app.default_app;
+                
                 let iconName = this.uploadIconFile(app, app.label);
-                var query = "INSERT IGNORE INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app) VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , " + app.visible + ", " + app.defaultApp + ")";
+                var query = "INSERT IGNORE INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app) VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , " + app.visible + ", " + default_app + ")";
                 await sql.query(query);
 
                 await this.getApp(app.uniqueName, deviceData.id, app.guest, app.encrypted, app.enable);
@@ -123,6 +123,7 @@ module.exports = {
     },
     insertOrUpdateSettings: async function (permissions, device_id) {
         try {
+            console.log("here device id", device_id);
             var updateQuery = "REPLACE INTO user_app_permissions (device_id, permissions) VALUE ('" + device_id + "', '" + permissions + "')";
             await sql.query(updateQuery)
         } catch (error) {
@@ -322,7 +323,6 @@ module.exports = {
             return 'N/A'
         }
     },
-
     getUserAccountId: async (device_id) => {
         let query = "SELECT usr_acc.id from usr_acc left join devices on devices.id=usr_acc.device_id where devices.device_id='" + device_id + "'"
         let results = await sql.query(query);
@@ -332,31 +332,8 @@ module.exports = {
             return ''
         }
     },
-    // getDealerdata: async (result) => {
-    //     let query = "SELECT dealer_name,connected_dealer  FROM dealers WHERE user_acc_id = '" + result.dealer_id + "'"
-    //     let results = await sql.query(query);
-    //     if (results.length) {
-    //         return results[0]
-    //     } 
-    // }
-
-    // getDeviceDetail: async (device_id, user_type)=> {
-    //     sql.query('SELECT devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "'+device_id+'"', async function (error, results, fields) {
-    //         if (error) throw error;
-    //         if(results.length){
-    //             results[0].finalStatus = device_helper.checkStatus(results[0])
-    //             results[0].pgp_email = await device_helper.getPgpEmails(results[0])
-    //             results[0].sim_id = await device_helper.getSimids(results[0])
-    //             results[0].chat_id = await device_helpergetChatids(results[0])
-    //             // dealerData = await getDealerdata(results[i]);
-    //             return results[0];
-    //         }
-
-    // })
-
-    // }
     saveActionHistory: async (device, action) => {
-        console.log('SAVE HISTORY', action ,device);
+        console.log('SAVE HISTORY', action, device);
         let query = "INSERT INTO acc_action_history (action, device_id, device_name, session_id, model, ip_address,simno,imei,simno2,imei2,serial_number,mac_address,fcm_token,online,is_sync,flagged,screen_start_date,reject_status,account_email,dealer_id,prnt_dlr_id,link_code,client_id,start_date,expiry_months,expiry_date,activation_code,status,device_status,activation_status,wipe_status,account_status,unlink_status,transfer_status,dealer_name,prnt_dlr_name,user_acc_id,pgp_email,chat_id,sim_id,finalStatus) VALUES "
         let finalQuery = ''
         if (action === Constants.DEVICE_UNLINKED || action === Constants.UNLINK_DEVICE_DELETE) {
@@ -389,35 +366,35 @@ module.exports = {
         var simNo = req.body.simNo;
         var serial_number = req.body.serialNo;
         var mac_address = req.body.macAddr;
-    
+
         //geting imei's
         var imei1 = imei[0] ? imei[0] : null;
         var imei2 = imei[1] ? imei[1] : null;
-    
+
         var simNo1 = simNo[0] ? simNo[0] : null;
         var simNo2 = simNo[1] ? simNo[1] : null;
         return {
             imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address
         }
     },
-    checkRemainDays : async (createDate, validity) => {
+    checkRemainDays: async (createDate, validity) => {
         var createdDateTime, today, days;
         if (validity != null) {
 
             createdDateTime = new Date(createDate);
             createdDateTime.setDate(createdDateTime.getDate() + validity);
             today = new Date();
-            var difference_ms =  createdDateTime.getTime() - today.getTime();
-    
+            var difference_ms = createdDateTime.getTime() - today.getTime();
+
             //Get 1 day in milliseconds
-            var one_day=1000*60*60*24;
-              
+            var one_day = 1000 * 60 * 60 * 24;
+
             // Convert back to days and return
-            days = Math.round(difference_ms/one_day); 
+            days = Math.round(difference_ms / one_day);
         } else {
             days = validity
         }
-       
+
         if (days > 0) return days; else if (days <= 0 && days !== null) return "Expired"; else return "Not Announced";
     }
 }
