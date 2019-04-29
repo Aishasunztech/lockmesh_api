@@ -1365,7 +1365,7 @@ router.put('/edit/devices', async function (req, res) {
             var note = req.body.note;
             var validity = req.body.validity;
             var user_id = req.body.user_id;
-            console.log(validity, note);
+            console.log(req.body.expiry_date);
             // let s_dealer_id = req.body.s_dealer;
             let start_date = req.body.start_date;
             // let expiray_date = req.body.expiray_date;
@@ -1396,7 +1396,11 @@ router.put('/edit/devices', async function (req, res) {
                     var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
                     var expiry_date = moment(trailDate).format("YYYY/MM/DD")
                 }
-            } else {
+            }
+            else if (req.body.expiry_date != 0 && req.body.expiry_date != 1 && req.body.expiry_date != 3 && req.body.expiry_date != 6 && req.body.expiry_date != 12) {
+                var expiry_date = req.body.expiry_date
+            }
+            else {
                 let exp_month = req.body.expiry_date;
                 var expiry_date = helpers.getExpDateByMonth(start_date, exp_month);
             }
