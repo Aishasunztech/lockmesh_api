@@ -1833,6 +1833,8 @@ router.post('/wipe/:id', async function (req, res) {
     if (verify.status !== undefined && verify.status == true) {
         var sql2 = "select * from devices where id = '" + device_id + "'";
         var gtres = await sql.query(sql2);
+        console.log('dasdas');
+
         if (!empty(device_id)) {
 
             var sql1 = "update usr_acc set wipe_status='wipe' where device_id = '" + device_id + "'";
@@ -1868,9 +1870,6 @@ router.post('/wipe/:id', async function (req, res) {
                     })
                 }
             });
-
-
-
         } else {
             data = {
                 "status": false,
@@ -2754,7 +2753,7 @@ router.get('/get_apps/:device_id', async function (req, res) {
             // var query = 'SELECT user_apps.*, apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon from user_apps LEFT JOIN apps_info on user_apps.app_id = apps_info.id LEFT JOIN devices on user_apps.device_id=devices.id where devices.device_id ="' + req.params.device_id + '"';
             // console.log(query);
             var getAppsQ = "SELECT user_apps.id, user_apps.device_id, user_apps.app_id, user_apps.guest, user_apps.encrypted, user_apps.`enable`, " +
-                " apps_info.label,apps_info.default_app,apps_info.visible, apps_info.unique_name as uniqueName, apps_info.icon as icon , apps_info.extension, apps_info.extension_id" +
+                " apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon , apps_info.extension, apps_info.visible, apps_info.extension_id, apps_info.default_app" +
                 " FROM user_apps" +
                 " LEFT JOIN apps_info on user_apps.app_id = apps_info.id" +
                 " LEFT JOIN devices on user_apps.device_id=devices.id" +
@@ -2783,7 +2782,7 @@ router.get('/get_apps/:device_id', async function (req, res) {
                         let subExtension = [];
 
                         for (let item of apps) {
-                            //  console.log(ext.app_id,' ', item.visible);
+                            // console.log(item.visible, item.extension);
                             if (ext.app_id === item.extension_id) {
                                 subExtension.push({
                                     uniqueName: ext.uniqueName,
@@ -2798,7 +2797,8 @@ router.get('/get_apps/:device_id', async function (req, res) {
                                     default_app: item.default_app
                                 });
                             }
-                            else if (item.extension == 0 || item.visible == 1) {
+                            else if (item.extension == 0 && item.visible == 1) {
+                                // console.log(item);
                                 onlyApps.push(item)
                             }
                              if(item.visible == 0){
@@ -2807,7 +2807,7 @@ router.get('/get_apps/:device_id', async function (req, res) {
                             }
                             
                         }
-
+                        // console.log(onlyApps);
                         newExtlist.push({
                             uniqueName: ext.uniqueName,
                             guest: ext.guest,
@@ -2818,7 +2818,7 @@ router.get('/get_apps/:device_id', async function (req, res) {
 
                         })
                     }
-                    // console.log("apps length" + apps.length);
+                    // console.log("apps length" + onlyApps);
                     var query1 = 'SELECT * from user_app_permissions where device_id ="' + req.params.device_id + '" limit 1';
                     // 
 console.log('query is ', query1)
