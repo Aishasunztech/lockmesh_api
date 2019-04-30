@@ -1365,7 +1365,7 @@ router.put('/edit/devices', async function (req, res) {
             var note = req.body.note;
             var validity = req.body.validity;
             var user_id = req.body.user_id;
-            console.log(validity, note);
+            console.log(req.body.expiry_date);
             // let s_dealer_id = req.body.s_dealer;
             let start_date = req.body.start_date;
             // let expiray_date = req.body.expiray_date;
@@ -1396,7 +1396,11 @@ router.put('/edit/devices', async function (req, res) {
                     var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
                     var expiry_date = moment(trailDate).format("YYYY/MM/DD")
                 }
-            } else {
+            }
+            else if (req.body.expiry_date != 0 && req.body.expiry_date != 1 && req.body.expiry_date != 3 && req.body.expiry_date != 6 && req.body.expiry_date != 12) {
+                var expiry_date = req.body.expiry_date
+            }
+            else {
                 let exp_month = req.body.expiry_date;
                 var expiry_date = helpers.getExpDateByMonth(start_date, exp_month);
             }
@@ -2779,7 +2783,7 @@ router.get('/get_apps/:device_id', async function (req, res) {
                         let subExtension = [];
 
                         for (let item of apps) {
-                             console.log(ext.app_id,' ', item.visible);
+                            //  console.log(ext.app_id,' ', item.visible);
                             if (ext.app_id === item.extension_id) {
                                 subExtension.push({
                                     uniqueName: ext.uniqueName,
@@ -2817,13 +2821,13 @@ router.get('/get_apps/:device_id', async function (req, res) {
                     // console.log("apps length" + apps.length);
                     var query1 = 'SELECT * from user_app_permissions where device_id ="' + req.params.device_id + '" limit 1';
                     // 
-
+console.log('query is ', query1)
                     sql.query(query1, async (error, controls) => {
                         if (error) {
                             throw Error("Query Expection");
                         }
                         if (controls.length > 0) {
-                            // console.log("geting device app");
+                             console.log("geting device app", controls);
                            let cntrls = JSON.parse(controls[0].permissions);
                         //    consrols.push(settings);
                             res.send({

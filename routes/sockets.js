@@ -175,10 +175,10 @@ module.exports.listen = async function (server) {
 
             socket.emit('get_applied_settings_' + device_id, {
                 device_id: device_id,
-                app_list: (setting_res[0].app_list == null || setting_res[0].app_list == '') ? '[]' : setting_res[0].app_list,
-                passwords: (setting_res[0].passwords == null || setting_res[0].passwords == '') ? '{}' : setting_res[0].passwords,
-                settings: '{}',
-                extension_list: (setting_res[0].permissions == null || setting_res[0].permissions == '') ? '[]' : setting_res[0].permissions,
+                app_list: (setting_res[0].app_list ===undefined || setting_res[0].app_list === null || setting_res[0].app_list === '') ? '[]' : setting_res[0].app_list,
+                passwords: (setting_res[0].passwords ===undefined || setting_res[0].passwords === null || setting_res[0].passwords === '') ? '{}' : setting_res[0].passwords,
+                settings: (setting_res[0].controls ===undefined || setting_res[0].controls === null || setting_res[0].controls === '') ? '{}' : setting_res[0].controls,
+                extension_list: (setting_res[0].permissions ===undefined||setting_res[0].permissions === null || setting_res[0].permissions === '') ? '[]' : setting_res[0].permissions,
                 status: true
             });
         } else {
@@ -253,8 +253,8 @@ module.exports.listen = async function (server) {
             // let device_permissions = permissions;
 
             await device_helpers.insertOrUpdateSettings(controls, device_id);
-            console.log("Device save" );
-                await device_helpers.deviceSynced(device_id);
+            console.log("Device save");
+            await device_helpers.deviceSynced(device_id);
 
             socket.emit("get_sync_status_" + device_id, {
                 device_id: device_id,

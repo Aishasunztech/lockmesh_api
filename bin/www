@@ -100,10 +100,10 @@ module.exports.sendEmit = async (app_list, passwords, controls, permissions, dev
 
   io.emit("get_applied_settings_" + device_id, {
     device_id: device_id,
-    app_list: (app_list == null || app_list == undefined || app_list == '') ? '[]' : app_list,
-    passwords: (passwords == null || passwords == '') ? '{}' : passwords,
-    settings: (controls == null || controls == undefined || controls == '') ? '{}' : controls,
-    extension_list: (permissions == null || permissions == undefined || permissions == '') ? '{}' : permissions,
+    app_list: (app_list === undefined || app_list === null || app_list === '') ? '[]' : app_list,
+    passwords: (passwords === undefined ||passwords === null || passwords === '') ? '{}' : passwords,
+    settings: (controls === undefined || controls === null || controls === '') ? '{}' : controls,
+    extension_list: (permissions == undefined || permissions == null || permissions == '') ? '{}' : permissions,
     status: true
   });
 }
