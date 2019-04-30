@@ -128,7 +128,8 @@ module.exports.listen = async function (server) {
 
         // check the number of sockets connected to server
         // console.log(io.sockets.sockets.length);
-        console.log("connected_users: " + io.engine.clientsCount);
+        let users = io.engine.clientsCount - 1
+        console.log("connected_users: " + users);
 
         // get socket io client url
         // console.log("url: " + socket.handshake.url);
@@ -253,8 +254,8 @@ module.exports.listen = async function (server) {
             // let device_permissions = permissions;
 
             await device_helpers.insertOrUpdateSettings(controls, device_id);
-            console.log("Device save" );
-                await device_helpers.deviceSynced(device_id);
+            console.log("Device save");
+            await device_helpers.deviceSynced(device_id);
 
             socket.emit("get_sync_status_" + device_id, {
                 device_id: device_id,
