@@ -79,17 +79,17 @@ module.exports = {
             // console.log("isvisible",apps);
             apps.forEach(async (app) => {
                 let default_app = (app.defaultApp !== undefined) ? app.defaultApp : app.default_app;
-                
+
                 let iconName = this.uploadIconFile(app, app.label);
-                
+
                 let query = "INSERT INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app) " +
-                " VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , " + app.visible + ", " + default_app + ") " +
-                " ON DUPLICATE KEY UPDATE " +
-                // " label= '" + app.label +"',"+
-                // " icon= '" + app.icon +"'," +
-                " extension= " + app.extension +", "+
-                " visible= " + app.visible +", "+
-                " default_app= " + default_app +" "
+                    " VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , " + app.visible + ", " + default_app + ") " +
+                    " ON DUPLICATE KEY UPDATE " +
+                    // " label= '" + app.label +"',"+
+                    // " icon= '" + app.icon +"'," +
+                    " extension= " + app.extension + ", " +
+                    " visible= " + app.visible + ", " +
+                    " default_app= " + default_app + " "
                 // console.log("update query: ", query);
 
                 // var query = "INSERT IGNORE INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app) VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , " + app.visible + ", " + default_app + ")";
@@ -109,9 +109,8 @@ module.exports = {
         extensions.forEach(async (app) => {
             // console.log("ext object", app.uniqueName);
 
-            let getPrntExt = "SELECT id FROM apps_info WHERE unique_name='" + app.uniqueName + "' AND (extension=1 OR extension=true)";
+            let getPrntExt = "SELECT id FROM apps_info WHERE (unique_name='" + app.uniqueName + "' AND (extension=1 OR extension=true) AND extension_id=0) ";
             // console.log("extension query", getPrntExt);
-
             let extension = await sql.query(getPrntExt);
             if (extension.length) {
                 console.log("parent uniqueName: ", app.uniqueName);
@@ -122,8 +121,15 @@ module.exports = {
                 console.log("encrytped: ", app.encrypted);
 
                 let iconName = this.uploadIconFile(app, app.label);
-
-                var query = "INSERT IGNORE INTO apps_info (unique_name, label, icon, extension, extension_id) VALUES ('" + app.uniqueExtension + "', '" + app.label + "', '" + iconName + "', 1, " + extension[0].id + ")";
+                var query = "INSERT INTO apps_info (unique_name, label, icon, extension, extension_id) VALUES ('" + app.uniqueExtension + "', '" + app.label + "', '" + iconName + "', 1, " + extension[0].id + ") " +
+                " ON DUPLICATE KEY UPDATE " +
+                // " label= '" + app.label +"',"+
+                // " icon= '" + app.icon +"'," +
+                " extension= 1, " +
+                // " visible= " + app.visible + ", " +
+                " default_app= 0  "
+                
+                // var query = "INSERT IGNORE INTO apps_info (unique_name, label, icon, extension, extension_id) VALUES ('" + app.uniqueExtension + "', '" + app.label + "', '" + iconName + "', 1, " + extension[0].id + ")";
                 // console.log("helloo:",query);
                 await sql.query(query);
                 // console.log("inserting extension")
@@ -147,11 +153,7 @@ module.exports = {
         await sql.query(updateQuery);
     },
     getApp: async function (uniqueName, device_id, guest, encrypted, enable) {
-        // console.log("hello world: " + uniqueName);
-        // console.log("device_id: " + device_id);
-        // console.log("hello world: " + guest);
-        // console.log("hello world: " + encrypted);
-        // console.log("hello world: " + enable);
+        
         var query = "SELECT id FROM apps_info WHERE unique_name='" + uniqueName + "' limit 1";
         console.log(query);
         let response = await sql.query(query);
@@ -165,14 +167,16 @@ module.exports = {
     insertOrUpdateApps: async function (appId, deviceId, guest, encrypted, enable) {
         try {
 
-            var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
-            // console.log("update query", updateQuery);
-            sql.query(updateQuery, async function (error, row) {
-                // console.log("this is", row);
-                if (row != undefined && row.affectedRows === 0) {
-                    var insertQuery = "INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + ")";
-                    await sql.query(insertQuery);
-                }
+            let updateQuery = "INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + " ) " +
+                " ON DUPLICATE KEY UPDATE " +
+                " guest = " + guest + ", " +
+                " encrypted = " + encrypted + ", " +
+                " enable = " + enable + " ";
+            // var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
+            sql.query(updateQuery, function(error, response){
+                console.log("insert or update apps error", error);
+                // console.log("insert or update apps response", response);
+                
             });
 
         } catch (error) {
