@@ -81,11 +81,21 @@ module.exports = {
                 let default_app = (app.defaultApp !== undefined) ? app.defaultApp : app.default_app;
                 
                 let iconName = this.uploadIconFile(app, app.label);
-                var query = "INSERT IGNORE INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app) VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , " + app.visible + ", " + default_app + ")";
+                
+                let query = "INSERT INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app) " +
+                " VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , " + app.visible + ", " + default_app + ") " +
+                " ON DUPLICATE KEY UPDATE " +
+                // " label= '" + app.label +"',"+
+                // " icon= '" + app.icon +"'," +
+                " extension= " + app.extension +", "+
+                " visible= " + app.visible +", "+
+                " default_app= " + default_app +" "
+                // console.log("update query: ", query);
+
+                // var query = "INSERT IGNORE INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app) VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , " + app.visible + ", " + default_app + ")";
                 await sql.query(query);
 
                 await this.getApp(app.uniqueName, deviceData.id, app.guest, app.encrypted, app.enable);
-
             });
         } else {
             console.log("device not connected may be deleted");
@@ -237,7 +247,7 @@ module.exports = {
                 if (err) console.log(err);
             });
 
-        } else if (typeof app.icon === 'string') {
+        } else if (app.icon != undefined && typeof app.icon === 'string') {
             console.log("icon was in string type");
             var bytes = app.icon.split(",");
             var base64Data = Buffer.from(bytes).toString("base64");
@@ -246,8 +256,6 @@ module.exports = {
                 console.log(err);
             });
 
-
-        } else {
 
         }
 
