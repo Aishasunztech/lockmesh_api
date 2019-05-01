@@ -2685,22 +2685,22 @@ router.get('/get_app_permissions', async function (req, res) {
     var verify = await verifyToken(req, res);
     console.log('get app permisiion si sdaf', verify.status)
     if (verify.status !== undefined && verify.status == true) {
-        //console.log('id is the ', req.params);
+        // console.log('id is the ', req.params);
         let loggedUserType = verify.user.user_type;
-        if (loggedUserType !== Constants.ADMIN) {
+        // if (loggedUserType !== Constants.ADMIN) {
             let query = "select * from apps_info";
 
-            await sql.query(query, async (error, apps) => {
-                console.log(query, 'rslt  ', apps);
-                if (error) throw error;
+            sql.query(query, async (error, apps) => {
 
+                if (error) throw error;
+                console.log(query, 'rslt  ', apps);
                 let Extension = [];
                 let onlyApps = [];
                 for (let item of apps) {
                     let subExtension = [];
                     // console.log("extenstion id", item.extension_id);
                     if (item.extension === 1 && item.extension_id === 0) {
-                        console.log('main', item)
+                        // console.log('main', item)
                         Extension.push(item);
                     }
 
@@ -2714,9 +2714,9 @@ router.get('/get_app_permissions', async function (req, res) {
                     let subExtension = [];
 
                     for (let item of apps) {
-                        console.log(ext.id, item.extension_id);
+                        // console.log(ext.id, item.extension_id);
                         if (ext.id === item.extension_id) {
-                            console.log('sub ext item', item)
+                            // console.log('sub ext item', item)
 
                             subExtension.push({
                                 uniqueName: ext.uniqueName,
@@ -2734,7 +2734,7 @@ router.get('/get_app_permissions', async function (req, res) {
 
                     }
 
-                    console.log('sub ext', subExtension)
+                    // console.log('sub ext', subExtension)
 
                     newExtlist.push({
                         uniqueName: ext.uniqueName,
@@ -2747,7 +2747,7 @@ router.get('/get_app_permissions', async function (req, res) {
                     })
                 }
 
-                console.log('daa is ', newExtlist)
+                console.log('daa is ', onlyApps)
 
 
                 res.send({
@@ -2757,7 +2757,7 @@ router.get('/get_app_permissions', async function (req, res) {
                 });
             })
         }
-    }
+    // }
 
 });
 
