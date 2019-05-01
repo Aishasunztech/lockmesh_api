@@ -406,7 +406,7 @@ router.post('/linkdevice', async function (req, resp) {
                         sql.query(link_acc, function (error, rows) {
                             //response.end(JSON.stringify(rows));
                             if (error) throw error;
-
+                            device_helpers.saveImeiHistory(deviceId, serial_number, mac_address, imei1, imei2)
                             resp.json({
                                 "status": true,
                                 "msg": "Device linked."

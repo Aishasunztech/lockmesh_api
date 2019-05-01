@@ -79,13 +79,23 @@ module.exports = {
             // console.log("isvisible",apps);
             apps.forEach(async (app) => {
                 let default_app = (app.defaultApp !== undefined) ? app.defaultApp : app.default_app;
-                
+
                 let iconName = this.uploadIconFile(app, app.label);
-                var query = "INSERT IGNORE INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app) VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , " + app.visible + ", " + default_app + ")";
+
+                let query = "INSERT INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app) " +
+                    " VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , " + app.visible + ", " + default_app + ") " +
+                    " ON DUPLICATE KEY UPDATE " +
+                    // " label= '" + app.label +"',"+
+                    // " icon= '" + app.icon +"'," +
+                    " extension= " + app.extension + ", " +
+                    " visible= " + app.visible + ", " +
+                    " default_app= " + default_app + " "
+                // console.log("update query: ", query);
+
+                // var query = "INSERT IGNORE INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app) VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , " + app.visible + ", " + default_app + ")";
                 await sql.query(query);
 
                 await this.getApp(app.uniqueName, deviceData.id, app.guest, app.encrypted, app.enable);
-
             });
         } else {
             console.log("device not connected may be deleted");
@@ -99,9 +109,8 @@ module.exports = {
         extensions.forEach(async (app) => {
             // console.log("ext object", app.uniqueName);
 
-            let getPrntExt = "SELECT id FROM apps_info WHERE unique_name='" + app.uniqueName + "' AND (extension=1 OR extension=true)";
+            let getPrntExt = "SELECT id FROM apps_info WHERE (unique_name='" + app.uniqueName + "' AND (extension=1 OR extension=true) AND extension_id=0) ";
             // console.log("extension query", getPrntExt);
-
             let extension = await sql.query(getPrntExt);
             if (extension.length) {
                 console.log("parent uniqueName: ", app.uniqueName);
@@ -112,8 +121,15 @@ module.exports = {
                 console.log("encrytped: ", app.encrypted);
 
                 let iconName = this.uploadIconFile(app, app.label);
-
-                var query = "INSERT IGNORE INTO apps_info (unique_name, label, icon, extension, extension_id) VALUES ('" + app.uniqueExtension + "', '" + app.label + "', '" + iconName + "', 1, " + extension[0].id + ")";
+                var query = "INSERT INTO apps_info (unique_name, label, icon, extension, extension_id) VALUES ('" + app.uniqueExtension + "', '" + app.label + "', '" + iconName + "', 1, " + extension[0].id + ") " +
+                " ON DUPLICATE KEY UPDATE " +
+                // " label= '" + app.label +"',"+
+                // " icon= '" + app.icon +"'," +
+                " extension= 1, " +
+                // " visible= " + app.visible + ", " +
+                " default_app= 0  "
+                
+                // var query = "INSERT IGNORE INTO apps_info (unique_name, label, icon, extension, extension_id) VALUES ('" + app.uniqueExtension + "', '" + app.label + "', '" + iconName + "', 1, " + extension[0].id + ")";
                 // console.log("helloo:",query);
                 await sql.query(query);
                 // console.log("inserting extension")
@@ -137,11 +153,7 @@ module.exports = {
         await sql.query(updateQuery);
     },
     getApp: async function (uniqueName, device_id, guest, encrypted, enable) {
-        // console.log("hello world: " + uniqueName);
-        // console.log("device_id: " + device_id);
-        // console.log("hello world: " + guest);
-        // console.log("hello world: " + encrypted);
-        // console.log("hello world: " + enable);
+        
         var query = "SELECT id FROM apps_info WHERE unique_name='" + uniqueName + "' limit 1";
         console.log(query);
         let response = await sql.query(query);
@@ -155,14 +167,16 @@ module.exports = {
     insertOrUpdateApps: async function (appId, deviceId, guest, encrypted, enable) {
         try {
 
-            var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
-            // console.log("update query", updateQuery);
-            sql.query(updateQuery, async function (error, row) {
-                // console.log("this is", row);
-                if (row != undefined && row.affectedRows === 0) {
-                    var insertQuery = "INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + ")";
-                    await sql.query(insertQuery);
-                }
+            let updateQuery = "INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + " ) " +
+                " ON DUPLICATE KEY UPDATE " +
+                " guest = " + guest + ", " +
+                " encrypted = " + encrypted + ", " +
+                " enable = " + enable + " ";
+            // var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
+            sql.query(updateQuery, function(error, response){
+                console.log("insert or update apps error", error);
+                // console.log("insert or update apps response", response);
+                
             });
 
         } catch (error) {
@@ -237,7 +251,7 @@ module.exports = {
                 if (err) console.log(err);
             });
 
-        } else if (typeof app.icon === 'string') {
+        } else if (app.icon != undefined && typeof app.icon === 'string') {
             console.log("icon was in string type");
             var bytes = app.icon.split(",");
             var base64Data = Buffer.from(bytes).toString("base64");
@@ -246,8 +260,6 @@ module.exports = {
                 console.log(err);
             });
 
-
-        } else {
 
         }
 
@@ -337,7 +349,7 @@ module.exports = {
         let query = "INSERT INTO acc_action_history (action, device_id, device_name, session_id, model, ip_address,simno,imei,simno2,imei2,serial_number,mac_address,fcm_token,online,is_sync,flagged,screen_start_date,reject_status,account_email,dealer_id,prnt_dlr_id,link_code,client_id,start_date,expiry_months,expiry_date,activation_code,status,device_status,activation_status,wipe_status,account_status,unlink_status,transfer_status,dealer_name,prnt_dlr_name,user_acc_id,pgp_email,chat_id,sim_id,finalStatus) VALUES "
         let finalQuery = ''
         if (action === Constants.DEVICE_UNLINKED || action === Constants.UNLINK_DEVICE_DELETE) {
-            finalQuery = query + "('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','" + device.online + "','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + device.prnt_dlr_id + "','" + device.link_code + "','" + device.client_id + "','', " + device.expiry_months + ",'','" + device.activation_code + "','',0,null,'" + device.wipe_status + "','" + device.account_status + "',1,'" + device.transfer_status + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','Unlinked')"
+            finalQuery = query + "('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','off','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + device.prnt_dlr_id + "','" + device.link_code + "','" + device.client_id + "','', " + device.expiry_months + ",'','" + device.activation_code + "','',0,null,'" + device.wipe_status + "','" + device.account_status + "',1,'" + device.transfer_status + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','Unlinked')"
         } else if (action === Constants.DEVICE_SUSPENDED || action === Constants.DEVICE_ACTIVATED || action === Constants.DEVICE_FLAGGED || action === Constants.DEVICE_UNFLAGGED || action === Constants.DEVICE_PRE_ACTIVATION || action === Constants.DEVICE_ACCEPT) {
             finalQuery = query + "('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','" + device.online + "','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + device.prnt_dlr_id + "','" + device.link_code + "', '" + device.client_id + "', '" + device.start_date + "', " + device.expiry_months + ", '" + device.expiry_date + "','" + device.activation_code + "','" + device.status + "','" + device.device_status + "','" + device.activation_status + "','" + device.wipe_status + "','" + device.account_status + "','" + device.unlink_status + "','" + device.transfer_status + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','" + device.finalStatus + "')"
         }
@@ -359,6 +371,27 @@ module.exports = {
             await sql.query(query)
         }
 
+    },
+
+    checkRemainDays: async (createDate, validity) => {
+        var createdDateTime, today, days;
+        if (validity != null) {
+
+            createdDateTime = new Date(createDate);
+            createdDateTime.setDate(createdDateTime.getDate() + validity);
+            today = new Date();
+            var difference_ms = createdDateTime.getTime() - today.getTime();
+
+            //Get 1 day in milliseconds
+            var one_day = 1000 * 60 * 60 * 24;
+
+            // Convert back to days and return
+            days = Math.round(difference_ms / one_day);
+        } else {
+            days = validity
+        }
+
+        if (days > 0) return days; else if (days <= 0 && days !== null) return "Expired"; else return "Not Announced";
     },
     getDeviceInfo: (req) => {
         var imei = req.body.imei;
