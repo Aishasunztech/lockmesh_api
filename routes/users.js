@@ -2683,7 +2683,7 @@ router.get('/get_usr_acc_id/:device_id', async function (req, res) {
 
 router.get('/get_app_permissions', async function (req, res) {
     var verify = await verifyToken(req, res);
-    console.log('get app permisiion si sdaf', verify.status)
+    // console.log('get app permisiion si sdaf', verify.status)
     if (verify.status !== undefined && verify.status == true) {
         // console.log('id is the ', req.params);
         let loggedUserType = verify.user.user_type;
@@ -2693,7 +2693,7 @@ router.get('/get_app_permissions', async function (req, res) {
             sql.query(query, async (error, apps) => {
 
                 if (error) throw error;
-                console.log(query, 'rslt  ', apps);
+                // console.log(query, 'rslt  ', apps);
                 let Extension = [];
                 let onlyApps = [];
                 for (let item of apps) {
@@ -2708,6 +2708,7 @@ router.get('/get_app_permissions', async function (req, res) {
                         onlyApps.push(item)
                     }
                 }
+                console.log('ext e n tion ', Extension)
 
                 let newExtlist = [];
                 for (let ext of Extension) {
@@ -2719,7 +2720,7 @@ router.get('/get_app_permissions', async function (req, res) {
                             // console.log('sub ext item', item)
 
                             subExtension.push({
-                                uniqueName: ext.uniqueName,
+                                uniqueName: ext.unique_name,
                                 uniqueExtension: item.uniqueName,
                                 guest: item.guest,
                                 label: item.label,
@@ -2734,10 +2735,10 @@ router.get('/get_app_permissions', async function (req, res) {
 
                     }
 
-                    // console.log('sub ext', subExtension)
+                     console.log('sub ext', subExtension)
 
                     newExtlist.push({
-                        uniqueName: ext.uniqueName,
+                        uniqueName: ext.unique_name,
                         guest: ext.guest,
                         encrypted: ext.encrypted,
                         enable: ext.enable,
@@ -2971,7 +2972,7 @@ router.post('/save_policy', async function (req, res) {
         var verify = await verifyToken(req, res);
         if (verify.status !== undefined && verify.status == true) {
 
-            console.log('verfy os', verify)
+            console.log('verfy sysytem', req.body.data.system_permissions)
 
             let policy_name = req.body.data.policy_name !== undefined ? req.body.data.policy_name : null;
             let policy_note = req.body.data.policy_note !== undefined ? req.body.data.policy_note : null;
