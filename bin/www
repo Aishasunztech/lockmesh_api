@@ -108,6 +108,16 @@ module.exports.sendEmit = async (app_list, passwords, controls, permissions, dev
   });
 }
 
+module.exports.syncDevice = async (device_id) => {
+
+  io.emit("get_sync_status_" + device_id, {
+      device_id: device_id,
+      apps_status: false,
+      extensions_status: false,
+      settings_status: false,
+      is_sync: false,
+  });
+}
 // live device status activity
 module.exports.sendDeviceStatus = async function (device_id, device_status, status = false) {
   console.log("send device status");

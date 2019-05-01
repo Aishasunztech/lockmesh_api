@@ -2526,7 +2526,7 @@ router.post('/dealer/undo', async function (req, res) {
 
 /** Get Device Details of Dealers (Connect Page) **/
 router.get('/connect/:device_id', async function (req, res) {
-    console.log('api check is caled')
+    // console.log('api check is caled')
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         if (!empty(req.params.device_id)) {
@@ -2588,6 +2588,25 @@ router.get('/connect/:device_id', async function (req, res) {
     }
 });
 
+router.patch('/sync-device', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify.status !== undefined && verify.status == true) {
+        let deviceId = req.body.device_id;
+        if(!empty(deviceId)){
+            let query = "SELECT * FROM devices WHERE device_id = '"+ deviceId+"' and (online = 'On' OR online = 'on') ";
+            sql.query(query, function (error, response){
+                if(error) console.log(error);
+                if(response.length){
+                    require("../bin/www").syncDevice(deviceId);
+                }
+                res.send({
+                    status: true,
+                    msg : "device synced successfully"
+                })
+            });
+        }
+    }
+});
 
 /** Get logged in Dealer permitted apps  **/
 router.get('/get_dealer_apps', async function (req, res) {
@@ -3203,7 +3222,7 @@ router.get('/get_policies', async function (req, res) {
                     let dealerCount = await helpers.dealerCount(adminRoleId);
 
                     for (var i = 0; i < results.length; i++) {
-                        console.log('push apps', results[i].push_apps)
+                        // console.log('push apps', results[i].push_apps)
                         let permissions = (results[i].permissions !== undefined && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : JSON.parse('[]');
                         let controls = (results[i].controls !== undefined && results[i].controls !== null) ? JSON.parse(results[i].controls) : JSON.parse('[]');
                         let push_apps = (results[i].push_apps !== undefined && results[i].push_apps !== null) ? JSON.parse(results[i].push_apps) : JSON.parse('[]');
