@@ -711,7 +711,66 @@ router.post('/add/user', async function (req, res) {
     }
 });
 
+/*** Edit User ***/
+router.post('/edit/user', async function (req, res) {
 
+    res.setHeader('Content-Type', 'application/json');
+
+    var verify = await verifyToken(req, res);
+
+    if (verify.status !== undefined && verify.status == true) {
+        var userName = req.body.name;
+        var userEmail = req.body.email;
+        var user_id = req.body.user_id
+        if (!empty(userEmail) && !empty(userName)) {
+            var user = await sql.query("SELECT * FROM users WHERE email = '" + userEmail + "' AND user_id != '" + user_id + "'");
+
+            if (user.length > 0) {
+                data = {
+                    'status': false,
+                    'msg': 'User Already Registered. Please use another email.',
+                }
+                res.status(200).send(data);
+                return;
+            }
+            let PrevUserData = await helpers.getUserDataByUserId(user_id)
+            var sql1 = "UPDATE users set user_name ='" + userName + "',  email = '" + userEmail + "' WHERE user_id ='" + user_id + "'";
+            sql.query(sql1, async function (error, rows) {
+                if (error) throw error;
+
+                if (PrevUserData[0].email != userEmail) {
+
+                    var html = 'User details are : <br> ' +
+                        'User ID : ' + user_id + '.<br> ' +
+                        'Name : ' + userName + '<br> ' +
+                        'Email : ' + userEmail + '<br> '
+                    sendEmail("User info Changed Successfully", html, verify.user.email)
+                    sendEmail("User Info Changed Successfully", html, userEmail)
+                }
+
+                //res.send("Email has been sent successfully");
+                let userData = await helpers.getUserDataByUserId(user_id)
+                let data = await helpers.getAllRecordbyUserID(user_id)
+                userData[0].devicesList = data
+
+                data = {
+                    'status': true,
+                    'msg': 'User Info has been changed successfully.',
+                    'user': userData,
+                }
+                res.status(200).send(data);
+
+            });
+
+        } else {
+            data = {
+                'status': false,
+                'msg': 'Invalid email or name'
+            }
+            res.status(200).send(data);
+        }
+    }
+});
 
 
 
@@ -860,7 +919,8 @@ router.post('/create/device_profile', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         // var dataStag = [];
-        var activation_code = randomize('0', 7);
+        var code = randomize('0', 7);
+        var activation_code = await helpers.checkActivationCode(code);
         // let device_id = helpers.getDeviceId();
         // device_id = await helpers.checkDeviceId(device_id);
         // console.log("device_id", device_id);
@@ -907,8 +967,8 @@ router.post('/create/device_profile', async function (req, res) {
             let deviceIds = []
             const addDuplicateActivations = async () => {
                 for (let i = 0; i < duplicate; i++) {
-                    let activationCode = randomize('0', 7);
-                    // let deviceId = helpers.getDeviceId();
+                    let code = randomize('0', 7);
+                    var activationCode = await helpers.checkActivationCode(code);
                     activationCodes.push(activationCode);
                     // deviceIds.push("'" + deviceId + "'");
                     let chat_id = (chat_ids[i]) ? chat_ids[i].chat_id : null;
@@ -1107,7 +1167,8 @@ router.post('/transfer/device_profile', async (req, res) => {
         let loggedDealerType = verify.user.user_type;
         let device_id = req.body.device_id;
         console.log('device id', device_id);
-        var activation_code = randomize('0', 7);
+        var code = randomize('0', 7);
+        var activation_code = await helpers.checkActivationCode(code);
         // let device_id_new = helpers.getDeviceId();
         // device_id_new = await helpers.checkDeviceId(device_id_new);
 
@@ -1132,7 +1193,8 @@ router.post('/transfer/device_profile', async (req, res) => {
                 if (err) throw (err);
                 if (resp.affectedRows) {
 
-                    var activation_code = randomize('0', 7);
+                    var code = randomize('0', 7);
+                    var activation_code = await helpers.checkActivationCode(code);
                     // let device_id_new = helpers.getDeviceId();
                     // device_id_new = await helpers.checkDeviceId(device_id_new);
 
@@ -2591,16 +2653,16 @@ router.patch('/sync-device', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         let deviceId = req.body.device_id;
-        if(!empty(deviceId)){
-            let query = "SELECT * FROM devices WHERE device_id = '"+ deviceId+"' and (online = 'On' OR online = 'on') ";
-            sql.query(query, function (error, response){
-                if(error) console.log(error);
-                if(response.length){
+        if (!empty(deviceId)) {
+            let query = "SELECT * FROM devices WHERE device_id = '" + deviceId + "' and (online = 'On' OR online = 'on') ";
+            sql.query(query, function (error, response) {
+                if (error) console.log(error);
+                if (response.length) {
                     require("../bin/www").syncDevice(deviceId);
                 }
                 res.send({
                     status: true,
-                    msg : "device synced successfully"
+                    msg: "device synced successfully"
                 })
             });
         }
@@ -2682,76 +2744,76 @@ router.get('/get_app_permissions', async function (req, res) {
         // console.log('id is the ', req.params);
         let loggedUserType = verify.user.user_type;
         // if (loggedUserType !== Constants.ADMIN) {
-            let query = "select * from apps_info";
+        let query = "select * from apps_info";
 
-            sql.query(query, async (error, apps) => {
+        sql.query(query, async (error, apps) => {
 
-                if (error) throw error;
-                // console.log(query, 'rslt  ', apps);
-                let Extension = [];
-                let onlyApps = [];
+            if (error) throw error;
+            // console.log(query, 'rslt  ', apps);
+            let Extension = [];
+            let onlyApps = [];
+            for (let item of apps) {
+                let subExtension = [];
+                // console.log("extenstion id", item.extension_id);
+                if (item.extension === 1 && item.extension_id === 0) {
+                    // console.log('main', item)
+                    Extension.push(item);
+                }
+
+                if (item.extension == 0 || item.visible == 1) {
+                    onlyApps.push(item)
+                }
+            }
+            console.log('ext e n tion ', Extension)
+
+            let newExtlist = [];
+            for (let ext of Extension) {
+                let subExtension = [];
+
                 for (let item of apps) {
-                    let subExtension = [];
-                    // console.log("extenstion id", item.extension_id);
-                    if (item.extension === 1 && item.extension_id === 0) {
-                        // console.log('main', item)
-                        Extension.push(item);
+                    // console.log(ext.id, item.extension_id);
+                    if (ext.id === item.extension_id) {
+                        // console.log('sub ext item', item)
+
+                        subExtension.push({
+                            uniqueName: ext.unique_name,
+                            uniqueExtension: item.uniqueName,
+                            guest: item.guest,
+                            label: item.label,
+                            icon: item.icon,
+                            encrypted: item.encrypted,
+                            id: item.id,
+                            device_id: item.device_id,
+                            app_id: item.id,
+                            default_app: item.default_app
+                        });
                     }
 
-                    if (item.extension == 0 || item.visible == 1) {
-                        onlyApps.push(item)
-                    }
-                }
-                console.log('ext e n tion ', Extension)
-
-                let newExtlist = [];
-                for (let ext of Extension) {
-                    let subExtension = [];
-
-                    for (let item of apps) {
-                        // console.log(ext.id, item.extension_id);
-                        if (ext.id === item.extension_id) {
-                            // console.log('sub ext item', item)
-
-                            subExtension.push({
-                                uniqueName: ext.unique_name,
-                                uniqueExtension: item.uniqueName,
-                                guest: item.guest,
-                                label: item.label,
-                                icon: item.icon,
-                                encrypted: item.encrypted,
-                                id: item.id,
-                                device_id: item.device_id,
-                                app_id: item.id,
-                                default_app: item.default_app
-                            });
-                        }
-
-                    }
-
-                     console.log('sub ext', subExtension)
-
-                    newExtlist.push({
-                        uniqueName: ext.unique_name,
-                        guest: ext.guest,
-                        encrypted: ext.encrypted,
-                        enable: ext.enable,
-                        label: ext.label,
-                        subExtension: subExtension
-
-                    })
                 }
 
-                console.log('daa is ', onlyApps)
+                console.log('sub ext', subExtension)
+
+                newExtlist.push({
+                    uniqueName: ext.unique_name,
+                    guest: ext.guest,
+                    encrypted: ext.encrypted,
+                    enable: ext.enable,
+                    label: ext.label,
+                    subExtension: subExtension
+
+                })
+            }
+
+            console.log('daa is ', onlyApps)
 
 
-                res.send({
-                    status: true,
-                    extensions: newExtlist,
-                    appPermissions: onlyApps
-                });
-            })
-        }
+            res.send({
+                status: true,
+                extensions: newExtlist,
+                appPermissions: onlyApps
+            });
+        })
+    }
     // }
 
 });

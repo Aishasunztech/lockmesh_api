@@ -11,6 +11,7 @@ const device_helpers = require('./device_helpers');
 var util = require('util')
 var ApkReader = require('node-apk-parser')
 var md5 = require('md5');
+var randomize = require('randomatic');
 
 
 module.exports = {
@@ -480,5 +481,27 @@ module.exports = {
 			return [];
 		}
 	},
+	//to get User record by user ID
+	getUserDataByUserId: async function (user_id) {
+
+		let result = await sql.query("SELECT * FROM USERS WHERE user_id = '" + user_id + "'")
+		if (result.length) {
+			return result
+		} else {
+			return []
+		}
+	},
+	// Check for unique Activation code
+	checkActivationCode: async function (device_id) {
+
+		let query = "SELECT device_id FROM devices WHERE device_id = '" + device_id + "';"
+		let result = await sql.query(query);
+		if (result.length > 1) {
+			activationCode = randomize('0', 7);
+			this.checkActivationCode(device_id);
+		} else {
+			return device_id;
+		}
+	}
 
 }
