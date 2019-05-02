@@ -427,7 +427,6 @@ module.exports = {
         } else {
             days = validity
         }
-
         if (days > 0) return days; else if (days <= 0 && days !== null) return "Expired"; else return "Not Announced";
     }
 }

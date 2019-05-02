@@ -919,7 +919,8 @@ router.post('/create/device_profile', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         // var dataStag = [];
-        var activation_code = randomize('0', 7);
+        var code = randomize('0', 7);
+        var activation_code = await helpers.checkActivationCode(code);
         // let device_id = helpers.getDeviceId();
         // device_id = await helpers.checkDeviceId(device_id);
         // console.log("device_id", device_id);
@@ -966,8 +967,8 @@ router.post('/create/device_profile', async function (req, res) {
             let deviceIds = []
             const addDuplicateActivations = async () => {
                 for (let i = 0; i < duplicate; i++) {
-                    let activationCode = randomize('0', 7);
-                    // let deviceId = helpers.getDeviceId();
+                    let code = randomize('0', 7);
+                    var activationCode = await helpers.checkActivationCode(code);
                     activationCodes.push(activationCode);
                     // deviceIds.push("'" + deviceId + "'");
                     let chat_id = (chat_ids[i]) ? chat_ids[i].chat_id : null;
@@ -1166,7 +1167,8 @@ router.post('/transfer/device_profile', async (req, res) => {
         let loggedDealerType = verify.user.user_type;
         let device_id = req.body.device_id;
         console.log('device id', device_id);
-        var activation_code = randomize('0', 7);
+        var code = randomize('0', 7);
+        var activation_code = await helpers.checkActivationCode(code);
         // let device_id_new = helpers.getDeviceId();
         // device_id_new = await helpers.checkDeviceId(device_id_new);
 
@@ -1191,7 +1193,8 @@ router.post('/transfer/device_profile', async (req, res) => {
                 if (err) throw (err);
                 if (resp.affectedRows) {
 
-                    var activation_code = randomize('0', 7);
+                    var code = randomize('0', 7);
+                    var activation_code = await helpers.checkActivationCode(code);
                     // let device_id_new = helpers.getDeviceId();
                     // device_id_new = await helpers.checkDeviceId(device_id_new);
 
