@@ -2616,7 +2616,7 @@ router.get('/get_dealer_apps', async function (req, res) {
         let loggedUserId = verify.user.id;
         let loggedUserType = verify.user.user_type;
 
-        let getAppsQ = "SELECT * FROM apk_details ";
+        let getAppsQ = "SELECT apk_details.* FROM apk_details ";
         if (loggedUserType !== Constants.ADMIN) {
             getAppsQ = getAppsQ + " JOIN dealer_apks on (dealer_apks.apk_id = apk_details.id) WHERE dealer_apks.dealer_id =" + loggedUserId;
         }
@@ -2625,29 +2625,24 @@ router.get('/get_dealer_apps', async function (req, res) {
         if (apps.length > 0) {
             let data = []
             for (var i = 0; i < apps.length; i++) {
-                // let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : '[]';
-                // let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
-                // let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
                 dta = {
-                    "apk_id": apps[i].id,
-                    "apk_name": apps[i].app_name,
-                    "logo": apps[i].logo,
-                    "apk": apps[i].apk,
-                    "guest": false,
-                    "encrypted": false,
-                    "enable": false,
-                    // "permissions": permissions,
-                    // "permission_count": permissionC,
-                    "apk_status": apps[i].status,
-                    "deleteable": (apps[i].apk_type == "permanent") ? false : true
+                    apk_id: apps[i].id,
+                    apk_name: apps[i].app_name,
+                    logo: apps[i].logo,
+                    apk: apps[i].apk,
+                    package_name: apps[i].package_name,
+                    version: apps[i].version,
+                    guest: false,
+                    encrypted: false,
+                    enable: false,
+                    apk_status: apps[i].status,
+                    deleteable: (apps[i].apk_type == "permanent") ? false : true
                 }
                 data.push(dta);
             }
-            // console.log('api response is ', data)
 
             return res.json({
                 status: true,
-                success: true,
                 list: data
             });
 
@@ -3009,31 +3004,26 @@ router.post('/save_policy', async function (req, res) {
 
 });
 
-router.post('/apply_settings/:device_id', async function (req, res) {
+router.post ('/save/profile', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
         if (verify.status !== undefined && verify.status == true) {
             let device_id = req.params.device_id;
 
-            // console.log('body is', req.body);
-
             let type = req.body.type;
             let name = req.body.name;
             let dealer_id = verify.user.id;
             let usr_acc_id = req.body.usr_acc_id;
-            let subExtension = req.body.subExtension;
 
             let app_list = (req.body.device_setting.app_list == undefined) ? '' : JSON.stringify(req.body.device_setting.app_list);
-            // console.log("controls: " + app_list);
 
             let passwords = (req.body.device_setting.passwords == undefined) ? '' : JSON.stringify(req.body.device_setting.passwords);
-            // console.log("controls: " + passwords);
 
             let controls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
-            let systemControls = (req.body.controls == undefined) ? '' : JSON.stringify(req.body.controls);
 
-            // console.log("controls: " + controls);
-            let subExtension2 = (subExtension == undefined) ? '' : JSON.stringify(subExtension);
+            let systemControls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
+
+            let subExtension2 = (req.body.device_setting.subExtension == undefined) ? '' : JSON.stringify(req.body.device_setting.subExtension);
             console.log("subExtension: ", subExtension);
 
             if (type == "profile" || type == "policy") device_id = '';
@@ -3146,6 +3136,58 @@ router.post('/apply_settings/:device_id', async function (req, res) {
 
                 });
             }
+        }
+    } catch (error) {
+        throw Error(error.message);
+    }
+});
+
+router.post('/apply_settings/:device_id', async function (req, res) {
+    try {
+        var verify = await verifyToken(req, res);
+        if (verify.status !== undefined && verify.status == true) {
+            let device_id = req.params.device_id;
+
+            let usrAccId = req.body.usr_acc_id;
+
+            let app_list = (req.body.device_setting.app_list == undefined) ? '' : JSON.stringify(req.body.device_setting.app_list);
+
+            let passwords = (req.body.device_setting.passwords == undefined) ? '' : JSON.stringify(req.body.device_setting.passwords);
+
+            let controls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
+            console.log("hello controls", controls);
+            let subExtensions = (req.body.device_setting.subExtensions == undefined) ? '' : JSON.stringify(req.body.device_setting.subExtensions);
+            
+            var applyQuery = "insert into device_history (user_acc_id, app_list, passwords, controls, permissions) values (" + usrAccId + ", '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "')";
+            
+            await sql.query(applyQuery, async function (err, rslts) {
+                if (err) {
+                    throw err;
+                }
+
+                let isOnline = await device_helpers.isDeviceOnline(device_id);
+                let permissions = subExtensions;
+                // console.log("isOnline: " + isOnline);
+                if (isOnline) {
+                    require("../bin/www").sendEmit(app_list, passwords, controls, permissions, device_id);
+                }
+
+                if (rslts) {
+                    data = {
+                        "status": true,
+                        "msg": 'Settings Applied Successfully',
+                    };
+                    res.send(data);
+                } else {
+                    data = {
+                        "status": false,
+                        "msg": 'Error while Proccessing',
+                    };
+                    res.send(data);
+                }
+
+            });
+            
         }
     } catch (error) {
         throw Error(error.message);
