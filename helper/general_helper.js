@@ -480,5 +480,14 @@ module.exports = {
 			return [];
 		}
 	},
+	//to get User record by user ID
+	getUserDataByUserId: async function (user_id) {
+		let result = await sql.query("SELECT * FROM USERS WHERE user_id = '" + user_id + "'")
+		if (result.length) {
+			return result
+		} else {
+			return []
+		}
+	}
 
 }
