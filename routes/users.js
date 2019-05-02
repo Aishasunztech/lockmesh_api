@@ -2531,7 +2531,6 @@ router.get('/connect/:device_id', async function (req, res) {
     if (verify.status !== undefined && verify.status == true) {
         if (!empty(req.params.device_id)) {
             let userId = verify.user.id;
-            console.log("userId", req.params.device_id);
             //  console.log(verify.user);
             let usertype = await helpers.getUserType(userId);
             let where = "devices.device_id = '" + req.params.device_id + "'";
@@ -2794,7 +2793,7 @@ router.get('/get_apps/:device_id', async function (req, res) {
                         let subExtension = [];
 
                         for (let item of apps) {
-                            console.log(ext.app_id, ' ', item.visible);
+                            // console.log(ext.app_id, ' ', item.visible);
                             if (ext.app_id === item.extension_id) {
                                 subExtension.push({
                                     uniqueName: ext.uniqueName,
@@ -3155,7 +3154,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
             let passwords = (req.body.device_setting.passwords == undefined) ? '' : JSON.stringify(req.body.device_setting.passwords);
 
             let controls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
-            console.log("hello controls", controls);
+            // console.log("hello controls", controls);
             let subExtensions = (req.body.device_setting.subExtensions == undefined) ? '' : JSON.stringify(req.body.device_setting.subExtensions);
             
             var applyQuery = "insert into device_history (user_acc_id, app_list, passwords, controls, permissions) values (" + usrAccId + ", '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "')";
