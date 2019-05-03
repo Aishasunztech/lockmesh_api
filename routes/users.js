@@ -3046,7 +3046,7 @@ router.post('/save_policy', async function (req, res) {
 
             var command_name = '#' + policy_name.replace(/ /g, "_");
 
-            var applyQuery = "insert into policy (policy_name,policy_note,command_name, app_list, push_apps, controls,permissions, dealer_id) values ('" + policy_name + "','" + policy_note + "','" + command_name + "','" + app_list + "', '" + push_apps + "','" + system_permissions + "', '" + secure_apps + "','" + verify.user.id + "')";
+            var applyQuery = "insert into policy (policy_name,policy_note,command_name, app_list, push_apps, controls,permissions, dealer_id , dealers) values ('" + policy_name + "','" + policy_note + "','" + command_name + "','" + app_list + "', '" + push_apps + "','" + system_permissions + "', '" + secure_apps + "','" + verify.user.id + "' , '[]')";
             // console.log('query insert', applyQuery);
             // console.log(applyQuery);
 
@@ -3286,13 +3286,13 @@ router.get('/get_policies', async function (req, res) {
 
                     for (var i = 0; i < results.length; i++) {
                         // console.log('push apps', results[i].push_apps)
-                        let permissions = (results[i].permissions !== undefined && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : JSON.parse('[]');
+                        let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
                         let controls = (results[i].controls !== undefined && results[i].controls !== null) ? JSON.parse(results[i].controls) : JSON.parse('[]');
                         let push_apps = (results[i].push_apps !== undefined && results[i].push_apps !== null) ? JSON.parse(results[i].push_apps) : JSON.parse('[]');
                         let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== null) ? JSON.parse(results[i].app_list) : JSON.parse('[]');
+                        let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : JSON.parse('[]');
                         let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
                         let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
-
                         dta = {
                             id: results[i].id,
                             policy_name: results[i].policy_name,
@@ -3302,7 +3302,7 @@ router.get('/get_policies', async function (req, res) {
                             // app_list: results[i].apk_list,
                             command_name: results[i].command_name,
                             controls: controls,
-                            secure_apps: results[i].permissions,
+                            secure_apps: secure_apps,
                             push_apps: push_apps,
                             app_list: app_list2
                         }
@@ -4621,20 +4621,20 @@ router.post('/save_policy_permissions', async function (req, res) {
                 }
             }
             let parsedCombineArray = JSON.stringify(prevParsDealers)
-            let updateAPKQ = "UPDATE policy SET dealers = '" + parsedCombineArray + "' WHERE id=" + apkId;
+            let updateAPKQ = "UPDATE policy SET dealers = '" + parsedCombineArray + "' WHERE id=" + policyId;
 
             if (prevParsDealers.length) {
-                let deleteNotIn = "DELETE FROM dealer_policies WHERE dealer_id NOT IN (" + prevParsDealers.join() + ") AND apk_id = " + apkId;
+                let deleteNotIn = "DELETE FROM dealer_policies WHERE dealer_id NOT IN (" + prevParsDealers.join() + ") AND policy_id = " + policyId;
                 // console.log(deleteNotIn);
                 await sql.query(deleteNotIn);
-                let insertQuery = "INSERT IGNORE INTO dealer_policies (dealer_id, apk_id) VALUES ";
+                let insertQuery = "INSERT IGNORE INTO dealer_policies (dealer_id, policy_id) VALUES ";
 
                 let insertOrIgnore = ' '
                 for (let i = 0; i < prevParsDealers.length; i++) {
                     if (i === prevParsDealers.length - 1) {
-                        insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + ")"
+                        insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + policyId + ")"
                     } else {
-                        insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + "),"
+                        insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + policyId + "),"
                     }
                 }
                 await sql.query(insertQuery + insertOrIgnore);
@@ -4643,7 +4643,7 @@ router.post('/save_policy_permissions', async function (req, res) {
             sql.query(updateAPKQ, async (error, result) => {
                 if (error) throw (error);
                 let permissionC = [];
-                let rslt = await sql.query("select dealers from policy where id='" + apkId + "' order by id ASC")
+                let rslt = await sql.query("select dealers from policy where id='" + policyId + "' order by id ASC")
                 if (rslt.length) {
                     if (rslt !== undefined && rslt !== null) {
                         let permission = JSON.parse(rslt[0].dealers);
@@ -4698,20 +4698,20 @@ router.post('/save_policy_permissions', async function (req, res) {
             console.log(prevParsDealers);
             let toDeleteDealers = (prevParsDealers.length > 0) ? prevParsDealers.join() : '""';
 
-            let updateAPKQ = "UPDATE policy SET dealers = '" + JSON.stringify(prevParsDealers) + "' WHERE id=" + apkId;
+            let updateAPKQ = "UPDATE policy SET dealers = '" + JSON.stringify(prevParsDealers) + "' WHERE id=" + policyId;
             if (dealers.length) {
-                let deleteNotIn = "DELETE FROM dealer_policies WHERE dealer_id NOT IN (" + toDeleteDealers + ") AND apk_id = " + apkId;
+                let deleteNotIn = "DELETE FROM dealer_policies WHERE dealer_id NOT IN (" + toDeleteDealers + ") AND policy_id = " + policyId;
                 console.log(deleteNotIn);
                 await sql.query(deleteNotIn);
                 if (prevParsDealers.length > 0) {
-                    let insertQuery = "INSERT IGNORE INTO dealer_policies (dealer_id, apk_id) VALUES";
+                    let insertQuery = "INSERT IGNORE INTO dealer_policies (dealer_id, policy_id) VALUES";
 
                     let insertOrIgnore = ' '
                     for (let i = 0; i < prevParsDealers.length; i++) {
                         if (i === prevParsDealers.length - 1) {
-                            insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + ")"
+                            insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + policyId + ")"
                         } else {
-                            insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + "),"
+                            insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + policyId + "),"
                         }
                     }
                     console.log(insertQuery + insertOrIgnore);
@@ -4724,7 +4724,7 @@ router.post('/save_policy_permissions', async function (req, res) {
             sql.query(updateAPKQ, async (error, result) => {
                 if (error) throw (error);
                 let permissionC = [];
-                let rslt = await sql.query("select dealers from apk_details where id='" + apkId + "' order by id ASC")
+                let rslt = await sql.query("select dealers from policy where id='" + policyId + "' order by id ASC")
                 if (rslt.length) {
                     console.log(rslt, ' do ti ');
                     if (rslt !== undefined && rslt !== null) {
