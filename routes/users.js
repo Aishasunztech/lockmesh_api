@@ -3065,7 +3065,7 @@ router.post('/save_policy', async function (req, res) {
 
 });
 
-router.post ('/save/profile', async function (req, res) {
+router.post('/save/profile', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
         if (verify.status !== undefined && verify.status == true) {
@@ -3218,9 +3218,9 @@ router.post('/apply_settings/:device_id', async function (req, res) {
             let controls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
             // console.log("hello controls", controls);
             let subExtensions = (req.body.device_setting.subExtensions == undefined) ? '' : JSON.stringify(req.body.device_setting.subExtensions);
-            
+
             var applyQuery = "insert into device_history (user_acc_id, app_list, passwords, controls, permissions) values (" + usrAccId + ", '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "')";
-            
+
             await sql.query(applyQuery, async function (err, rslts) {
                 if (err) {
                     throw err;
@@ -3248,7 +3248,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
                 }
 
             });
-            
+
         }
     } catch (error) {
         throw Error(error.message);
@@ -3372,31 +3372,31 @@ router.get('/get_policies', async function (req, res) {
 });
 
 
-router.post('/deleteORStatusPolicy', async function (req, res){
+router.post('/deleteORStatusPolicy', async function (req, res) {
     var verify = await verifyToken(req, res);
-    if(verify.status === true){
+    if (verify.status === true) {
         let id = req.body.id;
-        let value = req.body.value == true ? 1: 0;
+        let value = req.body.value == true ? 1 : 0;
         let key = req.body.key;
 
-        let query = "UPDATE policy SET "+key+" = '"+value+"' WHERE id='"+id+"'";
+        let query = "UPDATE policy SET " + key + " = '" + value + "' WHERE id='" + id + "'";
 
         sql.query(query, (error, result) => {
             console.log(result, 'relstsdf')
-            if(result.affectedRows){
+            if (result.affectedRows) {
                 data = {
                     "status": true,
                     "msg": 'successful'
                 };
                 res.send(data);
-            }else{
+            } else {
                 data = {
                     "status": false,
                     "msg": 'successful'
                 };
                 res.send(data);
             }
-           
+
         });
     }
 })
@@ -4683,9 +4683,10 @@ router.post('/save_policy_permissions', async function (req, res) {
         var action = req.body.action
         let policyId = req.body.policyId;
         let dealers = req.body.dealers;
-        let prevPermissions = await sql.query("SELECT dealers FROM policy WHERE id = " + policyId);
-        let prevParsDealers = (prevPermissions !== null) ? JSON.parse(prevPermissions[0].dealers) : [];
 
+        let prevPermissions = await sql.query("SELECT dealers FROM policy WHERE id = " + policyId);
+        let prevParsDealers = (prevPermissions[0].dealers !== null && prevPermissions[0].dealers !== '' && prevPermissions[0].dealers !== 'null') ? JSON.parse(prevPermissions[0].dealers) : [];
+        console.log(prevPermissions[0].dealers, prevParsDealers, 'dalers for da', dealers)
         if (action === 'save') {
             var parsedDealers = JSON.parse(dealers);
             for (let i = 0; i < parsedDealers.length; i++) {
