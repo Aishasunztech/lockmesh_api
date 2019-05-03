@@ -155,7 +155,7 @@ module.exports = {
     getApp: async function (uniqueName, device_id, guest, encrypted, enable) {
         
         var query = "SELECT id FROM apps_info WHERE unique_name='" + uniqueName + "' limit 1";
-        console.log(query);
+        // console.log(query);
         let response = await sql.query(query);
         if (response.length) {
             await this.insertOrUpdateApps(response[0].id, device_id, guest, encrypted, enable);
