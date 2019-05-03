@@ -3319,7 +3319,7 @@ router.get('/get_policies', async function (req, res) {
         }
 
         if (isValid) {
-            let query = "SELECT * FROM policy ";
+            let query = "SELECT * FROM policy where delete_status=0";
             sql.query(query, async (error, results) => {
                 if (results.length) {
                     let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
@@ -3338,6 +3338,7 @@ router.get('/get_policies', async function (req, res) {
                             id: results[i].id,
                             policy_name: results[i].policy_name,
                             policy_note: results[i].policy_note,
+                            status: results[i].status,
                             dealer_permission: permissions,
                             permission_count: permissionC,
                             // app_list: results[i].apk_list,
@@ -3369,6 +3370,37 @@ router.get('/get_policies', async function (req, res) {
     }
 
 });
+
+
+router.post('/deleteORStatusPolicy', async function (req, res){
+    var verify = await verifyToken(req, res);
+    if(verify.status === true){
+        let id = req.body.id;
+        let value = req.body.value == true ? 1: 0;
+        let key = req.body.key;
+
+        let query = "UPDATE policy SET "+key+" = '"+value+"' WHERE id='"+id+"'";
+
+        sql.query(query, (error, result) => {
+            console.log(result, 'relstsdf')
+            if(result.affectedRows){
+                data = {
+                    "status": true,
+                    "msg": 'successful'
+                };
+                res.send(data);
+            }else{
+                data = {
+                    "status": false,
+                    "msg": 'successful'
+                };
+                res.send(data);
+            }
+           
+        });
+    }
+})
+
 
 router.post('/get_device_history', async function (req, res) {
     var verify = await verifyToken(req, res);
