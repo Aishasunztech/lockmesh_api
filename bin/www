@@ -108,8 +108,15 @@ module.exports.sendEmit = async (app_list, passwords, controls, permissions, dev
   });
 }
 
+module.exports.applyPushApps = (push_apps, device_id) =>{
+  console.log("get_pushed_apps_" + device_id);
+  io.emit("get_pushed_apps_" + device_id, {
+    status: true,
+    device_id: device_id,
+    push_apps: push_apps
+  });
+}
 module.exports.syncDevice = async (device_id) => {
-
   io.emit("get_sync_status_" + device_id, {
       device_id: device_id,
       apps_status: false,

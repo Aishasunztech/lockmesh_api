@@ -2692,7 +2692,7 @@ router.get('/get_dealer_apps', async function (req, res) {
                     logo: apps[i].logo,
                     apk: apps[i].apk,
                     package_name: apps[i].package_name,
-                    version: apps[i].version,
+                    version_name: apps[i].version_name,
                     guest: false,
                     encrypted: false,
                     enable: false,
@@ -3190,7 +3190,7 @@ router.post ('/save/profile', async function (req, res) {
                     } else {
                         data = {
                             "status": false,
-                            "msg": 'Error while Proccessing',
+                            "msg": 'Error while Processing',
                         };
                         res.send(data);
                     }
@@ -3210,25 +3210,29 @@ router.post('/apply_settings/:device_id', async function (req, res) {
             let device_id = req.params.device_id;
 
             let usrAccId = req.body.usr_acc_id;
-
-            let app_list = (req.body.device_setting.app_list == undefined) ? '' : JSON.stringify(req.body.device_setting.app_list);
-
-            let passwords = (req.body.device_setting.passwords == undefined) ? '' : JSON.stringify(req.body.device_setting.passwords);
-
-            let controls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
-            // console.log("hello controls", controls);
-            let subExtensions = (req.body.device_setting.subExtensions == undefined) ? '' : JSON.stringify(req.body.device_setting.subExtensions);
             
-            var applyQuery = "insert into device_history (user_acc_id, app_list, passwords, controls, permissions) values (" + usrAccId + ", '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "')";
+            let device_setting = req.body.device_setting;
+
+            let app_list = (device_setting.app_list === undefined) ? '' : JSON.stringify(device_setting.app_list);
+
+            let passwords = (device_setting.passwords === undefined) ? '' : JSON.stringify(device_setting.passwords);
+
+            let controls = (device_setting.controls === undefined) ? '' : JSON.stringify(device_setting.controls);
+                        
+            let subExtensions = (device_setting.subExtensions == undefined) ? '' : JSON.stringify(device_setting.subExtensions);
             
-            await sql.query(applyQuery, async function (err, rslts) {
+            let push_apps = (device_setting.push_apps === undefined)? '' : JSON.stringify(device_setting.push_apps);
+            
+            var applyQuery = "INSERT INTO device_history (user_acc_id, app_list, passwords, controls, permissions) VALUES (" + usrAccId + ", '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "')";
+            
+            sql.query(applyQuery, async function (err, rslts) {
                 if (err) {
                     throw err;
                 }
 
                 let isOnline = await device_helpers.isDeviceOnline(device_id);
                 let permissions = subExtensions;
-                // console.log("isOnline: " + isOnline);
+
                 if (isOnline) {
                     require("../bin/www").sendEmit(app_list, passwords, controls, permissions, device_id);
                 }
@@ -3242,7 +3246,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
                 } else {
                     data = {
                         "status": false,
-                        "msg": 'Error while Proccessing',
+                        "msg": 'Error while Processing',
                     };
                     res.send(data);
                 }
@@ -3256,7 +3260,51 @@ router.post('/apply_settings/:device_id', async function (req, res) {
 
 });
 
+router.post('/apply_pushapps/:device_id', async function(req, res){
+    try {
+        var verify = await verifyToken(req, res);
+        if (verify.status !== undefined && verify.status == true) {
+            let device_id = req.params.device_id;
 
+            let usrAccId = req.body.usrAccId;
+            
+            let push_apps = req.body.push_apps;
+            
+            let apps = (push_apps === undefined)? '' : JSON.stringify(push_apps);
+            
+            // var applyQuery = "INSERT INTO device_history (user_acc_id, push_apps) VALUES (" + usrAccId + ", '" + push_apps + "')";
+            
+            // sql.query(applyQuery, async function (err, rslts) {
+            //     if (err) {
+            //         throw err;
+            //     }
+
+                let isOnline = await device_helpers.isDeviceOnline(device_id);
+                if (isOnline) {
+                    require("../bin/www").applyPushApps(apps, device_id);
+                }
+
+                // if (rslts) {
+                //     data = {
+                //         "status": true,
+                //         "msg": 'Apps are being pushed',
+                //     };
+                //     res.send(data);
+                // } else {
+                    data = {
+                        "status": false,
+                        "msg": 'Error while Processing',
+                    };
+                    res.send(data);
+                // }
+
+            // });
+            
+        }
+    } catch (error) {
+        throw Error(error.message);
+    }
+});
 
 router.post('/get_profiles', async function (req, res) {
     var verify = await verifyToken(req, res);
@@ -4235,7 +4283,6 @@ router.post('/addApk', async function (req, res) {
                 mimeType = file.mimetype;
                 fieldName = file.fieldname;
                 var filetypes = /jpeg|jpg|apk|png/;
-
                 // console.log("mimetype: ", mimeType);
                 // console.log("fieldName: ", fieldName);
 
@@ -4328,6 +4375,8 @@ router.post('/upload', async function (req, res) {
                 let file = path.join(__dirname, "../uploads/" + apk);
                 let versionCode = helpers.getAPKVersionCode(file);
                 let versionName = helpers.getAPKVersionName(file);
+                console.log("versionName", versionName);
+
                 let packageName = helpers.getAPKPackageName(file);
                 let details = JSON.stringify(helpers.getAPKDetails(file));
 
