@@ -11,18 +11,16 @@ var Constants = require('../constants/Application');
 
 module.exports = {
     onlineOflineDevice: async function (deviceId = null, sessionId, status) {
-        if (deviceId != null) {
-            var query = "UPDATE devices SET session_id='" + sessionId + "', online='" + status + "' WHERE device_id='" + deviceId + "';";
-            let res = await sql.query(query);
-            if (res) {
-                return true;
-            }
+        let query = "";
+        if (deviceId !== null) {
+            query = "UPDATE devices SET session_id='" + sessionId + "', online='" + status + "' WHERE device_id='" + deviceId + "';";
         } else {
-            var query = "UPDATE devices SET online = '" + status + "', session_id=null WHERE session_id='" + sessionId.replace(/['"]+/g, '') + "'";
-            let res = await sql.query(query);
-            if (res) {
-                return true;
-            }
+            query = "UPDATE devices SET online = '" + status + "', session_id=null WHERE session_id='" + sessionId.replace(/['"]+/g, '') + "'";
+        }
+
+        let res = await sql.query(query);
+        if (res) {
+            return true;
         }
         return false;
     },
@@ -148,9 +146,9 @@ module.exports = {
 
     },
     deviceSynced: async function (deviceId) {
-        console.log("device_id", deviceId);
         var updateQuery = "UPDATE devices set is_sync=1 WHERE device_id='" + deviceId + "'";
         await sql.query(updateQuery);
+        console.log("device synced");
     },
     getApp: async function (uniqueName, device_id, guest, encrypted, enable) {
         
@@ -173,11 +171,7 @@ module.exports = {
                 " encrypted = " + encrypted + ", " +
                 " enable = " + enable + " ";
             // var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
-            sql.query(updateQuery, function(error, response){
-                console.log("insert or update apps error", error);
-                // console.log("insert or update apps response", response);
-                
-            });
+            await sql.query(updateQuery);
 
         } catch (error) {
             console.log(error);
@@ -345,8 +339,7 @@ module.exports = {
         }
     },
     saveActionHistory: async (device, action) => {
-        console.log('SAVE HISTORY', action, device);
-        let query = "INSERT INTO acc_action_history (action, device_id, device_name, session_id, model, ip_address,simno,imei,simno2,imei2,serial_number,mac_address,fcm_token,online,is_sync,flagged,screen_start_date,reject_status,account_email,dealer_id,prnt_dlr_id,link_code,client_id,start_date,expiry_months,expiry_date,activation_code,status,device_status,activation_status,wipe_status,account_status,unlink_status,transfer_status,dealer_name,prnt_dlr_name,user_acc_id,pgp_email,chat_id,sim_id,finalStatus) VALUES "
+        let query = "INSERT INTO acc_action_history (action, device_id, device_name, session_id, model, ip_address, simno, imei, simno2, imei2, serial_number, mac_address, fcm_token, online, is_sync, flagged, screen_start_date, reject_status, account_email, dealer_id, prnt_dlr_id, link_code, client_id, start_date, expiry_months, expiry_date, activation_code, status, device_status, activation_status, wipe_status, account_status, unlink_status, transfer_status, dealer_name, prnt_dlr_name, user_acc_id, pgp_email, chat_id, sim_id, finalStatus) VALUES "
         let finalQuery = ''
         if (action === Constants.DEVICE_UNLINKED || action === Constants.UNLINK_DEVICE_DELETE) {
             finalQuery = query + "('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','off','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + device.prnt_dlr_id + "','" + device.link_code + "','" + device.client_id + "','', " + device.expiry_months + ",'','" + device.activation_code + "','',0,null,'" + device.wipe_status + "','" + device.account_status + "',1,'" + device.transfer_status + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','Unlinked')"
@@ -363,11 +356,11 @@ module.exports = {
         if (result.length) {
             console.log(result[0].serial_number);
             if (result[0].imei1 != imei1 || result[0].imei2 != imei2) {
-                let query = "INSERT INTO imei_history(device_id,serial_number,mac_address,imei1,imei2) VALUES ('" + deviceId + "','" + sn + "','" + mac + "','" + imei1 + "','" + imei2 + "')"
+                let query = "INSERT INTO imei_history(device_id, serial_number, mac_address, imei1, imei2) VALUES ('" + deviceId + "','" + sn + "','" + mac + "','" + imei1 + "','" + imei2 + "')"
                 await sql.query(query)
             }
         } else {
-            let query = "INSERT INTO imei_history(device_id,serial_number,mac_address,orignal_imei1,orignal_imei2,imei1,imei2) VALUES ('" + deviceId + "','" + sn + "','" + mac + "','" + imei1 + "','" + imei2 + "','" + imei1 + "','" + imei2 + "')"
+            let query = "INSERT INTO imei_history(device_id, serial_number, mac_address, orignal_imei1, orignal_imei2, imei1, imei2) VALUES ('" + deviceId + "','" + sn + "','" + mac + "','" + imei1 + "','" + imei2 + "','" + imei1 + "','" + imei2 + "')"
             await sql.query(query)
         }
 

@@ -3270,33 +3270,33 @@ router.post('/apply_pushapps/:device_id', async function(req, res){
             
             let apps = (push_apps === undefined)? '' : JSON.stringify(push_apps);
             
-            // var applyQuery = "INSERT INTO device_history (user_acc_id, push_apps) VALUES (" + usrAccId + ", '" + push_apps + "')";
+            var applyQuery = "INSERT INTO device_history (user_acc_id, push_apps, type) VALUES (" + usrAccId + ", '" + apps + "', 'push_apps')";
             
-            // sql.query(applyQuery, async function (err, rslts) {
-            //     if (err) {
-            //         throw err;
-            //     }
-
-                let isOnline = await device_helpers.isDeviceOnline(device_id);
-                if (isOnline) {
-                    require("../bin/www").applyPushApps(apps, device_id);
+            sql.query(applyQuery, async function (err, rslts) {
+                if (err) {
+                    throw err;
                 }
-
-                // if (rslts) {
-                //     data = {
-                //         "status": true,
-                //         "msg": 'Apps are being pushed',
-                //     };
-                //     res.send(data);
-                // } else {
+  
+                if (rslts) {
+                    
+                    let isOnline = await device_helpers.isDeviceOnline(device_id);
+                    if (isOnline) {
+                        require("../bin/www").applyPushApps(apps, device_id);
+                    }
+                    data = {
+                        "status": true,
+                        "msg": 'Apps are being pushed',
+                    };
+                    res.send(data);
+                } else {
                     data = {
                         "status": false,
                         "msg": 'Error while Processing',
                     };
                     res.send(data);
-                // }
+                }
 
-            // });
+            });
             
         }
     } catch (error) {
