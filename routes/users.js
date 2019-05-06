@@ -3065,15 +3065,15 @@ router.post('/save_policy', async function (req, res) {
 
 });
 
+
+
 router.post('/save/profile', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
         if (verify.status !== undefined && verify.status == true) {
-            let device_id = req.params.device_id;
-
-            let type = req.body.type;
-            let name = req.body.name;
-            let dealer_id = verify.user.id;
+console.log('body is', req.body)
+            let name = req.body.profileName;
+            // let dealer_id = verify.user.id;
             let usr_acc_id = req.body.usr_acc_id;
 
             let app_list = (req.body.device_setting.app_list == undefined) ? '' : JSON.stringify(req.body.device_setting.app_list);
@@ -3082,121 +3082,43 @@ router.post('/save/profile', async function (req, res) {
 
             let controls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
 
-            let systemControls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
-
-            let subExtension2 = (req.body.device_setting.subExtension == undefined) ? '' : JSON.stringify(req.body.device_setting.subExtension);
-            console.log("subExtension: ", subExtension);
-
-            if (type == "profile" || type == "policy") device_id = '';
-            if (type == "history") {
-                name = '';
-                dealer_id = 0;
-            }
-
-            if (type === 'profile') {
-                console.log('action type', type);
                 var query = "select id from usr_acc_profile where profile_name = '" + name + "'";
+                
                 let result = await sql.query(query);
 
                 if (result.length == 0 || name == '') {
-                    var applyQuery = "insert into usr_acc_profile (profile_name, user_acc_id, app_list, setting, controls,passwords, type) values ('" + name + "', " + usr_acc_id + ",'" + app_list + "', null, '" + controls + "', '" + passwords + "', '" + type + "')";
+                    var applyQuery = "insert into usr_acc_profile (profile_name, user_acc_id, app_list, setting, controls,passwords) values ('" + name + "', " + usr_acc_id + ",'" + app_list + "', null, '" + controls + "', '" + passwords + "')";
                     // console.log('query insert', applyQuery);
-                    // console.log(applyQuery);
+                     console.log(applyQuery , 'thats it');
 
-                    await sql.query(applyQuery, async function (err, rslts) {
+                     sql.query(applyQuery, async function (err, rslts) {
+                        // console.log(rslts, 'rslt is query')
+                        if(rslts.affectedRows){
+                            data = {
+                                "status": true,
+                                "msg": 'Setting Applied Successfully',
+                                "data": rslts
+                            };
+                            res.send(data);
+                        }else{
+                            data = {
+                                "status": false,
+                                "msg": 'Profile Name is already Exist',
+                            };
+                            res.send(data);
+                        }
 
-                        // if (type == "history") {
-                        //     let isOnline = await device_helpers.isDeviceOnline(device_id);
-                        //     // console.log("isOnline: " + isOnline);
-                        //     if (isOnline) {
-                        //         require("../bin/www").sendEmit(app_list, passwords, controls, device_id);
-                        //     }
-                        // }
-
-                        data = {
-                            "status": true,
-                            "msg": 'Setting Applied Successfully',
-                            "data": rslts
-                        };
-                        res.send(data);
+                      
                     });
-
-                } else {
+                    
+                }else{
                     data = {
                         "status": false,
                         "msg": 'Profile Name is already Exist',
                     };
                     res.send(data);
                 }
-            } else if (type === 'policy') {
-                // console.log('action type polocy', type);
-                var query = "select id from policy where policy_name = '" + name + "'";
-                let result = await sql.query(query);
-
-                if (result.length == 0 || name == '') {
-                    var applyQuery = "insert into policy (policy_name, app_list, setting, controls,passwords) values ('" + name + "','" + app_list + "', null, '" + controls + "', '" + passwords + "')";
-                    // console.log('query insert', applyQuery);
-                    // console.log(applyQuery);
-
-                    await sql.query(applyQuery, async function (err, rslts) {
-                        if (err) throw err;
-                        // if (type == "history") {
-                        //     let isOnline = await device_helpers.isDeviceOnline(device_id);
-                        //     // console.log("isOnline: " + isOnline);
-                        //     if (isOnline) {
-                        //         require("../bin/www").sendEmit(app_list, passwords, controls, device_id);
-                        //     }
-                        // }
-                        // console.log('resluts id ', rslts);
-                        if (rslts.affectedRows) {
-                            data = {
-                                "status": true,
-                                "msg": 'Policy Saved Successfully',
-                                "data": rslts
-                            };
-                            res.send(data);
-                        }
-
-                    });
-                } else {
-                    data = {
-                        "status": false,
-                        "msg": 'Policy Name is already Exist',
-                    };
-                    res.send(data);
-                }
-            } else if (type === 'history') {
-
-                var applyQuery = "insert into device_history (user_acc_id, app_list, passwords, controls, permissions) values ('" + usr_acc_id + "','" + app_list + "', '" + passwords + "', '" + systemControls + "','" + subExtension2 + "')";
-                // console.log(applyQuery);
-                await sql.query(applyQuery, async function (err, rslts) {
-                    if (err) {
-                        throw err;
-                    }
-
-                    let isOnline = await device_helpers.isDeviceOnline(device_id);
-                    let permissions = subExtension2;
-                    // console.log("isOnline: " + isOnline);
-                    if (isOnline) {
-                        require("../bin/www").sendEmit(app_list, passwords, controls, permissions, device_id);
-                    }
-
-                    if (rslts) {
-                        data = {
-                            "status": true,
-                            "msg": 'Settings Applied Successfully',
-                        };
-                        res.send(data);
-                    } else {
-                        data = {
-                            "status": false,
-                            "msg": 'Error while Proccessing',
-                        };
-                        res.send(data);
-                    }
-
-                });
-            }
+        
         }
     } catch (error) {
         throw Error(error.message);
@@ -3351,6 +3273,7 @@ router.get('/get_policies', async function (req, res) {
                         policies.push(dta);
                     }
                 }
+                console.log('policy', policies)
 
                 data = {
                     "status": true,
@@ -3372,7 +3295,7 @@ router.get('/get_policies', async function (req, res) {
 });
 
 
-router.post('/deleteORStatusPolicy', async function (req, res) {
+router.post('/change_policy_status', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status === true) {
         let id = req.body.id;
@@ -3392,7 +3315,42 @@ router.post('/deleteORStatusPolicy', async function (req, res) {
             } else {
                 data = {
                     "status": false,
-                    "msg": 'successful'
+                    "msg": 'error'
+                };
+                res.send(data);
+            }
+
+        });
+    }
+})
+
+router.post('/save_policy_changes', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify.status === true) {
+        // console.log('body of kth e', req.body);
+        let record = req.body;
+        let id = record.id;
+        let push_apps = record.push_apps;
+        let controls = record.controls;
+        let permissions = record.permissions;
+        let  app_list = record.app_list;
+        // console.log('id id', id)
+
+        let query = "UPDATE policy SET push_apps = '" + push_apps + "', controls = '" + controls + "', permissions = '" + permissions + "', app_list = '" + app_list + "' WHERE id='" + id + "'";
+        // console.log('qerury', query)
+        sql.query(query, (error, result) => {
+            // console.log(result, 'relstsdf');
+            if (error) throw error;
+            if (result.affectedRows) {
+                data = {
+                    "status": true,
+                    "msg": 'Policy Updated Successfully'
+                };
+                res.send(data);
+            } else {
+                data = {
+                    "status": false,
+                    "msg": 'error'
                 };
                 res.send(data);
             }
@@ -3563,9 +3521,9 @@ router.post('/dealer/postPagination', async function (req, res) {
         var dropdownType = req.body.pageName;
         var dealer_id = verify.user.id;
         var squery = "select * from dealer_pagination where dealer_id = " + dealer_id + " AND type ='" + dropdownType + "'";
-        // console.log('query', squery);
+         console.log('query', squery);
         var srslt = await sql.query(squery);
-        // console.log('query result', srslt);
+         console.log('query result pagination', srslt);
 
         if (srslt.length == 0) {
             var squery = sql.query("insert into dealer_pagination (dealer_id, record_per_page, type) values (" + dealer_id + ", '" + selectedValue + "', '" + dropdownType + "')", function (err, rslts) {
@@ -3586,6 +3544,7 @@ router.post('/dealer/postPagination', async function (req, res) {
                         "msg": 'Items Updated.',
                         "data": row
                     };
+
                     res.send(data);
                 } else {
                     data = {
