@@ -155,7 +155,7 @@ module.exports = {
     getApp: async function (uniqueName, device_id, guest, encrypted, enable) {
         
         var query = "SELECT id FROM apps_info WHERE unique_name='" + uniqueName + "' limit 1";
-        console.log(query);
+        // console.log(query);
         let response = await sql.query(query);
         if (response.length) {
             await this.insertOrUpdateApps(response[0].id, device_id, guest, encrypted, enable);
@@ -427,7 +427,6 @@ module.exports = {
         } else {
             days = validity
         }
-
         if (days > 0) return days; else if (days <= 0 && days !== null) return "Expired"; else return "Not Announced";
     }
 }

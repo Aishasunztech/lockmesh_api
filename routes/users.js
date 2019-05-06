@@ -711,7 +711,66 @@ router.post('/add/user', async function (req, res) {
     }
 });
 
+/*** Edit User ***/
+router.post('/edit/user', async function (req, res) {
 
+    res.setHeader('Content-Type', 'application/json');
+
+    var verify = await verifyToken(req, res);
+
+    if (verify.status !== undefined && verify.status == true) {
+        var userName = req.body.name;
+        var userEmail = req.body.email;
+        var user_id = req.body.user_id
+        if (!empty(userEmail) && !empty(userName)) {
+            var user = await sql.query("SELECT * FROM users WHERE email = '" + userEmail + "' AND user_id != '" + user_id + "'");
+
+            if (user.length > 0) {
+                data = {
+                    'status': false,
+                    'msg': 'User Already Registered. Please use another email.',
+                }
+                res.status(200).send(data);
+                return;
+            }
+            let PrevUserData = await helpers.getUserDataByUserId(user_id)
+            var sql1 = "UPDATE users set user_name ='" + userName + "',  email = '" + userEmail + "' WHERE user_id ='" + user_id + "'";
+            sql.query(sql1, async function (error, rows) {
+                if (error) throw error;
+
+                if (PrevUserData[0].email != userEmail) {
+
+                    var html = 'User details are : <br> ' +
+                        'User ID : ' + user_id + '.<br> ' +
+                        'Name : ' + userName + '<br> ' +
+                        'Email : ' + userEmail + '<br> '
+                    sendEmail("User info Changed Successfully", html, verify.user.email)
+                    sendEmail("User Info Changed Successfully", html, userEmail)
+                }
+
+                //res.send("Email has been sent successfully");
+                let userData = await helpers.getUserDataByUserId(user_id)
+                let data = await helpers.getAllRecordbyUserID(user_id)
+                userData[0].devicesList = data
+
+                data = {
+                    'status': true,
+                    'msg': 'User Info has been changed successfully.',
+                    'user': userData,
+                }
+                res.status(200).send(data);
+
+            });
+
+        } else {
+            data = {
+                'status': false,
+                'msg': 'Invalid email or name'
+            }
+            res.status(200).send(data);
+        }
+    }
+});
 
 
 
@@ -860,7 +919,8 @@ router.post('/create/device_profile', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         // var dataStag = [];
-        var activation_code = randomize('0', 7);
+        var code = randomize('0', 7);
+        var activation_code = await helpers.checkActivationCode(code);
         // let device_id = helpers.getDeviceId();
         // device_id = await helpers.checkDeviceId(device_id);
         // console.log("device_id", device_id);
@@ -907,8 +967,8 @@ router.post('/create/device_profile', async function (req, res) {
             let deviceIds = []
             const addDuplicateActivations = async () => {
                 for (let i = 0; i < duplicate; i++) {
-                    let activationCode = randomize('0', 7);
-                    // let deviceId = helpers.getDeviceId();
+                    let code = randomize('0', 7);
+                    var activationCode = await helpers.checkActivationCode(code);
                     activationCodes.push(activationCode);
                     // deviceIds.push("'" + deviceId + "'");
                     let chat_id = (chat_ids[i]) ? chat_ids[i].chat_id : null;
@@ -1107,7 +1167,8 @@ router.post('/transfer/device_profile', async (req, res) => {
         let loggedDealerType = verify.user.user_type;
         let device_id = req.body.device_id;
         console.log('device id', device_id);
-        var activation_code = randomize('0', 7);
+        var code = randomize('0', 7);
+        var activation_code = await helpers.checkActivationCode(code);
         // let device_id_new = helpers.getDeviceId();
         // device_id_new = await helpers.checkDeviceId(device_id_new);
 
@@ -1132,7 +1193,8 @@ router.post('/transfer/device_profile', async (req, res) => {
                 if (err) throw (err);
                 if (resp.affectedRows) {
 
-                    var activation_code = randomize('0', 7);
+                    var code = randomize('0', 7);
+                    var activation_code = await helpers.checkActivationCode(code);
                     // let device_id_new = helpers.getDeviceId();
                     // device_id_new = await helpers.checkDeviceId(device_id_new);
 
@@ -2531,7 +2593,6 @@ router.get('/connect/:device_id', async function (req, res) {
     if (verify.status !== undefined && verify.status == true) {
         if (!empty(req.params.device_id)) {
             let userId = verify.user.id;
-            console.log("userId", req.params.device_id);
             //  console.log(verify.user);
             let usertype = await helpers.getUserType(userId);
             let where = "devices.device_id = '" + req.params.device_id + "'";
@@ -2592,16 +2653,16 @@ router.patch('/sync-device', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         let deviceId = req.body.device_id;
-        if(!empty(deviceId)){
-            let query = "SELECT * FROM devices WHERE device_id = '"+ deviceId+"' and (online = 'On' OR online = 'on') ";
-            sql.query(query, function (error, response){
-                if(error) console.log(error);
-                if(response.length){
+        if (!empty(deviceId)) {
+            let query = "SELECT * FROM devices WHERE device_id = '" + deviceId + "' and (online = 'On' OR online = 'on') ";
+            sql.query(query, function (error, response) {
+                if (error) console.log(error);
+                if (response.length) {
                     require("../bin/www").syncDevice(deviceId);
                 }
                 res.send({
                     status: true,
-                    msg : "device synced successfully"
+                    msg: "device synced successfully"
                 })
             });
         }
@@ -2616,7 +2677,7 @@ router.get('/get_dealer_apps', async function (req, res) {
         let loggedUserId = verify.user.id;
         let loggedUserType = verify.user.user_type;
 
-        let getAppsQ = "SELECT * FROM apk_details ";
+        let getAppsQ = "SELECT apk_details.* FROM apk_details ";
         if (loggedUserType !== Constants.ADMIN) {
             getAppsQ = getAppsQ + " JOIN dealer_apks on (dealer_apks.apk_id = apk_details.id) WHERE dealer_apks.dealer_id =" + loggedUserId;
         }
@@ -2625,29 +2686,24 @@ router.get('/get_dealer_apps', async function (req, res) {
         if (apps.length > 0) {
             let data = []
             for (var i = 0; i < apps.length; i++) {
-                // let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : '[]';
-                // let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
-                // let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
                 dta = {
-                    "apk_id": apps[i].id,
-                    "apk_name": apps[i].app_name,
-                    "logo": apps[i].logo,
-                    "apk": apps[i].apk,
-                    "guest": false,
-                    "encrypted": false,
-                    "enable": false,
-                    // "permissions": permissions,
-                    // "permission_count": permissionC,
-                    "apk_status": apps[i].status,
-                    "deleteable": (apps[i].apk_type == "permanent") ? false : true
+                    apk_id: apps[i].id,
+                    apk_name: apps[i].app_name,
+                    logo: apps[i].logo,
+                    apk: apps[i].apk,
+                    package_name: apps[i].package_name,
+                    version_name: apps[i].version_name,
+                    guest: false,
+                    encrypted: false,
+                    enable: false,
+                    apk_status: apps[i].status,
+                    deleteable: (apps[i].apk_type == "permanent") ? false : true
                 }
                 data.push(dta);
             }
-            // console.log('api response is ', data)
 
             return res.json({
                 status: true,
-                success: true,
                 list: data
             });
 
@@ -2688,76 +2744,76 @@ router.get('/get_app_permissions', async function (req, res) {
         // console.log('id is the ', req.params);
         let loggedUserType = verify.user.user_type;
         // if (loggedUserType !== Constants.ADMIN) {
-            let query = "select * from apps_info";
+        let query = "select * from apps_info";
 
-            sql.query(query, async (error, apps) => {
+        sql.query(query, async (error, apps) => {
 
-                if (error) throw error;
-                // console.log(query, 'rslt  ', apps);
-                let Extension = [];
-                let onlyApps = [];
+            if (error) throw error;
+            // console.log(query, 'rslt  ', apps);
+            let Extension = [];
+            let onlyApps = [];
+            for (let item of apps) {
+                let subExtension = [];
+                // console.log("extenstion id", item.extension_id);
+                if (item.extension === 1 && item.extension_id === 0) {
+                    // console.log('main', item)
+                    Extension.push(item);
+                }
+
+                if (item.extension == 0 || item.visible == 1) {
+                    onlyApps.push(item)
+                }
+            }
+            console.log('ext e n tion ', Extension)
+
+            let newExtlist = [];
+            for (let ext of Extension) {
+                let subExtension = [];
+
                 for (let item of apps) {
-                    let subExtension = [];
-                    // console.log("extenstion id", item.extension_id);
-                    if (item.extension === 1 && item.extension_id === 0) {
-                        // console.log('main', item)
-                        Extension.push(item);
+                    // console.log(ext.id, item.extension_id);
+                    if (ext.id === item.extension_id) {
+                        // console.log('sub ext item', item)
+
+                        subExtension.push({
+                            uniqueName: ext.unique_name,
+                            uniqueExtension: item.uniqueName,
+                            guest: item.guest,
+                            label: item.label,
+                            icon: item.icon,
+                            encrypted: item.encrypted,
+                            id: item.id,
+                            device_id: item.device_id,
+                            app_id: item.id,
+                            default_app: item.default_app
+                        });
                     }
 
-                    if (item.extension == 0 || item.visible == 1) {
-                        onlyApps.push(item)
-                    }
-                }
-                console.log('ext e n tion ', Extension)
-
-                let newExtlist = [];
-                for (let ext of Extension) {
-                    let subExtension = [];
-
-                    for (let item of apps) {
-                        // console.log(ext.id, item.extension_id);
-                        if (ext.id === item.extension_id) {
-                            // console.log('sub ext item', item)
-
-                            subExtension.push({
-                                uniqueName: ext.unique_name,
-                                uniqueExtension: item.uniqueName,
-                                guest: item.guest,
-                                label: item.label,
-                                icon: item.icon,
-                                encrypted: item.encrypted,
-                                id: item.id,
-                                device_id: item.device_id,
-                                app_id: item.id,
-                                default_app: item.default_app
-                            });
-                        }
-
-                    }
-
-                     console.log('sub ext', subExtension)
-
-                    newExtlist.push({
-                        uniqueName: ext.unique_name,
-                        guest: ext.guest,
-                        encrypted: ext.encrypted,
-                        enable: ext.enable,
-                        label: ext.label,
-                        subExtension: subExtension
-
-                    })
                 }
 
-                console.log('daa is ', onlyApps)
+                console.log('sub ext', subExtension)
+
+                newExtlist.push({
+                    uniqueName: ext.unique_name,
+                    guest: ext.guest,
+                    encrypted: ext.encrypted,
+                    enable: ext.enable,
+                    label: ext.label,
+                    subExtension: subExtension
+
+                })
+            }
+
+            console.log('daa is ', onlyApps)
 
 
-                res.send({
-                    status: true,
-                    extensions: newExtlist,
-                    appPermissions: onlyApps
-                });
-            })
-        }
+            res.send({
+                status: true,
+                extensions: newExtlist,
+                appPermissions: onlyApps
+            });
+        })
+    }
     // }
 
 });
@@ -2799,7 +2855,7 @@ router.get('/get_apps/:device_id', async function (req, res) {
                         let subExtension = [];
 
                         for (let item of apps) {
-                            console.log(ext.app_id, ' ', item.visible);
+                            // console.log(ext.app_id, ' ', item.visible);
                             if (ext.app_id === item.extension_id) {
                                 subExtension.push({
                                     uniqueName: ext.uniqueName,
@@ -2984,7 +3040,7 @@ router.post('/save_policy', async function (req, res) {
 
             var command_name = '#' + policy_name.replace(/ /g, "_");
 
-            var applyQuery = "insert into policy (policy_name,policy_note,command_name, app_list, push_apps, controls,permissions, dealer_id) values ('" + policy_name + "','" + policy_note + "','" + command_name + "','" + app_list + "', '" + push_apps + "','" + system_permissions + "', '" + secure_apps + "','" + verify.user.id + "')";
+            var applyQuery = "insert into policy (policy_name,policy_note,command_name, app_list, push_apps, controls,permissions, dealer_id , dealers) values ('" + policy_name + "','" + policy_note + "','" + command_name + "','" + app_list + "', '" + push_apps + "','" + system_permissions + "', '" + secure_apps + "','" + verify.user.id + "' , '[]')";
             // console.log('query insert', applyQuery);
             // console.log(applyQuery);
 
@@ -3009,31 +3065,26 @@ router.post('/save_policy', async function (req, res) {
 
 });
 
-router.post('/apply_settings/:device_id', async function (req, res) {
+router.post('/save/profile', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
         if (verify.status !== undefined && verify.status == true) {
             let device_id = req.params.device_id;
 
-            // console.log('body is', req.body);
-
             let type = req.body.type;
             let name = req.body.name;
             let dealer_id = verify.user.id;
             let usr_acc_id = req.body.usr_acc_id;
-            let subExtension = req.body.subExtension;
 
             let app_list = (req.body.device_setting.app_list == undefined) ? '' : JSON.stringify(req.body.device_setting.app_list);
-            // console.log("controls: " + app_list);
 
             let passwords = (req.body.device_setting.passwords == undefined) ? '' : JSON.stringify(req.body.device_setting.passwords);
-            // console.log("controls: " + passwords);
 
             let controls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
-            let systemControls = (req.body.controls == undefined) ? '' : JSON.stringify(req.body.controls);
 
-            // console.log("controls: " + controls);
-            let subExtension2 = (subExtension == undefined) ? '' : JSON.stringify(subExtension);
+            let systemControls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
+
+            let subExtension2 = (req.body.device_setting.subExtension == undefined) ? '' : JSON.stringify(req.body.device_setting.subExtension);
             console.log("subExtension: ", subExtension);
 
             if (type == "profile" || type == "policy") device_id = '';
@@ -3139,7 +3190,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
                     } else {
                         data = {
                             "status": false,
-                            "msg": 'Error while Proccessing',
+                            "msg": 'Error while Processing',
                         };
                         res.send(data);
                     }
@@ -3150,10 +3201,108 @@ router.post('/apply_settings/:device_id', async function (req, res) {
     } catch (error) {
         throw Error(error.message);
     }
+});
+
+router.post('/apply_settings/:device_id', async function (req, res) {
+    try {
+        var verify = await verifyToken(req, res);
+        if (verify.status !== undefined && verify.status == true) {
+            let device_id = req.params.device_id;
+
+            let usrAccId = req.body.usr_acc_id;
+            
+            let device_setting = req.body.device_setting;
+
+            let app_list = (device_setting.app_list === undefined) ? '' : JSON.stringify(device_setting.app_list);
+
+            let passwords = (device_setting.passwords === undefined) ? '' : JSON.stringify(device_setting.passwords);
+
+            let controls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
+            // console.log("hello controls", controls);
+            let subExtensions = (req.body.device_setting.subExtensions == undefined) ? '' : JSON.stringify(req.body.device_setting.subExtensions);
+
+            var applyQuery = "insert into device_history (user_acc_id, app_list, passwords, controls, permissions) values (" + usrAccId + ", '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "')";
+
+            await sql.query(applyQuery, async function (err, rslts) {
+                if (err) {
+                    throw err;
+                }
+
+                let isOnline = await device_helpers.isDeviceOnline(device_id);
+                let permissions = subExtensions;
+
+                if (isOnline) {
+                    require("../bin/www").sendEmit(app_list, passwords, controls, permissions, device_id);
+                }
+
+                if (rslts) {
+                    data = {
+                        "status": true,
+                        "msg": 'Settings Applied Successfully',
+                    };
+                    res.send(data);
+                } else {
+                    data = {
+                        "status": false,
+                        "msg": 'Error while Processing',
+                    };
+                    res.send(data);
+                }
+
+            });
+
+        }
+    } catch (error) {
+        throw Error(error.message);
+    }
 
 });
 
+router.post('/apply_pushapps/:device_id', async function(req, res){
+    try {
+        var verify = await verifyToken(req, res);
+        if (verify.status !== undefined && verify.status == true) {
+            let device_id = req.params.device_id;
 
+            let usrAccId = req.body.usrAccId;
+            
+            let push_apps = req.body.push_apps;
+            
+            let apps = (push_apps === undefined)? '' : JSON.stringify(push_apps);
+            
+            // var applyQuery = "INSERT INTO device_history (user_acc_id, push_apps) VALUES (" + usrAccId + ", '" + push_apps + "')";
+            
+            // sql.query(applyQuery, async function (err, rslts) {
+            //     if (err) {
+            //         throw err;
+            //     }
+
+                let isOnline = await device_helpers.isDeviceOnline(device_id);
+                if (isOnline) {
+                    require("../bin/www").applyPushApps(apps, device_id);
+                }
+
+                // if (rslts) {
+                //     data = {
+                //         "status": true,
+                //         "msg": 'Apps are being pushed',
+                //     };
+                //     res.send(data);
+                // } else {
+                    data = {
+                        "status": false,
+                        "msg": 'Error while Processing',
+                    };
+                    res.send(data);
+                // }
+
+            // });
+            
+        }
+    } catch (error) {
+        throw Error(error.message);
+    }
+});
 
 router.post('/get_profiles', async function (req, res) {
     var verify = await verifyToken(req, res);
@@ -3216,7 +3365,7 @@ router.get('/get_policies', async function (req, res) {
         }
 
         if (isValid) {
-            let query = "SELECT * FROM policy ";
+            let query = "SELECT * FROM policy where delete_status=0";
             sql.query(query, async (error, results) => {
                 if (results.length) {
                     let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
@@ -3224,23 +3373,24 @@ router.get('/get_policies', async function (req, res) {
 
                     for (var i = 0; i < results.length; i++) {
                         // console.log('push apps', results[i].push_apps)
-                        let permissions = (results[i].permissions !== undefined && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : JSON.parse('[]');
+                        let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
                         let controls = (results[i].controls !== undefined && results[i].controls !== null) ? JSON.parse(results[i].controls) : JSON.parse('[]');
                         let push_apps = (results[i].push_apps !== undefined && results[i].push_apps !== null) ? JSON.parse(results[i].push_apps) : JSON.parse('[]');
                         let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== null) ? JSON.parse(results[i].app_list) : JSON.parse('[]');
+                        let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : JSON.parse('[]');
                         let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
                         let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
-
                         dta = {
                             id: results[i].id,
                             policy_name: results[i].policy_name,
                             policy_note: results[i].policy_note,
+                            status: results[i].status,
                             dealer_permission: permissions,
                             permission_count: permissionC,
                             // app_list: results[i].apk_list,
                             command_name: results[i].command_name,
                             controls: controls,
-                            secure_apps: results[i].permissions,
+                            secure_apps: secure_apps,
                             push_apps: push_apps,
                             app_list: app_list2
                         }
@@ -3267,38 +3417,50 @@ router.get('/get_policies', async function (req, res) {
 
 });
 
-router.post('/get_device_history', async function (req, res) {
+
+router.post('/deleteORStatusPolicy', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status === true) {
+        let id = req.body.id;
+        let value = req.body.value == true ? 1 : 0;
+        let key = req.body.key;
+
+        let query = "UPDATE policy SET " + key + " = '" + value + "' WHERE id='" + id + "'";
+
+        sql.query(query, (error, result) => {
+            console.log(result, 'relstsdf')
+            if (result.affectedRows) {
+                data = {
+                    "status": true,
+                    "msg": 'successful'
+                };
+                res.send(data);
+            } else {
+                data = {
+                    "status": false,
+                    "msg": 'successful'
+                };
+                res.send(data);
+            }
+
+        });
+    }
+})
+
+
+router.post('/get_device_history', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify['status'] !== undefined && verify.status == true) {
         let userId = verify.user.id;
         let userType = await helpers.getUserType(userId);
         let user_acc_id = await device_helpers.getUserAccountId(req.body.device_id);
-        // console.log('user id si', user_acc_id);
-        let where = "where";
-        let isValid = true;
-        // console.log('d_id', user_acc_id);
+
+        let where = " WHERE ";
+        
         if (user_acc_id != undefined && user_acc_id != '' && user_acc_id != null) {
             where = where + " user_acc_id='" + user_acc_id + "'";
 
-        } else {
-            where = "";
-        }
-        // if (userType != ADMIN) {
-        //     if (userType == DEALER) {
-        //         where = where + " AND ((type='profile' AND dealer_id=" + userId + ") OR type='policy')";
-        //     } else {
-        //         let connected_dealer = verify.user.connected_dealer;
-        //         if (connected_dealer != undefined && connected_dealer != '' && connected_dealer != null && connected_dealer != 0) {
-        //             where = where + " AND ((type='profile' AND dealer_id=" + connected_dealer + ") OR type='policy')";
-        //         } else {
-        //             isValid = false;
-        //         }
-        //     }
-        // }
-        // console.log(where);
-        if (isValid) {
             let query = "SELECT * FROM device_history " + where;
-            // console.log("getprofiles query", query);
             sql.query(query, (error, result) => {
                 data = {
                     "status": true,
@@ -3309,6 +3471,7 @@ router.post('/get_device_history', async function (req, res) {
             });
 
         } else {
+            where = "";
             data = {
                 "status": false,
                 "msg": 'Invalid User'
@@ -4132,7 +4295,6 @@ router.post('/addApk', async function (req, res) {
                 mimeType = file.mimetype;
                 fieldName = file.fieldname;
                 var filetypes = /jpeg|jpg|apk|png/;
-
                 // console.log("mimetype: ", mimeType);
                 // console.log("fieldName: ", fieldName);
 
@@ -4225,6 +4387,8 @@ router.post('/upload', async function (req, res) {
                 let file = path.join(__dirname, "../uploads/" + apk);
                 let versionCode = helpers.getAPKVersionCode(file);
                 let versionName = helpers.getAPKVersionName(file);
+                console.log("versionName", versionName);
+
                 let packageName = helpers.getAPKPackageName(file);
                 let details = JSON.stringify(helpers.getAPKDetails(file));
 
@@ -4548,9 +4712,10 @@ router.post('/save_policy_permissions', async function (req, res) {
         var action = req.body.action
         let policyId = req.body.policyId;
         let dealers = req.body.dealers;
-        let prevPermissions = await sql.query("SELECT dealers FROM policy WHERE id = " + policyId);
-        let prevParsDealers = (prevPermissions !== null) ? JSON.parse(prevPermissions[0].dealers) : [];
 
+        let prevPermissions = await sql.query("SELECT dealers FROM policy WHERE id = " + policyId);
+        let prevParsDealers = (prevPermissions[0].dealers !== null && prevPermissions[0].dealers !== '' && prevPermissions[0].dealers !== 'null') ? JSON.parse(prevPermissions[0].dealers) : [];
+        console.log(prevPermissions[0].dealers, prevParsDealers, 'dalers for da', dealers)
         if (action === 'save') {
             var parsedDealers = JSON.parse(dealers);
             for (let i = 0; i < parsedDealers.length; i++) {
@@ -4559,20 +4724,20 @@ router.post('/save_policy_permissions', async function (req, res) {
                 }
             }
             let parsedCombineArray = JSON.stringify(prevParsDealers)
-            let updateAPKQ = "UPDATE policy SET dealers = '" + parsedCombineArray + "' WHERE id=" + apkId;
+            let updateAPKQ = "UPDATE policy SET dealers = '" + parsedCombineArray + "' WHERE id=" + policyId;
 
             if (prevParsDealers.length) {
-                let deleteNotIn = "DELETE FROM dealer_policies WHERE dealer_id NOT IN (" + prevParsDealers.join() + ") AND apk_id = " + apkId;
+                let deleteNotIn = "DELETE FROM dealer_policies WHERE dealer_id NOT IN (" + prevParsDealers.join() + ") AND policy_id = " + policyId;
                 // console.log(deleteNotIn);
                 await sql.query(deleteNotIn);
-                let insertQuery = "INSERT IGNORE INTO dealer_policies (dealer_id, apk_id) VALUES ";
+                let insertQuery = "INSERT IGNORE INTO dealer_policies (dealer_id, policy_id) VALUES ";
 
                 let insertOrIgnore = ' '
                 for (let i = 0; i < prevParsDealers.length; i++) {
                     if (i === prevParsDealers.length - 1) {
-                        insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + ")"
+                        insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + policyId + ")"
                     } else {
-                        insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + "),"
+                        insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + policyId + "),"
                     }
                 }
                 await sql.query(insertQuery + insertOrIgnore);
@@ -4581,7 +4746,7 @@ router.post('/save_policy_permissions', async function (req, res) {
             sql.query(updateAPKQ, async (error, result) => {
                 if (error) throw (error);
                 let permissionC = [];
-                let rslt = await sql.query("select dealers from policy where id='" + apkId + "' order by id ASC")
+                let rslt = await sql.query("select dealers from policy where id='" + policyId + "' order by id ASC")
                 if (rslt.length) {
                     if (rslt !== undefined && rslt !== null) {
                         let permission = JSON.parse(rslt[0].dealers);
@@ -4636,20 +4801,20 @@ router.post('/save_policy_permissions', async function (req, res) {
             console.log(prevParsDealers);
             let toDeleteDealers = (prevParsDealers.length > 0) ? prevParsDealers.join() : '""';
 
-            let updateAPKQ = "UPDATE policy SET dealers = '" + JSON.stringify(prevParsDealers) + "' WHERE id=" + apkId;
+            let updateAPKQ = "UPDATE policy SET dealers = '" + JSON.stringify(prevParsDealers) + "' WHERE id=" + policyId;
             if (dealers.length) {
-                let deleteNotIn = "DELETE FROM dealer_policies WHERE dealer_id NOT IN (" + toDeleteDealers + ") AND apk_id = " + apkId;
+                let deleteNotIn = "DELETE FROM dealer_policies WHERE dealer_id NOT IN (" + toDeleteDealers + ") AND policy_id = " + policyId;
                 console.log(deleteNotIn);
                 await sql.query(deleteNotIn);
                 if (prevParsDealers.length > 0) {
-                    let insertQuery = "INSERT IGNORE INTO dealer_policies (dealer_id, apk_id) VALUES";
+                    let insertQuery = "INSERT IGNORE INTO dealer_policies (dealer_id, policy_id) VALUES";
 
                     let insertOrIgnore = ' '
                     for (let i = 0; i < prevParsDealers.length; i++) {
                         if (i === prevParsDealers.length - 1) {
-                            insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + ")"
+                            insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + policyId + ")"
                         } else {
-                            insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + "),"
+                            insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + policyId + "),"
                         }
                     }
                     console.log(insertQuery + insertOrIgnore);
@@ -4662,7 +4827,7 @@ router.post('/save_policy_permissions', async function (req, res) {
             sql.query(updateAPKQ, async (error, result) => {
                 if (error) throw (error);
                 let permissionC = [];
-                let rslt = await sql.query("select dealers from apk_details where id='" + apkId + "' order by id ASC")
+                let rslt = await sql.query("select dealers from policy where id='" + policyId + "' order by id ASC")
                 if (rslt.length) {
                     console.log(rslt, ' do ti ');
                     if (rslt !== undefined && rslt !== null) {
