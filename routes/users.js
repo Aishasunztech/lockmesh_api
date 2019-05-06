@@ -386,6 +386,8 @@ router.get('/devices', async function (req, res) {
             // console.log("return data", data123);
             // console.log("Here is data",await helpers.getAllRecordbyDeviceId(finalResult[0].id));
             // device_helpers.getQueryOfInsert(finalResult[0])
+            // let response = await device_helpers.saveImeiHistory(finalResult[0].device_id, 'serial_number', 'mac_address', 213456122421354, 321351241321234)
+            // console.log("Imei History Save", response);
             data = {
                 "status": true,
                 "data": finalResult
@@ -3065,7 +3067,7 @@ router.post('/save_policy', async function (req, res) {
 
 });
 
-router.post ('/save/profile', async function (req, res) {
+router.post('/save/profile', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
         if (verify.status !== undefined && verify.status == true) {
@@ -3210,7 +3212,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
             let device_id = req.params.device_id;
 
             let usrAccId = req.body.usr_acc_id;
-            
+
             let device_setting = req.body.device_setting;
 
             let app_list = (device_setting.app_list === undefined) ? '' : JSON.stringify(device_setting.app_list);
@@ -3218,13 +3220,13 @@ router.post('/apply_settings/:device_id', async function (req, res) {
             let passwords = (device_setting.passwords === undefined) ? '' : JSON.stringify(device_setting.passwords);
 
             let controls = (device_setting.controls === undefined) ? '' : JSON.stringify(device_setting.controls);
-                        
+
             let subExtensions = (device_setting.subExtensions == undefined) ? '' : JSON.stringify(device_setting.subExtensions);
-            
-            let push_apps = (device_setting.push_apps === undefined)? '' : JSON.stringify(device_setting.push_apps);
-            
+
+            let push_apps = (device_setting.push_apps === undefined) ? '' : JSON.stringify(device_setting.push_apps);
+
             var applyQuery = "INSERT INTO device_history (user_acc_id, app_list, passwords, controls, permissions) VALUES (" + usrAccId + ", '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "')";
-            
+
             sql.query(applyQuery, async function (err, rslts) {
                 if (err) {
                     throw err;
@@ -3252,7 +3254,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
                 }
 
             });
-            
+
         }
     } catch (error) {
         throw Error(error.message);
@@ -3260,46 +3262,46 @@ router.post('/apply_settings/:device_id', async function (req, res) {
 
 });
 
-router.post('/apply_pushapps/:device_id', async function(req, res){
+router.post('/apply_pushapps/:device_id', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
         if (verify.status !== undefined && verify.status == true) {
             let device_id = req.params.device_id;
 
             let usrAccId = req.body.usrAccId;
-            
+
             let push_apps = req.body.push_apps;
-            
-            let apps = (push_apps === undefined)? '' : JSON.stringify(push_apps);
-            
+
+            let apps = (push_apps === undefined) ? '' : JSON.stringify(push_apps);
+
             // var applyQuery = "INSERT INTO device_history (user_acc_id, push_apps) VALUES (" + usrAccId + ", '" + push_apps + "')";
-            
+
             // sql.query(applyQuery, async function (err, rslts) {
             //     if (err) {
             //         throw err;
             //     }
 
-                let isOnline = await device_helpers.isDeviceOnline(device_id);
-                if (isOnline) {
-                    require("../bin/www").applyPushApps(apps, device_id);
-                }
+            let isOnline = await device_helpers.isDeviceOnline(device_id);
+            if (isOnline) {
+                require("../bin/www").applyPushApps(apps, device_id);
+            }
 
-                // if (rslts) {
-                //     data = {
-                //         "status": true,
-                //         "msg": 'Apps are being pushed',
-                //     };
-                //     res.send(data);
-                // } else {
-                    data = {
-                        "status": false,
-                        "msg": 'Error while Processing',
-                    };
-                    res.send(data);
-                // }
+            // if (rslts) {
+            //     data = {
+            //         "status": true,
+            //         "msg": 'Apps are being pushed',
+            //     };
+            //     res.send(data);
+            // } else {
+            data = {
+                "status": false,
+                "msg": 'Error while Processing',
+            };
+            res.send(data);
+            // }
 
             // });
-            
+
         }
     } catch (error) {
         throw Error(error.message);
@@ -3367,7 +3369,7 @@ router.get('/get_policies', async function (req, res) {
         }
 
         if (isValid) {
-            let query = "SELECT * FROM policy ";
+            let query = "SELECT * FROM policy where delete_status=0";
             sql.query(query, async (error, results) => {
                 if (results.length) {
                     let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
@@ -3386,6 +3388,7 @@ router.get('/get_policies', async function (req, res) {
                             id: results[i].id,
                             policy_name: results[i].policy_name,
                             policy_note: results[i].policy_note,
+                            status: results[i].status,
                             dealer_permission: permissions,
                             permission_count: permissionC,
                             // app_list: results[i].apk_list,
@@ -3417,6 +3420,37 @@ router.get('/get_policies', async function (req, res) {
     }
 
 });
+
+
+router.post('/deleteORStatusPolicy', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify.status === true) {
+        let id = req.body.id;
+        let value = req.body.value == true ? 1 : 0;
+        let key = req.body.key;
+
+        let query = "UPDATE policy SET " + key + " = '" + value + "' WHERE id='" + id + "'";
+
+        sql.query(query, (error, result) => {
+            console.log(result, 'relstsdf')
+            if (result.affectedRows) {
+                data = {
+                    "status": true,
+                    "msg": 'successful'
+                };
+                res.send(data);
+            } else {
+                data = {
+                    "status": false,
+                    "msg": 'successful'
+                };
+                res.send(data);
+            }
+
+        });
+    }
+})
+
 
 router.post('/get_device_history', async function (req, res) {
     var verify = await verifyToken(req, res);
@@ -4700,9 +4734,10 @@ router.post('/save_policy_permissions', async function (req, res) {
         var action = req.body.action
         let policyId = req.body.policyId;
         let dealers = req.body.dealers;
-        let prevPermissions = await sql.query("SELECT dealers FROM policy WHERE id = " + policyId);
-        let prevParsDealers = (prevPermissions !== null) ? JSON.parse(prevPermissions[0].dealers) : [];
 
+        let prevPermissions = await sql.query("SELECT dealers FROM policy WHERE id = " + policyId);
+        let prevParsDealers = (prevPermissions[0].dealers !== null && prevPermissions[0].dealers !== '' && prevPermissions[0].dealers !== 'null') ? JSON.parse(prevPermissions[0].dealers) : [];
+        console.log(prevPermissions[0].dealers, prevParsDealers, 'dalers for da', dealers)
         if (action === 'save') {
             var parsedDealers = JSON.parse(dealers);
             for (let i = 0; i < parsedDealers.length; i++) {
@@ -5170,6 +5205,85 @@ router.get('/userList', async function (req, res) {
         res.send(data)
     }
 });
+
+
+
+/*Transfer Apps to secure market */
+router.post('/transferApps', async function (req, res) {
+
+    let appKeys = req.body.data
+    var verify = await verifyToken(req, res);
+    let toDelete = '"' + appKeys.join('","') + '"'
+    if (verify.status !== undefined && verify.status == true) {
+        let dealer_type = verify.user.user_type;
+        let dealer_id = verify.user.id;
+
+        let deleteNotIn = "DELETE FROM secure_market_apps WHERE apk_id NOT IN ('" + toDelete + "')"
+        // console.log(deleteNotIn);
+        await sql.query(deleteNotIn);
+        if (appKeys.length) {
+            let insertQuery = "INSERT IGNORE INTO secure_market_apps (dealer_type,dealer_id, apk_id) VALUES ";
+
+            let insertOrIgnore = ' '
+            for (let i = 0; i < appKeys.length; i++) {
+                if (i === appKeys.length - 1) {
+                    insertOrIgnore = insertOrIgnore + "('" + dealer_type + "' ," + dealer_id + " , " + appKeys[i] + ")"
+                } else {
+                    insertOrIgnore = insertOrIgnore + "('" + dealer_type + "' ," + dealer_id + " , " + appKeys[i] + "),"
+                }
+            }
+            await sql.query(insertQuery + insertOrIgnore);
+        }
+        data = {
+            "status": true,
+            "msg": 'Apps Transfered Sussecfully'
+        }
+        res.send(data)
+    }
+    else {
+        data = {
+            "status": false,
+        }
+        res.send(data)
+    }
+});
+
+/** Get Market app List **/
+
+router.get('/marketApplist', async function (req, res) {
+
+    var verify = await verifyToken(req, res);
+    var data = [];
+    if (verify.status !== undefined && verify.status == true) {
+        where = '';
+        if (verify.user.user_type !== ADMIN) {
+            where = "AND (dealer_type = 'admin' OR dealer_id = '" + verify.user.id + "')"
+        }
+        console.log("SELECT apk_details.* ,secure_market_apps.* from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 " + where);
+        sql.query("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 " + where, function (err, results) {
+            if (err) throw err;
+            if (results.length) {
+                data = {
+                    status: true,
+                    data: results
+                }
+                res.send(data)
+            } else {
+                data = {
+                    status: true,
+                    data: []
+                }
+            }
+        })
+    }
+    else {
+        data = {
+            status: false
+        }
+    }
+});
+
+
 
 /** Cron for expiry date **/
 cron.schedule('0 0 0 * * *', async () => {

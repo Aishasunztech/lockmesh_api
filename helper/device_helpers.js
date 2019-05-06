@@ -122,13 +122,13 @@ module.exports = {
 
                 let iconName = this.uploadIconFile(app, app.label);
                 var query = "INSERT INTO apps_info (unique_name, label, icon, extension, extension_id) VALUES ('" + app.uniqueExtension + "', '" + app.label + "', '" + iconName + "', 1, " + extension[0].id + ") " +
-                " ON DUPLICATE KEY UPDATE " +
-                // " label= '" + app.label +"',"+
-                // " icon= '" + app.icon +"'," +
-                " extension= 1, " +
-                // " visible= " + app.visible + ", " +
-                " default_app= 0  "
-                
+                    " ON DUPLICATE KEY UPDATE " +
+                    // " label= '" + app.label +"',"+
+                    // " icon= '" + app.icon +"'," +
+                    " extension= 1, " +
+                    // " visible= " + app.visible + ", " +
+                    " default_app= 0  "
+
                 // var query = "INSERT IGNORE INTO apps_info (unique_name, label, icon, extension, extension_id) VALUES ('" + app.uniqueExtension + "', '" + app.label + "', '" + iconName + "', 1, " + extension[0].id + ")";
                 // console.log("helloo:",query);
                 await sql.query(query);
@@ -153,7 +153,7 @@ module.exports = {
         await sql.query(updateQuery);
     },
     getApp: async function (uniqueName, device_id, guest, encrypted, enable) {
-        
+
         var query = "SELECT id FROM apps_info WHERE unique_name='" + uniqueName + "' limit 1";
         // console.log(query);
         let response = await sql.query(query);
@@ -173,10 +173,10 @@ module.exports = {
                 " encrypted = " + encrypted + ", " +
                 " enable = " + enable + " ";
             // var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
-            sql.query(updateQuery, function(error, response){
+            sql.query(updateQuery, function (error, response) {
                 console.log("insert or update apps error", error);
                 // console.log("insert or update apps response", response);
-                
+
             });
 
         } catch (error) {
@@ -358,18 +358,35 @@ module.exports = {
 
     },
     saveImeiHistory: async (deviceId, sn, mac, imei1, imei2) => {
+        let response = false;
         let sqlQuery = "SELECT * from imei_history WHERE serial_number = '" + sn + "' OR mac_address = '" + mac + "' order by created_at DESC";
         let result = await sql.query(sqlQuery);
         if (result.length) {
-            console.log(result[0].serial_number);
+            // console.log(result[0].serial_number);
             if (result[0].imei1 != imei1 || result[0].imei2 != imei2) {
                 let query = "INSERT INTO imei_history(device_id,serial_number,mac_address,imei1,imei2) VALUES ('" + deviceId + "','" + sn + "','" + mac + "','" + imei1 + "','" + imei2 + "')"
-                await sql.query(query)
+                let result = await sql.query(query);
+                if (result.affectedRows) {
+                    response = true
+                }
+                else {
+                    response = false
+                }
+            }
+            else {
+                response = true
             }
         } else {
             let query = "INSERT INTO imei_history(device_id,serial_number,mac_address,orignal_imei1,orignal_imei2,imei1,imei2) VALUES ('" + deviceId + "','" + sn + "','" + mac + "','" + imei1 + "','" + imei2 + "','" + imei1 + "','" + imei2 + "')"
-            await sql.query(query)
+            let result = await sql.query(query);
+            if (result.affectedRows) {
+                response = true
+            }
+            else {
+                response = false
+            }
         }
+        return response
 
     },
 
