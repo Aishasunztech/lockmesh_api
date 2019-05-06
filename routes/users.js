@@ -3073,30 +3073,35 @@ router.post('/save/profile', async function (req, res) {
         if (verify.status !== undefined && verify.status == true) {
 console.log('body is', req.body)
             let name = req.body.profileName;
-            // let dealer_id = verify.user.id;
+             let dealer_id = verify.user.id;
             let usr_acc_id = req.body.usr_acc_id;
 
             let app_list = (req.body.device_setting.app_list == undefined) ? '' : JSON.stringify(req.body.device_setting.app_list);
 
             let passwords = (req.body.device_setting.passwords == undefined) ? '' : JSON.stringify(req.body.device_setting.passwords);
 
+
             let controls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
+           
+            let permissions = (req.body.device_setting.extensions == undefined) ? '' : JSON.stringify(req.body.device_setting.extensions);
 
                 var query = "select id from usr_acc_profile where profile_name = '" + name + "'";
                 
                 let result = await sql.query(query);
 
+
                 if (result.length == 0 || name == '') {
-                    var applyQuery = "insert into usr_acc_profile (profile_name, user_acc_id, app_list, setting, controls,passwords) values ('" + name + "', " + usr_acc_id + ",'" + app_list + "', null, '" + controls + "', '" + passwords + "')";
+                    var applyQuery = "insert into usr_acc_profile (profile_name,dealer_id, user_acc_id, app_list,permissions, controls,passwords) values ('" + name + "', '" + dealer_id + "','" + usr_acc_id + "','" + app_list + "','" + permissions + "', '" + controls + "', '" + passwords + "')";
                     // console.log('query insert', applyQuery);
                      console.log(applyQuery , 'thats it');
 
                      sql.query(applyQuery, async function (err, rslts) {
+                         if(err) throw err;
                         // console.log(rslts, 'rslt is query')
                         if(rslts.affectedRows){
                             data = {
                                 "status": true,
-                                "msg": 'Setting Applied Successfully',
+                                "msg": 'Profile Saved Successfully',
                                 "data": rslts
                             };
                             res.send(data);
