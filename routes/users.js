@@ -3450,36 +3450,17 @@ router.post('/deleteORStatusPolicy', async function (req, res) {
 
 router.post('/get_device_history', async function (req, res) {
     var verify = await verifyToken(req, res);
-    if (verify.status === true) {
+    if (verify['status'] !== undefined && verify.status == true) {
         let userId = verify.user.id;
         let userType = await helpers.getUserType(userId);
         let user_acc_id = await device_helpers.getUserAccountId(req.body.device_id);
-        // console.log('user id si', user_acc_id);
-        let where = "where";
-        let isValid = true;
-        // console.log('d_id', user_acc_id);
+
+        let where = " WHERE ";
+        
         if (user_acc_id != undefined && user_acc_id != '' && user_acc_id != null) {
             where = where + " user_acc_id='" + user_acc_id + "'";
 
-        } else {
-            where = "";
-        }
-        // if (userType != ADMIN) {
-        //     if (userType == DEALER) {
-        //         where = where + " AND ((type='profile' AND dealer_id=" + userId + ") OR type='policy')";
-        //     } else {
-        //         let connected_dealer = verify.user.connected_dealer;
-        //         if (connected_dealer != undefined && connected_dealer != '' && connected_dealer != null && connected_dealer != 0) {
-        //             where = where + " AND ((type='profile' AND dealer_id=" + connected_dealer + ") OR type='policy')";
-        //         } else {
-        //             isValid = false;
-        //         }
-        //     }
-        // }
-        // console.log(where);
-        if (isValid) {
             let query = "SELECT * FROM device_history " + where;
-            // console.log("getprofiles query", query);
             sql.query(query, (error, result) => {
                 data = {
                     "status": true,
@@ -3490,6 +3471,7 @@ router.post('/get_device_history', async function (req, res) {
             });
 
         } else {
+            where = "";
             data = {
                 "status": false,
                 "msg": 'Invalid User'
