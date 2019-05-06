@@ -150,7 +150,7 @@ router.post('/login', async function (req, resp) {
             }
 
         } else if (linkCode.length >= 7) {
-            var usrAccQ = "SELECT * FROM usr_acc WHERE activation_code='" + linkCode + "'";
+            var usrAccQ = "SELECT * FROM usr_acc WHERE activation_code='" + linkCode + "' and activation_status=0";
             var usrAcc = await sql.query(usrAccQ);
             if (usrAcc.length === 0) {
                 data = {

@@ -265,7 +265,7 @@ module.exports = {
         let res = await sql.query(query);
         // console.log(res);
         if (res.length) {
-            if (res[0].online == "On") {
+            if (res[0].online === Constants.DEVICE_ONLINE) {
                 return true;
             } else {
                 return false;
