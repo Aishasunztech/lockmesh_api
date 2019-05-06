@@ -981,5 +981,51 @@ router.post('/accountstatus', async function (req, res) {
     }
 
 });
+router.post('/imeiChanged', async function (req, res) {
+    let deviceId = req.body.device_id;
+    var imei = req.body.imei;
+    var serial_number = req.body.serial;
+    var mac_address = req.body.mac;
+    var imei1 = imei[0] ? imei[0] : null;
+    var imei2 = imei[1] ? imei[1] : null;
+    // console.log(req.body);
 
+    if (serial_number !== undefined && serial_number !== null && mac_address !== undefined && mac_address !== null) {
+        let response = await device_helpers.saveImeiHistory(deviceId, serial_number, mac_address, imei1, imei2)
+        // console.log("response", response);
+        res.send({
+            status: response
+        })
+    }
+});
+
+router.get('/admin/marketApplist', async function (req, res) {
+    let data = [];
+    sql.query("SELECT apk_details.* from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND secure_market_apps.dealer_type = 'admin'", function (err, results) {
+        if (err) throw err;
+        if (results.length) {
+            for (var i = 0; i < results.length; i++) {
+                dta = {
+                    "apk_name": results[i].app_name,
+                    "logo": results[i].logo,
+                    "apk": results[i].apk,
+                    "apk_status": results[i].status
+                }
+                data.push(dta);
+            }
+            //   console.log(data);
+            //res.json("status" : true , result : data);
+            return res.json({
+                success: true,
+                list: data
+            });
+        } else {
+            data = {
+                "status": false,
+                "msg": "No result found"
+            }
+            res.send(data);
+        }
+    })
+});
 module.exports = router;
