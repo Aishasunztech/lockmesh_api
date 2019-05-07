@@ -769,19 +769,9 @@ router.get('/getUpdate/:version/:uniqueName', async (req, res) => {
 /** Get Apk **/
 router.get("/getApk/:apk", (req, res) => {
 
-    // if (fs.existsSync(path.join(__dirname, "../uploads/" + req.params.apk + '.apk'))) {
-    //     // Do something
-    //     res.sendFile(path.join(__dirname, "../uploads/" + req.params.apk + '.apk'));
-    // } else {
-    //     res.send({
-    //         "status": false,
-    //         "msg": "file not found"
-    //     })
-    // }
-    
-    if (fs.existsSync(path.join(__dirname, "../uploads/" + req.params.apk))) {
+    if (fs.existsSync(path.join(__dirname, "../uploads/" + req.params.apk + '.apk'))) {
         // Do something
-        res.sendFile(path.join(__dirname, "../uploads/" + req.params.apk));
+        res.sendFile(path.join(__dirname, "../uploads/" + req.params.apk + '.apk'));
     } else {
         res.send({
             "status": false,

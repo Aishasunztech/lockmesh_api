@@ -3783,8 +3783,6 @@ router.post('/import/:fieldName', async (req, res) => {
             },
             filename: function (req, file, callback) {
                 var ext = file.originalname.split(".");
-                // console.log("ext", ext.length)
-                // console.log("mimetype ", file.mimetype);
                 if ((
                     file.mimetype === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
                     file.mimetype === "text/csv" ||
