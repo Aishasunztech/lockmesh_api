@@ -182,7 +182,7 @@ router.post('/login', async function (req, resp) {
                             } else {
                                 var expiry_date = helpers.getExpDateByMonth(new Date(), usrAcc[0].expiry_months);
                             }
-                            var updateDevice = "UPDATE devices set device_id = '" + chechedDeviceId + "', ip_address = '" + ip + "', simno = '" + simNo1 + "', online = 'On', imei='" + imei1 + "', imei2='" + imei2 + "', serial_number='" + serial_number + "', mac_address='" + mac_address + "', simno2 = '" + simNo2 + "' where id='" + usrAcc[0].device_id + "'";
+                            var updateDevice = "UPDATE devices set device_id = '" + chechedDeviceId + "', ip_address = '" + ip + "', simno = '" + simNo1 + "', online = '"+ Constants.DEVICE_OFFLINE +"', imei='" + imei1 + "', imei2='" + imei2 + "', serial_number='" + serial_number + "', mac_address='" + mac_address + "', simno2 = '" + simNo2 + "' where id='" + usrAcc[0].device_id + "'";
                             await sql.query(updateDevice);
                             
                             var updateAccount = "UPDATE usr_acc set activation_status=1, status='active', expiry_date='" + expiry_date + "', start_date='" + start_date + "', device_status=1, unlink_status = 0 WHERE id = " + usrAcc[0].id;
@@ -377,7 +377,7 @@ router.post('/linkdevice', async function (req, resp) {
                         if (deviceStatus == Constants.DEVICE_UNLINKED) {
 
                             var link_acc = "";
-                            var updateDviceQ = "UPDATE devices set ip_address = '" + ip + "', simno = '" + simNo1 + "', online = 'On' , simno2 = '" + simNo2 + "', reject_status=0  where id=" + device[0].id;
+                            var updateDviceQ = "UPDATE devices set ip_address = '" + ip + "', simno = '" + simNo1 + "', online = '"+ Constants.DEVICE_OFFLINE +"' , simno2 = '" + simNo2 + "', reject_status=0  where id=" + device[0].id;
                             // , unlink_status = 0
                             // console.log(updateDviceQ);
                             var updateDevice = await sql.query(updateDviceQ);
@@ -420,7 +420,7 @@ router.post('/linkdevice', async function (req, resp) {
                     // var deviceId = await checkDeviceId(device_id, serial_number, mac_address);
 
                     let insertDevice = "INSERT INTO devices (device_id, imei, imei2, ip_address, simno, simno2, serial_number, mac_address, online) values(?,?,?,?,?,?,?,?,?)";
-                    sql.query(insertDevice, [deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, 'On'], function (error, deviceRes) {
+                    sql.query(insertDevice, [deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, Constants.DEVICE_OFFLINE], function (error, deviceRes) {
                         // console.log("Insert Query" , insertDevice, [deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, 'On']);
                         if (error) {
                             throw Error(error);

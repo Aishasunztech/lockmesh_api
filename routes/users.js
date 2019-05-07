@@ -3551,14 +3551,11 @@ router.post('/dealer/postPagination', async function (req, res) {
     // console.log("Working")
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
-        console.log(verify.status, "verify")
         var selectedValue = req.body.selectedValue;
         var dropdownType = req.body.pageName;
         var dealer_id = verify.user.id;
         var squery = "select * from dealer_pagination where dealer_id = " + dealer_id + " AND type ='" + dropdownType + "'";
-         console.log('query', squery);
         var srslt = await sql.query(squery);
-         console.log('query result pagination', srslt);
 
         if (srslt.length == 0) {
             var squery = sql.query("insert into dealer_pagination (dealer_id, record_per_page, type) values (" + dealer_id + ", '" + selectedValue + "', '" + dropdownType + "')", function (err, rslts) {
