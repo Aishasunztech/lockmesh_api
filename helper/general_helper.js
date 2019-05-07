@@ -496,11 +496,28 @@ module.exports = {
 
 		let query = "SELECT device_id FROM devices WHERE device_id = '" + device_id + "';"
 		let result = await sql.query(query);
-		if (result.length > 1) {
+		if (result.length > 0) {
 			activationCode = randomize('0', 7);
 			this.checkActivationCode(device_id);
 		} else {
 			return device_id;
+		}
+	},
+	// Get Dealer Id by link code or activation code
+	getDealerIdByLinkOrActivation: async function (code) {
+
+		let query = "SELECT dealer_id FROM dealers WHERE link_code ='" + code + "' "
+		let result = await sql.query(query);
+		if (result.length) {
+			return result[0].dealer_id
+		} else {
+			let query = "SELECT dealer_id FROM usr_acc WHERE activation_code ='" + code + "'";
+			let result = await sql.query(query);
+			if (result.length) {
+				return result[0].dealer_id
+			} else {
+				return null;
+			}
 		}
 	}
 

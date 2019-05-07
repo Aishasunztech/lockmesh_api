@@ -388,6 +388,8 @@ router.get('/devices', async function (req, res) {
             // device_helpers.getQueryOfInsert(finalResult[0])
             // let response = await device_helpers.saveImeiHistory(finalResult[0].device_id, 'serial_number', 'mac_address', 213456122421354, 321351241321234)
             // console.log("Imei History Save", response);
+            // let dealer_id = await helpers.getDealerIdByLinkOrActivation(541763)
+            // console.log(dealer_id);
             data = {
                 "status": true,
                 "data": finalResult
@@ -5246,19 +5248,25 @@ router.post('/transferApps', async function (req, res) {
             let deleteNotIn = "DELETE FROM secure_market_apps WHERE apk_id NOT IN ('" + toDelete + "') AND dealer_id = '" + verify.user.id + " '"
             // console.log(deleteNotIn);
             await sql.query(deleteNotIn);
-            // if (appKeys.length) {
-            //     let insertQuery = "INSERT IGNORE INTO secure_market_apps (dealer_type,dealer_id, apk_id) VALUES ";
-
-            //     let insertOrIgnore = ' '
-            //     for (let i = 0; i < appKeys.length; i++) {
-            //         if (i === appKeys.length - 1) {
-            //             insertOrIgnore = insertOrIgnore + "('" + dealer_type + "' ," + dealer_id + " , " + appKeys[i] + ")"
-            //         } else {
-            //             insertOrIgnore = insertOrIgnore + "('" + dealer_type + "' ," + dealer_id + " , " + appKeys[i] + "),"
-            //         }
-            //     }
-            //     await sql.query(insertQuery + insertOrIgnore);
-            // }
+            let adminAppKeys = await sql.query("SELECT apk_id FROM secure_market_apps WHERE dealer_type = '" + ADMIN + "'");
+            adminAppKeys.forEach((item) => {
+                let index = appKeys.indexOf(item.apk_id)
+                if (index !== -1) {
+                    appKeys.splice(index, 1)
+                }
+            })
+            if (appKeys.length) {
+                let insertQuery = "INSERT IGNORE INTO secure_market_apps (dealer_type,dealer_id, apk_id) VALUES ";
+                let insertOrIgnore = ' '
+                for (let i = 0; i < appKeys.length; i++) {
+                    if (i === appKeys.length - 1) {
+                        insertOrIgnore = insertOrIgnore + "('" + dealer_type + "' ," + dealer_id + " , " + appKeys[i] + ")"
+                    } else {
+                        insertOrIgnore = insertOrIgnore + "('" + dealer_type + "' ," + dealer_id + " , " + appKeys[i] + "),"
+                    }
+                }
+                await sql.query(insertQuery + insertOrIgnore);
+            }
             data = {
                 "status": true,
                 "msg": 'Apps Transfered Sussecfully'
@@ -5294,18 +5302,15 @@ router.get('/marketApplist', async function (req, res) {
             where = "AND (dealer_type = 'admin' OR dealer_id = '" + verify.user.id + "')"
         }
         // console.log("SELECT apk_details.* ,secure_market_apps.* from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 " + where);
-        sql.query("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 " + where, async function (err, results) {
+        sql.query("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 " + where + "ORDER BY created_at desc", async function (err, results) {
             if (err) throw err;
             if (results.length) {
-
                 apklist.forEach((item, index) => {
-
                     for (let i = 0; i < results.length; i++) {
                         if (item.apk_id === results[i].id) {
                             apklist.splice(index, 1)
                         }
                     }
-
                 })
                 data = {
                     status: true,

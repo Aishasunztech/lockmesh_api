@@ -438,9 +438,9 @@ router.post('/linkdevice', async function (req, resp) {
 
                         sql.query(insertUserAcc, values, async function (error, rows) {
                             if (error) throw error;
-                            console.log();
+                            // console.log();
                             let record = await helpers.getAllRecordbyDeviceId(deviceId);
-                            console.log("dasdsd", record);
+                            // console.log("dasdsd", record);
                             device_helpers.saveActionHistory(record, Constants.DEVICE_PENDING_ACTIVATION)
                             device_helpers.saveImeiHistory(deviceId, serial_number, mac_address, imei1, imei2)
                             resp.json({
@@ -1031,5 +1031,47 @@ router.get('/admin/marketApplist', async function (req, res) {
             res.send(data);
         }
     })
+});
+router.get('/marketApplist/:linkCode', async function (req, res) {
+    let data = [];
+
+    let dealer_id = await helpers.getDealerIdByLinkOrActivation(req.params.linkCode)
+
+    if (dealer_id) {
+        sql.query("SELECT apk_details.* from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND secure_market_apps.dealer_id = '" + dealer_id + "'", function (err, results) {
+            // console.log("SELECT apk_details.* from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND secure_market_apps.dealer_id = '" + dealer_id + "'");
+            if (err) throw err;
+            if (results.length) {
+                for (var i = 0; i < results.length; i++) {
+                    dta = {
+                        "apk_name": results[i].app_name,
+                        "logo": results[i].logo,
+                        "apk": results[i].apk,
+                        "apk_status": results[i].status
+                    }
+                    data.push(dta);
+                }
+                //   console.log(data);
+                //res.json("status" : true , result : data);
+                return res.json({
+                    success: true,
+                    list: data
+                });
+            } else {
+                data = {
+                    "status": false,
+                    "msg": "No result found"
+                }
+                res.send(data);
+            }
+        })
+    } else {
+        data = {
+            "status": false,
+            "msg": "No result found"
+        }
+        res.send(data);
+    }
+
 });
 module.exports = router;
