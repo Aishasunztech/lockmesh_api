@@ -2848,6 +2848,13 @@ router.get('/get_apps/:device_id', async function (req, res) {
 
                             Extension.push(item);
                         }
+                        if (item.extension == 0 || item.visible == 1) {  
+                                onlyApps.push(item)
+                        }
+                        if (item.visible == 0) {
+
+                            settings.push(item)
+                        }
                     }
 
                     let newExtlist = [];
@@ -2870,14 +2877,6 @@ router.get('/get_apps/:device_id', async function (req, res) {
                                     default_app: item.default_app
                                 });
                             }
-                            else if (item.extension == 0 || item.visible == 1) {
-                                onlyApps.push(item)
-                            }
-                            if (item.visible == 0) {
-
-                                settings.push(item)
-                            }
-
                         }
 
                         newExtlist.push({
@@ -2893,7 +2892,6 @@ router.get('/get_apps/:device_id', async function (req, res) {
                     // console.log("apps length" + apps.length);
                     var query1 = 'SELECT * from user_app_permissions where device_id ="' + req.params.device_id + '" limit 1';
                     // 
-
                     sql.query(query1, async (error, controls) => {
                         if (error) {
                             throw Error("Query Expection");
