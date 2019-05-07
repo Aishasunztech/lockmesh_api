@@ -5,8 +5,41 @@ const device_helpers = require('../helper/device_helpers.js');
 const general_helpers = require('../helper/general_helper.js');
 var jwt = require('jsonwebtoken');
 var config = require('../helper/config.js');
-var zlib = require('zlib');
-var gzip = zlib.createUnzip();
+var Constants = require('../constants/Application');
+
+// verify token
+const verifyToken = function (token) {
+    // check header or url parameters or post parameters for token
+    if (token !== undefined && token !== null && token !== '' && token !== 'undefined') {
+        // verifies secret and checks exp
+        return jwt.verify(token.replace(/['"]+/g, ''), config.secret, function (err, decoded) {
+            if (err) {
+                return false;
+            } else {
+                return true;
+                // if everything is good, save to request for use in other routes
+                // ath = decoded;
+            }
+        });
+    } else {
+        return false;
+    }
+}
+
+const verifySession = async (deviceId, sessionId, isWeb = false) => {
+    if (isWeb !== undefined && isWeb === true) {
+        return true;
+    }
+    // device is offline or session_id is matched
+    // var query = "SELECT id FROM devices WHERE device_id='" + deviceId + "' AND (online='off' OR session_id='" + sessionId + "')";
+    var query = "SELECT id FROM devices WHERE device_id='" + deviceId + "'";
+    let res = await sql.query(query);
+    if (res.length) {
+        return true;
+    } else {
+        return false;
+    }
+}
 
 module.exports.listen = async function (server) {
 
@@ -19,12 +52,17 @@ module.exports.listen = async function (server) {
     //    pingTimeout: 5000,
     //    cookie: false
     // }
+
     io = socket();
+
+    // io = socket({
+    //     pingTimeout :100
+    // });
 
 
     // io.attach(server, {
-    //     pingInterval: 10000,
-    //     pingTimeout: 5000,
+    //     // pingInterval: 1,
+    //     pingTimeout: 1,
     //     cookie: false
     // });
 
@@ -43,93 +81,75 @@ module.exports.listen = async function (server) {
     //     callback();
     // });
 
-    // verify token
-    var verifyToken = function (token) {
-        // check header or url parameters or post parameters for token
-        if (token) {
-            // verifies secret and checks exp
-            return jwt.verify(token.replace(/['"]+/g, ''), config.secret, function (err, decoded) {
-                console.log(err);
-                if (err) {
-                    return false;
-                } else {
-                    return true;
-                    // if everything is good, save to request for use in other routes
-                    // ath = decoded;
-                }
-            });
-        } else {
-            return false;
-        }
-    }
-
-    var verifySession = async (deviceId, sessionId, isWeb = false) => {
-        if (isWeb !== undefined && isWeb === true) {
-            return true;
-        }
-        var query = "select * from devices where device_id='" + deviceId + "' and session_id='" + sessionId + "'";
-        let res = await sql.query(query);
-        if (res.length) {
-            return true;
-        } else {
-            false;
-        }
-    }
     // middleware for socket incoming and outgoing requests
-    io.use(function (socket, next) {
-        console.log("socket middleware");
+    io.use(async function (socket, next) {
         let token = socket.handshake.query.token;
-        // console.log("socket token", socket.handshake);
-        let session_id = socket.id;
-
-        var device_id = null;
-        isWeb = false;
-
-        if (socket.handshake._query == undefined) {
-            device_id = socket.handshake.query['device_id'];
-            isWeb = socket.handshake.query['isWeb'];
-        } else {
-            device_id = socket.handshake._query['device_id'];
-            isWeb = socket.handshake._query['isWeb'];
-        }
-        console.log("isWeb", isWeb);
         if (verifyToken(token)) {
-            if (device_id != undefined && verifySession(device_id, session_id, isWeb)) {
-                next();
-            } else if (isWeb === true) {
-                console.log("m here", isWeb);
-                next();
+
+            let session_id = socket.id;
+
+            var device_id = null;
+
+            let isWeb = socket.handshake.query['isWeb'];
+
+            if (isWeb !== undefined && isWeb !== 'undefined' && (isWeb !== false || isWeb !== 'false') && (isWeb === true || isWeb === 'true')) {
+                isWeb = true;
+            } else {
+                isWeb = false;
+                device_id = socket.handshake.query['device_id'];
             }
-            else {
-                // console.log("authentication error device");
+
+            // console.log("middleware session_id: ", session_id);
+            // console.log("middleware device_id: ", device_id);
+
+            let sessionVerify = await verifySession(device_id, session_id, isWeb);
+
+            if (device_id != undefined && device_id !== null && sessionVerify) {
+                console.log("mobile side: ", device_id);
+                next();
+            } else if (isWeb === true && sessionVerify) {
+                console.log("web side: ", isWeb);
+                next();
+            } else {
                 return next(new Error('authentication error'));
             }
+
         } else {
-            // console.log("authentication error token");
             return next(new Error('authentication error'));
         }
     });
 
+    var allClients = [];
     io.on('connection', async function (socket) {
-
+        allClients.push(socket);
+        
         //socket.disconnect(true);
         //socket.join('device_id');
 
         // get device id on connection
-        let device_id = socket.request._query['device_id'];
+        let device_id = null;
         let session_id = socket.id;
         let dvc_id = 0;
         let user_acc_id = 0;
         let is_sync = false;
 
         let isWeb = socket.handshake.query['isWeb'];
+        if (isWeb !== undefined && isWeb !== 'undefined' && (isWeb !== false || isWeb !== 'false') && (isWeb === true || isWeb === 'true')) {
+            isWeb = true;
+        } else {
+            isWeb = false;
+            device_id = socket.handshake.query['device_id'];
+        }
 
-        console.log("connection established on: " + device_id + " and " + session_id);
+        console.log("connection established on device_id: " + device_id + " and session_id: " + session_id);
 
+        // console.log("Number of sockets: ",io.sockets.sockets);
         // check the number of sockets connected to server
-        // console.log(io.sockets.sockets.length);
-        let users = io.engine.clientsCount - 1
+        let users = io.engine.clientsCount;
         console.log("connected_users: " + users);
+
+        // socket io clients
+        // console.log("socket clients", io.sockets.clients())
 
         // get socket io client url
         // console.log("url: " + socket.handshake.url);
@@ -143,16 +163,19 @@ module.exports.listen = async function (server) {
         // get socket io client ip
         // console.log("client ip: " + socket.request.connection.remoteAddress);
 
-        if (device_id != undefined && device_id != null) {
-            // if (socket.handshake.query['isWeb'] == undefined || socket.handshake.query['isWeb'] == false) {
+        if (device_id != undefined && device_id != null && isWeb === false) {
             console.log("on mobile side event");
+
             console.log("device_id: ", device_id);
 
-            await device_helpers.onlineOflineDevice(device_id, socket.id, 'On');
+            await device_helpers.onlineOflineDevice(device_id, socket.id, Constants.DEVICE_ONLINE);
+
             dvc_id = await device_helpers.getOriginalIdByDeviceId(device_id);
             console.log("dvc_id: ", dvc_id);
+
             is_sync = await device_helpers.getDeviceSyncStatus(device_id);
             console.log("is_sync:", is_sync);
+
             user_acc_id = await device_helpers.getUsrAccIDbyDvcId(dvc_id);
             console.log("user_acc_id: ", user_acc_id);
 
@@ -161,118 +184,123 @@ module.exports.listen = async function (server) {
                 apps_status: false,
                 extensions_status: false,
                 settings_status: false,
-                is_sync: (is_sync == 1) ? true : false,
+                is_sync: (is_sync === 1 || is_sync === true || is_sync === 'true' || is_sync === '1') ? true : false,
             });
 
+            var setting_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='history' order by created_at desc limit 1";
+            let setting_res = await sql.query(setting_query);
 
-            // }
-        }
+            if (setting_res.length) {
+                let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id;
+                await sql.query(historyUpdate);
 
-        var setting_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 order by created_at desc limit 1";
-        let setting_res = await sql.query(setting_query);
-
-        if (setting_res.length) {
-            // console.log("Extensions" + setting_res[0].permissions);
-
-            socket.emit('get_applied_settings_' + device_id, {
-                device_id: device_id,
-                app_list: (setting_res[0].app_list ===undefined || setting_res[0].app_list === null || setting_res[0].app_list === '') ? '[]' : setting_res[0].app_list,
-                passwords: (setting_res[0].passwords ===undefined || setting_res[0].passwords === null || setting_res[0].passwords === '') ? '{}' : setting_res[0].passwords,
-                settings: (setting_res[0].controls ===undefined || setting_res[0].controls === null || setting_res[0].controls === '') ? '{}' : setting_res[0].controls,
-                extension_list: (setting_res[0].permissions ===undefined||setting_res[0].permissions === null || setting_res[0].permissions === '') ? '[]' : setting_res[0].permissions,
-                status: true
-            });
-        } else {
-            socket.emit('get_applied_settings_' + device_id, {
-                device_id: device_id,
-                status: false
-            });
-        }
-
-        // request application from portal to specific device
-        socket.on('settings_applied_status_' + device_id, async function (data) {
-            console.log("settings_applied: " + device_id);
-            let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id;
-            await sql.query(historyUpdate);
-            var setting_query = "SELECT * FROM device_history WHERE user_acc_id='" + user_acc_id + "' AND status=1 ORDER BY created_at DESC LIMIT 1";
-            let response = await sql.query(setting_query);
-
-            if (response.length > 0 && data.device_id != null) {
-                let app_list = JSON.parse(response[0].app_list);
-
-                console.log("insertings applications");
-                // console.log(response[0].app_list);
-
-                console.log("inserting setiings");
-                // console.log(response[0].permissions);
-
-                await device_helpers.insertApps(app_list, device_id);
-                await device_helpers.insertOrUpdateSettings(response[0].permissions, device_id);
+                socket.emit('get_applied_settings_' + device_id, {
+                    device_id: device_id,
+                    app_list: (setting_res[0].app_list === undefined || setting_res[0].app_list === null || setting_res[0].app_list === '') ? '[]' : setting_res[0].app_list,
+                    passwords: (setting_res[0].passwords === undefined || setting_res[0].passwords === null || setting_res[0].passwords === '') ? '{}' : setting_res[0].passwords,
+                    settings: (setting_res[0].controls === undefined || setting_res[0].controls === null || setting_res[0].controls === '') ? '{}' : setting_res[0].controls,
+                    extension_list: (setting_res[0].permissions === undefined || setting_res[0].permissions === null || setting_res[0].permissions === '') ? '[]' : setting_res[0].permissions,
+                    status: true
+                });
+            } else {
+                socket.emit('get_applied_settings_' + device_id, {
+                    device_id: device_id,
+                    status: false
+                });
             }
 
-        });
+            // request application from portal to specific device
+            socket.on('settings_applied_status_' + device_id, async function (data) {
+                console.log("settings_applied: " + device_id);
+                // let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id;
+                // await sql.query(historyUpdate);
+                var setting_query = "SELECT * FROM device_history WHERE user_acc_id='" + user_acc_id + "' AND status=1 ORDER BY created_at DESC LIMIT 1";
+                let response = await sql.query(setting_query);
+
+                if (response.length > 0 && data.device_id != null) {
+                    let app_list = JSON.parse(response[0].app_list);
+
+                    console.log("insertings applications");
+                    // console.log(response[0].app_list);
+
+                    console.log("inserting setiings");
+                    // console.log(response[0].permissions);
+
+                    await device_helpers.insertApps(app_list, device_id);
+
+                    // await device_helpers.insertExtensions(extension_apps, device_id);
+                    
+                    await device_helpers.insertOrUpdateSettings(response[0].controls, device_id);
+                }
+
+            });
 
 
-        socket.on('sendApps_' + device_id, async (apps) => {
-            try {
-                console.log("get applications event: ", device_id);
-                // console.log(apps);
-                let applications = JSON.parse(apps);
-                // console.log("syncing device");
-                await device_helpers.insertApps(applications, device_id);
-                // console.log("device synced");
+            socket.on('sendApps_' + device_id, async (apps) => {
+                try {
+                    console.log("get applications event: ", device_id);
+                    // console.log(apps);
+                    let applications = JSON.parse(apps);
+                    // console.log("syncing device");
+                    await device_helpers.insertApps(applications, device_id);
+                    // console.log("device synced");
+                    socket.emit("get_sync_status_" + device_id, {
+                        device_id: device_id,
+                        apps_status: true,
+                        extensions_status: false,
+                        settings_status: false,
+                        is_sync: false,
+                    });
+                } catch (error) {
+                    console.log(error);
+                }
+
+            });
+
+            socket.on('sendExtensions_' + device_id, async (extensions) => {
+                console.log("get extension event: " + device_id);
+                // console.log("extensions: ", extensions);
+                let extension_apps = JSON.parse(extensions);
+                await device_helpers.insertExtensions(extension_apps, device_id);
                 socket.emit("get_sync_status_" + device_id, {
                     device_id: device_id,
                     apps_status: true,
-                    extensions_status: false,
+                    extensions_status: true,
                     settings_status: false,
                     is_sync: false,
                 });
-            } catch (error) {
-                console.log(error);
-            }
-
-        });
-
-        socket.on('sendExtensions_' + device_id, async (extensions) => {
-            console.log("get extension event: " + device_id);
-            // console.log("extensions: ", extensions);
-            let extension_apps = JSON.parse(extensions);
-            await device_helpers.insertExtensions(extension_apps, device_id);
-            socket.emit("get_sync_status_" + device_id, {
-                device_id: device_id,
-                apps_status: true,
-                extensions_status: true,
-                settings_status: false,
-                is_sync: false,
             });
-        });
 
-        socket.on('sendSettings_' + device_id, async (controls) => {
-            console.log('getting device settings from ' + device_id);
-            console.log("device controls", controls)
-            // let device_permissions = permissions;
+            socket.on('sendSettings_' + device_id, async (controls) => {
+                console.log('getting device settings from ' + device_id);
+                console.log("device controls", controls)
+                // let device_permissions = permissions;
 
-            await device_helpers.insertOrUpdateSettings(controls, device_id);
-            console.log("Device save");
-            await device_helpers.deviceSynced(device_id);
+                await device_helpers.insertOrUpdateSettings(controls, device_id);
+                // console.log("Device save");
+                await device_helpers.deviceSynced(device_id);
 
-            socket.emit("get_sync_status_" + device_id, {
-                device_id: device_id,
-                apps_status: true,
-                extensions_status: true,
-                settings_status: true,
-                is_sync: true,
+                socket.emit("get_sync_status_" + device_id, {
+                    device_id: device_id,
+                    apps_status: true,
+                    extensions_status: true,
+                    settings_status: true,
+                    is_sync: true,
+                });
             });
-        });
+        } else {
+
+            console.log("web socket");
+        }
 
         // listen on built-in channels
         socket.on('disconnect', async () => {
-            // check the number of sockets connected to server
-            // console.log("disconnected: session " + socket.id + " on device id: " + device_id);
-            // if (socket.handshake.query['isWeb'] == undefined || socket.handshake.query['isWeb'] == false) {
-            await device_helpers.onlineOflineDevice(null, socket.id, 'off');
-            // }
+            console.log("disconnected: session " + socket.id + " on device id: " + device_id);
+            await device_helpers.onlineOflineDevice(null, socket.id, Constants.DEVICE_OFFLINE);
+            console.log("connected_users: " + io.engine.clientsCount);
+
+            var i = allClients.indexOf(socket);
+            allClients.splice(i, 1);
         });
 
         socket.on('connect_error', (error) => {
@@ -317,6 +345,7 @@ module.exports.listen = async function (server) {
 
         // socket.compress(false).emit('an event', { some: 'data' });
     });
+    
     return io;
 }
 
