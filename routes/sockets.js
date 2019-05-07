@@ -141,7 +141,7 @@ module.exports.listen = async function (server) {
             device_id = socket.handshake.query['device_id'];
         }
 
-        console.log("connection established on: " + device_id + " and " + session_id);
+        console.log("connection established on device_id: " + device_id + " and session_id: " + session_id);
 
         // console.log("Number of sockets: ",io.sockets.sockets);
         // check the number of sockets connected to server
@@ -184,7 +184,7 @@ module.exports.listen = async function (server) {
                 apps_status: false,
                 extensions_status: false,
                 settings_status: false,
-                is_sync: (is_sync == 1) ? true : false,
+                is_sync: (is_sync === 1 || is_sync === true || is_sync === 'true' || is_sync === '1') ? true : false,
             });
 
             var setting_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='history' order by created_at desc limit 1";
