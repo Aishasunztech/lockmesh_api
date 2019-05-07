@@ -148,7 +148,6 @@ router.post('/login', async function (req, resp) {
                         });
                 }
             }
-
         } else if (linkCode.length >= 7) {
             var usrAccQ = "SELECT * FROM usr_acc WHERE activation_code='" + linkCode + "'";
             var usrAcc = await sql.query(usrAccQ);
@@ -237,7 +236,7 @@ router.post('/login', async function (req, resp) {
         var deviceQ = "SELECT * FROM devices WHERE mac_address = '" + mac_address + "' OR serial_number='" + serial_number + "'";
         var device = await sql.query(deviceQ);
         if (device.length == 0) {
-            console.log("hello", "login")
+            // console.log("hello", "login")
             data = {
                 'status': false,
                 'msg': 'unlinked'
@@ -348,8 +347,8 @@ router.post('/linkdevice', async function (req, resp) {
         var connected_dealer = (req.body.connected_dealer === undefined || req.body.connected_dealer === null) ? 0 : req.body.connected_dealer;
         // var deviceId = uniqid.process();        
         let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = device_helpers.getDeviceInfo(req);
-        console.log("serial no", serial_number);
-        console.log("mac address", mac_address);
+        // console.log("serial no", serial_number);
+        // console.log("mac address", mac_address);
         if (!empty(serial_number) && !empty(mac_address)) {
 
             var deviceQ = "SELECT * FROM devices WHERE  mac_address='" + mac_address + "' OR serial_number='" + serial_number + "'";
@@ -437,8 +436,12 @@ router.post('/linkdevice', async function (req, resp) {
                             values = [dvc_id, dealer[0].dealer_id, dealer[0].link_code];
                         }
 
-                        sql.query(insertUserAcc, values, function (error, rows) {
+                        sql.query(insertUserAcc, values, async function (error, rows) {
                             if (error) throw error;
+                            console.log();
+                            let record = await helpers.getAllRecordbyDeviceId(deviceId);
+                            console.log("dasdsd", record);
+                            device_helpers.saveActionHistory(record, Constants.DEVICE_PENDING_ACTIVATION)
                             device_helpers.saveImeiHistory(deviceId, serial_number, mac_address, imei1, imei2)
                             resp.json({
                                 "status": true,
@@ -610,10 +613,12 @@ router.delete('/unlink/:macAddr/:serialNo', async function (req, res) {
     // console.log("serialNo", serial_number);
     if (reslt.status == true) {
         if (!empty(mac_address) && !empty(serial_number)) {
-            let deviceQ = "SELECT id FROM devices WHERE mac_address='" + mac_address + "' OR serial_number='" + serial_number + "'";
+            let deviceQ = "SELECT id ,device_id FROM devices WHERE mac_address='" + mac_address + "' OR serial_number='" + serial_number + "'";
             sql.query(deviceQ, async function (error, resp) {
                 if (error) throw (error);
                 if (resp.length) {
+                    let device_record = await helpers.getAllRecordbyDeviceId(resp[0].device_id)
+                    device_helpers.saveActionHistory(device_record, Constants.DEVICE_UNLINKED)
                     var query = "UPDATE usr_acc SET unlink_status=1, dealer_id=null WHERE device_id = '" + resp[0].id + "'";
 
                     await sql.query(query);
