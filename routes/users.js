@@ -3205,9 +3205,9 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
                 if (err) {
                     throw err;
                 }
-  
                 if (rslts) {
-                    
+                    var applyPushQ = "UPDATE devices set is_push_apps=1 WHERE device_id='"+ device_id +"'";
+                    await sql.query(applyPushQ)
                     let isOnline = await device_helpers.isDeviceOnline(device_id);
                     if (isOnline) {
                         require("../bin/www").applyPushApps(apps, device_id);
