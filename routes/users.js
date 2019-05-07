@@ -3073,9 +3073,9 @@ router.post('/save/profile', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
         if (verify.status !== undefined && verify.status == true) {
-console.log('body is', req.body)
+            console.log('body is', req.body)
             let name = req.body.profileName;
-             let dealer_id = verify.user.id;
+            let dealer_id = verify.user.id;
             let usr_acc_id = req.body.usr_acc_id;
 
             let app_list = (req.body.device_setting.app_list == undefined) ? '' : JSON.stringify(req.body.device_setting.app_list);
@@ -3084,48 +3084,48 @@ console.log('body is', req.body)
 
 
             let controls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
-           
+
             let permissions = (req.body.device_setting.extensions == undefined) ? '' : JSON.stringify(req.body.device_setting.extensions);
 
-                var query = "select id from usr_acc_profile where profile_name = '" + name + "'";
-                
-                let result = await sql.query(query);
+            var query = "select id from usr_acc_profile where profile_name = '" + name + "'";
+
+            let result = await sql.query(query);
 
 
-                if (result.length == 0 || name == '') {
-                    var applyQuery = "insert into usr_acc_profile (profile_name,dealer_id, user_acc_id, app_list,permissions, controls,passwords) values ('" + name + "', '" + dealer_id + "','" + usr_acc_id + "','" + app_list + "','" + permissions + "', '" + controls + "', '" + passwords + "')";
-                    // console.log('query insert', applyQuery);
-                     console.log(applyQuery , 'thats it');
+            if (result.length == 0 || name == '') {
+                var applyQuery = "insert into usr_acc_profile (profile_name,dealer_id, user_acc_id, app_list,permissions, controls,passwords) values ('" + name + "', '" + dealer_id + "','" + usr_acc_id + "','" + app_list + "','" + permissions + "', '" + controls + "', '" + passwords + "')";
+                // console.log('query insert', applyQuery);
+                console.log(applyQuery, 'thats it');
 
-                     sql.query(applyQuery, async function (err, rslts) {
-                         if(err) throw err;
-                        // console.log(rslts, 'rslt is query')
-                        if(rslts.affectedRows){
-                            data = {
-                                "status": true,
-                                "msg": 'Profile Saved Successfully',
-                                "data": rslts
-                            };
-                            res.send(data);
-                        }else{
-                            data = {
-                                "status": false,
-                                "msg": 'Profile Name is already Exist',
-                            };
-                            res.send(data);
-                        }
+                sql.query(applyQuery, async function (err, rslts) {
+                    if (err) throw err;
+                    // console.log(rslts, 'rslt is query')
+                    if (rslts.affectedRows) {
+                        data = {
+                            "status": true,
+                            "msg": 'Profile Saved Successfully',
+                            "data": rslts
+                        };
+                        res.send(data);
+                    } else {
+                        data = {
+                            "status": false,
+                            "msg": 'Profile Name is already Exist',
+                        };
+                        res.send(data);
+                    }
 
-                      
-                    });
-                    
-                }else{
-                    data = {
-                        "status": false,
-                        "msg": 'Profile Name is already Exist',
-                    };
-                    res.send(data);
-                }
-        
+
+                });
+
+            } else {
+                data = {
+                    "status": false,
+                    "msg": 'Profile Name is already Exist',
+                };
+                res.send(data);
+            }
+
         }
     } catch (error) {
         throw Error(error.message);
@@ -3196,17 +3196,17 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
             let usrAccId = req.body.usrAccId;
 
             let push_apps = req.body.push_apps;
-            
-            let apps = (push_apps === undefined)? '' : JSON.stringify(push_apps);
-            
+
+            let apps = (push_apps === undefined) ? '' : JSON.stringify(push_apps);
+
             var applyQuery = "INSERT INTO device_history (user_acc_id, push_apps, type) VALUES (" + usrAccId + ", '" + apps + "', 'push_apps')";
-            
+
             sql.query(applyQuery, async function (err, rslts) {
                 if (err) {
                     throw err;
                 }
                 if (rslts) {
-                    var applyPushQ = "UPDATE devices set is_push_apps=1 WHERE device_id='"+ device_id +"'";
+                    var applyPushQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
                     await sql.query(applyPushQ)
                     let isOnline = await device_helpers.isDeviceOnline(device_id);
                     if (isOnline) {
@@ -3226,7 +3226,7 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
                 }
 
             });
-            
+
         }
     } catch (error) {
         throw Error(error.message);
@@ -3386,7 +3386,7 @@ router.post('/save_policy_changes', async function (req, res) {
         let push_apps = record.push_apps;
         let controls = record.controls;
         let permissions = record.permissions;
-        let  app_list = record.app_list;
+        let app_list = record.app_list;
         // console.log('id id', id)
 
         let query = "UPDATE policy SET push_apps = '" + push_apps + "', controls = '" + controls + "', permissions = '" + permissions + "', app_list = '" + app_list + "' WHERE id='" + id + "'";
@@ -3421,7 +3421,7 @@ router.post('/get_device_history', async function (req, res) {
         let user_acc_id = await device_helpers.getUserAccountId(req.body.device_id);
 
         let where = " WHERE ";
-        
+
         if (user_acc_id != undefined && user_acc_id != '' && user_acc_id != null) {
             where = where + " user_acc_id='" + user_acc_id + "'";
 
@@ -3799,7 +3799,6 @@ router.post('/import/:fieldName', async (req, res) => {
 
         var upload = multer({
             storage: storage,
-            // fileFilter: fileFilter,
         }).fields([{
             name: "sim_ids",
             maxCount: 1
@@ -3830,6 +3829,26 @@ router.post('/import/:fieldName', async (req, res) => {
                     });
                     if (fieldName == "sim_ids") {
                         let error = false;
+                        let isSimId = parsedData.findIndex(
+                            obj => Object.keys(obj).includes('sim_id')
+                        ) !== -1;
+                        let isStartDate = parsedData.findIndex(
+                            obj => Object.keys(obj).includes('start_date')
+                        ) !== -1;
+                        
+                        let isExpiryDate = parsedData.findIndex(
+                            obj => Object.keys(obj).includes('expiry_date')
+                        ) !== -1;
+                        
+                        if(isSimId && isStartDate && isExpiryDate){
+
+                        } else {
+                            res.send({
+                                status: false,
+                                msg: "Incorrect file data"
+                            })
+                        }
+
                         parsedData.forEach(async (row) => {
                             if (row.sim_id && row.start_date && row.expiry_date) {
                                 let result = await sql.query("INSERT IGNORE sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");
