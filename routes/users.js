@@ -2833,7 +2833,7 @@ router.get('/get_apps/:device_id', async function (req, res) {
                 " LEFT JOIN apps_info on user_apps.app_id = apps_info.id" +
                 " LEFT JOIN devices on user_apps.device_id=devices.id" +
                 " WHERE devices.device_id = '" + req.params.device_id + "'"
-            // console.log("hello", getAppsQ);
+            // console.log("get apps query", getAppsQ);
             try {
                 sql.query(getAppsQ, async (error, apps) => {
                     if (error) {

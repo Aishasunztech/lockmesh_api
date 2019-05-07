@@ -141,7 +141,7 @@ module.exports = {
             var updateQuery = "REPLACE INTO user_app_permissions (device_id, permissions) VALUE ('" + device_id + "', '" + permissions + "')";
             await sql.query(updateQuery)
         } catch (error) {
-            console.log(error);
+            console.log("insert setting error", error);
         }
 
     },
@@ -165,16 +165,26 @@ module.exports = {
     insertOrUpdateApps: async function (appId, deviceId, guest, encrypted, enable) {
         try {
 
-            let updateQuery = "INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + " ) " +
-                " ON DUPLICATE KEY UPDATE " +
-                " guest = " + guest + ", " +
-                " encrypted = " + encrypted + ", " +
-                " enable = " + enable + " ";
-            // var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
-            await sql.query(updateQuery);
+            var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
+            // console.log("update query", updateQuery);
+            sql.query(updateQuery, async function (error, row) {
+                // console.log("this is", row);
+                if (row != undefined && row.affectedRows === 0) {
+                    var insertQuery = "INSERT INTO user_apps ( device_id, app_id, guest, encrypted, enable) VALUES (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + ")";
+                    await sql.query(insertQuery);
+                }
+            });
+
+            // let updateQuery = "INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + " ) " +
+            //     " ON DUPLICATE KEY UPDATE " +
+            //     " guest = " + guest + ", " +
+            //     " encrypted = " + encrypted + ", " +
+            //     " enable = " + enable + " ";
+            // // var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
+            // sql.query(updateQuery);
 
         } catch (error) {
-            console.log(error);
+            console.log("error", error);
             throw error;
 
         }
@@ -251,7 +261,7 @@ module.exports = {
             var base64Data = Buffer.from(bytes).toString("base64");
 
             fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
-                console.log(err);
+                console.log("file error",err);
             });
 
 
