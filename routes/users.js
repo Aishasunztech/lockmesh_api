@@ -2850,8 +2850,8 @@ router.get('/get_apps/:device_id', async function (req, res) {
 
                             Extension.push(item);
                         }
-                        if (item.extension == 0 || item.visible == 1) {  
-                                onlyApps.push(item)
+                        if (item.extension == 0 || item.visible == 1) {
+                            onlyApps.push(item)
                         }
                         if (item.visible == 0) {
 
@@ -3764,6 +3764,51 @@ router.get('/admin/gtdropdown', async function (req, res) {
     }
 });
 
+
+
+router.post('/save_new_data', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify.status !== undefined && verify.status == true) {
+        let error = 0;
+        if (req.body.type == 'sim_id') {
+            for (let row of req.body.newData) {
+                let result = await sql.query("INSERT IGNORE sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");
+                if (!result.affectedRows) {
+                    error += 1;
+                }
+            }
+        } else if (req.body.type == 'chat_id') {
+            for (let row of req.body.newData) {
+                let result = await sql.query("INSERT IGNORE chat_ids (chat_id) value ('" + row.chat_id + "')");
+                if (!result.affectedRows) {
+                    error += 1;
+                }
+            }
+        } else if (req.body.type == 'pgp_email') {
+            for (let row of req.body.newData) {
+                let result = await sql.query("INSERT IGNORE pgp_emails (pgp_email) value ('" + row.pgp_email + "')");
+                if (!result.affectedRows) {
+                    error += 1;
+                }
+            }
+        }
+
+        if (error == 0) {
+            res.send({
+                "status": true,
+                "msg": "Inserted Successfully"
+            })
+
+        } else {
+            res.send({
+                "status": false,
+                "msg": "Error While Insertion, " + error + " records not Inserted"
+            })
+        }
+        //    let newData = req.body.
+    }
+});
+
 // import sims
 router.post('/import/:fieldName', async (req, res) => {
     res.setHeader('Content-Type', 'multipart/form-data');
@@ -3817,7 +3862,7 @@ router.post('/import/:fieldName', async (req, res) => {
                 });
                 return;
             } else {
-                console.log("success file name", filename);
+                // console.log("success file name", filename);
                 var workbook = XLSX.readFile('uploads/' + filename);
 
                 workbook.SheetNames.forEach(async (sheet) => {
@@ -3827,107 +3872,223 @@ router.post('/import/:fieldName', async (req, res) => {
                     });
                     if (fieldName == "sim_ids") {
                         let error = false;
+                        let duplicatedSimIds = [];
+                        let InsertableSimIds = [];
                         let isSimId = parsedData.findIndex(
                             obj => Object.keys(obj).includes('sim_id')
                         ) !== -1;
                         let isStartDate = parsedData.findIndex(
                             obj => Object.keys(obj).includes('start_date')
                         ) !== -1;
-                        
+
                         let isExpiryDate = parsedData.findIndex(
                             obj => Object.keys(obj).includes('expiry_date')
                         ) !== -1;
-                        
-                        if(isSimId && isStartDate && isExpiryDate){
+
+                        if (isSimId && isStartDate && isExpiryDate) {
 
                         } else {
                             res.send({
                                 status: false,
-                                msg: "Incorrect file data"
+                                msg: "Incorrect file data",
+                                "duplicateData": [],
                             })
                         }
 
-                        parsedData.forEach(async (row) => {
-                            if (row.sim_id && row.start_date && row.expiry_date) {
-                                let result = await sql.query("INSERT IGNORE sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");
-                                console.log(result);
-                            } else {
-                                error = true;
+                        let sim = []
+                        for (let row of parsedData) {
+                            sim.push(row.sim_id)
+                        }
+                        let slctQ = "SELECT sim_id, start_date, expiry_date from sim_ids WHERE sim_id IN (" + sim + ")";
+                        let dataof = await sql.query(slctQ);
+                        if (dataof.length) {
+                            // console.log(parsedData, 'daata of', dataof);
+
+                            for (let row of parsedData) {
+
+                                let index = dataof.findIndex((item) => item.sim_id == row.sim_id);
+
+                                if (index >= 0) {
+                                    duplicatedSimIds.push(row)
+                                } else {
+                                    InsertableSimIds.push(row)
+                                }
                             }
+                        }
 
-                        })
+                        if (duplicatedSimIds.length == 0) {
+                            for (let row of parsedData) {
+                                if (row.sim_id && row.start_date && row.expiry_date) {
+                                    let result = await sql.query("INSERT sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");
+                                } else {
+                                    error = true;
+                                }
+                            }
+                        }
 
-                        if (!error) {
+                        // console.log('duplicate data is', duplicatedSimIds)
+
+                        if (!error && duplicatedSimIds.length === 0) {
                             res.send({
                                 "status": true,
                                 "msg": "imported successfully",
-                                "data": []
+                                "type": "sim_id",
+                                "duplicateData": [],
                             });
                         } else {
                             res.send({
-                                "status": true,
+                                "status": false,
                                 "msg": "File contained invalid data that has been ignored, rest has been imported successfully.",
-                                "data": []
+                                "type": "sim_id",
+                                "duplicateData": duplicatedSimIds,
+                                "newData": InsertableSimIds
+
+
                             });
                         }
 
                         return;
                     } else if (fieldName === "chat_ids") {
                         let error = false;
-                        parsedData.forEach(async (row) => {
-                            if (row.chat_id) {
+                        let duplicatedChat_ids = [];
+                        let InsertableChat_ids = [];
 
-                                let result = await sql.query("INSERT IGNORE into chat_ids (chat_id) value ('" + row.chat_id + "')");
-                                console.log(result);
-                            } else {
-                                error = true;
+                        let isChatId = parsedData.findIndex(
+                            obj => Object.keys(obj).includes('chat_id')
+                        ) !== -1;
+
+                        if (isChatId) {
+
+                        } else {
+                            res.send({
+                                status: false,
+                                msg: "Incorrect file data",
+                                "duplicateData": [],
+                            })
+                        }
+
+
+
+                        let chat_ids = []
+                        for (let row of parsedData) {
+                            chat_ids.push(row.chat_id.toString())
+                        }
+                        let slctQ = "SELECT chat_id from chat_ids WHERE chat_id IN (" + chat_ids + ")";
+                        let dataof = await sql.query(slctQ);
+                        if (dataof.length) {
+                            // console.log(parsedData, 'daata of', dataof);
+
+                            for (let row of parsedData) {
+
+                                let index = dataof.findIndex((item) => item.chat_id == row.chat_id);
+
+                                if (index >= 0) {
+                                    duplicatedChat_ids.push(row)
+                                } else {
+                                    InsertableChat_ids.push(row)
+                                }
                             }
+                        }
 
-                        })
+                        if (duplicatedChat_ids.length == 0) {
+                            for (let row of parsedData) {
+                                if (row.chat_id) {
+                                    let result = await sql.query("INSERT sim_ids (chat_id) value ('" + row.chat_id + "')");
+                                } else {
+                                    error = true;
+                                }
+                            }
+                        }
 
-                        if (!error) {
+                        // console.log('duplicate data is', duplicatedChat_ids)
+
+                        if (!error && duplicatedChat_ids.length === 0) {
                             res.send({
                                 "status": true,
                                 "msg": "imported successfully",
-                                "data": []
+                                "type": "chat_id",
+                                "duplicateData": [],
                             });
                         } else {
                             res.send({
-                                "status": true,
+                                "status": false,
                                 "msg": "File contained invalid data that has been ignored, rest has been imported successfully.",
-                                "data": []
+                                "type": "chat_id",
+                                "duplicateData": duplicatedChat_ids,
+                                "newData": InsertableChat_ids
+
                             });
                         }
 
                         return;
                     } else if (fieldName === "pgp_emails") {
                         let error = false;
-                        parsedData.forEach(async (row) => {
-                            if (row.pgp_email) {
-                                let email = helpers.validateEmail(row.pgp_email);
-                                if (email) {
-                                    let result = await sql.query("INSERT IGNORE into pgp_emails (pgp_email) value ('" + row.pgp_email + "')");
-                                    console.log(result);
+                        let duplicatedPgp_emails = [];
+                        let InsertablePgp_emails = [];
+
+                        let isPgpEmail = parsedData.findIndex(
+                            obj => Object.keys(obj).includes('pgp_email')
+                        ) !== -1;
+
+                        if (isPgpEmail) {
+
+                        } else {
+                            res.send({
+                                status: false,
+                                msg: "Incorrect file data",
+                                "duplicateData": [],
+                            })
+                        }
+
+                        let pgp_emails = []
+                        for (let row of parsedData) {
+                            pgp_emails.push(row.pgp_email)
+                        }
+                        let slctQ = "SELECT pgp_email from pgp_emails WHERE pgp_email IN (" + pgp_emails.map(item => { return "'" + item + "'" }) + ")";
+                        // console.log('pgp query', slctQ)
+                        let dataof = await sql.query(slctQ);
+                        if (dataof.length) {
+                            // console.log(parsedData, 'daata of', dataof);
+
+                            for (let row of parsedData) {
+
+                                let index = dataof.findIndex((item) => item.pgp_email == row.pgp_email);
+
+                                if (index >= 0) {
+                                    duplicatedPgp_emails.push(row)
+                                } else {
+                                    InsertablePgp_emails.push(row)
                                 }
-
-                            } else {
-                                error = true;
                             }
+                        }
 
+                        if (duplicatedPgp_emails.length == 0) {
+                            for (let row of parsedData) {
+                                if (row.pgp_email) {
+                                    let result = await sql.query("INSERT pgp_emails (pgp_email) value ('" + row.pgp_email + "')");
+                                } else {
+                                    error = true;
+                                }
+                            }
+                        }
 
-                        })
+                        // console.log('duplicate data is', duplicatedPgp_emails)
 
-                        if (!error) {
+                        if (!error && duplicatedPgp_emails.length === 0) {
                             res.send({
                                 "status": true,
                                 "msg": "imported successfully",
-                                "data": []
+                                "type": "pgp_email",
+                                "duplicateData": [],
                             });
                         } else {
                             res.send({
-                                "status": true,
+                                "status": false,
                                 "msg": "File contained invalid data that has been ignored, rest has been imported successfully.",
-                                "data": []
+                                "type": "pgp_email",
+                                "duplicateData": duplicatedPgp_emails,
+                                "newData": InsertablePgp_emails
+
                             });
                         }
 
