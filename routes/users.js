@@ -3208,8 +3208,10 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
                     throw err;
                 }
                 if (rslts) {
-                    var applyPushQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
-                    await sql.query(applyPushQ)
+                    var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='push_apps' AND user_acc_id=" + usrAccId + "";
+                    
+                    var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
+                    await sql.query(loadDeviceQ)
                     let isOnline = await device_helpers.isDeviceOnline(device_id);
                     if (isOnline) {
                         require("../bin/www").applyPushApps(apps, device_id);
@@ -3328,7 +3330,6 @@ router.get('/get_policies', async function (req, res) {
                         policies.push(dta);
                     }
                 }
-                console.log('policy', policies)
 
                 data = {
                     "status": true,

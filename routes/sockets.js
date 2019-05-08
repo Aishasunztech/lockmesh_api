@@ -122,7 +122,7 @@ module.exports.listen = async function (server) {
     var allClients = [];
     io.on('connection', async function (socket) {
         allClients.push(socket);
-        
+
         //socket.disconnect(true);
         //socket.join('device_id');
 
@@ -187,14 +187,14 @@ module.exports.listen = async function (server) {
                 is_sync: (is_sync === 1 || is_sync === true || is_sync === 'true' || is_sync === '1') ? true : false,
             });
 
+            // pending settings for device
             var setting_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='history' order by created_at desc limit 1";
             let setting_res = await sql.query(setting_query);
-
             if (setting_res.length) {
-                let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id;
+                let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND type='history' ";
                 await sql.query(historyUpdate);
 
-                socket.emit('get_applied_settings_' + device_id, {
+                socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
                     device_id: device_id,
                     app_list: (setting_res[0].app_list === undefined || setting_res[0].app_list === null || setting_res[0].app_list === '') ? '[]' : setting_res[0].app_list,
                     passwords: (setting_res[0].passwords === undefined || setting_res[0].passwords === null || setting_res[0].passwords === '') ? '{}' : setting_res[0].passwords,
@@ -208,6 +208,23 @@ module.exports.listen = async function (server) {
                     status: false
                 });
             }
+
+            // pending pushed apps for device
+            var pendingAppsQ = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='push_apps' order by created_at desc limit 1";
+            let pendingPushedApps = await sql.query(pendingAppsQ);
+
+            if (pendingPushedApps.length) {
+                // console.log("pendingPushedApps",pendingPushedApps);
+                let pushHistoryUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND type='push_apps'";
+                await sql.query(pushHistoryUpdate);
+                io.emit(Constants.GET_PUSHED_APPS + device_id, {
+                    status: true,
+                    device_id: device_id,
+                    push_apps: pendingPushedApps[0].push_apps
+                });
+            }
+
+
 
             // request application from portal to specific device
             socket.on(Constants.SETTING_APPLIED_STATUS + device_id, async function (data) {
@@ -229,7 +246,7 @@ module.exports.listen = async function (server) {
                     await device_helpers.insertApps(app_list, device_id);
 
                     // await device_helpers.insertExtensions(extension_apps, device_id);
-                    
+
                     await device_helpers.insertOrUpdateSettings(response[0].controls, device_id);
                 }
 
@@ -245,7 +262,7 @@ module.exports.listen = async function (server) {
                     // console.log("syncing device");
                     await device_helpers.insertApps(applications, device_id);
                     // console.log("device synced");
-                    socket.emit("get_sync_status_" + device_id, {
+                    socket.emit(Constants.GET_SYNC_STATUS + device_id, {
                         device_id: device_id,
                         apps_status: true,
                         extensions_status: false,
@@ -292,19 +309,22 @@ module.exports.listen = async function (server) {
                 });
             });
 
-            socket.on(Constants.SEND_PUSHED_APPS_STATUS + device_id, async (pushedApps) =>{
-                console.log("send_pushed_apps_status_",pushedApps);
+            socket.on(Constants.SEND_PUSHED_APPS_STATUS + device_id, async (pushedApps) => {
+                console.log("send_pushed_apps_status_", pushedApps);
 
             })
-            
-            socket.on(Constants.FINISHED_PUSH_APPS + device_id, async (response)=>{
-                console.log(Constants.FINISHED_PUSH_APPS, response);
-                socket.emit(Constants.ACK_FINISHED_PUSH_APPS,{
-                    status: true
-                });
+
+            socket.on(Constants.FINISHED_PUSH_APPS + device_id, async (response) => {
+                
+                require('../bin/www').ackFinishedPushApps(device_id, response);
+                // socket.emit(Constants.ACK_FINISHED_PUSH_APPS + device_id, {
+                //     status: true
+                // });
             });
         } else {
-
+            // socket.emit('ack_finished_push_apps_', {
+            //     status:false
+            // });
             console.log("web socket");
         }
 
@@ -361,7 +381,7 @@ module.exports.listen = async function (server) {
 
         // socket.compress(false).emit('an event', { some: 'data' });
     });
-    
+
     return io;
 }
 

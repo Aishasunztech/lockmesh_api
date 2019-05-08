@@ -9,6 +9,7 @@ var debug = require('debug')('webportalbackend:server');
 var http = require('http');
 var https = require('https');
 var fs = require('fs');
+var Constants = require('../constants/Application');
 
 var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
@@ -95,40 +96,45 @@ function onListening() {
 // if device is live then send data to device
 module.exports.sendEmit = async (app_list, passwords, controls, permissions, device_id) => {
 
-  io.emit("get_applied_settings_" + device_id, {
+  io.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
     device_id: device_id,
     app_list: (app_list === undefined || app_list === null || app_list === '') ? '[]' : app_list,
-    passwords: (passwords === undefined ||passwords === null || passwords === '') ? '{}' : passwords,
+    passwords: (passwords === undefined || passwords === null || passwords === '') ? '{}' : passwords,
     settings: (controls === undefined || controls === null || controls === '') ? '{}' : controls,
     extension_list: (permissions == undefined || permissions == null || permissions == '') ? '{}' : permissions,
     status: true
   });
 }
 
-module.exports.applyPushApps = (push_apps, device_id) =>{
-  console.log("get_pushed_apps_" + device_id);
-  io.emit("get_pushed_apps_" + device_id, {
+module.exports.applyPushApps = (push_apps, device_id) => {
+  console.log(Constants.GET_PUSHED_APPS + device_id);
+  io.emit(Constants.GET_PUSHED_APPS + device_id, {
     status: true,
     device_id: device_id,
     push_apps: push_apps
   });
 }
 module.exports.syncDevice = async (device_id) => {
-  io.emit("get_sync_status_" + device_id, {
-      device_id: device_id,
-      apps_status: false,
-      extensions_status: false,
-      settings_status: false,
-      is_sync: false,
+  io.emit(Constants.GET_SYNC_STATUS + device_id, {
+    device_id: device_id,
+    apps_status: false,
+    extensions_status: false,
+    settings_status: false,
+    is_sync: false,
   });
 }
 // live device status activity
 module.exports.sendDeviceStatus = async function (device_id, device_status, status = false) {
-  console.log("send device status");
-  console.log(device_id);
-  io.emit("device_status_" + device_id, {
+  console.log("send device status", device_id);
+  io.emit(Constants.DEVICE_STATUS + device_id, {
     device_id: device_id,
     status: status,
     msg: device_status
+  });
+}
+
+module.exports.ackFinishedPushApps = async function (device_id, response) {
+  io.emit(Constants.ACK_FINISHED_PUSH_APPS + device_id, {
+    status: true
   });
 }
