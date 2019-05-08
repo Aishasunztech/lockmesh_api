@@ -261,7 +261,7 @@ module.exports = {
             var base64Data = Buffer.from(bytes).toString("base64");
 
             fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
-                console.log("file error",err);
+                console.log("file error", err);
             });
 
 
@@ -449,5 +449,28 @@ module.exports = {
             days = validity
         }
         if (days > 0) return days; else if (days <= 0 && days !== null) return "Expired"; else return "Not Announced";
+    },
+    checkvalidImei: async (s) => {
+        var etal = /^[0-9]{15}$/;
+        if (!etal.test(s))
+            return false;
+        sum = 0; mul = 2; l = 14;
+        for (i = 0; i < l; i++) {
+            digit = s.substring(l - i - 1, l - i);
+            tp = parseInt(digit, 10) * mul;
+            if (tp >= 10)
+                sum += (tp % 10) + 1;
+            else
+                sum += tp;
+            if (mul == 1)
+                mul++;
+            else
+                mul--;
+        }
+        chk = ((10 - (sum % 10)) % 10);
+        if (chk != parseInt(s.substring(14, 15), 10))
+            return false;
+        return true;
     }
+
 }

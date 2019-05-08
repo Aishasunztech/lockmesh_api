@@ -181,12 +181,12 @@ router.post('/login', async function (req, resp) {
                             } else {
                                 var expiry_date = helpers.getExpDateByMonth(new Date(), usrAcc[0].expiry_months);
                             }
-                            var updateDevice = "UPDATE devices set device_id = '" + chechedDeviceId + "', ip_address = '" + ip + "', simno = '" + simNo1 + "', online = '"+ Constants.DEVICE_OFFLINE +"', imei='" + imei1 + "', imei2='" + imei2 + "', serial_number='" + serial_number + "', mac_address='" + mac_address + "', simno2 = '" + simNo2 + "' where id='" + usrAcc[0].device_id + "'";
+                            var updateDevice = "UPDATE devices set device_id = '" + chechedDeviceId + "', ip_address = '" + ip + "', simno = '" + simNo1 + "', online = '" + Constants.DEVICE_OFFLINE + "', imei='" + imei1 + "', imei2='" + imei2 + "', serial_number='" + serial_number + "', mac_address='" + mac_address + "', simno2 = '" + simNo2 + "' where id='" + usrAcc[0].device_id + "'";
                             await sql.query(updateDevice);
-                            
+
                             var updateAccount = "UPDATE usr_acc set activation_status=1, status='active', expiry_date='" + expiry_date + "', start_date='" + start_date + "', device_status=1, unlink_status = 0 WHERE id = " + usrAcc[0].id;
                             await sql.query(updateAccount);
-                            
+
                             let device_id = await device_helpers.getDvcIDByDeviceID(usrAcc[0].device_id)
 
                             const device = {
@@ -376,7 +376,7 @@ router.post('/linkdevice', async function (req, resp) {
                         if (deviceStatus == Constants.DEVICE_UNLINKED) {
 
                             var link_acc = "";
-                            var updateDviceQ = "UPDATE devices set ip_address = '" + ip + "', simno = '" + simNo1 + "', online = '"+ Constants.DEVICE_OFFLINE +"' , simno2 = '" + simNo2 + "', reject_status=0  where id=" + device[0].id;
+                            var updateDviceQ = "UPDATE devices set ip_address = '" + ip + "', simno = '" + simNo1 + "', online = '" + Constants.DEVICE_OFFLINE + "' , simno2 = '" + simNo2 + "', reject_status=0  where id=" + device[0].id;
                             // , unlink_status = 0
                             // console.log(updateDviceQ);
                             var updateDevice = await sql.query(updateDviceQ);
@@ -747,19 +747,19 @@ router.get('/getUpdate/:version/:uniqueName', async (req, res) => {
         let isAvail = false;
 
         if (response.length) {
-            for(let i =0; i< response.length; i++){
+            for (let i = 0; i < response.length; i++) {
                 console.log("testing upgrade", response[i].version_name)
                 if (Number(response[i].version_name) > Number(versionName)) {
-                    isAvail=true;
+                    isAvail = true;
                     res.send({
                         apk_status: true,
                         apk_url: response[i].apk
                     });
-                    
+
                     break;
                 }
             }
-            if(!isAvail){
+            if (!isAvail) {
                 res.send({
                     apk_status: false,
                     msg: ""
@@ -991,6 +991,11 @@ router.post('/imeiChanged', async function (req, res) {
     // console.log(req.body);
 
     if (serial_number !== undefined && serial_number !== null && mac_address !== undefined && mac_address !== null) {
+        if (imei1) {
+            sql.query("UPDATE devices set imei = '" + imei1 + "' WHERE device_id = '" + deviceId + "'")
+        } else {
+            sql.query("UPDATE devices set imei2 = '" + imei2 + "' WHERE device_id = '" + deviceId + "'")
+        }
         let response = await device_helpers.saveImeiHistory(deviceId, serial_number, mac_address, imei1, imei2)
         // console.log("response", response);
         res.send({
@@ -1034,7 +1039,7 @@ router.get('/marketApplist/:linkCode', async function (req, res) {
     let dealer_id = await helpers.getDealerIdByLinkOrActivation(req.params.linkCode)
 
     if (dealer_id) {
-        sql.query("SELECT apk_details.* from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND secure_market_apps.dealer_id = '" + dealer_id + "'", function (err, results) {
+        sql.query("SELECT apk_details.* from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND (secure_market_apps.dealer_id = '" + dealer_id + "' OR dealer_type = 'admin')", function (err, results) {
             // console.log("SELECT apk_details.* from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND secure_market_apps.dealer_id = '" + dealer_id + "'");
             if (err) throw err;
             if (results.length) {

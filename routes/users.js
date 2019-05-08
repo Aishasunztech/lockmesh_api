@@ -390,6 +390,7 @@ router.get('/devices', async function (req, res) {
             // console.log("Imei History Save", response);
             // let dealer_id = await helpers.getDealerIdByLinkOrActivation(541763)
             // console.log(dealer_id);
+            // console.log(imei);
             data = {
                 "status": true,
                 "data": finalResult
@@ -2854,8 +2855,8 @@ router.get('/get_apps/:device_id', async function (req, res) {
 
                             Extension.push(item);
                         }
-                        if (item.extension == 0 || item.visible == 1) {  
-                                onlyApps.push(item)
+                        if (item.extension == 0 || item.visible == 1) {
+                            onlyApps.push(item)
                         }
                         if (item.visible == 0) {
 
@@ -3837,12 +3838,12 @@ router.post('/import/:fieldName', async (req, res) => {
                         let isStartDate = parsedData.findIndex(
                             obj => Object.keys(obj).includes('start_date')
                         ) !== -1;
-                        
+
                         let isExpiryDate = parsedData.findIndex(
                             obj => Object.keys(obj).includes('expiry_date')
                         ) !== -1;
-                        
-                        if(isSimId && isStartDate && isExpiryDate){
+
+                        if (isSimId && isStartDate && isExpiryDate) {
 
                         } else {
                             res.send({
@@ -5297,7 +5298,112 @@ router.get('/marketApplist', async function (req, res) {
     }
 });
 
+// Write IMEI on device
+router.post('/writeImei/:device_id', async function (req, res) {
+    try {
+        var verify = await verifyToken(req, res);
+        if (verify.status !== undefined && verify.status == true) {
+            let device_id = req.params.device_id;
+            let usrAccId = req.body.usrAccId;
+            let type = req.body.type;
+            let imeiNo = req.body.imeiNo;
 
+            let imei = await device_helpers.checkvalidImei(imeiNo)
+            if (imei) {
+                let imei1 = (type == 'IMEI1') ? imeiNo : null
+                let imei2 = (type == 'IMEI2') ? imeiNo : null
+                let msg = (type == 'IMEI1') ? imei1 + " successfully written to IMEI 1 on Device!" : imei2 + " successfully written to IMEI 2 on Device!"
+                let msg2 = (type == 'IMEI1') ? imei1 + " will write to IMEI 1 on Device when device online!" : imei2 + " will write to IMEI 2 on Device when device online!"
+                let query = "SELECT * from device_history WHERE user_acc_id = '" + usrAccId + "' AND type = 'imei' AND status = 0"
+
+                let result = await sql.query(query);
+                if (result.length) {
+                    let prevImei = JSON.parse(result[0].imei)
+                    // console.log(prevImei);
+                    if (type == 'IMEI1') {
+                        prevImei.imei1 = imei1
+                    }
+                    else {
+                        prevImei.imei2 = imei2
+                    }
+                    let newImei = JSON.stringify(prevImei)
+                    sql.query("UPDATE device_history set imei = ' " + newImei + "' WHERE user_acc_id = '" + usrAccId + "' AND type = 'imei' AND status = 0 ", async function (err, results) {
+                        if (err) throw err;
+                        if (results.affectedRows) {
+                            let isOnline = await device_helpers.isDeviceOnline(device_id);
+                            if (isOnline) {
+                                require("../bin/www").writeImei(newImei, device_id);
+                                data = {
+                                    "status": true,
+                                    "msg": msg,
+                                };
+                                res.send(data);
+                            }
+                            data = {
+                                "status": true,
+                                "msg": msg2,
+                            };
+                            res.send(data);
+                        } else {
+                            data = {
+                                "status": false,
+                                "msg": 'Error while Processing',
+                            };
+                            res.send(data);
+                        }
+
+                    })
+                } else {
+                    let imei = {
+                        imei1: imei1,
+                        imei2: imei2
+                    }
+                    let newImei = JSON.stringify(imei)
+                    var applyQuery = "INSERT INTO device_history (user_acc_id, imei, type) VALUES (" + usrAccId + ", '" + newImei + "', 'imei')";
+
+                    sql.query(applyQuery, async function (err, rslts) {
+                        if (err) {
+                            throw err;
+                        }
+                        if (rslts) {
+                            // var applyPushQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
+                            // await sql.query(applyPushQ)
+                            let isOnline = await device_helpers.isDeviceOnline(device_id);
+                            if (isOnline) {
+                                require("../bin/www").writeImei(newImei, device_id);
+                                data = {
+                                    "status": true,
+                                    "msg": msg,
+                                };
+                                res.send(data);
+                            } else {
+                                data = {
+                                    "status": true,
+                                    "msg": msg2,
+                                };
+                                res.send(data);
+                            }
+                        } else {
+                            data = {
+                                "status": false,
+                                "msg": 'Error while Processing',
+                            };
+                            res.send(data);
+                        }
+                    });
+                }
+            } else {
+                data = {
+                    "status": false,
+                    "msg": "Invalid IMEI number, please make sure you are using a valid IMEI number and try again",
+                };
+                res.send(data);
+            }
+        }
+    } catch (error) {
+        throw Error(error.message);
+    }
+});
 
 /** Cron for expiry date **/
 cron.schedule('0 0 0 * * *', async () => {
