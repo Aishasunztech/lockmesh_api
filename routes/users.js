@@ -2837,7 +2837,7 @@ router.get('/get_apps/:device_id', async function (req, res) {
                 " LEFT JOIN apps_info on user_apps.app_id = apps_info.id" +
                 " LEFT JOIN devices on user_apps.device_id=devices.id" +
                 " WHERE devices.device_id = '" + req.params.device_id + "'"
-            // console.log("hello", getAppsQ);
+            // console.log("get apps query", getAppsQ);
             try {
                 sql.query(getAppsQ, async (error, apps) => {
                     if (error) {
@@ -2853,6 +2853,13 @@ router.get('/get_apps/:device_id', async function (req, res) {
                         if (item.extension === 1 && item.extension_id === 0) {
 
                             Extension.push(item);
+                        }
+                        if (item.extension == 0 || item.visible == 1) {  
+                                onlyApps.push(item)
+                        }
+                        if (item.visible == 0) {
+
+                            settings.push(item)
                         }
                     }
 
@@ -2876,14 +2883,6 @@ router.get('/get_apps/:device_id', async function (req, res) {
                                     default_app: item.default_app
                                 });
                             }
-                            else if (item.extension == 0 || item.visible == 1) {
-                                onlyApps.push(item)
-                            }
-                            if (item.visible == 0) {
-
-                                settings.push(item)
-                            }
-
                         }
 
                         newExtlist.push({
@@ -2899,7 +2898,6 @@ router.get('/get_apps/:device_id', async function (req, res) {
                     // console.log("apps length" + apps.length);
                     var query1 = 'SELECT * from user_app_permissions where device_id ="' + req.params.device_id + '" limit 1';
                     // 
-
                     sql.query(query1, async (error, controls) => {
                         if (error) {
                             throw Error("Query Expection");
@@ -3071,14 +3069,14 @@ router.post('/save_policy', async function (req, res) {
 
 });
 
+
+
 router.post('/save/profile', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
         if (verify.status !== undefined && verify.status == true) {
-            let device_id = req.params.device_id;
-
-            let type = req.body.type;
-            let name = req.body.name;
+            console.log('body is', req.body)
+            let name = req.body.profileName;
             let dealer_id = verify.user.id;
             let usr_acc_id = req.body.usr_acc_id;
 
@@ -3086,123 +3084,50 @@ router.post('/save/profile', async function (req, res) {
 
             let passwords = (req.body.device_setting.passwords == undefined) ? '' : JSON.stringify(req.body.device_setting.passwords);
 
+
             let controls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
 
-            let systemControls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
+            let permissions = (req.body.device_setting.extensions == undefined) ? '' : JSON.stringify(req.body.device_setting.extensions);
 
-            let subExtension2 = (req.body.device_setting.subExtension == undefined) ? '' : JSON.stringify(req.body.device_setting.subExtension);
-            console.log("subExtension: ", subExtension);
+            var query = "select id from usr_acc_profile where profile_name = '" + name + "'";
 
-            if (type == "profile" || type == "policy") device_id = '';
-            if (type == "history") {
-                name = '';
-                dealer_id = 0;
-            }
+            let result = await sql.query(query);
 
-            if (type === 'profile') {
-                console.log('action type', type);
-                var query = "select id from usr_acc_profile where profile_name = '" + name + "'";
-                let result = await sql.query(query);
 
-                if (result.length == 0 || name == '') {
-                    var applyQuery = "insert into usr_acc_profile (profile_name, user_acc_id, app_list, setting, controls,passwords, type) values ('" + name + "', " + usr_acc_id + ",'" + app_list + "', null, '" + controls + "', '" + passwords + "', '" + type + "')";
-                    // console.log('query insert', applyQuery);
-                    // console.log(applyQuery);
+            if (result.length == 0 || name == '') {
+                var applyQuery = "insert into usr_acc_profile (profile_name,dealer_id, user_acc_id, app_list,permissions, controls,passwords) values ('" + name + "', '" + dealer_id + "','" + usr_acc_id + "','" + app_list + "','" + permissions + "', '" + controls + "', '" + passwords + "')";
+                // console.log('query insert', applyQuery);
+                console.log(applyQuery, 'thats it');
 
-                    await sql.query(applyQuery, async function (err, rslts) {
-
-                        // if (type == "history") {
-                        //     let isOnline = await device_helpers.isDeviceOnline(device_id);
-                        //     // console.log("isOnline: " + isOnline);
-                        //     if (isOnline) {
-                        //         require("../bin/www").sendEmit(app_list, passwords, controls, device_id);
-                        //     }
-                        // }
-
+                sql.query(applyQuery, async function (err, rslts) {
+                    if (err) throw err;
+                    // console.log(rslts, 'rslt is query')
+                    if (rslts.affectedRows) {
                         data = {
                             "status": true,
-                            "msg": 'Setting Applied Successfully',
+                            "msg": 'Profile Saved Successfully',
                             "data": rslts
-                        };
-                        res.send(data);
-                    });
-
-                } else {
-                    data = {
-                        "status": false,
-                        "msg": 'Profile Name is already Exist',
-                    };
-                    res.send(data);
-                }
-            } else if (type === 'policy') {
-                // console.log('action type polocy', type);
-                var query = "select id from policy where policy_name = '" + name + "'";
-                let result = await sql.query(query);
-
-                if (result.length == 0 || name == '') {
-                    var applyQuery = "insert into policy (policy_name, app_list, setting, controls,passwords) values ('" + name + "','" + app_list + "', null, '" + controls + "', '" + passwords + "')";
-                    // console.log('query insert', applyQuery);
-                    // console.log(applyQuery);
-
-                    await sql.query(applyQuery, async function (err, rslts) {
-                        if (err) throw err;
-                        // if (type == "history") {
-                        //     let isOnline = await device_helpers.isDeviceOnline(device_id);
-                        //     // console.log("isOnline: " + isOnline);
-                        //     if (isOnline) {
-                        //         require("../bin/www").sendEmit(app_list, passwords, controls, device_id);
-                        //     }
-                        // }
-                        // console.log('resluts id ', rslts);
-                        if (rslts.affectedRows) {
-                            data = {
-                                "status": true,
-                                "msg": 'Policy Saved Successfully',
-                                "data": rslts
-                            };
-                            res.send(data);
-                        }
-
-                    });
-                } else {
-                    data = {
-                        "status": false,
-                        "msg": 'Policy Name is already Exist',
-                    };
-                    res.send(data);
-                }
-            } else if (type === 'history') {
-
-                var applyQuery = "insert into device_history (user_acc_id, app_list, passwords, controls, permissions) values ('" + usr_acc_id + "','" + app_list + "', '" + passwords + "', '" + systemControls + "','" + subExtension2 + "')";
-                // console.log(applyQuery);
-                await sql.query(applyQuery, async function (err, rslts) {
-                    if (err) {
-                        throw err;
-                    }
-
-                    let isOnline = await device_helpers.isDeviceOnline(device_id);
-                    let permissions = subExtension2;
-                    // console.log("isOnline: " + isOnline);
-                    if (isOnline) {
-                        require("../bin/www").sendEmit(app_list, passwords, controls, permissions, device_id);
-                    }
-
-                    if (rslts) {
-                        data = {
-                            "status": true,
-                            "msg": 'Settings Applied Successfully',
                         };
                         res.send(data);
                     } else {
                         data = {
                             "status": false,
-                            "msg": 'Error while Processing',
+                            "msg": 'Profile Name is already Exist',
                         };
                         res.send(data);
                     }
 
+
                 });
+
+            } else {
+                data = {
+                    "status": false,
+                    "msg": 'Profile Name is already Exist',
+                };
+                res.send(data);
             }
+
         }
     } catch (error) {
         throw Error(error.message);
@@ -3223,15 +3148,13 @@ router.post('/apply_settings/:device_id', async function (req, res) {
 
             let passwords = (device_setting.passwords === undefined) ? '' : JSON.stringify(device_setting.passwords);
 
-            let controls = (device_setting.controls === undefined) ? '' : JSON.stringify(device_setting.controls);
+            let controls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
+            // console.log("hello controls", controls);
+            let subExtensions = (req.body.device_setting.subExtensions == undefined) ? '' : JSON.stringify(req.body.device_setting.subExtensions);
 
-            let subExtensions = (device_setting.subExtensions == undefined) ? '' : JSON.stringify(device_setting.subExtensions);
+            var applyQuery = "insert into device_history (user_acc_id, app_list, passwords, controls, permissions) values (" + usrAccId + ", '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "')";
 
-            let push_apps = (device_setting.push_apps === undefined) ? '' : JSON.stringify(device_setting.push_apps);
-
-            var applyQuery = "INSERT INTO device_history (user_acc_id, app_list, passwords, controls, permissions) VALUES (" + usrAccId + ", '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "')";
-
-            sql.query(applyQuery, async function (err, rslts) {
+            await sql.query(applyQuery, async function (err, rslts) {
                 if (err) {
                     throw err;
                 }
@@ -3278,33 +3201,33 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
 
             let apps = (push_apps === undefined) ? '' : JSON.stringify(push_apps);
 
-            // var applyQuery = "INSERT INTO device_history (user_acc_id, push_apps) VALUES (" + usrAccId + ", '" + push_apps + "')";
+            var applyQuery = "INSERT INTO device_history (user_acc_id, push_apps, type) VALUES (" + usrAccId + ", '" + apps + "', 'push_apps')";
 
-            // sql.query(applyQuery, async function (err, rslts) {
-            //     if (err) {
-            //         throw err;
-            //     }
+            sql.query(applyQuery, async function (err, rslts) {
+                if (err) {
+                    throw err;
+                }
+                if (rslts) {
+                    var applyPushQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
+                    await sql.query(applyPushQ)
+                    let isOnline = await device_helpers.isDeviceOnline(device_id);
+                    if (isOnline) {
+                        require("../bin/www").applyPushApps(apps, device_id);
+                    }
+                    data = {
+                        "status": true,
+                        "msg": 'Apps are being pushed',
+                    };
+                    res.send(data);
+                } else {
+                    data = {
+                        "status": false,
+                        "msg": 'Error while Processing',
+                    };
+                    res.send(data);
+                }
 
-            let isOnline = await device_helpers.isDeviceOnline(device_id);
-            if (isOnline) {
-                require("../bin/www").applyPushApps(apps, device_id);
-            }
-
-            // if (rslts) {
-            //     data = {
-            //         "status": true,
-            //         "msg": 'Apps are being pushed',
-            //     };
-            //     res.send(data);
-            // } else {
-            data = {
-                "status": false,
-                "msg": 'Error while Processing',
-            };
-            res.send(data);
-            // }
-
-            // });
+            });
 
         }
     } catch (error) {
@@ -3405,6 +3328,7 @@ router.get('/get_policies', async function (req, res) {
                         policies.push(dta);
                     }
                 }
+                console.log('policy', policies)
 
                 data = {
                     "status": true,
@@ -3426,7 +3350,7 @@ router.get('/get_policies', async function (req, res) {
 });
 
 
-router.post('/deleteORStatusPolicy', async function (req, res) {
+router.post('/change_policy_status', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status === true) {
         let id = req.body.id;
@@ -3446,7 +3370,42 @@ router.post('/deleteORStatusPolicy', async function (req, res) {
             } else {
                 data = {
                     "status": false,
-                    "msg": 'successful'
+                    "msg": 'error'
+                };
+                res.send(data);
+            }
+
+        });
+    }
+})
+
+router.post('/save_policy_changes', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify.status === true) {
+        // console.log('body of kth e', req.body);
+        let record = req.body;
+        let id = record.id;
+        let push_apps = record.push_apps;
+        let controls = record.controls;
+        let permissions = record.permissions;
+        let app_list = record.app_list;
+        // console.log('id id', id)
+
+        let query = "UPDATE policy SET push_apps = '" + push_apps + "', controls = '" + controls + "', permissions = '" + permissions + "', app_list = '" + app_list + "' WHERE id='" + id + "'";
+        // console.log('qerury', query)
+        sql.query(query, (error, result) => {
+            // console.log(result, 'relstsdf');
+            if (error) throw error;
+            if (result.affectedRows) {
+                data = {
+                    "status": true,
+                    "msg": 'Policy Updated Successfully'
+                };
+                res.send(data);
+            } else {
+                data = {
+                    "status": false,
+                    "msg": 'error'
                 };
                 res.send(data);
             }
@@ -3458,36 +3417,17 @@ router.post('/deleteORStatusPolicy', async function (req, res) {
 
 router.post('/get_device_history', async function (req, res) {
     var verify = await verifyToken(req, res);
-    if (verify.status === true) {
+    if (verify['status'] !== undefined && verify.status == true) {
         let userId = verify.user.id;
         let userType = await helpers.getUserType(userId);
         let user_acc_id = await device_helpers.getUserAccountId(req.body.device_id);
-        // console.log('user id si', user_acc_id);
-        let where = "where";
-        let isValid = true;
-        // console.log('d_id', user_acc_id);
+
+        let where = " WHERE ";
+
         if (user_acc_id != undefined && user_acc_id != '' && user_acc_id != null) {
             where = where + " user_acc_id='" + user_acc_id + "'";
 
-        } else {
-            where = "";
-        }
-        // if (userType != ADMIN) {
-        //     if (userType == DEALER) {
-        //         where = where + " AND ((type='profile' AND dealer_id=" + userId + ") OR type='policy')";
-        //     } else {
-        //         let connected_dealer = verify.user.connected_dealer;
-        //         if (connected_dealer != undefined && connected_dealer != '' && connected_dealer != null && connected_dealer != 0) {
-        //             where = where + " AND ((type='profile' AND dealer_id=" + connected_dealer + ") OR type='policy')";
-        //         } else {
-        //             isValid = false;
-        //         }
-        //     }
-        // }
-        // console.log(where);
-        if (isValid) {
             let query = "SELECT * FROM device_history " + where;
-            // console.log("getprofiles query", query);
             sql.query(query, (error, result) => {
                 data = {
                     "status": true,
@@ -3498,6 +3438,7 @@ router.post('/get_device_history', async function (req, res) {
             });
 
         } else {
+            where = "";
             data = {
                 "status": false,
                 "msg": 'Invalid User'
@@ -3612,14 +3553,11 @@ router.post('/dealer/postPagination', async function (req, res) {
     // console.log("Working")
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
-        console.log(verify.status, "verify")
         var selectedValue = req.body.selectedValue;
         var dropdownType = req.body.pageName;
         var dealer_id = verify.user.id;
         var squery = "select * from dealer_pagination where dealer_id = " + dealer_id + " AND type ='" + dropdownType + "'";
-        // console.log('query', squery);
         var srslt = await sql.query(squery);
-        // console.log('query result', srslt);
 
         if (srslt.length == 0) {
             var squery = sql.query("insert into dealer_pagination (dealer_id, record_per_page, type) values (" + dealer_id + ", '" + selectedValue + "', '" + dropdownType + "')", function (err, rslts) {
@@ -3640,6 +3578,7 @@ router.post('/dealer/postPagination', async function (req, res) {
                         "msg": 'Items Updated.',
                         "data": row
                     };
+
                     res.send(data);
                 } else {
                     data = {
@@ -3846,8 +3785,6 @@ router.post('/import/:fieldName', async (req, res) => {
             },
             filename: function (req, file, callback) {
                 var ext = file.originalname.split(".");
-                // console.log("ext", ext.length)
-                // console.log("mimetype ", file.mimetype);
                 if ((
                     file.mimetype === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
                     file.mimetype === "text/csv" ||
@@ -3864,7 +3801,6 @@ router.post('/import/:fieldName', async (req, res) => {
 
         var upload = multer({
             storage: storage,
-            // fileFilter: fileFilter,
         }).fields([{
             name: "sim_ids",
             maxCount: 1
@@ -3895,6 +3831,26 @@ router.post('/import/:fieldName', async (req, res) => {
                     });
                     if (fieldName == "sim_ids") {
                         let error = false;
+                        let isSimId = parsedData.findIndex(
+                            obj => Object.keys(obj).includes('sim_id')
+                        ) !== -1;
+                        let isStartDate = parsedData.findIndex(
+                            obj => Object.keys(obj).includes('start_date')
+                        ) !== -1;
+                        
+                        let isExpiryDate = parsedData.findIndex(
+                            obj => Object.keys(obj).includes('expiry_date')
+                        ) !== -1;
+                        
+                        if(isSimId && isStartDate && isExpiryDate){
+
+                        } else {
+                            res.send({
+                                status: false,
+                                msg: "Incorrect file data"
+                            })
+                        }
+
                         parsedData.forEach(async (row) => {
                             if (row.sim_id && row.start_date && row.expiry_date) {
                                 let result = await sql.query("INSERT IGNORE sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");

@@ -11,18 +11,16 @@ var Constants = require('../constants/Application');
 
 module.exports = {
     onlineOflineDevice: async function (deviceId = null, sessionId, status) {
-        if (deviceId != null) {
-            var query = "UPDATE devices SET session_id='" + sessionId + "', online='" + status + "' WHERE device_id='" + deviceId + "';";
-            let res = await sql.query(query);
-            if (res) {
-                return true;
-            }
+        let query = "";
+        if (deviceId !== null) {
+            query = "UPDATE devices SET session_id='" + sessionId + "', online='" + status + "' WHERE device_id='" + deviceId + "';";
         } else {
-            var query = "UPDATE devices SET online = '" + status + "', session_id=null WHERE session_id='" + sessionId.replace(/['"]+/g, '') + "'";
-            let res = await sql.query(query);
-            if (res) {
-                return true;
-            }
+            query = "UPDATE devices SET online = '" + status + "', session_id=null WHERE session_id='" + sessionId.replace(/['"]+/g, '') + "'";
+        }
+
+        let res = await sql.query(query);
+        if (res) {
+            return true;
         }
         return false;
     },
@@ -143,14 +141,14 @@ module.exports = {
             var updateQuery = "REPLACE INTO user_app_permissions (device_id, permissions) VALUE ('" + device_id + "', '" + permissions + "')";
             await sql.query(updateQuery)
         } catch (error) {
-            console.log(error);
+            console.log("insert setting error", error);
         }
 
     },
     deviceSynced: async function (deviceId) {
-        console.log("device_id", deviceId);
         var updateQuery = "UPDATE devices set is_sync=1 WHERE device_id='" + deviceId + "'";
         await sql.query(updateQuery);
+        console.log("device synced");
     },
     getApp: async function (uniqueName, device_id, guest, encrypted, enable) {
 
@@ -167,20 +165,26 @@ module.exports = {
     insertOrUpdateApps: async function (appId, deviceId, guest, encrypted, enable) {
         try {
 
-            let updateQuery = "INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + " ) " +
-                " ON DUPLICATE KEY UPDATE " +
-                " guest = " + guest + ", " +
-                " encrypted = " + encrypted + ", " +
-                " enable = " + enable + " ";
-            // var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
-            sql.query(updateQuery, function (error, response) {
-                console.log("insert or update apps error", error);
-                // console.log("insert or update apps response", response);
-
+            var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
+            // console.log("update query", updateQuery);
+            sql.query(updateQuery, async function (error, row) {
+                // console.log("this is", row);
+                if (row != undefined && row.affectedRows === 0) {
+                    var insertQuery = "INSERT INTO user_apps ( device_id, app_id, guest, encrypted, enable) VALUES (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + ")";
+                    await sql.query(insertQuery);
+                }
             });
 
+            // let updateQuery = "INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + " ) " +
+            //     " ON DUPLICATE KEY UPDATE " +
+            //     " guest = " + guest + ", " +
+            //     " encrypted = " + encrypted + ", " +
+            //     " enable = " + enable + " ";
+            // // var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
+            // sql.query(updateQuery);
+
         } catch (error) {
-            console.log(error);
+            console.log("error", error);
             throw error;
 
         }
@@ -257,7 +261,7 @@ module.exports = {
             var base64Data = Buffer.from(bytes).toString("base64");
 
             fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
-                console.log(err);
+                console.log("file error",err);
             });
 
 
@@ -271,7 +275,7 @@ module.exports = {
         let res = await sql.query(query);
         // console.log(res);
         if (res.length) {
-            if (res[0].online == "On") {
+            if (res[0].online === Constants.DEVICE_ONLINE) {
                 return true;
             } else {
                 return false;
@@ -346,7 +350,7 @@ module.exports = {
     },
     saveActionHistory: async (device, action) => {
         // console.log('SAVE HISTORY', action, device);
-        let query = "INSERT INTO acc_action_history (action, device_id, device_name, session_id, model, ip_address,simno,imei,simno2,imei2,serial_number,mac_address,fcm_token,online,is_sync,flagged,screen_start_date,reject_status,account_email,dealer_id,prnt_dlr_id,link_code,client_id,start_date,expiry_months,expiry_date,activation_code,status,device_status,activation_status,wipe_status,account_status,unlink_status,transfer_status,dealer_name,prnt_dlr_name,user_acc_id,pgp_email,chat_id,sim_id,finalStatus) VALUES "
+        let query = "INSERT INTO acc_action_history (action, device_id, device_name, session_id, model, ip_address, simno, imei, simno2, imei2, serial_number, mac_address, fcm_token, online, is_sync, flagged, screen_start_date, reject_status, account_email, dealer_id, prnt_dlr_id, link_code, client_id, start_date, expiry_months, expiry_date, activation_code, status, device_status, activation_status, wipe_status, account_status, unlink_status, transfer_status, dealer_name, prnt_dlr_name, user_acc_id, pgp_email, chat_id, sim_id, finalStatus) VALUES "
         let finalQuery = ''
         if (action === Constants.DEVICE_UNLINKED || action === Constants.UNLINK_DEVICE_DELETE) {
             finalQuery = query + "('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','off','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + device.prnt_dlr_id + "','" + device.link_code + "','" + device.client_id + "','', " + device.expiry_months + ",'','" + device.activation_code + "','',0,null,'" + device.wipe_status + "','" + device.account_status + "',1,'" + device.transfer_status + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','Unlinked')"
@@ -364,7 +368,7 @@ module.exports = {
         if (result.length) {
             // console.log(result[0].serial_number);
             if (result[0].imei1 != imei1 || result[0].imei2 != imei2) {
-                let query = "INSERT INTO imei_history(device_id,serial_number,mac_address,imei1,imei2) VALUES ('" + deviceId + "','" + sn + "','" + mac + "','" + imei1 + "','" + imei2 + "')"
+                let query = "INSERT INTO imei_history(device_id, serial_number, mac_address, imei1, imei2) VALUES ('" + deviceId + "','" + sn + "','" + mac + "','" + imei1 + "','" + imei2 + "')"
                 let result = await sql.query(query);
                 if (result.affectedRows) {
                     response = true
@@ -377,7 +381,7 @@ module.exports = {
                 response = true
             }
         } else {
-            let query = "INSERT INTO imei_history(device_id,serial_number,mac_address,orignal_imei1,orignal_imei2,imei1,imei2) VALUES ('" + deviceId + "','" + sn + "','" + mac + "','" + imei1 + "','" + imei2 + "','" + imei1 + "','" + imei2 + "')"
+            let query = "INSERT INTO imei_history(device_id, serial_number, mac_address, orignal_imei1, orignal_imei2, imei1, imei2) VALUES ('" + deviceId + "','" + sn + "','" + mac + "','" + imei1 + "','" + imei2 + "','" + imei1 + "','" + imei2 + "')"
             let result = await sql.query(query);
             if (result.affectedRows) {
                 response = true

@@ -27,6 +27,8 @@ module.exports = {
     DEVICE_ACCEPT: "Accept Device",
     NEW_DEVICE: "new device",
 
+    DEVICE_ONLINE: "On",
+    DEVICE_OFFLINE: "off",
     // sockets
     GET_SYNC_STATUS: "get_sync_status_",
     GET_APPLIED_STATUS: "get_applied_settings_",
@@ -48,4 +50,7 @@ module.exports = {
     // apk
     APK: "apk",
     LOGO: "logo",
+
+    APK_ON:'On',
+    APK_OFF:'Off'
 }
