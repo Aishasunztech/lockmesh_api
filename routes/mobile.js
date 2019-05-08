@@ -148,7 +148,6 @@ router.post('/login', async function (req, resp) {
                         });
                 }
             }
-
         } else if (linkCode.length >= 7) {
             var usrAccQ = "SELECT * FROM usr_acc WHERE activation_code='" + linkCode + "' and activation_status=0";
             var usrAcc = await sql.query(usrAccQ);
@@ -182,7 +181,7 @@ router.post('/login', async function (req, resp) {
                             } else {
                                 var expiry_date = helpers.getExpDateByMonth(new Date(), usrAcc[0].expiry_months);
                             }
-                            var updateDevice = "UPDATE devices set device_id = '" + chechedDeviceId + "', ip_address = '" + ip + "', simno = '" + simNo1 + "', online = 'On', imei='" + imei1 + "', imei2='" + imei2 + "', serial_number='" + serial_number + "', mac_address='" + mac_address + "', simno2 = '" + simNo2 + "' where id='" + usrAcc[0].device_id + "'";
+                            var updateDevice = "UPDATE devices set device_id = '" + chechedDeviceId + "', ip_address = '" + ip + "', simno = '" + simNo1 + "', online = '"+ Constants.DEVICE_OFFLINE +"', imei='" + imei1 + "', imei2='" + imei2 + "', serial_number='" + serial_number + "', mac_address='" + mac_address + "', simno2 = '" + simNo2 + "' where id='" + usrAcc[0].device_id + "'";
                             await sql.query(updateDevice);
                             
                             var updateAccount = "UPDATE usr_acc set activation_status=1, status='active', expiry_date='" + expiry_date + "', start_date='" + start_date + "', device_status=1, unlink_status = 0 WHERE id = " + usrAcc[0].id;
@@ -238,7 +237,7 @@ router.post('/login', async function (req, resp) {
         var deviceQ = "SELECT * FROM devices WHERE mac_address = '" + mac_address + "' OR serial_number='" + serial_number + "'";
         var device = await sql.query(deviceQ);
         if (device.length == 0) {
-            console.log("hello", "login")
+            // console.log("hello", "login")
             data = {
                 'status': false,
                 'msg': 'unlinked'
@@ -349,8 +348,8 @@ router.post('/linkdevice', async function (req, resp) {
         var connected_dealer = (req.body.connected_dealer === undefined || req.body.connected_dealer === null) ? 0 : req.body.connected_dealer;
         // var deviceId = uniqid.process();        
         let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = device_helpers.getDeviceInfo(req);
-        console.log("serial no", serial_number);
-        console.log("mac address", mac_address);
+        // console.log("serial no", serial_number);
+        // console.log("mac address", mac_address);
         if (!empty(serial_number) && !empty(mac_address)) {
 
             var deviceQ = "SELECT * FROM devices WHERE  mac_address='" + mac_address + "' OR serial_number='" + serial_number + "'";
@@ -377,7 +376,7 @@ router.post('/linkdevice', async function (req, resp) {
                         if (deviceStatus == Constants.DEVICE_UNLINKED) {
 
                             var link_acc = "";
-                            var updateDviceQ = "UPDATE devices set ip_address = '" + ip + "', simno = '" + simNo1 + "', online = 'On' , simno2 = '" + simNo2 + "', reject_status=0  where id=" + device[0].id;
+                            var updateDviceQ = "UPDATE devices set ip_address = '" + ip + "', simno = '" + simNo1 + "', online = '"+ Constants.DEVICE_OFFLINE +"' , simno2 = '" + simNo2 + "', reject_status=0  where id=" + device[0].id;
                             // , unlink_status = 0
                             // console.log(updateDviceQ);
                             var updateDevice = await sql.query(updateDviceQ);
@@ -420,7 +419,7 @@ router.post('/linkdevice', async function (req, resp) {
                     // var deviceId = await checkDeviceId(device_id, serial_number, mac_address);
 
                     let insertDevice = "INSERT INTO devices (device_id, imei, imei2, ip_address, simno, simno2, serial_number, mac_address, online) values(?,?,?,?,?,?,?,?,?)";
-                    sql.query(insertDevice, [deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, 'On'], function (error, deviceRes) {
+                    sql.query(insertDevice, [deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, Constants.DEVICE_OFFLINE], function (error, deviceRes) {
                         // console.log("Insert Query" , insertDevice, [deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, 'On']);
                         if (error) {
                             throw Error(error);
@@ -438,8 +437,12 @@ router.post('/linkdevice', async function (req, resp) {
                             values = [dvc_id, dealer[0].dealer_id, dealer[0].link_code];
                         }
 
-                        sql.query(insertUserAcc, values, function (error, rows) {
+                        sql.query(insertUserAcc, values, async function (error, rows) {
                             if (error) throw error;
+                            // console.log();
+                            let record = await helpers.getAllRecordbyDeviceId(deviceId);
+                            // console.log("dasdsd", record);
+                            device_helpers.saveActionHistory(record, Constants.DEVICE_PENDING_ACTIVATION)
                             device_helpers.saveImeiHistory(deviceId, serial_number, mac_address, imei1, imei2)
                             resp.json({
                                 "status": true,
@@ -611,10 +614,12 @@ router.delete('/unlink/:macAddr/:serialNo', async function (req, res) {
     // console.log("serialNo", serial_number);
     if (reslt.status == true) {
         if (!empty(mac_address) && !empty(serial_number)) {
-            let deviceQ = "SELECT id FROM devices WHERE mac_address='" + mac_address + "' OR serial_number='" + serial_number + "'";
+            let deviceQ = "SELECT id ,device_id FROM devices WHERE mac_address='" + mac_address + "' OR serial_number='" + serial_number + "'";
             sql.query(deviceQ, async function (error, resp) {
                 if (error) throw (error);
                 if (resp.length) {
+                    let device_record = await helpers.getAllRecordbyDeviceId(resp[0].device_id)
+                    device_helpers.saveActionHistory(device_record, Constants.DEVICE_UNLINKED)
                     var query = "UPDATE usr_acc SET unlink_status=1, dealer_id=null WHERE device_id = '" + resp[0].id + "'";
 
                     await sql.query(query);
@@ -728,7 +733,7 @@ router.get('/getUpdate/:version/:uniqueName', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     let versionName = req.params.version;
     let uniqueName = req.params.uniqueName;
-    let query = "SELECT * FROM apk_details WHERE package_name = '" + uniqueName + "' AND delete_status=0 limit 1";
+    let query = "SELECT * FROM apk_details WHERE package_name = '" + uniqueName + "' AND delete_status=0 ";
     sql.query(query, function (error, response) {
         // console.log("res", response);
 
@@ -739,24 +744,28 @@ router.get('/getUpdate/:version/:uniqueName', async (req, res) => {
             });
 
         }
+        let isAvail = false;
 
         if (response.length) {
-            // console.log("verion name", Number(response[0].version_name));
-            // console.log("verion name", Number(versionName));
-
-            if (Number(response[0].version_name) > Number(versionName)) {
-                console.log("i am here", response[0].version_name);
-
-                res.send({
-                    apk_status: true,
-                    apk_url: response[0].apk
-                })
-            } else {
+            for(let i =0; i< response.length; i++){
+                console.log("testing upgrade", response[i].version_name)
+                if (Number(response[i].version_name) > Number(versionName)) {
+                    isAvail=true;
+                    res.send({
+                        apk_status: true,
+                        apk_url: response[i].apk
+                    });
+                    
+                    break;
+                }
+            }
+            if(!isAvail){
                 res.send({
                     apk_status: false,
                     msg: ""
                 });
             }
+
         } else {
             res.send({
                 apk_status: false,
@@ -769,18 +778,9 @@ router.get('/getUpdate/:version/:uniqueName', async (req, res) => {
 /** Get Apk **/
 router.get("/getApk/:apk", (req, res) => {
 
-    // if (fs.existsSync(path.join(__dirname, "../uploads/" + req.params.apk + '.apk'))) {
-    //     // Do something
-    //     res.sendFile(path.join(__dirname, "../uploads/" + req.params.apk + '.apk'));
-    // } else {
-    //     res.send({
-    //         "status": false,
-    //         "msg": "file not found"
-    //     })
-    // }
-    if (fs.existsSync(path.join(__dirname, "../uploads/" + req.params.apk))) {
+    if (fs.existsSync(path.join(__dirname, "../uploads/" + req.params.apk + '.apk'))) {
         // Do something
-        res.sendFile(path.join(__dirname, "../uploads/" + req.params.apk));
+        res.sendFile(path.join(__dirname, "../uploads/" + req.params.apk + '.apk'));
     } else {
         res.send({
             "status": false,
@@ -981,5 +981,93 @@ router.post('/accountstatus', async function (req, res) {
     }
 
 });
+router.post('/imeiChanged', async function (req, res) {
+    let deviceId = req.body.device_id;
+    var imei = req.body.imei;
+    var serial_number = req.body.serial;
+    var mac_address = req.body.mac;
+    var imei1 = imei[0] ? imei[0] : null;
+    var imei2 = imei[1] ? imei[1] : null;
+    // console.log(req.body);
 
+    if (serial_number !== undefined && serial_number !== null && mac_address !== undefined && mac_address !== null) {
+        let response = await device_helpers.saveImeiHistory(deviceId, serial_number, mac_address, imei1, imei2)
+        // console.log("response", response);
+        res.send({
+            status: response
+        })
+    }
+});
+
+router.get('/admin/marketApplist', async function (req, res) {
+    let data = [];
+    sql.query("SELECT apk_details.* from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND secure_market_apps.dealer_type = 'admin'", function (err, results) {
+        if (err) throw err;
+        if (results.length) {
+            for (var i = 0; i < results.length; i++) {
+                dta = {
+                    "apk_name": results[i].app_name,
+                    "logo": results[i].logo,
+                    "apk": results[i].apk,
+                    "apk_status": results[i].status
+                }
+                data.push(dta);
+            }
+            //   console.log(data);
+            //res.json("status" : true , result : data);
+            return res.json({
+                success: true,
+                list: data
+            });
+        } else {
+            data = {
+                "status": false,
+                "msg": "No result found"
+            }
+            res.send(data);
+        }
+    })
+});
+router.get('/marketApplist/:linkCode', async function (req, res) {
+    let data = [];
+
+    let dealer_id = await helpers.getDealerIdByLinkOrActivation(req.params.linkCode)
+
+    if (dealer_id) {
+        sql.query("SELECT apk_details.* from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND secure_market_apps.dealer_id = '" + dealer_id + "'", function (err, results) {
+            // console.log("SELECT apk_details.* from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND secure_market_apps.dealer_id = '" + dealer_id + "'");
+            if (err) throw err;
+            if (results.length) {
+                for (var i = 0; i < results.length; i++) {
+                    dta = {
+                        "apk_name": results[i].app_name,
+                        "logo": results[i].logo,
+                        "apk": results[i].apk,
+                        "apk_status": results[i].status
+                    }
+                    data.push(dta);
+                }
+                //   console.log(data);
+                //res.json("status" : true , result : data);
+                return res.json({
+                    success: true,
+                    list: data
+                });
+            } else {
+                data = {
+                    "status": false,
+                    "msg": "No result found"
+                }
+                res.send(data);
+            }
+        })
+    } else {
+        data = {
+            "status": false,
+            "msg": "No result found"
+        }
+        res.send(data);
+    }
+
+});
 module.exports = router;
