@@ -728,7 +728,7 @@ router.get('/getUpdate/:version/:uniqueName', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     let versionName = req.params.version;
     let uniqueName = req.params.uniqueName;
-    let query = "SELECT * FROM apk_details WHERE package_name = '" + uniqueName + "' AND delete_status=0 limit 1";
+    let query = "SELECT * FROM apk_details WHERE package_name = '" + uniqueName + "' AND delete_status=0 ";
     sql.query(query, function (error, response) {
         // console.log("res", response);
 
@@ -739,24 +739,28 @@ router.get('/getUpdate/:version/:uniqueName', async (req, res) => {
             });
 
         }
+        let isAvail = false;
 
         if (response.length) {
-            // console.log("verion name", Number(response[0].version_name));
-            // console.log("verion name", Number(versionName));
-
-            if (Number(response[0].version_name) > Number(versionName)) {
-                console.log("i am here", response[0].version_name);
-
-                res.send({
-                    apk_status: true,
-                    apk_url: response[0].apk
-                })
-            } else {
+            for(let i =0; i< response.length; i++){
+                console.log("testing upgrade", response[i].version_name)
+                if (Number(response[i].version_name) > Number(versionName)) {
+                    isAvail=true;
+                    res.send({
+                        apk_status: true,
+                        apk_url: response[i].apk
+                    });
+                    
+                    break;
+                }
+            }
+            if(!isAvail){
                 res.send({
                     apk_status: false,
                     msg: ""
                 });
             }
+
         } else {
             res.send({
                 apk_status: false,
