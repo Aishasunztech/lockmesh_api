@@ -179,7 +179,7 @@ module.exports.listen = async function (server) {
             user_acc_id = await device_helpers.getUsrAccIDbyDvcId(dvc_id);
             console.log("user_acc_id: ", user_acc_id);
 
-            socket.emit("get_sync_status_" + device_id, {
+            socket.emit(Constants.GET_SYNC_STATUS + device_id, {
                 device_id: device_id,
                 apps_status: false,
                 extensions_status: false,
@@ -210,7 +210,7 @@ module.exports.listen = async function (server) {
             }
 
             // request application from portal to specific device
-            socket.on('settings_applied_status_' + device_id, async function (data) {
+            socket.on(Constants.SETTING_APPLIED_STATUS + device_id, async function (data) {
                 console.log("settings_applied: " + device_id);
                 // let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id;
                 // await sql.query(historyUpdate);
@@ -236,7 +236,8 @@ module.exports.listen = async function (server) {
             });
 
 
-            socket.on('sendApps_' + device_id, async (apps) => {
+            // send apps from mobile side
+            socket.on(Constants.SEND_APPS + device_id, async (apps) => {
                 try {
                     console.log("get applications event: ", device_id);
                     // console.log(apps);
@@ -257,7 +258,8 @@ module.exports.listen = async function (server) {
 
             });
 
-            socket.on('sendExtensions_' + device_id, async (extensions) => {
+            // send extensions from mobile side
+            socket.on(Constants.SEND_EXTENSIONS + device_id, async (extensions) => {
                 console.log("get extension event: " + device_id);
                 // console.log("extensions: ", extensions);
                 let extension_apps = JSON.parse(extensions);
@@ -271,7 +273,8 @@ module.exports.listen = async function (server) {
                 });
             });
 
-            socket.on('sendSettings_' + device_id, async (controls) => {
+            // send system settings from mobile side
+            socket.on(Constants.SEND_SETTINGS + device_id, async (controls) => {
                 console.log('getting device settings from ' + device_id);
                 console.log("device controls", controls)
                 // let device_permissions = permissions;
@@ -288,13 +291,26 @@ module.exports.listen = async function (server) {
                     is_sync: true,
                 });
             });
+
+            socket.on(Constants.SEND_PUSHED_APPS_STATUS + device_id, async (pushedApps) =>{
+                console.log("send_pushed_apps_status_",pushedApps);
+
+            })
+            
+            socket.on(Constants.FINISHED_PUSH_APPS + device_id, async (response)=>{
+                console.log(Constants.FINISHED_PUSH_APPS, response);
+                socket.emit(Constants.ACK_FINISHED_PUSH_APPS,{
+                    status: true
+                });
+            });
         } else {
 
             console.log("web socket");
         }
 
-        // listen on built-in channels
-        socket.on('disconnect', async () => {
+
+        // common channels for panel and device
+        socket.on(Constants.DISCONNECT, async () => {
             console.log("disconnected: session " + socket.id + " on device id: " + device_id);
             await device_helpers.onlineOflineDevice(null, socket.id, Constants.DEVICE_OFFLINE);
             console.log("connected_users: " + io.engine.clientsCount);
@@ -319,27 +335,27 @@ module.exports.listen = async function (server) {
             console.log("reconnecting: " + attemptNumber);
         });
 
-        socket.on('reconnect_attempt', (attemptNumber) => {
+        socket.on(Constants.RECONNECT_ATTEMPT, (attemptNumber) => {
             console.log("reconnect_attempt: " + attemptNumber);
         });
 
-        socket.on('reconnecting', (attemptNumber) => {
+        socket.on(Constants.RECONNECTING, (attemptNumber) => {
             console.log("reconnecting: " + attemptNumber);
         });
 
-        socket.on('reconnect_error', (error) => {
+        socket.on(Constants.RECONNECT_ERROR, (error) => {
             console.log("reconnect_error: " + error);
         });
 
-        socket.on('reconnect_failed', () => {
+        socket.on(Constants.RECONNECT_FAILED, () => {
             console.log("reconnect_failed: ");
         });
 
-        socket.on('ping', () => {
+        socket.on(Constants.PING, () => {
             console.log("ping: ");
         });
 
-        socket.on('pong', (latency) => {
+        socket.on(Constants.PONG, (latency) => {
             console.log("pong: " + latency);
         });
 
