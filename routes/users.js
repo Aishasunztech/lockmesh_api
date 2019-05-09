@@ -3238,6 +3238,54 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
     }
 });
 
+router.post('/apply_pullapps/:device_id', async function (req, res) {
+    try {
+        var verify = await verifyToken(req, res);
+        if (verify.status !== undefined && verify.status == true) {
+            let device_id = req.params.device_id;
+
+            let usrAccId = req.body.usrAccId;
+
+            let pull_apps = req.body.pull_apps;
+
+            let apps = (pull_apps === undefined) ? '' : JSON.stringify(pull_apps);
+
+            var applyQuery = "INSERT INTO device_history (user_acc_id, pull_apps, type) VALUES (" + usrAccId + ", '" + apps + "', 'pull_apps')";
+
+            sql.query(applyQuery, async function (err, rslts) {
+                if (err) {
+                    throw err;
+                }
+                if (rslts) {
+                    // var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='pull_apps' AND user_acc_id=" + usrAccId + "";
+                    
+                    // var loadDeviceQ = "UPDATE devices set is_pull_apps=1 WHERE device_id='" + device_id + "'";
+                    // await sql.query(loadDeviceQ)
+                    // let isOnline = await device_helpers.isDeviceOnline(device_id);
+                    // if (isOnline) {
+                    //     require("../bin/www").applyPushApps(apps, device_id);
+                    // }
+                    data = {
+                        "status": true,
+                        "msg": 'Apps are being pulled',
+                    };
+                    res.send(data);
+                } else {
+                    data = {
+                        "status": false,
+                        "msg": 'Error while Processing',
+                    };
+                    res.send(data);
+                }
+
+            });
+
+        }
+    } catch (error) {
+        throw Error(error.message);
+    }
+});
+
 router.post('/get_profiles', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status === true) {
