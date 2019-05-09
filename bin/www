@@ -144,7 +144,16 @@ module.exports.sendDeviceStatus = async function (device_id, device_status, stat
 }
 
 module.exports.ackFinishedPushApps = async function (device_id, response) {
+  console.log(Constants.ACK_FINISHED_PUSH_APPS + device_id);
+
   io.emit(Constants.ACK_FINISHED_PUSH_APPS + device_id, {
     status: true
   });
+}
+
+module.exports.ackSinglePushApp = async function (device_id, response) {
+  console.log(Constants.ACK_SINGLE_PUSH_APP);
+  io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
+
+  })
 }
