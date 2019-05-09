@@ -188,16 +188,6 @@ module.exports.listen = async function (server) {
                 }
             });
 
-            var imei_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='imei' order by created_at desc limit 1";
-            let imei_res = await sql.query(imei_query);
-
-            if (imei_res.length) {
-                socket.emit(Constants.WRITE_IMEI + device_id, {
-                    device_id: device_id,
-                    imei: imei_res.imei
-                });
-            }
-
 
             socket.on(Constants.IMEI_CHANGED + device_id, async function (data) {
                 let deviceId = data.device_id;
@@ -206,18 +196,27 @@ module.exports.listen = async function (server) {
                 var mac_address = data.mac;
                 var imei1 = data.imei1
                 var imei2 = data.imei2
-                // console.log(req.body);
 
                 if (serial_number !== undefined && serial_number !== null && mac_address !== undefined && mac_address !== null) {
 
-                    sql.query("UPDATE devices set imei = '" + imei1 + "' imei2 = '" + imei2 + "' WHERE device_id = '" + deviceId + "'")
-                    let response = await device_helpers.saveImeiHistory(deviceId, serial_number, mac_address, imei1, imei2)
+                    sql.query("UPDATE devices set imei = '" + imei1 + "', imei2 = '" + imei2 + "' WHERE device_id = '" + deviceId + "'")
+                    await device_helpers.saveImeiHistory(deviceId, serial_number, mac_address, imei1, imei2)
                     // res.send({
                     //     status: response
                     // })
                 }
             });
 
+
+            var imei_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='imei' order by created_at desc limit 1";
+            let imei_res = await sql.query(imei_query);
+
+            if (imei_res.length) {
+                socket.emit(Constants.WRITE_IMEI + device_id, {
+                    device_id: device_id,
+                    imei: imei_res[0].imei
+                });
+            }
             socket.emit(Constants.GET_SYNC_STATUS + device_id, {
                 device_id: device_id,
                 apps_status: false,
