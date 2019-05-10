@@ -10,6 +10,7 @@ var http = require('http');
 var https = require('https');
 var fs = require('fs');
 var Constants = require('../constants/Application');
+const sql = require('../helper/sql.js');
 
 var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
@@ -144,8 +145,8 @@ module.exports.sendDeviceStatus = async function (device_id, device_status, stat
 }
 
 module.exports.ackFinishedPushApps = async function (device_id, response) {
-  console.log(Constants.ACK_FINISHED_PUSH_APPS + device_id);
 
+  sql.query("UPDATE devices set is_push_apps = 0 WHERE device_id = '" + device_id + "'")
   io.emit(Constants.ACK_FINISHED_PUSH_APPS + device_id, {
     status: true
   });
