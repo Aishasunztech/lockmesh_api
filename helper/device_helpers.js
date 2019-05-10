@@ -73,28 +73,28 @@ module.exports = {
 
 
         if (deviceData != null) {
-            // console.log("insertApps device_id:" + deviceData.id);
-            // console.log("isvisible",apps);
-            apps.forEach(async (app) => {
-                let default_app = (app.defaultApp !== undefined) ? app.defaultApp : app.default_app;
-
-                let iconName = this.uploadIconFile(app, app.label);
-
-                let query = "INSERT INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app) " +
-                    " VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , " + app.visible + ", " + default_app + ") " +
-                    " ON DUPLICATE KEY UPDATE " +
-                    // " label= '" + app.label +"',"+
-                    // " icon= '" + app.icon +"'," +
-                    " extension= " + app.extension + ", " +
-                    " visible= " + app.visible + ", " +
-                    " default_app= " + default_app + " "
-                // console.log("update query: ", query);
-
-                // var query = "INSERT IGNORE INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app) VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , " + app.visible + ", " + default_app + ")";
-                await sql.query(query);
-
-                await this.getApp(app.uniqueName, deviceData.id, app.guest, app.encrypted, app.enable);
-            });
+            if(apps !== null){
+                apps.forEach(async (app) => {
+                    let default_app = (app.defaultApp !== undefined) ? app.defaultApp : app.default_app;
+    
+                    let iconName = this.uploadIconFile(app, app.label);
+    
+                    let query = "INSERT INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app) " +
+                        " VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , " + app.visible + ", " + default_app + ") " +
+                        " ON DUPLICATE KEY UPDATE " +
+                        // " label= '" + app.label +"',"+
+                        // " icon= '" + app.icon +"'," +
+                        " extension= " + app.extension + ", " +
+                        " visible= " + app.visible + ", " +
+                        " default_app= " + default_app + " "
+                    // console.log("update query: ", query);
+    
+                    // var query = "INSERT IGNORE INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app) VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , " + app.visible + ", " + default_app + ")";
+                    await sql.query(query);
+    
+                    await this.getApp(app.uniqueName, deviceData.id, app.guest, app.encrypted, app.enable);
+                });
+            }
         } else {
             console.log("device not connected may be deleted");
         }
@@ -362,6 +362,7 @@ module.exports = {
 
     },
     saveImeiHistory: async (deviceId, sn, mac, imei1, imei2) => {
+        console.log("Imei History");
         let response = false;
         let sqlQuery = "SELECT * from imei_history WHERE serial_number = '" + sn + "' OR mac_address = '" + mac + "' order by created_at DESC";
         let result = await sql.query(sqlQuery);

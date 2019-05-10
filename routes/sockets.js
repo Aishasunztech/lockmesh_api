@@ -164,48 +164,7 @@ module.exports.listen = async function (server) {
         // console.log("client ip: " + socket.request.connection.remoteAddress);
 
         if (device_id != undefined && device_id != null && isWeb === false) {
-
-
-
-            socket.on(Constants.IMEI_APPLIED + device_id, async function (data) {
-                console.log("imei_applied: " + device_id);
-                if (data.status) {
-                    var imei_query = "UPDATE device_history SET status = 1 WHERE user_acc_id='" + user_acc_id + "' AND type = 'imei' ORDER BY created_at DESC LIMIT 1";
-                    let response = await sql.query(imei_query);
-                }
-            });
-
-            var imei_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='imei' order by created_at desc limit 1";
-            let imei_res = await sql.query(imei_query);
-
-            if (imei_res.length) {
-                socket.emit(Constants.WRITE_IMEI + device_id, {
-                    device_id: device_id,
-                    imei: imei_res.imei
-                });
-            }
-
-
-            socket.on(Constants.IMEI_CHANGED + device_id, async function (data) {
-                let deviceId = data.device_id;
-                var imei = data.imei;
-                var serial_number = data.serial;
-                var mac_address = data.mac;
-                var imei1 = data.imei1
-                var imei2 = data.imei2
-                // console.log(req.body);
-
-                if (serial_number !== undefined && serial_number !== null && mac_address !== undefined && mac_address !== null) {
-
-                    sql.query("UPDATE devices set imei = '" + imei1 + "' imei2 = '" + imei2 + "' WHERE device_id = '" + deviceId + "'")
-                    let response = await device_helpers.saveImeiHistory(deviceId, serial_number, mac_address, imei1, imei2)
-                    // res.send({
-                    //     status: response
-                    // })
-                }
-            });
-
-
+            
             console.log("on mobile side event");
 
             console.log("device_id: ", device_id);
@@ -221,6 +180,43 @@ module.exports.listen = async function (server) {
             user_acc_id = await device_helpers.getUsrAccIDbyDvcId(dvc_id);
             console.log("user_acc_id: ", user_acc_id);
 
+            socket.on(Constants.IMEI_APPLIED + device_id, async function (data) {
+                console.log("imei_applied: " + device_id);
+                if (data.status) {
+                    var imei_query = "UPDATE device_history SET status = 1 WHERE user_acc_id='" + user_acc_id + "' AND type = 'imei' ORDER BY created_at DESC LIMIT 1";
+                    let response = await sql.query(imei_query);
+                }
+            });
+
+
+            socket.on(Constants.IMEI_CHANGED + device_id, async function (data) {
+                let deviceId = data.device_id;
+                var imei = data.imei;
+                var serial_number = data.serial;
+                var mac_address = data.mac;
+                var imei1 = data.imei1
+                var imei2 = data.imei2
+
+                if (serial_number !== undefined && serial_number !== null && mac_address !== undefined && mac_address !== null) {
+
+                    sql.query("UPDATE devices set imei = '" + imei1 + "', imei2 = '" + imei2 + "' WHERE device_id = '" + deviceId + "'")
+                    await device_helpers.saveImeiHistory(deviceId, serial_number, mac_address, imei1, imei2)
+                    // res.send({
+                    //     status: response
+                    // })
+                }
+            });
+
+
+            var imei_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='imei' order by created_at desc limit 1";
+            let imei_res = await sql.query(imei_query);
+
+            if (imei_res.length) {
+                socket.emit(Constants.WRITE_IMEI + device_id, {
+                    device_id: device_id,
+                    imei: imei_res[0].imei
+                });
+            }
             socket.emit(Constants.GET_SYNC_STATUS + device_id, {
                 device_id: device_id,
                 apps_status: false,
@@ -265,8 +261,6 @@ module.exports.listen = async function (server) {
                     push_apps: pendingPushedApps[0].push_apps
                 });
             }
-
-
 
             // request application from portal to specific device
             socket.on(Constants.SETTING_APPLIED_STATUS + device_id, async function (data) {
@@ -353,10 +347,12 @@ module.exports.listen = async function (server) {
 
             socket.on(Constants.SEND_PUSHED_APPS_STATUS + device_id, async (pushedApps) => {
                 console.log("send_pushed_apps_status_", pushedApps);
+                require('../bin/www').ackSinglePushApp(device_id, pushedApps);
 
             })
 
             socket.on(Constants.FINISHED_PUSH_APPS + device_id, async (response) => {
+                console.log("testing", response);
 
                 require('../bin/www').ackFinishedPushApps(device_id, response);
                 // socket.emit(Constants.ACK_FINISHED_PUSH_APPS + device_id, {

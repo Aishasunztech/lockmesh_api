@@ -209,22 +209,23 @@ router.post('/login', async function (req, res) {
                     // console.log('object data is ', users[0]);
 
                     const user = {
-                        "id": users[0].dealer_id,
-                        "dealer_id": users[0].dealer_id,
-                        "email": users[0].dealer_email,
-                        "lastName": users[0].last_name,
-                        "name": users[0].dealer_name,
-                        "firstName": users[0].first_name,
-                        "dealer_name": users[0].dealer_name,
-                        "dealer_email": users[0].dealer_email,
-                        "link_code": users[0].link_code,
-                        "connected_dealer": users[0].connected_dealer,
-                        "connected_devices": get_connected_devices,
-                        "account_status": users[0].account_status,
-                        "user_type": userType,
-                        "created": users[0].created,
-                        "modified": users[0].modified,
-                        "ip_address": ip
+                        id: users[0].dealer_id,
+                        dealer_id: users[0].dealer_id,
+                        email: users[0].dealer_email,
+                        lastName: users[0].last_name,
+                        name: users[0].dealer_name,
+                        firstName: users[0].first_name,
+                        dealer_name: users[0].dealer_name,
+                        dealer_email: users[0].dealer_email,
+                        link_code: users[0].link_code,
+                        connected_dealer: users[0].connected_dealer,
+                        connected_devices: get_connected_devices,
+                        account_status: users[0].account_status,
+                        user_type: userType,
+                        created: users[0].created,
+                        modified: users[0].modified,
+                        two_factor_auth: users[0].is_two_factor_auth,
+                        ip_address: ip
                     }
 
                     jwt.sign({
@@ -273,6 +274,37 @@ router.post('/Signup', async function (req, res) {
 
 });
 
+// enable or disable two factor auth
+router.post('/two_factor_auth', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify['status'] !== undefined && verify.status === true) {
+        let loggedDealerId = verify.user.id;
+        isEnable = req.body.isEnable;
+        let updateDealerQ = "UPDATE dealers SET is_two_factor_auth=" + isEnable + " WHERE dealer_id=" + loggedDealerId;
+        let updatedDealer = await sql.query(updateDealerQ);
+        if (updatedDealer.affectedRows) {
+            if (isEnable) {
+                res.send({
+                    status: true,
+                    msg: "Dual Authentication is Successfully enabled",
+                    isEnable: isEnable
+                })
+            } else {
+                res.send({
+                    status: true,
+                    msg: "Dual Authentication is Successfully disabled",
+                    isEnable: isEnable
+                })
+            }
+        } else {
+            res.send({
+                status: false,
+                msg: "Dual Authentication could not be enabled"
+            })
+        }
+
+    }
+});
 
 router.get('/get_allowed_components', async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
@@ -299,21 +331,22 @@ router.post('/check_component', async function (req, res) {
         if (user.length) {
 
             const usr = {
-                "id": user[0].dealer_id,
-                "dealer_id": user[0].dealer_id,
-                "email": user[0].dealer_email,
-                "lastName": user[0].last_name,
-                "name": user[0].dealer_name,
-                "firstName": user[0].first_name,
-                "dealer_name": user[0].dealer_name,
-                "dealer_email": user[0].dealer_email,
-                "link_code": user[0].link_code,
-                "connected_dealer": user[0].connected_dealer,
-                "connected_devices": get_connected_devices,
-                "account_status": user[0].account_status,
-                "user_type": verify.user.user_type,
-                "created": user[0].created,
-                "modified": user[0].modified,
+                id: user[0].dealer_id,
+                dealer_id: user[0].dealer_id,
+                email: user[0].dealer_email,
+                lastName: user[0].last_name,
+                name: user[0].dealer_name,
+                firstName: user[0].first_name,
+                dealer_name: user[0].dealer_name,
+                dealer_email: user[0].dealer_email,
+                link_code: user[0].link_code,
+                connected_dealer: user[0].connected_dealer,
+                connected_devices: get_connected_devices,
+                account_status: user[0].account_status,
+                user_type: verify.user.user_type,
+                created: user[0].created,
+                modified: user[0].modified,
+                two_factor_auth: user[0].is_two_factor_auth
             }
 
             res.json({
@@ -3210,7 +3243,7 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
                 }
                 if (rslts) {
                     var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='push_apps' AND user_acc_id=" + usrAccId + "";
-                    
+
                     var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
                     await sql.query(loadDeviceQ)
                     let isOnline = await device_helpers.isDeviceOnline(device_id);
@@ -3258,7 +3291,7 @@ router.post('/apply_pullapps/:device_id', async function (req, res) {
                 }
                 if (rslts) {
                     // var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='pull_apps' AND user_acc_id=" + usrAccId + "";
-                    
+
                     // var loadDeviceQ = "UPDATE devices set is_pull_apps=1 WHERE device_id='" + device_id + "'";
                     // await sql.query(loadDeviceQ)
                     // let isOnline = await device_helpers.isDeviceOnline(device_id);
