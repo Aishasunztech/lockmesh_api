@@ -99,8 +99,6 @@ module.exports.listen = async function (server) {
                 device_id = socket.handshake.query['device_id'];
             }
 
-            // console.log("middleware session_id: ", session_id);
-            // console.log("middleware device_id: ", device_id);
 
             let sessionVerify = await verifySession(device_id, session_id, isWeb);
 
