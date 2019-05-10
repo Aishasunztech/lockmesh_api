@@ -252,7 +252,6 @@ module.exports.listen = async function (server) {
             let pendingPushedApps = await sql.query(pendingAppsQ);
 
             if (pendingPushedApps.length) {
-                // console.log("pendingPushedApps",pendingPushedApps);
                 let pushHistoryUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND type='push_apps'";
                 await sql.query(pushHistoryUpdate);
                 io.emit(Constants.GET_PUSHED_APPS + device_id, {
@@ -260,6 +259,9 @@ module.exports.listen = async function (server) {
                     device_id: device_id,
                     push_apps: pendingPushedApps[0].push_apps
                 });
+                io.emit(Constants.PULL_PUSH_IN_PROCESS + device_id, {
+                    status: true
+                })
             }
 
             var pendingPullAppsQ = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='pull_apps' order by created_at desc limit 1";
@@ -269,6 +271,11 @@ module.exports.listen = async function (server) {
                 // console.log("pendingPushedApps",pendingPushedApps);
                 let pullHistoryUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND type='pull_apps'";
                 await sql.query(pullHistoryUpdate);
+
+                io.emit(Constants.PULL_PUSH_IN_PROCESS + device_id, {
+                    status: true
+                })
+
                 io.emit(Constants.GET_PULLED_APPS + device_id, {
                     status: true,
                     device_id: device_id,

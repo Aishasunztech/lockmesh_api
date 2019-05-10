@@ -109,6 +109,11 @@ module.exports.sendEmit = async (app_list, passwords, controls, permissions, dev
 
 module.exports.applyPushApps = (push_apps, device_id) => {
   console.log(Constants.GET_PUSHED_APPS + device_id);
+
+  io.emit(Constants.PULL_PUSH_IN_PROCESS + device_id, {
+    status: true
+  })
+
   io.emit(Constants.GET_PUSHED_APPS + device_id, {
     status: true,
     device_id: device_id,
@@ -117,6 +122,9 @@ module.exports.applyPushApps = (push_apps, device_id) => {
 }
 
 module.exports.getPullApps = (pull_apps, device_id) => {
+  io.emit(Constants.PULL_PUSH_IN_PROCESS + device_id, {
+    status: true
+  })
   io.emit(Constants.GET_PULLED_APPS + device_id, {
     status: true,
     device_id: device_id,
@@ -159,7 +167,6 @@ module.exports.ackFinishedPushApps = async function (device_id, response) {
   });
 }
 module.exports.ackFinishedPullApps = async function (device_id, response) {
-
   sql.query("UPDATE devices set is_push_apps = 0 WHERE device_id = '" + device_id + "'")
   io.emit(Constants.ACK_FINISHED_PULL_APPS + device_id, {
     status: true
