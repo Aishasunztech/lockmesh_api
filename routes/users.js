@@ -3244,16 +3244,22 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
                 if (rslts) {
                     var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='push_apps' AND user_acc_id=" + usrAccId + "";
 
-                    var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
-                    await sql.query(loadDeviceQ)
                     let isOnline = await device_helpers.isDeviceOnline(device_id);
                     if (isOnline) {
+                        var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
+                        await sql.query(loadDeviceQ)
                         require("../bin/www").applyPushApps(apps, device_id);
+                        data = {
+                            "status": true,
+                            "online": true
+                        };
                     }
-                    data = {
-                        "status": true,
-                        "msg": 'Apps are being pushed',
-                    };
+                    else {
+                        data = {
+                            "status": true,
+                            "msg": 'Apps are being pushed',
+                        };
+                    }
                     res.send(data);
                 } else {
                     data = {
@@ -5553,10 +5559,10 @@ router.post('/writeImei/:device_id', async function (req, res) {
 
             let imei = await device_helpers.checkvalidImei(imeiNo)
             if (imei) {
+
                 let imei1 = (type == 'IMEI1') ? imeiNo : null
                 let imei2 = (type == 'IMEI2') ? imeiNo : null
-                let msg = (type == 'IMEI1') ? imei1 + " successfully written to IMEI 1 on Device!" : imei2 + " successfully written to IMEI 2 on Device!"
-                let msg2 = (type == 'IMEI1') ? imei1 + " will write to IMEI 1 on Device when device online!" : imei2 + " will write to IMEI 2 on Device when device online!"
+
                 let query = "SELECT * from device_history WHERE user_acc_id = '" + usrAccId + "' AND type = 'imei' AND status = 0"
 
                 let result = await sql.query(query);
@@ -5578,13 +5584,12 @@ router.post('/writeImei/:device_id', async function (req, res) {
                                 require("../bin/www").writeImei(newImei, device_id);
                                 data = {
                                     "status": true,
-                                    "msg": msg,
+                                    'online': true,
                                 };
                                 res.send(data);
                             }
                             data = {
                                 "status": true,
-                                "msg": msg2,
                             };
                             res.send(data);
                         } else {
@@ -5616,13 +5621,13 @@ router.post('/writeImei/:device_id', async function (req, res) {
                                 require("../bin/www").writeImei(newImei, device_id);
                                 data = {
                                     "status": true,
-                                    "msg": msg,
+                                    'online': true,
                                 };
                                 res.send(data);
                             } else {
                                 data = {
                                     "status": true,
-                                    "msg": msg2,
+                                    'online': false,
                                 };
                                 res.send(data);
                             }
