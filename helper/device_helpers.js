@@ -73,12 +73,15 @@ module.exports = {
 
 
         if (deviceData != null) {
-            if(apps !== null){
+            if (apps !== null) {
+                sql.query("DELETE from user_apps WHERE device_id = " + deviceData.id)
+                console.log("DELETE from user_apps WHERE device_id = " + deviceData.id);
                 apps.forEach(async (app) => {
+                    console.log(app.uniqueName, "Apps");
                     let default_app = (app.defaultApp !== undefined) ? app.defaultApp : app.default_app;
-    
+
                     let iconName = this.uploadIconFile(app, app.label);
-    
+
                     let query = "INSERT INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app) " +
                         " VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , " + app.visible + ", " + default_app + ") " +
                         " ON DUPLICATE KEY UPDATE " +
@@ -88,10 +91,10 @@ module.exports = {
                         " visible= " + app.visible + ", " +
                         " default_app= " + default_app + " "
                     // console.log("update query: ", query);
-    
+
                     // var query = "INSERT IGNORE INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app) VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , " + app.visible + ", " + default_app + ")";
                     await sql.query(query);
-    
+
                     await this.getApp(app.uniqueName, deviceData.id, app.guest, app.encrypted, app.enable);
                 });
             }
@@ -103,7 +106,6 @@ module.exports = {
     insertExtensions: async function (extensions, deviceId) {
         let deviceData = await this.getDeviceByDeviceId(deviceId);
         // console.log("my extensions", extensions.toString());
-
         extensions.forEach(async (app) => {
             // console.log("ext object", app.uniqueName);
 
@@ -152,7 +154,7 @@ module.exports = {
     },
     getApp: async function (uniqueName, device_id, guest, encrypted, enable) {
 
-        var query = "SELECT id FROM apps_info WHERE unique_name='" + uniqueName + "' limit 1";
+        var query = "SELECT id FROM apps_info WHERE unique_name='" + uniqueName + "'limit 1";
         // console.log(query);
         let response = await sql.query(query);
         if (response.length) {

@@ -164,7 +164,7 @@ module.exports.listen = async function (server) {
         // console.log("client ip: " + socket.request.connection.remoteAddress);
 
         if (device_id != undefined && device_id != null && isWeb === false) {
-            
+
             console.log("on mobile side event");
 
             console.log("device_id: ", device_id);
@@ -262,6 +262,20 @@ module.exports.listen = async function (server) {
                 });
             }
 
+            var pendingPullAppsQ = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='pull_apps' order by created_at desc limit 1";
+            let pendingPulledApps = await sql.query(pendingPullAppsQ);
+
+            if (pendingPulledApps.length) {
+                // console.log("pendingPushedApps",pendingPushedApps);
+                let pullHistoryUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND type='pull_apps'";
+                await sql.query(pullHistoryUpdate);
+                io.emit(Constants.GET_PULLED_APPS + device_id, {
+                    status: true,
+                    device_id: device_id,
+                    pull_apps: pendingPulledApps[0].pull_apps
+                });
+            }
+
             // request application from portal to specific device
             socket.on(Constants.SETTING_APPLIED_STATUS + device_id, async function (data) {
                 console.log("settings_applied: " + device_id);
@@ -348,13 +362,24 @@ module.exports.listen = async function (server) {
             socket.on(Constants.SEND_PUSHED_APPS_STATUS + device_id, async (pushedApps) => {
                 console.log("send_pushed_apps_status_", pushedApps);
                 require('../bin/www').ackSinglePushApp(device_id, pushedApps);
-
+            })
+            socket.on(Constants.SEND_PULLED_APPS_STATUS + device_id, async (pushedApps) => {
+                console.log("send_pulled_apps_status_", pushedApps);
+                require('../bin/www').ackSinglePullApp(device_id, pushedApps);
             })
 
             socket.on(Constants.FINISHED_PUSH_APPS + device_id, async (response) => {
                 console.log("testing", response);
 
                 require('../bin/www').ackFinishedPushApps(device_id, response);
+                // socket.emit(Constants.ACK_FINISHED_PUSH_APPS + device_id, {
+                //     status: true
+                // });
+            });
+            socket.on(Constants.FINISHED_PULL_APPS + device_id, async (response) => {
+                console.log("FININSHED PULLED APPS", response);
+
+                require('../bin/www').ackFinishedPullApps(device_id, response);
                 // socket.emit(Constants.ACK_FINISHED_PUSH_APPS + device_id, {
                 //     status: true
                 // });

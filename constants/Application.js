@@ -64,7 +64,7 @@ module.exports = {
     // pull apps
     GET_PULLED_APPS: 'get_pulled_apps_',
     SEND_PULLED_APPS_STATUS: 'send_pulled_apps_status_',
-    FINISHED_pull_APPS: 'finished_pull_apps_',
+    FINISHED_PULL_APPS: 'finished_pulled_apps_',
     ACK_pull_APPS: 'ack_pull_apps_',
     ACK_FINISHED_PULL_APPS: 'ack_finished_pull_apps_',
     ACK_SINGLE_PULL_APP: 'ack_single_pull_app_',

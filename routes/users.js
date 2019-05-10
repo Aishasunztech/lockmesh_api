@@ -3224,7 +3224,6 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
                     else {
                         data = {
                             "status": true,
-                            "msg": 'Apps are being pushed',
                         };
                     }
                     res.send(data);
@@ -3263,18 +3262,21 @@ router.post('/apply_pullapps/:device_id', async function (req, res) {
                     throw err;
                 }
                 if (rslts) {
-                    // var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='pull_apps' AND user_acc_id=" + usrAccId + "";
-
-                    // var loadDeviceQ = "UPDATE devices set is_pull_apps=1 WHERE device_id='" + device_id + "'";
-                    // await sql.query(loadDeviceQ)
-                    // let isOnline = await device_helpers.isDeviceOnline(device_id);
-                    // if (isOnline) {
-                    //     require("../bin/www").applyPushApps(apps, device_id);
-                    // }
-                    data = {
-                        "status": true,
-                        "msg": 'Apps are being pulled',
-                    };
+                    var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='pull_apps' AND user_acc_id=" + usrAccId + "";
+                    let isOnline = await device_helpers.isDeviceOnline(device_id);
+                    if (isOnline) {
+                        var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
+                        await sql.query(loadDeviceQ)
+                        require("../bin/www").getPullApps(apps, device_id);
+                        data = {
+                            "status": true,
+                            "online": true
+                        };
+                    } else {
+                        data = {
+                            "status": true,
+                        };
+                    }
                     res.send(data);
                 } else {
                     data = {
