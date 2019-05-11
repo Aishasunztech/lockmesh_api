@@ -214,7 +214,7 @@ router.post('/login', async function (req, res) {
                         await sql.query(updateVerification);
                         let html = "Your Login Code is: " + verificationCode;
                         sendEmail("Dual Auth Verification", html, users[0].dealer_email, function (error, response) {
-                            if (error){ 
+                            if (error) {
                                 throw (error)
                             } else {
                                 res.send({
@@ -317,7 +317,7 @@ router.post('/verify_code', async function (req, res) {
             if (error) throw (error);
             if (response.affectedRows) {
                 let dealerStatus = helpers.getDealerStatus(checkRes[0]);
-                console.log("dealer status",dealerStatus);
+                console.log("dealer status", dealerStatus);
                 if (dealerStatus === Constants.DEALER_SUSPENDED) {
                     data = {
                         'status': false,
@@ -337,7 +337,7 @@ router.post('/verify_code', async function (req, res) {
                 } else {
 
                     var userType = await helpers.getUserType(checkRes[0].dealer_id);
-                    
+
                     var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + checkRes[0].dealer_id + "'");
                     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
                     // console.log('object data is ', users[0]);
@@ -366,26 +366,26 @@ router.post('/verify_code', async function (req, res) {
                         user
                     }, config.secret, {
                             expiresIn: config.expiresIn
-                    }, (err, token) => {
-                        if (err) {
-                            res.json({
-                                'err': err
-                            });
-                        } else {
-                            user.expiresIn = config.expiresIn;
-                            user.verified = checkRes[0].verified;
-                            user.token = token;
-                            helpers.saveLogin(user, userType, Constants.TOKEN, 1);
+                        }, (err, token) => {
+                            if (err) {
+                                res.json({
+                                    'err': err
+                                });
+                            } else {
+                                user.expiresIn = config.expiresIn;
+                                user.verified = checkRes[0].verified;
+                                user.token = token;
+                                helpers.saveLogin(user, userType, Constants.TOKEN, 1);
 
-                            res.send({
-                                token: token,
-                                status: true,
-                                msg: 'User loged in Successfully',
-                                expiresIn: config.expiresIn,
-                                user
-                            });
-                        }
-                    });
+                                res.send({
+                                    token: token,
+                                    status: true,
+                                    msg: 'User loged in Successfully',
+                                    expiresIn: config.expiresIn,
+                                    user
+                                });
+                            }
+                        });
                 }
             } else {
                 return {
@@ -3377,10 +3377,11 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
                     throw err;
                 }
                 if (rslts) {
-                    var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='push_apps' AND user_acc_id=" + usrAccId + "";
 
                     let isOnline = await device_helpers.isDeviceOnline(device_id);
                     if (isOnline) {
+                        var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='push_apps' AND user_acc_id=" + usrAccId + "";
+                        sql.query(pushAppsQ)
                         var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
                         await sql.query(loadDeviceQ)
                         require("../bin/www").applyPushApps(apps, device_id);
@@ -3419,6 +3420,7 @@ router.post('/apply_pullapps/:device_id', async function (req, res) {
 
             let usrAccId = req.body.usrAccId;
 
+
             let pull_apps = req.body.pull_apps;
 
             let apps = (pull_apps === undefined) ? '' : JSON.stringify(pull_apps);
@@ -3430,9 +3432,11 @@ router.post('/apply_pullapps/:device_id', async function (req, res) {
                     throw err;
                 }
                 if (rslts) {
-                    var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='pull_apps' AND user_acc_id=" + usrAccId + "";
+
                     let isOnline = await device_helpers.isDeviceOnline(device_id);
                     if (isOnline) {
+                        var pullAppsQ = "UPDATE device_history SET status=1 WHERE type='pull_apps' AND user_acc_id=" + usrAccId + "";
+                        sql.query(pullAppsQ)
                         var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
                         await sql.query(loadDeviceQ)
                         require("../bin/www").getPullApps(apps, device_id);
@@ -3587,8 +3591,8 @@ router.post('/change_policy_status', async function (req, res) {
 
 
         sql.query(query, (error, result) => {
-           
-            if(error) throw error;
+
+            if (error) throw error;
             // console.log(result, 'relstsdf')
             if (result.affectedRows) {
                 data = {
