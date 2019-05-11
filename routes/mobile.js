@@ -186,7 +186,7 @@ router.post('/login', async function (req, resp) {
 
                             var updateAccount = "UPDATE usr_acc set activation_status=1, status='active', expiry_date='" + expiry_date + "', start_date='" + start_date + "', device_status=1, unlink_status = 0 WHERE id = " + usrAcc[0].id;
                             await sql.query(updateAccount);
-
+                            device_helpers.saveImeiHistory(chechedDeviceId, serial_number, mac_address, imei1, imei2)
                             let device_id = await device_helpers.getDvcIDByDeviceID(usrAcc[0].device_id)
 
                             const device = {
