@@ -3585,8 +3585,11 @@ router.post('/change_policy_status', async function (req, res) {
 
         let query = "UPDATE policy SET " + key + " = '" + value + "' WHERE id='" + id + "'";
 
+
         sql.query(query, (error, result) => {
-            console.log(result, 'relstsdf')
+           
+            if(error) throw error;
+            // console.log(result, 'relstsdf')
             if (result.affectedRows) {
                 data = {
                     "status": true,
