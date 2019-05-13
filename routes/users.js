@@ -34,7 +34,10 @@ const SDEALER = "sdealer";
 let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity"
 // var CryptoJS = require("crypto-js");
 // var io = require("../bin/www");
-
+var util = require('util')
+var ApkReader = require('node-apk-parser');
+const zlib = require('zlib');
+var AdmZip = require('adm-zip');
 
 /** SMTP Email **/
 var smtpTransport = nodemailer.createTransport({
@@ -123,20 +126,28 @@ var verifyToken = function (req, res) {
 
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
-    res.send({
-        file: path.join(__dirname, "../uploads/apk-titanlocker.apk")
-    })
+    // apk-ScreenLocker v3.31.apk
+  
+    // const unzip = zlib.createGunzip();
+    // fileContents.pipe(unzip).pipe(writeStream);
+    
+    // const directoryFiles = fs.readdirSync(path.join(__dirname, "../"));
 
-    // if (fs.existsSync(path.join(__dirname, "../uploads/apk-1541743825834.apk"))) {
-    //     // Do something
-    //     const versionCode =await helpers.getAPKVersionCode(path.join(__dirname, "../uploads/apk-1541743825834.apk"));
-    //     res.send({versionCode});
+    // res.send(directoryFiles);
+    // directoryFiles.forEach(filename => {
+    // const fileContents = fs.createReadStream(`./data/${filename}`);
+    // const writeStream = fs.createWriteStream(`./data/${filename.slice(0, -3)}`);
+    // const unzip = zlib.createGunzip();
+    // fileContents.pipe(unzip).pipe(writeStream);
+    // });
 
-    // } else {
-    //     res.send({
-    //         "status": false,
-    //         "msg": "file not found"
-    //     })
+    // var zip = new AdmZip(path.join(__dirname, "../uploads/apk-ScreenLocker v3.31.apk"));
+    // var zipEntries = await zip.getEntries();
+    // console.log(zipEntries.length)
+    // res.send(zipEntries);
+    // for (var i = 0; i < zipEntries.length; i++) {
+    //   if (zipEntries[i].entryName.match(/readme/))
+    //     console.log(zip.readAsText(zipEntries[i]));
     // }
 });
 
@@ -4648,152 +4659,6 @@ router.post('/releaseCSV/:fieldName', async (req, res) => {
         }
     }
 });
-// upload test apk
-
-router.post('/addApk', async function (req, res) {
-    res.setHeader('Content-Type', 'multipart/form-data');
-
-    var verify = await verifyToken(req, res);
-    //  console.log('verify', verify.status);
-    if (verify.status !== undefined && verify.status == true) {
-        let fileUploaded = false;
-
-        let filename = "";
-        let mimeType = "";
-        let fieldName = "";
-
-        var storage = multer.diskStorage({
-            destination: function (req, file, callback) {
-                callback(null, './uploads');
-            },
-
-            filename: function (req, file, callback) {
-                mimeType = file.mimetype;
-                fieldName = file.fieldname;
-                var filetypes = /jpeg|jpg|apk|png/;
-                // console.log("mimetype: ", mimeType);
-                // console.log("fieldName: ", fieldName);
-
-                if (fieldName === Constants.LOGO && filetypes.test(mimeType)) {
-                    fileUploaded = true;
-                    filename = fieldName + '-' + Date.now() + '.jpg';
-
-                    callback(null, filename);
-                } else if (fieldName === Constants.APK && mimeType === "application/vnd.android.package-archive") {
-                    fileUploaded = true;
-                    filename = fieldName + '-' + Date.now() + '.apk';
-
-                    callback(null, filename);
-                } else {
-                    callback("file not supported");
-                }
-            }
-        });
-
-        var upload = multer({
-            storage: storage,
-            limits: { fileSize: "50mb" }
-        }).fields([{
-            name: 'logo',
-            maxCount: 1
-        }, {
-            name: 'apk',
-            maxCount: 1
-        }]);
-
-        upload(req, res, function (err) {
-            if (err) {
-                return res.send({
-                    status: false,
-                    msg: "Error while Uploading"
-                });
-            }
-
-            if (fileUploaded) {
-
-                if (fieldName === Constants.APK) {
-                    try {
-                        let file = path.join(__dirname, "../uploads/" + filename);
-
-                        data = {
-                            status: true,
-                            msg: 'Uploaded Successfully',
-                            fileName: filename,
-                            versionCode: helpers.getAPKVersionCode(file),
-
-                        };
-                    } catch (error) {
-                        console.log(error);
-
-                        data = {
-                            status: false,
-                            msg: "Error while Uploading",
-                        };
-                    }
-                } else if (fieldName === Constants.LOGO) {
-                    data = {
-                        status: true,
-                        msg: 'Uploaded Successfully',
-                        fileName: filename,
-                    };
-                }
-            } else {
-                data = {
-                    status: false,
-                    msg: "Error while Uploading",
-                };
-            }
-
-            res.send(data);
-
-        });
-    }
-});
-
-router.post('/upload', async function (req, res) {
-    res.setHeader('Content-Type', 'multipart/form-data');
-    var verify = await verifyToken(req, res);
-
-    if (verify['status'] && verify.status == true) {
-        try {
-            if (req.body.logo !== '' && req.body.apk !== '' && req.body.name !== '') {
-                let apk = req.body.apk;
-                let apk_name = req.body.name;
-                let logo = req.body.logo;
-                let file = path.join(__dirname, "../uploads/" + apk);
-                let versionCode = helpers.getAPKVersionCode(file);
-                let versionName = helpers.getAPKVersionName(file);
-                console.log("versionName", versionName);
-
-                let packageName = helpers.getAPKPackageName(file);
-                let details = JSON.stringify(helpers.getAPKDetails(file));
-
-                sql.query("INSERT INTO apk_details (app_name, logo, apk, version_code, version_name, package_name, details) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + versionCode + "', '" + versionName + "', '" + packageName + "','" + details + "')", function (err, rslts) {
-
-                    if (err) throw err;
-                    data = {
-                        "status": true,
-                        "msg": "Apk is uploaded"
-
-                    };
-                    res.send(data);
-                });
-            } else {
-                data = {
-                    "status": false,
-                    "msg": "Error While Uploading"
-                };
-                res.send(data);
-            }
-        } catch (error) {
-            data = {
-                status: false,
-                msg: "Error while Uploading",
-            };
-        }
-
-    }
-});
 
 
 /** Get Apk List Admin Panel **/
@@ -4899,6 +4764,261 @@ router.get('/apklist', async function (req, res) {
 
 
     }
+});
+
+
+// upload test apk
+router.post('/addApk', async function (req, res) {
+    res.setHeader('Content-Type', 'multipart/form-data');
+
+    var verify = await verifyToken(req, res);
+    //  console.log('verify', verify.status);
+    if (verify.status !== undefined && verify.status == true) {
+        let fileUploaded = false;
+
+        let filename = "";
+        let mimeType = "";
+        let fieldName = "";
+
+        var storage = multer.diskStorage({
+            destination: function (req, file, callback) {
+                callback(null, './uploads');
+            },
+
+            filename: function (req, file, callback) {
+                mimeType = file.mimetype;
+                fieldName = file.fieldname;
+                var filetypes = /jpeg|jpg|apk|png/;
+                // console.log("mimetype: ", mimeType);
+                // console.log("fieldName: ", fieldName);
+
+                if (fieldName === Constants.LOGO && filetypes.test(mimeType)) {
+                    fileUploaded = true;
+                    filename = fieldName + '-' + Date.now() + '.jpg';
+
+                    callback(null, filename);
+                } else if (fieldName === Constants.APK && mimeType === "application/vnd.android.package-archive") {
+                    fileUploaded = true;
+                    filename = fieldName + '-' + Date.now() + '.apk';
+
+                    callback(null, filename);
+                } else {
+                    callback("file not supported");
+                }
+            }
+        });
+
+        var upload = multer({
+            storage: storage,
+            limits: { fileSize: "50mb" }
+        }).fields([{
+            name: 'logo',
+            maxCount: 1
+        }, {
+            name: 'apk',
+            maxCount: 1
+        }]);
+
+        upload(req, res, function (err) {
+            if (err) {
+                return res.send({
+                    status: false,
+                    msg: "Error while Uploading"
+                });
+            }
+
+            if (fileUploaded) {
+
+                if (fieldName === Constants.APK) {
+                    try {
+                        let file = path.join(__dirname, "../uploads/" + filename);
+
+                        data = {
+                            status: true,
+                            msg: 'Uploaded Successfully',
+                            fileName: filename,
+                            versionCode: helpers.getAPKVersionCode(file),
+
+                        };
+                    } catch (error) {
+                        console.log(error);
+
+                        data = {
+                            status: false,
+                            msg: "Error while Uploading",
+                        };
+                    }
+                } else if (fieldName === Constants.LOGO) {
+                    data = {
+                        status: true,
+                        msg: 'Uploaded Successfully',
+                        fileName: filename,
+                    };
+                }
+            } else {
+                data = {
+                    status: false,
+                    msg: "Error while Uploading",
+                };
+            }
+
+            res.send(data);
+
+        });
+    }
+});
+
+// add apk. endpoints name should be changed
+router.post('/upload', async function (req, res) {
+    res.setHeader('Content-Type', 'multipart/form-data');
+    var verify = await verifyToken(req, res);
+
+    if (verify['status'] && verify.status == true) {
+        try {
+            if (req.body.logo !== '' && req.body.apk !== '' && req.body.name !== '') {
+                let apk = req.body.apk;
+                let file = path.join(__dirname, "../uploads/" + apk);
+                if (fs.existsSync(file)) {
+                    let apk_name = req.body.name;
+                    let logo = req.body.logo;
+                    let versionCode = helpers.getAPKVersionCode(file);
+                    let versionName = helpers.getAPKVersionName(file);
+                    // let label = helpers.getAPKLabel(file);
+                    let packageName = helpers.getAPKPackageName(file);
+                    console.log("versionName", versionName);
+                    let details = JSON.stringify(helpers.getAPKDetails(file));
+
+                    let apk_stats = fs.statSync(file);
+                    console.log("file size in bytes", apk_stats.size);
+                    
+                    let formatByte = helpers.formatBytes(apk_stats.size);
+                    console.log("file size in format", formatByte)
+
+                    sql.query("INSERT INTO apk_details (app_name, logo, apk, version_code, version_name, package_name, details, apk_bytes, apk_size) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + versionCode + "', '" + versionName + "', '" + packageName + "', '" + details + "', "+ apk_stats.size +", '"+ formatByte +"')", function (err, rslts) {
+
+                        if (err) throw err;
+                        data = {
+                            "status": true,
+                            "msg": "Apk is uploaded"
+                        };
+                        res.send(data);
+                    });
+                } else {
+                    console.log("file not found");
+                    res.send({
+                        "status": false,
+                        "msg": "Error While Uploading"
+                    })
+                }
+
+            } else {
+                data = {
+                    "status": false,
+                    "msg": "Error While Uploading"
+                };
+                res.send(data);
+            }
+        } catch (error) {
+            data = {
+                status: false,
+                msg: "Error while Uploading",
+            };
+        }
+
+    }
+});
+
+
+/** Edit Apk (Admin panel) **/
+router.post('/edit/apk', async function (req, res) {
+    res.setHeader('Content-Type', 'multipart/form-data');
+    var verify = await verifyToken(req, res);
+    if (verify['status'] && verify.status == true) {
+        try {
+            if (req.body.logo !== '' && req.body.apk !== '' && req.body.name !== '') {
+                let apk = req.body.apk;
+                let file = path.join(__dirname, "../uploads/" + apk);
+                if (fs.existsSync(file)) {
+                    let apk_name = req.body.name;
+                    let logo = req.body.logo;
+
+                    let versionCode = helpers.getAPKVersionCode(file);
+                    let versionName = helpers.getAPKVersionName(file);
+                    let packageName = helpers.getAPKPackageName(file);
+                    let details = JSON.stringify(helpers.getAPKDetails(file));
+                    sql.query("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "'  where id = '" + req.body.apk_id + "'", function (err, rslts) {
+
+                        if (err) throw err;
+                        data = {
+                            "status": true,
+                            "msg": "Record Updated"
+
+                        };
+                        res.send(data);
+                        return;
+                    });
+                } else {
+                    data = {
+                        "status": false,
+                        "msg": "Error While Uploading"
+                    };
+                    res.send(data);
+                    return;
+                }
+
+            } else {
+                data = {
+                    "status": false,
+                    "msg": "Error While Uploading"
+                };
+                res.send(data);
+                return;
+            }
+        } catch (error) {
+            data = {
+                status: false,
+                msg: "Error while Uploading",
+            };
+        }
+    }
+
+});
+
+/** Toggle Apk Admin Panel (On / Off) **/
+router.post('/toggle', async function (req, res) {
+    var verify = await verifyToken(req, res);
+
+    if (verify.status !== undefined && verify.status == true) {
+
+        if (!empty(req.body.status) && !empty(req.body.apk_id)) {
+            sql.query("update apk_details set status = '" + req.body.status + "' where id = '" + req.body.apk_id + "'", function (err, result) {
+                if (err) throw err;
+
+                if (result.affectedRows != 0) {
+                    data = {
+                        "status": true,
+                        "msg": 'Status Updated.'
+                    };
+                    res.send(data);
+                } else {
+                    data = {
+                        "status": false,
+                        "msg": 'Status Not Updated.'
+
+                    };
+                    res.send(data);
+
+                }
+            });
+        } else {
+            data = {
+                "status": false,
+                "msg": 'Some error occurred.'
+            };
+            res.send(data);
+        }
+    }
+
 });
 
 /** Save apk Permissions**/
@@ -5252,43 +5372,7 @@ router.post('/save_policy_permissions', async function (req, res) {
         }
     }
 });
-/** Toggle Apk Admin Panel (On / Off) **/
 
-router.post('/toggle', async function (req, res) {
-    var verify = await verifyToken(req, res);
-
-    if (verify.status !== undefined && verify.status == true) {
-
-        if (!empty(req.body.status) && !empty(req.body.apk_id)) {
-            sql.query("update apk_details set status = '" + req.body.status + "' where id = '" + req.body.apk_id + "'", function (err, result) {
-                if (err) throw err;
-
-                if (result.affectedRows != 0) {
-                    data = {
-                        "status": true,
-                        "msg": 'Status Updated.'
-                    };
-                    res.send(data);
-                } else {
-                    data = {
-                        "status": false,
-                        "msg": 'Status Not Updated.'
-
-                    };
-                    res.send(data);
-
-                }
-            });
-        } else {
-            data = {
-                "status": false,
-                "msg": 'Some error occurred.'
-            };
-            res.send(data);
-        }
-    }
-
-});
 
 
 /** Get image logo **/
@@ -5306,48 +5390,6 @@ router.get("/getFile/:file", (req, res) => {
 
 });
 
-
-/** Edit Apk (Admin panel) **/
-router.post('/edit/apk', async function (req, res) {
-    res.setHeader('Content-Type', 'multipart/form-data');
-    var verify = await verifyToken(req, res);
-
-    try {
-        if (req.body.logo !== '' && req.body.apk !== '' && req.body.name !== '') {
-            let apk = req.body.apk;
-            let apk_name = req.body.name;
-            let logo = req.body.logo;
-            let file = path.join(__dirname, "../uploads/" + apk);
-
-            let versionCode = helpers.getAPKVersionCode(file);
-            let versionName = helpers.getAPKVersionName(file);
-            let packageName = helpers.getAPKPackageName(file);
-            let details = JSON.stringify(helpers.getAPKDetails(file));
-            sql.query("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "'  where id = '" + req.body.apk_id + "'", function (err, rslts) {
-
-                if (err) throw err;
-                data = {
-                    "status": true,
-                    "msg": "Record Updated"
-
-                };
-                res.send(data);
-            });
-        } else {
-            data = {
-                "status": false,
-                "msg": "Error While Uploading"
-            };
-            res.send(data);
-        }
-    } catch (error) {
-        data = {
-            status: false,
-            msg: "Error while Uploading",
-        };
-    }
-
-});
 
 
 /**Delete Apk**/

@@ -283,7 +283,7 @@ module.exports = {
 			return link_code;
 		}
 	},
-	checkVerificationCode: async function (code){
+	checkVerificationCode: async function (code) {
 		let query = "select dealer_id from dealers where verification_code = '" + code + "';"
 		let result = await sql.query(query);
 		if (result.length > 1) {
@@ -369,6 +369,13 @@ module.exports = {
 		else {
 			return [];
 		}
+	},
+	getAPKLabel: function (filePath) {
+		var reader = ApkReader.readFile(filePath);
+		var manifest = reader.readManifestSync();
+		let res = JSON.parse(JSON.stringify(manifest));
+		console.log("test", res);
+		return res.label;
 	},
 	getAPKPackageName: function (filePath) {
 		var reader = ApkReader.readFile(filePath);
@@ -529,6 +536,23 @@ module.exports = {
 				return null;
 			}
 		}
+	},
+	formatBytes: function (bytes, decimals = 2) {
+		if (bytes === 0) return '0 Bytes';
+
+		const k = 1024;
+		const dm = decimals < 0 ? 0 : decimals;
+		const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+		const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+		return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+	},
+	bytesToSize: function(bytes) {
+		var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+		if (bytes == 0) return '0 Byte';
+		var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+		return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
 	}
 
 }
