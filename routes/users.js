@@ -5466,7 +5466,7 @@ router.post('/check_pass', async function (req, res) {
 router.get('/get_imei_history/:device_id', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
-        let query = "select * from imei_history where device_id = '" + req.params.device_id + "'";
+        let query = "select * from imei_history where device_id = '" + req.params.device_id + "' order by created_at desc";
         sql.query(query, (error, resp) => {
             res.send({
                 status: true,
@@ -5795,6 +5795,65 @@ router.post('/writeImei/:device_id', async function (req, res) {
                 };
                 res.send(data);
             }
+        }
+    } catch (error) {
+        throw Error(error.message);
+    }
+});
+
+
+router.get('/get_activities/:device_id', async function (req, res) {
+    try {
+        var verify = await verifyToken(req, res);
+        if (verify.status !== undefined && verify.status == true) {
+
+            let device_id = req.params.device_id
+            let activities = [];
+            let usrAccId = await device_helpers.getUserAccByDeviceId(device_id)
+            // 'DELETE','SUSPENDED','UNLINKED','EXPIRED','ACTIVE','FLAGGED','UNFLAGGED','TRANSFER','Pre-activated','wiped'
+            let acc_action_query = "SELECT * FROM acc_action_history WHERE device_id = '" + device_id + "'"
+            let accResults = await sql.query(acc_action_query)
+            let device_history_query = "SELECT * FROM device_history WHERE user_acc_id = '" + usrAccId.id + "'"
+            let deviceResults = await sql.query(device_history_query)
+            let imei_history_query = "SELECT * FROM imei_history WHERE device_id = '" + device_id + "'"
+            let imeiResults = await sql.query(imei_history_query)
+            let action;
+
+            for (let i = 0; i < accResults.length; i++) {
+                if (accResults[i].action == Constants.DEVICE_PRE_ACTIVATION || accResults[i].action === Constants.DEVICE_EXPIRED || accResults[i].action == 'DELETE') {
+                    continue
+                } else {
+                    action = {
+                        "action_name": await helpers.getActivityName(accResults[i].action),
+                        "created_at": accResults[i].created_at
+                    }
+                    activities.push(action)
+                }
+            }
+            for (let i = 0; i < deviceResults.length; i++) {
+                if (deviceResults[i].type != 'imei') {
+                    action = {
+                        "action_name": await helpers.getActivityName(deviceResults[i].type),
+                        "created_at": deviceResults[i].created_at
+                    }
+                    activities.push(action)
+                }
+            }
+            for (let i = 0; i < imeiResults.length; i++) {
+                if (imeiResults[i].type != 'imei') {
+                    action = {
+                        "action_name": 'Imei Changed',
+                        "created_at": imeiResults[i].created_at
+                    }
+                    activities.push(action)
+                }
+            }
+            // console.log(activities);
+            data = {
+                "status": true,
+                "data": activities
+            };
+            res.send(data);
         }
     } catch (error) {
         throw Error(error.message);
