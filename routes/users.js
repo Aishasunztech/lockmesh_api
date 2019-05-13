@@ -149,6 +149,12 @@ router.get('/test', async function (req, res) {
     // });
 });
 
+/*****User Registration*****/
+router.post('/Signup', async function (req, res) {
+
+});
+
+
 /*****User Login*****/
 router.post('/login', async function (req, res) {
     var email = req.body.demail;
@@ -181,12 +187,9 @@ router.post('/login', async function (req, res) {
             res.status(200).send(data);
         } else {
 
-            var dUser = "SELECT * FROM dealers WHERE  dealer_email='" + email + "' and password ='" + enc_pwd + "';";
-
-            var usr = await sql.query(dUser);
-
-            if (usr.length) {
-                if (users[0].account_status == 'suspended') {
+            if (users[0].password === enc_pwd) {
+                let dealerStatus = helpers.getDealerStatus(users[0]);
+                if (dealerStatus === Constants.DEALER_SUSPENDED) {
                     data = {
                         'status': false,
                         'msg': 'Your account is suspended',
@@ -194,7 +197,7 @@ router.post('/login', async function (req, res) {
                     }
                     res.status(200).send(data);
                     return;
-                } else if (users[0].unlink_status == 1) {
+                } else if (dealerStatus === Constants.DEALER_UNLINKED) {
                     data = {
                         'status': false,
                         'msg': 'Your account is deleted',
@@ -203,54 +206,87 @@ router.post('/login', async function (req, res) {
                     res.status(200).send(data);
                     return;
                 } else {
-                    var userType = await helpers.getUserType(users[0].dealer_id);
-                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + users[0].dealer_id + "'");
-                    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-                    // console.log('object data is ', users[0]);
 
-                    const user = {
-                        id: users[0].dealer_id,
-                        dealer_id: users[0].dealer_id,
-                        email: users[0].dealer_email,
-                        lastName: users[0].last_name,
-                        name: users[0].dealer_name,
-                        firstName: users[0].first_name,
-                        dealer_name: users[0].dealer_name,
-                        dealer_email: users[0].dealer_email,
-                        link_code: users[0].link_code,
-                        connected_dealer: users[0].connected_dealer,
-                        connected_devices: get_connected_devices,
-                        account_status: users[0].account_status,
-                        user_type: userType,
-                        created: users[0].created,
-                        modified: users[0].modified,
-                        two_factor_auth: users[0].is_two_factor_auth,
-                        ip_address: ip
+                    if (users[0].is_two_factor_auth === 1 || users[0].is_two_factor_auth === true) {
+                        verificationCode = randomize('0', 6);
+                        verificationCode = await helpers.checkVerificationCode(verificationCode);
+                        let updateVerification = "UPDATE dealers SET verified=0, verification_code='" + md5(verificationCode) + "' WHERE dealer_id=" + users[0].dealer_id;
+                        await sql.query(updateVerification);
+                        let html = "Your Login Code is: " + verificationCode;
+                        sendEmail("Dual Auth Verification", html, users[0].dealer_email, function (error, response) {
+                            if (error) {
+                                throw (error)
+                            } else {
+                                res.send({
+                                    status: true,
+                                    two_factor_auth: true,
+                                    msg: "Verification Code sent to Your Email"
+                                })
+                            }
+
+                        });
+                    } else {
+                        // send email you are successfully logged in
+
+                        var userType = await helpers.getUserType(users[0].dealer_id);
+                        var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + users[0].dealer_id + "'");
+                        var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+                        // console.log('object data is ', users[0]);
+
+                        const user = {
+                            id: users[0].dealer_id,
+                            dealer_id: users[0].dealer_id,
+                            email: users[0].dealer_email,
+                            lastName: users[0].last_name,
+                            name: users[0].dealer_name,
+                            firstName: users[0].first_name,
+                            dealer_name: users[0].dealer_name,
+                            dealer_email: users[0].dealer_email,
+                            link_code: users[0].link_code,
+                            connected_dealer: users[0].connected_dealer,
+                            connected_devices: get_connected_devices,
+                            account_status: users[0].account_status,
+                            user_type: userType,
+                            created: users[0].created,
+                            modified: users[0].modified,
+                            two_factor_auth: users[0].is_two_factor_auth,
+                            ip_address: ip,
+                        }
+
+                        jwt.sign(
+                            {
+                                user
+                            },
+                            config.secret,
+                            {
+                                expiresIn: config.expiresIn
+                            }, (err, token) => {
+                                if (err) {
+                                    res.json({
+                                        'err': err
+                                    });
+                                } else {
+                                    user.expiresIn = config.expiresIn;
+                                    // console.log("logged in user", user[0]);
+                                    user.verified = (users[0].is_two_factor_auth === true || users[0].is_two_factor_auth === 1) ? false : true;
+                                    user.token = token;
+
+                                    helpers.saveLogin(user, userType, Constants.TOKEN, 1);
+
+                                    res.json({
+                                        token: token,
+                                        status: true,
+                                        msg: 'User loged in Successfully',
+                                        expiresIn: config.expiresIn,
+                                        user,
+                                        two_factor_auth: false,
+                                    });
+                                }
+                            }
+                        );
                     }
 
-                    jwt.sign({
-                        user
-                    }, config.secret, {
-                            expiresIn: config.expiresIn
-                        }, (err, token) => {
-                            if (err) {
-                                res.json({
-                                    'err': err
-                                });
-                            } else {
-                                user.expiresIn = config.expiresIn;
-                                user.token = token;
-                                helpers.saveLogin(user, userType, Constants.TOKEN, 1);
 
-                                res.json({
-                                    token: token,
-                                    'status': true,
-                                    'msg': 'User loged in Successfully',
-                                    'expiresIn': config.expiresIn,
-                                    user
-                                });
-                            }
-                        });
                 }
             } else {
 
@@ -269,8 +305,105 @@ router.post('/login', async function (req, res) {
     }
 });
 
-/*****User Registration*****/
-router.post('/Signup', async function (req, res) {
+router.post('/verify_code', async function (req, res) {
+    let verify_code = req.body.verify_code;
+
+    let checkVerificationQ = "SELECT * FROM dealers WHERE verification_code = '" + md5(verify_code) + "' limit 1";
+    let checkRes = await sql.query(checkVerificationQ);
+    if (checkRes.length) {
+        let updateVerificationQ = "UPDATE dealers SET verified = 1, verification_code=null WHERE dealer_id=" + checkRes[0].dealer_id;
+        // let updateVerificationQ = "UPDATE dealers SET verified = 1 WHERE dealer_id=" + checkRes[0].dealer_id;
+        sql.query(updateVerificationQ, async function (error, response) {
+            if (error) throw (error);
+            if (response.affectedRows) {
+                let dealerStatus = helpers.getDealerStatus(checkRes[0]);
+                console.log("dealer status", dealerStatus);
+                if (dealerStatus === Constants.DEALER_SUSPENDED) {
+                    data = {
+                        'status': false,
+                        'msg': 'Your account is suspended',
+                        'data': null
+                    }
+                    res.status(200).send(data);
+                    return;
+                } else if (dealerStatus === Constants.DEALER_UNLINKED) {
+                    data = {
+                        'status': false,
+                        'msg': 'Your account is deleted',
+                        'data': null
+                    }
+                    res.status(200).send(data);
+                    return;
+                } else {
+
+                    var userType = await helpers.getUserType(checkRes[0].dealer_id);
+
+                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + checkRes[0].dealer_id + "'");
+                    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+                    // console.log('object data is ', users[0]);
+
+                    const user = {
+                        id: checkRes[0].dealer_id,
+                        dealer_id: checkRes[0].dealer_id,
+                        email: checkRes[0].dealer_email,
+                        lastName: checkRes[0].last_name,
+                        name: checkRes[0].dealer_name,
+                        firstName: checkRes[0].first_name,
+                        dealer_name: checkRes[0].dealer_name,
+                        dealer_email: checkRes[0].dealer_email,
+                        link_code: checkRes[0].link_code,
+                        connected_dealer: checkRes[0].connected_dealer,
+                        connected_devices: get_connected_devices,
+                        account_status: checkRes[0].account_status,
+                        user_type: userType,
+                        created: checkRes[0].created,
+                        modified: checkRes[0].modified,
+                        two_factor_auth: checkRes[0].is_two_factor_auth,
+                        ip_address: ip,
+                    }
+
+                    jwt.sign({
+                        user
+                    }, config.secret, {
+                            expiresIn: config.expiresIn
+                        }, (err, token) => {
+                            if (err) {
+                                res.json({
+                                    'err': err
+                                });
+                            } else {
+                                user.expiresIn = config.expiresIn;
+                                user.verified = checkRes[0].verified;
+                                user.token = token;
+                                helpers.saveLogin(user, userType, Constants.TOKEN, 1);
+
+                                res.send({
+                                    token: token,
+                                    status: true,
+                                    msg: 'User loged in Successfully',
+                                    expiresIn: config.expiresIn,
+                                    user
+                                });
+                            }
+                        });
+                }
+            } else {
+                return {
+                    status: false,
+                    msg: "verification code successfully matched",
+                    data: null
+                }
+            }
+        });
+
+    } else {
+        data = {
+            status: false,
+            msg: 'invalid verification code',
+            data: null
+        }
+        res.status(200).send(data);
+    }
 
 });
 
@@ -305,6 +438,7 @@ router.post('/two_factor_auth', async function (req, res) {
 
     }
 });
+
 
 router.get('/get_allowed_components', async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
@@ -346,7 +480,8 @@ router.post('/check_component', async function (req, res) {
                 user_type: verify.user.user_type,
                 created: user[0].created,
                 modified: user[0].modified,
-                two_factor_auth: user[0].is_two_factor_auth
+                two_factor_auth: user[0].is_two_factor_auth,
+                verified: user[0].verified
             }
 
             res.json({
@@ -3242,10 +3377,11 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
                     throw err;
                 }
                 if (rslts) {
-                    var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='push_apps' AND user_acc_id=" + usrAccId + "";
 
                     let isOnline = await device_helpers.isDeviceOnline(device_id);
                     if (isOnline) {
+                        var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='push_apps' AND user_acc_id=" + usrAccId + "";
+                        sql.query(pushAppsQ)
                         var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
                         await sql.query(loadDeviceQ)
                         require("../bin/www").applyPushApps(apps, device_id);
@@ -3284,6 +3420,7 @@ router.post('/apply_pullapps/:device_id', async function (req, res) {
 
             let usrAccId = req.body.usrAccId;
 
+
             let pull_apps = req.body.pull_apps;
 
             let apps = (pull_apps === undefined) ? '' : JSON.stringify(pull_apps);
@@ -3295,9 +3432,11 @@ router.post('/apply_pullapps/:device_id', async function (req, res) {
                     throw err;
                 }
                 if (rslts) {
-                    var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='pull_apps' AND user_acc_id=" + usrAccId + "";
+
                     let isOnline = await device_helpers.isDeviceOnline(device_id);
                     if (isOnline) {
+                        var pullAppsQ = "UPDATE device_history SET status=1 WHERE type='pull_apps' AND user_acc_id=" + usrAccId + "";
+                        sql.query(pullAppsQ)
                         var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
                         await sql.query(loadDeviceQ)
                         require("../bin/www").getPullApps(apps, device_id);
@@ -3452,8 +3591,8 @@ router.post('/change_policy_status', async function (req, res) {
 
 
         sql.query(query, (error, result) => {
-           
-            if(error) throw error;
+
+            if (error) throw error;
             // console.log(result, 'relstsdf')
             if (result.affectedRows) {
                 data = {

@@ -161,13 +161,14 @@ module.exports.sendDeviceStatus = async function (device_id, device_status, stat
 
 module.exports.ackFinishedPushApps = async function (device_id, response) {
 
-  sql.query("UPDATE devices set is_push_apps = 0 WHERE device_id = '" + device_id + "'")
+  await sql.query("UPDATE devices set is_push_apps = 0 WHERE device_id = '" + device_id + "'")
   io.emit(Constants.ACK_FINISHED_PUSH_APPS + device_id, {
     status: true
   });
 }
 module.exports.ackFinishedPullApps = async function (device_id, response) {
-  sql.query("UPDATE devices set is_push_apps = 0 WHERE device_id = '" + device_id + "'")
+  await sql.query("UPDATE devices set is_push_apps = 0 WHERE device_id = '" + device_id + "'")
+  
   io.emit(Constants.ACK_FINISHED_PULL_APPS + device_id, {
     status: true
   });

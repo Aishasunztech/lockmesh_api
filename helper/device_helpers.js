@@ -364,7 +364,7 @@ module.exports = {
 
     },
     saveImeiHistory: async (deviceId, sn, mac, imei1, imei2) => {
-        console.log("Imei History");
+        // console.log("Imei History");
         let response = false;
         let sqlQuery = "SELECT * from imei_history WHERE serial_number = '" + sn + "' OR mac_address = '" + mac + "' order by created_at DESC";
         let result = await sql.query(sqlQuery);

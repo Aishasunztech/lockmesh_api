@@ -283,6 +283,16 @@ module.exports = {
 			return link_code;
 		}
 	},
+	checkVerificationCode: async function (code){
+		let query = "select dealer_id from dealers where verification_code = '" + code + "';"
+		let result = await sql.query(query);
+		if (result.length > 1) {
+			code = randomize('0', 6);
+			this.checkVerificationCode(code);
+		} else {
+			return code;
+		}
+	},
 	checkUserId: async function (userId) {
 
 		let query = "select user_id from users where user_id = '" + userId + "';"
