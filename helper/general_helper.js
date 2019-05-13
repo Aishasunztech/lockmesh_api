@@ -283,7 +283,7 @@ module.exports = {
 			return link_code;
 		}
 	},
-	checkVerificationCode: async function (code){
+	checkVerificationCode: async function (code) {
 		let query = "select dealer_id from dealers where verification_code = '" + code + "';"
 		let result = await sql.query(query);
 		if (result.length > 1) {
@@ -529,6 +529,32 @@ module.exports = {
 				return null;
 			}
 		}
+	},
+	getActivityName: async function (value) {
+
+		let name = value
+
+		switch (value) {
+			case 'imei':
+				name = 'IMEI CHANGE'
+				break;
+			case 'wiped':
+				name = 'Devcie wipe'
+				break;
+			case 'push_apps':
+				name = 'Apps Pushed'
+				break;
+			case 'pull_apps':
+				name = 'Apps Pulled'
+				break;
+			case 'history':
+				name = 'Setting changed'
+				break;
+			default:
+				break;
+		}
+		// console.log(name);
+		return name
 	}
 
 }

@@ -2079,11 +2079,11 @@ router.post('/wipe/:id', async function (req, res) {
                     }
                     res.send(data);
                 } else {
-                    require("../bin/www").sendDeviceStatus(gtres[0].device_id, "wiped");
+                    require("../bin/www").sendDeviceStatus(gtres[0].device_id, Constants.DEVICE_WIPE);
 
                     sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
                         if (error) throw error;
-                        console.log('lolo else', resquery[0])
+                        // console.log('lolo else', resquery[0])
 
                         if (resquery.length) {
                             resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
@@ -2091,6 +2091,8 @@ router.post('/wipe/:id', async function (req, res) {
                             resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
                             resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                             // dealerData = await getDealerdata(res[i]);
+
+                            device_helpers.saveActionHistory(resquery[0], Constants.DEVICE_WIPE)
                             data = {
                                 "data": resquery[0],
                                 "status": true,
@@ -5467,7 +5469,7 @@ router.post('/check_pass', async function (req, res) {
 router.get('/get_imei_history/:device_id', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
-        let query = "select * from imei_history where device_id = '" + req.params.device_id + "'";
+        let query = "select * from imei_history where device_id = '" + req.params.device_id + "' order by created_at desc";
         sql.query(query, (error, resp) => {
             res.send({
                 status: true,
@@ -5703,12 +5705,14 @@ router.post('/writeImei/:device_id', async function (req, res) {
             let usrAccId = req.body.usrAccId;
             let type = req.body.type;
             let imeiNo = req.body.imeiNo;
+            let device = req.body.device
 
             let imei = await device_helpers.checkvalidImei(imeiNo)
             if (imei) {
-
                 let imei1 = (type == 'IMEI1') ? imeiNo : null
                 let imei2 = (type == 'IMEI2') ? imeiNo : null
+
+                device_helpers.saveImeiHistory(device.device_id, device.serial_number, device.mac_address, imei1, imei2)
 
                 let query = "SELECT * from device_history WHERE user_acc_id = '" + usrAccId + "' AND type = 'imei' AND status = 0"
 
@@ -5794,6 +5798,65 @@ router.post('/writeImei/:device_id', async function (req, res) {
                 };
                 res.send(data);
             }
+        }
+    } catch (error) {
+        throw Error(error.message);
+    }
+});
+
+
+router.get('/get_activities/:device_id', async function (req, res) {
+    try {
+        var verify = await verifyToken(req, res);
+        if (verify.status !== undefined && verify.status == true) {
+
+            let device_id = req.params.device_id
+            let activities = [];
+            let usrAccId = await device_helpers.getUserAccByDeviceId(device_id)
+            // 'DELETE','SUSPENDED','UNLINKED','EXPIRED','ACTIVE','FLAGGED','UNFLAGGED','TRANSFER','Pre-activated','wiped'
+            let acc_action_query = "SELECT * FROM acc_action_history WHERE device_id = '" + device_id + "'"
+            let accResults = await sql.query(acc_action_query)
+            let device_history_query = "SELECT * FROM device_history WHERE user_acc_id = '" + usrAccId.id + "'"
+            let deviceResults = await sql.query(device_history_query)
+            let imei_history_query = "SELECT * FROM imei_history WHERE device_id = '" + device_id + "'"
+            let imeiResults = await sql.query(imei_history_query)
+            let action;
+
+            for (let i = 0; i < accResults.length; i++) {
+                if (accResults[i].action == Constants.DEVICE_PRE_ACTIVATION || accResults[i].action === Constants.DEVICE_EXPIRED || accResults[i].action == 'DELETE') {
+                    continue
+                } else {
+                    action = {
+                        "action_name": await helpers.getActivityName(accResults[i].action),
+                        "created_at": accResults[i].created_at
+                    }
+                    activities.push(action)
+                }
+            }
+            for (let i = 0; i < deviceResults.length; i++) {
+                if (deviceResults[i].type != 'imei') {
+                    action = {
+                        "action_name": await helpers.getActivityName(deviceResults[i].type),
+                        "created_at": deviceResults[i].created_at
+                    }
+                    activities.push(action)
+                }
+            }
+            for (let i = 0; i < imeiResults.length; i++) {
+                if (imeiResults[i].type != 'imei') {
+                    action = {
+                        "action_name": 'Imei Changed',
+                        "created_at": imeiResults[i].created_at
+                    }
+                    activities.push(action)
+                }
+            }
+            // console.log(activities);
+            data = {
+                "status": true,
+                "data": activities
+            };
+            res.send(data);
         }
     } catch (error) {
         throw Error(error.message);

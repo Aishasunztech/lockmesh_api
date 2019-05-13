@@ -26,6 +26,7 @@ module.exports = {
     DEVICE_UNFLAGGED: "Unflagged",
     DEVICE_ACCEPT: "Accept Device",
     NEW_DEVICE: "new device",
+    DEVICE_WIPE: "wiped",
 
     DEVICE_ONLINE: "On",
     DEVICE_OFFLINE: "off",
