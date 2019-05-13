@@ -1014,7 +1014,8 @@ router.get('/admin/marketApplist', async function (req, res) {
                     "apk_name": results[i].app_name,
                     "logo": results[i].logo,
                     "apk": results[i].apk,
-                    "apk_status": results[i].status
+                    "apk_status": results[i].status,
+                    "package_name": results[i].package_name
                 }
                 data.push(dta);
             }
@@ -1048,7 +1049,8 @@ router.get('/marketApplist/:linkCode', async function (req, res) {
                         "apk_name": results[i].app_name,
                         "logo": results[i].logo,
                         "apk": results[i].apk,
-                        "apk_status": results[i].status
+                        "apk_status": results[i].status,
+                        "package_name": results[i].package_name
                     }
                     data.push(dta);
                 }
