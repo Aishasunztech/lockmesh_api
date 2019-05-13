@@ -559,6 +559,8 @@ router.get('/devices', async function (req, res) {
             // let dealer_id = await helpers.getDealerIdByLinkOrActivation(541763)
             // console.log(dealer_id);
             // console.log(imei);
+            
+
             data = {
                 "status": true,
                 "data": finalResult
@@ -1671,9 +1673,9 @@ router.put('/edit/devices', async function (req, res) {
                             common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE id = '" + usr_device_id + "'";
                             if (finalStatus !== Constants.DEVICE_PRE_ACTIVATION) {
                                 if (expiry_date == 0) {
-                                    usr_acc_Query = "UPDATE usr_acc set user_id = '" + user_id + "' ,status = '" + status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' WHERE device_id = '" + usr_device_id + "'"
+                                    usr_acc_Query = "UPDATE usr_acc set user_id = '" + user_id + "' ,account_email = '" + req.body.email + "',status = '" + status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' WHERE device_id = '" + usr_device_id + "'"
                                 } else {
-                                    usr_acc_Query = "UPDATE usr_acc set user_id = '" + user_id + "' , status = '" + status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' WHERE device_id = '" + usr_device_id + "'"
+                                    usr_acc_Query = "UPDATE usr_acc set user_id = '" + user_id + "' ,account_email = '" + req.body.email + "', status = '" + status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' WHERE device_id = '" + usr_device_id + "'"
                                 }
                             } else {
                                 if (expiry_date == 0) {
