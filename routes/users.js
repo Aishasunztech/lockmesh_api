@@ -2935,11 +2935,12 @@ router.get('/get_app_permissions', async function (req, res) {
                     Extension.push(item);
                 }
 
-                if (item.extension == 0 || item.visible == 1) {
+                if (item.extension == 0 && item.visible == 1) {
                     onlyApps.push(item)
                 }
             }
-            console.log('ext e n tion ', Extension)
+
+            console.log(onlyApps, 'ext e n tion ', Extension)
 
             let newExtlist = [];
             for (let ext of Extension) {
@@ -3023,7 +3024,7 @@ router.get('/get_apps/:device_id', async function (req, res) {
 
                             Extension.push(item);
                         }
-                        if (item.extension == 0 || item.visible == 1) {
+                        if (item.extension == 0 && item.visible == 1) {
                             onlyApps.push(item)
                         }
                         if (item.visible == 0) {
@@ -3031,6 +3032,8 @@ router.get('/get_apps/:device_id', async function (req, res) {
                             settings.push(item)
                         }
                     }
+
+                    // console.log(onlyApps, 'onlu apps')
 
                     let newExtlist = [];
                     for (let ext of Extension) {
