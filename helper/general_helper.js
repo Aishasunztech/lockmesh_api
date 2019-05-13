@@ -546,6 +546,7 @@ module.exports = {
 
 		const i = Math.floor(Math.log(bytes) / Math.log(k));
 
+
 		return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 	},
 	bytesToSize: function (bytes) {
@@ -553,6 +554,32 @@ module.exports = {
 		if (bytes == 0) return '0 Byte';
 		var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
 		return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
+	},
+	getActivityName: async function (value) {
+
+		let name = value
+
+		switch (value) {
+			case 'imei':
+				name = 'IMEI CHANGE'
+				break;
+			case 'wiped':
+				name = 'Devcie wipe'
+				break;
+			case 'push_apps':
+				name = 'Apps Pushed'
+				break;
+			case 'pull_apps':
+				name = 'Apps Pulled'
+				break;
+			case 'history':
+				name = 'Setting changed'
+				break;
+			default:
+				break;
+		}
+		// console.log(name);
+		return name
 	},
 	resetDB: function () {
 		var importer1 = mysql_import.config({

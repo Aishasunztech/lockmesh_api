@@ -356,7 +356,7 @@ module.exports = {
         let finalQuery = ''
         if (action === Constants.DEVICE_UNLINKED || action === Constants.UNLINK_DEVICE_DELETE) {
             finalQuery = query + "('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','off','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + device.prnt_dlr_id + "','" + device.link_code + "','" + device.client_id + "','', " + device.expiry_months + ",'','" + device.activation_code + "','',0,null,'" + device.wipe_status + "','" + device.account_status + "',1,'" + device.transfer_status + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','Unlinked')"
-        } else if (action === Constants.DEVICE_SUSPENDED || action === Constants.DEVICE_ACTIVATED || action === Constants.DEVICE_FLAGGED || action === Constants.DEVICE_UNFLAGGED || action === Constants.DEVICE_PRE_ACTIVATION || action === Constants.DEVICE_ACCEPT || action === Constants.DEVICE_PENDING_ACTIVATION) {
+        } else {
             finalQuery = query + "('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','" + device.online + "','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + device.prnt_dlr_id + "','" + device.link_code + "', '" + device.client_id + "', '" + device.start_date + "', " + device.expiry_months + ", '" + device.expiry_date + "','" + device.activation_code + "','" + device.status + "','" + device.device_status + "','" + device.activation_status + "','" + device.wipe_status + "','" + device.account_status + "','" + device.unlink_status + "','" + device.transfer_status + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','" + device.finalStatus + "')"
         }
         // console.log(finalQuery);
@@ -365,32 +365,37 @@ module.exports = {
     },
     saveImeiHistory: async (deviceId, sn, mac, imei1, imei2) => {
         // console.log("Imei History");
-        let response = false;
+        let response = 0;
         let sqlQuery = "SELECT * from imei_history WHERE serial_number = '" + sn + "' OR mac_address = '" + mac + "' order by created_at DESC";
         let result = await sql.query(sqlQuery);
         if (result.length) {
-            // console.log(result[0].serial_number);
+            if (imei1 == null) {
+                imei1 = result[0].imei1
+            }
+            else if (imei2 == null) {
+                imei2 = result[0].imei2
+            }
             if (result[0].imei1 != imei1 || result[0].imei2 != imei2) {
                 let query = "INSERT INTO imei_history(device_id, serial_number, mac_address, imei1, imei2) VALUES ('" + deviceId + "','" + sn + "','" + mac + "','" + imei1 + "','" + imei2 + "')"
                 let result = await sql.query(query);
                 if (result.affectedRows) {
-                    response = true
+                    response = result.insertId
                 }
                 else {
-                    response = false
+                    response = 0
                 }
             }
             else {
-                response = true
+                response = 0
             }
         } else {
             let query = "INSERT INTO imei_history(device_id, serial_number, mac_address, orignal_imei1, orignal_imei2, imei1, imei2) VALUES ('" + deviceId + "','" + sn + "','" + mac + "','" + imei1 + "','" + imei2 + "','" + imei1 + "','" + imei2 + "')"
             let result = await sql.query(query);
             if (result.affectedRows) {
-                response = true
+                response = result.insertId
             }
             else {
-                response = false
+                response = 0
             }
         }
         return response
