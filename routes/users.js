@@ -2079,11 +2079,11 @@ router.post('/wipe/:id', async function (req, res) {
                     }
                     res.send(data);
                 } else {
-                    require("../bin/www").sendDeviceStatus(gtres[0].device_id, "wiped");
+                    require("../bin/www").sendDeviceStatus(gtres[0].device_id, Constants.DEVICE_WIPE);
 
                     sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
                         if (error) throw error;
-                        console.log('lolo else', resquery[0])
+                        // console.log('lolo else', resquery[0])
 
                         if (resquery.length) {
                             resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
@@ -2091,6 +2091,8 @@ router.post('/wipe/:id', async function (req, res) {
                             resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
                             resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                             // dealerData = await getDealerdata(res[i]);
+
+                            device_helpers.saveActionHistory(resquery[0], Constants.DEVICE_WIPE)
                             data = {
                                 "data": resquery[0],
                                 "status": true,
@@ -5700,12 +5702,14 @@ router.post('/writeImei/:device_id', async function (req, res) {
             let usrAccId = req.body.usrAccId;
             let type = req.body.type;
             let imeiNo = req.body.imeiNo;
+            let device = req.body.device
 
             let imei = await device_helpers.checkvalidImei(imeiNo)
             if (imei) {
-
                 let imei1 = (type == 'IMEI1') ? imeiNo : null
                 let imei2 = (type == 'IMEI2') ? imeiNo : null
+
+                device_helpers.saveImeiHistory(device.device_id, device.serial_number, device.mac_address, imei1, imei2)
 
                 let query = "SELECT * from device_history WHERE user_acc_id = '" + usrAccId + "' AND type = 'imei' AND status = 0"
 
