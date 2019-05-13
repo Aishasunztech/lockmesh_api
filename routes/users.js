@@ -5735,10 +5735,11 @@ router.post('/writeImei/:device_id', async function (req, res) {
                                     'online': true,
                                 };
                                 res.send(data);
+                            } else {
+                                data = {
+                                    "status": true,
+                                };
                             }
-                            data = {
-                                "status": true,
-                            };
                             res.send(data);
                         } else {
                             data = {
