@@ -5712,8 +5712,13 @@ router.post('/writeImei/:device_id', async function (req, res) {
                 let imei1 = (type == 'IMEI1') ? imeiNo : null
                 let imei2 = (type == 'IMEI2') ? imeiNo : null
 
-                device_helpers.saveImeiHistory(device.device_id, device.serial_number, device.mac_address, imei1, imei2)
-
+                let insertId = await device_helpers.saveImeiHistory(device.device_id, device.serial_number, device.mac_address, imei1, imei2)
+                console.log('object id is', insertId);
+                let inserted = await sql.query("SELECT * FROM imei_history WHERE id='" + insertId + "'")
+                let insertedData = null;
+                if (inserted.length) {
+                    insertedData = inserted[0]
+                }
                 let query = "SELECT * from device_history WHERE user_acc_id = '" + usrAccId + "' AND type = 'imei' AND status = 0"
 
                 let result = await sql.query(query);
@@ -5736,14 +5741,17 @@ router.post('/writeImei/:device_id', async function (req, res) {
                                 data = {
                                     "status": true,
                                     'online': true,
+                                    'insertedData': insertedData
                                 };
                                 res.send(data);
                             } else {
                                 data = {
                                     "status": true,
+                                    'insertedData': insertedData
                                 };
+                                res.send(data);
                             }
-                            res.send(data);
+
                         } else {
                             data = {
                                 "status": false,
@@ -5774,12 +5782,14 @@ router.post('/writeImei/:device_id', async function (req, res) {
                                 data = {
                                     "status": true,
                                     'online': true,
+                                    'insertedData': insertedData
                                 };
                                 res.send(data);
                             } else {
                                 data = {
                                     "status": true,
                                     'online': false,
+                                    'insertedData': insertedData
                                 };
                                 res.send(data);
                             }
