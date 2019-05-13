@@ -6,14 +6,15 @@ var datetime = require('node-datetime');
 // import ADMIN from "../constants/Application";
 var moment = require('moment-strftime');
 var Constants = require('../constants/Application');
-let usr_acc_query_text = "usr_acc.id,usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.user_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity"
 const device_helpers = require('./device_helpers');
 var util = require('util')
 var ApkReader = require('node-apk-parser')
 var md5 = require('md5');
 var randomize = require('randomatic');
+const mysql_import = require('mysql-import');
+var path = require('path');
 
-
+let usr_acc_query_text = "usr_acc.id,usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.user_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity"
 module.exports = {
 	isAdmin: async function (userId) {
 		var query1 = "SELECT type FROM dealers where dealer_id =" + userId;
@@ -74,7 +75,6 @@ module.exports = {
 			return dType[0].id;
 		}
 	},
-
 	getAllUserTypes: async function () {
 		var query = "SELECT * FROM user_roles";
 		var userRoles = await sql.query(query);
@@ -548,11 +548,23 @@ module.exports = {
 
 		return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 	},
-	bytesToSize: function(bytes) {
+	bytesToSize: function (bytes) {
 		var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
 		if (bytes == 0) return '0 Byte';
 		var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
 		return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
+	},
+	resetDB: function () {
+		var importer1 = mysql_import.config({
+			host: 'localhost',
+			user: 'root',
+			password: '',
+			database: 'mydb',
+			onerror: err => console.log(err.message)
+		});
+		let sqlFile = path.join(__dirname + '/../_DB/reset_db.sql');
+		importer1.import(sqlFile).then(() => {
+			console.log('DB1 has finished importing')
+		});
 	}
-
 }

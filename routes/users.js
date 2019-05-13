@@ -126,6 +126,7 @@ var verifyToken = function (req, res) {
 
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
+    // helpers.resetDB();
     // apk-ScreenLocker v3.31.apk
   
     // const unzip = zlib.createGunzip();
@@ -149,15 +150,6 @@ router.get('/', async function (req, res, next) {
     //   if (zipEntries[i].entryName.match(/readme/))
     //     console.log(zip.readAsText(zipEntries[i]));
     // }
-});
-
-router.get('/test', async function (req, res) {
-    // var componentAllowed = await helpers.isAllowedComponent(1, 155);
-    // console.log(componentAllowed);
-    // res.send({
-    //     status: true,
-    //     allowed: componentAllowed
-    // });
 });
 
 /*****User Registration*****/

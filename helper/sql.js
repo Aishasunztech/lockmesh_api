@@ -26,32 +26,6 @@ const sqlPool = mysql.createPool({
 });
 
 
-
-
-
-/*let sql = function() {}
-exports.Query = function(sql) {
-    return new Promise(function(fulfill, reject) { // Create Promise
-        con.getConnection(function(err, connection) {
-            if (err) {
-                // connection.release();
-                console.error(err);
-                reject(err);
-            } else {
-                connection.query(sql, function(err, rows, fields) {
-                    connection.release();
-                    if (!err) {
-                        fulfill(rows);
-                    } else {
-                        reject(err);
-                        //console.log(err);
-                    }
-                });
-            }
-        });
-    });
-} */
-
 sqlPool.getConnection((err, connection) => {
     if (err) {
         if (err.code === 'PROTOCOL_CONNECTION_LOST') {
