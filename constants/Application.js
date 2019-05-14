@@ -72,6 +72,8 @@ module.exports = {
 
     PULL_PUSH_IN_PROCESS: 'pull_push_in_process',
 
+    LOAD_POLICY:'load_policy_',
+
     PING: "ping",
     PONG: "pong",
 
