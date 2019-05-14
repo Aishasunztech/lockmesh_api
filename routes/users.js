@@ -2848,7 +2848,7 @@ router.get('/get_dealer_apps', async function (req, res) {
 
         let getAppsQ = "SELECT apk_details.* FROM apk_details ";
         if (loggedUserType !== Constants.ADMIN) {
-            getAppsQ = getAppsQ + " JOIN dealer_apks on (dealer_apks.apk_id = apk_details.id) WHERE dealer_apks.dealer_id =" + loggedUserId;
+            getAppsQ = getAppsQ + " JOIN dealer_apks on dealer_apks.apk_id = apk_details.id WHERE dealer_apks.dealer_id =" + loggedUserId;
         }
         let apps = await sql.query(getAppsQ);
 
@@ -2933,7 +2933,6 @@ router.get('/get_app_permissions', async function (req, res) {
                     onlyApps.push(item)
                 }
             }
-
 
             let newExtlist = [];
             for (let ext of Extension) {
@@ -3592,7 +3591,8 @@ router.get('/get_policies', async function (req, res) {
                                 controls: controls,
                                 secure_apps: secure_apps,
                                 push_apps: push_apps,
-                                app_list: app_list2
+                                app_list: app_list2,
+                                dealer_id: results[i].dealer_id
                             }
                             policies.push(dta);
                         }
@@ -3607,7 +3607,9 @@ router.get('/get_policies', async function (req, res) {
                 });
             }
             else {
-                sql.query("select dealer_policies.* ,policy.* from dealer_policies left join policy on policy.id = dealer_policies.policy_id where dealer_policies.dealer_id='" + verify.user.id + "'", async function (error, results) {
+                sql.query("select policy.* from policy left join dealer_policies on policy.id = dealer_policies.policy_id where dealer_policies.dealer_id='" + verify.user.id + "' OR policy.dealer_id = " + verify.user.id + "", async function (error, results) {
+                    // console.log("select dealer_policies.* ,policy.* from dealer_policies left join policy on policy.id = dealer_policies.policy_id where dealer_policies.dealer_id='" + verify.user.id + "' OR policy.dealer_id = " + verify.user.id + "");
+
                     if (error) throw error;
                     if (results.length > 0) {
                         // console.log(results);
@@ -3646,7 +3648,8 @@ router.get('/get_policies', async function (req, res) {
                                 secure_apps: secure_apps,
                                 push_apps: push_apps,
                                 app_list: app_list2,
-                                is_default: is_default
+                                is_default: is_default,
+                                dealer_id: results[i].dealer_id
                             }
                             policies.push(dta);
                         }
@@ -4798,7 +4801,7 @@ router.get('/apklist', async function (req, res) {
             });
         }
         else if (verify.user.user_type === DEALER) {
-            sql.query("select dealer_apks.* ,apk_details.* from dealer_apks left join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "'", async function (error, results) {
+            sql.query("select dealer_apks.* ,apk_details.* from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "'", async function (error, results) {
                 if (error) throw error;
                 if (results.length > 0) {
                     let dealerRole = await helpers.getuserTypeIdByName(Constants.DEALER);
