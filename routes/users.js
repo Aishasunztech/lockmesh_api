@@ -2705,8 +2705,7 @@ router.get('/sdealers/:dealer_id', async function (req, res) {
 });
 
 
-/** Undo Dealer / S Dealer **/
-
+/** Undo Dealer / S-Dealer **/
 router.post('/dealer/undo', async function (req, res) {
     var verify = await verifyToken(req, res);
     var dealer_id = req.body.dealer_id;
@@ -2818,6 +2817,7 @@ router.get('/connect/:device_id', async function (req, res) {
     }
 });
 
+// resync device
 router.patch('/sync-device', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
@@ -2934,7 +2934,6 @@ router.get('/get_app_permissions', async function (req, res) {
                 }
             }
 
-            console.log(onlyApps, 'ext e n tion ', Extension)
 
             let newExtlist = [];
             for (let ext of Extension) {
@@ -2961,7 +2960,6 @@ router.get('/get_app_permissions', async function (req, res) {
 
                 }
 
-                console.log('sub ext', subExtension)
 
                 newExtlist.push({
                     uniqueName: ext.unique_name,
@@ -2973,8 +2971,6 @@ router.get('/get_app_permissions', async function (req, res) {
 
                 })
             }
-
-            console.log('daa is ', onlyApps)
 
 
             res.send({
@@ -3198,35 +3194,80 @@ router.post('/save_policy', async function (req, res) {
         var verify = await verifyToken(req, res);
         if (verify.status !== undefined && verify.status == true) {
 
-            console.log('verfy sysytem', req.body.data.system_permissions)
-
             let policy_name = req.body.data.policy_name !== undefined ? req.body.data.policy_name : null;
-            let policy_note = req.body.data.policy_note !== undefined ? req.body.data.policy_note : null;
-            let push_apps = req.body.data.push_apps !== undefined ? JSON.stringify(req.body.data.push_apps) : null;
-            let app_list = req.body.data.app_list !== undefined ? JSON.stringify(req.body.data.app_list) : null;
-            let secure_apps = req.body.data.secure_apps !== undefined ? JSON.stringify(req.body.data.secure_apps) : null;
-            let system_permissions = req.body.data.system_permissions !== undefined ? JSON.stringify(req.body.data.system_permissions) : null;
-            // console.log(policy_name, 'policy name', req.body.data)
+            if (policy_name !== null) {
+                let policy_note = req.body.data.policy_note !== undefined ? req.body.data.policy_note : null;
+                let push_apps = req.body.data.push_apps !== undefined ? JSON.stringify(req.body.data.push_apps) : null;
+                let app_list = req.body.data.app_list !== undefined ? JSON.stringify(req.body.data.app_list) : null;
+                let secure_apps = req.body.data.secure_apps !== undefined ? JSON.stringify(req.body.data.secure_apps) : null;
+                let system_permissions = req.body.data.system_permissions !== undefined ? JSON.stringify(req.body.data.system_permissions) : null;
 
-            var command_name = '#' + policy_name.replace(/ /g, "_");
+                let loggedDealerId = verify.user.id;
+                let loggedDealerType = verify.user.user_type;
+                let connectedDealer = verify.user.connected_dealer;         
+                let checkExistingQ = "SELECT policy_name FROM policy WHERE policy_name='"+policy_name+"' ";
+                // let checkExisting = await sql.query(checkExistingQ);
 
-            var applyQuery = "insert into policy (policy_name,policy_note,command_name, app_list, push_apps, controls,permissions, dealer_id , dealers) values ('" + policy_name + "','" + policy_note + "','" + command_name + "','" + app_list + "', '" + push_apps + "','" + system_permissions + "', '" + secure_apps + "','" + verify.user.id + "' , '[]')";
-            // console.log('query insert', applyQuery);
-            // console.log(applyQuery);
+                if (loggedDealerType === ADMIN) {
 
-            await sql.query(applyQuery, async function (err, rslts) {
-                if (err) throw err;
-                // console.log('query/........... ', applyQuery)
-
-                if (rslts.affectedRows) {
+                } else if (loggedDealerType === DEALER) {
+                    let subDealerQ = "SELECT dealer_id FROM dealers WHERE connected_dealer=" + loggedDealerId;
+                    let subDealers = await sql.query(subDealerQ);
+                    let subDealerArray = [];
+                    subDealers.map((dealer)=>{
+                        subDealerArray.push(dealer.dealer_id)
+                    });
+                    if(subDealerArray.length){
+                        checkExistingQ = checkExistingQ + " AND (dealer_type='"+ ADMIN +"' OR dealer_id="+loggedDealerId+" OR dealer_id in ("+ subDealerArray.join() +"))"
+                    } else {
+                        checkExistingQ = checkExistingQ + " AND (dealer_type='"+ ADMIN +"' OR dealer_id="+loggedDealerId+" )"
+                    }
+                } else if (loggedDealerType === SDEALER){
+                    checkExistingQ = checkExistingQ + " AND (dealer_type='"+ ADMIN +"' OR dealer_id="+loggedDealerId+" OR dealer_id = "+ connectedDealer +")";
+                }
+                console.log("testing testing testing");
+                console.log(checkExistingQ);
+                let checkExisting = await sql.query(checkExistingQ);
+                if(checkExisting.length){
                     data = {
-                        "status": true,
-                        "msg": 'Policy Saved Successfully',
+                        status: false,
+                        msg: 'Policy name should be unique',
 
                     };
                     res.send(data);
+                    return;
                 }
-            })
+                var command_name = '#' + policy_name.replace(/ /g, "_");
+
+                var applyQuery = "INSERT INTO policy (policy_name, policy_note, command_name, app_list, push_apps, controls, permissions, dealer_id, dealer_type, dealers) VALUES ('" + policy_name + "', '" + policy_note + "', '" + command_name + "', '" + app_list + "', '" + push_apps + "', '" + system_permissions + "', '" + secure_apps + "', '" + loggedDealerId + "', '"+ loggedDealerType +"', '[]')";
+
+                sql.query(applyQuery, async function (err, rslts) {
+                    if (err) throw err;
+                    // console.log('query/........... ', applyQuery)
+
+                    if (rslts.affectedRows) {
+                        data = {
+                            status: true,
+                            msg: 'Policy Saved Successfully',
+
+                        };
+                    } else {
+                        data = {
+                            status: false,
+                            msg: 'Policy Couldn\'t be saved'
+                        }
+                    }
+                    res.send(data);
+                    return;
+                })
+            } else {
+                data = {
+                    status: false,
+                    msg: 'Policy Couldn\'t be saved'
+                }
+                res.send(data);
+                return;
+            }
 
         }
     } catch (error) {
