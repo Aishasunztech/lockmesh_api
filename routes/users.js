@@ -3561,7 +3561,7 @@ router.get('/get_policies', async function (req, res) {
                         "msg": 'successful',
                         "policies": policies
                     };
-                    console.log(data);
+                    // console.log(data);
                     res.send(data);
                 });
             }
@@ -3571,6 +3571,8 @@ router.get('/get_policies', async function (req, res) {
                     if (results.length > 0) {
                         // console.log(results);
                         let dealerRole = await helpers.getuserTypeIdByName(Constants.DEALER);
+                        let default_policy = await sql.query("SELECT * from default_policies WHERE dealer_id = '" + userId + "'")
+                        let default_policy_id = (default_policy.length) ? default_policy[0].policy_id : null
 
                         let sdealerList = await sql.query("select count(*) as dealer_count ,dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
                         let dealerCount = sdealerList[0].dealer_count;
@@ -3589,6 +3591,7 @@ router.get('/get_policies', async function (req, res) {
                             let push_apps = (results[i].push_apps !== undefined && results[i].push_apps !== null) ? JSON.parse(results[i].push_apps) : JSON.parse('[]');
                             let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== null) ? JSON.parse(results[i].app_list) : JSON.parse('[]');
                             let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : JSON.parse('[]');
+                            let is_default = (results[i].id === default_policy_id) ? true : false
                             dta = {
                                 id: results[i].id,
                                 policy_name: results[i].policy_name,
@@ -3601,7 +3604,8 @@ router.get('/get_policies', async function (req, res) {
                                 controls: controls,
                                 secure_apps: secure_apps,
                                 push_apps: push_apps,
-                                app_list: app_list2
+                                app_list: app_list2,
+                                is_default: is_default
                             }
                             policies.push(dta);
                         }
@@ -5953,6 +5957,36 @@ router.get('/get_activities/:device_id', async function (req, res) {
         throw Error(error.message);
     }
 });
+
+router.post('/set_default_policy', async function (req, res) {
+    try {
+        var verify = await verifyToken(req, res);
+        if (verify.status !== undefined && verify.status == true) {
+            let enable = req.body.enable
+            let policy_id = req.body.policy_id
+
+            let default_policy = await sql.query("SELECT * FROM default_policies WHERE dealer_id = '" + verify.user.id + "'")
+            if (default_policy.length) {
+                if (enable) {
+                    sql.query("UPDATE default_policies SET policy_id = '" + policy_id + "' WHERE dealer_id = '" + verify.user.id + "'")
+                }
+                else {
+                    sql.query("DELETE FROM default_policies WHERE dealer_id = '" + verify.user.id + "' AND policy_id = '" + policy_id + "'")
+                }
+            } else {
+                sql.query("INSERT INTO default_policies (dealer_id , policy_id) VALUES (" + verify.user.id + " , " + policy_id + " )")
+            }
+            data = {
+                "status": true,
+                "msg": 'Default policy changed successfully'
+            };
+            res.send(data);
+        }
+    } catch (error) {
+        throw Error(error.message);
+    }
+});
+
 
 /** Cron for expiry date **/
 cron.schedule('0 0 0 * * *', async () => {
