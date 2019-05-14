@@ -295,7 +295,7 @@ module.exports.listen = async function (server) {
                 });
             }
 
-            // ================================================================IMEI===================================================
+            // ================================================================ IMEI ===================================================
             // IMEI SOCKET
             socket.on(Constants.IMEI_APPLIED + device_id, async function (data) {
                 console.log("imei_applied: " + device_id);
@@ -335,7 +335,7 @@ module.exports.listen = async function (server) {
                 });
             }
 
-            // ==========================================================PUSH APPS ============================================
+            // ========================================================== PUSH APPS ============================================
             // pending pushed apps for device
             var pendingAppsQ = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='push_apps' order by created_at desc limit 1";
             let pendingPushedApps = await sql.query(pendingAppsQ);
@@ -405,7 +405,37 @@ module.exports.listen = async function (server) {
 
             // ======================================================= Policy ============================================================= \\
             socket.on(Constants.LOAD_POLICY + device_id, async (response) => {
-                console.log("Load Policy", response);
+                let {link_code, device_id, policy_name, is_default} = response;
+
+                let dealerQ = "SELECT * FROM dealers WHERE link_code ='"+ link_code +"'";
+                
+                if(is_default){
+                    
+                } else if(policy_name !== '' && policy_name !== null) {
+                    let dealer = await sql.query(dealerQ);
+                    if(dealer.length){
+                        let policyQ = "SELECT policy.* FROM dealer_policies LEFT JOIN policy ON policy.id = dealer_policies.policy_id WHERE (dealer_policies.dealer_id=" + dealer[0].dealer_id + " OR policy.dealer_id="+ dealer[0].dealer_id+" )  AND  command_name = '"+policy_name+"'";
+                        let policy= await sql.query(policyQ);
+                        if(policy.length){
+
+                        } else {
+                            socket.emit(Constants.GET_POLICY + device_id,{
+                                status: false,
+                                device_id: device_id
+                            })    
+                        }
+                    } else {
+                        socket.emit(Constants.GET_POLICY + device_id,{
+                            status: false,
+                            device_id: device_id
+                        })
+                    }
+                } else {
+                    socket.emit(Constants.GET_POLICY + device_id,{
+                        status: false,
+                        device_id: device_id
+                    })
+                }
             });
 
 

@@ -74,6 +74,8 @@ module.exports = {
 
     LOAD_POLICY:'load_policy_',
 
+    GET_POLICY: 'get_policy_',
+    
     PING: "ping",
     PONG: "pong",
 

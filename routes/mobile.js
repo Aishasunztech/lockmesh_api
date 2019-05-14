@@ -159,7 +159,7 @@ router.post('/login', async function (req, resp) {
                 resp.send(data);
             } else {
                 let validity = await device_helpers.checkRemainDays(usrAcc[0].created_at, usrAcc[0].validity)
-                if (validity < 0 || validity == 'Expired') {
+                if (validity < 0 || validity === 'Expired') {
                     data = {
                         'status': false,
                         'msg': 'Invalid activation code'
@@ -198,11 +198,11 @@ router.post('/login', async function (req, resp) {
                                 let device_id = await device_helpers.getDvcIDByDeviceID(usrAcc[0].device_id)
 
                                 const device = {
-                                    'dId': dealer[0].dealer_id,
-                                    'dealer_pin': dealer[0].link_code,
-                                    'connected_dealer': dealer[0].connected_dealer,
-                                    'type': await helpers.getUserTypeByTypeId(dealer[0].type),
-                                    'device_id': device_id
+                                    dId: dealer[0].dealer_id,
+                                    dealer_pin: dealer[0].link_code,
+                                    connected_dealer: dealer[0].connected_dealer,
+                                    type: await helpers.getUserTypeByTypeId(dealer[0].type),
+                                    device_id: device_id
                                 }
 
                                 jwt.sign({
@@ -232,8 +232,7 @@ router.post('/login', async function (req, resp) {
                             }
 
                         }
-                    }
-                    else {
+                    } else {
 
                     }
 
@@ -247,7 +246,7 @@ router.post('/login', async function (req, resp) {
 
         var deviceQ = "SELECT * FROM devices WHERE mac_address = '" + mac_address + "' OR serial_number='" + serial_number + "'";
         var device = await sql.query(deviceQ);
-        if (device.length == 0) {
+        if (device.length === 0) {
             // console.log("hello", "login")
             data = {
                 'status': false,
@@ -494,113 +493,59 @@ router.post('/getstatus', async function (req, resp) {
         //console.log(sql1);
 
         var device = await sql.query(deviceQ);
-        // console.log("my device", device);
-        // res
-        //console.log(res[0].device_status);
+        // console.log("my device", device)
         if (device.length > 0) {
             // let userAcc = await sql.query("SELECT * FROM usr_acc WHERE device_id="+ device[0].id);
             let userAcc = await device_helpers.getUserAccByDvcId(device[0].id);
             // console.log("get usr account by device id", userAcc);
             if (userAcc) {
                 let deviceStatus = device_helpers.checkStatus(userAcc);
-                // console.log("device_status get_status", deviceStatus);
-
-                if (userAcc.device_status == 0) {
-                    if (userAcc.unlink_status == 1) {
-                        data = {
-                            "status": -1,
-                            "msg": "Device Unlinked.",
-                            "dealer_id": userAcc.dealer_id,
-                            "device_id": device[0].device_id
-                        };
+                let dealerQ = "SELECT dealer_id, link_code FROM dealers WHERE dealer_id =" + userAcc.dealer_id;
+                let dealer = await sql.query(dealerQ);
+                if(dealer.length){
+                    if (userAcc.device_status == 0) {
+                        if (userAcc.unlink_status == 1) {
+                            data = {
+                                status: -1,
+                                msg: "Device Unlinked.",
+                                dealer_id: userAcc.dealer_id,
+                                device_id: device[0].device_id,
+                                dealer_pin: dealer[0].link_code
+                            };
+                        } else {
+                            data = {
+                                status: 0,
+                                msg: "Processing.",
+                                dealer_id: userAcc.dealer_id,
+                                device_id: device[0].device_id,
+                                dealer_pin: dealer[0].link_code,
+                            };
+    
+                        }
+    
+                        resp.send(data);
                     } else {
                         data = {
-                            "status": 0,
-                            "msg": "Processing.",
-                            "dealer_id": userAcc.dealer_id,
-                            "device_id": device[0].device_id
+                            status: 1,
+                            msg: "Device activated.",
+                            dealer_id: userAcc.dealer_id,
+                            expiry_date: userAcc.expiry_date,
+                            device_id: device[0].device_id,
+                            dealer_pin: dealer[0].link_code
+                            // "chat_id": res[0].chat_id,
+                            // "pgp_email": res[0].pgp_email,
+                            // "sim_id": res[0].sim_id
                         };
-
+                        resp.send(data);
                     }
-
-                    resp.send(data);
                 } else {
-                    data = {
-                        "status": 1,
-                        "msg": "Device activated.",
-                        "dealer_id": userAcc.dealer_id,
-                        "expiry_date": userAcc.expiry_date,
-                        "device_id": device[0].device_id,
-                        // "chat_id": res[0].chat_id,
-                        // "pgp_email": res[0].pgp_email,
-                        // "sim_id": res[0].sim_id
-                    };
-                    resp.send(data);
+
                 }
-                // if(deviceStatus === Constants.DEVICE_PENDING_ACTIVATION){
-                //     console.log("pending");
-                //     data = {
-                //         "status": -1,
-                //         "msg": "Device Unlinked.",
-                //         "dealer_id": userAcc.dealer_id,
-                //         "device_id": device[0].device_id
-                //     };
-                //     resp.send(data);
-                //     return;
-                // }  
 
-                // else {
-                //     console.log("activated");
-                //     data = {
-                //         "status": 0,
-                //         "msg": "Processing.",
-                //         "dealer_id": userAcc.dealer_id,
-                //         "expiry_date": usrAcc.expiry_date,
-                //         "device_id": device[0].device_id,
-                //         // "chat_id": res[0].chat_id,
-                //         // "pgp_email": res[0].pgp_email,
-                //         // "sim_id": res[0].sim_id
-                //     };
-                //     resp.send(data);
-                // }
-                // else {
-                //     console.log("activated");
-                //     data = {
-                //         "status": 1,
-                //         "msg": "Device activated.",
-                //         "dealer_id": userAcc.dealer_id,
-                //         "expiry_date": usrAcc.expiry_date,
-                //         "device_id": device[0].device_id,
-                //         // "chat_id": res[0].chat_id,
-                //         // "pgp_email": res[0].pgp_email,
-                //         // "sim_id": res[0].sim_id
-                //     };
-                //     resp.send(data);
-                // }
-
+            } else {
+                // device exists but user account was deleted
             }
 
-
-            // else if (userAcc.expiry_date == null || userAcc.expiry_date == '') {
-            //     console.log("expiry date");
-
-            //     data = {
-            //         "status": 1,
-            //         "msg": "Device activated.",
-            //         "dealer_id": userAcc.dealer_id,
-            //         "expiry_date": '',
-            //         "device_id": device[0].device_id,
-            //         // "chat_id": userAcc[0].chat_id,
-            //         // "pgp_email": res[0].pgp_email,
-            //         // "sim_id": res[0].sim_id
-            //     };
-            //     resp.send(data);
-            // }
-
-
-            // } else {
-
-            // }
         } else {
             data = {
                 "status": -1,
