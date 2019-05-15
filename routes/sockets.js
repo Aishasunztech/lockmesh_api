@@ -433,29 +433,27 @@ module.exports.listen = async function (server) {
                                 status: false,
                                 device_id: device_id
                             })
-                        }
-                                } else {  
-                        socket.emit(Constants.GET_POLICY + device_id, {
-                            status: false,
-                            device_id: device_id
-                        })
-                    
+                        }  
+
+                    } else {
+
                     }
+                
                 } else {
                     socket.emit(Constants.GET_POLICY + device_id, {
                         status: false,
-                        device_id: device_id
-                    })
-                
+                        device_id: device_id    
+                    });
                 }
-            });
+           });
 
+
+        // ====================================================== Force Update =====================================
 
         } else {
             console.log("web socket");
         }
-
-
+        // ====================================================== Common Channels =====================================
         // common channels for panel and device
         socket.on(Constants.DISCONNECT, async () => {
             console.log("disconnected: session " + socket.id + " on device id: " + device_id);

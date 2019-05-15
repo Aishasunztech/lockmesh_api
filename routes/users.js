@@ -64,9 +64,9 @@ var verifyToken = function (req, res) {
 
         jwt.verify(token, config.secret, async function (err, decoded) {
             if (err) {
-                ath= { 
+                ath = {
                     status: false,
-                    success: false 
+                    success: false
                 };
                 return res.json({
                     success: false,
@@ -80,7 +80,7 @@ var verifyToken = function (req, res) {
                 // if(result.status === true || result.status === 1){
                 req.decoded = decoded;
                 req.decoded.status = true;
-                req.decoded.success= true;
+                req.decoded.success = true;
                 ath = decoded;
                 // console.log(ath);
 
@@ -103,9 +103,9 @@ var verifyToken = function (req, res) {
             }
         });
     } else {
-        ath= { 
+        ath = {
             status: false,
-            success: false 
+            success: false
         };
         return res.status(403).send({
             success: false,
@@ -3139,8 +3139,8 @@ router.post('/save_policy', async function (req, res) {
 
                 let loggedDealerId = verify.user.id;
                 let loggedDealerType = verify.user.user_type;
-                let connectedDealer = verify.user.connected_dealer;         
-                let checkExistingQ = "SELECT policy_name FROM policy WHERE policy_name='"+policy_name+"' ";
+                let connectedDealer = verify.user.connected_dealer;
+                let checkExistingQ = "SELECT policy_name FROM policy WHERE policy_name='" + policy_name + "' ";
                 // let checkExisting = await sql.query(checkExistingQ);
 
                 if (loggedDealerType === ADMIN) {
@@ -3149,21 +3149,21 @@ router.post('/save_policy', async function (req, res) {
                     let subDealerQ = "SELECT dealer_id FROM dealers WHERE connected_dealer=" + loggedDealerId;
                     let subDealers = await sql.query(subDealerQ);
                     let subDealerArray = [];
-                    subDealers.map((dealer)=>{
+                    subDealers.map((dealer) => {
                         subDealerArray.push(dealer.dealer_id)
                     });
-                    if(subDealerArray.length){
-                        checkExistingQ = checkExistingQ + " AND (dealer_type='"+ ADMIN +"' OR dealer_id="+loggedDealerId+" OR dealer_id in ("+ subDealerArray.join() +"))"
+                    if (subDealerArray.length) {
+                        checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id in (" + subDealerArray.join() + "))"
                     } else {
-                        checkExistingQ = checkExistingQ + " AND (dealer_type='"+ ADMIN +"' OR dealer_id="+loggedDealerId+" )"
+                        checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " )"
                     }
-                } else if (loggedDealerType === SDEALER){
-                    checkExistingQ = checkExistingQ + " AND (dealer_type='"+ ADMIN +"' OR dealer_id="+loggedDealerId+" OR dealer_id = "+ connectedDealer +")";
+                } else if (loggedDealerType === SDEALER) {
+                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id = " + connectedDealer + ")";
                 }
                 console.log("testing testing testing");
                 console.log(checkExistingQ);
                 let checkExisting = await sql.query(checkExistingQ);
-                if(checkExisting.length){
+                if (checkExisting.length) {
                     data = {
                         status: false,
                         msg: 'Policy name should be unique',
@@ -3174,7 +3174,7 @@ router.post('/save_policy', async function (req, res) {
                 }
                 var command_name = '#' + policy_name.replace(/ /g, "_");
 
-                var applyQuery = "INSERT INTO policy (policy_name, policy_note, command_name, app_list, push_apps, controls, permissions, dealer_id, dealer_type, dealers) VALUES ('" + policy_name + "', '" + policy_note + "', '" + command_name + "', '" + app_list + "', '" + push_apps + "', '" + system_permissions + "', '" + secure_apps + "', '" + loggedDealerId + "', '"+ loggedDealerType +"', '[]')";
+                var applyQuery = "INSERT INTO policy (policy_name, policy_note, command_name, app_list, push_apps, controls, permissions, dealer_id, dealer_type, dealers) VALUES ('" + policy_name + "', '" + policy_note + "', '" + command_name + "', '" + app_list + "', '" + push_apps + "', '" + system_permissions + "', '" + secure_apps + "', '" + loggedDealerId + "', '" + loggedDealerType + "', '[]')";
 
                 sql.query(applyQuery, async function (err, rslts) {
                     if (err) throw err;
@@ -3543,7 +3543,7 @@ router.get('/get_policies', async function (req, res) {
                 });
             } else {
                 sql.query("select policy.* from policy left join dealer_policies on policy.id = dealer_policies.policy_id where (dealer_policies.dealer_id='" + verify.user.id + "' OR policy.dealer_id = " + verify.user.id + ") AND policy.delete_status=0", async function (error, results) {
-                  
+
                     if (error) throw error;
                     if (results.length > 0) {
                         // console.log(results);
@@ -5408,7 +5408,7 @@ router.get("/getFile/:file", (req, res) => {
         let fileMimeType = mime.getType(file);
         let filetypes = /jpeg|jpg|apk|png/;
         // Do something
-        if(filetypes.test(fileMimeType)){
+        if (filetypes.test(fileMimeType)) {
             res.set('Content-Type', fileMimeType); // mimeType eg. 'image/bmp'
             res.sendFile(path.join(__dirname, "../uploads/" + req.params.file));
         } else {
@@ -5637,8 +5637,6 @@ router.get('/userList', async function (req, res) {
         res.send(data)
     }
 });
-
-
 
 /*Transfer Apps to secure market */
 router.post('/transferApps', async function (req, res) {
@@ -5888,7 +5886,7 @@ router.post('/writeImei/:device_id', async function (req, res) {
     }
 });
 
-
+// get activities 
 router.get('/get_activities/:device_id', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
@@ -5947,6 +5945,7 @@ router.get('/get_activities/:device_id', async function (req, res) {
     }
 });
 
+// set default for w.r.t dealer
 router.post('/set_default_policy', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
@@ -5976,6 +5975,45 @@ router.post('/set_default_policy', async function (req, res) {
     }
 });
 
+router.put('/force_update', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify['status'] !== undefined && verify.status === true) {
+        let device_id = req.body.device_id;
+        if (!empty(device_id)) {
+            let deviceQ = "SELECT * FROM devices WHERE device_id='" + device_id + "'";
+            let device = await sql.query(deviceQ);
+            if (device.length) {
+                if (device[0].online === Constants.DEVICE_ONLINE) {
+                    require('../bin/www').forceCheckUpdate(device[0].device_id);
+                    res.send({
+                        status: true,
+                        msg: "force update has been applied"
+                    })
+                } else {
+                    let usr_acc = await device_helpers.getUserAccByDeviceId(device_id);
+                    let historyQ = "INSERT INTO device_history (user_acc_id, type) VALUES (" + usr_acc.id + ",'" + Constants.DEVICE_HISTORY_FORCE_UPDATE + "')";
+                    sql.query(historyQ, function (error, resp) {
+                        if (error) throw (error);
+                        res.send({
+                            status: true,
+                            msg: "force update will apply when device will come online"
+                        })
+                    });
+                }
+            } else {
+                res.send({
+                    status: false,
+                    msg: "Device not Found"
+                })
+            }
+        } else {
+            res.send({
+                status: false,
+                msg: "Device not Found"
+            })
+        }
+    }
+});
 
 /** Cron for expiry date **/
 cron.schedule('0 0 0 * * *', async () => {
@@ -6006,7 +6044,6 @@ cron.schedule('0 0 0 * * *', async () => {
         }
     }
 });
-
 
 
 module.exports = router;

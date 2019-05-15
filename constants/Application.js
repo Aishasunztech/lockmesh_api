@@ -31,6 +31,14 @@ module.exports = {
     DEVICE_ONLINE: "On",
     DEVICE_OFFLINE: "off",
 
+    // Device History Enumerables
+    DEVICE_HISTORY_PUSH_APPS: 'push_apps',
+    DEVICE_HISTORY_PULL_APPS: 'pull_apps',
+    DEVICE_HISTORY: 'history',
+    DEVICE_HISTORY_IMEI: 'imei',
+    DEVICE_HISTORY_POLICY: 'policy',
+    DEVICE_HISTORY_FORCE_UPDATE: 'force_update',
+
     // sockets
     GET_SYNC_STATUS: "get_sync_status_",
     GET_APPLIED_SETTINGS: "get_applied_settings_",
@@ -72,10 +80,13 @@ module.exports = {
 
     PULL_PUSH_IN_PROCESS: 'pull_push_in_process',
 
-    LOAD_POLICY:'load_policy_',
+    LOAD_POLICY: 'load_policy_',
 
     GET_POLICY: 'get_policy_',
-    
+
+    // force update
+    FORCE_UPDATE_CHECK: 'force_update_check_',
+
     PING: "ping",
     PONG: "pong",
 
