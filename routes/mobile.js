@@ -66,7 +66,7 @@ var verifyToken = function (req, res) {
             status: false,
             success: false
         };
-        return res.status(403).send({
+        return res.send({
             success: false,
             msg: 'TOKEN_NOT_PROVIDED'
         });
@@ -348,14 +348,36 @@ router.post('/login', async function (req, resp) {
 });
 
 // system control login, secure market login
-router.post('systemlogin', async function (req, res) {
+router.post('/systemlogin', async function (req, res) {
     let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = device_helpers.getDeviceInfo(req);
     console.log(imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address);
+    const sysmtemInfo = {
+        serial_number, ip, mac_address
+    };
 
-    res.send({
-        success: true,
+    jwt.sign({
+        sysmtemInfo
+    },
+        config.secret,
+        {
+            expiresIn: config.expiresIn
+        },
+        (err, token) => {
+            if (err) {
+                res.json({
+                    'err': err
+                });
+            } else {
 
-    })
+                res.json({
+                    token: token,
+                    status: true,
+                });
+                return;
+            }
+        }
+    );
+
 });
 
 /** Link Device MDM **/
@@ -695,48 +717,55 @@ router.get('/apklist', async function (req, res) {
 
 router.get('/getUpdate/:version/:uniqueName/:label', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
-    let versionName = req.params.version;
-    let uniqueName = req.params.uniqueName;
-    let query = "SELECT * FROM apk_details WHERE package_name = '" + uniqueName + "' AND delete_status=0 ";
-    sql.query(query, function (error, response) {
-        // console.log("res", response);
+    let verify = await verifyToken(req, res);
+    if (verify.status == true) {
+        let versionName = req.params.version;
+        let uniqueName = req.params.uniqueName;
+        let query = "SELECT * FROM apk_details WHERE package_name = '" + uniqueName + "' AND delete_status=0 ";
+        sql.query(query, function (error, response) {
+            // console.log("res", response);
 
-        if (error) {
-            res.send({
-                status: false,
-                msg: ""
-            });
-
-        }
-        let isAvail = false;
-
-        if (response.length) {
-            for (let i = 0; i < response.length; i++) {
-                console.log("testing upgrade", response[i].version_name)
-                if (Number(response[i].version_name) > Number(versionName)) {
-                    isAvail = true;
-                    res.send({
-                        apk_status: true,
-                        apk_url: response[i].apk
-                    });
-
-                    break;
-                }
-            }
-            if (!isAvail) {
+            if (error) {
                 res.send({
-                    apk_status: false,
-                    msg: ""
+                    success: true,
+                    status: false,
+                    msg: "Error in Query"
                 });
             }
 
-        } else {
-            res.send({
-                apk_status: false,
-                msg: ""
-            });
-        }
-    })
+            let isAvail = false;
+
+            if (response.length) {
+                for (let i = 0; i < response.length; i++) {
+                    if (Number(response[i].version_code) > Number(versionName)) {
+                        isAvail = true;
+                        res.send({
+                            apk_status: true,
+                            success: true,
+                            apk_url: response[i].apk
+                        });
+
+                        break;
+                    }
+                }
+                if (!isAvail) {
+                    res.send({
+                        apk_status: false,
+                        success: true,
+                        msg: ""
+                    });
+                }
+
+            } else {
+                res.send({
+                    apk_status: false,
+                    success: true,
+                    msg: ""
+                });
+            }
+        })
+    }
+
 });
 
 /** Get Apk **/
