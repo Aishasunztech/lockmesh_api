@@ -22,6 +22,7 @@ var path = require('path');
 var fs = require("fs");
 var Constants = require('../constants/Application');
 var moment = require('moment-strftime');
+var mime = require('mime');
 
 var helpers = require('../helper/general_helper.js');
 const device_helpers = require('../helper/device_helpers.js');
@@ -5403,9 +5404,19 @@ router.post('/save_policy_permissions', async function (req, res) {
 router.get("/getFile/:file", (req, res) => {
 
     if (fs.existsSync(path.join(__dirname, "../uploads/" + req.params.file))) {
+        let file = path.join(__dirname, "../uploads/" + req.params.file);
+        let fileMimeType = mime.getType(file);
+        let filetypes = /jpeg|jpg|apk|png/;
         // Do something
-        // res.set('Content-Type', mimeType); // mimeType eg. 'image/bmp'
-        res.sendFile(path.join(__dirname, "../uploads/" + req.params.file));
+        if(filetypes.test(fileMimeType)){
+            res.set('Content-Type', fileMimeType); // mimeType eg. 'image/bmp'
+            res.sendFile(path.join(__dirname, "../uploads/" + req.params.file));
+        } else {
+            res.send({
+                "status": false,
+                "msg": "file not found"
+            })
+        }
     } else {
         res.send({
             "status": false,
