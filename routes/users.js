@@ -3407,6 +3407,67 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
     }
 });
 
+router.post('/apply_policy/:device_id', async function (req, res) {
+    try {
+        var verify = await verifyToken(req, res);
+        if (verify.status !== undefined && verify.status == true) {
+            let device_id = req.params.device_id;
+            let userAccId = req.body.userAccId;
+            let policy_id = req.body.policyId;
+            if (device_id !== null || device_id !== '' || device_id !== undefined || device_id !== 'undefined' || policy_id !== null || policy_id !== '' || policy_id !== undefined || policy_id !== 'undefined') {
+
+                let getPolicyQ = "SELECT * FROM POLICY WHERE id =" + policy_id;
+                let reslults = await sql.query(getPolicyQ)
+
+                var applyQuery = "INSERT INTO device_history (user_acc_id, app_list, controls, permissions, push_apps, type) VALUES (" + userAccId + ", '" + reslults[0].app_list + "','" + reslults[0].controls + "','" + reslults[0].permissions + "','" + reslults[0].push_apps + "',  'policy')";
+                sql.query(applyQuery, async function (err, rslts) {
+                    if (err) {
+                        throw err;
+                    }
+                    if (rslts) {
+
+                        let isOnline = await device_helpers.isDeviceOnline(device_id);
+                        if (isOnline) {
+                            // require("../bin/www").applyPushApps(apps, device_id);
+                            var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='policy' AND user_acc_id=" + userAccId + "";
+                            sql.query(pushAppsQ)
+                            var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
+                            await sql.query(loadDeviceQ)
+                            data = {
+                                "status": true,
+                                "online": true
+                            };
+                        }
+                        else {
+                            data = {
+                                "status": true,
+                            };
+                        }
+                        res.send(data);
+                    } else {
+                        data = {
+                            "status": false,
+                            "msg": 'Error while Processing',
+                        };
+                        res.send(data);
+                    }
+
+                });
+            }
+        }
+        else {
+            data = {
+                "status": false,
+                "msg": 'token not provided',
+            };
+            res.send(data);
+
+        }
+    } catch (error) {
+        throw Error(error.message);
+    }
+});
+
 router.post('/apply_pullapps/:device_id', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
