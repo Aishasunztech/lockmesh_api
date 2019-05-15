@@ -249,8 +249,8 @@ router.post('/login', async function (req, resp) {
         if (device.length === 0) {
             // console.log("hello", "login")
             data = {
-                'status': false,
-                'msg': 'unlinked'
+                status: false,
+                msg: 'unlinked'
             }
             resp.send(data);
         } else {
@@ -259,19 +259,19 @@ router.post('/login', async function (req, resp) {
 
             if (deviceStatus == "Unlinked") {
                 data = {
-                    'status': false,
-                    'msg': 'unlinked'
+                    status: false,
+                    msg: 'unlinked'
                 }
 
             } else if (deviceStatus == 'Expired') {
                 data = {
-                    'status': false,
-                    'msg': 'expired'
+                    status: false,
+                    msg: 'expired'
                 }
             } else if (deviceStatus == "Suspended") {
                 data = {
-                    'status': false,
-                    'msg': 'suspended'
+                    status: false,
+                    msg: 'suspended'
                 }
             }
             // } else if (device[0].wipe_status == "wipe") {
@@ -282,49 +282,49 @@ router.post('/login', async function (req, resp) {
 
             // }
             else {
-
                 data = {
-                    'status': true,
-                    'msg': 'success'
+                    status: true,
+                    msg: 'success'
                 }
 
             }
 
             const dvc = {
-                'dId': usr_acc.dealer_id,
-                'device_id': device[0].device_id,
-                data
+                dId: usr_acc.dealer_id,
+                device_id: device[0].device_id,
+                ...data
             }
             // console.log("this is device", dvc);
             jwt.sign({
                 dvc
             }, config.secret, {
-                    expiresIn: '86400s'
-                }, (err, token) => {
-                    if (err) {
-                        resp.json({
-                            'err': err
-                        });
-                        return;
-                    }
+                expiresIn: '86400s'
+            }, (err, token) => {
+                if (err) {
+                    resp.json({
+                        'err': err
+                    });
+                    return;
+                }
 
+                try {
                     var d = new Date(usr_acc.expiry_date);
                     var n = d.valueOf()
                     // console.log("expire in", n);
-                    try {
 
-                        resp.json({
-                            token: token,
-                            'status': data.status,
-                            'msg': data.msg,
-                            'dId': device.dId,
-                            'device_id': dvc.device_id,
-                            'expiresIn': n
-                        });
-                    } catch (error) {
-                        // console.log(error);
-                    }
-                });
+                    resp.json({
+                        token: token,
+                        status: data.status,
+                        msg: data.msg,
+                        dId: dvc.dId,
+                        device_id: dvc.device_id,
+                        expiresIn: n
+                    });
+                    return;
+                } catch (error) {
+                    // console.log(error);
+                }
+            });
         }
 
     } else {
