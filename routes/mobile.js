@@ -951,8 +951,8 @@ router.post('/accountstatus', async function (req, res) {
             } else {
 
                 data = {
-                    "status": true,
-                    "msg": Constants.NEW_DEVICE,
+                    status: true,
+                    msg: Constants.NEW_DEVICE,
                 }
                 res.send(data);
 
