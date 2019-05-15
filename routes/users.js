@@ -5984,7 +5984,8 @@ router.put('/force_update', async function (req, res) {
             let device = await sql.query(deviceQ);
             if (device.length) {
                 if (device[0].online === Constants.DEVICE_ONLINE) {
-                    require('../bin/www').forceCheckUpdate(device[0].device_id);
+                    // require('../bin/www').forceCheckUpdate(device[0].device_id);
+                    require("../bin/www").forceCheckUpdate(device[0].device_id);
                     res.send({
                         status: true,
                         msg: "force update has been applied"

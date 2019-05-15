@@ -358,7 +358,7 @@ module.exports.listen = async function (server) {
                 require('../bin/www').ackSinglePushApp(device_id, pushedApps);
             });
             socket.on(Constants.FINISHED_PUSH_APPS + device_id, async (response) => {
-                console.log("testing", response);
+                // console.log("testing", response);
 
                 require('../bin/www').ackFinishedPushApps(device_id, response);
                 // socket.emit(Constants.ACK_FINISHED_PUSH_APPS + device_id, {

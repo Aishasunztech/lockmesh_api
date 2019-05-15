@@ -187,6 +187,7 @@ module.exports.ackSinglePullApp = async function (device_id, response) {
 }
 
 module.exports.forceCheckUpdate = async function (device_id) {
+  console.log("testing forceupdate", device_id);
   io.emit(Constants.FORCE_UPDATE_CHECK + device_id, {
     device_id: device_id,
     status: true

@@ -721,7 +721,7 @@ router.get('/getUpdate/:version/:uniqueName/:label', async (req, res) => {
     if (verify.status == true) {
         let versionName = req.params.version;
         let uniqueName = req.params.uniqueName;
-        let query = "SELECT * FROM apk_details WHERE package_name = '" + uniqueName + "' AND delete_status=0 ";
+        let query = "SELECT * FROM apk_details WHERE package_name = '" + uniqueName + "' AND delete_status=0 AND status='On'";
         sql.query(query, function (error, response) {
             // console.log("res", response);
 
@@ -769,17 +769,19 @@ router.get('/getUpdate/:version/:uniqueName/:label', async (req, res) => {
 });
 
 /** Get Apk **/
-router.get("/getApk/:apk", (req, res) => {
-
-    if (fs.existsSync(path.join(__dirname, "../uploads/" + req.params.apk + '.apk'))) {
-        // Do something
-        res.sendFile(path.join(__dirname, "../uploads/" + req.params.apk + '.apk'));
-    } else {
-        res.send({
-            status: false,
-            msg: "file not found"
-        })
-    }
+router.get("/getApk/:apk", async (req, res) => {
+    // let verify = await verifyToken(req, res);
+    // if(verify['status']!==undefined && verify.status===true){
+        let file = path.join(__dirname, "../uploads/" + req.params.apk + '.apk');
+        if (fs.existsSync(file)) {
+            res.sendFile(file);
+        } else {
+            res.send({
+                status: false,
+                msg: "file not found"
+            })
+        }
+    // }
 });
 
 /** New API MDM Client App (11th.Oct.2018) **/
