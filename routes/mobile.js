@@ -88,17 +88,17 @@ var verifyToken = function (req, res) {
 }
 
 // check device id
-async function checkDeviceId(device_id, sn, mac) {
+// async function checkDeviceId(device_id, sn, mac) {
 
-    let query = "SELECT device_id FROM devices WHERE device_id = '" + device_id + "';"
-    let result = await sql.query(query);
-    if (result.length > 1) {
-        device_id = await helpers.getDeviceId(sn, mac);
-        checkDeviceId(device_id, sn, mac);
-    } else {
-        return device_id;
-    }
-}
+//     let query = "SELECT device_id FROM devices WHERE device_id = '" + device_id + "';"
+//     let result = await sql.query(query);
+//     if (result.length > 1) {
+//         device_id = await helpers.getDeviceId(sn, mac);
+//         checkDeviceId(device_id, sn, mac);
+//     } else {
+//         return device_id;
+//     }
+// }
 
 /* Client Login with Link Code MDM  */
 router.post('/login', async function (req, resp) {
@@ -374,13 +374,13 @@ router.post('/linkdevice', async function (req, resp) {
     // console.log("/linkdevice");
     var reslt = verifyToken(req, resp);
     if (reslt.status == true) {
-        var dId = req.body.dId;
-        var connected_dealer = (req.body.connected_dealer === undefined || req.body.connected_dealer === null) ? 0 : req.body.connected_dealer;
-        // var deviceId = uniqid.process();        
         let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = device_helpers.getDeviceInfo(req);
         // console.log("serial no", serial_number);
         // console.log("mac address", mac_address);
         if (!empty(serial_number) && !empty(mac_address)) {
+            var dId = req.body.dId;
+            var connected_dealer = (req.body.connected_dealer === undefined || req.body.connected_dealer === null) ? 0 : req.body.connected_dealer;
+            // var deviceId = uniqid.process();        
 
             var deviceQ = "SELECT * FROM devices WHERE  mac_address='" + mac_address + "' OR serial_number='" + serial_number + "'";
             var device = await sql.query(deviceQ);
@@ -397,7 +397,6 @@ router.post('/linkdevice', async function (req, resp) {
                 sendEmail("New Device Request", "You have a new device request", dealer[0].dealer_email, function (error, response) {
                     if (error) throw error;
                 });
-                // let dealerStatus = helpers.getDealerStatus(dealer[0]);
 
                 if (device.length > 0) {
                     var user_acc = await device_helpers.getUserAccByDvcId(device[0].id);
