@@ -16,6 +16,7 @@ const nodemailer = require('nodemailer');
 var moment = require('moment-strftime');
 const device_helpers = require('../helper/device_helpers.js');
 var Constants = require('../constants/Application');
+
 /** SMTP Email **/
 var smtpTransport = nodemailer.createTransport({
     host: "smtp.office365.com",
@@ -55,29 +56,51 @@ var verifyToken = function (req, res) {
         jwt.verify(token, config.secret, function (err, decoded) {
             // console.log(err);
             if (err) {
+                ath = {
+                    status: false,
+                    success: false
+                };
                 return res.json({
                     success: false,
-                    message: 'TOKEN_INVALID'
+                    msg: 'TOKEN_INVALID'
                 });
             } else {
                 // if everything is good, save to request for use in other routes
                 req.decoded = decoded;
+
                 req.decoded.status = true;
+                req.decoded.success = true;
                 ath = decoded;
             }
         });
     } else {
-        // if there is no token return an error
+        ath = {
+            status: false,
+            success: false
+        };
         return res.status(403).send({
             success: false,
-            message: 'TOKEN_NOT_PROVIDED'
+            msg: 'TOKEN_NOT_PROVIDED'
         });
     }
+
     return ath;
 }
 
+// check device id
+async function checkDeviceId(device_id, sn, mac) {
+
+    let query = "SELECT device_id FROM devices WHERE device_id = '" + device_id + "';"
+    let result = await sql.query(query);
+    if (result.length > 1) {
+        device_id = await helpers.getDeviceId(sn, mac);
+        checkDeviceId(device_id, sn, mac);
+    } else {
+        return device_id;
+    }
+}
+
 /* Client Login with Link Code MDM  */
-/* Client Login via Locker app*/
 router.post('/login', async function (req, resp) {
 
     var linkCode = req.body.link_code;
@@ -86,8 +109,8 @@ router.post('/login', async function (req, resp) {
     var dateNow = new Date()
     var start_date = moment(dateNow).format("YYYY/MM/DD")
 
-    // console.log("mac_address", mac_address);
-    // console.log("serial_number", serial_number);
+    console.log("mac_address", mac_address);
+    console.log("serial_number", serial_number);
 
     var data;
     //console.log(linkCode);
@@ -121,16 +144,16 @@ router.post('/login', async function (req, resp) {
                 } else {
 
                     const device = {
-                        'dId': dealer[0].dealer_id,
-                        'dealer_pin': dealer[0].link_code,
-                        'connected_dealer': dealer[0].connected_dealer,
-                        'type': await helpers.getUserTypeByTypeId(dealer[0].type)
+                        dId: dealer[0].dealer_id,
+                        dealer_pin: dealer[0].link_code,
+                        connected_dealer: dealer[0].connected_dealer,
+                        type: await helpers.getUserTypeByTypeId(dealer[0].type)
                     }
 
                     jwt.sign({
                         device
                     }, config.secret, {
-                            expiresIn: '86400s'
+                            expiresIn: config.expiresIn
                         }, (err, token) => {
                             if (err) {
                                 resp.json({
@@ -298,33 +321,33 @@ router.post('/login', async function (req, resp) {
             jwt.sign({
                 dvc
             }, config.secret, {
-                expiresIn: '86400s'
-            }, (err, token) => {
-                if (err) {
-                    resp.json({
-                        'err': err
-                    });
-                    return;
-                }
+                    expiresIn: '86400s'
+                }, (err, token) => {
+                    if (err) {
+                        resp.json({
+                            'err': err
+                        });
+                        return;
+                    }
 
-                try {
-                    var d = new Date(usr_acc.expiry_date);
-                    var n = d.valueOf()
-                    // console.log("expire in", n);
+                    try {
+                        var d = new Date(usr_acc.expiry_date);
+                        var n = d.valueOf()
+                        // console.log("expire in", n);
 
-                    resp.json({
-                        token: token,
-                        status: data.status,
-                        msg: data.msg,
-                        dId: dvc.dId,
-                        device_id: dvc.device_id,
-                        expiresIn: n
-                    });
-                    return;
-                } catch (error) {
-                    // console.log(error);
-                }
-            });
+                        resp.json({
+                            token: token,
+                            status: data.status,
+                            msg: data.msg,
+                            dId: dvc.dId,
+                            device_id: dvc.device_id,
+                            expiresIn: n
+                        });
+                        return;
+                    } catch (error) {
+                        // console.log(error);
+                    }
+                });
         }
 
     } else {
@@ -336,17 +359,14 @@ router.post('/login', async function (req, resp) {
     }
 });
 
-async function checkDeviceId(device_id, sn, mac) {
+// system control login, secure market login
+router.post('systemlogin', async function (req, res) {
 
-    let query = "SELECT device_id FROM devices WHERE device_id = '" + device_id + "';"
-    let result = await sql.query(query);
-    if (result.length > 1) {
-        device_id = await helpers.getDeviceId(sn, mac);
-        checkDeviceId(device_id, sn, mac);
-    } else {
-        return device_id;
-    }
-}
+    res.send({
+        success: true,
+
+    })
+});
 
 /** Link Device MDM **/
 router.post('/linkdevice', async function (req, resp) {
@@ -502,7 +522,7 @@ router.post('/getstatus', async function (req, resp) {
                 let deviceStatus = device_helpers.checkStatus(userAcc);
                 let dealerQ = "SELECT dealer_id, link_code FROM dealers WHERE dealer_id =" + userAcc.dealer_id;
                 let dealer = await sql.query(dealerQ);
-                if(dealer.length){
+                if (dealer.length) {
                     if (userAcc.device_status == 0) {
                         if (userAcc.unlink_status == 1) {
                             data = {
@@ -520,9 +540,9 @@ router.post('/getstatus', async function (req, resp) {
                                 device_id: device[0].device_id,
                                 dealer_pin: dealer[0].link_code,
                             };
-    
+
                         }
-    
+
                         resp.send(data);
                     } else {
                         data = {
@@ -685,7 +705,7 @@ router.get('/apklist', async function (req, res) {
 });
 
 
-router.get('/getUpdate/:version/:uniqueName', async (req, res) => {
+router.get('/getUpdate/:version/:uniqueName/:label', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     let versionName = req.params.version;
     let uniqueName = req.params.uniqueName;

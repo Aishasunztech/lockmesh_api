@@ -76,8 +76,10 @@ var verifyToken = function (req, res) {
 
         jwt.verify(token, config.secret, async function (err, decoded) {
             if (err) {
-                // ath.status = false;
-
+                ath= { 
+                    status: false,
+                    success: false 
+                };
                 return res.json({
                     success: false,
                     msg: 'Failed to authenticate token.'
@@ -90,6 +92,7 @@ var verifyToken = function (req, res) {
                 // if(result.status === true || result.status === 1){
                 req.decoded = decoded;
                 req.decoded.status = true;
+                req.decoded.success= true;
                 ath = decoded;
                 // console.log(ath);
 
@@ -112,8 +115,10 @@ var verifyToken = function (req, res) {
             }
         });
     } else {
-        // ath.status = false;
-        // if there is no token return an error
+        ath= { 
+            status: false,
+            success: false 
+        };
         return res.status(403).send({
             success: false,
             msg: 'No token provided.'
@@ -5471,6 +5476,7 @@ router.get("/getFile/:file", (req, res) => {
 
     if (fs.existsSync(path.join(__dirname, "../uploads/" + req.params.file))) {
         // Do something
+        // res.set('Content-Type', mimeType); // mimeType eg. 'image/bmp'
         res.sendFile(path.join(__dirname, "../uploads/" + req.params.file));
     } else {
         res.send({

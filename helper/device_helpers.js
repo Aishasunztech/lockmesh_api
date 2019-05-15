@@ -429,12 +429,21 @@ module.exports = {
         var serial_number = req.body.serialNo;
         var mac_address = req.body.macAddr;
 
+        var imei1 = null;
+        var imei2 = null;
+        var simNo1 = null;
+        var simNo2 = null;
         //geting imei's
-        var imei1 = imei[0] ? imei[0] : null;
-        var imei2 = imei[1] ? imei[1] : null;
+        if (imei !== undefined) {
+            imei1 = (imei[0] !== undefined && imei[0] !== null && imei[0] !== 'null') ? imei[0] : null;
+            imei2 = (imei[1] !== undefined && imei[0] !== null && imei[1] !== 'null') ? imei[1] : null;
+        }
 
-        var simNo1 = simNo[0] ? simNo[0] : null;
-        var simNo2 = simNo[1] ? simNo[1] : null;
+        if (simNo !== undefined) {
+            simNo1 = (simNo[0] !== undefined && simNo[0] !== null && simNo[0] !== 'null') ? simNo[0] : null;
+            simNo2 = (simNo[1] !== undefined && simNo[1] !== null && simNo[0] !== 'null') ? simNo[1] : null;
+        }
+
         return {
             imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address
         }
