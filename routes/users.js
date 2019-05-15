@@ -1086,9 +1086,6 @@ router.post('/create/device_profile', async function (req, res) {
         // var dataStag = [];
         var code = randomize('0', 7);
         var activation_code = await helpers.checkActivationCode(code);
-        // let device_id = helpers.getDeviceId();
-        // device_id = await helpers.checkDeviceId(device_id);
-        // console.log("device_id", device_id);
         var name = req.body.name;
         var client_id = req.body.client_id;
         var chat_id = req.body.chat_id ? req.body.chat_id : '';
@@ -1100,13 +1097,10 @@ router.post('/create/device_profile', async function (req, res) {
         var note = req.body.note;
         var validity = req.body.validity;
         var duplicate = req.body.duplicate ? req.body.duplicate : 0;
-        // validityDay = moment(new Date(), "YYYY/MM/DD").add(validityDay, 'days');
-        // var validity = moment(validityDay).format("YYYY/MM/DD")
+        var link_code = await device_helpers.getLinkCodeByDealerId(verify.user.id)
         if (req.body.expiry_date == 0) {
-            // console.log(req.body.expiry_date);
             var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
             var expiry_date = moment(trailDate).format("YYYY/MM/DD")
-            // console.log(expiry_date);
         } else {
             let exp_month = req.body.expiry_date;
             var expiry_date = helpers.getExpDateByMonth(start_date, exp_month);
@@ -1146,8 +1140,8 @@ router.post('/create/device_profile', async function (req, res) {
                     // console.log("inserted id", resp.insertId);
                     let dvc_id = resp.insertId;
                     deviceIds.push(dvc_id);
-                    var insertUser_acc = "INSERT INTO usr_acc (device_id , user_id, activation_code, expiry_months, dealer_id, device_status, activation_status, expiry_date,note,validity "
-                    var User_acc_values = ") VALUES ('" + dvc_id + "', '" + user_id + "',  '" + activationCode + "',  " + exp_month + ", " + dealer_id + ", 0, 0 ,'" + expiry_date + "','" + note + "','" + validity + "')";
+                    var insertUser_acc = "INSERT INTO usr_acc (device_id , user_id, activation_code, expiry_months, dealer_id,link_code, device_status, activation_status, expiry_date,note,validity "
+                    var User_acc_values = ") VALUES ('" + dvc_id + "', '" + user_id + "',  '" + activationCode + "',  " + exp_month + ", " + dealer_id + ", '" + link_code + "' ,  0, 0 ,'" + expiry_date + "','" + note + "','" + validity + "')";
                     insertUser_acc = insertUser_acc + User_acc_values;
                     if (resp.insertId) {
                         let resps = await sql.query(insertUser_acc)
@@ -1238,9 +1232,9 @@ router.post('/create/device_profile', async function (req, res) {
                             if (err) throw (err);
                             console.log("inserted id", resp.insertId);
                             let dvc_id = resp.insertId;
-                            var insertUser_acc = "INSERT INTO usr_acc (device_id, user_id, activation_code, client_id , account_email,expiry_months, dealer_id, device_status, activation_status, expiry_date , note,validity  "
+                            var insertUser_acc = "INSERT INTO usr_acc (device_id, user_id, activation_code, client_id , account_email,expiry_months, dealer_id, link_code ,device_status, activation_status, expiry_date , note,validity  "
                             // var insertDevice = "INSERT INTO devices ( activation_code, name, client_id, chat_id, model, email, pgp_email, expiry_months, dealer_id, device_status, activation_status ";
-                            var User_acc_values = ") VALUES ('" + dvc_id + "','" + user_id + "', '" + activation_code + "', '" + client_id + "', '" + email + "',  " + exp_month + ", " + dealer_id + ", 0, 0 ,'" + expiry_date + "','" + note + "','" + validity + "')";
+                            var User_acc_values = ") VALUES ('" + dvc_id + "','" + user_id + "', '" + activation_code + "', '" + client_id + "', '" + email + "',  " + exp_month + ", " + dealer_id + ",'" + link_code + "' ,  0, 0 ,'" + expiry_date + "','" + note + "','" + validity + "')";
                             insertUser_acc = insertUser_acc + User_acc_values;
                             console.log(insertUser_acc);
                             if (resp.affectedRows) {

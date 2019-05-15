@@ -479,6 +479,15 @@ module.exports = {
         if (chk != parseInt(s.substring(14, 15), 10))
             return false;
         return true;
+    },
+    getLinkCodeByDealerId: async (dealer_id) => {
+        let query = "SELECT link_code from dealers where dealer_id='" + dealer_id + "'"
+        let results = await sql.query(query);
+        if (results.length) {
+            return results[0].link_code
+        } else {
+            return ''
+        }
     }
 
 }
