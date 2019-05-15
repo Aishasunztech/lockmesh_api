@@ -575,6 +575,9 @@ module.exports = {
 			case 'history':
 				name = 'Setting changed'
 				break;
+			case 'policy':
+				name = 'Policy Applied'
+				break;
 			default:
 				break;
 		}
