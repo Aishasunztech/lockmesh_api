@@ -39,20 +39,7 @@ var ApkReader = require('node-apk-parser');
 const zlib = require('zlib');
 var AdmZip = require('adm-zip');
 
-/** SMTP Email **/
-var smtpTransport = nodemailer.createTransport({
-    host: "smtp.office365.com",
-    secureConnection: true,
-    // logger: true,
-    // debug: true,
-    connectionTimeout: 600000,
-    greetingTimeout: 300000,
-    port: 587,
-    auth: {
-        user: "admin@lockmesh.com",
-        pass: "34e@2!2xder"
-    }
-});
+const smtpTransport = require('../helper/mail')
 
 function sendEmail(subject, message, to, callback) {
     let cb = callback;
@@ -1803,7 +1790,6 @@ router.put('/updateProfile/:id', async function (req, res) {
 
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
-        console.log('body data', req.body);
         sql.query('UPDATE dealers SET `dealer_name` = ? where `dealer_id` = ?', [req.body.name, req.body.dealerId], function (error, rows, status) {
 
             if (error) throw error;
@@ -1827,62 +1813,6 @@ router.put('/updateProfile/:id', async function (req, res) {
     }
 });
 
-/***GET all the clients (not using) ***/
-// router.get('/clients', function (req, res) {
-//     console.log(req);
-//     sql.query('select * from clients', function (error, results, fields) {
-//         if (error) throw error;
-//         data = {
-//             "status": true,
-//             "data": results
-//         };
-//         res.send(data);
-//     });
-// });
-
-/***Add client (not using)***/
-// router.post('/new/client', function (req, res) {
-//     console.log(req);
-//     sql.query('INSERT INTO clients (name, client_id, imei, s_dealer, start_date, expiry_date, online, status, model) values(?,?,?,?,?,?,?,?,?)', [req.body.name, req.body.client_id, req.body.imei, req.body.s_dealer, req.body.start_date, req.body.expiry_date, req.body.expiry_date, req.body.online, req.body.status, req.body.model], function (error, rows) {
-//         //response.end(JSON.stringify(rows));
-//         if (error) throw error;
-//         data = {
-//             "status": true,
-//             "data": rows
-//         };
-//         res.send(data);
-//     });
-// });
-
-/**UPDATE Client details (not using) **/
-// router.put('/client/:client_id', function (req, res) {
-//     res.setHeader('Content-Type', 'application/json');
-//     console.log(req);
-//     sql.query('UPDATE clients SET `name` = ?, `imei` = ?, `s_dealer` = ? , `start_date` = ?, `expiry_date` = ?, `status` = ?, `model`= ? where `client_id` = ?', [req.body.name, req.body.imei, req.body.s_dealer, req.body.start_date, req.body.expiry_date, req.body.status, req.body.model, req.body.client_id], function (error, rows) {
-
-//         if (error) throw error;
-//         data = {
-//             "status": true,
-//             "data": rows
-//         };
-//         res.send(data);
-//     });
-// });
-
-/**client record delete (not using) **/
-// router.delete('/client/:client_id', function (req, res) {
-//     res.setHeader('Content-Type', 'application/json');
-//     console.log(req);
-//     sql.query('DELETE FROM `clients` WHERE `client_id`=?', [req.params.client_id], function (error, results, fields) {
-
-//         if (error) throw error;
-//         data = {
-//             "status": true,
-//             "data": results
-//         };
-//         res.send(data);
-//     });
-// });
 
 /** Unlink Device  **/
 router.post('/unlink/:id', async function (req, res) {

@@ -17,20 +17,8 @@ var moment = require('moment-strftime');
 const device_helpers = require('../helper/device_helpers.js');
 var Constants = require('../constants/Application');
 
-/** SMTP Email **/
-var smtpTransport = nodemailer.createTransport({
-    host: "smtp.office365.com",
-    secureConnection: true,
-    // logger: true,
-    // debug: true,
-    connectionTimeout: 600000,
-    greetingTimeout: 300000,
-    port: 587,
-    auth: {
-        user: "admin@lockmesh.com",
-        pass: "34e@2!2xder"
-    }
-});
+const smtpTransport = require('../helper/mail')
+
 
 function sendEmail(subject, message, to, callback) {
     let cb = callback;
