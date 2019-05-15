@@ -776,8 +776,8 @@ router.get("/getApk/:apk", (req, res) => {
         res.sendFile(path.join(__dirname, "../uploads/" + req.params.apk + '.apk'));
     } else {
         res.send({
-            "status": false,
-            "msg": "file not found"
+            status: false,
+            msg: "file not found"
         })
     }
 });
@@ -893,10 +893,10 @@ router.post('/accountstatus', async function (req, res) {
 
                     } else {
                         data = {
-                            "status": false,
-                            "msg": "Dealer Not found.Contact Admin.",
-                            "device_id": device[0].device_id,
-                            "expiry_date": user_acc[0].expiry_date
+                            status: false,
+                            msg: "Dealer Not found.Contact Admin.",
+                            device_id: device[0].device_id,
+                            expiry_date: user_acc[0].expiry_date
                         }
                         res.send(data);
                         return;
@@ -1004,11 +1004,11 @@ router.get('/admin/marketApplist', async function (req, res) {
         if (results.length) {
             for (var i = 0; i < results.length; i++) {
                 dta = {
-                    "apk_name": results[i].app_name,
-                    "logo": results[i].logo,
-                    "apk": results[i].apk,
-                    "apk_status": results[i].status,
-                    "package_name": results[i].package_name
+                    apk_name: results[i].app_name,
+                    logo: results[i].logo,
+                    apk: results[i].apk,
+                    apk_status: results[i].status,
+                    package_name: results[i].package_name
                 }
                 data.push(dta);
             }
@@ -1039,11 +1039,11 @@ router.get('/marketApplist/:linkCode', async function (req, res) {
             if (results.length) {
                 for (var i = 0; i < results.length; i++) {
                     dta = {
-                        "apk_name": results[i].app_name,
-                        "logo": results[i].logo,
-                        "apk": results[i].apk,
-                        "apk_status": results[i].status,
-                        "package_name": results[i].package_name
+                        apk_name: results[i].app_name,
+                        logo: results[i].logo,
+                        apk: results[i].apk,
+                        apk_status: results[i].status,
+                        package_name: results[i].package_name
                     }
                     data.push(dta);
                 }
@@ -1055,16 +1055,16 @@ router.get('/marketApplist/:linkCode', async function (req, res) {
                 });
             } else {
                 data = {
-                    "status": false,
-                    "msg": "No result found"
+                    status: false,
+                    msg: "No result found"
                 }
                 res.send(data);
             }
         })
     } else {
         data = {
-            "status": false,
-            "msg": "No result found"
+            status: false,
+            msg: "No result found"
         }
         res.send(data);
     }
