@@ -3540,11 +3540,9 @@ router.get('/get_policies', async function (req, res) {
                     // console.log(data);
                     res.send(data);
                 });
-            }
-            else {
-                sql.query("select policy.* from policy left join dealer_policies on policy.id = dealer_policies.policy_id where dealer_policies.dealer_id='" + verify.user.id + "' OR policy.dealer_id = " + verify.user.id + "", async function (error, results) {
-                    // console.log("select dealer_policies.* ,policy.* from dealer_policies left join policy on policy.id = dealer_policies.policy_id where dealer_policies.dealer_id='" + verify.user.id + "' OR policy.dealer_id = " + verify.user.id + "");
-
+            } else {
+                sql.query("select policy.* from policy left join dealer_policies on policy.id = dealer_policies.policy_id where (dealer_policies.dealer_id='" + verify.user.id + "' OR policy.dealer_id = " + verify.user.id + ") AND policy.delete_status=0", async function (error, results) {
+                  
                     if (error) throw error;
                     if (results.length > 0) {
                         // console.log(results);

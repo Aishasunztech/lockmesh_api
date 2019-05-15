@@ -349,6 +349,8 @@ router.post('/login', async function (req, resp) {
 
 // system control login, secure market login
 router.post('systemlogin', async function (req, res) {
+    let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = device_helpers.getDeviceInfo(req);
+    console.log(imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address);
 
     res.send({
         success: true,
@@ -368,7 +370,6 @@ router.post('/linkdevice', async function (req, resp) {
         if (!empty(serial_number) && !empty(mac_address)) {
             var dId = req.body.dId;
             var connected_dealer = (req.body.connected_dealer === undefined || req.body.connected_dealer === null) ? 0 : req.body.connected_dealer;
-            // var deviceId = uniqid.process();        
 
             var deviceQ = "SELECT * FROM devices WHERE  mac_address='" + mac_address + "' OR serial_number='" + serial_number + "'";
             var device = await sql.query(deviceQ);
