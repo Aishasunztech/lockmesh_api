@@ -152,8 +152,8 @@ router.post('/login', async function (req, resp) {
 
                                 resp.json({
                                     token: token,
-                                    'status': true,
-                                    'data': device,
+                                    status: true,
+                                    data: device,
                                 });
                             }
                         });
@@ -182,8 +182,8 @@ router.post('/login', async function (req, resp) {
                     if (dealer.length) {
                         if (dealer[0].unlink_status == 1 || dealer[0].account_status == 'suspended') {
                             data = {
-                                'status': false,
-                                'msg': 'Dealer Suspended, Contact Admin'
+                                status: false,
+                                msg: 'Dealer Suspended, Contact Admin'
                             }
                             resp.status(200).send(data);
 
@@ -223,15 +223,16 @@ router.post('/login', async function (req, resp) {
                                     }, (err, token) => {
                                         if (err) {
                                             resp.json({
-                                                'err': err
+                                                err: err
                                             });
                                         } else {
 
                                             resp.json({
                                                 token: token,
-                                                'status': true,
-                                                'data': device,
+                                                status: true,
+                                                data: device,
                                             });
+                                            return;
                                         }
                                     });
                             } else {
@@ -240,6 +241,7 @@ router.post('/login', async function (req, resp) {
                                     msg: 'Information not provided'
                                 }
                                 resp.send(data);
+                                return;
                             }
 
                         }
@@ -267,6 +269,7 @@ router.post('/login', async function (req, resp) {
         } else {
             let usr_acc = await device_helpers.getUserAccByDvcId(device[0].id);
             let deviceStatus = device_helpers.checkStatus(usr_acc);
+            // console.log("usr_acc", usr_acc);
 
             if (deviceStatus == "Unlinked") {
                 data = {
@@ -303,13 +306,14 @@ router.post('/login', async function (req, resp) {
             const dvc = {
                 dId: usr_acc.dealer_id,
                 device_id: device[0].device_id,
-                ...data
+                link_code:usr_acc.link_code,
+                // ...data
             }
             // console.log("this is device", dvc);
             jwt.sign({
                 dvc
             }, config.secret, {
-                    expiresIn: '86400s'
+                    expiresIn: config.expiresIn
                 }, (err, token) => {
                     if (err) {
                         resp.json({
@@ -328,6 +332,7 @@ router.post('/login', async function (req, resp) {
                             status: data.status,
                             msg: data.msg,
                             dId: dvc.dId,
+                            dealer_pin: dvc.link_code,
                             device_id: dvc.device_id,
                             expiresIn: n
                         });
@@ -340,8 +345,8 @@ router.post('/login', async function (req, resp) {
 
     } else {
         data = {
-            'status': false,
-            'msg': 'information not provided'
+            status: false,
+            msg: 'information not provided'
         }
         resp.send(data);
     }
