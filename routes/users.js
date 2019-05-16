@@ -1483,7 +1483,7 @@ router.put('/new/device', async (req, res) => {
                     let checkUniquePgp = "SELECT pgp_email from pgp_emails WHERE (pgp_email= '" + pgp_email + "' AND used=1)";
                     let checkDevicepgp = await sql.query(checkUniquePgp);
 
-                    let checkUnique = "SELECT usr_acc.* from usr_acc WHERE account_email= '" + device_email + "' AND device_id != '" + device_id + "'"
+                    let checkUnique = "SELECT usr_acc.* from usr_acc WHERE account_email= '" + device_email + "' AND device_id != '" + device_id + "' AND user_id != '" + user_id + "'"
                     sql.query(checkUnique, async (error, success) => {
                         if (success.length || checkDevicepgp.length) {
                             res.send({
@@ -5615,7 +5615,7 @@ router.post('/check_pass', async function (req, res) {
 router.get('/get_imei_history/:device_id', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
-        let query = "select * from imei_history where device_id = '" + req.params.device_id + "' order by created_at desc";
+        let query = "select * from imei_history where device_id = '" + req.params.device_id + "' ";
         sql.query(query, (error, resp) => {
             res.send({
                 status: true,
@@ -5856,14 +5856,7 @@ router.post('/writeImei/:device_id', async function (req, res) {
                 let imei1 = (type == 'IMEI1') ? imeiNo : null
                 let imei2 = (type == 'IMEI2') ? imeiNo : null
 
-                let insertId = await device_helpers.saveImeiHistory(device.device_id, device.serial_number, device.mac_address, imei1, imei2)
-                console.log('object id is', insertId);
-                let inserted = await sql.query("SELECT * FROM imei_history WHERE id='" + insertId + "'")
-                let insertedData = null;
-                if (inserted.length) {
-                    insertedData = inserted[0]
-                }
-                let query = "SELECT * from device_history WHERE user_acc_id = '" + usrAccId + "' AND type = 'imei' AND status = 0"
+                let query = "SELECT * from device_history WHERE user_acc_id = '" + usrAccId + "' AND type = 'imei' AND status = 0 order by created_at desc limit 1"
 
                 let result = await sql.query(query);
                 if (result.length) {
@@ -5876,7 +5869,7 @@ router.post('/writeImei/:device_id', async function (req, res) {
                         prevImei.imei2 = imei2
                     }
                     let newImei = JSON.stringify(prevImei)
-                    sql.query("UPDATE device_history set imei = ' " + newImei + "' WHERE user_acc_id = '" + usrAccId + "' AND type = 'imei' AND status = 0 ", async function (err, results) {
+                    sql.query("INSERT INTO device_history (user_acc_id, imei, type) VALUES (" + usrAccId + ", '" + newImei + "', 'imei')", async function (err, results) {
                         if (err) throw err;
                         if (results.affectedRows) {
                             let isOnline = await device_helpers.isDeviceOnline(device_id);
@@ -5885,13 +5878,13 @@ router.post('/writeImei/:device_id', async function (req, res) {
                                 data = {
                                     "status": true,
                                     'online': true,
-                                    'insertedData': insertedData
+                                    // 'insertedData': insertedData
                                 };
                                 res.send(data);
                             } else {
                                 data = {
                                     "status": true,
-                                    'insertedData': insertedData
+                                    // 'insertedData': insertedData
                                 };
                                 res.send(data);
                             }
@@ -5926,14 +5919,14 @@ router.post('/writeImei/:device_id', async function (req, res) {
                                 data = {
                                     "status": true,
                                     'online': true,
-                                    'insertedData': insertedData
+                                    // 'insertedData': insertedData
                                 };
                                 res.send(data);
                             } else {
                                 data = {
                                     "status": true,
                                     'online': false,
-                                    'insertedData': insertedData
+                                    // 'insertedData': insertedData
                                 };
                                 res.send(data);
                             }
@@ -5973,10 +5966,8 @@ router.get('/get_activities/:device_id', async function (req, res) {
             let accResults = await sql.query(acc_action_query)
             let device_history_query = "SELECT * FROM device_history WHERE user_acc_id = '" + usrAccId.id + "'"
             let deviceResults = await sql.query(device_history_query)
-            let imei_history_query = "SELECT * FROM imei_history WHERE device_id = '" + device_id + "'"
-            let imeiResults = await sql.query(imei_history_query)
-            let action;
 
+            let action;
             for (let i = 0; i < accResults.length; i++) {
                 if (accResults[i].action == Constants.DEVICE_PRE_ACTIVATION || accResults[i].action === Constants.DEVICE_EXPIRED || accResults[i].action == 'DELETE') {
                     continue
@@ -5989,22 +5980,11 @@ router.get('/get_activities/:device_id', async function (req, res) {
                 }
             }
             for (let i = 0; i < deviceResults.length; i++) {
-                if (deviceResults[i].type != 'imei') {
-                    action = {
-                        "action_name": await helpers.getActivityName(deviceResults[i].type),
-                        "created_at": deviceResults[i].created_at
-                    }
-                    activities.push(action)
+                action = {
+                    "action_name": await helpers.getActivityName(deviceResults[i].type),
+                    "created_at": deviceResults[i].created_at
                 }
-            }
-            for (let i = 0; i < imeiResults.length; i++) {
-                if (imeiResults[i].type != 'imei') {
-                    action = {
-                        "action_name": 'Imei Changed',
-                        "created_at": imeiResults[i].created_at
-                    }
-                    activities.push(action)
-                }
+                activities.push(action)
             }
             // console.log(activities);
             data = {

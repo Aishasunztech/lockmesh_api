@@ -561,7 +561,7 @@ module.exports = {
 
 		switch (value) {
 			case 'imei':
-				name = 'IMEI CHANGE'
+				name = 'IMEI CHANGED'
 				break;
 			case 'wiped':
 				name = 'Devcie wipe'
