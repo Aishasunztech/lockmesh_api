@@ -168,7 +168,7 @@ module.exports.ackFinishedPushApps = async function (device_id, response) {
 }
 module.exports.ackFinishedPullApps = async function (device_id, response) {
   await sql.query("UPDATE devices set is_push_apps = 0 WHERE device_id = '" + device_id + "'")
-  
+
   io.emit(Constants.ACK_FINISHED_PULL_APPS + device_id, {
     status: true
   });
@@ -179,8 +179,17 @@ module.exports.ackSinglePushApp = async function (device_id, response) {
   io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
   })
 }
+
 module.exports.ackSinglePullApp = async function (device_id, response) {
   console.log(Constants.ACK_SINGLE_PUSH_APP);
   // io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
   // })
+}
+
+module.exports.forceCheckUpdate = async function (device_id) {
+  console.log("testing forceupdate", device_id);
+  io.emit(Constants.FORCE_UPDATE_CHECK + device_id, {
+    device_id: device_id,
+    status: true
+  });
 }

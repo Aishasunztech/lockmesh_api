@@ -22,6 +22,7 @@ var path = require('path');
 var fs = require("fs");
 var Constants = require('../constants/Application');
 var moment = require('moment-strftime');
+var mime = require('mime');
 
 var helpers = require('../helper/general_helper.js');
 const device_helpers = require('../helper/device_helpers.js');
@@ -32,6 +33,10 @@ const ADMIN = "admin";
 const DEALER = "dealer";
 const SDEALER = "sdealer";
 let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity"
+let deviceColumns = ["DEVICE ID","USER ID","REMAINING DAYS","FLAGGED","STATUS","MODE","DEVICE NAME","ACTIVATION CODE","ACCOUNT EMAIL","PGP EMAIL","CHAT ID","CLIENT ID","DEALER ID","DEALER PIN","MAC ADDRESS","SIM ID","IMEI 1","SIM 1","IMEI 2","SIM 2","SERIAL NUMBER","MODEL","START DATE","EXPIRY DATE","DEALER NAME","S-DEALER","S-DEALER NAME"]
+let dealerColumns = ["DEALER ID","DEALER NAME","DEALER EMAIL","DEALER PIN","DEVICES","TOKENS"];
+let apkColumns = ["SHOW ON DEVICE","APK","APP NAME","APP LOGO"]
+let sdealerColumns = ["DEALER ID","DEALER NAME","DEALER EMAIL","DEALER PIN","DEVICES","TOKENS","PARENT DEALER","PARENT DEALER ID"]
 // var CryptoJS = require("crypto-js");
 // var io = require("../bin/www");
 var util = require('util')
@@ -39,20 +44,7 @@ var ApkReader = require('node-apk-parser');
 const zlib = require('zlib');
 var AdmZip = require('adm-zip');
 
-/** SMTP Email **/
-var smtpTransport = nodemailer.createTransport({
-    host: "smtp.office365.com",
-    secureConnection: true,
-    // logger: true,
-    // debug: true,
-    connectionTimeout: 600000,
-    greetingTimeout: 300000,
-    port: 587,
-    auth: {
-        user: "admin@lockmesh.com",
-        pass: "34e@2!2xder"
-    }
-});
+const smtpTransport = require('../helper/mail')
 
 function sendEmail(subject, message, to, callback) {
     let cb = callback;
@@ -76,8 +68,10 @@ var verifyToken = function (req, res) {
 
         jwt.verify(token, config.secret, async function (err, decoded) {
             if (err) {
-                // ath.status = false;
-
+                ath = {
+                    status: false,
+                    success: false
+                };
                 return res.json({
                     success: false,
                     msg: 'Failed to authenticate token.'
@@ -90,6 +84,7 @@ var verifyToken = function (req, res) {
                 // if(result.status === true || result.status === 1){
                 req.decoded = decoded;
                 req.decoded.status = true;
+                req.decoded.success = true;
                 ath = decoded;
                 // console.log(ath);
 
@@ -112,8 +107,10 @@ var verifyToken = function (req, res) {
             }
         });
     } else {
-        // ath.status = false;
-        // if there is no token return an error
+        ath = {
+            status: false,
+            success: false
+        };
         return res.status(403).send({
             success: false,
             msg: 'No token provided.'
@@ -664,6 +661,13 @@ router.post('/add/dealer', async function (req, res) {
 
             sql.query(sql1, function (error, rows) {
                 if (error) throw error;
+                if(rows.affectedRows){
+                   
+                    sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('"+rows.insertId+"', '"+JSON.stringify(deviceColumns) +"', 'devices') ")
+                    sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('"+rows.insertId+"', '"+JSON.stringify(dealerColumns) +"', 'dealer') ")                   
+                    sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('"+rows.insertId+"', '"+JSON.stringify(sdealerColumns) +"', 'sdealer') ")                   
+                    sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('"+rows.insertId+"', '"+JSON.stringify(apkColumns) +"', 'apk') ")
+                }
 
                 var html = '';
                 if (pageType === DEALER) {
@@ -1799,7 +1803,6 @@ router.put('/updateProfile/:id', async function (req, res) {
 
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
-        console.log('body data', req.body);
         sql.query('UPDATE dealers SET `dealer_name` = ? where `dealer_id` = ?', [req.body.name, req.body.dealerId], function (error, rows, status) {
 
             if (error) throw error;
@@ -1823,62 +1826,6 @@ router.put('/updateProfile/:id', async function (req, res) {
     }
 });
 
-/***GET all the clients (not using) ***/
-// router.get('/clients', function (req, res) {
-//     console.log(req);
-//     sql.query('select * from clients', function (error, results, fields) {
-//         if (error) throw error;
-//         data = {
-//             "status": true,
-//             "data": results
-//         };
-//         res.send(data);
-//     });
-// });
-
-/***Add client (not using)***/
-// router.post('/new/client', function (req, res) {
-//     console.log(req);
-//     sql.query('INSERT INTO clients (name, client_id, imei, s_dealer, start_date, expiry_date, online, status, model) values(?,?,?,?,?,?,?,?,?)', [req.body.name, req.body.client_id, req.body.imei, req.body.s_dealer, req.body.start_date, req.body.expiry_date, req.body.expiry_date, req.body.online, req.body.status, req.body.model], function (error, rows) {
-//         //response.end(JSON.stringify(rows));
-//         if (error) throw error;
-//         data = {
-//             "status": true,
-//             "data": rows
-//         };
-//         res.send(data);
-//     });
-// });
-
-/**UPDATE Client details (not using) **/
-// router.put('/client/:client_id', function (req, res) {
-//     res.setHeader('Content-Type', 'application/json');
-//     console.log(req);
-//     sql.query('UPDATE clients SET `name` = ?, `imei` = ?, `s_dealer` = ? , `start_date` = ?, `expiry_date` = ?, `status` = ?, `model`= ? where `client_id` = ?', [req.body.name, req.body.imei, req.body.s_dealer, req.body.start_date, req.body.expiry_date, req.body.status, req.body.model, req.body.client_id], function (error, rows) {
-
-//         if (error) throw error;
-//         data = {
-//             "status": true,
-//             "data": rows
-//         };
-//         res.send(data);
-//     });
-// });
-
-/**client record delete (not using) **/
-// router.delete('/client/:client_id', function (req, res) {
-//     res.setHeader('Content-Type', 'application/json');
-//     console.log(req);
-//     sql.query('DELETE FROM `clients` WHERE `client_id`=?', [req.params.client_id], function (error, results, fields) {
-
-//         if (error) throw error;
-//         data = {
-//             "status": true,
-//             "data": results
-//         };
-//         res.send(data);
-//     });
-// });
 
 /** Unlink Device  **/
 router.post('/unlink/:id', async function (req, res) {
@@ -2706,8 +2653,7 @@ router.get('/sdealers/:dealer_id', async function (req, res) {
 });
 
 
-/** Undo Dealer / S Dealer **/
-
+/** Undo Dealer / S-Dealer **/
 router.post('/dealer/undo', async function (req, res) {
     var verify = await verifyToken(req, res);
     var dealer_id = req.body.dealer_id;
@@ -2819,6 +2765,7 @@ router.get('/connect/:device_id', async function (req, res) {
     }
 });
 
+// resync device
 router.patch('/sync-device', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
@@ -2960,7 +2907,6 @@ router.get('/get_app_permissions', async function (req, res) {
 
                 }
 
-                console.log('sub ext', subExtension)
 
                 newExtlist.push({
                     uniqueName: ext.unique_name,
@@ -2972,8 +2918,6 @@ router.get('/get_app_permissions', async function (req, res) {
 
                 })
             }
-
-            console.log('daa is ', onlyApps)
 
 
             res.send({
@@ -3197,35 +3141,80 @@ router.post('/save_policy', async function (req, res) {
         var verify = await verifyToken(req, res);
         if (verify.status !== undefined && verify.status == true) {
 
-            console.log('verfy sysytem', req.body.data.system_permissions)
-
             let policy_name = req.body.data.policy_name !== undefined ? req.body.data.policy_name : null;
-            let policy_note = req.body.data.policy_note !== undefined ? req.body.data.policy_note : null;
-            let push_apps = req.body.data.push_apps !== undefined ? JSON.stringify(req.body.data.push_apps) : null;
-            let app_list = req.body.data.app_list !== undefined ? JSON.stringify(req.body.data.app_list) : null;
-            let secure_apps = req.body.data.secure_apps !== undefined ? JSON.stringify(req.body.data.secure_apps) : null;
-            let system_permissions = req.body.data.system_permissions !== undefined ? JSON.stringify(req.body.data.system_permissions) : null;
-            // console.log(policy_name, 'policy name', req.body.data)
+            if (policy_name !== null) {
+                let policy_note = req.body.data.policy_note !== undefined ? req.body.data.policy_note : null;
+                let push_apps = req.body.data.push_apps !== undefined ? JSON.stringify(req.body.data.push_apps) : null;
+                let app_list = req.body.data.app_list !== undefined ? JSON.stringify(req.body.data.app_list) : null;
+                let secure_apps = req.body.data.secure_apps !== undefined ? JSON.stringify(req.body.data.secure_apps) : null;
+                let system_permissions = req.body.data.system_permissions !== undefined ? JSON.stringify(req.body.data.system_permissions) : null;
 
-            var command_name = '#' + policy_name.replace(/ /g, "_");
+                let loggedDealerId = verify.user.id;
+                let loggedDealerType = verify.user.user_type;
+                let connectedDealer = verify.user.connected_dealer;
+                let checkExistingQ = "SELECT policy_name FROM policy WHERE policy_name='" + policy_name + "' ";
+                // let checkExisting = await sql.query(checkExistingQ);
 
-            var applyQuery = "insert into policy (policy_name,policy_note,command_name, app_list, push_apps, controls,permissions, dealer_id , dealers) values ('" + policy_name + "','" + policy_note + "','" + command_name + "','" + app_list + "', '" + push_apps + "','" + system_permissions + "', '" + secure_apps + "','" + verify.user.id + "' , '[]')";
-            // console.log('query insert', applyQuery);
-            // console.log(applyQuery);
+                if (loggedDealerType === ADMIN) {
 
-            await sql.query(applyQuery, async function (err, rslts) {
-                if (err) throw err;
-                // console.log('query/........... ', applyQuery)
-
-                if (rslts.affectedRows) {
+                } else if (loggedDealerType === DEALER) {
+                    let subDealerQ = "SELECT dealer_id FROM dealers WHERE connected_dealer=" + loggedDealerId;
+                    let subDealers = await sql.query(subDealerQ);
+                    let subDealerArray = [];
+                    subDealers.map((dealer) => {
+                        subDealerArray.push(dealer.dealer_id)
+                    });
+                    if (subDealerArray.length) {
+                        checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id in (" + subDealerArray.join() + "))"
+                    } else {
+                        checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " )"
+                    }
+                } else if (loggedDealerType === SDEALER) {
+                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id = " + connectedDealer + ")";
+                }
+                console.log("testing testing testing");
+                console.log(checkExistingQ);
+                let checkExisting = await sql.query(checkExistingQ);
+                if (checkExisting.length) {
                     data = {
-                        "status": true,
-                        "msg": 'Policy Saved Successfully',
+                        status: false,
+                        msg: 'Policy name should be unique',
 
                     };
                     res.send(data);
+                    return;
                 }
-            })
+                var command_name = '#' + policy_name.replace(/ /g, "_");
+
+                var applyQuery = "INSERT INTO policy (policy_name, policy_note, command_name, app_list, push_apps, controls, permissions, dealer_id, dealer_type, dealers) VALUES ('" + policy_name + "', '" + policy_note + "', '" + command_name + "', '" + app_list + "', '" + push_apps + "', '" + system_permissions + "', '" + secure_apps + "', '" + loggedDealerId + "', '" + loggedDealerType + "', '[]')";
+
+                sql.query(applyQuery, async function (err, rslts) {
+                    if (err) throw err;
+                    // console.log('query/........... ', applyQuery)
+
+                    if (rslts.affectedRows) {
+                        data = {
+                            status: true,
+                            msg: 'Policy Saved Successfully',
+
+                        };
+                    } else {
+                        data = {
+                            status: false,
+                            msg: 'Policy Couldn\'t be saved'
+                        }
+                    }
+                    res.send(data);
+                    return;
+                })
+            } else {
+                data = {
+                    status: false,
+                    msg: 'Policy Couldn\'t be saved'
+                }
+                res.send(data);
+                return;
+            }
 
         }
     } catch (error) {
@@ -3625,10 +3614,8 @@ router.get('/get_policies', async function (req, res) {
                     // console.log(data);
                     res.send(data);
                 });
-            }
-            else {
-                sql.query("select policy.* from policy left join dealer_policies on policy.id = dealer_policies.policy_id where dealer_policies.dealer_id='" + verify.user.id + "' OR policy.dealer_id = " + verify.user.id + "", async function (error, results) {
-                    // console.log("select dealer_policies.* ,policy.* from dealer_policies left join policy on policy.id = dealer_policies.policy_id where dealer_policies.dealer_id='" + verify.user.id + "' OR policy.dealer_id = " + verify.user.id + "");
+            } else {
+                sql.query("select policy.* from policy left join dealer_policies on policy.id = dealer_policies.policy_id where (dealer_policies.dealer_id='" + verify.user.id + "' OR policy.dealer_id = " + verify.user.id + ") AND policy.delete_status=0", async function (error, results) {
 
                     if (error) throw error;
                     if (results.length > 0) {
@@ -5490,8 +5477,19 @@ router.post('/save_policy_permissions', async function (req, res) {
 router.get("/getFile/:file", (req, res) => {
 
     if (fs.existsSync(path.join(__dirname, "../uploads/" + req.params.file))) {
+        let file = path.join(__dirname, "../uploads/" + req.params.file);
+        let fileMimeType = mime.getType(file);
+        let filetypes = /jpeg|jpg|apk|png/;
         // Do something
-        res.sendFile(path.join(__dirname, "../uploads/" + req.params.file));
+        if (filetypes.test(fileMimeType)) {
+            res.set('Content-Type', fileMimeType); // mimeType eg. 'image/bmp'
+            res.sendFile(path.join(__dirname, "../uploads/" + req.params.file));
+        } else {
+            res.send({
+                "status": false,
+                "msg": "file not found"
+            })
+        }
     } else {
         res.send({
             "status": false,
@@ -5712,8 +5710,6 @@ router.get('/userList', async function (req, res) {
         res.send(data)
     }
 });
-
-
 
 /*Transfer Apps to secure market */
 router.post('/transferApps', async function (req, res) {
@@ -5963,7 +5959,7 @@ router.post('/writeImei/:device_id', async function (req, res) {
     }
 });
 
-
+// get activities 
 router.get('/get_activities/:device_id', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
@@ -6022,6 +6018,7 @@ router.get('/get_activities/:device_id', async function (req, res) {
     }
 });
 
+// set default for w.r.t dealer
 router.post('/set_default_policy', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
@@ -6051,6 +6048,46 @@ router.post('/set_default_policy', async function (req, res) {
     }
 });
 
+router.put('/force_update', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify['status'] !== undefined && verify.status === true) {
+        let device_id = req.body.device_id;
+        if (!empty(device_id)) {
+            let deviceQ = "SELECT * FROM devices WHERE device_id='" + device_id + "'";
+            let device = await sql.query(deviceQ);
+            if (device.length) {
+                if (device[0].online === Constants.DEVICE_ONLINE) {
+                    // require('../bin/www').forceCheckUpdate(device[0].device_id);
+                    require("../bin/www").forceCheckUpdate(device[0].device_id);
+                    res.send({
+                        status: true,
+                        msg: "force update has been applied"
+                    })
+                } else {
+                    let usr_acc = await device_helpers.getUserAccByDeviceId(device_id);
+                    let historyQ = "INSERT INTO device_history (user_acc_id, type) VALUES (" + usr_acc.id + ",'" + Constants.DEVICE_HISTORY_FORCE_UPDATE + "')";
+                    sql.query(historyQ, function (error, resp) {
+                        if (error) throw (error);
+                        res.send({
+                            status: true,
+                            msg: "force update will apply when device will come online"
+                        })
+                    });
+                }
+            } else {
+                res.send({
+                    status: false,
+                    msg: "Device not Found"
+                })
+            }
+        } else {
+            res.send({
+                status: false,
+                msg: "Device not Found"
+            })
+        }
+    }
+});
 
 /** Cron for expiry date **/
 cron.schedule('0 0 0 * * *', async () => {
@@ -6081,7 +6118,6 @@ cron.schedule('0 0 0 * * *', async () => {
         }
     }
 });
-
 
 
 module.exports = router;

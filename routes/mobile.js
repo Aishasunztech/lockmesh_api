@@ -16,20 +16,9 @@ const nodemailer = require('nodemailer');
 var moment = require('moment-strftime');
 const device_helpers = require('../helper/device_helpers.js');
 var Constants = require('../constants/Application');
-/** SMTP Email **/
-var smtpTransport = nodemailer.createTransport({
-    host: "smtp.office365.com",
-    secureConnection: true,
-    // logger: true,
-    // debug: true,
-    connectionTimeout: 600000,
-    greetingTimeout: 300000,
-    port: 587,
-    auth: {
-        user: "admin@lockmesh.com",
-        pass: "34e@2!2xder"
-    }
-});
+
+const smtpTransport = require('../helper/mail')
+
 
 function sendEmail(subject, message, to, callback) {
     let cb = callback;
@@ -55,29 +44,51 @@ var verifyToken = function (req, res) {
         jwt.verify(token, config.secret, function (err, decoded) {
             // console.log(err);
             if (err) {
+                ath = {
+                    status: false,
+                    success: false
+                };
                 return res.json({
                     success: false,
-                    message: 'TOKEN_INVALID'
+                    msg: 'TOKEN_INVALID'
                 });
             } else {
                 // if everything is good, save to request for use in other routes
                 req.decoded = decoded;
+
                 req.decoded.status = true;
+                req.decoded.success = true;
                 ath = decoded;
             }
         });
     } else {
-        // if there is no token return an error
-        return res.status(403).send({
+        ath = {
+            status: false,
+            success: false
+        };
+        return res.send({
             success: false,
-            message: 'TOKEN_NOT_PROVIDED'
+            msg: 'TOKEN_NOT_PROVIDED'
         });
     }
+
     return ath;
 }
 
+// check device id
+// async function checkDeviceId(device_id, sn, mac) {
+
+//     let query = "SELECT device_id FROM devices WHERE device_id = '" + device_id + "';"
+//     let result = await sql.query(query);
+//     if (result.length > 1) {
+//         device_id = await helpers.getDeviceId(sn, mac);
+//         checkDeviceId(device_id, sn, mac);
+//     } else {
+//         return device_id;
+//     }
+// }
+
 /* Client Login with Link Code MDM  */
-/* Client Login via Locker app*/
 router.post('/login', async function (req, resp) {
 
     var linkCode = req.body.link_code;
@@ -86,8 +97,8 @@ router.post('/login', async function (req, resp) {
     var dateNow = new Date()
     var start_date = moment(dateNow).format("YYYY/MM/DD")
 
-    // console.log("mac_address", mac_address);
-    // console.log("serial_number", serial_number);
+    console.log("mac_address", mac_address);
+    console.log("serial_number", serial_number);
 
     var data;
     //console.log(linkCode);
@@ -121,16 +132,16 @@ router.post('/login', async function (req, resp) {
                 } else {
 
                     const device = {
-                        'dId': dealer[0].dealer_id,
-                        'dealer_pin': dealer[0].link_code,
-                        'connected_dealer': dealer[0].connected_dealer,
-                        'type': await helpers.getUserTypeByTypeId(dealer[0].type)
+                        dId: dealer[0].dealer_id,
+                        dealer_pin: dealer[0].link_code,
+                        connected_dealer: dealer[0].connected_dealer,
+                        type: await helpers.getUserTypeByTypeId(dealer[0].type)
                     }
 
                     jwt.sign({
                         device
                     }, config.secret, {
-                            expiresIn: '86400s'
+                            expiresIn: config.expiresIn
                         }, (err, token) => {
                             if (err) {
                                 resp.json({
@@ -159,7 +170,7 @@ router.post('/login', async function (req, resp) {
                 resp.send(data);
             } else {
                 let validity = await device_helpers.checkRemainDays(usrAcc[0].created_at, usrAcc[0].validity)
-                if (validity < 0 || validity == 'Expired') {
+                if (validity < 0 || validity === 'Expired') {
                     data = {
                         'status': false,
                         'msg': 'Invalid activation code'
@@ -198,11 +209,11 @@ router.post('/login', async function (req, resp) {
                                 let device_id = await device_helpers.getDvcIDByDeviceID(usrAcc[0].device_id)
 
                                 const device = {
-                                    'dId': dealer[0].dealer_id,
-                                    'dealer_pin': dealer[0].link_code,
-                                    'connected_dealer': dealer[0].connected_dealer,
-                                    'type': await helpers.getUserTypeByTypeId(dealer[0].type),
-                                    'device_id': device_id
+                                    dId: dealer[0].dealer_id,
+                                    dealer_pin: dealer[0].link_code,
+                                    connected_dealer: dealer[0].connected_dealer,
+                                    type: await helpers.getUserTypeByTypeId(dealer[0].type),
+                                    device_id: device_id
                                 }
 
                                 jwt.sign({
@@ -232,8 +243,7 @@ router.post('/login', async function (req, resp) {
                             }
 
                         }
-                    }
-                    else {
+                    } else {
 
                     }
 
@@ -247,11 +257,11 @@ router.post('/login', async function (req, resp) {
 
         var deviceQ = "SELECT * FROM devices WHERE mac_address = '" + mac_address + "' OR serial_number='" + serial_number + "'";
         var device = await sql.query(deviceQ);
-        if (device.length == 0) {
+        if (device.length === 0) {
             // console.log("hello", "login")
             data = {
-                'status': false,
-                'msg': 'unlinked'
+                status: false,
+                msg: 'unlinked'
             }
             resp.send(data);
         } else {
@@ -260,19 +270,19 @@ router.post('/login', async function (req, resp) {
 
             if (deviceStatus == "Unlinked") {
                 data = {
-                    'status': false,
-                    'msg': 'unlinked'
+                    status: false,
+                    msg: 'unlinked'
                 }
 
             } else if (deviceStatus == 'Expired') {
                 data = {
-                    'status': false,
-                    'msg': 'expired'
+                    status: false,
+                    msg: 'expired'
                 }
             } else if (deviceStatus == "Suspended") {
                 data = {
-                    'status': false,
-                    'msg': 'suspended'
+                    status: false,
+                    msg: 'suspended'
                 }
             }
             // } else if (device[0].wipe_status == "wipe") {
@@ -283,18 +293,17 @@ router.post('/login', async function (req, resp) {
 
             // }
             else {
-
                 data = {
-                    'status': true,
-                    'msg': 'success'
+                    status: true,
+                    msg: 'success'
                 }
 
             }
 
             const dvc = {
-                'dId': usr_acc.dealer_id,
-                'device_id': device[0].device_id,
-                data
+                dId: usr_acc.dealer_id,
+                device_id: device[0].device_id,
+                ...data
             }
             // console.log("this is device", dvc);
             jwt.sign({
@@ -309,19 +318,20 @@ router.post('/login', async function (req, resp) {
                         return;
                     }
 
-                    var d = new Date(usr_acc.expiry_date);
-                    var n = d.valueOf()
-                    // console.log("expire in", n);
                     try {
+                        var d = new Date(usr_acc.expiry_date);
+                        var n = d.valueOf()
+                        // console.log("expire in", n);
 
                         resp.json({
                             token: token,
-                            'status': data.status,
-                            'msg': data.msg,
-                            'dId': device.dId,
-                            'device_id': dvc.device_id,
-                            'expiresIn': n
+                            status: data.status,
+                            msg: data.msg,
+                            dId: dvc.dId,
+                            device_id: dvc.device_id,
+                            expiresIn: n
                         });
+                        return;
                     } catch (error) {
                         // console.log(error);
                     }
@@ -337,17 +347,38 @@ router.post('/login', async function (req, resp) {
     }
 });
 
-async function checkDeviceId(device_id, sn, mac) {
+// system control login, secure market login
+router.post('/systemlogin', async function (req, res) {
+    let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = device_helpers.getDeviceInfo(req);
+    console.log(imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address);
+    const sysmtemInfo = {
+        serial_number, ip, mac_address
+    };
 
-    let query = "SELECT device_id FROM devices WHERE device_id = '" + device_id + "';"
-    let result = await sql.query(query);
-    if (result.length > 1) {
-        device_id = await helpers.getDeviceId(sn, mac);
-        checkDeviceId(device_id, sn, mac);
-    } else {
-        return device_id;
-    }
-}
+    jwt.sign({
+        sysmtemInfo
+    },
+        config.secret,
+        {
+            expiresIn: config.expiresIn
+        },
+        (err, token) => {
+            if (err) {
+                res.json({
+                    'err': err
+                });
+            } else {
+
+                res.json({
+                    token: token,
+                    status: true,
+                });
+                return;
+            }
+        }
+    );
+
+});
 
 /** Link Device MDM **/
 router.post('/linkdevice', async function (req, resp) {
@@ -355,13 +386,12 @@ router.post('/linkdevice', async function (req, resp) {
     // console.log("/linkdevice");
     var reslt = verifyToken(req, resp);
     if (reslt.status == true) {
-        var dId = req.body.dId;
-        var connected_dealer = (req.body.connected_dealer === undefined || req.body.connected_dealer === null) ? 0 : req.body.connected_dealer;
-        // var deviceId = uniqid.process();        
         let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = device_helpers.getDeviceInfo(req);
         // console.log("serial no", serial_number);
         // console.log("mac address", mac_address);
         if (!empty(serial_number) && !empty(mac_address)) {
+            var dId = req.body.dId;
+            var connected_dealer = (req.body.connected_dealer === undefined || req.body.connected_dealer === null) ? 0 : req.body.connected_dealer;
 
             var deviceQ = "SELECT * FROM devices WHERE  mac_address='" + mac_address + "' OR serial_number='" + serial_number + "'";
             var device = await sql.query(deviceQ);
@@ -378,7 +408,6 @@ router.post('/linkdevice', async function (req, resp) {
                 sendEmail("New Device Request", "You have a new device request", dealer[0].dealer_email, function (error, response) {
                     if (error) throw error;
                 });
-                // let dealerStatus = helpers.getDealerStatus(dealer[0]);
 
                 if (device.length > 0) {
                     var user_acc = await device_helpers.getUserAccByDvcId(device[0].id);
@@ -494,113 +523,59 @@ router.post('/getstatus', async function (req, resp) {
         //console.log(sql1);
 
         var device = await sql.query(deviceQ);
-        // console.log("my device", device);
-        // res
-        //console.log(res[0].device_status);
+        // console.log("my device", device)
         if (device.length > 0) {
             // let userAcc = await sql.query("SELECT * FROM usr_acc WHERE device_id="+ device[0].id);
             let userAcc = await device_helpers.getUserAccByDvcId(device[0].id);
             // console.log("get usr account by device id", userAcc);
             if (userAcc) {
                 let deviceStatus = device_helpers.checkStatus(userAcc);
-                // console.log("device_status get_status", deviceStatus);
+                let dealerQ = "SELECT dealer_id, link_code FROM dealers WHERE dealer_id =" + userAcc.dealer_id;
+                let dealer = await sql.query(dealerQ);
+                if (dealer.length) {
+                    if (userAcc.device_status == 0) {
+                        if (userAcc.unlink_status == 1) {
+                            data = {
+                                status: -1,
+                                msg: "Device Unlinked.",
+                                dealer_id: userAcc.dealer_id,
+                                device_id: device[0].device_id,
+                                dealer_pin: dealer[0].link_code
+                            };
+                        } else {
+                            data = {
+                                status: 0,
+                                msg: "Processing.",
+                                dealer_id: userAcc.dealer_id,
+                                device_id: device[0].device_id,
+                                dealer_pin: dealer[0].link_code,
+                            };
 
-                if (userAcc.device_status == 0) {
-                    if (userAcc.unlink_status == 1) {
-                        data = {
-                            "status": -1,
-                            "msg": "Device Unlinked.",
-                            "dealer_id": userAcc.dealer_id,
-                            "device_id": device[0].device_id
-                        };
+                        }
+
+                        resp.send(data);
                     } else {
                         data = {
-                            "status": 0,
-                            "msg": "Processing.",
-                            "dealer_id": userAcc.dealer_id,
-                            "device_id": device[0].device_id
+                            status: 1,
+                            msg: "Device activated.",
+                            dealer_id: userAcc.dealer_id,
+                            expiry_date: userAcc.expiry_date,
+                            device_id: device[0].device_id,
+                            dealer_pin: dealer[0].link_code
+                            // "chat_id": res[0].chat_id,
+                            // "pgp_email": res[0].pgp_email,
+                            // "sim_id": res[0].sim_id
                         };
-
+                        resp.send(data);
                     }
-
-                    resp.send(data);
                 } else {
-                    data = {
-                        "status": 1,
-                        "msg": "Device activated.",
-                        "dealer_id": userAcc.dealer_id,
-                        "expiry_date": userAcc.expiry_date,
-                        "device_id": device[0].device_id,
-                        // "chat_id": res[0].chat_id,
-                        // "pgp_email": res[0].pgp_email,
-                        // "sim_id": res[0].sim_id
-                    };
-                    resp.send(data);
+
                 }
-                // if(deviceStatus === Constants.DEVICE_PENDING_ACTIVATION){
-                //     console.log("pending");
-                //     data = {
-                //         "status": -1,
-                //         "msg": "Device Unlinked.",
-                //         "dealer_id": userAcc.dealer_id,
-                //         "device_id": device[0].device_id
-                //     };
-                //     resp.send(data);
-                //     return;
-                // }  
 
-                // else {
-                //     console.log("activated");
-                //     data = {
-                //         "status": 0,
-                //         "msg": "Processing.",
-                //         "dealer_id": userAcc.dealer_id,
-                //         "expiry_date": usrAcc.expiry_date,
-                //         "device_id": device[0].device_id,
-                //         // "chat_id": res[0].chat_id,
-                //         // "pgp_email": res[0].pgp_email,
-                //         // "sim_id": res[0].sim_id
-                //     };
-                //     resp.send(data);
-                // }
-                // else {
-                //     console.log("activated");
-                //     data = {
-                //         "status": 1,
-                //         "msg": "Device activated.",
-                //         "dealer_id": userAcc.dealer_id,
-                //         "expiry_date": usrAcc.expiry_date,
-                //         "device_id": device[0].device_id,
-                //         // "chat_id": res[0].chat_id,
-                //         // "pgp_email": res[0].pgp_email,
-                //         // "sim_id": res[0].sim_id
-                //     };
-                //     resp.send(data);
-                // }
-
+            } else {
+                // device exists but user account was deleted
             }
 
-
-            // else if (userAcc.expiry_date == null || userAcc.expiry_date == '') {
-            //     console.log("expiry date");
-
-            //     data = {
-            //         "status": 1,
-            //         "msg": "Device activated.",
-            //         "dealer_id": userAcc.dealer_id,
-            //         "expiry_date": '',
-            //         "device_id": device[0].device_id,
-            //         // "chat_id": userAcc[0].chat_id,
-            //         // "pgp_email": res[0].pgp_email,
-            //         // "sim_id": res[0].sim_id
-            //     };
-            //     resp.send(data);
-            // }
-
-
-            // } else {
-
-            // }
         } else {
             data = {
                 "status": -1,
@@ -740,64 +715,73 @@ router.get('/apklist', async function (req, res) {
 });
 
 
-router.get('/getUpdate/:version/:uniqueName', async (req, res) => {
+router.get('/getUpdate/:version/:uniqueName/:label', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
-    let versionName = req.params.version;
-    let uniqueName = req.params.uniqueName;
-    let query = "SELECT * FROM apk_details WHERE package_name = '" + uniqueName + "' AND delete_status=0 ";
-    sql.query(query, function (error, response) {
-        // console.log("res", response);
+    let verify = await verifyToken(req, res);
+    if (verify.status == true) {
+        let versionName = req.params.version;
+        let uniqueName = req.params.uniqueName;
+        let query = "SELECT * FROM apk_details WHERE package_name = '" + uniqueName + "' AND delete_status=0 AND status='On'";
+        sql.query(query, function (error, response) {
+            // console.log("res", response);
 
-        if (error) {
-            res.send({
-                status: false,
-                msg: ""
-            });
-
-        }
-        let isAvail = false;
-
-        if (response.length) {
-            for (let i = 0; i < response.length; i++) {
-                console.log("testing upgrade", response[i].version_name)
-                if (Number(response[i].version_name) > Number(versionName)) {
-                    isAvail = true;
-                    res.send({
-                        apk_status: true,
-                        apk_url: response[i].apk
-                    });
-
-                    break;
-                }
-            }
-            if (!isAvail) {
+            if (error) {
                 res.send({
-                    apk_status: false,
-                    msg: ""
+                    success: true,
+                    status: false,
+                    msg: "Error in Query"
                 });
             }
 
-        } else {
-            res.send({
-                apk_status: false,
-                msg: ""
-            });
-        }
-    })
+            let isAvail = false;
+
+            if (response.length) {
+                for (let i = 0; i < response.length; i++) {
+                    if (Number(response[i].version_code) > Number(versionName)) {
+                        isAvail = true;
+                        res.send({
+                            apk_status: true,
+                            success: true,
+                            apk_url: response[i].apk
+                        });
+
+                        break;
+                    }
+                }
+                if (!isAvail) {
+                    res.send({
+                        apk_status: false,
+                        success: true,
+                        msg: ""
+                    });
+                }
+
+            } else {
+                res.send({
+                    apk_status: false,
+                    success: true,
+                    msg: ""
+                });
+            }
+        })
+    }
+
 });
 
 /** Get Apk **/
-router.get("/getApk/:apk", (req, res) => {
-
-    if (fs.existsSync(path.join(__dirname, "../uploads/" + req.params.apk + '.apk'))) {
-        // Do something
-        res.sendFile(path.join(__dirname, "../uploads/" + req.params.apk + '.apk'));
-    } else {
-        res.send({
-            "status": false,
-            "msg": "file not found"
-        })
-    }
+router.get("/getApk/:apk", async (req, res) => {
+    // let verify = await verifyToken(req, res);
+    // if(verify['status']!==undefined && verify.status===true){
+        let file = path.join(__dirname, "../uploads/" + req.params.apk + '.apk');
+        if (fs.existsSync(file)) {
+            res.sendFile(file);
+        } else {
+            res.send({
+                status: false,
+                msg: "file not found"
+            })
+        }
+    // }
 });
 
 /** New API MDM Client App (11th.Oct.2018) **/
@@ -911,10 +895,10 @@ router.post('/accountstatus', async function (req, res) {
 
                     } else {
                         data = {
-                            "status": false,
-                            "msg": "Dealer Not found.Contact Admin.",
-                            "device_id": device[0].device_id,
-                            "expiry_date": user_acc[0].expiry_date
+                            status: false,
+                            msg: "Dealer Not found.Contact Admin.",
+                            device_id: device[0].device_id,
+                            expiry_date: user_acc[0].expiry_date
                         }
                         res.send(data);
                         return;
@@ -969,8 +953,8 @@ router.post('/accountstatus', async function (req, res) {
             } else {
 
                 data = {
-                    "status": true,
-                    "msg": Constants.NEW_DEVICE,
+                    status: true,
+                    msg: Constants.NEW_DEVICE,
                 }
                 res.send(data);
 
@@ -1022,11 +1006,11 @@ router.get('/admin/marketApplist', async function (req, res) {
         if (results.length) {
             for (var i = 0; i < results.length; i++) {
                 dta = {
-                    "apk_name": results[i].app_name,
-                    "logo": results[i].logo,
-                    "apk": results[i].apk,
-                    "apk_status": results[i].status,
-                    "package_name": results[i].package_name
+                    apk_name: results[i].app_name,
+                    logo: results[i].logo,
+                    apk: results[i].apk,
+                    apk_status: results[i].status,
+                    package_name: results[i].package_name
                 }
                 data.push(dta);
             }
@@ -1057,11 +1041,11 @@ router.get('/marketApplist/:linkCode', async function (req, res) {
             if (results.length) {
                 for (var i = 0; i < results.length; i++) {
                     dta = {
-                        "apk_name": results[i].app_name,
-                        "logo": results[i].logo,
-                        "apk": results[i].apk,
-                        "apk_status": results[i].status,
-                        "package_name": results[i].package_name
+                        apk_name: results[i].app_name,
+                        logo: results[i].logo,
+                        apk: results[i].apk,
+                        apk_status: results[i].status,
+                        package_name: results[i].package_name
                     }
                     data.push(dta);
                 }
@@ -1073,16 +1057,16 @@ router.get('/marketApplist/:linkCode', async function (req, res) {
                 });
             } else {
                 data = {
-                    "status": false,
-                    "msg": "No result found"
+                    status: false,
+                    msg: "No result found"
                 }
                 res.send(data);
             }
         })
     } else {
         data = {
-            "status": false,
-            "msg": "No result found"
+            status: false,
+            msg: "No result found"
         }
         res.send(data);
     }

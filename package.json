@@ -20,6 +20,7 @@
     "jszip": "^3.2.1",
     "mariadb": "^2.0.3",
     "md5": "^2.2.1",
+    "mime": "^2.4.2",
     "moment": "^2.24.0",
     "moment-strftime": "^0.5.0",
     "morgan": "~1.9.0",
@@ -39,6 +40,7 @@
     "sequelize": "^5.3.1",
     "socket.io": "^2.2.0",
     "sqlite3": "^4.0.6",
+    "swagger-ui-express": "^4.0.3",
     "uniqid": "^5.0.3",
     "xlsx": "^0.14.2",
     "zlib": "^1.0.5"
