@@ -2795,7 +2795,10 @@ router.get('/get_dealer_apps', async function (req, res) {
 
         let getAppsQ = "SELECT apk_details.* FROM apk_details ";
         if (loggedUserType !== Constants.ADMIN) {
-            getAppsQ = getAppsQ + " JOIN dealer_apks on dealer_apks.apk_id = apk_details.id WHERE dealer_apks.dealer_id =" + loggedUserId;
+            getAppsQ = getAppsQ + " JOIN dealer_apks on dealer_apks.apk_id = apk_details.id WHERE dealer_apks.dealer_id =" + loggedUserId + " AND delete_status=0";
+        } else {
+            getAppsQ = getAppsQ + " WHERE delete_status=0" ;
+
         }
         let apps = await sql.query(getAppsQ);
 
