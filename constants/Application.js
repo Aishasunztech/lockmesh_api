@@ -77,11 +77,8 @@ module.exports = {
     ACK_pull_APPS: 'ack_pull_apps_',
     ACK_FINISHED_PULL_APPS: 'ack_finished_pull_apps_',
     ACK_SINGLE_PULL_APP: 'ack_single_pull_app_',
-
     PULL_PUSH_IN_PROCESS: 'pull_push_in_process',
-
     LOAD_POLICY: 'load_policy_',
-
     GET_POLICY: 'get_policy_',
 
     // force update

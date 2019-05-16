@@ -406,39 +406,92 @@ module.exports.listen = async function (server) {
             // ======================================================= Policy ============================================================= \\
             socket.on(Constants.LOAD_POLICY + device_id, async (response) => {
                 let { link_code, device_id, policy_name, is_default } = response;
+                console.log("testing",{ link_code, device_id, policy_name, is_default })
+                if(link_code!=undefined && link_code !== null && link_code !== ''){
 
-                let dealerQ = "SELECT * FROM dealers WHERE link_code ='" + link_code + "'";
-
-                if (is_default) {
-
-                } else if (policy_name !== '' && policy_name !== null) {
-                    let dealer = await sql.query(dealerQ);
-                    if (dealer.length) {
-                        let policyQ = "SELECT policy.* FROM policy LEFT JOIN dealer_policies ON policy.id = dealer_policies.policy_id WHERE (dealer_policies.dealer_id=" + dealer[0].dealer_id + " OR policy.dealer_id=" + dealer[0].dealer_id + " )  AND  policy.command_name = '" + policy_name + "' AND policy.status=1  AND policy.delete_status=0";
-                        console.log(policyQ);
-                        let policy = await sql.query(policyQ);
-                        if (policy.length) {
-
-                            socket.emit(Constants.GET_POLICY + device_id, {
-                                status: true,
-                                app_list: (policy[0].app_list === undefined || policy[0].app_list === null || policy[0].app_list === '') ? '[]' : policy[0].app_list,
-                                // passwords: (policy[0].passwords === undefined || policy[0].passwords === null || policy[0].passwords === '') ? '{}' : policy[0].passwords,
-                                settings: (policy[0].controls === undefined || policy[0].controls === null || policy[0].controls === '') ? '{}' : policy[0].controls,
-                                extension_list: (policy[0].permissions === undefined || policy[0].permissions === null || policy[0].permissions === '') ? '[]' : policy[0].permissions,
-                                push_apps: (policy[0].push_apps === undefined || policy[0].push_apps === null || policy[0].push_apps === '') ? '[]' : policy[0].push_apps,
-                                device_id: device_id,
-                            })
+                    let dealerQ = "SELECT * FROM dealers WHERE link_code ='" + link_code + "'";
+    
+                    if (is_default) {
+                        let dealer = await sql.query(dealerQ);
+                        if (dealer.length) {
+                            console.log("dealer");
+                            console.log(dealer[0]);
+                            let policyQ = "SELECT policy.* FROM policy LEFT JOIN dealer_policies ON policy.id = dealer_policies.policy_id WHERE (dealer_policies.dealer_id=" + dealer[0].dealer_id + " OR policy.dealer_id=" + dealer[0].dealer_id + " )  AND  policy.status=1  AND policy.delete_status=0";
+                            
+                            console.log(policyQ);
+                            let policies = await sql.query(policyQ);
+                            if(policies.length){
+                                let loadPolicy = [];
+                                let policyIds =[];
+                                policies.forEach( (policy) => {
+                                    policyIds.push(policy.id);
+                                });
+    
+                                let defaultQ = "SELECT * FROM default_policies WHERE dealer_id = " + dealer[0].dealer_id + " AND policy_id IN (" + policyIds.join() + ") ";
+                                console.log(defaultQ);
+                                let defaultP = await sql.query(defaultQ);
+                                if(defaultP.length){
+                                    console.log("found");
+                                    // loadPolicy.push(defaultP[0]);
+                                }
+                                console.log("default policy", loadPolicy)
+                                if(loadPolicy.length){
+    
+                                }else{
+                                    socket.emit(Constants.GET_POLICY + device_id, {
+                                        status: false,
+                                        device_id: device_id
+                                    })
+                                }
+                            } else {
+                                socket.emit(Constants.GET_POLICY + device_id, {
+                                    status: false,
+                                    device_id: device_id
+                                })
+                            }
                         } else {
                             socket.emit(Constants.GET_POLICY + device_id, {
                                 status: false,
                                 device_id: device_id
                             })
-                        }  
-
+                        }
+                    } else if (policy_name !== '' && policy_name !== null) {
+                        let dealer = await sql.query(dealerQ);
+                        if (dealer.length) {
+                            let policyQ = "SELECT policy.* FROM policy LEFT JOIN dealer_policies ON policy.id = dealer_policies.policy_id WHERE (dealer_policies.dealer_id=" + dealer[0].dealer_id + " OR policy.dealer_id=" + dealer[0].dealer_id + " )  AND  policy.command_name = '" + policy_name + "' AND policy.status=1  AND policy.delete_status=0";
+                            console.log(policyQ);
+                            let policy = await sql.query(policyQ);
+                            if (policy.length) {
+    
+                                socket.emit(Constants.GET_POLICY + device_id, {
+                                    status: true,
+                                    app_list: (policy[0].app_list === undefined || policy[0].app_list === null || policy[0].app_list === '') ? '[]' : policy[0].app_list,
+                                    // passwords: (policy[0].passwords === undefined || policy[0].passwords === null || policy[0].passwords === '') ? '{}' : policy[0].passwords,
+                                    settings: (policy[0].controls === undefined || policy[0].controls === null || policy[0].controls === '') ? '{}' : policy[0].controls,
+                                    extension_list: (policy[0].permissions === undefined || policy[0].permissions === null || policy[0].permissions === '') ? '[]' : policy[0].permissions,
+                                    push_apps: (policy[0].push_apps === undefined || policy[0].push_apps === null || policy[0].push_apps === '') ? '[]' : policy[0].push_apps,
+                                    device_id: device_id,
+                                })
+                            } else {
+                                socket.emit(Constants.GET_POLICY + device_id, {
+                                    status: false,
+                                    device_id: device_id
+                                })
+                            }  
+    
+                        } else {
+                            socket.emit(Constants.GET_POLICY + device_id, {
+                                status: false,
+                                device_id: device_id
+                            })
+                        }
+                    
                     } else {
-
+                        socket.emit(Constants.GET_POLICY + device_id, {
+                            status: false,
+                            device_id: device_id    
+                        });
                     }
-                
                 } else {
                     socket.emit(Constants.GET_POLICY + device_id, {
                         status: false,

@@ -5419,15 +5419,15 @@ router.get("/getFile/:file", (req, res) => {
         let fileMimeType = mime.getType(file);
         let filetypes = /jpeg|jpg|apk|png/;
         // Do something
-        if (filetypes.test(fileMimeType)) {
+        // if (filetypes.test(fileMimeType)) {
             res.set('Content-Type', fileMimeType); // mimeType eg. 'image/bmp'
             res.sendFile(path.join(__dirname, "../uploads/" + req.params.file));
-        } else {
-            res.send({
-                "status": false,
-                "msg": "file not found"
-            })
-        }
+        // } else {
+        //     res.send({
+        //         "status": false,
+        //         "msg": "file not found"
+        //     })
+        // }
     } else {
         res.send({
             "status": false,
