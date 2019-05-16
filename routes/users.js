@@ -33,10 +33,10 @@ const ADMIN = "admin";
 const DEALER = "dealer";
 const SDEALER = "sdealer";
 let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity"
-let deviceColumns = ["DEVICE ID","USER ID","REMAINING DAYS","FLAGGED","STATUS","MODE","DEVICE NAME","ACTIVATION CODE","ACCOUNT EMAIL","PGP EMAIL","CHAT ID","CLIENT ID","DEALER ID","DEALER PIN","MAC ADDRESS","SIM ID","IMEI 1","SIM 1","IMEI 2","SIM 2","SERIAL NUMBER","MODEL","START DATE","EXPIRY DATE","DEALER NAME","S-DEALER","S-DEALER NAME"]
-let dealerColumns = ["DEALER ID","DEALER NAME","DEALER EMAIL","DEALER PIN","DEVICES","TOKENS"];
-let apkColumns = ["SHOW ON DEVICE","APK","APP NAME","APP LOGO"]
-let sdealerColumns = ["DEALER ID","DEALER NAME","DEALER EMAIL","DEALER PIN","DEVICES","TOKENS","PARENT DEALER","PARENT DEALER ID"]
+let deviceColumns = ["DEVICE ID", "USER ID", "REMAINING DAYS", "FLAGGED", "STATUS", "MODE", "DEVICE NAME", "ACTIVATION CODE", "ACCOUNT EMAIL", "PGP EMAIL", "CHAT ID", "CLIENT ID", "DEALER ID", "DEALER PIN", "MAC ADDRESS", "SIM ID", "IMEI 1", "SIM 1", "IMEI 2", "SIM 2", "SERIAL NUMBER", "MODEL", "START DATE", "EXPIRY DATE", "DEALER NAME", "S-DEALER", "S-DEALER NAME"]
+let dealerColumns = ["DEALER ID", "DEALER NAME", "DEALER EMAIL", "DEALER PIN", "DEVICES", "TOKENS"];
+let apkColumns = ["SHOW ON DEVICE", "APK", "APP NAME", "APP LOGO"]
+let sdealerColumns = ["DEALER ID", "DEALER NAME", "DEALER EMAIL", "DEALER PIN", "DEVICES", "TOKENS", "PARENT DEALER", "PARENT DEALER ID"]
 // var CryptoJS = require("crypto-js");
 // var io = require("../bin/www");
 var util = require('util')
@@ -661,12 +661,12 @@ router.post('/add/dealer', async function (req, res) {
 
             sql.query(sql1, function (error, rows) {
                 if (error) throw error;
-                if(rows.affectedRows){
-                   
-                    sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('"+rows.insertId+"', '"+JSON.stringify(deviceColumns) +"', 'devices') ")
-                    sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('"+rows.insertId+"', '"+JSON.stringify(dealerColumns) +"', 'dealer') ")                   
-                    sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('"+rows.insertId+"', '"+JSON.stringify(sdealerColumns) +"', 'sdealer') ")                   
-                    sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('"+rows.insertId+"', '"+JSON.stringify(apkColumns) +"', 'apk') ")
+                if (rows.affectedRows) {
+
+                    sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('" + rows.insertId + "', '" + JSON.stringify(deviceColumns) + "', 'devices') ")
+                    sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('" + rows.insertId + "', '" + JSON.stringify(dealerColumns) + "', 'dealer') ")
+                    sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('" + rows.insertId + "', '" + JSON.stringify(sdealerColumns) + "', 'sdealer') ")
+                    sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('" + rows.insertId + "', '" + JSON.stringify(apkColumns) + "', 'apk') ")
                 }
 
                 var html = '';
@@ -4625,7 +4625,7 @@ router.get('/get_pgp_emails', async (req, res) => {
 router.get('/get_used_pgp_emails', async (req, res) => {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
-        let query = "select * from pgp_emails where used=1";
+        let query = "select * from pgp_emails where used=1 AND user_acc_id is null";
         sql.query(query, (error, resp) => {
             res.send({
                 status: false,
@@ -4644,7 +4644,7 @@ router.get('/get_used_pgp_emails', async (req, res) => {
 router.get('/get_used_sim_ids', async (req, res) => {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
-        let query = "select * from sim_ids where used=1";
+        let query = "select * from sim_ids where used=1 AND user_acc_id is null";
         sql.query(query, (error, resp) => {
             res.send({
                 status: false,
@@ -4663,7 +4663,7 @@ router.get('/get_used_sim_ids', async (req, res) => {
 router.get('/get_used_chat_ids', async (req, res) => {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
-        let query = "select * from chat_ids where used=1";
+        let query = "select * from chat_ids where used=1 AND user_acc_id is null";
         sql.query(query, (error, resp) => {
             res.send({
                 status: false,
