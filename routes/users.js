@@ -2798,7 +2798,7 @@ router.get('/get_dealer_apps', async function (req, res) {
         if (loggedUserType !== Constants.ADMIN) {
             getAppsQ = getAppsQ + " JOIN dealer_apks on dealer_apks.apk_id = apk_details.id WHERE dealer_apks.dealer_id =" + loggedUserId + " AND delete_status=0";
         } else {
-            getAppsQ = getAppsQ + " WHERE delete_status=0" ;
+            getAppsQ = getAppsQ + " WHERE delete_status=0";
 
         }
         let apps = await sql.query(getAppsQ);
@@ -3175,13 +3175,11 @@ router.post('/save_policy', async function (req, res) {
                 } else if (loggedDealerType === SDEALER) {
                     checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id = " + connectedDealer + ")";
                 }
-                console.log("testing testing testing");
-                console.log(checkExistingQ);
                 let checkExisting = await sql.query(checkExistingQ);
                 if (checkExisting.length) {
                     data = {
                         status: false,
-                        msg: 'Policy name should be unique',
+                        msg: 'Policy name has already been taken',
 
                     };
                     res.send(data);
@@ -3410,51 +3408,49 @@ router.post('/apply_policy/:device_id', async function (req, res) {
             if (device_id !== null || device_id !== '' || device_id !== undefined || device_id !== 'undefined' || policy_id !== null || policy_id !== '' || policy_id !== undefined || policy_id !== 'undefined') {
 
                 let getPolicyQ = "SELECT * FROM POLICY WHERE id =" + policy_id;
-                let reslults = await sql.query(getPolicyQ)
+                let policy = await sql.query(getPolicyQ)
 
-                var applyQuery = "INSERT INTO device_history (user_acc_id, app_list, controls, permissions, push_apps, type) VALUES (" + userAccId + ", '" + reslults[0].app_list + "','" + reslults[0].controls + "','" + reslults[0].permissions + "','" + reslults[0].push_apps + "',  'policy')";
-                sql.query(applyQuery, async function (err, rslts) {
-                    if (err) {
-                        throw err;
-                    }
-                    if (rslts) {
-
-                        let isOnline = await device_helpers.isDeviceOnline(device_id);
-                        if (isOnline) {
-                            // require("../bin/www").applyPushApps(apps, device_id);
-                            var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='policy' AND user_acc_id=" + userAccId + "";
-                            sql.query(pushAppsQ)
-                            var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
-                            await sql.query(loadDeviceQ)
-                            data = {
-                                "status": true,
-                                "online": true
-                            };
+                if (policy.length) {
+                    var applyQuery = "INSERT INTO device_history (user_acc_id, app_list, controls, permissions, push_apps, type) VALUES (" + userAccId + ", '" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
+                    sql.query(applyQuery, async function (err, policyApplied) {
+                        if (err) {
+                            throw err;
                         }
-                        else {
-                            data = {
-                                "status": true,
-                            };
-                        }
-                        res.send(data);
-                    } else {
-                        data = {
-                            "status": false,
-                            "msg": 'Error while Processing',
-                        };
-                        res.send(data);
-                    }
 
-                });
+                        if (policyApplied && policyApplied.affectedRows) {
+
+                            let isOnline = await device_helpers.isDeviceOnline(device_id, policy[0]);
+                            if (isOnline) {
+                                require("../bin/www").loadPolicy(device_id, policy[0]);
+                                var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='policy' AND user_acc_id=" + userAccId + "";
+                                sql.query(pushAppsQ)
+                                var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
+                                await sql.query(loadDeviceQ)
+                                data = {
+                                    status: true,
+                                    online: true,
+                                };
+                            } else {
+                                data = {
+                                    status: true,
+
+                                };
+                            }
+                            res.send(data);
+                            return;
+                        } else {
+                            data = {
+                                status: false,
+                                msg: 'Error while Processing',
+                            };
+                            res.send(data);
+                        }
+
+                    });
+                } else {
+
+                }
             }
-        }
-        else {
-            data = {
-                "status": false,
-                "msg": 'token not provided',
-            };
-            res.send(data);
-
         }
     } catch (error) {
         throw Error(error.message);
@@ -5485,8 +5481,8 @@ router.get("/getFile/:file", (req, res) => {
         let filetypes = /jpeg|jpg|apk|png/;
         // Do something
         // if (filetypes.test(fileMimeType)) {
-            res.set('Content-Type', fileMimeType); // mimeType eg. 'image/bmp'
-            res.sendFile(path.join(__dirname, "../uploads/" + req.params.file));
+        res.set('Content-Type', fileMimeType); // mimeType eg. 'image/bmp'
+        res.sendFile(path.join(__dirname, "../uploads/" + req.params.file));
         // } else {
         //     res.send({
         //         "status": false,

@@ -584,6 +584,13 @@ module.exports = {
 		// console.log(name);
 		return name
 	},
+	checkValue: (value) => {
+		if (value !== undefined && value !== '' && value !== null && value !== 'undefined' && value !== 'Undefined' && value !== "UNDEFINED" && value !== 'null' && value !== 'Null' && value !== 'NULL') {
+			return value;
+		} else {
+			return 'N/A';
+		}
+	},
 	resetDB: function () {
 		var importer1 = mysql_import.config({
 			host: 'localhost',

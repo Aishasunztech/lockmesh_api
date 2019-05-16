@@ -78,10 +78,10 @@ module.exports = {
     ACK_FINISHED_PULL_APPS: 'ack_finished_pull_apps_',
     ACK_SINGLE_PULL_APP: 'ack_single_pull_app_',
     PULL_PUSH_IN_PROCESS: 'pull_push_in_process',
+    
+    // Policy
     LOAD_POLICY: 'load_policy_',
     GET_POLICY: 'get_policy_',
-
-    // Policy
     FINISH_POLICY_PUSH_APPS: "finish_policy_push_apps_",
     FINISH_POLICY_APPS: "finish_policy_apps_",
     FINISH_POLICY_SETTINGS: "finish_policy_settings_",

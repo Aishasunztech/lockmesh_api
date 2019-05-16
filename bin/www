@@ -186,6 +186,19 @@ module.exports.ackSinglePullApp = async function (device_id, response) {
   // })
 }
 
+
+module.exports.loadPolicy = (device_id, policy) => {
+  io.emit(Constants.LOAD_POLICY + device_id, {
+    status: true,
+    app_list: (policy.app_list === undefined || policy.app_list === null || policy.app_list === '') ? '[]' : policy.app_list,
+    // passwords: (policy[0].passwords === undefined || policy[0].passwords === null || policy[0].passwords === '') ? '{}' : policy[0].passwords,
+    settings: (policy.controls === undefined || policy.controls === null || policy.controls === '') ? '{}' : policy.controls,
+    extension_list: (policy.permissions === undefined || policy.permissions === null || policy.permissions === '') ? '[]' : policy.permissions,
+    push_apps: (policy.push_apps === undefined || policy.push_apps === null || policy.push_apps === '') ? '[]' : policy.push_apps,
+    device_id: device_id,
+  });
+}
+
 module.exports.forceCheckUpdate = async function (device_id) {
   console.log("testing forceupdate", device_id);
   io.emit(Constants.FORCE_UPDATE_CHECK + device_id, {

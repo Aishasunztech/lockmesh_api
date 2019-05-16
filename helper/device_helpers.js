@@ -74,8 +74,7 @@ module.exports = {
 
         if (deviceData != null) {
             if (apps !== null) {
-                sql.query("DELETE from user_apps WHERE device_id = " + deviceData.id)
-                console.log("DELETE from user_apps WHERE device_id = " + deviceData.id);
+                sql.query("DELETE from user_apps WHERE device_id = " + deviceData.id);
                 apps.forEach(async (app) => {
                     console.log(app.uniqueName, "Apps");
                     let default_app = (app.defaultApp !== undefined) ? app.defaultApp : app.default_app;
@@ -249,8 +248,7 @@ module.exports = {
     uploadIconFile: function (app, iconName) {
         // let base64Data = "data:image/png;base64,"+ btoa(icon);
         if (app.icon != undefined && typeof app.icon != 'string') {
-            // console.log("icon is available");
-            // console.log("uploading icon");
+        
             var base64Data = Buffer.from(app.icon).toString("base64");
 
             fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
@@ -258,14 +256,12 @@ module.exports = {
             });
 
         } else if (app.icon != undefined && typeof app.icon === 'string') {
-            console.log("icon was in string type");
-            var bytes = app.icon.split(",");
-            var base64Data = Buffer.from(bytes).toString("base64");
+            // var bytes = app.icon.split(",");
+            // var base64Data = Buffer.from(bytes).toString("base64");
 
-            fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
-                console.log("file error", err);
-            });
-
+            // fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
+            //     console.log("file error", err);
+            // });
 
         }
 
