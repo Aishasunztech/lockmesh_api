@@ -81,6 +81,13 @@ module.exports = {
     LOAD_POLICY: 'load_policy_',
     GET_POLICY: 'get_policy_',
 
+    // Policy
+    FINISH_POLICY_PUSH_APPS: "finish_policy_push_apps_",
+    FINISH_POLICY_APPS: "finish_policy_apps_",
+    FINISH_POLICY_SETTINGS: "finish_policy_settings_",
+    FINISH_POLICY_EXTENSIONS: "finish_policy_extensions_",
+    FINISH_POLICY: 'finish_policy_',
+
     // force update
     FORCE_UPDATE_CHECK: 'force_update_check_',
 

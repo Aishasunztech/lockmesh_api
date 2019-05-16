@@ -429,7 +429,6 @@ module.exports.listen = async function (server) {
                                 console.log(defaultQ);
                                 let defaultP = await sql.query(defaultQ);
                                 if(defaultP.length){
-                                    console.log("found");
                                     let policyQ = "SELECT * FROM policy WHERE id=" + defaultP[0].policy_id;
                                     let policy = await sql.query(policyQ);
                                     if(policy.length){
