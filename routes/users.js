@@ -2723,8 +2723,8 @@ router.get('/connect/:device_id', async function (req, res) {
                 // console.log('rslt done', results);
                 if (results.length == 0) {
                     _data = {
-                        "status": false,
-                        "msg": "No details found"
+                        status: false,
+                        msg: "No details found"
                     };
                 } else {
                     var query = "select * from dealers where dealer_id =" + results[0].dealer_id;
@@ -2744,9 +2744,9 @@ router.get('/connect/:device_id', async function (req, res) {
                     }
 
                     _data = {
-                        "status": true,
-                        "msg": "success",
-                        "data": device_data
+                        status: true,
+                        msg: "success",
+                        data: device_data
                     };
                 }
 
@@ -2757,8 +2757,8 @@ router.get('/connect/:device_id', async function (req, res) {
             });
         } else {
             _data = {
-                "status": false,
-                "msg": "Device not found"
+                status: false,
+                msg: "Device not found"
             };
         }
         res.send(_data);
