@@ -386,8 +386,9 @@ module.exports = {
 	getAPKVersionCode: function (filePath) {
 		try {
 			var reader = ApkReader.readFile(filePath);
-			// console.log(reader);
+			
 			var manifest = reader.readManifestSync();
+			console.log("manifest", manifest);
 			// let apk = util.inspect(manifest, {depth:null});
 			let res = JSON.parse(JSON.stringify(manifest));
 			return res.versionCode

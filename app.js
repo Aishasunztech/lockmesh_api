@@ -8,6 +8,7 @@ var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var mobileRouter = require('./routes/mobile');
 var bodyParser = require('body-parser');
+const fileUpload = require('express-fileupload');
 
 var swaggerUi = require('swagger-ui-express'),
 swaggerDocument = require('./swagger.json');
@@ -40,7 +41,7 @@ app.use(function (req, res, next) {
 
 	next();
 });
-
+// app.use(fileUpload());
 // routes
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/', indexRouter);

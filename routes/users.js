@@ -3903,9 +3903,9 @@ router.post('/dealer/postPagination', async function (req, res) {
         if (srslt.length == 0) {
             var squery = sql.query("insert into dealer_pagination (dealer_id, record_per_page, type) values (" + dealer_id + ", '" + selectedValue + "', '" + dropdownType + "')", function (err, rslts) {
                 data = {
-                    "status": true,
-                    "msg": 'record Added.',
-                    "data": rslts
+                    status: true,
+                    msg: 'record Added.',
+                    data: rslts
                 };
                 res.send(data);
             });
@@ -3913,19 +3913,19 @@ router.post('/dealer/postPagination', async function (req, res) {
 
             sql.query("update dealer_pagination set record_per_page = '" + selectedValue + "' where type='" + dropdownType + "' AND dealer_id='" + dealer_id + "'", function (err, row) {
                 // console.log('squery data ', 'rowws', row);
-                if (row.affectedRows != 0) {
+                if (row && row.affectedRows !== 0) {
                     data = {
-                        "status": true,
-                        "msg": 'Items Updated.',
-                        "data": row
+                        status: true,
+                        msg: 'Items Updated.',
+                        data: row
                     };
 
                     res.send(data);
                 } else {
                     data = {
-                        "status": false,
-                        "msg": 'Items Not Updated.',
-                        "data": row
+                        status: false,
+                        msg: 'Items Not Updated.',
+                        data: row
                     };
                     res.send(data);
 
@@ -4877,6 +4877,7 @@ router.post('/addApk', async function (req, res) {
         let mimeType = "";
         let fieldName = "";
 
+
         var storage = multer.diskStorage({
             destination: function (req, file, callback) {
                 callback(null, './uploads');
@@ -4886,8 +4887,11 @@ router.post('/addApk', async function (req, res) {
                 mimeType = file.mimetype;
                 fieldName = file.fieldname;
                 var filetypes = /jpeg|jpg|apk|png/;
-                // console.log("mimetype: ", mimeType);
-                // console.log("fieldName: ", fieldName);
+
+                console.log('files',req.files, file);
+                console.log(req.files.apk.path);
+                // let data = fs.readFile(req.files.apk.path,'utf8');
+                console.log("file", data);
 
                 if (fieldName === Constants.LOGO && filetypes.test(mimeType)) {
                     fileUploaded = true;
@@ -4897,7 +4901,8 @@ router.post('/addApk', async function (req, res) {
                 } else if (fieldName === Constants.APK && mimeType === "application/vnd.android.package-archive") {
                     fileUploaded = true;
                     filename = fieldName + '-' + Date.now() + '.apk';
-
+                    // apk manifest should be check here
+                    // helpers.getAPKVersionCode(req.files.apk);
                     callback(null, filename);
                 } else {
                     callback("file not supported");
@@ -4929,21 +4934,23 @@ router.post('/addApk', async function (req, res) {
                 if (fieldName === Constants.APK) {
                     try {
                         let file = path.join(__dirname, "../uploads/" + filename);
-
+                        let versionCode = helpers.getAPKVersionCode(file),
+                        
                         data = {
                             status: true,
                             msg: 'Uploaded Successfully',
                             fileName: filename,
-                            versionCode: helpers.getAPKVersionCode(file),
-
                         };
+                        res.send(data);
+                        return;
                     } catch (error) {
                         console.log(error);
-
                         data = {
                             status: false,
                             msg: "Error while Uploading",
                         };
+                        res.send(data);
+                        return;
                     }
                 } else if (fieldName === Constants.LOGO) {
                     data = {
@@ -4951,16 +4958,24 @@ router.post('/addApk', async function (req, res) {
                         msg: 'Uploaded Successfully',
                         fileName: filename,
                     };
+                    res.send(data);
+                    return;
+                } else {
+                    data = {
+                        status: false,
+                        msg: "Error while Uploading"
+                    }
+                    res.send(data);
+                    return;
                 }
             } else {
                 data = {
                     status: false,
                     msg: "Error while Uploading",
                 };
+                res.send(data);
+                return;
             }
-
-            res.send(data);
-
         });
     }
 });
