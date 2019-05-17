@@ -190,7 +190,7 @@ module.exports.listen = async function (server) {
             // ===================================================== Syncing Device ===================================================
             // request application from portal to specific device
             socket.on(Constants.SETTING_APPLIED_STATUS + device_id, async function (data) {
-                console.log("settings_applied: " + device_id);
+                // console.log("settings_applied: " + device_id);
                 // let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id;
                 // await sql.query(historyUpdate);
 
@@ -199,16 +199,17 @@ module.exports.listen = async function (server) {
 
                 if (response.length > 0 && data.device_id != null) {
                     let app_list = JSON.parse(response[0].app_list);
+                    let extensions = JSON.parse(response[0].permissions);
 
-                    console.log("insertings applications");
+                    // console.log("insertings applications", response);
                     // console.log(response[0].app_list);
 
-                    console.log("inserting setiings");
-                    // console.log(response[0].permissions);
+                    // console.log("inserting setiings", device_id);
+                    //  console.log(response[0].permissions);
 
                     await device_helpers.insertApps(app_list, device_id);
 
-                    // await device_helpers.insertExtensions(extension_apps, device_id);
+                    await device_helpers.insertExtensions(extensions, device_id);
 
                     await device_helpers.insertOrUpdateSettings(response[0].controls, device_id);
                 }
@@ -260,7 +261,7 @@ module.exports.listen = async function (server) {
                 // let device_permissions = permissions;
 
                 await device_helpers.insertOrUpdateSettings(controls, device_id);
-                // console.log("Device save");
+                 console.log("Device save");
                 await device_helpers.deviceSynced(device_id);
 
                 socket.emit("get_sync_status_" + device_id, {
@@ -279,6 +280,7 @@ module.exports.listen = async function (server) {
             if (setting_res.length) {
                 let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND type='history' ";
                 await sql.query(historyUpdate);
+
 
                 socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
                     device_id: device_id,
