@@ -1251,7 +1251,7 @@ router.post('/create/device_profile', async function (req, res) {
                                     let user_acc_id = resp.insertId;
 
                                     console.log("affectedRows", resp.affectedRows);
-                                    if (resp.affectedRows) {
+                                    if (resp && resp.affectedRows) {
                                         let updateChatIds = 'update chat_ids set used=1, user_acc_id="' + user_acc_id + '" where chat_id ="' + chat_id + '"';
                                         await sql.query(updateChatIds);
                                         let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + user_acc_id + '" where sim_id ="' + sim_id + '"';

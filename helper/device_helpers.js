@@ -374,7 +374,7 @@ module.exports = {
             if (result[0].imei1 != imei1 || result[0].imei2 != imei2) {
                 let query = "INSERT INTO imei_history(device_id, serial_number, mac_address, imei1, imei2) VALUES ('" + deviceId + "','" + sn + "','" + mac + "','" + imei1 + "','" + imei2 + "')"
                 let result = await sql.query(query);
-                if (result.affectedRows) {
+                if (result && result.affectedRows) {
                     response = result.insertId
                 }
                 else {
@@ -387,7 +387,7 @@ module.exports = {
         } else {
             let query = "INSERT INTO imei_history(device_id, serial_number, mac_address, orignal_imei1, orignal_imei2, imei1, imei2) VALUES ('" + deviceId + "','" + sn + "','" + mac + "','" + imei1 + "','" + imei2 + "','" + imei1 + "','" + imei2 + "')"
             let result = await sql.query(query);
-            if (result.affectedRows) {
+            if (result && result.affectedRows) {
                 response = result.insertId
             }
             else {
