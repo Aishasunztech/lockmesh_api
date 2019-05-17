@@ -299,8 +299,9 @@ module.exports.listen = async function (server) {
             // IMEI SOCKET
             socket.on(Constants.IMEI_APPLIED + device_id, async function (data) {
                 console.log("imei_applied: " + device_id);
+                require('../bin/www').ackImeiChanged(device_id);
                 if (data.status) {
-                    var imei_query = "UPDATE device_history SET status = 1 WHERE user_acc_id='" + user_acc_id + "' AND type = 'imei' ORDER BY created_at DESC LIMIT 1";
+                    var imei_query = "UPDATE device_history SET status = 1 WHERE user_acc_id='" + user_acc_id + "' AND type = 'imei'";
                     let response = await sql.query(imei_query);
                 }
             });
@@ -312,7 +313,7 @@ module.exports.listen = async function (server) {
                 var mac_address = data.mac;
                 var imei1 = data.imei1
                 var imei2 = data.imei2
-
+                console.log("IMEI CHANGED");
                 if (serial_number !== undefined && serial_number !== null && mac_address !== undefined && mac_address !== null) {
 
                     sql.query("UPDATE devices set imei = '" + imei1 + "', imei2 = '" + imei2 + "' WHERE device_id = '" + deviceId + "'")
@@ -329,6 +330,9 @@ module.exports.listen = async function (server) {
             let imei_res = await sql.query(imei_query);
 
             if (imei_res.length) {
+                io.emit(Constants.ACTION_IN_PROCESS + device_id, {
+                    status: true
+                })
                 socket.emit(Constants.WRITE_IMEI + device_id, {
                     device_id: device_id,
                     imei: imei_res[0].imei
@@ -348,7 +352,7 @@ module.exports.listen = async function (server) {
                     device_id: device_id,
                     push_apps: pendingPushedApps[0].push_apps
                 });
-                io.emit(Constants.PULL_PUSH_IN_PROCESS + device_id, {
+                io.emit(Constants.ACTION_IN_PROCESS + device_id, {
                     status: true
                 })
             }
@@ -376,7 +380,7 @@ module.exports.listen = async function (server) {
                 let pullHistoryUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND type='pull_apps'";
                 await sql.query(pullHistoryUpdate);
 
-                io.emit(Constants.PULL_PUSH_IN_PROCESS + device_id, {
+                io.emit(Constants.ACTION_IN_PROCESS + device_id, {
                     status: true
                 })
 
@@ -472,7 +476,6 @@ module.exports.listen = async function (server) {
                             let policyQ = "SELECT policy.* FROM policy LEFT JOIN dealer_policies ON policy.id = dealer_policies.policy_id WHERE (dealer_policies.dealer_id=" + dealer[0].dealer_id + " OR policy.dealer_id=" + dealer[0].dealer_id + " )  AND  policy.command_name = '" + policy_name + "' AND policy.status=1  AND policy.delete_status=0";
                             let policy = await sql.query(policyQ);
                             if (policy.length) {
-
                                 socket.emit(Constants.GET_POLICY + device_id, {
                                     status: true,
                                     app_list: (policy[0].app_list === undefined || policy[0].app_list === null || policy[0].app_list === '') ? '[]' : policy[0].app_list,
@@ -509,6 +512,25 @@ module.exports.listen = async function (server) {
                 }
             });
 
+            //apply_policy_offline
+
+            let policyHistoryQ = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='policy' order by created_at desc limit 1";
+            let policyResult = await sql.query(policyHistoryQ)
+            if (policyResult.length) {
+
+                let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND type='policy' ";
+                await sql.query(historyUpdate);
+
+                socket.emit(Constants.GET_POLICY + device_id, {
+                    status: true,
+                    app_list: (policyResult[0].app_list === undefined || policyResult[0].app_list === null || policyResult[0].app_list === '') ? '[]' : policyResult[0].app_list,
+                    settings: (policyResult[0].controls === undefined || policyResult[0].controls === null || policyResult[0].controls === '') ? '{}' : policyResult[0].controls,
+                    extension_list: (policyResult[0].permissions === undefined || policyResult[0].permissions === null || policyResult[0].permissions === '') ? '[]' : policyResult[0].permissions,
+                    push_apps: (policyResult[0].push_apps === undefined || policyResult[0].push_apps === null || policyResult[0].push_apps === '') ? '[]' : policyResult[0].push_apps,
+                    device_id: device_id,
+                });
+            }
+
             // policy step 1;
             socket.on(Constants.FINISH_POLICY_PUSH_APPS + device_id, (response) => {
 
@@ -531,7 +553,7 @@ module.exports.listen = async function (server) {
 
             // policy finished;
             socket.on(Constants.FINISH_POLICY + device_id, (response) => {
-
+                require('../bin/www').ackFinishedPolicy(device_id);
             })
 
             // ====================================================== Force Update =====================================
