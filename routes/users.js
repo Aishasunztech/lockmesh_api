@@ -3512,18 +3512,17 @@ router.post('/apply_pullapps/:device_id', async function (req, res) {
                     var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
                     await sql.query(loadDeviceQ)
                     if (isOnline) {
-                        require("../bin/www").getPullApps(apps, device_id);
                         data = {
                             "status": true,
                             "online": true
                         };
                     } else {
-                        require("../bin/www").getPullApps(apps, device_id);
                         data = {
                             "status": true,
                         };
                     }
                     res.send(data);
+                    require("../bin/www").getPullApps(apps, device_id);
                 } else {
                     data = {
                         "status": false,

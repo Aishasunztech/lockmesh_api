@@ -374,7 +374,7 @@ module.exports.listen = async function (server) {
             let pendingPulledApps = await sql.query(pendingPullAppsQ);
 
             if (pendingPulledApps.length) {
-                // console.log("pendingPushedApps",pendingPushedApps);
+                console.log("pendingPulledApps");
 
                 io.emit(Constants.ACTION_IN_PROCESS + device_id, {
                     status: true
@@ -390,7 +390,7 @@ module.exports.listen = async function (server) {
 
             socket.on(Constants.SEND_PULLED_APPS_STATUS + device_id, async (pushedApps) => {
                 console.log("send_pulled_apps_status_", pushedApps);
-                require('../bin/www').ackSinglePullApp(device_id, pushedApps);
+                // require('../bin/www').ackSinglePullApp(device_id, pushedApps);
             })
 
 
