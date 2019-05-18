@@ -2956,7 +2956,10 @@ router.get('/get_app_permissions', async function (req, res) {
                     encrypted: ext.encrypted,
                     enable: ext.enable,
                     label: ext.label,
-                    subExtension: subExtension
+                    subExtension: subExtension,
+                    extension: ext.extension,
+                    default_app: ext.default_app,
+                    visible: ext.visible
 
                 })
             }
@@ -3042,7 +3045,10 @@ router.get('/get_apps/:device_id', async function (req, res) {
                             encrypted: ext.encrypted,
                             enable: ext.enable,
                             label: ext.label,
-                            subExtension: subExtension
+                            subExtension: subExtension,
+                            visible: ext.visible,
+                            default_app: ext.default_app,
+                            extension: ext.extension
 
                         })
                     }
@@ -3063,7 +3069,6 @@ router.get('/get_apps/:device_id', async function (req, res) {
                                 controls: { controls: cntrls, settings: settings },
                                 extensions: newExtlist
                             });
-
 
                         } else {
                             res.send({
@@ -3337,6 +3342,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
             let usrAccId = req.body.usr_acc_id;
 
             let device_setting = req.body.device_setting;
+            // console.log('app list length',device_setting.app_list.length)
 
             let app_list = (device_setting.app_list === undefined) ? '' : JSON.stringify(device_setting.app_list);
 
