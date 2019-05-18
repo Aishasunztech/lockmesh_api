@@ -110,7 +110,7 @@ module.exports.sendEmit = async (app_list, passwords, controls, permissions, dev
 module.exports.applyPushApps = (push_apps, device_id) => {
   console.log(Constants.GET_PUSHED_APPS + device_id);
 
-  io.emit(Constants.PULL_PUSH_IN_PROCESS + device_id, {
+  io.emit(Constants.ACTION_IN_PROCESS + device_id, {
     status: true
   })
 
@@ -122,7 +122,7 @@ module.exports.applyPushApps = (push_apps, device_id) => {
 }
 
 module.exports.getPullApps = (pull_apps, device_id) => {
-  io.emit(Constants.PULL_PUSH_IN_PROCESS + device_id, {
+  io.emit(Constants.ACTION_IN_PROCESS + device_id, {
     status: true
   })
   io.emit(Constants.GET_PULLED_APPS + device_id, {
@@ -133,6 +133,9 @@ module.exports.getPullApps = (pull_apps, device_id) => {
 }
 module.exports.writeImei = (imei, device_id) => {
   console.log("write_imei_" + device_id);
+  io.emit(Constants.ACTION_IN_PROCESS + device_id, {
+    status: true
+  })
   io.emit(Constants.WRITE_IMEI + device_id, {
     status: true,
     device_id: device_id,
@@ -173,6 +176,22 @@ module.exports.ackFinishedPullApps = async function (device_id, response) {
     status: true
   });
 }
+module.exports.ackFinishedPolicy = async function (device_id) {
+  console.log("FINISHED POLICY")
+  await sql.query("UPDATE devices set is_push_apps = 0 WHERE device_id = '" + device_id + "'")
+
+  io.emit(Constants.FINISH_POLICY + device_id, {
+    status: true
+  });
+}
+module.exports.ackImeiChanged = async function (device_id) {
+  console.log("IMEI Applied")
+  await sql.query("UPDATE devices set is_push_apps = 0 WHERE device_id = '" + device_id + "'")
+
+  io.emit(Constants.FINISH_IMEI + device_id, {
+    status: true
+  });
+}
 
 module.exports.ackSinglePushApp = async function (device_id, response) {
   console.log(Constants.ACK_SINGLE_PUSH_APP);
@@ -187,11 +206,13 @@ module.exports.ackSinglePullApp = async function (device_id, response) {
 }
 
 
-module.exports.loadPolicy = (device_id, policy) => {
-  io.emit(Constants.LOAD_POLICY + device_id, {
+module.exports.getPolicy = (device_id, policy) => {
+  io.emit(Constants.ACTION_IN_PROCESS + device_id, {
+    status: true
+  })
+  io.emit(Constants.GET_POLICY + device_id, {
     status: true,
     app_list: (policy.app_list === undefined || policy.app_list === null || policy.app_list === '') ? '[]' : policy.app_list,
-    // passwords: (policy[0].passwords === undefined || policy[0].passwords === null || policy[0].passwords === '') ? '{}' : policy[0].passwords,
     settings: (policy.controls === undefined || policy.controls === null || policy.controls === '') ? '{}' : policy.controls,
     extension_list: (policy.permissions === undefined || policy.permissions === null || policy.permissions === '') ? '[]' : policy.permissions,
     push_apps: (policy.push_apps === undefined || policy.push_apps === null || policy.push_apps === '') ? '[]' : policy.push_apps,

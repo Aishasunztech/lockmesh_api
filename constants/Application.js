@@ -47,6 +47,7 @@ module.exports = {
     WRITE_IMEI: 'write_imei_',
     IMEI_CHANGED: 'imei_changed_',
     IMEI_APPLIED: 'imei_applied_',
+    FINISH_IMEI: 'finish_imei',
 
 
     SEND_APPS: "sendApps_",
@@ -77,8 +78,8 @@ module.exports = {
     ACK_pull_APPS: 'ack_pull_apps_',
     ACK_FINISHED_PULL_APPS: 'ack_finished_pull_apps_',
     ACK_SINGLE_PULL_APP: 'ack_single_pull_app_',
-    PULL_PUSH_IN_PROCESS: 'pull_push_in_process',
-    
+    ACTION_IN_PROCESS: 'action_in_process',
+
     // Policy
     LOAD_POLICY: 'load_policy_',
     GET_POLICY: 'get_policy_',

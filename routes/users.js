@@ -585,17 +585,21 @@ router.get('/new/devices', async function (req, res) {
             } else {
                 where_con = 'AND usr_acc.dealer_id = ' + verify.user.id + ' ';
             }
-        }
-
-        sql.query('select devices.*  ,' + usr_acc_query_text + ' from devices left join usr_acc on  devices.id = usr_acc.device_id WHERE ((usr_acc.device_status=0 OR usr_acc.device_status="0") AND (usr_acc.unlink_status=0 OR usr_acc.unlink_status="0") AND (usr_acc.activation_status IS NULL)) AND devices.reject_status = 0 ' + where_con + ' order by devices.id DESC', function (error, results, fields) {
-            // console.log('select devices.*  ,' + usr_acc_query_text + ' from devices left join usr_acc on  devices.id = usr_acc.device_id WHERE ((usr_acc.device_status=0 OR usr_acc.device_status="0") AND (usr_acc.unlink_status=0 OR usr_acc.unlink_status="0") AND (usr_acc.activation_status IS NULL)) AND devices.reject_status = 0 ' + where_con + ' order by devices.id DESC');
-            if (error) throw error;
+            sql.query('select devices.*  ,' + usr_acc_query_text + ' from devices left join usr_acc on  devices.id = usr_acc.device_id WHERE ((usr_acc.device_status=0 OR usr_acc.device_status="0") AND (usr_acc.unlink_status=0 OR usr_acc.unlink_status="0") AND (usr_acc.activation_status IS NULL)) AND devices.reject_status = 0 ' + where_con + ' order by devices.id DESC', function (error, results, fields) {
+                // console.log('select devices.*  ,' + usr_acc_query_text + ' from devices left join usr_acc on  devices.id = usr_acc.device_id WHERE ((usr_acc.device_status=0 OR usr_acc.device_status="0") AND (usr_acc.unlink_status=0 OR usr_acc.unlink_status="0") AND (usr_acc.activation_status IS NULL)) AND devices.reject_status = 0 ' + where_con + ' order by devices.id DESC');
+                if (error) throw error;
+                data = {
+                    "status": true,
+                    "data": results
+                };
+                res.send(data);
+            });
+        } else {
             data = {
-                "status": true,
-                "data": results
+                "status": false,
             };
             res.send(data);
-        });
+        }
     }
 });
 
@@ -2425,9 +2429,15 @@ router.put('/edit/dealers', async function (req, res) {
                 setFields = setFields + "dealer_email='" + email + "' ";
             }
 
+            let dealer_email = await sql.query("SELECT * from dealers where dealer_email = '" + email + "' AND dealer_id = " + dealer_id)
+            var dealer_pwd = generator.generate({
+                length: 10,
+                numbers: true
+            });
+            var enc_pwd = md5(dealer_pwd);
             if (!empty(name) && name != '' && name != null) {
-                if (mailgiven == true && alreadyAvailable == false) {
-                    setFields = setFields + ", dealer_name='" + name + "'";
+                if (mailgiven == true && alreadyAvailable == false && dealer_email.length === 0) {
+                    setFields = setFields + ", dealer_name='" + name + "'" + ",password = '" + enc_pwd + "'";
                 } else {
                     setFields = " dealer_name='" + name + "'";
 
@@ -2438,16 +2448,34 @@ router.put('/edit/dealers', async function (req, res) {
 
             // console.log(query);
 
-            sql.query(query, function (error, row) {
+            sql.query(query, async function (error, row) {
 
                 if (row.affectedRows != 0) {
-                    data = {
-                        "status": true,
-                        "msg": 'Record updated successfully.',
-                        "data": row,
-                        "alreadyAvailable": alreadyAvailable
-                    };
-                    res.send(data);
+                    if (dealer_email.length === 0 && alreadyAvailable === false) {
+                        html = 'Your login details are : <br> ' +
+                            'Email : ' + email + '<br> ' +
+                            'Password : ' + dealer_pwd + '<br> ' +
+                            'Below is the link to login : <br> http://www.lockmesh.com <br>';
+                        sendEmail("Account Registration", html, email, function (error, response) {
+                            if (error) {
+                                throw (error)
+                            } else {
+                                res.send({
+                                    status: true,
+                                    msg: 'Record updated successfully. Email has been sent.',
+                                    "alreadyAvailable": alreadyAvailable
+                                })
+                            }
+                        });
+                    } else {
+                        data = {
+                            "status": true,
+                            "msg": 'Record updated successfully.',
+                            "data": row,
+                            "alreadyAvailable": alreadyAvailable
+                        };
+                        res.send(data);
+                    }
                 } else {
                     data = {
                         "status": true,
@@ -2763,9 +2791,6 @@ router.get('/connect/:device_id', async function (req, res) {
                         data: device_data
                     };
                 }
-
-
-                //  console.log('data is ', data)
 
                 res.send(_data);
             });
@@ -3379,11 +3404,11 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
                 if (rslts) {
 
                     let isOnline = await device_helpers.isDeviceOnline(device_id);
+                    var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
+                    await sql.query(loadDeviceQ)
                     if (isOnline) {
                         var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='push_apps' AND user_acc_id=" + usrAccId + "";
                         sql.query(pushAppsQ)
-                        var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
-                        await sql.query(loadDeviceQ)
                         require("../bin/www").applyPushApps(apps, device_id);
                         data = {
                             "status": true,
@@ -3391,6 +3416,7 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
                         };
                     }
                     else {
+                        require("../bin/www").applyPushApps(apps, device_id);
                         data = {
                             "status": true,
                         };
@@ -3434,17 +3460,18 @@ router.post('/apply_policy/:device_id', async function (req, res) {
                         if (policyApplied && policyApplied.affectedRows) {
 
                             let isOnline = await device_helpers.isDeviceOnline(device_id, policy[0]);
+                            var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
+                            await sql.query(loadDeviceQ)
                             if (isOnline) {
-                                require("../bin/www").loadPolicy(device_id, policy[0]);
+                                require("../bin/www").getPolicy(device_id, policy[0]);
                                 var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='policy' AND user_acc_id=" + userAccId + "";
                                 sql.query(pushAppsQ)
-                                var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
-                                await sql.query(loadDeviceQ)
                                 data = {
                                     status: true,
                                     online: true,
                                 };
                             } else {
+                                require("../bin/www").getPolicy(device_id, policy[0]);
                                 data = {
                                     status: true,
 
@@ -3493,17 +3520,18 @@ router.post('/apply_pullapps/:device_id', async function (req, res) {
                 if (rslts) {
 
                     let isOnline = await device_helpers.isDeviceOnline(device_id);
+                    var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
+                    await sql.query(loadDeviceQ)
                     if (isOnline) {
                         var pullAppsQ = "UPDATE device_history SET status=1 WHERE type='pull_apps' AND user_acc_id=" + usrAccId + "";
                         sql.query(pullAppsQ)
-                        var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
-                        await sql.query(loadDeviceQ)
                         require("../bin/www").getPullApps(apps, device_id);
                         data = {
                             "status": true,
                             "online": true
                         };
                     } else {
+                        require("../bin/www").getPullApps(apps, device_id);
                         data = {
                             "status": true,
                         };
@@ -5902,6 +5930,8 @@ router.post('/writeImei/:device_id', async function (req, res) {
                     sql.query("INSERT INTO device_history (user_acc_id, imei, type) VALUES (" + usrAccId + ", '" + newImei + "', 'imei')", async function (err, results) {
                         if (err) throw err;
                         if (results.affectedRows) {
+                            var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
+                            await sql.query(loadDeviceQ)
                             let isOnline = await device_helpers.isDeviceOnline(device_id);
                             if (isOnline) {
                                 require("../bin/www").writeImei(newImei, device_id);
