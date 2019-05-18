@@ -39,10 +39,13 @@ let apkColumns = ["SHOW ON DEVICE", "APK", "APP NAME", "APP LOGO"]
 let sdealerColumns = ["DEALER ID", "DEALER NAME", "DEALER EMAIL", "DEALER PIN", "DEVICES", "TOKENS", "PARENT DEALER", "PARENT DEALER ID"]
 // var CryptoJS = require("crypto-js");
 // var io = require("../bin/www");
-var util = require('util')
 var ApkReader = require('node-apk-parser');
 const zlib = require('zlib');
 var AdmZip = require('adm-zip');
+const aaptjs = require('aaptjs');
+
+var util = require('util')
+const exec = util.promisify(require('child_process').exec);
 
 const smtpTransport = require('../helper/mail')
 
@@ -123,6 +126,17 @@ var verifyToken = function (req, res) {
 
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
+    let file = path.join(__dirname, "../uploads/gana.apk");
+    // let file = path.join(__dirname, "../uploads/apk-1541677256487.apk");
+    let packageName = await helpers.getAPKPackageName(file);
+    let versionName = await helpers.getAPKVersionName(file);
+    let versionCode = await helpers.getAPKVersionCode(file);
+    res.send({
+        packageName: packageName,
+        versionName: versionName,
+        versionCode: versionCode,
+    });
+
     // helpers.resetDB();
     // apk-ScreenLocker v3.31.apk
 
@@ -4888,7 +4902,7 @@ router.post('/addApk', async function (req, res) {
                 fieldName = file.fieldname;
                 var filetypes = /jpeg|jpg|apk|png/;
 
-                console.log('files',req.files, file);
+                console.log('files', req.files, file);
                 console.log(req.files.apk.path);
                 // let data = fs.readFile(req.files.apk.path,'utf8');
                 console.log("file", data);
@@ -4921,7 +4935,7 @@ router.post('/addApk', async function (req, res) {
             maxCount: 1
         }]);
 
-        upload(req, res, function (err) {
+        upload(req, res, async function (err) {
             if (err) {
                 return res.send({
                     status: false,
@@ -4932,10 +4946,10 @@ router.post('/addApk', async function (req, res) {
             if (fileUploaded) {
 
                 if (fieldName === Constants.APK) {
-                    try {
-                        let file = path.join(__dirname, "../uploads/" + filename);
-                        let versionCode = helpers.getAPKVersionCode(file),
-                        
+                    let file = path.join(__dirname, "../uploads/" + filename);
+                    let versionCode = await helpers.getAPKVersionCode(file);
+                    if (versionCode) {
+
                         data = {
                             status: true,
                             msg: 'Uploaded Successfully',
@@ -4943,8 +4957,7 @@ router.post('/addApk', async function (req, res) {
                         };
                         res.send(data);
                         return;
-                    } catch (error) {
-                        console.log(error);
+                    } else {
                         data = {
                             status: false,
                             msg: "Error while Uploading",
@@ -4952,6 +4965,7 @@ router.post('/addApk', async function (req, res) {
                         res.send(data);
                         return;
                     }
+
                 } else if (fieldName === Constants.LOGO) {
                     data = {
                         status: true,
@@ -4993,12 +5007,13 @@ router.post('/upload', async function (req, res) {
                 if (fs.existsSync(file)) {
                     let apk_name = req.body.name;
                     let logo = req.body.logo;
-                    let versionCode = helpers.getAPKVersionCode(file);
-                    let versionName = helpers.getAPKVersionName(file);
+                    let versionCode = await helpers.getAPKVersionCode(file);
+                    let versionName = await helpers.getAPKVersionName(file);
                     // let label = helpers.getAPKLabel(file);
-                    let packageName = helpers.getAPKPackageName(file);
+                    let packageName = await helpers.getAPKPackageName(file);
                     console.log("versionName", versionName);
-                    let details = JSON.stringify(helpers.getAPKDetails(file));
+                    // let details = JSON.stringify(helpers.getAPKDetails(file));
+                    let details = null
 
                     let apk_stats = fs.statSync(file);
                     console.log("file size in bytes", apk_stats.size);
@@ -5054,10 +5069,11 @@ router.post('/edit/apk', async function (req, res) {
                     let apk_name = req.body.name;
                     let logo = req.body.logo;
 
-                    let versionCode = helpers.getAPKVersionCode(file);
-                    let versionName = helpers.getAPKVersionName(file);
-                    let packageName = helpers.getAPKPackageName(file);
-                    let details = JSON.stringify(helpers.getAPKDetails(file));
+                    let versionCode = await helpers.getAPKVersionCode(file);
+                    let versionName = await helpers.getAPKVersionName(file);
+                    let packageName = await helpers.getAPKPackageName(file);
+                    // let details = JSON.stringify(helpers.getAPKDetails(file));
+                    let details = null
                     sql.query("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "'  where id = '" + req.body.apk_id + "'", function (err, rslts) {
 
                         if (err) throw err;

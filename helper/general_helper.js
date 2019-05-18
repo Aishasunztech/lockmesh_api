@@ -8,6 +8,8 @@ var moment = require('moment-strftime');
 var Constants = require('../constants/Application');
 const device_helpers = require('./device_helpers');
 var util = require('util')
+const exec = util.promisify(require('child_process').exec);
+
 var ApkReader = require('node-apk-parser')
 var md5 = require('md5');
 var randomize = require('randomatic');
@@ -370,46 +372,198 @@ module.exports = {
 			return [];
 		}
 	},
-	getAPKLabel: function (filePath) {
-		var reader = ApkReader.readFile(filePath);
-		var manifest = reader.readManifestSync();
-		let res = JSON.parse(JSON.stringify(manifest));
-		console.log("test", res);
-		return res.label;
+
+	// windows
+	getWindowAPKPackageNameScript: async (filePath) => {
+		try {
+			let cmd = "aapt dump badging " + filePath + " | findstr /C:\"package: name\"";
+			console.log(cmd);
+			const { stdout, stderr, error } = await exec(cmd);
+			console.log('stdout:', stdout);
+			console.log('stderr:', stderr);
+			if (error) {
+				return false;
+			}
+			if (stderr) {
+				return false;
+			}
+			if (stdout) {
+				let array=stdout.split(' ');
+				console.log(array);
+				let packageName = array[1].split('=');
+				console.log(packageName);
+				return (packageName[1])?packageName[1].replace(/\'/g,''):false;
+			}
+			return false;
+		} catch (error) {
+			return false;
+		}
+
 	},
-	getAPKPackageName: function (filePath) {
-		var reader = ApkReader.readFile(filePath);
-		var manifest = reader.readManifestSync();
-		let res = JSON.parse(JSON.stringify(manifest));
-		return res.package
+	getWindowAPKVersionCodeScript: async (filePath) => {
+		try {
+			let cmd = "aapt dump badging " + filePath + " | findstr /C:\"package: name\"";
+			console.log(cmd);
+			const { stdout, stderr, error } = await exec(cmd);
+			console.log('stdout:', stdout);
+			console.log('stderr:', stderr);
+			if (error) {
+				return false;
+			}
+			if (stderr) {
+				return false;
+			}
+			if (stdout) {
+				let array=stdout.split(' ');
+				console.log(array);
+				let packageName = array[2].split('=');
+				console.log(packageName);
+				return (packageName[1])?packageName[1].replace(/\'/g,''):false;
+			}
+			return false;
+		} catch (error) {
+			return false;
+		}
 	},
-	getAPKVersionCode: function (filePath) {
+	getWindowAPKVersionNameScript: async (filePath) => {
+		try {
+			let cmd = "aapt dump badging " + filePath + " | findstr /C:\"package: name\"";
+			console.log(cmd);
+			const { stdout, stderr, error } = await exec(cmd);
+			console.log('stdout:', stdout);
+			console.log('stderr:', stderr);
+			if (error) {
+				return false;
+			}
+			if (stderr) {
+				return false;
+			}
+			if (stdout) {
+				let array=stdout.split(' ');
+				console.log(array);
+				let packageName = array[2].split('=');
+				console.log(packageName);
+				return (packageName[1])?packageName[1].replace(/\'/g,''):false;
+			}
+			return false;
+		} catch (error) {
+			return false;
+		}
+	},
+	getWindowAPKLabelScript: async function (filePath)  {
+
+	},
+
+	// linux scripts
+	getAPKPackageNameScript: async function (filePath) {
+		try {
+			let packageName = "aapt list -a " + filePath + " | awk -v FS='\"' '/package=/{print $2}'";
+			const { stdout, stderr, error } = await exec(packageName);
+			console.log('stdout:', stdout);
+			console.log('stderr:', stderr);
+			if (error) {
+				return false;
+			}
+			if (stderr) {
+				return false;
+			}
+			if (stdout) {
+				return stdout;
+			}
+			return false;
+		} catch (error) {
+			return await this.getWindowAPKPackageNameScript(filePath);
+		}
+
+	},
+	getAPKVersionCodeScript: async function (filePath) {
+		try {
+			let versionCode = "aapt dump badging " + filePath + " | grep \"versionCode\" | sed -e \"s/.*versionCode='//\" -e \"s/' .*//\"";
+			const { stdout, stderr, error } = await exec(versionCode);
+			console.log('stdout:', stdout);
+			console.log('stderr:', stderr);
+
+			if (error) {
+				return false;
+			}
+
+			if (stderr) {
+				return false;
+			}
+			if (stdout) {
+				return stdout;
+			}
+			return false;
+		} catch (error) {
+			return await this.getWindowAPKVersionCodeScript(filePath);
+		}
+
+	},
+
+	getAPKVersionNameScript: async function (filePath)  {
+		try {
+			let versionName = "aapt dump badging " + filePath + " | grep \"versionName\" | sed -e \"s/.*versionName='//\" -e \"s/' .*//\"";
+			const { stdout, stderr, error } = await exec(versionName);
+			console.log('stdout:', stdout);
+			console.log('stderr:', stderr);
+			if (error) {
+				return false;
+			}
+
+			if (stderr) {
+				return false
+			}
+			if (stdout) {
+				return stdout;
+			}
+			return false;
+		} catch (error) {
+			return await this.getWindowAPKVersionNameScript(filePath);
+		}
+
+	},
+	getAPKLabelScript: async function(filePath)  {
+		let label = "aapt dump badging " + filePath + " | sed -n \"s/^application-label:'\(.*\)'/\1/p\"";
+		return label;
+	},
+
+	// getting
+	getAPKPackageName: async function (filePath) {
 		try {
 			var reader = ApkReader.readFile(filePath);
-			
+			var manifest = reader.readManifestSync();
+			let res = JSON.parse(JSON.stringify(manifest));
+			return res.package
+
+		} catch (error) {
+			return await this.getAPKPackageNameScript(filePath);
+		}
+	},
+	getAPKVersionCode: async function (filePath) {
+		try {
+			var reader = ApkReader.readFile(filePath);
 			var manifest = reader.readManifestSync();
 			console.log("manifest", manifest);
 			// let apk = util.inspect(manifest, {depth:null});
 			let res = JSON.parse(JSON.stringify(manifest));
 			return res.versionCode
 		} catch (e) {
-			throw (e);
+			return await this.getAPKVersionCodeScript(filePath);
 		}
 
 	},
-	getAPKVersionName: function (filePath) {
+	getAPKVersionName: async function (filePath) {
 		try {
 			var reader = ApkReader.readFile(filePath);
 			var manifest = reader.readManifestSync();
-			// let apk = util.inspect(manifest, {depth:null});
 			let res = JSON.parse(JSON.stringify(manifest));
 			return res.versionName;
 		} catch (e) {
-			throw (e);
+			return await this.getAPKVersionNameScript(filePath);
 		}
 
 	},
-	getAPKDetails: function (filePath) {
+	getAPKDetails: async function (filePath) {
 		try {
 			var reader = ApkReader.readFile(filePath);
 			var manifest = reader.readManifestSync();
@@ -420,6 +574,13 @@ module.exports = {
 			throw (e);
 		}
 
+	},
+	getAPKLabel: function (filePath) {
+		var reader = ApkReader.readFile(filePath);
+		var manifest = reader.readManifestSync();
+		let res = JSON.parse(JSON.stringify(manifest));
+		console.log("test", res);
+		return res.label;
 	},
 	saveLogin: async function (user, loginClient, type, status) {
 		let insertQ = "INSERT INTO login_history ";
