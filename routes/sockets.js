@@ -313,7 +313,6 @@ module.exports.listen = async function (server) {
                 var mac_address = data.mac;
                 var imei1 = data.imei1
                 var imei2 = data.imei2
-                console.log("IMEI CHANGED");
                 if (serial_number !== undefined && serial_number !== null && mac_address !== undefined && mac_address !== null) {
 
                     sql.query("UPDATE devices set imei = '" + imei1 + "', imei2 = '" + imei2 + "' WHERE device_id = '" + deviceId + "'")
@@ -345,8 +344,7 @@ module.exports.listen = async function (server) {
             let pendingPushedApps = await sql.query(pendingAppsQ);
 
             if (pendingPushedApps.length) {
-                let pushHistoryUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND type='push_apps'";
-                await sql.query(pushHistoryUpdate);
+
                 io.emit(Constants.GET_PUSHED_APPS + device_id, {
                     status: true,
                     device_id: device_id,
@@ -364,7 +362,7 @@ module.exports.listen = async function (server) {
             socket.on(Constants.FINISHED_PUSH_APPS + device_id, async (response) => {
                 // console.log("testing", response);
 
-                require('../bin/www').ackFinishedPushApps(device_id, response);
+                require('../bin/www').ackFinishedPushApps(device_id, user_acc_id);
                 // socket.emit(Constants.ACK_FINISHED_PUSH_APPS + device_id, {
                 //     status: true
                 // });
@@ -377,8 +375,6 @@ module.exports.listen = async function (server) {
 
             if (pendingPulledApps.length) {
                 // console.log("pendingPushedApps",pendingPushedApps);
-                let pullHistoryUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND type='pull_apps'";
-                await sql.query(pullHistoryUpdate);
 
                 io.emit(Constants.ACTION_IN_PROCESS + device_id, {
                     status: true
@@ -401,7 +397,7 @@ module.exports.listen = async function (server) {
             socket.on(Constants.FINISHED_PULL_APPS + device_id, async (response) => {
                 console.log("FININSHED PULLED APPS", response);
 
-                require('../bin/www').ackFinishedPullApps(device_id, response);
+                require('../bin/www').ackFinishedPullApps(device_id, user_acc_id);
                 // socket.emit(Constants.ACK_FINISHED_PUSH_APPS + device_id, {
                 //     status: true
                 // });
@@ -518,9 +514,6 @@ module.exports.listen = async function (server) {
             let policyResult = await sql.query(policyHistoryQ)
             if (policyResult.length) {
 
-                let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND type='policy' ";
-                await sql.query(historyUpdate);
-
                 socket.emit(Constants.GET_POLICY + device_id, {
                     status: true,
                     app_list: (policyResult[0].app_list === undefined || policyResult[0].app_list === null || policyResult[0].app_list === '') ? '[]' : policyResult[0].app_list,
@@ -553,7 +546,7 @@ module.exports.listen = async function (server) {
 
             // policy finished;
             socket.on(Constants.FINISH_POLICY + device_id, (response) => {
-                require('../bin/www').ackFinishedPolicy(device_id);
+                require('../bin/www').ackFinishedPolicy(device_id, user_acc_id);
             })
 
             // ====================================================== Force Update =====================================

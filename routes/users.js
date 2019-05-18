@@ -1165,19 +1165,19 @@ router.post('/create/device_profile', async function (req, res) {
                             await sql.query(updateSimIds)
                             let updatePgpEmails = 'update pgp_emails set used=1, user_acc_id="' + user_acc_id + '" where pgp_email ="' + pgp_email + '"';
                             await sql.query(updatePgpEmails);
-                            if (policy_id !== '') {
-                                var slctpolicy = "select * from device_history where id = " + policy_id + "";
-                                policy_obj = await sql.query(slctpolicy);
-                                // console.log('policy ', policy_obj);
-                                policy_obj[0].dealer_id = dealer_id;
-                                policy_obj[0].status = 0;
-                                policy_obj[0].type = 'history';
+                            // if (policy_id !== '') {
+                            //     var slctpolicy = "select * from device_history where id = " + policy_id + "";
+                            //     policy_obj = await sql.query(slctpolicy);
+                            //     // console.log('policy ', policy_obj);
+                            //     policy_obj[0].dealer_id = dealer_id;
+                            //     policy_obj[0].status = 0;
+                            //     policy_obj[0].type = 'history';
 
-                                var insertQuery = "INSERT INTO device_history ( user_acc_id, app_list, setting, controls, status ) "
-                                    + " VALUES('" + user_acc_id + "', '" + policy_obj[0].app_list + "', '" + policy_obj[0].setting + "', '" + policy_obj[0].controls + "', 0 ) "
+                            //     var insertQuery = "INSERT INTO device_history ( user_acc_id, app_list, setting, controls, status ) "
+                            //         + " VALUES('" + user_acc_id + "', '" + policy_obj[0].app_list + "', '" + policy_obj[0].setting + "', '" + policy_obj[0].controls + "', 0 ) "
 
-                                await sql.query(insertQuery);
-                            }
+                            //     await sql.query(insertQuery);
+                            // }
                         }
 
                     }
@@ -1262,19 +1262,19 @@ router.post('/create/device_profile', async function (req, res) {
                                         await sql.query(updateSimIds)
                                         let updatePgpEmails = 'update pgp_emails set used=1, user_acc_id="' + user_acc_id + '" where pgp_email ="' + pgp_email + '"';
                                         await sql.query(updatePgpEmails);
-                                        if (policy_id !== '') {
-                                            var slctpolicy = "select * from device_history where id = " + policy_id + "";
-                                            policy_obj = await sql.query(slctpolicy);
-                                            // console.log('policy ', policy_obj);
-                                            policy_obj[0].dealer_id = dealer_id;
-                                            policy_obj[0].status = 0;
-                                            policy_obj[0].type = 'history';
+                                        // if (policy_id !== '') {
+                                        //     var slctpolicy = "select * from device_history where id = " + policy_id + "";
+                                        //     policy_obj = await sql.query(slctpolicy);
+                                        //     // console.log('policy ', policy_obj);
+                                        //     policy_obj[0].dealer_id = dealer_id;
+                                        //     policy_obj[0].status = 0;
+                                        //     policy_obj[0].type = 'history';
 
-                                            var insertQuery = "INSERT INTO device_history ( user_acc_id, app_list, setting, controls, status ) "
-                                                + " VALUES('" + user_acc_id + "', '" + policy_obj[0].app_list + "', '" + policy_obj[0].setting + "', '" + policy_obj[0].controls + "', 0 ) "
+                                        //     var insertQuery = "INSERT INTO device_history ( user_acc_id, app_list, setting, controls, status ) "
+                                        //         + " VALUES('" + user_acc_id + "', '" + policy_obj[0].app_list + "', '" + policy_obj[0].setting + "', '" + policy_obj[0].controls + "', 0 ) "
 
-                                            await sql.query(insertQuery);
-                                        }
+                                        //     await sql.query(insertQuery);
+                                        // }
 
                                         sql.query("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name, dealers.connected_dealer from devices left join usr_acc on devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 and devices.id='" + dvc_id + "'", async function (error, results, fields) {
 
@@ -1530,14 +1530,14 @@ router.put('/new/device', async (req, res) => {
                                 rsltq = await sql.query(slctquery);
                                 console.log(rsltq);
 
-                                if (policy_id !== undefined && policy_id !== '' && policy_id !== null) {
-                                    var slctpolicy = "select * from device_history where id = " + policy_id + "";
-                                    policy_obj = await sql.query(slctpolicy);
-                                    var insertQuery = "INSERT INTO device_history ( device_id, app_list, setting, controls, passwords, type, status ) "
-                                        + " VALUES('" + device_id + "', '" + policy_obj[0].app_list + "', '" + policy_obj[0].setting + "', '" + policy_obj[0].controls + "', '" + policy_obj[0].passwords + "', 'history', 0 ) "
+                                // if (policy_id !== undefined && policy_id !== '' && policy_id !== null) {
+                                //     var slctpolicy = "select * from device_history where id = " + policy_id + "";
+                                //     policy_obj = await sql.query(slctpolicy);
+                                //     var insertQuery = "INSERT INTO device_history ( device_id, app_list, setting, controls, passwords, type, status ) "
+                                //         + " VALUES('" + device_id + "', '" + policy_obj[0].app_list + "', '" + policy_obj[0].setting + "', '" + policy_obj[0].controls + "', '" + policy_obj[0].passwords + "', 'history', 0 ) "
 
-                                    await sql.query(insertQuery);
-                                }
+                                //     await sql.query(insertQuery);
+                                // }
                                 for (var i = 0; i < rsltq.length; i++) {
                                     rsltq[i].finalStatus = device_helpers.checkStatus(rsltq[i])
                                 }
@@ -3322,6 +3322,8 @@ router.post('/apply_settings/:device_id', async function (req, res) {
 
             let usrAccId = req.body.usr_acc_id;
 
+            let dealer_id = verify.user.id
+
             let device_setting = req.body.device_setting;
 
             let app_list = (device_setting.app_list === undefined) ? '' : JSON.stringify(device_setting.app_list);
@@ -3332,7 +3334,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
             // console.log("hello controls", controls);
             let subExtensions = (req.body.device_setting.subExtensions == undefined) ? '' : JSON.stringify(req.body.device_setting.subExtensions);
 
-            var applyQuery = "insert into device_history (user_acc_id, app_list, passwords, controls, permissions) values (" + usrAccId + ", '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "')";
+            var applyQuery = "insert into device_history (device_id,dealer_id,user_acc_id, app_list, passwords, controls, permissions) values ('" + device_id + "'," + dealer_id + "," + usrAccId + ", '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "')";
 
             await sql.query(applyQuery, async function (err, rslts) {
                 if (err) {
@@ -3375,13 +3377,15 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
         if (verify.status !== undefined && verify.status == true) {
             let device_id = req.params.device_id;
 
+            let dealer_id = verify.user.id
+
             let usrAccId = req.body.usrAccId;
 
             let push_apps = req.body.push_apps;
 
             let apps = (push_apps === undefined) ? '' : JSON.stringify(push_apps);
 
-            var applyQuery = "INSERT INTO device_history (user_acc_id, push_apps, type) VALUES (" + usrAccId + ", '" + apps + "', 'push_apps')";
+            var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, push_apps, type) VALUES ('" + device_id + "'," + dealer_id + "," + usrAccId + ", '" + apps + "', 'push_apps')";
 
             sql.query(applyQuery, async function (err, rslts) {
                 if (err) {
@@ -3393,8 +3397,7 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
                     var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
                     await sql.query(loadDeviceQ)
                     if (isOnline) {
-                        var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='push_apps' AND user_acc_id=" + usrAccId + "";
-                        sql.query(pushAppsQ)
+
                         require("../bin/www").applyPushApps(apps, device_id);
                         data = {
                             "status": true,
@@ -3429,6 +3432,7 @@ router.post('/apply_policy/:device_id', async function (req, res) {
         var verify = await verifyToken(req, res);
         if (verify.status !== undefined && verify.status == true) {
             let device_id = req.params.device_id;
+            let dealer_id = verify.user.id
             let userAccId = req.body.userAccId;
             let policy_id = req.body.policyId;
             if (device_id !== null || device_id !== '' || device_id !== undefined || device_id !== 'undefined' || policy_id !== null || policy_id !== '' || policy_id !== undefined || policy_id !== 'undefined') {
@@ -3437,7 +3441,7 @@ router.post('/apply_policy/:device_id', async function (req, res) {
                 let policy = await sql.query(getPolicyQ)
 
                 if (policy.length) {
-                    var applyQuery = "INSERT INTO device_history (user_acc_id, app_list, controls, permissions, push_apps, type) VALUES (" + userAccId + ", '" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
+                    var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, app_list, controls, permissions, push_apps, type) VALUES ('" + device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
                     sql.query(applyQuery, async function (err, policyApplied) {
                         if (err) {
                             throw err;
@@ -3450,8 +3454,7 @@ router.post('/apply_policy/:device_id', async function (req, res) {
                             await sql.query(loadDeviceQ)
                             if (isOnline) {
                                 require("../bin/www").getPolicy(device_id, policy[0]);
-                                var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='policy' AND user_acc_id=" + userAccId + "";
-                                sql.query(pushAppsQ)
+
                                 data = {
                                     status: true,
                                     online: true,
@@ -3492,12 +3495,12 @@ router.post('/apply_pullapps/:device_id', async function (req, res) {
 
             let usrAccId = req.body.usrAccId;
 
-
+            let dealer_id = verify.user.id
             let pull_apps = req.body.pull_apps;
 
             let apps = (pull_apps === undefined) ? '' : JSON.stringify(pull_apps);
 
-            var applyQuery = "INSERT INTO device_history (user_acc_id, pull_apps, type) VALUES (" + usrAccId + ", '" + apps + "', 'pull_apps')";
+            var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, pull_apps, type) VALUES ('" + device_id + "'," + dealer_id + "," + usrAccId + ", '" + apps + "', 'pull_apps')";
 
             sql.query(applyQuery, async function (err, rslts) {
                 if (err) {
@@ -3509,8 +3512,6 @@ router.post('/apply_pullapps/:device_id', async function (req, res) {
                     var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
                     await sql.query(loadDeviceQ)
                     if (isOnline) {
-                        var pullAppsQ = "UPDATE device_history SET status=1 WHERE type='pull_apps' AND user_acc_id=" + usrAccId + "";
-                        sql.query(pullAppsQ)
                         require("../bin/www").getPullApps(apps, device_id);
                         data = {
                             "status": true,
@@ -5874,6 +5875,7 @@ router.post('/writeImei/:device_id', async function (req, res) {
         if (verify.status !== undefined && verify.status == true) {
             let device_id = req.params.device_id;
             let usrAccId = req.body.usrAccId;
+            let dealer_id = verify.user.id
             let type = req.body.type;
             let imeiNo = req.body.imeiNo;
             let device = req.body.device
@@ -5896,7 +5898,7 @@ router.post('/writeImei/:device_id', async function (req, res) {
                         prevImei.imei2 = imei2
                     }
                     let newImei = JSON.stringify(prevImei)
-                    sql.query("INSERT INTO device_history (user_acc_id, imei, type) VALUES (" + usrAccId + ", '" + newImei + "', 'imei')", async function (err, results) {
+                    sql.query("INSERT INTO device_history (device_id,dealer_id,user_acc_id, imei, type) VALUES (" + device_id + "," + dealer_id + "," + usrAccId + ", '" + newImei + "', 'imei')", async function (err, results) {
                         if (err) throw err;
                         if (results.affectedRows) {
                             var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
@@ -5933,7 +5935,7 @@ router.post('/writeImei/:device_id', async function (req, res) {
                         imei2: imei2
                     }
                     let newImei = JSON.stringify(imei)
-                    var applyQuery = "INSERT INTO device_history (user_acc_id, imei, type) VALUES (" + usrAccId + ", '" + newImei + "', 'imei')";
+                    var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, imei, type) VALUES ('" + device_id + "'," + dealer_id + "," + usrAccId + ", '" + newImei + "', 'imei')";
 
                     sql.query(applyQuery, async function (err, rslts) {
                         if (err) {
@@ -6061,6 +6063,7 @@ router.put('/force_update', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
         let device_id = req.body.device_id;
+        let dealer_id = verify.user.id
         if (!empty(device_id)) {
             let deviceQ = "SELECT * FROM devices WHERE device_id='" + device_id + "'";
             let device = await sql.query(deviceQ);
@@ -6074,7 +6077,7 @@ router.put('/force_update', async function (req, res) {
                     })
                 } else {
                     let usr_acc = await device_helpers.getUserAccByDeviceId(device_id);
-                    let historyQ = "INSERT INTO device_history (user_acc_id, type) VALUES (" + usr_acc.id + ",'" + Constants.DEVICE_HISTORY_FORCE_UPDATE + "')";
+                    let historyQ = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, type) VALUES ('" + device_id + "'," + dealer_id + "," + usr_acc.id + ",'" + Constants.DEVICE_HISTORY_FORCE_UPDATE + "')";
                     sql.query(historyQ, function (error, resp) {
                         if (error) throw (error);
                         res.send({

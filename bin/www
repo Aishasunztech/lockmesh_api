@@ -162,23 +162,31 @@ module.exports.sendDeviceStatus = async function (device_id, device_status, stat
   });
 }
 
-module.exports.ackFinishedPushApps = async function (device_id, response) {
+module.exports.ackFinishedPushApps = async function (device_id, user_acc_id) {
 
   await sql.query("UPDATE devices set is_push_apps = 0 WHERE device_id = '" + device_id + "'")
+  var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='push_apps' AND user_acc_id=" + user_acc_id + "";
+  sql.query(pushAppsQ)
+
   io.emit(Constants.ACK_FINISHED_PUSH_APPS + device_id, {
     status: true
   });
 }
-module.exports.ackFinishedPullApps = async function (device_id, response) {
+module.exports.ackFinishedPullApps = async function (device_id, user_acc_id) {
   await sql.query("UPDATE devices set is_push_apps = 0 WHERE device_id = '" + device_id + "'")
+  var pullAppsQ = "UPDATE device_history SET status=1 WHERE type='pull_apps' AND user_acc_id=" + user_acc_id + "";
+  sql.query(pullAppsQ)
 
   io.emit(Constants.ACK_FINISHED_PULL_APPS + device_id, {
     status: true
   });
 }
-module.exports.ackFinishedPolicy = async function (device_id) {
+module.exports.ackFinishedPolicy = async function (device_id, user_acc_id) {
   console.log("FINISHED POLICY")
   await sql.query("UPDATE devices set is_push_apps = 0 WHERE device_id = '" + device_id + "'")
+
+  var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='policy' AND user_acc_id=" + user_acc_id + "";
+  sql.query(pushAppsQ)
 
   io.emit(Constants.FINISH_POLICY + device_id, {
     status: true
@@ -200,6 +208,7 @@ module.exports.ackSinglePushApp = async function (device_id, response) {
 }
 
 module.exports.ackSinglePullApp = async function (device_id, response) {
+
   console.log(Constants.ACK_SINGLE_PUSH_APP);
   // io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
   // })
