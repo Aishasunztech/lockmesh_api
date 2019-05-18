@@ -4937,9 +4937,9 @@ router.post('/addApk', async function (req, res) {
                 var filetypes = /jpeg|jpg|apk|png/;
 
                 console.log('files', req.files, file);
-                console.log(req.files.apk.path);
+               
                 // let data = fs.readFile(req.files.apk.path,'utf8');
-                console.log("file", data);
+                // console.log("file", data);
 
                 if (fieldName === Constants.LOGO && filetypes.test(mimeType)) {
                     fileUploaded = true;
@@ -4982,6 +4982,7 @@ router.post('/addApk', async function (req, res) {
                 if (fieldName === Constants.APK) {
                     let file = path.join(__dirname, "../uploads/" + filename);
                     let versionCode = await helpers.getAPKVersionCode(file);
+                    console.log("version code", versionCode);
                     if (versionCode) {
 
                         data = {
@@ -5039,51 +5040,63 @@ router.post('/upload', async function (req, res) {
                 let apk = req.body.apk;
                 let file = path.join(__dirname, "../uploads/" + apk);
                 if (fs.existsSync(file)) {
-                    let apk_name = req.body.name;
-                    let logo = req.body.logo;
                     let versionCode = await helpers.getAPKVersionCode(file);
                     let versionName = await helpers.getAPKVersionName(file);
                     // let label = helpers.getAPKLabel(file);
                     let packageName = await helpers.getAPKPackageName(file);
                     console.log("versionName", versionName);
                     // let details = JSON.stringify(helpers.getAPKDetails(file));
-                    let details = null
+                    let details = null;
 
-                    let apk_stats = fs.statSync(file);
-                    console.log("file size in bytes", apk_stats.size);
-
-                    let formatByte = helpers.formatBytes(apk_stats.size);
                     console.log("file size in format", formatByte)
+                    if (versionCode && versionName && packageName) {
+                        let apk_name = req.body.name;
+                        let logo = req.body.logo;
+                        let apk_stats = fs.statSync(file);
 
-                    sql.query("INSERT INTO apk_details (app_name, logo, apk, version_code, version_name, package_name, details, apk_bytes, apk_size) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + versionCode + "', '" + versionName + "', '" + packageName + "', '" + details + "', " + apk_stats.size + ", '" + formatByte + "')", function (err, rslts) {
+                        let formatByte = helpers.formatBytes(apk_stats.size);
+                        sql.query("INSERT INTO apk_details (app_name, logo, apk, version_code, version_name, package_name, details, apk_bytes, apk_size) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + versionCode + "', '" + versionName + "', '" + packageName + "', '" + details + "', " + apk_stats.size + ", '" + formatByte + "')", function (err, rslts) {
 
-                        if (err) throw err;
-                        data = {
-                            "status": true,
-                            "msg": "Apk is uploaded"
-                        };
-                        res.send(data);
-                    });
+                            if (err) throw err;
+                            data = {
+                                status: true,
+                                msg: "Apk is uploaded"
+                            };
+                            res.send(data);
+                            return;
+
+                        });
+                    } else {
+                        console.log("file not found");
+                        res.send({
+                            status: false,
+                            msg: "Error While Uploading"
+                        })
+                        return;
+                    }
                 } else {
                     console.log("file not found");
                     res.send({
-                        "status": false,
-                        "msg": "Error While Uploading"
+                        status: false,
+                        msg: "Error While Uploading"
                     })
+                    return;
                 }
 
             } else {
                 data = {
-                    "status": false,
-                    "msg": "Error While Uploading"
+                    status: false,
+                    msg: "Error While Uploading"
                 };
                 res.send(data);
+                return;
             }
         } catch (error) {
             data = {
                 status: false,
                 msg: "Error while Uploading",
             };
+            return;
         }
 
     }
@@ -5100,29 +5113,39 @@ router.post('/edit/apk', async function (req, res) {
                 let apk = req.body.apk;
                 let file = path.join(__dirname, "../uploads/" + apk);
                 if (fs.existsSync(file)) {
-                    let apk_name = req.body.name;
-                    let logo = req.body.logo;
-
+                    
                     let versionCode = await helpers.getAPKVersionCode(file);
                     let versionName = await helpers.getAPKVersionName(file);
                     let packageName = await helpers.getAPKPackageName(file);
                     // let details = JSON.stringify(helpers.getAPKDetails(file));
-                    let details = null
-                    sql.query("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "'  where id = '" + req.body.apk_id + "'", function (err, rslts) {
+                    let details = null;
+                    if(versionCode && versionName && packageName){
+                        let apk_name = req.body.name;
+                        let logo = req.body.logo;
+                        sql.query("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "'  where id = '" + req.body.apk_id + "'", function (err, rslts) {
+    
+                            if (err) throw err;
+                            data = {
+                                status: true,
+                                msg: "Record Updated"
+    
+                            };
+                            res.send(data);
+                            return;
+                        });
 
-                        if (err) throw err;
+                    } else {
                         data = {
-                            "status": true,
-                            "msg": "Record Updated"
-
+                            status: false,
+                            msg: "Error While Uploading"
                         };
                         res.send(data);
-                        return;
-                    });
+                        return;    
+                    }
                 } else {
                     data = {
-                        "status": false,
-                        "msg": "Error While Uploading"
+                        status: false,
+                        msg: "Error While Uploading"
                     };
                     res.send(data);
                     return;
@@ -5130,8 +5153,8 @@ router.post('/edit/apk', async function (req, res) {
 
             } else {
                 data = {
-                    "status": false,
-                    "msg": "Error While Uploading"
+                    status: false,
+                    msg: "Error While Uploading"
                 };
                 res.send(data);
                 return;
@@ -5141,6 +5164,8 @@ router.post('/edit/apk', async function (req, res) {
                 status: false,
                 msg: "Error while Uploading",
             };
+            res.send(data);
+            return;
         }
     }
 
