@@ -4,7 +4,6 @@ var generator = require('generate-password');
 var md5 = require('md5');
 const sql = require('../helper/sql.js');
 const bcrypt = require('bcrypt');
-const nodemailer = require('nodemailer');
 var empty = require('is-empty');
 var datetime = require('node-datetime');
 var cron = require('node-cron');
@@ -13,9 +12,7 @@ var jwt = require('jsonwebtoken');
 var randomize = require('randomatic');
 var multer = require('multer');
 var config = require('../helper/config.js');
-var upload = multer({
-    dest: 'uploads/'
-});
+
 var XLSX = require('xlsx');
 const url = require('url');
 var path = require('path');
@@ -39,13 +36,8 @@ let apkColumns = ["SHOW ON DEVICE", "APK", "APP NAME", "APP LOGO"]
 let sdealerColumns = ["DEALER ID", "DEALER NAME", "DEALER EMAIL", "DEALER PIN", "DEVICES", "TOKENS", "PARENT DEALER", "PARENT DEALER ID"]
 // var CryptoJS = require("crypto-js");
 // var io = require("../bin/www");
-var ApkReader = require('node-apk-parser');
-const zlib = require('zlib');
-var AdmZip = require('adm-zip');
-const aaptjs = require('aaptjs');
 
 var util = require('util')
-const exec = util.promisify(require('child_process').exec);
 
 const smtpTransport = require('../helper/mail')
 
