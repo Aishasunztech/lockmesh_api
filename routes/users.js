@@ -5803,8 +5803,8 @@ router.post('/transferApps', async function (req, res) {
         let dealer_id = verify.user.id;
         if (dealer_type === ADMIN) {
 
-            let deleteNotIn = "DELETE FROM secure_market_apps WHERE apk_id NOT IN ('" + toDelete + "')"
-            // console.log(deleteNotIn);
+            let deleteNotIn = "DELETE FROM secure_market_apps WHERE apk_id NOT IN (" + toDelete + ")"
+            console.log(deleteNotIn);
             await sql.query(deleteNotIn);
             if (appKeys.length) {
                 let insertQuery = "INSERT IGNORE INTO secure_market_apps (dealer_type,dealer_id, apk_id) VALUES ";
