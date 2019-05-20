@@ -777,19 +777,20 @@ module.exports = {
 			delete app.default_app;
 		})
 
-		// let permissions = JSON.parse(policy[0].permissions);
-		// permissions.forEach((app) => {
-		// 	app.uniqueName = app.unique_name;
-		// 	app.packageName = app.package_name;
-		// 	app.defaultApp = app.default_app;
-		// 	delete app.unique_name;
-		// 	delete app.package_name;
-		// 	delete app.default_app;
-		// })
+		let permissions = JSON.parse(policy[0].permissions);
+		permissions.forEach((app) => {
+			app.uniqueName = app.uniqueExtesion;
+
+			app.defaultApp = app.default_app;
+			// app.uniqueExtension = app.
+			// delete app.unique_name;
+			// delete app.package_name;
+			delete app.default_app;
+		})
 		
 		policy[0].app_list = JSON.stringify(applist);
-		
-		// policy[0].permissions = JSON.stringify(permissions);
+
+		policy[0].permissions = JSON.stringify(permissions);
 		return policy;
 	}
 }
