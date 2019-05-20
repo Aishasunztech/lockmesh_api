@@ -1249,6 +1249,7 @@ router.post('/create/device_profile', async function (req, res) {
                             let updatePgpEmails = 'update pgp_emails set used=1, user_acc_id="' + user_acc_id + '" where pgp_email ="' + pgp_email + '"';
                             await sql.query(updatePgpEmails);
                             // if (policy_id !== '') {
+                            
                             //     var slctpolicy = "select * from device_history where id = " + policy_id + "";
                             //     policy_obj = await sql.query(slctpolicy);
                             //     // console.log('policy ', policy_obj);
@@ -3000,10 +3001,10 @@ router.get('/get_app_permissions', async function (req, res) {
                     // console.log(ext.id, item.extension_id);
                     if (ext.id === item.extension_id) {
                     //  console.log('sub ext item', item.guest)
-
+                    // console.log(ext.unique_name, 'dfs',item.unique_name);
                         subExtension.push({
                             uniqueName: ext.unique_name,
-                            uniqueExtension: item.uniqueName,
+                            uniqueExtension: item.unique_name,
                             guest: item.guest != undefined ? item.guest: 0,
                             label: item.label,
                             icon: item.icon,
@@ -3092,6 +3093,7 @@ router.get('/get_apps/:device_id', async function (req, res) {
                         for (let item of apps) {
                             // console.log(ext.app_id, ' ', item.visible);
                             if (ext.app_id === item.extension_id) {
+                                //  console.log(ext.uniqueName);
                                 subExtension.push({
                                     uniqueName: ext.uniqueName,
                                     uniqueExtension: item.uniqueName,
@@ -3106,6 +3108,8 @@ router.get('/get_apps/:device_id', async function (req, res) {
                                 });
                             }
                         }
+
+                        console.log('subextensiondsf ', subExtension)
 
                         newExtlist.push({
                             uniqueName: ext.uniqueName,
