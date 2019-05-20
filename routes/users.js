@@ -2924,15 +2924,15 @@ router.get('/get_app_permissions', async function (req, res) {
                 for (let item of apps) {
                     // console.log(ext.id, item.extension_id);
                     if (ext.id === item.extension_id) {
-                        // console.log('sub ext item', item)
+                    //  console.log('sub ext item', item.guest)
 
                         subExtension.push({
                             uniqueName: ext.unique_name,
                             uniqueExtension: item.uniqueName,
-                            guest: item.guest,
+                            guest: item.guest != undefined ? item.guest: 0,
                             label: item.label,
                             icon: item.icon,
-                            encrypted: item.encrypted,
+                            encrypted: item.encrypted != undefined ? item.encrypted : 0,
                             id: item.id,
                             device_id: item.device_id,
                             app_id: item.id,
@@ -2945,9 +2945,9 @@ router.get('/get_app_permissions', async function (req, res) {
 
                 newExtlist.push({
                     uniqueName: ext.unique_name,
-                    guest: ext.guest,
-                    encrypted: ext.encrypted,
-                    enable: ext.enable,
+                    guest: ext.guest != undefined ? ext.guest : 0,
+                    encrypted: ext.encrypted != undefined ? ext.encrypted : 0,
+                    enable: ext.enable != undefined ? ext.enable : 0,
                     label: ext.label,
                     subExtension: subExtension,
                     extension: ext.extension,
@@ -3020,10 +3020,10 @@ router.get('/get_apps/:device_id', async function (req, res) {
                                 subExtension.push({
                                     uniqueName: ext.uniqueName,
                                     uniqueExtension: item.uniqueName,
-                                    guest: item.guest,
+                                    guest: item.guest != undefined ? item.guest:0,
                                     label: item.label,
                                     icon: item.icon,
-                                    encrypted: item.encrypted,
+                                    encrypted: item.encrypted != undefined ? item.encrypted : 0,
                                     id: item.id,
                                     device_id: item.device_id,
                                     app_id: item.app_id,
@@ -3034,9 +3034,9 @@ router.get('/get_apps/:device_id', async function (req, res) {
 
                         newExtlist.push({
                             uniqueName: ext.uniqueName,
-                            guest: ext.guest,
-                            encrypted: ext.encrypted,
-                            enable: ext.enable,
+                            guest: ext.guest != undefined ? ext.guest:0,
+                            encrypted: ext.encrypted != undefined ? ext.encrypted: 0,
+                            enable: ext.enable != undefined ? ext.enable: 0,
                             label: ext.label,
                             subExtension: subExtension,
                             visible: ext.visible,
