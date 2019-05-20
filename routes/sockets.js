@@ -261,7 +261,7 @@ module.exports.listen = async function (server) {
                 // let device_permissions = permissions;
 
                 await device_helpers.insertOrUpdateSettings(controls, device_id);
-                 console.log("Device save");
+                console.log("Device save");
                 await device_helpers.deviceSynced(device_id);
 
                 socket.emit("get_sync_status_" + device_id, {
@@ -433,6 +433,8 @@ module.exports.listen = async function (server) {
                                     let policyQ = "SELECT * FROM policy WHERE id=" + defaultP[0].policy_id;
                                     let policy = await sql.query(policyQ);
                                     if (policy.length) {
+                                        policy = general_helpers.refactorPolicy(policy);
+                                        
                                         socket.emit(Constants.GET_POLICY + device_id, {
                                             status: true,
                                             app_list: (policy[0].app_list === undefined || policy[0].app_list === null || policy[0].app_list === '') ? '[]' : policy[0].app_list,
@@ -474,6 +476,8 @@ module.exports.listen = async function (server) {
                             let policyQ = "SELECT policy.* FROM policy LEFT JOIN dealer_policies ON policy.id = dealer_policies.policy_id WHERE (dealer_policies.dealer_id=" + dealer[0].dealer_id + " OR policy.dealer_id=" + dealer[0].dealer_id + " )  AND  policy.command_name = '" + policy_name + "' AND policy.status=1  AND policy.delete_status=0";
                             let policy = await sql.query(policyQ);
                             if (policy.length) {
+                                policy = general_helpers.refactorPolicy(policy);
+
                                 socket.emit(Constants.GET_POLICY + device_id, {
                                     status: true,
                                     app_list: (policy[0].app_list === undefined || policy[0].app_list === null || policy[0].app_list === '') ? '[]' : policy[0].app_list,

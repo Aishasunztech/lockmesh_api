@@ -388,11 +388,11 @@ module.exports = {
 				return false;
 			}
 			if (stdout) {
-				let array=stdout.split(' ');
+				let array = stdout.split(' ');
 				console.log(array);
 				let packageName = array[1].split('=');
 				console.log(packageName);
-				return (packageName[1])?packageName[1].replace(/\'/g,''):false;
+				return (packageName[1]) ? packageName[1].replace(/\'/g, '') : false;
 			}
 			return false;
 		} catch (error) {
@@ -414,11 +414,11 @@ module.exports = {
 				return false;
 			}
 			if (stdout) {
-				let array=stdout.split(' ');
+				let array = stdout.split(' ');
 				console.log(array);
 				let packageName = array[2].split('=');
 				console.log(packageName);
-				return (packageName[1])?packageName[1].replace(/\'/g,''):false;
+				return (packageName[1]) ? packageName[1].replace(/\'/g, '') : false;
 			}
 			return false;
 		} catch (error) {
@@ -439,18 +439,18 @@ module.exports = {
 				return false;
 			}
 			if (stdout) {
-				let array=stdout.split(' ');
+				let array = stdout.split(' ');
 				console.log(array);
 				let packageName = array[2].split('=');
 				console.log(packageName);
-				return (packageName[1])?packageName[1].replace(/\'/g,''):false;
+				return (packageName[1]) ? packageName[1].replace(/\'/g, '') : false;
 			}
 			return false;
 		} catch (error) {
 			return false;
 		}
 	},
-	getWindowAPKLabelScript: async function (filePath)  {
+	getWindowAPKLabelScript: async function (filePath) {
 
 	},
 
@@ -500,7 +500,7 @@ module.exports = {
 
 	},
 
-	getAPKVersionNameScript: async function (filePath)  {
+	getAPKVersionNameScript: async function (filePath) {
 		try {
 			let versionName = "aapt dump badging " + filePath + " | grep \"versionName\" | sed -e \"s/.*versionName='//\" -e \"s/' .*//\"";
 			const { stdout, stderr, error } = await exec(versionName);
@@ -522,7 +522,7 @@ module.exports = {
 		}
 
 	},
-	getAPKLabelScript: async function(filePath)  {
+	getAPKLabelScript: async function (filePath) {
 		let label = "aapt dump badging " + filePath + " | sed -n \"s/^application-label:'\(.*\)'/\1/p\"";
 		return label;
 	},
@@ -765,5 +765,31 @@ module.exports = {
 		importer1.import(sqlFile).then(() => {
 			console.log('DB1 has finished importing')
 		});
+	},
+	refactorPolicy: function (policy) {
+		let applist = JSON.parse(policy[0].app_list);
+		applist.forEach((app) => {
+			app.uniqueName = app.unique_name;
+			app.packageName = app.package_name;
+			app.defaultApp = app.default_app;
+			delete app.unique_name;
+			delete app.package_name;
+			delete app.default_app;
+		})
+
+		// let permissions = JSON.parse(policy[0].permissions);
+		// permissions.forEach((app) => {
+		// 	app.uniqueName = app.unique_name;
+		// 	app.packageName = app.package_name;
+		// 	app.defaultApp = app.default_app;
+		// 	delete app.unique_name;
+		// 	delete app.package_name;
+		// 	delete app.default_app;
+		// })
+		
+		policy[0].app_list = JSON.stringify(applist);
+		
+		// policy[0].permissions = JSON.stringify(permissions);
+		return policy;
 	}
 }

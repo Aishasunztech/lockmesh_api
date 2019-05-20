@@ -3453,26 +3453,7 @@ router.post('/apply_policy/:device_id', async function (req, res) {
                 let policy = await sql.query(getPolicyQ)
 
                 if (policy.length) {
-                    let applist = JSON.parse(policy[0].app_list);
-                    applist.forEach((app)=>{
-                        app.uniqueName = app.unique_name;
-                        app.packageName = app.package_name;
-                        app.defaultApp = app.default_app;
-                        delete app.unique_name;
-                        delete app.package_name;
-                        delete app.default_app;
-                    })
-                    let permissions = JSON.parse(policy[0].permissions);
-                    permissions.forEach((app)=>{
-                        app.uniqueName = app.unique_name;
-                        app.packageName = app.package_name;
-                        app.defaultApp = app.default_app;
-                        delete app.unique_name;
-                        delete app.package_name;
-                        delete app.default_app;
-                    })
-                    policy[0].app_list = JSON.stringify(applist);
-                    policy[0].permissions = JSON.stringify(permissions);
+                    policy = helpers.refactorPolicy(policy);
 
                     var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, app_list, controls, permissions, push_apps, type) VALUES ('" + device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
                     sql.query(applyQuery, async function (err, policyApplied) {
@@ -4950,7 +4931,7 @@ router.post('/addApk', async function (req, res) {
                 var filetypes = /jpeg|jpg|apk|png/;
 
                 console.log('files', req.files, file);
-               
+
                 // let data = fs.readFile(req.files.apk.path,'utf8');
                 // console.log("file", data);
 
@@ -5126,22 +5107,22 @@ router.post('/edit/apk', async function (req, res) {
                 let apk = req.body.apk;
                 let file = path.join(__dirname, "../uploads/" + apk);
                 if (fs.existsSync(file)) {
-                    
+
                     let versionCode = await helpers.getAPKVersionCode(file);
                     let versionName = await helpers.getAPKVersionName(file);
                     let packageName = await helpers.getAPKPackageName(file);
                     // let details = JSON.stringify(helpers.getAPKDetails(file));
                     let details = null;
-                    if(versionCode && versionName && packageName){
+                    if (versionCode && versionName && packageName) {
                         let apk_name = req.body.name;
                         let logo = req.body.logo;
                         sql.query("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "'  where id = '" + req.body.apk_id + "'", function (err, rslts) {
-    
+
                             if (err) throw err;
                             data = {
                                 status: true,
                                 msg: "Record Updated"
-    
+
                             };
                             res.send(data);
                             return;
@@ -5153,7 +5134,7 @@ router.post('/edit/apk', async function (req, res) {
                             msg: "Error While Uploading"
                         };
                         res.send(data);
-                        return;    
+                        return;
                     }
                 } else {
                     data = {
