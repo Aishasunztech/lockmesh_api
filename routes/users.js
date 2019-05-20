@@ -3453,6 +3453,27 @@ router.post('/apply_policy/:device_id', async function (req, res) {
                 let policy = await sql.query(getPolicyQ)
 
                 if (policy.length) {
+                    let applist = JSON.parse(policy[0].app_list);
+                    applist.forEach((app)=>{
+                        app.uniqueName = app.unique_name;
+                        app.packageName = app.package_name;
+                        app.defaultApp = app.default_app;
+                        delete app.unique_name;
+                        delete app.package_name;
+                        delete app.default_app;
+                    })
+                    let permissions = JSON.parse(policy[0].permissions);
+                    permissions.forEach((app)=>{
+                        app.uniqueName = app.unique_name;
+                        app.packageName = app.package_name;
+                        app.defaultApp = app.default_app;
+                        delete app.unique_name;
+                        delete app.package_name;
+                        delete app.default_app;
+                    })
+                    policy[0].app_list = JSON.stringify(applist);
+                    policy[0].permissions = JSON.stringify(permissions);
+
                     var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, app_list, controls, permissions, push_apps, type) VALUES ('" + device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
                     sql.query(applyQuery, async function (err, policyApplied) {
                         if (err) {
