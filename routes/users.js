@@ -4936,9 +4936,9 @@ router.get('/apklist', async function (req, res) {
                     console.log("Role", dealerRole);
 
                     let sdealerList = await sql.query("select count(*) as dealer_count ,dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
-                    console.log(sdealerList);
+                    // console.log(sdealerList);
                     let dealerCount = sdealerList[0].dealer_count;
-                    console.log("dealer_count ", dealerCount);
+                    // console.log("dealer_count ", dealerCount);
                     for (var i = 0; i < results.length; i++) {
                         let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
                         let Sdealerpermissions = permissions.filter(function (item) {
@@ -4948,7 +4948,7 @@ router.get('/apklist', async function (req, res) {
                                 }
                             }
                         })
-                        console.log(Sdealerpermissions);
+                        // console.log(Sdealerpermissions);
                         let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
                         let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
                         dta = {
@@ -5901,11 +5901,6 @@ router.post('/transferApps', async function (req, res) {
                 }
                 await sql.query(insertQuery + insertOrIgnore);
             }
-            data = {
-                "status": true,
-                "msg": 'Apps Transfered Sussecfully'
-            }
-            res.send(data)
         } else {
             let deleteNotIn = "DELETE FROM secure_market_apps WHERE apk_id NOT IN ('" + toDelete + "') AND dealer_id = '" + verify.user.id + " '"
             // console.log(deleteNotIn);
@@ -5929,42 +5924,49 @@ router.post('/transferApps', async function (req, res) {
                 }
                 await sql.query(insertQuery + insertOrIgnore);
             }
-            let apklist = await sql.query("select dealer_apks.* ,apk_details.* from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.delete_status = 0")
-
-            console.log("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND (secure_market_apps.dealer_type = 'admin' OR secure_market_apps.dealer_id = '" + verify.user.id + "') ORDER BY created_at desc");
-
-            sql.query("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND (secure_market_apps.dealer_type = 'admin' OR secure_market_apps.dealer_id = '" + verify.user.id + "') ORDER BY created_at desc", async function (err, results) {
-                if (err) throw err;
-                if (results.length) {
-                    apklist.forEach((item, index) => {
-                        for (let i = 0; i < results.length; i++) {
-                            if (item.apk_id === results[i].id) {
-                                apklist.splice(index, 1)
-                            }
-                        }
-                    })
-                    data = {
-                        status: true,
-                        msg: 'Apps Transfered Sussecfully',
-                        data: {
-                            marketApplist: results,
-                            availableApps: apklist
-                        }
-                    }
-                    res.send(data)
-                } else {
-                    data = {
-                        status: true,
-                        msg: 'Apps Transfered Sussecfully',
-                        data: {
-                            marketApplist: [],
-                            availableApps: apklist
-                        }
-                    }
-                    res.send(data)
-                }
-            })
         }
+
+        where = '';
+        if (verify.user.user_type !== ADMIN) {
+            apklist = await sql.query("select dealer_apks.* ,apk_details.* from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.delete_status = 0")
+        }
+        else {
+            apklist = await sql.query("select * from apk_details where delete_status=0")
+        }
+        if (verify.user.user_type !== ADMIN) {
+            where = "AND (secure_market_apps.dealer_type = 'admin' OR secure_market_apps.dealer_id = '" + verify.user.id + "')"
+        }
+        sql.query("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id, secure_market_apps.is_restrict_uninstall  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 " + where + " ORDER BY created_at desc", async function (err, results) {
+            if (err) throw err;
+            if (results.length) {
+                apklist.forEach((item, index) => {
+                    for (let i = 0; i < results.length; i++) {
+                        if (item.apk_id === results[i].id) {
+                            apklist.splice(index, 1)
+                        }
+                    }
+                })
+                data = {
+                    status: true,
+                    msg: 'Apps Transfered Sussecfully',
+                    data: {
+                        marketApplist: results,
+                        availableApps: apklist
+                    }
+                }
+                res.send(data)
+            } else {
+                data = {
+                    status: true,
+                    msg: 'Apps Transfered Sussecfully',
+                    data: {
+                        marketApplist: [],
+                        availableApps: apklist
+                    }
+                }
+                res.send(data)
+            }
+        })
     }
     else {
         data = {
@@ -5993,7 +5995,7 @@ router.get('/marketApplist', async function (req, res) {
             where = "AND (secure_market_apps.dealer_type = 'admin' OR secure_market_apps.dealer_id = '" + verify.user.id + "')"
         }
         // console.log("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 " + where + "ORDER BY created_at desc");
-        sql.query("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 " + where + "ORDER BY created_at desc", async function (err, results) {
+        sql.query("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id , secure_market_apps.is_restrict_uninstall  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 " + where + "ORDER BY created_at desc", async function (err, results) {
             if (err) throw err;
             if (results.length) {
                 apklist.forEach((item, index) => {
@@ -6029,6 +6031,40 @@ router.get('/marketApplist', async function (req, res) {
             status: false
         }
         res.send(data)
+    }
+});
+
+
+// Change unistall app restriction for Secure market apps 
+router.put('/handleUninstall/:apk_id', async function (req, res) {
+    try {
+        var verify = await verifyToken(req, res);
+        if (verify.status !== undefined && verify.status == true) {
+            let is_restricted = (req.body.value) ? 0 : 1;
+            let apk_id = req.params.apk_id;
+            // console.log("UPDATE secure_market_apps SET is_restrict_uninstall = " + is_restricted + " WHERE apk_id ='" + apk_id + "'");
+            sql.query("UPDATE secure_market_apps SET is_restrict_uninstall = " + is_restricted + " WHERE apk_id ='" + apk_id + "'", function (err, results) {
+                if (err) throw err
+                if (results.affectedRows) {
+                    data = {
+                        status: true,
+                        msg: "Uninstall permission changed."
+                    }
+                    res.send(data);
+                    return
+                }
+                else {
+                    data = {
+                        status: false,
+                        msg: "Uninstall permission not changed. Please try again later."
+                    }
+                    res.send(data);
+
+                }
+            })
+        }
+    } catch (error) {
+        throw Error(error.message);
     }
 });
 
