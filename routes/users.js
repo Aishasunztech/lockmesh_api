@@ -2339,6 +2339,7 @@ router.post('/resetpwd', async function (req, res) {
             if (result.length) {
                 // console.log('error');
                 if (isReset) {
+
                     var subject = "Password Reset";
                     var message = 'Your login details are : <br> Email : ' + email + '<br> Password : ' + newpwd + '<br> Dealer id : ' + dealer_id + '<br> Dealer Pin : ' + result[0].link_code + '.<br> Below is the link to login : <br> http://www.lockmesh.com <br>';
                 } else {
@@ -3678,10 +3679,10 @@ router.get('/get_policies', async function (req, res) {
                             })
                             let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
                             let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
-                            let controls = (results[i].controls !== undefined && results[i].controls !== null) ? JSON.parse(results[i].controls) : JSON.parse('[]');
-                            let push_apps = (results[i].push_apps !== undefined && results[i].push_apps !== null) ? JSON.parse(results[i].push_apps) : JSON.parse('[]');
-                            let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== null) ? JSON.parse(results[i].app_list) : JSON.parse('[]');
-                            let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : JSON.parse('[]');
+                            let controls = (results[i].controls !== undefined && results[i].controls !== 'undefined' &&  results[i].controls !== null) ? JSON.parse(results[i].controls) : JSON.parse('[]');
+                            let push_apps = (results[i].push_apps !== undefined && results[i].push_apps !== 'undefined' && results[i].push_apps !== null) ? JSON.parse(results[i].push_apps) : JSON.parse('[]');
+                            let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== 'undefined' &&  results[i].app_list !== null) ? JSON.parse(results[i].app_list) : JSON.parse('[]');
+                            let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== 'undefined' && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : JSON.parse('[]');
                             let is_default = (results[i].id === default_policy_id) ? true : false
                             dta = {
                                 id: results[i].id,
