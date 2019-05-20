@@ -950,6 +950,82 @@ router.post('/edit/user', async function (req, res) {
         }
     }
 });
+/*** DELETE User ***/
+router.put('/delete_user/:user_id', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify.status !== undefined && verify.status == true) {
+        var user_id = req.params.user_id
+        if (!empty(user_id) && user_id != undefined) {
+            let deleteUserQ = "UPDATE users SET del_status = 1 WHERE user_id ='" + user_id + "'";
+            console.log(deleteUserQ);
+            sql.query(deleteUserQ, function (err, result) {
+                if (err) {
+                    throw err
+                }
+                if (result && result.affectedRows !== 0) {
+                    data = {
+                        'status': true,
+                        'msg': 'User deleted successfully.'
+                    }
+                    res.send(data);
+                    return
+                } else {
+                    data = {
+                        'status': true,
+                        'msg': 'User not deleted try again later.'
+                    }
+                    res.send(data);
+                    return
+                }
+            })
+        } else {
+            data = {
+                'status': false,
+                'msg': 'Invalid User.'
+            }
+            res.send(data);
+            return
+        }
+    }
+});
+/***UNDO DELETE User ***/
+router.put('/undo_delete_user/:user_id', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify.status !== undefined && verify.status == true) {
+        var user_id = req.params.user_id
+        if (!empty(user_id) && user_id != undefined) {
+            let deleteUserQ = "UPDATE users SET del_status = 0 WHERE user_id ='" + user_id + "'";
+            console.log(deleteUserQ);
+            sql.query(deleteUserQ, function (err, result) {
+                if (err) {
+                    throw err
+                }
+                if (result && result.affectedRows !== 0) {
+                    data = {
+                        'status': true,
+                        'msg': 'User added again successfully.'
+                    }
+                    res.send(data);
+                    return
+                } else {
+                    data = {
+                        'status': true,
+                        'msg': 'User not added try again later.'
+                    }
+                    res.send(data);
+                    return
+                }
+            })
+        } else {
+            data = {
+                'status': false,
+                'msg': 'Invalid User.'
+            }
+            res.send(data);
+            return
+        }
+    }
+});
 
 
 
@@ -1141,6 +1217,7 @@ router.post('/create/device_profile', async function (req, res) {
             let sim_ids = await sql.query(simIds);
             let activationCodes = []
             let deviceIds = []
+            let batch_no = new Date().valueOf();
             const addDuplicateActivations = async () => {
                 for (let i = 0; i < duplicate; i++) {
                     let code = randomize('0', 7);
@@ -1152,13 +1229,13 @@ router.post('/create/device_profile', async function (req, res) {
                     let pgp_email = (pgp_emails[i]) ? pgp_emails[i].pgp_email : null;
                     // console.log(pgp_emails[i].pgp_email, chat_ids[i].chat_id, sim_isim_id, activationCode, deviceId);
 
-                    var insertDevice = "INSERT INTO devices (name , created_at ) VALUES ('" + name + "' NOW())";
+                    var insertDevice = "INSERT INTO devices (name , created_at ) VALUES ('" + name + "', NOW())";
                     let resp = await sql.query(insertDevice)
                     // console.log("inserted id", resp.insertId);
                     let dvc_id = resp.insertId;
                     deviceIds.push(dvc_id);
-                    var insertUser_acc = "INSERT INTO usr_acc (device_id , user_id, activation_code, expiry_months, dealer_id,link_code, device_status, activation_status, expiry_date,note,validity,account_email,account_name "
-                    var User_acc_values = ") VALUES ('" + dvc_id + "', '" + user_id + "',  '" + activationCode + "',  " + exp_month + ", " + dealer_id + ", '" + link_code + "' ,  0, 0 ,'" + expiry_date + "','" + note + "','" + validity + "','" + email + "','" + name + "')";
+                    var insertUser_acc = "INSERT INTO usr_acc (device_id , user_id,batch_no, activation_code, expiry_months, dealer_id,link_code, device_status, activation_status, expiry_date,note,validity,account_email,account_name "
+                    var User_acc_values = ") VALUES ('" + dvc_id + "', '" + user_id + "', '" + batch_no + "', '" + activationCode + "',  " + exp_month + ", " + dealer_id + ", '" + link_code + "' ,  0, 0 ,'" + expiry_date + "','" + note + "','" + validity + "','" + email + "','" + name + "')";
                     insertUser_acc = insertUser_acc + User_acc_values;
                     if (resp.insertId) {
                         let resps = await sql.query(insertUser_acc)
@@ -1305,8 +1382,6 @@ router.post('/create/device_profile', async function (req, res) {
                                                 data: data
                                             })
                                             return;
-
-
                                         })
 
 
@@ -4929,7 +5004,7 @@ router.post('/addApk', async function (req, res) {
                 var filetypes = /jpeg|jpg|apk|png/;
 
                 console.log('files', req.files, file);
-               
+
                 // let data = fs.readFile(req.files.apk.path,'utf8');
                 // console.log("file", data);
 
@@ -5105,22 +5180,22 @@ router.post('/edit/apk', async function (req, res) {
                 let apk = req.body.apk;
                 let file = path.join(__dirname, "../uploads/" + apk);
                 if (fs.existsSync(file)) {
-                    
+
                     let versionCode = await helpers.getAPKVersionCode(file);
                     let versionName = await helpers.getAPKVersionName(file);
                     let packageName = await helpers.getAPKPackageName(file);
                     // let details = JSON.stringify(helpers.getAPKDetails(file));
                     let details = null;
-                    if(versionCode && versionName && packageName){
+                    if (versionCode && versionName && packageName) {
                         let apk_name = req.body.name;
                         let logo = req.body.logo;
                         sql.query("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "'  where id = '" + req.body.apk_id + "'", function (err, rslts) {
-    
+
                             if (err) throw err;
                             data = {
                                 status: true,
                                 msg: "Record Updated"
-    
+
                             };
                             res.send(data);
                             return;
@@ -5132,7 +5207,7 @@ router.post('/edit/apk', async function (req, res) {
                             msg: "Error While Uploading"
                         };
                         res.send(data);
-                        return;    
+                        return;
                     }
                 } else {
                     data = {
@@ -5803,7 +5878,7 @@ router.post('/transferApps', async function (req, res) {
         let dealer_id = verify.user.id;
         if (dealer_type === ADMIN) {
 
-            let deleteNotIn = "DELETE FROM secure_market_apps WHERE apk_id NOT IN (" + toDelete + ")"
+            let deleteNotIn = "DELETE FROM secure_market_apps WHERE apk_id NOT IN ('" + toDelete + "')"
             console.log(deleteNotIn);
             await sql.query(deleteNotIn);
             if (appKeys.length) {
@@ -5847,12 +5922,41 @@ router.post('/transferApps', async function (req, res) {
                 }
                 await sql.query(insertQuery + insertOrIgnore);
             }
-            data = {
-                "status": true,
-                "msg": 'Apps Transfered Sussecfully'
-            }
-            res.send(data)
+            let apklist = await sql.query("select dealer_apks.* ,apk_details.* from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.delete_status = 0")
 
+            console.log("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND (secure_market_apps.dealer_type = 'admin' OR secure_market_apps.dealer_id = '" + verify.user.id + "') ORDER BY created_at desc");
+
+            sql.query("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND (secure_market_apps.dealer_type = 'admin' OR secure_market_apps.dealer_id = '" + verify.user.id + "') ORDER BY created_at desc", async function (err, results) {
+                if (err) throw err;
+                if (results.length) {
+                    apklist.forEach((item, index) => {
+                        for (let i = 0; i < results.length; i++) {
+                            if (item.apk_id === results[i].id) {
+                                apklist.splice(index, 1)
+                            }
+                        }
+                    })
+                    data = {
+                        status: true,
+                        msg: 'Apps Transfered Sussecfully',
+                        data: {
+                            marketApplist: results,
+                            availableApps: apklist
+                        }
+                    }
+                    res.send(data)
+                } else {
+                    data = {
+                        status: true,
+                        msg: 'Apps Transfered Sussecfully',
+                        data: {
+                            marketApplist: [],
+                            availableApps: apklist
+                        }
+                    }
+                    res.send(data)
+                }
+            })
         }
     }
     else {
@@ -5873,15 +5977,15 @@ router.get('/marketApplist', async function (req, res) {
     if (verify.status !== undefined && verify.status == true) {
         where = '';
         if (verify.user.user_type !== ADMIN) {
-            apklist = await sql.query("select dealer_apks.* ,apk_details.* from dealer_apks left join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "'")
+            apklist = await sql.query("select dealer_apks.* ,apk_details.* from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.delete_status = 0")
         }
         else {
             apklist = await sql.query("select * from apk_details where delete_status=0")
         }
         if (verify.user.user_type !== ADMIN) {
-            where = "AND (dealer_type = 'admin' OR dealer_id = '" + verify.user.id + "')"
+            where = "AND (secure_market_apps.dealer_type = 'admin' OR secure_market_apps.dealer_id = '" + verify.user.id + "')"
         }
-        // console.log("SELECT apk_details.* ,secure_market_apps.* from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 " + where);
+        // console.log("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 " + where + "ORDER BY created_at desc");
         sql.query("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 " + where + "ORDER BY created_at desc", async function (err, results) {
             if (err) throw err;
             if (results.length) {
