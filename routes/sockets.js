@@ -409,7 +409,6 @@ module.exports.listen = async function (server) {
             // ======================================================= Policy ============================================================= \\
             socket.on(Constants.LOAD_POLICY + device_id, async (response) => {
                 let { link_code, device_id, policy_name, is_default } = response;
-                console.log("testing", { link_code, device_id, policy_name, is_default })
                 if (link_code != undefined && link_code !== null && link_code !== '') {
 
                     let dealerQ = "SELECT * FROM dealers WHERE link_code ='" + link_code + "'";
@@ -434,7 +433,7 @@ module.exports.listen = async function (server) {
                                     let policy = await sql.query(policyQ);
                                     if (policy.length) {
                                         policy = general_helpers.refactorPolicy(policy);
-                                        
+
                                         socket.emit(Constants.GET_POLICY + device_id, {
                                             status: true,
                                             app_list: (policy[0].app_list === undefined || policy[0].app_list === null || policy[0].app_list === '') ? '[]' : policy[0].app_list,
