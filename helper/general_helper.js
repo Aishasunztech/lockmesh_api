@@ -377,7 +377,6 @@ module.exports = {
 	getWindowAPKPackageNameScript: async (filePath) => {
 		try {
 			let cmd = "aapt dump badging " + filePath + " | findstr /C:\"package: name\"";
-			console.log(cmd);
 			const { stdout, stderr, error } = await exec(cmd);
 			console.log('stdout:', stdout);
 			console.log('stderr:', stderr);
@@ -389,9 +388,7 @@ module.exports = {
 			}
 			if (stdout) {
 				let array = stdout.split(' ');
-				console.log(array);
 				let packageName = array[1].split('=');
-				console.log(packageName);
 				return (packageName[1]) ? packageName[1].replace(/\'/g, '') : false;
 			}
 			return false;
@@ -403,7 +400,7 @@ module.exports = {
 	getWindowAPKVersionCodeScript: async (filePath) => {
 		try {
 			let cmd = "aapt dump badging " + filePath + " | findstr /C:\"package: name\"";
-			console.log(cmd);
+			// console.log(cmd);
 			const { stdout, stderr, error } = await exec(cmd);
 			console.log('stdout:', stdout);
 			console.log('stderr:', stderr);
@@ -415,10 +412,8 @@ module.exports = {
 			}
 			if (stdout) {
 				let array = stdout.split(' ');
-				console.log(array);
-				let packageName = array[2].split('=');
-				console.log(packageName);
-				return (packageName[1]) ? packageName[1].replace(/\'/g, '') : false;
+				let versionCode = array[2].split('=');
+				return (versionCode[1]) ? versionCode[1].replace(/\'/g, '') : false;
 			}
 			return false;
 		} catch (error) {
@@ -440,10 +435,8 @@ module.exports = {
 			}
 			if (stdout) {
 				let array = stdout.split(' ');
-				console.log(array);
-				let packageName = array[2].split('=');
-				console.log(packageName);
-				return (packageName[1]) ? packageName[1].replace(/\'/g, '') : false;
+				let versionName = array[2].split('=');
+				return (versionName[1]) ? versionName[1].replace(/\'/g, '') : false;
 			}
 			return false;
 		} catch (error) {
@@ -451,7 +444,29 @@ module.exports = {
 		}
 	},
 	getWindowAPKLabelScript: async function (filePath) {
+		try {
+			let cmd = "aapt dump badging " + filePath + " | findstr /C:\"application:\"";
+			const { stdout, stderr, error } = await exec(cmd);
+			console.log('stdout:', stdout);
+			console.log('stderr:', stderr);
+			if (error) {
+				return false;
+			}
+			if (stderr) {
+				return false;
+			}
+			if (stdout) {
+				let array = stdout.split(' ');
+				console.log("arr", array);
+				let label = array[1].split('=');
+				console.log("label", label);
 
+				return (label[1]) ? label[1].replace(/\'/g, '') : false;
+			}
+			return false;
+		} catch (error) {
+			return false;
+		}
 	},
 
 	// linux scripts
@@ -523,8 +538,27 @@ module.exports = {
 
 	},
 	getAPKLabelScript: async function (filePath) {
-		let label = "aapt dump badging " + filePath + " | sed -n \"s/^application-label:'\(.*\)'/\1/p\"";
-		return label;
+		try {
+			let label = "aapt dump badging "+ filePath +" | grep \"application\" | sed -e \"s/.*label='//\" -e \"s/' .*//\""
+			;
+			const { stdout, stderr, error } = await exec(label);
+			console.log('stdout:', stdout);
+			console.log('stderr:', stderr);
+			if (error) {
+				return false;
+			}
+
+			if (stderr) {
+				return false
+			}
+			if (stdout) {
+				return stdout;
+			}
+			return false;
+			
+		} catch (error) {
+			return await this.getWindowAPKLabelScript(filePath);
+		}
 	},
 
 	// getting
@@ -575,12 +609,8 @@ module.exports = {
 		}
 
 	},
-	getAPKLabel: function (filePath) {
-		var reader = ApkReader.readFile(filePath);
-		var manifest = reader.readManifestSync();
-		let res = JSON.parse(JSON.stringify(manifest));
-		console.log("test", res);
-		return res.label;
+	getAPKLabel: async function (filePath) {
+		return await this.getAPKLabelScript(filePath)
 	},
 	saveLogin: async function (user, loginClient, type, status) {
 		let insertQ = "INSERT INTO login_history ";

@@ -118,16 +118,19 @@ var verifyToken = function (req, res) {
 
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
-    let file = path.join(__dirname, "../uploads/gana.apk");
-    // let file = path.join(__dirname, "../uploads/apk-1541677256487.apk");
-    let packageName = await helpers.getAPKPackageName(file);
-    let versionName = await helpers.getAPKVersionName(file);
-    let versionCode = await helpers.getAPKVersionCode(file);
-    res.send({
-        packageName: packageName,
-        versionName: versionName,
-        versionCode: versionCode,
-    });
+    // let file = path.join(__dirname, "../uploads/gana.apk");
+    // // let file = path.join(__dirname, "../uploads/apk-1541677256487.apk");
+    // let packageName = await helpers.getAPKPackageName(file);
+    // let versionName = await helpers.getAPKVersionName(file);
+    // let versionCode = await helpers.getAPKVersionCode(file);
+    // let label = await helpers.getAPKLabel(file);
+    // res.send({
+    //     packageName: packageName,
+    //     versionName: versionName,
+    //     versionCode: versionCode,
+    //     label: label
+    // });
+    res.send("Express");
 
     // helpers.resetDB();
     // apk-ScreenLocker v3.31.apk
