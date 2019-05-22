@@ -358,7 +358,6 @@ module.exports.listen = async function (server) {
             }
 
             socket.on(Constants.SEND_PUSHED_APPS_STATUS + device_id, async (pushedApps) => {
-                console.log("send_pushed_apps_status_", pushedApps);
                 require('../bin/www').ackSinglePushApp(device_id, pushedApps);
             });
             socket.on(Constants.FINISHED_PUSH_APPS + device_id, async (response) => {

@@ -2875,6 +2875,28 @@ router.get('/connect/:device_id', async function (req, res) {
         res.send(_data);
     }
 });
+/** Get get App Job Queue  (Connect Page) **/
+router.get('/getAppJobQueue/:device_id', async function (req, res) {
+    // console.log('api check is caled')
+    var verify = await verifyToken(req, res);
+    if (verify.status !== undefined && verify.status == true) {
+        let device_id = req.params.device_id;
+        if (!empty(device_id)) {
+
+            let jobQueue = await device_helpers.getAppJobQueue(device_id);
+            _data = {
+                status: true,
+                data: jobQueue
+            };
+        } else {
+            _data = {
+                status: false,
+                msg: "Device not found"
+            };
+        }
+        res.send(_data);
+    }
+});
 
 // resync device
 router.patch('/sync-device', async function (req, res) {
@@ -3306,7 +3328,7 @@ router.post('/save_policy', async function (req, res) {
                 }
                 var command_name = '#' + policy_name.replace(/ /g, "_");
 
-                var applyQuery = "INSERT INTO policy (policy_name, policy_note, command_name, app_list, push_apps, controls, permissions, dealer_id, dealer_type, dealers) VALUES ('" + policy_name + "', '" + policy_note + "', '" + command_name + "', '" + app_list + "', '" + push_apps + "', '" + system_permissions + "', '" + secure_apps + "', '" + loggedDealerId + "', '" + loggedDealerType + "', '[]')";
+                var applyQuery = "INSERT INTO policy (policy_name, policy_note, command_name, app_list, push_apps, controls, permissions, dealer_id, dealer_type, dealers,status) VALUES ('" + policy_name + "', '" + policy_note + "', '" + command_name + "', '" + app_list + "', '" + push_apps + "', '" + system_permissions + "', '" + secure_apps + "', '" + loggedDealerId + "', '" + loggedDealerType + "', '[]',1)";
 
                 sql.query(applyQuery, async function (err, rslts) {
                     if (err) throw err;
@@ -3477,6 +3499,7 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
             let usrAccId = req.body.usrAccId;
 
             let push_apps = req.body.push_apps;
+            let noOfApps = push_apps.length
 
             let apps = (push_apps === undefined) ? '' : JSON.stringify(push_apps);
 
@@ -3487,22 +3510,26 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
                     throw err;
                 }
                 if (rslts) {
-
                     let isOnline = await device_helpers.isDeviceOnline(device_id);
+                   //job Queue query
+                    // var loadDeviceQ = "INSERT INTO apps_queue_jobs (device_id,action,type,total_apps,is_in_process) " + " VALUES ('" + device_id + "', 'push', 'push', " + noOfApps + " ,1)"
                     var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
+
                     await sql.query(loadDeviceQ)
                     if (isOnline) {
 
                         require("../bin/www").applyPushApps(apps, device_id);
                         data = {
                             "status": true,
-                            "online": true
+                            "online": true,
+                            // noOfApps: noOfApps
                         };
                     }
                     else {
                         require("../bin/www").applyPushApps(apps, device_id);
                         data = {
                             "status": true,
+                            // noOfApps: noOfApps
                         };
                     }
                     res.send(data);
@@ -4990,7 +5017,7 @@ router.get('/apklist', async function (req, res) {
 
 
 // upload test apk
-router.post('/addApk', async function (req, res) {
+router.post('/upload', async function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
 
     var verify = await verifyToken(req, res);
@@ -5060,12 +5087,17 @@ router.post('/addApk', async function (req, res) {
                     let file = path.join(__dirname, "../uploads/" + filename);
                     let versionCode = await helpers.getAPKVersionCode(file);
                     console.log("version code", versionCode);
+                    let apk_stats = fs.statSync(file);
+
+                    let formatByte = helpers.formatBytes(apk_stats.size);
                     if (versionCode) {
 
                         data = {
                             status: true,
                             msg: 'Uploaded Successfully',
                             fileName: filename,
+                            size: formatByte
+
                         };
                         res.send(data);
                         return;
@@ -5077,7 +5109,6 @@ router.post('/addApk', async function (req, res) {
                         res.send(data);
                         return;
                     }
-
                 } else if (fieldName === Constants.LOGO) {
                     data = {
                         status: true,
@@ -5107,7 +5138,7 @@ router.post('/addApk', async function (req, res) {
 });
 
 // add apk. endpoints name should be changed
-router.post('/upload', async function (req, res) {
+router.post('/addApk', async function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
     var verify = await verifyToken(req, res);
 
@@ -5122,10 +5153,11 @@ router.post('/upload', async function (req, res) {
                     // let label = helpers.getAPKLabel(file);
                     let packageName = await helpers.getAPKPackageName(file);
                     console.log("versionName", versionName);
+                    console.log("pKGName", packageName);
+                    console.log("version Code", versionCode);
                     // let details = JSON.stringify(helpers.getAPKDetails(file));
                     let details = null;
 
-                    console.log("file size in format", formatByte)
                     if (versionCode && versionName && packageName) {
                         let apk_name = req.body.name;
                         let logo = req.body.logo;
@@ -5781,7 +5813,7 @@ router.post('/check_pass', async function (req, res) {
 router.get('/get_imei_history/:device_id', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
-        let query = "select * from imei_history where device_id = '" + req.params.device_id + "' ";
+        let query = "select * from imei_history where device_id = '" + req.params.device_id + "' order by created_at desc";
         sql.query(query, (error, resp) => {
             res.send({
                 status: true,
