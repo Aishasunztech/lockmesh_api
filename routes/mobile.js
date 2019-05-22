@@ -306,7 +306,7 @@ router.post('/login', async function (req, resp) {
             const dvc = {
                 dId: usr_acc.dealer_id,
                 device_id: device[0].device_id,
-                link_code:usr_acc.link_code,
+                link_code: usr_acc.link_code,
                 // ...data
             }
             // console.log("this is device", dvc);
@@ -777,15 +777,15 @@ router.get('/getUpdate/:version/:uniqueName/:label', async (req, res) => {
 router.get("/getApk/:apk", async (req, res) => {
     // let verify = await verifyToken(req, res);
     // if(verify['status']!==undefined && verify.status===true){
-        let file = path.join(__dirname, "../uploads/" + req.params.apk + '.apk');
-        if (fs.existsSync(file)) {
-            res.sendFile(file);
-        } else {
-            res.send({
-                status: false,
-                msg: "file not found"
-            })
-        }
+    let file = path.join(__dirname, "../uploads/" + req.params.apk + '.apk');
+    if (fs.existsSync(file)) {
+        res.sendFile(file);
+    } else {
+        res.send({
+            status: false,
+            msg: "file not found"
+        })
+    }
     // }
 });
 
@@ -1006,7 +1006,7 @@ router.post('/imeiChanged', async function (req, res) {
 
 router.get('/admin/marketApplist', async function (req, res) {
     let data = [];
-    sql.query("SELECT apk_details.* from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND secure_market_apps.dealer_type = 'admin'", function (err, results) {
+    sql.query("SELECT apk_details.* , secure_market_apps.is_restrict_uninstall from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND secure_market_apps.dealer_type = 'admin'", function (err, results) {
         if (err) throw err;
         if (results.length) {
             for (var i = 0; i < results.length; i++) {
@@ -1015,7 +1015,9 @@ router.get('/admin/marketApplist', async function (req, res) {
                     logo: results[i].logo,
                     apk: results[i].apk,
                     apk_status: results[i].status,
-                    package_name: results[i].package_name
+                    package_name: results[i].package_name,
+                    is_restrict_uninstall: results[i].is_restrict_uninstall,
+                    apk_size: results[i].apk_size,
                 }
                 data.push(dta);
             }
@@ -1040,7 +1042,7 @@ router.get('/marketApplist/:linkCode', async function (req, res) {
     let dealer_id = await helpers.getDealerIdByLinkOrActivation(req.params.linkCode)
 
     if (dealer_id) {
-        sql.query("SELECT apk_details.* from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND (secure_market_apps.dealer_id = '" + dealer_id + "' OR dealer_type = 'admin')", function (err, results) {
+        sql.query("SELECT apk_details.* , secure_market_apps.is_restrict_uninstall from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND (secure_market_apps.dealer_id = '" + dealer_id + "' OR dealer_type = 'admin')", function (err, results) {
             // console.log("SELECT apk_details.* from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND secure_market_apps.dealer_id = '" + dealer_id + "'");
             if (err) throw err;
             if (results.length) {
@@ -1050,7 +1052,9 @@ router.get('/marketApplist/:linkCode', async function (req, res) {
                         logo: results[i].logo,
                         apk: results[i].apk,
                         apk_status: results[i].status,
-                        package_name: results[i].package_name
+                        package_name: results[i].package_name,
+                        is_restrict_uninstall: results[i].is_restrict_uninstall,
+                        apk_size: results[i].apk_size,
                     }
                     data.push(dta);
                 }
@@ -1075,6 +1079,5 @@ router.get('/marketApplist/:linkCode', async function (req, res) {
         }
         res.send(data);
     }
-
 });
 module.exports = router;

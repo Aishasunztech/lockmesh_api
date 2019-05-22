@@ -212,12 +212,15 @@ module.exports.ackImeiChanged = async function (device_id) {
 }
 
 module.exports.ackSinglePushApp = async function (device_id, response) {
-  console.log(Constants.ACK_SINGLE_PUSH_APP);
-  io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
-  })
+  // await sql.query("UPDATE apps_queue_jobs set is_in_process = 0 WHERE device_id = '" + device_id + "'")
+
+  // io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
+  //   status: true
+  // })
 }
 
 module.exports.ackSinglePullApp = async function (device_id, response) {
+
 
   console.log(Constants.ACK_SINGLE_PUSH_APP);
   // io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {

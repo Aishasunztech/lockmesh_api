@@ -261,7 +261,7 @@ module.exports.listen = async function (server) {
                 // let device_permissions = permissions;
 
                 await device_helpers.insertOrUpdateSettings(controls, device_id);
-                 console.log("Device save");
+                console.log("Device save");
                 await device_helpers.deviceSynced(device_id);
 
                 socket.emit("get_sync_status_" + device_id, {
@@ -358,7 +358,6 @@ module.exports.listen = async function (server) {
             }
 
             socket.on(Constants.SEND_PUSHED_APPS_STATUS + device_id, async (pushedApps) => {
-                console.log("send_pushed_apps_status_", pushedApps);
                 require('../bin/www').ackSinglePushApp(device_id, pushedApps);
             });
             socket.on(Constants.FINISHED_PUSH_APPS + device_id, async (response) => {
