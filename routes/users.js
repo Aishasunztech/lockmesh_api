@@ -29,7 +29,7 @@ const device_helpers = require('../helper/device_helpers.js');
 const ADMIN = "admin";
 const DEALER = "dealer";
 const SDEALER = "sdealer";
-let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity"
+let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no"
 let deviceColumns = ["DEVICE ID", "USER ID", "REMAINING DAYS", "FLAGGED", "STATUS", "MODE", "DEVICE NAME", "ACTIVATION CODE", "ACCOUNT EMAIL", "PGP EMAIL", "CHAT ID", "CLIENT ID", "DEALER ID", "DEALER PIN", "MAC ADDRESS", "SIM ID", "IMEI 1", "SIM 1", "IMEI 2", "SIM 2", "SERIAL NUMBER", "MODEL", "START DATE", "EXPIRY DATE", "DEALER NAME", "S-DEALER", "S-DEALER NAME"]
 let dealerColumns = ["DEALER ID", "DEALER NAME", "DEALER EMAIL", "DEALER PIN", "DEVICES", "TOKENS"];
 let apkColumns = ["SHOW ON DEVICE", "APK", "APP NAME", "APP LOGO"]
@@ -542,7 +542,7 @@ router.get('/devices', async function (req, res) {
         // sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id where usr_acc.transfer_status = 0 ' + where_con + ' order by devices.id DESC', function (error, results, fields) {
         // console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 ' + where_con + ' order by devices.id DESC');
         sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 ' + where_con + ' order by devices.id DESC', async function (error, results, fields) {
-
+// console.log('query ', 'select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 ' + where_con + ' order by devices.id DESC')
             if (error) throw error;
             for (var i = 0; i < results.length; i++) {
                 results[i].finalStatus = device_helpers.checkStatus(results[i])
@@ -553,16 +553,54 @@ router.get('/devices', async function (req, res) {
                 // dealerData = await device_helpers.getDealerdata(results[i]);
             }
             let finalResult = [...results, ...newArray]
+            // console.log('old', finalResult.length)
+            // let dumyData = finalResult;
+            // let newResultArray = [];
+            // for (let device of finalResult) {
+            //     // console.log('device ', device.device_id)
+            //     if (device.batch_no !== undefined && device.batch_no !== null && device.batch_no !== 'null' && device.batch_no !== 'undefined') {
+            //         let batch_array = [];
+            //         // console.log('batch no is exist')
+            //         let chcek = newResultArray.findIndex(dvc => {
+            //             return dvc.batch_no == device.batch_no
+            //         });
+            //         if (chcek == -1) {
+            //             for (let batch_device of dumyData) {
+            //                 if (device.batch_no == batch_device.batch_no) {
+            //                     // console.log('batch no is matched', batch_device.batch_no)
+            //                     batch_array.push(JSON.parse(JSON.stringify(batch_device)));
+            //                 }
+            //             }
+            //             // console.log(batch_array, 'batch array length')
+            //             if (batch_array.length) {
+            //                 device.batchData = batch_array;
+            //             }
+
+            //             newResultArray.push(JSON.parse(JSON.stringify(device)))
+            //         }
+
+            //     } else {
+            //         device.batchData = [];
+            //         // if (!newResultArray.find(dvc => {
+            //             // dvc.device_id == null && dvc.device_id == 'null'
+            //         // })) {
+            //              newResultArray.push(JSON.parse(JSON.stringify(device)) )
+            //             // }
+            //     }
+            // }
+
+            // console.log('final list ',newResultArray[0])
 
             data = {
                 "status": true,
+                // "data": newResultArray
                 "data": finalResult
             };
             res.send(data);
         });
+
     }
 });
-
 
 /**GET New the devices**/
 router.get('/new/devices', async function (req, res) {
@@ -1249,7 +1287,7 @@ router.post('/create/device_profile', async function (req, res) {
                             let updatePgpEmails = 'update pgp_emails set used=1, user_acc_id="' + user_acc_id + '" where pgp_email ="' + pgp_email + '"';
                             await sql.query(updatePgpEmails);
                             // if (policy_id !== '') {
-                            
+
                             //     var slctpolicy = "select * from device_history where id = " + policy_id + "";
                             //     policy_obj = await sql.query(slctpolicy);
                             //     // console.log('policy ', policy_obj);
@@ -3000,12 +3038,12 @@ router.get('/get_app_permissions', async function (req, res) {
                 for (let item of apps) {
                     // console.log(ext.id, item.extension_id);
                     if (ext.id === item.extension_id) {
-                    //  console.log('sub ext item', item.guest)
-                    // console.log(ext.unique_name, 'dfs',item.unique_name);
+                        //  console.log('sub ext item', item.guest)
+                        // console.log(ext.unique_name, 'dfs',item.unique_name);
                         subExtension.push({
                             uniqueName: ext.unique_name,
                             uniqueExtension: item.unique_name,
-                            guest: item.guest != undefined ? item.guest: 0,
+                            guest: item.guest != undefined ? item.guest : 0,
                             label: item.label,
                             icon: item.icon,
                             encrypted: item.encrypted != undefined ? item.encrypted : 0,
@@ -3097,7 +3135,7 @@ router.get('/get_apps/:device_id', async function (req, res) {
                                 subExtension.push({
                                     uniqueName: ext.uniqueName,
                                     uniqueExtension: item.uniqueName,
-                                    guest: item.guest != undefined ? item.guest:0,
+                                    guest: item.guest != undefined ? item.guest : 0,
                                     label: item.label,
                                     icon: item.icon,
                                     encrypted: item.encrypted != undefined ? item.encrypted : 0,
@@ -3109,13 +3147,13 @@ router.get('/get_apps/:device_id', async function (req, res) {
                             }
                         }
 
-                        console.log('subextensiondsf ', subExtension)
+                        // console.log('subextensiondsf ', subExtension)
 
                         newExtlist.push({
                             uniqueName: ext.uniqueName,
-                            guest: ext.guest != undefined ? ext.guest:0,
-                            encrypted: ext.encrypted != undefined ? ext.encrypted: 0,
-                            enable: ext.enable != undefined ? ext.enable: 0,
+                            guest: ext.guest != undefined ? ext.guest : 0,
+                            encrypted: ext.encrypted != undefined ? ext.encrypted : 0,
+                            enable: ext.enable != undefined ? ext.enable : 0,
                             label: ext.label,
                             subExtension: subExtension,
                             visible: ext.visible,
@@ -3758,9 +3796,9 @@ router.get('/get_policies', async function (req, res) {
                             })
                             let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
                             let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
-                            let controls = (results[i].controls !== undefined && results[i].controls !== 'undefined' &&  results[i].controls !== null) ? JSON.parse(results[i].controls) : JSON.parse('[]');
+                            let controls = (results[i].controls !== undefined && results[i].controls !== 'undefined' && results[i].controls !== null) ? JSON.parse(results[i].controls) : JSON.parse('[]');
                             let push_apps = (results[i].push_apps !== undefined && results[i].push_apps !== 'undefined' && results[i].push_apps !== null) ? JSON.parse(results[i].push_apps) : JSON.parse('[]');
-                            let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== 'undefined' &&  results[i].app_list !== null) ? JSON.parse(results[i].app_list) : JSON.parse('[]');
+                            let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== 'undefined' && results[i].app_list !== null) ? JSON.parse(results[i].app_list) : JSON.parse('[]');
                             let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== 'undefined' && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : JSON.parse('[]');
                             let is_default = (results[i].id === default_policy_id) ? true : false
                             dta = {
