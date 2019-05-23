@@ -3503,7 +3503,7 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
                 }
                 if (rslts) {
                     let isOnline = await device_helpers.isDeviceOnline(device_id);
-                   //job Queue query
+                    //job Queue query
                     // var loadDeviceQ = "INSERT INTO apps_queue_jobs (device_id,action,type,total_apps,is_in_process) " + " VALUES ('" + device_id + "', 'push', 'push', " + noOfApps + " ,1)"
                     var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
 
@@ -5154,19 +5154,33 @@ router.post('/addApk', async function (req, res) {
                         let apk_stats = fs.statSync(file);
 
                         let formatByte = helpers.formatBytes(apk_stats.size);
-                        sql.query("INSERT INTO apk_details (app_name, logo, apk, version_code, version_name, package_name, details, apk_bytes, apk_size) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + versionCode + "', '" + versionName + "', '" + packageName + "', '" + details + "', " + apk_stats.size + ", '" + formatByte + "')", function (err, rslts) {
+                        sql.query("INSERT INTO apk_details (app_name, logo, apk, version_code, version_name, package_name, details, apk_bytes, apk_size) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + versionCode + "', '" + versionName + "', '" + packageName + "', '" + details + "', " + apk_stats.size + ", '" + formatByte + "')", async function (err, rslts) {
+                            // console.log("App Uploaded", rslts);
+                            let newData = await sql.query("SELECT * from apk_details where id = " + rslts.insertId)
+                            dta = {
+                                "apk_id": newData[0].id,
+                                "apk_name": newData[0].app_name,
+                                "logo": newData[0].logo,
+                                "apk": newData[0].apk,
+                                "permissions": [],
+                                "apk_status": newData[0].status,
+                                "permission_count": 0,
+                                "deleteable": (newData[0].apk_type == "permanent") ? false : true
+                            }
+
+
 
                             if (err) throw err;
                             data = {
                                 status: true,
-                                msg: "Apk is uploaded"
+                                msg: "Apk is uploaded",
+                                data: dta
                             };
                             res.send(data);
                             return;
-
                         });
                     } else {
-                        console.log("file not found");
+                        // console.log("file not found");
                         res.send({
                             status: false,
                             msg: "Error While Uploading"
