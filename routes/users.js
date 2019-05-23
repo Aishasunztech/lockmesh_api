@@ -5078,10 +5078,12 @@ router.post('/upload', async function (req, res) {
                 mimeType = file.mimetype;
                 fieldName = file.fieldname;
                 var filetypes = /jpeg|jpg|apk|png/;
+                // let type = mime.getExtension(file.)
+                // console.log('files', file.path);
 
-                console.log('files', req.files, file);
+                // let data = fs.readFile(file.path, function () {
 
-                // let data = fs.readFile(req.files.apk.path,'utf8');
+                // });
                 // console.log("file", data);
 
                 if (fieldName === Constants.LOGO && filetypes.test(mimeType)) {
@@ -5103,7 +5105,7 @@ router.post('/upload', async function (req, res) {
 
         var upload = multer({
             storage: storage,
-            limits: { fileSize: "50mb" }
+            limits: { fileSize: "100mb" }
         }).fields([{
             name: 'logo',
             maxCount: 1
@@ -5259,6 +5261,47 @@ router.post('/addApk', async function (req, res) {
                 msg: "Error while Uploading",
             };
             return;
+        }
+
+    }
+});
+
+
+
+// add apk. endpoints name should be changed
+router.post('/checkApkName', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify['status'] && verify.status == true) {
+        try {
+            let apkName = req.body.name;
+            let apk_id = req.body.apk_id
+            let query = '';
+            // console.log(apk_id);
+            if (apkName != '' || apkName != null) {
+                if (apk_id == '') {
+                    query = "SELECT * from apk_details where app_name = '" + apkName + "' AND delete_status != 1"
+                }
+                else {
+                    query = "SELECT * from apk_details where app_name = '" + apkName + "' AND delete_status != 1 AND id != " + apk_id
+                }
+                // console.log(query);
+                let isUniqueName = await sql.query(query)
+                if (isUniqueName.length) {
+                    res.send({
+                        status: false,
+                    })
+                } else {
+                    res.send({
+                        status: true
+                    })
+                }
+            } else {
+                res.send({
+                    status: true
+                })
+            }
+        } catch (error) {
+            throw error
         }
 
     }
@@ -5866,7 +5909,7 @@ router.post('/check_pass', async function (req, res) {
 router.get('/get_imei_history/:device_id', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
-        let query = "select * from imei_history where device_id = '" + req.params.device_id + "' order by created_at desc";
+        let query = "select * from imei_history where device_id = '" + req.params.device_id + "'";
         sql.query(query, (error, resp) => {
             res.send({
                 status: true,
