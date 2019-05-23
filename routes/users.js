@@ -3893,12 +3893,14 @@ router.post('/save_policy_changes', async function (req, res) {
         let controls = record.controls;
         let permissions = record.permissions;
         let app_list = record.app_list;
-        // console.log('id id', id)
+        let policy_note = record.policy_note;
+        console.log('id id', id)
 
-        let query = "UPDATE policy SET push_apps = '" + push_apps + "', controls = '" + controls + "', permissions = '" + permissions + "', app_list = '" + app_list + "' WHERE id='" + id + "'";
-        // console.log('qerury', query)
+        
+        let query = "UPDATE policy SET push_apps = '" + push_apps + "', controls = '" + controls + "', permissions = '" + permissions + "', app_list = '" + app_list + "', policy_note = '" + policy_note + "' WHERE id='" + id + "'";
+        console.log('qerury', query)
         sql.query(query, (error, result) => {
-            // console.log(result, 'relstsdf');
+            console.log(result, 'relstsdf');
             if (error) throw error;
             if (result.affectedRows) {
                 data = {
