@@ -3550,24 +3550,24 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
                 if (rslts) {
                     let isOnline = await device_helpers.isDeviceOnline(device_id);
                     //job Queue query
-                    // var loadDeviceQ = "INSERT INTO apps_queue_jobs (device_id,action,type,total_apps,is_in_process) " + " VALUES ('" + device_id + "', 'push', 'push', " + noOfApps + " ,1)"
-                    var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
-
+                    var loadDeviceQ = "INSERT INTO apps_queue_jobs (device_id,action,type,total_apps,is_in_process) " + " VALUES ('" + device_id + "', 'push', 'push', " + noOfApps + " ,1)"
+                    // var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
                     await sql.query(loadDeviceQ)
+
                     if (isOnline) {
 
                         require("../bin/www").applyPushApps(apps, device_id);
                         data = {
                             "status": true,
                             "online": true,
-                            // noOfApps: noOfApps
+                            noOfApps: noOfApps
                         };
                     }
                     else {
                         require("../bin/www").applyPushApps(apps, device_id);
                         data = {
                             "status": true,
-                            // noOfApps: noOfApps
+                            noOfApps: noOfApps
                         };
                     }
                     res.send(data);
@@ -3659,6 +3659,7 @@ router.post('/apply_pullapps/:device_id', async function (req, res) {
 
             let dealer_id = verify.user.id
             let pull_apps = req.body.pull_apps;
+            let noOfApps = pull_apps.length
 
             let apps = (pull_apps === undefined) ? '' : JSON.stringify(pull_apps);
 
@@ -3671,16 +3672,19 @@ router.post('/apply_pullapps/:device_id', async function (req, res) {
                 if (rslts) {
 
                     let isOnline = await device_helpers.isDeviceOnline(device_id);
-                    var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
+                    var loadDeviceQ = "INSERT INTO apps_queue_jobs (device_id,action,type,total_apps,is_in_process) " + " VALUES ('" + device_id + "', 'pull', 'pull', " + noOfApps + " ,1)"
+                    // var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
                     await sql.query(loadDeviceQ)
                     if (isOnline) {
                         data = {
                             "status": true,
-                            "online": true
+                            "online": true,
+                            noOfApps: noOfApps
                         };
                     } else {
                         data = {
                             "status": true,
+                            noOfApps: noOfApps
                         };
                     }
                     res.send(data);
@@ -3923,7 +3927,7 @@ router.post('/save_policy_changes', async function (req, res) {
         let policy_note = record.policy_note;
         console.log('id id', id)
 
-        
+
         let query = "UPDATE policy SET push_apps = '" + push_apps + "', controls = '" + controls + "', permissions = '" + permissions + "', app_list = '" + app_list + "', policy_note = '" + policy_note + "' WHERE id='" + id + "'";
         console.log('qerury', query)
         sql.query(query, (error, result) => {
@@ -5133,25 +5137,25 @@ router.post('/upload', async function (req, res) {
                     let apk_stats = fs.statSync(file);
 
                     let formatByte = helpers.formatBytes(apk_stats.size);
-                    if (versionCode) {
+                    // if (versionCode) {
 
-                        data = {
-                            status: true,
-                            msg: 'Uploaded Successfully',
-                            fileName: filename,
-                            size: formatByte
+                    data = {
+                        status: true,
+                        msg: 'Uploaded Successfully',
+                        fileName: filename,
+                        size: formatByte
 
-                        };
-                        res.send(data);
-                        return;
-                    } else {
-                        data = {
-                            status: false,
-                            msg: "Error while Uploading",
-                        };
-                        res.send(data);
-                        return;
-                    }
+                    };
+                    res.send(data);
+                    return;
+                    // } else {
+                    //     data = {
+                    //         status: false,
+                    //         msg: "Error while Uploading",
+                    //     };
+                    //     res.send(data);
+                    //     return;
+                    // }
                 } else if (fieldName === Constants.LOGO) {
                     data = {
                         status: true,
@@ -5188,58 +5192,70 @@ router.post('/addApk', async function (req, res) {
     if (verify['status'] && verify.status == true) {
         try {
             if (req.body.logo !== '' && req.body.apk !== '' && req.body.name !== '') {
+
                 let apk = req.body.apk;
                 let file = path.join(__dirname, "../uploads/" + apk);
                 if (fs.existsSync(file)) {
+                    let versionName = ''
+                    let packageName = ''
+                    let label = ''
                     let versionCode = await helpers.getAPKVersionCode(file);
-                    let versionName = await helpers.getAPKVersionName(file);
-                    // let label = helpers.getAPKLabel(file);
-                    let packageName = await helpers.getAPKPackageName(file);
-                    console.log("versionName", versionName);
-                    console.log("pKGName", packageName);
-                    console.log("version Code", versionCode);
-                    // let details = JSON.stringify(helpers.getAPKDetails(file));
-                    let details = null;
 
-                    if (versionCode && versionName && packageName) {
-                        let apk_name = req.body.name;
-                        let logo = req.body.logo;
-                        let apk_stats = fs.statSync(file);
+                    if (versionCode) {
+                        versionName = await helpers.getAPKVersionName(file);
+                        packageName = await helpers.getAPKPackageName(file);
+                        label = await helpers.getAPKLabel(file);
+                        if (!label) {
+                            label = ''
+                        }
 
-                        let formatByte = helpers.formatBytes(apk_stats.size);
-                        sql.query("INSERT INTO apk_details (app_name, logo, apk, version_code, version_name, package_name, details, apk_bytes, apk_size) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + versionCode + "', '" + versionName + "', '" + packageName + "', '" + details + "', " + apk_stats.size + ", '" + formatByte + "')", async function (err, rslts) {
-                            // console.log("App Uploaded", rslts);
-                            let newData = await sql.query("SELECT * from apk_details where id = " + rslts.insertId)
-                            dta = {
-                                "apk_id": newData[0].id,
-                                "apk_name": newData[0].app_name,
-                                "logo": newData[0].logo,
-                                "apk": newData[0].apk,
-                                "permissions": [],
-                                "apk_status": newData[0].status,
-                                "permission_count": 0,
-                                "deleteable": (newData[0].apk_type == "permanent") ? false : true
-                            }
-
-
-
-                            if (err) throw err;
-                            data = {
-                                status: true,
-                                msg: "Apk is uploaded",
-                                data: dta
-                            };
-                            res.send(data);
-                            return;
-                        });
                     } else {
-                        // console.log("file not found");
-                        res.send({
-                            status: false,
-                            msg: "Error While Uploading"
-                        })
-                        return;
+                        versionCode = '';
                     }
+
+                    // console.log("versionName", versionName);
+                    // console.log("pKGName", packageName);
+                    // console.log("version Code", versionCode);
+                    // let details = JSON.stringify(helpers.getAPKDetails(file));
+                    let details = '';
+                    let apk_name = req.body.name;
+                    let logo = req.body.logo;
+                    let apk_stats = fs.statSync(file);
+
+                    let formatByte = helpers.formatBytes(apk_stats.size);
+                    sql.query("INSERT INTO apk_details (app_name, logo, apk, version_code, version_name, package_name, details, apk_bytes, apk_size,label) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + versionCode + "', '" + versionName + "', '" + packageName + "', '" + details + "', " + apk_stats.size + ", '" + formatByte + "','" + label + "')", async function (err, rslts) {
+                        // console.log("App Uploaded", rslts);
+                        let newData = await sql.query("SELECT * from apk_details where id = " + rslts.insertId)
+                        dta = {
+                            "apk_id": newData[0].id,
+                            "apk_name": newData[0].app_name,
+                            "logo": newData[0].logo,
+                            "apk": newData[0].apk,
+                            "permissions": [],
+                            "apk_status": newData[0].status,
+                            "permission_count": 0,
+                            "deleteable": (newData[0].apk_type == "permanent") ? false : true
+                        }
+
+
+
+                        if (err) throw err;
+                        data = {
+                            status: true,
+                            msg: "Apk is uploaded",
+                            data: dta
+                        };
+                        res.send(data);
+                        return;
+                    });
+                    // } else {
+                    //     // console.log("file not found");
+                    //     res.send({
+                    //         status: false,
+                    //         msg: "Error While Uploading"
+                    //     })
+                    //     return;
+                    // }
                 } else {
                     console.log("file not found");
                     res.send({
@@ -6333,7 +6349,7 @@ router.get('/get_activities/:device_id', async function (req, res) {
 
             let action;
             for (let i = 0; i < accResults.length; i++) {
-                if (accResults[i].action == Constants.DEVICE_PRE_ACTIVATION || accResults[i].action === Constants.DEVICE_EXPIRED || accResults[i].action == 'DELETE') {
+                if (accResults[i].action == Constants.DEVICE_PENDING_ACTIVATION || accResults[i].action == Constants.DEVICE_PRE_ACTIVATION || accResults[i].action === Constants.DEVICE_EXPIRED || accResults[i].action == 'DELETE') {
                     continue
                 } else {
                     action = {
@@ -6346,6 +6362,7 @@ router.get('/get_activities/:device_id', async function (req, res) {
             for (let i = 0; i < deviceResults.length; i++) {
                 action = {
                     "action_name": await helpers.getActivityName(deviceResults[i].type),
+                    "data": deviceResults[i],
                     "created_at": deviceResults[i].created_at
                 }
                 activities.push(action)

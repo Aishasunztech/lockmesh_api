@@ -9,6 +9,7 @@ var debug = require('debug')('webportalbackend:server');
 var http = require('http');
 var https = require('https');
 var fs = require('fs');
+
 var Constants = require('../constants/Application');
 const sql = require('../helper/sql.js');
 
@@ -164,7 +165,8 @@ module.exports.sendDeviceStatus = async function (device_id, device_status, stat
 
 module.exports.ackFinishedPushApps = async function (device_id, user_acc_id) {
 
-  await sql.query("UPDATE devices set is_push_apps = 0 WHERE device_id = '" + device_id + "'")
+  await sql.query("DELETE from apps_queue_jobs WHERE device_id = '" + device_id + "' AND type = 'push'")
+  // await sql.query("UPDATE apps_queue_jobs set is_in_process = 0 WHERE device_id = '" + device_id + "'")
   var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='push_apps' AND user_acc_id=" + user_acc_id + "";
   await sql.query(pushAppsQ)
 
@@ -176,27 +178,19 @@ module.exports.ackFinishedPullApps = async function (device_id, user_acc_id) {
 
 
   var pullAppsQ = "UPDATE device_history SET status=1 WHERE type='pull_apps' AND user_acc_id=" + user_acc_id + "";
-  console.log(pullAppsQ);
   await sql.query(pullAppsQ)
+  await sql.query("DELETE from apps_queue_jobs WHERE device_id = '" + device_id + "' AND type = 'pull'")
 
-
-
-  sql.query("UPDATE devices set is_push_apps = 0 WHERE device_id = '" + device_id + "'", function (err, result) {
-    if (!err) {
-      io.emit(Constants.ACK_FINISHED_PULL_APPS + device_id, {
-        status: true
-      });
-    }
+  io.emit(Constants.ACK_FINISHED_PULL_APPS + device_id, {
+    status: true
   })
-
 }
 module.exports.ackFinishedPolicy = async function (device_id, user_acc_id) {
   console.log("FINISHED POLICY")
+
   var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='policy' AND user_acc_id=" + user_acc_id + "";
   await sql.query(pushAppsQ)
-
   await sql.query("UPDATE devices set is_push_apps = 0 WHERE device_id = '" + device_id + "'")
-
 
   io.emit(Constants.FINISH_POLICY + device_id, {
     status: true
@@ -212,21 +206,35 @@ module.exports.ackImeiChanged = async function (device_id) {
 }
 
 module.exports.ackSinglePushApp = async function (device_id, response) {
-  // await sql.query("UPDATE apps_queue_jobs set is_in_process = 0 WHERE device_id = '" + device_id + "'")
+  console.log("SINGLE APP PUSH");
+  let completePushApps = 0
+  let queueAppsData = await sql.query("SELECT * from apps_queue_jobs where device_id = '" + device_id + "' AND type = 'push' order by created_at desc limit 1")
+  if (queueAppsData.length) {
 
-  // io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
-  //   status: true
-  // })
+    completePushApps = queueAppsData[0].complete_apps + 1
+    await sql.query("UPDATE apps_queue_jobs set complete_apps = " + completePushApps + " WHERE device_id = '" + device_id + "' AND type = 'pull'")
+
+    io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
+      status: true,
+    })
+  }
 }
 
 module.exports.ackSinglePullApp = async function (device_id, response) {
 
+  console.log("SINGLE PULL PUSH");
+  let completePushApps = 0
+  let queueAppsData = await sql.query("SELECT * from apps_queue_jobs where device_id = '" + device_id + "' AND type = 'push' order by created_at desc limit 1")
+  if (queueAppsData.length) {
 
-  console.log(Constants.ACK_SINGLE_PUSH_APP);
-  // io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
-  // })
+    completePushApps = queueAppsData[0].complete_apps + 1
+    await sql.query("UPDATE apps_queue_jobs set complete_apps = " + completePushApps + " WHERE device_id = '" + device_id + "' AND type = 'pull'")
+
+    io.emit(Constants.ACK_SINGLE_PULL_APP + device_id, {
+      status: true
+    })
+  }
 }
-
 
 module.exports.getPolicy = (device_id, policy) => {
   io.emit(Constants.ACTION_IN_PROCESS + device_id, {

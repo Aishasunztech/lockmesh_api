@@ -350,7 +350,7 @@ module.exports = {
         if (results.length) {
             return results[0]
         } else {
-            return 'N/A'
+            return []
         }
     },
     getUserAccountId: async (device_id) => {

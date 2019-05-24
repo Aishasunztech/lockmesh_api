@@ -356,13 +356,11 @@ module.exports.listen = async function (server) {
                     status: true
                 })
             }
-
             socket.on(Constants.SEND_PUSHED_APPS_STATUS + device_id, async (pushedApps) => {
                 require('../bin/www').ackSinglePushApp(device_id, pushedApps);
             });
             socket.on(Constants.FINISHED_PUSH_APPS + device_id, async (response) => {
                 // console.log("testing", response);
-
                 require('../bin/www').ackFinishedPushApps(device_id, user_acc_id);
                 // socket.emit(Constants.ACK_FINISHED_PUSH_APPS + device_id, {
                 //     status: true
@@ -391,7 +389,7 @@ module.exports.listen = async function (server) {
 
             socket.on(Constants.SEND_PULLED_APPS_STATUS + device_id, async (pushedApps) => {
                 console.log("send_pulled_apps_status_", pushedApps);
-                // require('../bin/www').ackSinglePullApp(device_id, pushedApps);
+                require('../bin/www').ackSinglePullApp(device_id, pushedApps);
             })
 
 
