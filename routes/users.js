@@ -25,6 +25,7 @@ var helpers = require('../helper/general_helper.js');
 const device_helpers = require('../helper/device_helpers.js');
 // const UserApps = require('../models/UserApps');
 // const Devices = require('../models/Devices');
+var Jimp = require('jimp');
 
 const ADMIN = "admin";
 const DEALER = "dealer";
@@ -118,7 +119,19 @@ var verifyToken = function (req, res) {
 
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
-    // let file = path.join(__dirname, "../uploads/gana.apk");
+    // let filename = "icon_AdSense.png";
+    let filename = "apk-1541677256487.apk.jpg";
+
+    let file = path.join(__dirname, "../uploads/" + filename);
+
+    // Jimp.read(file)
+    //     .then(lenna => {
+    //         console.log("success", file)
+    //     })
+    //     .catch(err => {
+    //         console.error("error", err);
+    //     });
+
     // // let file = path.join(__dirname, "../uploads/apk-1541677256487.apk");
     // let packageName = await helpers.getAPKPackageName(file);
     // let versionName = await helpers.getAPKVersionName(file);
@@ -130,7 +143,7 @@ router.get('/', async function (req, res, next) {
     //     versionCode: versionCode,
     //     label: label
     // });
-    res.send("Express");
+    // res.send(mime.getExtension(filename));
 
     // helpers.resetDB();
     // apk-ScreenLocker v3.31.apk
