@@ -2924,7 +2924,8 @@ router.get('/getAppJobQueue/:device_id', async function (req, res) {
             let jobQueue = await device_helpers.getAppJobQueue(device_id);
             _data = {
                 status: true,
-                data: jobQueue
+                data: jobQueue.data,
+                type: jobQueue.type
             };
         } else {
             _data = {
@@ -3612,7 +3613,8 @@ router.post('/apply_policy/:device_id', async function (req, res) {
                         if (policyApplied && policyApplied.affectedRows) {
 
                             let isOnline = await device_helpers.isDeviceOnline(device_id, policy[0]);
-                            var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
+                            // var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
+                            var loadDeviceQ = "INSERT INTO policy_queue_jobs (policy_id,device_id,is_in_process) " + " VALUES ('" + policy_id + "','" + device_id + "',1)"
                             await sql.query(loadDeviceQ)
                             if (isOnline) {
                                 require("../bin/www").getPolicy(device_id, policy[0]);

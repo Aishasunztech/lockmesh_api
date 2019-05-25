@@ -345,12 +345,29 @@ module.exports = {
         }
     },
     getAppJobQueue: async (device_id) => {
-        let query = "SELECT * FROM apps_queue_jobs WHERE device_id = '" + device_id + "' order by created_at desc limit 1"
-        let results = await sql.query(query);
-        if (results.length) {
-            return results[0]
+
+        let policyQueue = "SELECT * FROM policy_queue_jobs WHERE device_id = '" + device_id + "' order by created_at desc limit 1"
+        let policy = await sql.query(policyQueue);
+        if (policy.length) {
+            return {
+                data: policy[0],
+                type: 'policy'
+            }
         } else {
-            return []
+            let query = "SELECT * FROM apps_queue_jobs WHERE device_id = '" + device_id + "' order by created_at desc limit 1"
+            let results = await sql.query(query);
+            if (results.length) {
+                return {
+                    data: results[0],
+                    type: 'pull_push'
+
+                }
+            } else {
+                return {
+                    data: [],
+                    type: ''
+                }
+            }
         }
     },
     getUserAccountId: async (device_id) => {
