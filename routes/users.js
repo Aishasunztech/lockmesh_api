@@ -2238,13 +2238,13 @@ router.post('/flagDevice/:id', async function (req, res) {
     var verify = await verifyToken(req, res);
     var device_id = req.params.id;
     var option = req.body.data
-    console.log(option);
+    // console.log(option);
     if (verify.status !== undefined && verify.status == true) {
         var sql2 = "select * from devices where id = '" + device_id + "'";
         var gtres = await sql.query(sql2);
         if (!empty(device_id)) {
 
-            if (gtres[0].flagged === '' || gtres[0].flagged === 'null' || gtres[0].flagged === null) {
+            if (gtres[0].flagged === '' || gtres[0].flagged === 'null' || gtres[0].flagged === null || gtres[0].flagged === 'Not flagged') {
                 var sql1 = "update devices set flagged='" + option + "' where id = '" + device_id + "'";
                 console.log(sql1);
                 await sql.query(sql1)
