@@ -5137,25 +5137,25 @@ router.post('/upload', async function (req, res) {
                     let apk_stats = fs.statSync(file);
 
                     let formatByte = helpers.formatBytes(apk_stats.size);
-                    // if (versionCode) {
+                    if (versionCode) {
 
-                    data = {
-                        status: true,
-                        msg: 'Uploaded Successfully',
-                        fileName: filename,
-                        size: formatByte
+                        data = {
+                            status: true,
+                            msg: 'Uploaded Successfully',
+                            fileName: filename,
+                            size: formatByte
 
-                    };
-                    res.send(data);
-                    return;
-                    // } else {
-                    //     data = {
-                    //         status: false,
-                    //         msg: "Error while Uploading",
-                    //     };
-                    //     res.send(data);
-                    //     return;
-                    // }
+                        };
+                        res.send(data);
+                        return;
+                    } else {
+                        data = {
+                            status: false,
+                            msg: "Error while Uploading",
+                        };
+                        res.send(data);
+                        return;
+                    }
                 } else if (fieldName === Constants.LOGO) {
                     data = {
                         status: true,
@@ -5192,70 +5192,58 @@ router.post('/addApk', async function (req, res) {
     if (verify['status'] && verify.status == true) {
         try {
             if (req.body.logo !== '' && req.body.apk !== '' && req.body.name !== '') {
-
                 let apk = req.body.apk;
                 let file = path.join(__dirname, "../uploads/" + apk);
                 if (fs.existsSync(file)) {
-                    let versionName = ''
-                    let packageName = ''
-                    let label = ''
                     let versionCode = await helpers.getAPKVersionCode(file);
-
-                    if (versionCode) {
-                        versionName = await helpers.getAPKVersionName(file);
-                        packageName = await helpers.getAPKPackageName(file);
-                        label = await helpers.getAPKLabel(file);
-                        if (!label) {
-                            label = ''
-                        }
-
-                    } else {
-                        versionCode = '';
-                    }
-
-                    // console.log("versionName", versionName);
-                    // console.log("pKGName", packageName);
-                    // console.log("version Code", versionCode);
+                    let versionName = await helpers.getAPKVersionName(file);
+                    // let label = helpers.getAPKLabel(file);
+                    let packageName = await helpers.getAPKPackageName(file);
+                    console.log("versionName", versionName);
+                    console.log("pKGName", packageName);
+                    console.log("version Code", versionCode);
                     // let details = JSON.stringify(helpers.getAPKDetails(file));
-                    let details = '';
-                    let apk_name = req.body.name;
-                    let logo = req.body.logo;
-                    let apk_stats = fs.statSync(file);
+                    let details = null;
 
-                    let formatByte = helpers.formatBytes(apk_stats.size);
-                    sql.query("INSERT INTO apk_details (app_name, logo, apk, version_code, version_name, package_name, details, apk_bytes, apk_size,label) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + versionCode + "', '" + versionName + "', '" + packageName + "', '" + details + "', " + apk_stats.size + ", '" + formatByte + "','" + label + "')", async function (err, rslts) {
-                        // console.log("App Uploaded", rslts);
-                        let newData = await sql.query("SELECT * from apk_details where id = " + rslts.insertId)
-                        dta = {
-                            "apk_id": newData[0].id,
-                            "apk_name": newData[0].app_name,
-                            "logo": newData[0].logo,
-                            "apk": newData[0].apk,
-                            "permissions": [],
-                            "apk_status": newData[0].status,
-                            "permission_count": 0,
-                            "deleteable": (newData[0].apk_type == "permanent") ? false : true
-                        }
+                    if (versionCode && versionName && packageName) {
+                        let apk_name = req.body.name;
+                        let logo = req.body.logo;
+                        let apk_stats = fs.statSync(file);
+
+                        let formatByte = helpers.formatBytes(apk_stats.size);
+                        sql.query("INSERT INTO apk_details (app_name, logo, apk, version_code, version_name, package_name, details, apk_bytes, apk_size) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + versionCode + "', '" + versionName + "', '" + packageName + "', '" + details + "', " + apk_stats.size + ", '" + formatByte + "')", async function (err, rslts) {
+                            // console.log("App Uploaded", rslts);
+                            let newData = await sql.query("SELECT * from apk_details where id = " + rslts.insertId)
+                            dta = {
+                                "apk_id": newData[0].id,
+                                "apk_name": newData[0].app_name,
+                                "logo": newData[0].logo,
+                                "apk": newData[0].apk,
+                                "permissions": [],
+                                "apk_status": newData[0].status,
+                                "permission_count": 0,
+                                "deleteable": (newData[0].apk_type == "permanent") ? false : true
+                            }
 
 
 
-                        if (err) throw err;
-                        data = {
-                            status: true,
-                            msg: "Apk is uploaded",
-                            data: dta
-                        };
-                        res.send(data);
+                            if (err) throw err;
+                            data = {
+                                status: true,
+                                msg: "Apk is uploaded",
+                                data: dta
+                            };
+                            res.send(data);
+                            return;
+                        });
+                    } else {
+                        // console.log("file not found");
+                        res.send({
+                            status: false,
+                            msg: "Error While Uploading"
+                        })
                         return;
-                    });
-                    // } else {
-                    //     // console.log("file not found");
-                    //     res.send({
-                    //         status: false,
-                    //         msg: "Error While Uploading"
-                    //     })
-                    //     return;
-                    // }
+                    }
                 } else {
                     console.log("file not found");
                     res.send({
