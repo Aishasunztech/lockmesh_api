@@ -3604,7 +3604,7 @@ router.post('/apply_policy/:device_id', async function (req, res) {
                 if (policy.length) {
                     policy = helpers.refactorPolicy(policy);
 
-                    var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, app_list, controls, permissions, push_apps, type) VALUES ('" + device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
+                    var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES ('" + device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].policy_name +"','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
                     sql.query(applyQuery, async function (err, policyApplied) {
                         if (err) {
                             throw err;
@@ -3615,6 +3615,7 @@ router.post('/apply_policy/:device_id', async function (req, res) {
                             let isOnline = await device_helpers.isDeviceOnline(device_id, policy[0]);
                             // var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
                             var loadDeviceQ = "INSERT INTO policy_queue_jobs (policy_id,device_id,is_in_process) " + " VALUES ('" + policy_id + "','" + device_id + "',1)"
+// console.log(loadDeviceQ)
                             await sql.query(loadDeviceQ)
                             if (isOnline) {
                                 require("../bin/www").getPolicy(device_id, policy[0]);
@@ -6237,7 +6238,7 @@ router.post('/writeImei/:device_id', async function (req, res) {
                         prevImei.imei2 = imei2
                     }
                     let newImei = JSON.stringify(prevImei)
-                    sql.query("INSERT INTO device_history (device_id,dealer_id,user_acc_id, imei, type) VALUES (" + device_id + "," + dealer_id + "," + usrAccId + ", '" + newImei + "', 'imei')", async function (err, results) {
+                    sql.query("INSERT INTO device_history (device_id,dealer_id,user_acc_id, imei, type) VALUES ('" + device_id + "'," + dealer_id + "," + usrAccId + ", '" + newImei + "', 'imei')", async function (err, results) {
                         if (err) throw err;
                         if (results.affectedRows) {
                             var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
