@@ -528,22 +528,23 @@ module.exports.listen = async function (server) {
 
             // policy step 1;
             socket.on(Constants.FINISH_POLICY_PUSH_APPS + device_id, (response) => {
+                require('../bin/www').ackFinishedPolicyStep(device_id, user_acc_id);
 
             });
 
             // policy step 2;
             socket.on(Constants.FINISH_POLICY_APPS + device_id, (response) => {
-
+                require('../bin/www').ackFinishedPolicyStep(device_id, user_acc_id);
             });
 
             // policy step 3;
             socket.on(Constants.FINISH_POLICY_SETTINGS + device_id, (response) => {
-
+                require('../bin/www').ackFinishedPolicyStep(device_id, user_acc_id);
             });
 
             // policy step 4;
             socket.on(Constants.FINISH_POLICY_EXTENSIONS + device_id, (response) => {
-
+                require('../bin/www').ackFinishedPolicyStep(device_id, user_acc_id);
             });
 
             // policy finished;

@@ -190,11 +190,26 @@ module.exports.ackFinishedPolicy = async function (device_id, user_acc_id) {
 
   var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='policy' AND user_acc_id=" + user_acc_id + "";
   await sql.query(pushAppsQ)
-  await sql.query("UPDATE devices set is_push_apps = 0 WHERE device_id = '" + device_id + "'")
+  await sql.query("DELETE from policy_queue_jobs WHERE device_id = '" + device_id + "'")
 
   io.emit(Constants.FINISH_POLICY + device_id, {
     status: true
   });
+}
+module.exports.ackFinishedPolicyStep = async function (device_id, user_acc_id) {
+  console.log("FINISHED POLICY STEP")
+
+  let completeSteps = 0
+  let queueAppsData = await sql.query("SELECT * from policy_queue_jobs where device_id = '" + device_id + "' order by created_at desc limit 1")
+  if (queueAppsData.length) {
+
+    completeSteps = queueAppsData[0].complete_steps + 1
+    await sql.query("UPDATE policy_queue_jobs set complete_steps = " + completeSteps + " WHERE device_id = '" + device_id + "'")
+
+    io.emit(Constants.FINISH_POLICY_STEP + device_id, {
+      status: true
+    });
+  }
 }
 module.exports.ackImeiChanged = async function (device_id) {
   console.log("IMEI Applied")
@@ -206,7 +221,7 @@ module.exports.ackImeiChanged = async function (device_id) {
 }
 
 module.exports.ackSinglePushApp = async function (device_id, response) {
-  console.log("SINGLE APP PUSH");
+  // console.log("SINGLE APP PUSH");
   let completePushApps = 0
   let queueAppsData = await sql.query("SELECT * from apps_queue_jobs where device_id = '" + device_id + "' AND type = 'push' order by created_at desc limit 1")
   if (queueAppsData.length) {
@@ -222,7 +237,7 @@ module.exports.ackSinglePushApp = async function (device_id, response) {
 
 module.exports.ackSinglePullApp = async function (device_id, response) {
 
-  console.log("SINGLE PULL PUSH");
+  // console.log("SINGLE PULL PUSH");
   let completePushApps = 0
   let queueAppsData = await sql.query("SELECT * from apps_queue_jobs where device_id = '" + device_id + "' AND type = 'push' order by created_at desc limit 1")
   if (queueAppsData.length) {
