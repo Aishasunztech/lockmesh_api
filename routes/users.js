@@ -2082,7 +2082,7 @@ router.post('/suspend/:id', async function (req, res) {
 
                             sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
                                 if (error) throw error;
-                                console.log('lolo else', resquery[0])
+                                // console.log('lolo else', resquery[0])
 
                                 if (resquery.length) {
                                     resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
