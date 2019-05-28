@@ -2956,7 +2956,7 @@ router.patch('/sync-device', async function (req, res) {
     if (verify.status !== undefined && verify.status == true) {
         let deviceId = req.body.device_id;
         if (!empty(deviceId)) {
-            let query = "SELECT * FROM devices WHERE device_id = '" + deviceId + "' and (online = 'On' OR online = 'on') ";
+            let query = "SELECT * FROM devices WHERE device_id = '" + deviceId + "' and (online = '"+ Constants.DEVICE_ONLINE +"' OR online = '"+ Constants.DEVICE_ONLINE +"') ";
             sql.query(query, function (error, response) {
                 if (error) console.log(error);
                 if (response.length) {
