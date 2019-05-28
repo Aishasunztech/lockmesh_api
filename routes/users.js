@@ -6479,6 +6479,46 @@ router.put('/force_update', async function (req, res) {
     }
 });
 
+
+/*****AUTHENTICATE UPDATE USER*****/
+router.post('/authenticate_update_user', async function (req, res) {
+    var email = req.body.email;
+    var pwd = req.body.pwd;
+    console.log(pwd);
+    var enc_pwd = md5(pwd);
+    var data = '';
+    var userType = await helpers.getDealerTypeIdByName(AUTO_UPDATE_ADMIN);
+    var verify = await verifyToken(req, res);
+    if (verify.status) {
+        // console.log("select * from dealers where type = '" + userType + "' and dealer_email='" + email + "' and password='" + enc_pwd + "'");
+        let query_res = await sql.query("select * from dealers where type = '" + userType + "' and dealer_email='" + email + "' and password='" + enc_pwd + "'");
+        if (query_res.length) {
+
+            data = {
+                status: true,
+                matched: true
+            }
+            res.send(data);
+            return;
+        }
+        else {
+            data = {
+                status: false,
+                matched: false
+            }
+            res.send(data);
+            return
+        }
+    } else {
+        data = {
+            status: false,
+            matched: false
+        }
+        res.send(data);
+        return
+    }
+});
+
 /** Cron for expiry date **/
 cron.schedule('0 0 0 * * *', async () => {
     var tod_dat = datetime.create();
