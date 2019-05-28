@@ -332,7 +332,8 @@ module.exports.listen = async function (server) {
 
             if (imei_res.length) {
                 io.emit(Constants.ACTION_IN_PROCESS + device_id, {
-                    status: true
+                    status: true,
+                    type:'imei'
                 })
                 socket.emit(Constants.WRITE_IMEI + device_id, {
                     device_id: device_id,
@@ -353,7 +354,8 @@ module.exports.listen = async function (server) {
                     push_apps: pendingPushedApps[0].push_apps
                 });
                 io.emit(Constants.ACTION_IN_PROCESS + device_id, {
-                    status: true
+                    status: true,
+                    type: 'push'
                 })
             }
             socket.on(Constants.SEND_PUSHED_APPS_STATUS + device_id, async (pushedApps) => {
@@ -376,7 +378,8 @@ module.exports.listen = async function (server) {
                 console.log("pendingPulledApps");
 
                 io.emit(Constants.ACTION_IN_PROCESS + device_id, {
-                    status: true
+                    status: true,
+                    type: 'pull'
                 })
 
                 io.emit(Constants.GET_PULLED_APPS + device_id, {

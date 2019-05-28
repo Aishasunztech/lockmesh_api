@@ -112,7 +112,8 @@ module.exports.applyPushApps = (push_apps, device_id) => {
   console.log(Constants.GET_PUSHED_APPS + device_id);
 
   io.emit(Constants.ACTION_IN_PROCESS + device_id, {
-    status: true
+    status: true,
+    type: 'push'
   })
 
   io.emit(Constants.GET_PUSHED_APPS + device_id, {
@@ -124,7 +125,8 @@ module.exports.applyPushApps = (push_apps, device_id) => {
 
 module.exports.getPullApps = (pull_apps, device_id) => {
   io.emit(Constants.ACTION_IN_PROCESS + device_id, {
-    status: true
+    status: true,
+    type: 'pull'
   })
   io.emit(Constants.GET_PULLED_APPS + device_id, {
     status: true,
@@ -135,7 +137,8 @@ module.exports.getPullApps = (pull_apps, device_id) => {
 module.exports.writeImei = (imei, device_id) => {
   console.log("write_imei_" + device_id);
   io.emit(Constants.ACTION_IN_PROCESS + device_id, {
-    status: true
+    status: true,
+    type:'imei'
   })
   io.emit(Constants.WRITE_IMEI + device_id, {
     status: true,
@@ -253,7 +256,8 @@ module.exports.ackSinglePullApp = async function (device_id, response) {
 
 module.exports.getPolicy = (device_id, policy) => {
   io.emit(Constants.ACTION_IN_PROCESS + device_id, {
-    status: true
+    status: true,
+    type: 'policy'
   })
   io.emit(Constants.GET_POLICY + device_id, {
     status: true,
