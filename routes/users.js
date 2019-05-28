@@ -29,6 +29,7 @@ const device_helpers = require('../helper/device_helpers.js');
 const ADMIN = "admin";
 const DEALER = "dealer";
 const SDEALER = "sdealer";
+const AUTO_UPDATE_ADMIN = "auto_update_admin";
 let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no"
 let deviceColumns = ["DEVICE ID", "USER ID", "REMAINING DAYS", "FLAGGED", "STATUS", "MODE", "DEVICE NAME", "ACTIVATION CODE", "ACCOUNT EMAIL", "PGP EMAIL", "CHAT ID", "CLIENT ID", "DEALER ID", "DEALER PIN", "MAC ADDRESS", "SIM ID", "IMEI 1", "SIM 1", "IMEI 2", "SIM 2", "SERIAL NUMBER", "MODEL", "START DATE", "EXPIRY DATE", "DEALER NAME", "S-DEALER", "S-DEALER NAME"]
 let dealerColumns = ["DEALER ID", "DEALER NAME", "DEALER EMAIL", "DEALER PIN", "DEVICES", "TOKENS"];
@@ -3604,7 +3605,7 @@ router.post('/apply_policy/:device_id', async function (req, res) {
                 if (policy.length) {
                     policy = helpers.refactorPolicy(policy);
 
-                    var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES ('" + device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].policy_name +"','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
+                    var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES ('" + device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
                     sql.query(applyQuery, async function (err, policyApplied) {
                         if (err) {
                             throw err;
@@ -3615,7 +3616,7 @@ router.post('/apply_policy/:device_id', async function (req, res) {
                             let isOnline = await device_helpers.isDeviceOnline(device_id, policy[0]);
                             // var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
                             var loadDeviceQ = "INSERT INTO policy_queue_jobs (policy_id,device_id,is_in_process) " + " VALUES ('" + policy_id + "','" + device_id + "',1)"
-// console.log(loadDeviceQ)
+                            // console.log(loadDeviceQ)
                             await sql.query(loadDeviceQ)
                             if (isOnline) {
                                 require("../bin/www").getPolicy(device_id, policy[0]);
@@ -5057,6 +5058,40 @@ router.get('/apklist', async function (req, res) {
                     res.send(data);
                 }
             });
+        } else if (verify.user.user_type === AUTO_UPDATE_ADMIN) {
+            sql.query("select * from apk_details where delete_status=0 AND apk_type = 'permanent' order by id ASC", async function (error, results) {
+                if (error) throw error;
+                if (results.length > 0) {
+                    // console.log("dealer_count ", dealerCount);
+                    for (var i = 0; i < results.length; i++) {
+                        dta = {
+                            "apk_id": results[i].id,
+                            "apk_name": results[i].app_name,
+                            "logo": results[i].logo,
+                            "apk": results[i].apk,
+                            "permissions": [],
+                            "apk_status": results[i].status,
+                            "permission_count": 0,
+                            // "deleteable": (results[i].apk_type == "permanent") ? false : true
+                        }
+                        data.push(dta);
+                    }
+
+                    return res.json({
+                        status: true,
+                        success: true,
+                        list: data
+                    });
+
+                } else {
+                    data = {
+                        status: false,
+                        msg: "No result found",
+                        list: []
+                    }
+                    res.send(data);
+                }
+            });
         }
 
 
@@ -5207,6 +5242,7 @@ router.post('/addApk', async function (req, res) {
                     console.log("version Code", versionCode);
                     // let details = JSON.stringify(helpers.getAPKDetails(file));
                     let details = null;
+                    let apk_type = (verify.user.user_type === AUTO_UPDATE_ADMIN) ? 'permanent' : 'basic'
 
                     if (versionCode && versionName && packageName) {
                         let apk_name = req.body.name;
@@ -5214,7 +5250,7 @@ router.post('/addApk', async function (req, res) {
                         let apk_stats = fs.statSync(file);
 
                         let formatByte = helpers.formatBytes(apk_stats.size);
-                        sql.query("INSERT INTO apk_details (app_name, logo, apk, version_code, version_name, package_name, details, apk_bytes, apk_size) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + versionCode + "', '" + versionName + "', '" + packageName + "', '" + details + "', " + apk_stats.size + ", '" + formatByte + "')", async function (err, rslts) {
+                        sql.query("INSERT INTO apk_details (app_name, logo,apk, apk_type, version_code, version_name, package_name, details, apk_bytes, apk_size) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + apk_type + "','" + versionCode + "', '" + versionName + "', '" + packageName + "', '" + details + "', " + apk_stats.size + ", '" + formatByte + "')", async function (err, rslts) {
                             // console.log("App Uploaded", rslts);
                             let newData = await sql.query("SELECT * from apk_details where id = " + rslts.insertId)
                             dta = {
