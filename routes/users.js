@@ -30,6 +30,7 @@ var Jimp = require('jimp');
 const ADMIN = "admin";
 const DEALER = "dealer";
 const SDEALER = "sdealer";
+const AUTO_UPDATE_ADMIN = "auto_update_admin";
 let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no"
 let deviceColumns = ["DEVICE ID", "USER ID", "REMAINING DAYS", "FLAGGED", "STATUS", "MODE", "DEVICE NAME", "ACTIVATION CODE", "ACCOUNT EMAIL", "PGP EMAIL", "CHAT ID", "CLIENT ID", "DEALER ID", "DEALER PIN", "MAC ADDRESS", "SIM ID", "IMEI 1", "SIM 1", "IMEI 2", "SIM 2", "SERIAL NUMBER", "MODEL", "START DATE", "EXPIRY DATE", "DEALER NAME", "S-DEALER", "S-DEALER NAME"]
 let dealerColumns = ["DEALER ID", "DEALER NAME", "DEALER EMAIL", "DEALER PIN", "DEVICES", "TOKENS"];
@@ -562,6 +563,7 @@ router.get('/devices', async function (req, res) {
             if (error) throw error;
             for (var i = 0; i < results.length; i++) {
                 results[i].finalStatus = device_helpers.checkStatus(results[i])
+                results[i].online = (results[i].online === 'On') ? 'Online' : 'Offline'
                 results[i].pgp_email = await device_helpers.getPgpEmails(results[i])
                 results[i].sim_id = await device_helpers.getSimids(results[i])
                 results[i].chat_id = await device_helpers.getChatids(results[i])
@@ -3617,7 +3619,7 @@ router.post('/apply_policy/:device_id', async function (req, res) {
                 if (policy.length) {
                     policy = helpers.refactorPolicy(policy);
 
-                    var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES ('" + device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].policy_name +"','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
+                    var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES ('" + device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
                     sql.query(applyQuery, async function (err, policyApplied) {
                         if (err) {
                             throw err;
@@ -3628,7 +3630,7 @@ router.post('/apply_policy/:device_id', async function (req, res) {
                             let isOnline = await device_helpers.isDeviceOnline(device_id, policy[0]);
                             // var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
                             var loadDeviceQ = "INSERT INTO policy_queue_jobs (policy_id,device_id,is_in_process) " + " VALUES ('" + policy_id + "','" + device_id + "',1)"
-// console.log(loadDeviceQ)
+                            // console.log(loadDeviceQ)
                             await sql.query(loadDeviceQ)
                             if (isOnline) {
                                 require("../bin/www").getPolicy(device_id, policy[0]);
@@ -4977,7 +4979,7 @@ router.get('/apklist', async function (req, res) {
     var data = [];
     if (verify.status !== undefined && verify.status == true) {
         if (verify.user.user_type === ADMIN) {
-            sql.query("select * from apk_details where delete_status=0 order by id ASC", async function (error, results) {
+            sql.query("select * from apk_details where delete_status=0 AND apk_type != 'permanent' order by id ASC", async function (error, results) {
                 if (error) throw error;
 
                 if (results.length > 0) {
@@ -5020,11 +5022,11 @@ router.get('/apklist', async function (req, res) {
             });
         }
         else if (verify.user.user_type === DEALER) {
-            sql.query("select dealer_apks.* ,apk_details.* from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "'", async function (error, results) {
+            sql.query("select dealer_apks.* ,apk_details.* from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.apk_type != 'permanent'", async function (error, results) {
                 if (error) throw error;
                 if (results.length > 0) {
                     let dealerRole = await helpers.getuserTypeIdByName(Constants.DEALER);
-                    console.log("Role", dealerRole);
+                    // console.log("Role", dealerRole);
 
                     let sdealerList = await sql.query("select count(*) as dealer_count ,dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
                     // console.log(sdealerList);
@@ -5050,6 +5052,40 @@ router.get('/apklist', async function (req, res) {
                             "permissions": Sdealerpermissions,
                             "apk_status": results[i].status,
                             "permission_count": permissionC,
+                            // "deleteable": (results[i].apk_type == "permanent") ? false : true
+                        }
+                        data.push(dta);
+                    }
+
+                    return res.json({
+                        status: true,
+                        success: true,
+                        list: data
+                    });
+
+                } else {
+                    data = {
+                        status: false,
+                        msg: "No result found",
+                        list: []
+                    }
+                    res.send(data);
+                }
+            });
+        } else if (verify.user.user_type === AUTO_UPDATE_ADMIN) {
+            sql.query("select * from apk_details where delete_status=0 AND apk_type = 'permanent' order by id ASC", async function (error, results) {
+                if (error) throw error;
+                if (results.length > 0) {
+                    // console.log("dealer_count ", dealerCount);
+                    for (var i = 0; i < results.length; i++) {
+                        dta = {
+                            "apk_id": results[i].id,
+                            "apk_name": results[i].app_name,
+                            "logo": results[i].logo,
+                            "apk": results[i].apk,
+                            "permissions": [],
+                            "apk_status": results[i].status,
+                            "permission_count": 0,
                             // "deleteable": (results[i].apk_type == "permanent") ? false : true
                         }
                         data.push(dta);
@@ -5220,6 +5256,7 @@ router.post('/addApk', async function (req, res) {
                     console.log("version Code", versionCode);
                     // let details = JSON.stringify(helpers.getAPKDetails(file));
                     let details = null;
+                    let apk_type = (verify.user.user_type === AUTO_UPDATE_ADMIN) ? 'permanent' : 'basic'
 
                     if (versionCode && versionName && packageName) {
                         let apk_name = req.body.name;
@@ -5227,7 +5264,7 @@ router.post('/addApk', async function (req, res) {
                         let apk_stats = fs.statSync(file);
 
                         let formatByte = helpers.formatBytes(apk_stats.size);
-                        sql.query("INSERT INTO apk_details (app_name, logo, apk, version_code, version_name, package_name, details, apk_bytes, apk_size) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + versionCode + "', '" + versionName + "', '" + packageName + "', '" + details + "', " + apk_stats.size + ", '" + formatByte + "')", async function (err, rslts) {
+                        sql.query("INSERT INTO apk_details (app_name, logo,apk, apk_type, version_code, version_name, package_name, details, apk_bytes, apk_size) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + apk_type + "','" + versionCode + "', '" + versionName + "', '" + packageName + "', '" + details + "', " + apk_stats.size + ", '" + formatByte + "')", async function (err, rslts) {
                             // console.log("App Uploaded", rslts);
                             let newData = await sql.query("SELECT * from apk_details where id = " + rslts.insertId)
                             dta = {
@@ -6139,16 +6176,16 @@ router.get('/marketApplist', async function (req, res) {
     if (verify.status !== undefined && verify.status == true) {
         where = '';
         if (verify.user.user_type !== ADMIN) {
-            apklist = await sql.query("select dealer_apks.* ,apk_details.* from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.delete_status = 0")
+            apklist = await sql.query("select dealer_apks.* ,apk_details.* from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'")
         }
         else {
-            apklist = await sql.query("select * from apk_details where delete_status=0")
+            apklist = await sql.query("select * from apk_details where delete_status=0 AND apk_type != 'permanent'")
         }
         if (verify.user.user_type !== ADMIN) {
             where = "AND (secure_market_apps.dealer_type = 'admin' OR secure_market_apps.dealer_id = '" + verify.user.id + "')"
         }
         // console.log("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 " + where + "ORDER BY created_at desc");
-        sql.query("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id , secure_market_apps.is_restrict_uninstall  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 " + where + "ORDER BY created_at desc", async function (err, results) {
+        sql.query("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id , secure_market_apps.is_restrict_uninstall  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'" + where + "ORDER BY created_at desc", async function (err, results) {
             if (err) throw err;
             if (results.length) {
                 apklist.forEach((item, index) => {
@@ -6452,6 +6489,46 @@ router.put('/force_update', async function (req, res) {
                 msg: "Device not Found"
             })
         }
+    }
+});
+
+
+/*****AUTHENTICATE UPDATE USER*****/
+router.post('/authenticate_update_user', async function (req, res) {
+    var email = req.body.email;
+    var pwd = req.body.pwd;
+    console.log(pwd);
+    var enc_pwd = md5(pwd);
+    var data = '';
+    var userType = await helpers.getDealerTypeIdByName(AUTO_UPDATE_ADMIN);
+    var verify = await verifyToken(req, res);
+    if (verify.status) {
+        // console.log("select * from dealers where type = '" + userType + "' and dealer_email='" + email + "' and password='" + enc_pwd + "'");
+        let query_res = await sql.query("select * from dealers where type = '" + userType + "' and dealer_email='" + email + "' and password='" + enc_pwd + "'");
+        if (query_res.length) {
+
+            data = {
+                status: true,
+                matched: true
+            }
+            res.send(data);
+            return;
+        }
+        else {
+            data = {
+                status: false,
+                matched: false
+            }
+            res.send(data);
+            return
+        }
+    } else {
+        data = {
+            status: false,
+            matched: false
+        }
+        res.send(data);
+        return
     }
 });
 
