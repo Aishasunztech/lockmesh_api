@@ -726,7 +726,7 @@ router.get('/getUpdate/:version/:uniqueName/:label', async (req, res) => {
     if (verify.status == true) {
         let versionName = req.params.version;
         let uniqueName = req.params.uniqueName;
-        let query = "SELECT * FROM apk_details WHERE package_name = '" + uniqueName + "' AND delete_status=0 AND status='On'";
+        let query = "SELECT * FROM apk_details WHERE package_name = '" + uniqueName + "' AND delete_status=0";
         sql.query(query, function (error, response) {
             // console.log("res", response);
 
