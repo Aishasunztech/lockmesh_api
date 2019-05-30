@@ -2204,7 +2204,7 @@ router.post('/UnflagDevice/:id', async function (req, res) {
     if (verify.status !== undefined && verify.status == true) {
 
         if (!empty(device_id)) {
-            var sql1 = "update devices set flagged= '' where device_id='" + device_id + "'";
+            var sql1 = "update devices set flagged= 'Not flagged' where device_id='" + device_id + "'";
             var rest = sql.query(sql1, async function (error, results) {
                 if (error) throw error;
                 else if (results.affectedRows == 0) {
@@ -3484,6 +3484,7 @@ router.post('/save/profile', async function (req, res) {
     }
 });
 
+
 router.post('/apply_settings/:device_id', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
@@ -3764,6 +3765,7 @@ router.post('/get_profiles', async function (req, res) {
     }
 
 });
+
 
 router.get('/get_policies', async function (req, res) {
     var verify = await verifyToken(req, res);
