@@ -90,6 +90,11 @@ module.exports = {
     FINISH_POLICY: 'finish_policy_',
     FINISH_POLICY_STEP: 'finish_policy_step_',
 
+    PRE_DEFINED_SERIAL_NUMBER: "0123456789ABCDEF",
+    PRE_DEFINED_MAC_ADDRESS: "02:00:00:00:00:00",
+
+
+
     // force update
     FORCE_UPDATE_CHECK: 'force_update_check_',
 

@@ -539,8 +539,8 @@ module.exports = {
 	},
 	getAPKLabelScript: async function (filePath) {
 		try {
-			let label = "aapt dump badging "+ filePath +" | grep \"application\" | sed -e \"s/.*label='//\" -e \"s/' .*//\""
-			;
+			let label = "aapt dump badging " + filePath + " | grep \"application\" | sed -e \"s/.*label='//\" -e \"s/' .*//\""
+				;
 			const { stdout, stderr, error } = await exec(label);
 			console.log('stdout:', stdout);
 			console.log('stderr:', stderr);
@@ -555,7 +555,7 @@ module.exports = {
 				return stdout;
 			}
 			return false;
-			
+
 		} catch (error) {
 			return await this.getWindowAPKLabelScript(filePath);
 		}
@@ -817,7 +817,7 @@ module.exports = {
 			// delete app.package_name;
 			delete app.default_app;
 		})
-		
+
 		policy[0].app_list = JSON.stringify(applist);
 
 		policy[0].permissions = JSON.stringify(permissions);

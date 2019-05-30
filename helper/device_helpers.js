@@ -245,6 +245,8 @@ module.exports = {
         }
     },
     getUserAccByDvcId: async (dvcId) => {
+        // console.log(dvcId);
+        // console.log("SELECT * FROM usr_acc WHERE device_id =" + dvcId);
         var usrAcc = await sql.query("SELECT * FROM usr_acc WHERE device_id =" + dvcId);
         if (usrAcc.length) {
             return usrAcc[0];
