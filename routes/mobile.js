@@ -524,6 +524,7 @@ router.post('/getstatus', async function (req, resp) {
     var reslt = verifyToken(req, resp);
 
     if (reslt.status == true) {
+        
         if (!empty(serial_number) && !empty(mac)) {
             var deviceQ = "SELECT * FROM devices WHERE  mac_address= '" + mac + "' OR serial_number = '" + serial_number + "'";
             //console.log(sql1);

@@ -378,8 +378,8 @@ module.exports = {
 		try {
 			let cmd = "aapt dump badging " + filePath + " | findstr /C:\"package: name\"";
 			const { stdout, stderr, error } = await exec(cmd);
-			console.log('stdout:', stdout);
-			console.log('stderr:', stderr);
+			// console.log('stdout:', stdout);
+			// console.log('stderr:', stderr);
 			if (error) {
 				return false;
 			}
@@ -402,8 +402,8 @@ module.exports = {
 			let cmd = "aapt dump badging " + filePath + " | findstr /C:\"package: name\"";
 			// console.log(cmd);
 			const { stdout, stderr, error } = await exec(cmd);
-			console.log('stdout:', stdout);
-			console.log('stderr:', stderr);
+			// console.log('stdout:', stdout);
+			// console.log('stderr:', stderr);
 			if (error) {
 				return false;
 			}
@@ -425,8 +425,8 @@ module.exports = {
 			let cmd = "aapt dump badging " + filePath + " | findstr /C:\"package: name\"";
 			console.log(cmd);
 			const { stdout, stderr, error } = await exec(cmd);
-			console.log('stdout:', stdout);
-			console.log('stderr:', stderr);
+			// console.log('stdout:', stdout);
+			// console.log('stderr:', stderr);
 			if (error) {
 				return false;
 			}
@@ -447,8 +447,8 @@ module.exports = {
 		try {
 			let cmd = "aapt dump badging " + filePath + " | findstr /C:\"application:\"";
 			const { stdout, stderr, error } = await exec(cmd);
-			console.log('stdout:', stdout);
-			console.log('stderr:', stderr);
+			// console.log('stdout:', stdout);
+			// console.log('stderr:', stderr);
 			if (error) {
 				return false;
 			}
@@ -474,8 +474,8 @@ module.exports = {
 		try {
 			let packageName = "aapt list -a " + filePath + " | awk -v FS='\"' '/package=/{print $2}'";
 			const { stdout, stderr, error } = await exec(packageName);
-			console.log('stdout:', stdout);
-			console.log('stderr:', stderr);
+			// console.log('stdout:', stdout);
+			// console.log('stderr:', stderr);
 			if (error) {
 				return false;
 			}
@@ -495,8 +495,8 @@ module.exports = {
 		try {
 			let versionCode = "aapt dump badging " + filePath + " | grep \"versionCode\" | sed -e \"s/.*versionCode='//\" -e \"s/' .*//\"";
 			const { stdout, stderr, error } = await exec(versionCode);
-			console.log('stdout:', stdout);
-			console.log('stderr:', stderr);
+			// console.log('stdout:', stdout);
+			// console.log('stderr:', stderr);
 
 			if (error) {
 				return false;
@@ -519,8 +519,8 @@ module.exports = {
 		try {
 			let versionName = "aapt dump badging " + filePath + " | grep \"versionName\" | sed -e \"s/.*versionName='//\" -e \"s/' .*//\"";
 			const { stdout, stderr, error } = await exec(versionName);
-			console.log('stdout:', stdout);
-			console.log('stderr:', stderr);
+			// console.log('stdout:', stdout);
+			// console.log('stderr:', stderr);
 			if (error) {
 				return false;
 			}
@@ -542,8 +542,8 @@ module.exports = {
 			let label = "aapt dump badging " + filePath + " | grep \"application\" | sed -e \"s/.*label='//\" -e \"s/' .*//\""
 				;
 			const { stdout, stderr, error } = await exec(label);
-			console.log('stdout:', stdout);
-			console.log('stderr:', stderr);
+			// console.log('stdout:', stdout);
+			// console.log('stderr:', stderr);
 			if (error) {
 				return false;
 			}
@@ -577,7 +577,7 @@ module.exports = {
 		try {
 			var reader = ApkReader.readFile(filePath);
 			var manifest = reader.readManifestSync();
-			console.log("manifest", manifest);
+			// console.log("manifest", manifest);
 			// let apk = util.inspect(manifest, {depth:null});
 			let res = JSON.parse(JSON.stringify(manifest));
 			return res.versionCode
