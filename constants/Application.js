@@ -31,6 +31,14 @@ module.exports = {
     DEVICE_ONLINE: "On",
     DEVICE_OFFLINE: "off",
 
+    DUPLICATE_MAC: "duplicate_mac",
+    DUPLICATE_SERIAL: "duplicate_serial",
+    DUPLICATE_MAC_AND_SERIAL: "duplicate_mac_and_serial",
+    DEALER_NOT_FOUND: "dealer_not_found",
+
+
+
+
     // Device History Enumerables
     DEVICE_HISTORY_PUSH_APPS: 'push_apps',
     DEVICE_HISTORY_PULL_APPS: 'pull_apps',

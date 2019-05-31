@@ -220,33 +220,38 @@ module.exports = {
 	},
 
 	//Helper function to get unique device_id in format like "ASGH457862" 
+
+
 	getDeviceId: async function (sn, mac) {
-		let sqlQuery = "SELECT device_id from devices where serial_number = '" + sn + "' OR mac_address = '" + mac + "'"
-		let result = await sql.query(sqlQuery)
-		if (result.length) {
-			return result[0].device_id
-		}
-		else {
-			var key = md5(sn + mac);
-			var num = "";
-			var str = "";
+		// let sqlQuery = "SELECT device_id from devices where serial_number = '" + sn + "' OR mac_address = '" + mac + "'"
+		// let result = await sql.query(sqlQuery)
+		// if (result.length) {
+		// 	return result[0].device_id
+		// }
+		// else {
 
-			for (i = 0; i < key.length; i++) {
 
-				if (isNaN(key[i])) {
-					if (str.length < 4) {
-						str += key[i];
-					}
-				} else {
-					if (num.length < 6) {
-						num += key[i];
-					}
+		console.log(sn, 'MAC', mac);
+		var key = md5(sn + mac);
+		var num = "";
+		var str = "";
+
+		for (i = 0; i < key.length; i++) {
+
+			if (isNaN(key[i])) {
+				if (str.length < 4) {
+					str += key[i];
+				}
+			} else {
+				if (num.length < 6) {
+					num += key[i];
 				}
 			}
-			var deviceId = str.toUpperCase() + num;
-
-			return deviceId;
 		}
+		var deviceId = str.toUpperCase() + num;
+
+		return deviceId;
+		// }
 		// const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 		// let fourLetterWords = [];
 		// for (let firstLetterIndex = 0; firstLetterIndex < alphabet.length; firstLetterIndex++) {

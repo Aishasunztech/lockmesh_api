@@ -25,11 +25,11 @@ const verifyToken = function (token) {
         return false;
     }
 }
-
 const verifySession = async (deviceId, sessionId, isWeb = false) => {
     if (isWeb !== undefined && isWeb === true) {
         return true;
     }
+    console.log(deviceId);
     // device is offline or session_id is matched
     // var query = "SELECT id FROM devices WHERE device_id='" + deviceId + "' AND (online='off' OR session_id='" + sessionId + "')";
     var query = "SELECT id FROM devices WHERE device_id='" + deviceId + "'";
@@ -84,6 +84,7 @@ module.exports.listen = async function (server) {
     // middleware for socket incoming and outgoing requests
     io.use(async function (socket, next) {
         let token = socket.handshake.query.token;
+        // console.log("Token", verifyToken(token));
         if (verifyToken(token)) {
 
             let session_id = socket.id;
@@ -101,6 +102,7 @@ module.exports.listen = async function (server) {
 
 
             let sessionVerify = await verifySession(device_id, session_id, isWeb);
+            console.log("Session", sessionVerify);
 
             if (device_id != undefined && device_id !== null && sessionVerify) {
                 console.log("mobile side: ", device_id);
@@ -109,11 +111,11 @@ module.exports.listen = async function (server) {
                 console.log("web side: ", isWeb);
                 next();
             } else {
-                return next(new Error('authentication error'));
+                return next(new Error('Unauthorized'));
             }
 
         } else {
-            return next(new Error('authentication error'));
+            return next(new Error('Unauthorized'));
         }
     });
 
@@ -333,7 +335,7 @@ module.exports.listen = async function (server) {
             if (imei_res.length) {
                 io.emit(Constants.ACTION_IN_PROCESS + device_id, {
                     status: true,
-                    type:'imei'
+                    type: 'imei'
                 })
                 socket.emit(Constants.WRITE_IMEI + device_id, {
                     device_id: device_id,

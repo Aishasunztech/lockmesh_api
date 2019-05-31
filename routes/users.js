@@ -5299,12 +5299,12 @@ router.post('/addApk', async function (req, res) {
                     versionCode = await helpers.getAPKVersionCode(file);
                     if (versionCode) {
                         versionName = await helpers.getAPKVersionName(file);
-                        if(!versionName){
+                        if (!versionName) {
                             versionName = ''
                         }
 
                         packageName = await helpers.getAPKPackageName(file);
-                        if(!packageName){
+                        if (!packageName) {
                             packageName = '';
                         }
 
@@ -5408,11 +5408,11 @@ router.post('/edit/apk', async function (req, res) {
                     versionCode = await helpers.getAPKVersionCode(file);
                     if (versionCode) {
                         versionName = await helpers.getAPKVersionName(file);
-                        if(!versionName){
+                        if (!versionName) {
                             versionName = ''
                         }
                         packageName = await helpers.getAPKPackageName(file);
-                        if(!packageName){
+                        if (!packageName) {
                             packageName = '';
                         }
                         label = await helpers.getAPKLabel(file);
@@ -5439,7 +5439,7 @@ router.post('/edit/apk', async function (req, res) {
                     let apk_stats = fs.statSync(file);
 
                     let formatByte = helpers.formatBytes(apk_stats.size);
-                    sql.query("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_byte='" + apk_stats.size + "',  apk_size='"+ formatByte +"'  where id = '" + req.body.apk_id + "'", function (err, rslts) {
+                    sql.query("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_byte='" + apk_stats.size + "',  apk_size='" + formatByte + "'  where id = '" + req.body.apk_id + "'", function (err, rslts) {
 
                         if (err) throw err;
                         data = {
