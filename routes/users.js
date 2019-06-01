@@ -3051,7 +3051,7 @@ router.get('/get_app_permissions', async function (req, res) {
         // console.log('id is the ', req.params);
         let loggedUserType = verify.user.user_type;
         // if (loggedUserType !== Constants.ADMIN) {
-        let query = "select * from apps_info";
+        let query = "select * from default_apps";
 
         sql.query(query, async (error, apps) => {
 
