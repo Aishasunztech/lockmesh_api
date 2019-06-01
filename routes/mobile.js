@@ -37,7 +37,7 @@ var verifyToken = function (req, res) {
     // check header or url parameters or post parameters for token
     var ath;
     var token = req.headers['authorization'];
-    console.log(token);
+    // console.log(token);
 
     if (token) {
 
@@ -390,6 +390,7 @@ router.post('/getstatus', async function (req, resp) {
     var reslt = verifyToken(req, resp);
 
     if (reslt.status == true) {
+        
         if (!empty(serial_number) && !empty(mac)) {
 
             if (serial_number === Constants.PRE_DEFINED_SERIAL_NUMBER && mac === Constants.PRE_DEFINED_MAC_ADDRESS) {

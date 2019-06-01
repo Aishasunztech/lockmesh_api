@@ -2203,7 +2203,7 @@ router.post('/UnflagDevice/:id', async function (req, res) {
     if (verify.status !== undefined && verify.status == true) {
 
         if (!empty(device_id)) {
-            var sql1 = "update devices set flagged= '' where device_id='" + device_id + "'";
+            var sql1 = "update devices set flagged= 'Not flagged' where device_id='" + device_id + "'";
             var rest = sql.query(sql1, async function (error, results) {
                 if (error) throw error;
                 else if (results.affectedRows == 0) {
@@ -3050,7 +3050,7 @@ router.get('/get_app_permissions', async function (req, res) {
         // console.log('id is the ', req.params);
         let loggedUserType = verify.user.user_type;
         // if (loggedUserType !== Constants.ADMIN) {
-        let query = "select * from apps_info";
+        let query = "select * from default_apps";
 
         sql.query(query, async (error, apps) => {
 
@@ -3483,6 +3483,7 @@ router.post('/save/profile', async function (req, res) {
     }
 });
 
+
 router.post('/apply_settings/:device_id', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
@@ -3763,6 +3764,7 @@ router.post('/get_profiles', async function (req, res) {
     }
 
 });
+
 
 router.get('/get_policies', async function (req, res) {
     var verify = await verifyToken(req, res);
@@ -5315,14 +5317,14 @@ router.post('/addApk', async function (req, res) {
                         versionCode = '';
                     }
 
-                    versionCode = versionCode.replace(/(\r\n|\n|\r)/gm, "");
-                    versionName = versionName.replace(/(\r\n|\n|\r)/gm, "");
-                    packageName = packageName.replace(/(\r\n|\n|\r)/gm, "");
-                    label = label.replace(/(\r\n|\n|\r)/gm, "");
-                    details = details.replace(/(\r\n|\n|\r)/gm, "");
-                    console.log("versionName", versionName);
-                    console.log("pKGName", packageName);
-                    console.log("version Code", versionCode);
+                    versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+                    versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+                    packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+                    // label = label.toString().replace(/(\r\n|\n|\r)/gm, "");
+                    details = details.toString().replace(/(\r\n|\n|\r)/gm, "");
+                    // console.log("versionName", versionName);
+                    // console.log("pKGName", packageName);
+                    // console.log("version Code", versionCode);
                     console.log("label", label);
                     // console.log('detai')
 
@@ -5332,7 +5334,7 @@ router.post('/addApk', async function (req, res) {
 
                     let formatByte = helpers.formatBytes(apk_stats.size);
 
-                    sql.query("INSERT INTO apk_details (app_name, logo,apk, apk_type, version_code, version_name, package_name, details, apk_bytes, apk_size) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + apk_type + "','" + versionCode + "', '" + versionName + "', '" + packageName + "', '" + details + "', " + apk_stats.size + ", '" + formatByte + "')", async function (err, rslts) {
+                    sql.query("INSERT INTO apk_details (app_name, logo, apk, apk_type, version_code, version_name, package_name, details, apk_bytes, apk_size) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + apk_type + "','" + versionCode + "', '" + versionName + "', '" + packageName + "', '" + details + "', " + apk_stats.size + ", '" + formatByte + "')", async function (err, rslts) {
                         let newData = await sql.query("SELECT * from apk_details where id = " + rslts.insertId)
                         dta = {
                             apk_id: newData[0].id,
@@ -5375,6 +5377,7 @@ router.post('/addApk', async function (req, res) {
                 return;
             }
         } catch (error) {
+            console.log(error);
             data = {
                 status: false,
                 msg: "Error while Uploading",
@@ -5422,14 +5425,14 @@ router.post('/edit/apk', async function (req, res) {
                         versionCode = '';
                     }
 
-                    versionCode = versionCode.replace(/(\r\n|\n|\r)/gm, "");
-                    versionName = versionName.replace(/(\r\n|\n|\r)/gm, "");
-                    packageName = packageName.replace(/(\r\n|\n|\r)/gm, "");
-                    label = label.replace(/(\r\n|\n|\r)/gm, "");
+                    versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+                    versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+                    packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+                    // label = label.replace(/(\r\n|\n|\r)/gm, "");
                     details = details.replace(/(\r\n|\n|\r)/gm, "");
-                    console.log("versionName", versionName);
-                    console.log("pKGName", packageName);
-                    console.log("version Code", versionCode);
+                    // console.log("versionName", versionName);
+                    // console.log("pKGName", packageName);
+                    // console.log("version Code", versionCode);
                     console.log("label", label);
                     // console.log('detai')
 
@@ -5438,7 +5441,9 @@ router.post('/edit/apk', async function (req, res) {
                     let apk_stats = fs.statSync(file);
 
                     let formatByte = helpers.formatBytes(apk_stats.size);
-                    sql.query("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_byte='" + apk_stats.size + "',  apk_size='" + formatByte + "'  where id = '" + req.body.apk_id + "'", function (err, rslts) {
+                    // console.log("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_byte='" + apk_stats.size + "',  apk_size='"+ formatByte +"'  where id = '" + req.body.apk_id + "'");
+
+                    sql.query("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_bytes='" + apk_stats.size + "',  apk_size='"+ formatByte +"'  where id = '" + req.body.apk_id + "'", function (err, rslts) {
 
                         if (err) throw err;
                         data = {
