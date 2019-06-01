@@ -28,8 +28,8 @@ module.exports = {
     NEW_DEVICE: "new device",
     DEVICE_WIPE: "wiped",
 
-    DEVICE_ONLINE: "On",
-    DEVICE_OFFLINE: "off",
+    DEVICE_ONLINE: "online",
+    DEVICE_OFFLINE: "offline",
 
     DUPLICATE_MAC: "duplicate_mac",
     DUPLICATE_SERIAL: "duplicate_serial",

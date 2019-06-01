@@ -180,7 +180,6 @@ module.exports.listen = async function (server) {
             user_acc_id = await device_helpers.getUsrAccIDbyDvcId(dvc_id);
             console.log("user_acc_id: ", user_acc_id);
 
-
             socket.emit(Constants.GET_SYNC_STATUS + device_id, {
                 device_id: device_id,
                 apps_status: false,
@@ -188,6 +187,13 @@ module.exports.listen = async function (server) {
                 settings_status: false,
                 is_sync: (is_sync === 1 || is_sync === true || is_sync === 'true' || is_sync === '1') ? true : false,
             });
+            // socket.emit(Constants.GET_SYNC_STATUS + device_id, {
+            //     device_id: device_id,
+            //     apps_status: false,
+            //     extensions_status: false,
+            //     settings_status: false,
+            //     is_sync: (is_sync === 1 || is_sync === true || is_sync === 'true' || is_sync === '1') ? true : false,
+            // });
 
             // ===================================================== Syncing Device ===================================================
             // request application from portal to specific device

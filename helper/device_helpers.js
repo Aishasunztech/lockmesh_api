@@ -11,13 +11,16 @@ var Constants = require('../constants/Application');
 
 module.exports = {
     onlineOflineDevice: async function (deviceId = null, sessionId, status) {
+        console.log("onlineOfflineDdevice", deviceId);
+        console.log("sessionId from offline", sessionId);
         let query = "";
         if (deviceId !== null) {
             query = "UPDATE devices SET session_id='" + sessionId + "', online='" + status + "' WHERE device_id='" + deviceId + "';";
         } else {
             query = "UPDATE devices SET online = '" + status + "', session_id=null WHERE session_id='" + sessionId.replace(/['"]+/g, '') + "'";
         }
-
+        console.log("offline query", query);
+        
         let res = await sql.query(query);
         if (res) {
             return true;

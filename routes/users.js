@@ -563,7 +563,6 @@ router.get('/devices', async function (req, res) {
             if (error) throw error;
             for (var i = 0; i < results.length; i++) {
                 results[i].finalStatus = device_helpers.checkStatus(results[i])
-                results[i].online = (results[i].online === 'On') ? 'Online' : 'Offline'
                 results[i].pgp_email = await device_helpers.getPgpEmails(results[i])
                 results[i].sim_id = await device_helpers.getSimids(results[i])
                 results[i].chat_id = await device_helpers.getChatids(results[i])
@@ -2958,7 +2957,7 @@ router.patch('/sync-device', async function (req, res) {
     if (verify.status !== undefined && verify.status == true) {
         let deviceId = req.body.device_id;
         if (!empty(deviceId)) {
-            let query = "SELECT * FROM devices WHERE device_id = '" + deviceId + "' and (online = '" + Constants.DEVICE_ONLINE + "' OR online = '" + Constants.DEVICE_ONLINE + "') ";
+            let query = "SELECT * FROM devices WHERE device_id = '" + deviceId + "' and online = '" + Constants.DEVICE_ONLINE + "'";
             sql.query(query, function (error, response) {
                 if (error) console.log(error);
                 if (response.length) {

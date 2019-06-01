@@ -224,6 +224,7 @@ router.post('/login', async function (req, resp) {
                                                 dId: dealer[0].dealer_id,
                                                 dealer_pin: dealer[0].link_code,
                                                 connected_dealer: dealer[0].connected_dealer,
+                                                device_id: device_id
                                             });
                                             return;
                                         }
@@ -297,6 +298,10 @@ router.post('/linkdevice', async function (req, resp) {
     //res.setHeader('Content-Type', 'application/json');
     // console.log("/linkdevice");
     // console.log(resp);
+    // return resp.send({
+    //     success: false,
+    //     msg: 'TOKEN_NOT_PROVIDED'
+    // });
     var reslt = verifyToken(req, resp);
     if (reslt.status == true) {
         let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = device_helpers.getDeviceInfo(req);
@@ -306,12 +311,12 @@ router.post('/linkdevice', async function (req, resp) {
             var dId = req.body.dId;
             var connected_dealer = (req.body.connected_dealer === undefined || req.body.connected_dealer === null) ? 0 : req.body.connected_dealer;
 
-            var deviceQ = "SELECT * FROM devices WHERE  mac_address='" + mac_address + "' OR serial_number='" + serial_number + "'";
-            var device = await sql.query(deviceQ);
+            // var deviceQ = "SELECT * FROM devices WHERE  mac_address='" + mac_address + "' OR serial_number='" + serial_number + "'";
+            // var device = await sql.query(deviceQ);
 
             // console.log("device query", device);
             // console.log("link device dealer id", dealer_pin);
-            var dealerQ = "select * from dealers where dealer_id = " + dId;
+            var dealerQ = "select * from dealers where dealer_id = '" + dId + "'";
             let dealer = await sql.query(dealerQ);
             // console.log("dealer query", dealer)
             // res2 = dealer
@@ -788,9 +793,11 @@ router.get("/getApk/:apk", async (req, res) => {
 
 /** Get status of device (active,expired,inactive) **/
 router.post('/device_status', async function (req, res) {
-    var serial_number = req.body.serial_number;
+    var serial_number = req.body.serial_no;
     var mac = req.body.mac_address;
     var data;
+    console.log(serial_number);
+    console.log(mac);
 
     if (empty(serial_number) && empty(mac)) {
         data = {
@@ -808,47 +815,10 @@ router.post('/device_status', async function (req, res) {
         res.send(data);
         return
     }
-    else if (serial_number === Constants.PRE_DEFINED_SERIAL_NUMBER || mac === Constants.PRE_DEFINED_MAC_ADDRESS) {
-        if (mac === Constants.PRE_DEFINED_MAC_ADDRESS) {
-            var deviceQ = "SELECT * FROM devices WHERE  serial_number= '" + serial_number + "' ";
-            var device = await sql.query(deviceQ);
-            if (device.length) {
-                console.log('SERIAL FOUUND');
-                data = {
-                    status: false,
-                    msg: Constants.DUPLICATE_SERIAL,
-                    device_id: device[0].device_id
-                };
-                res.send(data);
-                return
-            }
-            else {
-                data = {
-                    status: false,
-                    msg: Constants.NEW_DEVICE,
-                }
-                res.send(data);
-                return
-            }
-        } else {
-            var deviceQ = "SELECT * FROM devices WHERE  mac_address= '" + mac + "' ";
-            var device = await sql.query(deviceQ);
-            if (device.length) {
-                console.log('MAC FOUUND');
-                data = {
-                    "status": false,
-                    "msg": Constants.DUPLICATE_MAC
-                };
-                res.send(data);
-                return
-            }
-        }
-    }
-    else {
-        var deviceQuery = "select * from devices where mac_address = '" + mac + "' OR serial_number = '" + serial_number + "'";
-        // 
-        var device = await sql.query(deviceQuery);
-        if (device.length > 0) {
+    else if (mac == Constants.PRE_DEFINED_MAC_ADDRESS) {
+        var deviceQ = "SELECT * FROM devices WHERE  serial_number= '" + serial_number + "' ";
+        var device = await sql.query(deviceQ);
+        if (device.length) {
             var user_acc = await sql.query("SELECT * FROM usr_acc where device_id = " + device[0].id);
             if (user_acc.length > 0) {
 
@@ -892,7 +862,7 @@ router.post('/device_status', async function (req, res) {
                                         device_id: device[0].device_id,
                                         expiry_date: n,
                                         token: token,
-                                        dealer_pin: user_acc.dealer_pin
+                                        dealer_pin: user_acc[0].link_code
                                     }
                                     res.send(data);
                                     return;
@@ -904,7 +874,7 @@ router.post('/device_status', async function (req, res) {
                                         msg: deviceStatus,
                                         device_id: device[0].device_id,
                                         token: token,
-                                        dealer_pin: user_acc.dealer_pin
+                                        dealer_pin: user_acc[0].link_code
                                     }
                                     res.send(data);
                                     return;
@@ -951,7 +921,7 @@ router.post('/device_status', async function (req, res) {
                                     device_id: device[0].device_id,
                                     expiry_date: n,
                                     token: token,
-                                    dealer_pin: user_acc.dealer_pin
+                                    dealer_pin: user_acc[0].link_code
                                 }
                                 res.send(data);
                                 return;
@@ -961,7 +931,149 @@ router.post('/device_status', async function (req, res) {
                                     msg: deviceStatus,
                                     device_id: device[0].device_id,
                                     token: token,
-                                    dealer_pin: user_acc.dealer_pin
+                                    dealer_pin: user_acc[0].link_code
+                                }
+                                res.send(data);
+                                return;
+                            }
+                        });
+
+
+                }
+            } else {
+                data = {
+                    status: false,
+                    msg: Constants.NEW_DEVICE,
+                }
+                res.send(data);
+            }
+        }
+        else {
+            data = {
+                status: false,
+                msg: Constants.NEW_DEVICE,
+            }
+            res.send(data);
+            return
+        }
+    }
+    else if (serial_number == Constants.PRE_DEFINED_SERIAL_NUMBER) {
+        var deviceQ = "SELECT * FROM devices WHERE  mac_address= '" + mac + "' ";
+        var device = await sql.query(deviceQ);
+        if (device.length) {
+            var user_acc = await sql.query("SELECT * FROM usr_acc where device_id = " + device[0].id);
+            if (user_acc.length > 0) {
+
+                // get user account device status
+                let deviceStatus = device_helpers.checkStatus(user_acc[0]);
+                console.log("device_status", deviceStatus);
+
+                if (user_acc[0].dealer_id !== 0 && user_acc[0].dealer_id !== null) {
+
+                    var dealerQuery = "select * from dealers where dealer_id = '" + user_acc[0].dealer_id + "'";
+                    var dealer = await sql.query(dealerQuery);
+                    // reslts2 
+                    if (dealer.length > 0) {
+
+                        const dvc = {
+                            dId: dealer[0].dealer_id,
+                            dealer_pin: dealer[0].link_code,
+                            connected_dealer: dealer[0].connected_dealer,
+                            type: await helpers.getUserTypeByTypeId(dealer[0].type),
+                            device_id: device[0].device_id
+                        }
+
+                        jwt.sign({
+                            dvc
+                        }, config.secret, {
+                                expiresIn: config.expiresIn
+                            }, (err, token) => {
+
+                                if (err) {
+                                    res.json({
+                                        'err': err
+                                    });
+                                    return;
+                                }
+                                if (deviceStatus === Constants.DEVICE_ACTIVATED || deviceStatus === Constants.DEVICE_TRIAL || deviceStatus === Constants.DEVICE_SUSPENDED || deviceStatus === Constants.DEVICE_EXPIRED) {
+                                    var d = new Date(user_acc[0].expiry_date);
+                                    var n = d.valueOf()
+                                    data = {
+                                        status: true,
+                                        msg: deviceStatus,
+                                        device_id: device[0].device_id,
+                                        expiry_date: n,
+                                        token: token,
+                                        dealer_pin: user_acc[0].link_code,
+                                    }
+                                    res.send(data);
+                                    return;
+                                }
+                                else {
+
+                                    data = {
+                                        status: true,
+                                        msg: deviceStatus,
+                                        device_id: device[0].device_id,
+                                        token: token,
+                                        dealer_pin: user_acc[0].link_code,
+                                    }
+                                    res.send(data);
+                                    return;
+                                }
+                            });
+                    }
+                    else {
+                        data = {
+                            status: false,
+                            msg: Constants.DEALER_NOT_FOUND,
+                            device_id: device[0].device_id,
+                        }
+                        res.send(data);
+                        return;
+                    }
+                } else {
+                    const dvc = {
+                        // dId: dealer[0].dealer_id,
+                        // dealer_pin: dealer[0].link_code,
+                        // connected_dealer: dealer[0].connected_dealer,
+                        // type: await helpers.getUserTypeByTypeId(dealer[0].type),
+                        device_id: device[0].device_id
+                    }
+
+                    jwt.sign({
+                        dvc
+                    }, config.secret, {
+                            expiresIn: config.expiresIn
+                        }, (err, token) => {
+
+                            if (err) {
+                                res.json({
+                                    'err': err
+                                });
+                                return;
+                            }
+                            //when devcie have no dealer id 
+                            if (deviceStatus === Constants.DEVICE_ACTIVATED || deviceStatus === Constants.DEVICE_TRIAL || deviceStatus === Constants.DEVICE_SUSPENDED || deviceStatus === Constants.DEVICE_EXPIRED) {
+                                var d = new Date(user_acc[0].expiry_date);
+                                var n = d.valueOf()
+                                data = {
+                                    status: true,
+                                    msg: deviceStatus,
+                                    device_id: device[0].device_id,
+                                    expiry_date: n,
+                                    token: token,
+                                    dealer_pin: user_acc[0].link_code
+                                }
+                                res.send(data);
+                                return;
+                            } else {
+                                data = {
+                                    status: true,
+                                    msg: deviceStatus,
+                                    device_id: device[0].device_id,
+                                    token: token,
+                                    dealer_pin: user_acc[0].link_code
                                 }
                                 res.send(data);
                                 return;
@@ -977,21 +1089,185 @@ router.post('/device_status', async function (req, res) {
                     msg: Constants.NEW_DEVICE,
                 }
                 res.send(data);
-
-                // data = {
-                //     "status": true,
-                //     "msg": "account disabled",
-                // }
-                // res.send(data);
             }
-
-        } else {
-            console.log(Constants.NEW_DEVICE)
+        }
+        else {
             data = {
                 status: false,
                 msg: Constants.NEW_DEVICE,
             }
             res.send(data);
+            return
+        }
+    }
+    else {
+        var deviceQuery = "select * from devices where mac_address = '" + mac + "' AND serial_number = '" + serial_number + "'";
+        // 
+        var device = await sql.query(deviceQuery);
+
+        if (device.length > 0) {
+            var user_acc = await sql.query("SELECT * FROM usr_acc where device_id = " + device[0].id);
+            if (user_acc.length > 0) {
+
+                // get user account device status
+                let deviceStatus = device_helpers.checkStatus(user_acc[0]);
+                console.log("device_status", deviceStatus);
+
+                if (user_acc[0].dealer_id !== 0 && user_acc[0].dealer_id !== null) {
+
+                    var dealerQuery = "select * from dealers where dealer_id = '" + user_acc[0].dealer_id + "'";
+                    var dealer = await sql.query(dealerQuery);
+                    // reslts2 
+                    if (dealer.length > 0) {
+
+                        const dvc = {
+                            dId: dealer[0].dealer_id,
+                            dealer_pin: dealer[0].link_code,
+                            connected_dealer: dealer[0].connected_dealer,
+                            type: await helpers.getUserTypeByTypeId(dealer[0].type),
+                            device_id: device[0].device_id
+                        }
+
+                        jwt.sign({
+                            dvc
+                        }, config.secret, {
+                                expiresIn: config.expiresIn
+                            }, (err, token) => {
+
+                                if (err) {
+                                    res.json({
+                                        'err': err
+                                    });
+                                    return;
+                                }
+                                if (deviceStatus === Constants.DEVICE_ACTIVATED || deviceStatus === Constants.DEVICE_TRIAL || deviceStatus === Constants.DEVICE_SUSPENDED || deviceStatus === Constants.DEVICE_EXPIRED) {
+                                    var d = new Date(user_acc[0].expiry_date);
+                                    var n = d.valueOf()
+                                    data = {
+                                        status: true,
+                                        msg: deviceStatus,
+                                        device_id: device[0].device_id,
+                                        expiry_date: n,
+                                        token: token,
+                                        dealer_pin: user_acc[0].link_code
+                                    }
+                                    res.send(data);
+                                    return;
+                                }
+                                else {
+
+                                    data = {
+                                        status: true,
+                                        msg: deviceStatus,
+                                        device_id: device[0].device_id,
+                                        token: token,
+                                        dealer_pin: user_acc[0].link_code
+                                    }
+                                    res.send(data);
+                                    return;
+                                }
+                            });
+                    }
+                    else {
+                        data = {
+                            status: false,
+                            msg: Constants.DEALER_NOT_FOUND,
+                            device_id: device[0].device_id,
+                        }
+                        res.send(data);
+                        return;
+                    }
+                } else {
+                    const dvc = {
+                        // dId: dealer[0].dealer_id,
+                        // dealer_pin: dealer[0].link_code,
+                        // connected_dealer: dealer[0].connected_dealer,
+                        // type: await helpers.getUserTypeByTypeId(dealer[0].type),
+                        device_id: device[0].device_id
+                    }
+
+                    jwt.sign({
+                        dvc
+                    }, config.secret, {
+                            expiresIn: config.expiresIn
+                        }, (err, token) => {
+
+                            if (err) {
+                                res.json({
+                                    'err': err
+                                });
+                                return;
+                            }
+                            //when devcie have no dealer id 
+                            if (deviceStatus === Constants.DEVICE_ACTIVATED || deviceStatus === Constants.DEVICE_TRIAL || deviceStatus === Constants.DEVICE_SUSPENDED || deviceStatus === Constants.DEVICE_EXPIRED) {
+                                var d = new Date(user_acc[0].expiry_date);
+                                var n = d.valueOf()
+                                data = {
+                                    status: true,
+                                    msg: deviceStatus,
+                                    device_id: device[0].device_id,
+                                    expiry_date: n,
+                                    token: token,
+                                    dealer_pin: user_acc[0].link_code
+                                }
+                                res.send(data);
+                                return;
+                            } else {
+                                data = {
+                                    status: true,
+                                    msg: deviceStatus,
+                                    device_id: device[0].device_id,
+                                    token: token,
+                                    dealer_pin: user_acc[0].link_code
+                                }
+                                res.send(data);
+                                return;
+                            }
+                        });
+
+
+                }
+            } else {
+
+                data = {
+                    status: false,
+                    msg: Constants.NEW_DEVICE,
+                }
+                res.send(data);
+            }
+        }
+        else {
+            var deviceQuery = "select * from devices where mac_address = '" + mac + "' OR serial_number = '" + serial_number + "'";
+            // 
+            var device = await sql.query(deviceQuery);
+
+            if (device.length > 0) {
+
+                if (mac === device[0].mac_address) {
+                    data = {
+                        status: false,
+                        msg: Constants.DUPLICATE_MAC,
+                        device_id: device[0].device_id
+                    }
+                    res.send(data);
+                    return
+                } else {
+                    data = {
+                        status: false,
+                        msg: Constants.DUPLICATE_SERIAL,
+                        device_id: device[0].device_id
+                    }
+                    res.send(data);
+                    return
+                }
+            } else {
+                console.log(Constants.NEW_DEVICE)
+                data = {
+                    status: false,
+                    msg: Constants.NEW_DEVICE,
+                }
+                res.send(data);
+            }
         }
     }
 });
