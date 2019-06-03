@@ -390,7 +390,7 @@ router.post('/getstatus', async function (req, resp) {
     var reslt = verifyToken(req, resp);
 
     if (reslt.status == true) {
-        
+
         if (!empty(serial_number) && !empty(mac)) {
 
             if (serial_number === Constants.PRE_DEFINED_SERIAL_NUMBER && mac === Constants.PRE_DEFINED_MAC_ADDRESS) {
@@ -652,6 +652,7 @@ router.delete('/unlink/:macAddr/:serialNo', async function (req, res) {
                 if (error) throw (error);
                 if (resp.length) {
                     let device_record = await helpers.getAllRecordbyDeviceId(resp[0].device_id)
+                    // console.log(device_record);
                     device_helpers.saveActionHistory(device_record, Constants.DEVICE_UNLINKED)
                     var query = "DELETE from usr_acc WHERE device_id = '" + resp[0].id + "'";
                     await sql.query(query);
