@@ -1303,20 +1303,12 @@ router.post('/create/device_profile', async function (req, res) {
                             await sql.query(updateSimIds)
                             let updatePgpEmails = 'update pgp_emails set used=1, user_acc_id="' + user_acc_id + '" where pgp_email ="' + pgp_email + '"';
                             await sql.query(updatePgpEmails);
-                            // if (policy_id !== '') {
-
-                            //     var slctpolicy = "select * from device_history where id = " + policy_id + "";
-                            //     policy_obj = await sql.query(slctpolicy);
-                            //     // console.log('policy ', policy_obj);
-                            //     policy_obj[0].dealer_id = dealer_id;
-                            //     policy_obj[0].status = 0;
-                            //     policy_obj[0].type = 'history';
-
-                            //     var insertQuery = "INSERT INTO device_history ( user_acc_id, app_list, setting, controls, status ) "
-                            //         + " VALUES('" + user_acc_id + "', '" + policy_obj[0].app_list + "', '" + policy_obj[0].setting + "', '" + policy_obj[0].controls + "', 0 ) "
-
-                            //     await sql.query(insertQuery);
-                            // }
+                            if (policy_id !== '') {
+                                var slctpolicy = "select * from policy where id = " + policy_id + "";
+                                let policy = await sql.query(slctpolicy);
+                                var applyQuery = "INSERT INTO device_history (dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES (" + dealer_id + "," + user_acc_id + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
+                                sql.query(applyQuery)
+                            }
                         }
 
                     }
@@ -1401,24 +1393,17 @@ router.post('/create/device_profile', async function (req, res) {
                                         await sql.query(updateSimIds)
                                         let updatePgpEmails = 'update pgp_emails set used=1, user_acc_id="' + user_acc_id + '" where pgp_email ="' + pgp_email + '"';
                                         await sql.query(updatePgpEmails);
-                                        // if (policy_id !== '') {
-                                        //     var slctpolicy = "select * from device_history where id = " + policy_id + "";
-                                        //     policy_obj = await sql.query(slctpolicy);
-                                        //     // console.log('policy ', policy_obj);
-                                        //     policy_obj[0].dealer_id = dealer_id;
-                                        //     policy_obj[0].status = 0;
-                                        //     policy_obj[0].type = 'history';
-
-                                        //     var insertQuery = "INSERT INTO device_history ( user_acc_id, app_list, setting, controls, status ) "
-                                        //         + " VALUES('" + user_acc_id + "', '" + policy_obj[0].app_list + "', '" + policy_obj[0].setting + "', '" + policy_obj[0].controls + "', 0 ) "
-
-                                        //     await sql.query(insertQuery);
-                                        // }
+                                        if (policy_id !== '') {
+                                            var slctpolicy = "select * from policy where id = " + policy_id + "";
+                                            let policy = await sql.query(slctpolicy);
+                                            var applyQuery = "INSERT INTO device_history (dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES (" + dealer_id + "," + user_acc_id + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
+                                            sql.query(applyQuery)
+                                        }
 
                                         sql.query("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name, dealers.connected_dealer from devices left join usr_acc on devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 and devices.id='" + dvc_id + "'", async function (error, results, fields) {
 
                                             if (error) throw error;
-                                            console.log("user data list ", results)
+                                            // console.log("user data list ", results)
 
                                             results[0].finalStatus = device_helpers.checkStatus(results[0])
                                             results[0].pgp_email = await device_helpers.getPgpEmails(results[0])
