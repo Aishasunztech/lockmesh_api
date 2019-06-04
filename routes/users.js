@@ -1648,18 +1648,16 @@ router.put('/new/device', async (req, res) => {
                                 await sql.query(updatePgpEmails);
 
                                 var slctquery = "select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.user_acc_id = usr_acc.device_id where devices.device_id = '" + device_id + "'";
-                                console.log(slctquery);
+                                // console.log(slctquery);
                                 rsltq = await sql.query(slctquery);
-                                console.log(rsltq);
+                                // console.log(rsltq);
 
-                                // if (policy_id !== undefined && policy_id !== '' && policy_id !== null) {
-                                //     var slctpolicy = "select * from device_history where id = " + policy_id + "";
-                                //     policy_obj = await sql.query(slctpolicy);
-                                //     var insertQuery = "INSERT INTO device_history ( device_id, app_list, setting, controls, passwords, type, status ) "
-                                //         + " VALUES('" + device_id + "', '" + policy_obj[0].app_list + "', '" + policy_obj[0].setting + "', '" + policy_obj[0].controls + "', '" + policy_obj[0].passwords + "', 'history', 0 ) "
-
-                                //     await sql.query(insertQuery);
-                                // }
+                                if (policy_id !== '') {
+                                    var slctpolicy = "select * from policy where id = " + policy_id + "";
+                                    let policy = await sql.query(slctpolicy);
+                                    var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES ('" + device_id + "' ," + dealer_id + "," + usr_acc_id + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
+                                    sql.query(applyQuery)
+                                }
                                 for (var i = 0; i < rsltq.length; i++) {
                                     rsltq[i].finalStatus = device_helpers.checkStatus(rsltq[i])
                                 }
