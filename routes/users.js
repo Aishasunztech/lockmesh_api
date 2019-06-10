@@ -3473,11 +3473,11 @@ router.post('/apply_settings/:device_id', async function (req, res) {
             let device_id = req.params.device_id;
 
             let usrAccId = req.body.usr_acc_id;
+            let type = req.body.device_setting.type
 
             let dealer_id = verify.user.id
 
             let device_setting = req.body.device_setting;
-            // console.log('app list length',device_setting.app_list.length)
 
             let app_list = (device_setting.app_list === undefined) ? '' : JSON.stringify(device_setting.app_list);
 
@@ -3486,8 +3486,13 @@ router.post('/apply_settings/:device_id', async function (req, res) {
             let controls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
             // console.log("hello controls", controls);
             let subExtensions = (req.body.device_setting.subExtensions == undefined) ? '' : JSON.stringify(req.body.device_setting.subExtensions);
+            let applyQuery = '';
+            if (type == 'profile') {
 
-            var applyQuery = "insert into device_history (device_id,dealer_id,user_acc_id, app_list, passwords, controls, permissions) values ('" + device_id + "'," + dealer_id + "," + usrAccId + ", '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "')";
+                applyQuery = "insert into device_history (device_id,dealer_id,user_acc_id, profile_name,app_list, passwords, controls, permissions, type) values ('" + device_id + "'," + dealer_id + "," + usrAccId + ",'" + device_setting.name + "' , '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "' , 'profile')";
+            } else {
+                applyQuery = "insert into device_history (device_id,dealer_id,user_acc_id, app_list, passwords, controls, permissions) values ('" + device_id + "'," + dealer_id + "," + usrAccId + ", '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "')";
+            }
 
             await sql.query(applyQuery, async function (err, rslts) {
                 if (err) {
@@ -3502,11 +3507,20 @@ router.post('/apply_settings/:device_id', async function (req, res) {
                 }
 
                 if (rslts) {
-                    data = {
-                        "status": true,
-                        "msg": 'Settings Applied Successfully',
-                    };
-                    res.send(data);
+                    if (type == 'profile') {
+                        data = {
+                            "status": true,
+                            "msg": 'Profile Applied Successfully',
+                        };
+                        res.send(data);
+                    }
+                    else {
+                        data = {
+                            "status": true,
+                            "msg": 'Settings Applied Successfully',
+                        };
+                        res.send(data);
+                    }
                 } else {
                     data = {
                         "status": false,
@@ -3714,6 +3728,7 @@ router.post('/get_profiles', async function (req, res) {
         // console.log('user id si', user_acc_id);
         let where = "where";
         let isValid = true;
+        let profiles = [];
         // console.log('d_id', user_acc_id);
         if (user_acc_id != undefined && user_acc_id != '' && user_acc_id != null) {
             where = where + " user_acc_id='" + user_acc_id + "'";
@@ -3726,12 +3741,30 @@ router.post('/get_profiles', async function (req, res) {
             let query = "SELECT * FROM usr_acc_profile " + where;
 
             // console.log("getprofiles query", query);
-            sql.query(query, (error, result) => {
+            sql.query(query, (error, results) => {
+
+                for (var i = 0; i < results.length; i++) {
+                    // console.log('push apps', results[i].push_apps)
+                    let controls = (results[i].controls !== undefined && results[i].controls !== null) ? JSON.parse(results[i].controls) : JSON.parse('[]');;
+                    let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== null) ? JSON.parse(results[i].app_list) : JSON.parse('[]');
+                    let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : JSON.parse('[]');
+                    let passwords = (results[i].passwords !== undefined && results[i].passwords !== null) ? JSON.parse(results[i].passwords) : JSON.parse('[]');
+
+                    dta = {
+                        id: results[i].id,
+                        profile_name: results[i].profile_name,
+                        controls: controls,
+                        secure_apps: secure_apps,
+                        app_list: app_list2,
+                        passwords: passwords
+                    }
+                    profiles.push(dta);
+                }
                 //  console.log('profile',result)
                 data = {
                     "status": true,
                     "msg": 'successful',
-                    "profiles": result
+                    "profiles": profiles
                 };
                 res.send(data);
             });

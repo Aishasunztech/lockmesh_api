@@ -138,7 +138,7 @@ module.exports.writeImei = (imei, device_id) => {
   console.log("write_imei_" + device_id);
   io.emit(Constants.ACTION_IN_PROCESS + device_id, {
     status: true,
-    type:'imei'
+    type: 'imei'
   })
   io.emit(Constants.WRITE_IMEI + device_id, {
     status: true,

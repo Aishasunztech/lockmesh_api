@@ -223,18 +223,27 @@ module.exports = {
 
 
 	getDeviceId: async function (sn, mac) {
-		let sqlQuery = "SELECT device_id from devices where serial_number = '" + sn + "' OR mac_address = '" + mac + "'";
-		let result = await sql.query(sqlQuery)
-		let unlickQuery = "SELECT device_id from acc_action_history where serial_number = '" + sn + "' OR mac_address = '" + mac + "'";
-		let unlinkedResult = await sql.query(unlickQuery)
-		if (result.length) {
-			return result[0].device_id
+		// let sqlQuery = "SELECT device_id from devices where serial_number = '" + sn + "' OR mac_address = '" + mac + "'";
+		// let result = await sql.query(sqlQuery)
+		let unlickQuery
+		if (sn === Constants.PRE_DEFINED_SERIAL_NUMBER) {
+			unlickQuery = "SELECT device_id from acc_action_history where mac_address = '" + mac + "'";
+		} else if (mac === Constants.PRE_DEFINED_MAC_ADDRESS) {
+			unlickQuery = "SELECT device_id from acc_action_history where serial_number = '" + sn + "'";
 		}
-		else if (unlinkedResult.length) {
+		else {
+			unlickQuery = "SELECT device_id from acc_action_history where serial_number = '" + sn + "' OR mac_address = '" + mac + "'";
+		}
+
+		let unlinkedResult = await sql.query(unlickQuery)
+		// if (result.length) {
+		// 	return result[0].device_id
+		// }
+		// else 
+		if (unlinkedResult.length) {
 			return unlinkedResult[0].device_id
 		}
 		else {
-
 
 			console.log(sn, 'MAC', mac);
 			var key = md5(sn + mac);
@@ -779,6 +788,9 @@ module.exports = {
 				break;
 			case 'policy':
 				name = 'Policy Applied'
+				break;
+			case 'profile':
+				name = 'Profile Applied'
 				break;
 			default:
 				break;
