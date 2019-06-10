@@ -223,35 +223,40 @@ module.exports = {
 
 
 	getDeviceId: async function (sn, mac) {
-		// let sqlQuery = "SELECT device_id from devices where serial_number = '" + sn + "' OR mac_address = '" + mac + "'"
-		// let result = await sql.query(sqlQuery)
-		// if (result.length) {
-		// 	return result[0].device_id
-		// }
-		// else {
+		let sqlQuery = "SELECT device_id from devices where serial_number = '" + sn + "' OR mac_address = '" + mac + "'";
+		let result = await sql.query(sqlQuery)
+		let unlickQuery = "SELECT device_id from acc_action_history where serial_number = '" + sn + "' OR mac_address = '" + mac + "'";
+		let unlinkedResult = await sql.query(unlickQuery)
+		if (result.length) {
+			return result[0].device_id
+		}
+		else if (unlinkedResult.length) {
+			return unlinkedResult[0].device_id
+		}
+		else {
 
 
-		console.log(sn, 'MAC', mac);
-		var key = md5(sn + mac);
-		var num = "";
-		var str = "";
+			console.log(sn, 'MAC', mac);
+			var key = md5(sn + mac);
+			var num = "";
+			var str = "";
 
-		for (i = 0; i < key.length; i++) {
+			for (i = 0; i < key.length; i++) {
 
-			if (isNaN(key[i])) {
-				if (str.length < 4) {
-					str += key[i];
-				}
-			} else {
-				if (num.length < 6) {
-					num += key[i];
+				if (isNaN(key[i])) {
+					if (str.length < 4) {
+						str += key[i];
+					}
+				} else {
+					if (num.length < 6) {
+						num += key[i];
+					}
 				}
 			}
-		}
-		var deviceId = str.toUpperCase() + num;
+			var deviceId = str.toUpperCase() + num;
 
-		return deviceId;
-		// }
+			return deviceId;
+		}
 		// const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 		// let fourLetterWords = [];
 		// for (let firstLetterIndex = 0; firstLetterIndex < alphabet.length; firstLetterIndex++) {

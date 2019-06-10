@@ -1676,7 +1676,6 @@ router.put('/new/device', async (req, res) => {
                                 msg: "device is not added"
                             });
                         }
-
                     });
 
                 } else {
@@ -3407,7 +3406,7 @@ router.post('/save/profile', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
         if (verify.status !== undefined && verify.status == true) {
-            console.log('body is', req.body)
+            // console.log('body is', req.body)
             let name = req.body.profileName;
             let dealer_id = verify.user.id;
             let usr_acc_id = req.body.usr_acc_id;
