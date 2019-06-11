@@ -590,7 +590,62 @@ router.get('/devices', async function (req, res) {
                 // dealerData = await device_helpers.getDealerdata(results[i]);
             }
             let finalResult = [...results, ...newArray]
-            // console.log('old', finalResult.length)
+            // console.log('old', finalResult);
+
+            let checkValue = helpers.checkValue;
+            for (let device of finalResult) {
+
+                device.account_email = checkValue(device.account_email)
+                device.account_name=  checkValue(device.account_name)
+                device.account_status=  checkValue(device.account_status)
+                device.activation_code =  checkValue(device.activation_code)
+                device.activation_status =  checkValue(device.activation_status)
+                device.batch_no =  checkValue(device.batch_no)
+                device.chat_id =  checkValue(device.chat_id)
+                device.client_id =  checkValue(device.client_id)
+                device.connected_dealer =  checkValue(device.connected_dealer)
+                device.created_at =  checkValue(device.created_at)
+                device.dealer_id =  checkValue(device.dealer_id)
+                device.dealer_name =  checkValue(device.dealer_name)
+                device.del_status =  checkValue(device.del_status)
+                device.device_id =  checkValue(device.device_id)
+                device.device_status =  checkValue(device.device_status)
+                device.expiry_date =  checkValue(device.expiry_date)
+                device.expiry_months =  checkValue(device.expiry_months)
+                device.fcm_token =  checkValue(device.fcm_token)
+                device.finalStatus =  checkValue(device.finalStatus)
+                device.flagged =  checkValue(device.flagged)
+                device.id =  checkValue(device.id)
+                device.imei =  checkValue(device.imei)
+                device.imei2 =  checkValue(device.imei2)
+                device.ip_address =  checkValue(device.ip_address)
+                device.is_push_apps =  checkValue(device.is_push_apps)
+                device.is_sync =  checkValue(device.is_sync)
+                device.link_code =  checkValue(device.link_code)
+                device.mac_address =  checkValue(device.mac_address)
+                device.model =  checkValue(device.model)
+                device.name =  checkValue(device.name)
+                device.note =  checkValue(device.note)
+                device.online =  checkValue(device.online)
+                device.pgp_email =  checkValue(device.pgp_email)
+                device.prnt_dlr_id =  checkValue(device.prnt_dlr_id)
+                device.prnt_dlr_name =  checkValue(device.prnt_dlr_name)
+                device.reject_status =  checkValue(device.reject_status)
+                device.screen_start_date =  checkValue(device.screen_start_date)
+                device.serial_number =  checkValue(device.serial_number)
+                device.session_id =  checkValue(device.session_id)
+                device.sim_id =  checkValue(device.sim_id)
+                device.simno =  checkValue(device.simno)
+                device.simno2 =  checkValue(device.simno2)
+                device.start_date =  checkValue(device.start_date)
+                device.status =  checkValue(device.status)
+                device.transfer_status =  checkValue(device.transfer_status)
+                device.unlink_status =  checkValue(device.unlink_status)
+                device.updated_at =  checkValue(device.updated_at)
+                device.user_id =  checkValue(device.user_id)
+                device.usr_device_id =  checkValue(device.usr_device_id)
+                device.validity =  checkValue(device.validity)
+            }
             // let dumyData = finalResult;
             // let newResultArray = [];
             // for (let device of finalResult) {
