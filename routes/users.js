@@ -121,9 +121,19 @@ var verifyToken = function (req, res) {
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
     // let filename = "icon_AdSense.png";
-    let filename = "apk-1541677256487.apk.jpg";
-
-    let file = path.join(__dirname, "../uploads/" + filename);
+    // let filename = "apk-1541677256487.apk.jpg";
+    // var ip_info = get_ip(req);
+    // console.log(ip_info.clientIp);
+    // res.send({
+    //     ip_info
+    // })
+    // proxy_set_header X-Forwarded-For $remote_addr;
+    // res.send('IP = ' + req.connection.remoteAddress + ':' + req.connection.remotePort)
+    // console.log(req.headers['x-forwarded-for'])
+    // res.send({
+    //     data: req.headers['x-forwarded-for']
+    // })
+    // let file = path.join(__dirname, "../uploads/" + filename);
 
     // Jimp.read(file)
     //     .then(lenna => {
@@ -5969,6 +5979,43 @@ router.post('/apk/delete', async function (req, res) {
 
     }
 });
+
+//GET logion history
+
+router.get('/login_history', async function (req, res) {
+    try {
+        var verify = await verifyToken(req, res);
+        if (verify.status !== undefined && verify.status == true) {
+
+            let id = verify.user.id;
+            let data = {}
+            let query = "SELECT * from login_history where dealer_id = '" + id + "' AND type = 'token'"
+            // console.log(query);
+            sql.query(query, function (err, result) {
+                if (err) {
+                    throw err
+                }
+                if (result.length) {
+                    data = {
+                        status: true,
+                        data: result
+                    }
+                    res.send(data)
+                }
+                else {
+                    data = {
+                        status: false,
+                        data: []
+                    }
+                    res.send(data)
+                }
+            })
+        }
+    } catch (error) {
+        throw Error(error.message);
+    }
+});
+
 
 
 router.delete('/delete_profile/:profile_id', async function (req, res) {
