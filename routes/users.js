@@ -120,6 +120,16 @@ var verifyToken = function (req, res) {
 
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
+    // var ip = req.headers['x-forwarded-for']
+    // res.send({
+    //     ip: ip
+    // })
+
+    var clientip = req.socket.remoteAddress;
+    var xffip = req.header('x-real-ip') || req.connection.remoteAddress
+    var ip = xffip ? xffip : clientip;
+    res.send({ client: xffip });
+
     // let filename = "icon_AdSense.png";
     // let filename = "apk-1541677256487.apk.jpg";
     // var ip_info = get_ip(req);
@@ -263,7 +273,7 @@ router.post('/login', async function (req, res) {
 
                         var userType = await helpers.getUserType(users[0].dealer_id);
                         var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + users[0].dealer_id + "'");
-                        var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+                        var ip = req.header('x-real-ip') || req.connection.remoteAddress
                         // console.log('object data is ', users[0]);
 
                         const user = {
@@ -5268,6 +5278,7 @@ router.post('/checkApkName', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify['status'] && verify.status == true) {
         try {
+            console.log(req.body);
             let apkName = req.body.name;
             let apk_id = req.body.apk_id
             let query = '';
@@ -5989,7 +6000,7 @@ router.get('/login_history', async function (req, res) {
 
             let id = verify.user.id;
             let data = {}
-            let query = "SELECT * from login_history where dealer_id = '" + id + "' AND type = 'token'"
+            let query = "SELECT * from login_history where dealer_id = '" + id + "' AND type = 'token' order by created_at desc"
             // console.log(query);
             sql.query(query, function (err, result) {
                 if (err) {
