@@ -127,7 +127,28 @@ router.get('/', async function (req, res, next) {
     //     ip: ip
     // })
 
+    // var cm = require('csv-mysql');
 
+    // var data = '"1","2","3"\n"4","5","6"';
+    // var options = {
+    //     mysql: {
+    //         host: 'localhost',
+    //         user: 'root',
+    //         database: 'lockmesh_db',
+    //     },
+    //     csv: {
+    //         comment: '#',
+    //         quote: '"'
+    //     },
+    //     headers: ["c1", "c2", "c3"]
+    // }
+
+    // let data1 = await cm.import(options, data, function (err, rows) {
+    //     if (err === null) err = false;
+    //     // expect(err).to.equal(false);
+    //     // done();
+    // });
+    // res.send(data1)
 
     // var clientip = req.socket.remoteAddress;
     // var xffip = req.header('x-real-ip') || req.connection.remoteAddress
@@ -204,8 +225,10 @@ router.post('/create_backup_DB', async function (req, res) {
     var verify = await verifyToken(req, res);
 
     if (verify.status !== undefined && verify.status == true) {
-        console.log("Working");
-        // let file_name = 
+        // console.log("Working");
+        let date = new Date();
+        let formattedDate = moment(date).format("YYYY/MM/DD")
+        let file_name = 'dump_' + Constants.APP_TITLE + '_' + Date.now() + '.sql'
         const result = await mysqldump({
             connection: {
                 host: 'localhost',
@@ -213,11 +236,13 @@ router.post('/create_backup_DB', async function (req, res) {
                 password: '',
                 database: 'lockmesh_db',
             },
-            dumpToFile: './dump.sql',
+            dumpToFile: './uploads/' + file_name,
         });
-        res.send({
-            result
-        })
+        let data = {
+            status: true,
+            path: file_name
+        }
+        res.send(data)
     }
 });
 
