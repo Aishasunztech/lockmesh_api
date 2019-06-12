@@ -654,10 +654,12 @@ router.delete('/unlink/:macAddr/:serialNo', async function (req, res) {
                     let device_record = await helpers.getAllRecordbyDeviceId(resp[0].device_id)
                     // console.log(device_record);
                     device_helpers.saveActionHistory(device_record, Constants.DEVICE_UNLINKED)
-                    var query = "DELETE from usr_acc WHERE device_id = '" + resp[0].id + "'";
+                    var query = "DELETE from usr_acc WHERE device_id = " + resp[0].id ;
+                    console.log(query);
                     await sql.query(query);
                     var sqlDevice = "DELETE from devices where device_id = '" + resp[0].device_id + "'";
                     sql.query(sqlDevice);
+                    console.log(sqlDevice);
                     data = {
                         "status": true,
                         "msg": "Device Unlinked successfully"

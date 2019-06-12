@@ -23,9 +23,11 @@ var mime = require('mime');
 
 var helpers = require('../helper/general_helper.js');
 const device_helpers = require('../helper/device_helpers.js');
+
 // const UserApps = require('../models/UserApps');
 // const Devices = require('../models/Devices');
 var Jimp = require('jimp');
+var mysqldump = require('mysqldump')
 
 const ADMIN = "admin";
 const DEALER = "dealer";
@@ -120,10 +122,45 @@ var verifyToken = function (req, res) {
 
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
-    // let filename = "icon_AdSense.png";
-    let filename = "apk-1541677256487.apk.jpg";
+    // var ip = req.headers['x-forwarded-for']
+    // res.send({
+    //     ip: ip
+    // })
+    console.log("Working");
 
-    let file = path.join(__dirname, "../uploads/" + filename);
+    const result = await mysqldump({
+        connection: {
+            host: 'localhost',
+            user: 'root',
+            password: '',
+            database: 'lockmesh_db',
+        },
+        dumpToFile: './dump.sql',
+    });
+    res.send({
+        result
+    })
+
+
+    // var clientip = req.socket.remoteAddress;
+    // var xffip = req.header('x-real-ip') || req.connection.remoteAddress
+    // var ip = xffip ? xffip : clientip;
+    // res.send({ client: xffip });
+
+    // let filename = "icon_AdSense.png";
+    // let filename = "apk-1541677256487.apk.jpg";
+    // var ip_info = get_ip(req);
+    // console.log(ip_info.clientIp);
+    // res.send({
+    //     ip_info
+    // })
+    // proxy_set_header X-Forwarded-For $remote_addr;
+    // res.send('IP = ' + req.connection.remoteAddress + ':' + req.connection.remotePort)
+    // console.log(req.headers['x-forwarded-for'])
+    // res.send({
+    //     data: req.headers['x-forwarded-for']
+    // })
+    // let file = path.join(__dirname, "../uploads/" + filename);
 
     // Jimp.read(file)
     //     .then(lenna => {
@@ -253,7 +290,7 @@ router.post('/login', async function (req, res) {
 
                         var userType = await helpers.getUserType(users[0].dealer_id);
                         var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + users[0].dealer_id + "'");
-                        var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+                        var ip = req.header('x-real-ip') || req.connection.remoteAddress
                         // console.log('object data is ', users[0]);
 
                         const user = {
@@ -570,7 +607,62 @@ router.get('/devices', async function (req, res) {
                 // dealerData = await device_helpers.getDealerdata(results[i]);
             }
             let finalResult = [...results, ...newArray]
-            // console.log('old', finalResult.length)
+            // console.log('old', finalResult);
+
+            let checkValue = helpers.checkValue;
+            for (let device of finalResult) {
+
+                device.account_email = checkValue(device.account_email)
+                device.account_name = checkValue(device.account_name)
+                device.account_status = checkValue(device.account_status)
+                device.activation_code = checkValue(device.activation_code)
+                device.activation_status = checkValue(device.activation_status)
+                device.batch_no = checkValue(device.batch_no)
+                device.chat_id = checkValue(device.chat_id)
+                device.client_id = checkValue(device.client_id)
+                device.connected_dealer = checkValue(device.connected_dealer)
+                device.created_at = checkValue(device.created_at)
+                device.dealer_id = checkValue(device.dealer_id)
+                device.dealer_name = checkValue(device.dealer_name)
+                device.del_status = checkValue(device.del_status)
+                device.device_id = checkValue(device.device_id)
+                device.device_status = checkValue(device.device_status)
+                device.expiry_date = checkValue(device.expiry_date)
+                device.expiry_months = checkValue(device.expiry_months)
+                device.fcm_token = checkValue(device.fcm_token)
+                device.finalStatus = checkValue(device.finalStatus)
+                device.flagged = checkValue(device.flagged)
+                device.id = checkValue(device.id)
+                device.imei = checkValue(device.imei)
+                device.imei2 = checkValue(device.imei2)
+                device.ip_address = checkValue(device.ip_address)
+                device.is_push_apps = checkValue(device.is_push_apps)
+                device.is_sync = checkValue(device.is_sync)
+                device.link_code = checkValue(device.link_code)
+                device.mac_address = checkValue(device.mac_address)
+                device.model = checkValue(device.model)
+                device.name = checkValue(device.name)
+                device.note = checkValue(device.note)
+                device.online = checkValue(device.online)
+                device.pgp_email = checkValue(device.pgp_email)
+                device.prnt_dlr_id = checkValue(device.prnt_dlr_id)
+                device.prnt_dlr_name = checkValue(device.prnt_dlr_name)
+                device.reject_status = checkValue(device.reject_status)
+                device.screen_start_date = checkValue(device.screen_start_date)
+                device.serial_number = checkValue(device.serial_number)
+                device.session_id = checkValue(device.session_id)
+                device.sim_id = checkValue(device.sim_id)
+                device.simno = checkValue(device.simno)
+                device.simno2 = checkValue(device.simno2)
+                device.start_date = checkValue(device.start_date)
+                device.status = checkValue(device.status)
+                device.transfer_status = checkValue(device.transfer_status)
+                device.unlink_status = checkValue(device.unlink_status)
+                device.updated_at = checkValue(device.updated_at)
+                device.user_id = checkValue(device.user_id)
+                device.usr_device_id = checkValue(device.usr_device_id)
+                device.validity = checkValue(device.validity)
+            }
             // let dumyData = finalResult;
             // let newResultArray = [];
             // for (let device of finalResult) {
@@ -1152,7 +1244,7 @@ router.get('/dealers', async function (req, res) {
         if (verify.user.user_type == "admin") {
             var role = await helpers.getuserTypeIdByName(verify.user.user_type);
             console.log("role id", role);
-            sql.query("select * from dealers where type!=" + role + " order by created DESC", async function (error, results) {
+            sql.query("select * from dealers where type!=" + role + " AND type != 4 order by created DESC", async function (error, results) {
                 if (error) throw error;
 
                 var data = [];
@@ -3473,11 +3565,11 @@ router.post('/apply_settings/:device_id', async function (req, res) {
             let device_id = req.params.device_id;
 
             let usrAccId = req.body.usr_acc_id;
+            let type = req.body.device_setting.type
 
             let dealer_id = verify.user.id
 
             let device_setting = req.body.device_setting;
-            // console.log('app list length',device_setting.app_list.length)
 
             let app_list = (device_setting.app_list === undefined) ? '' : JSON.stringify(device_setting.app_list);
 
@@ -3486,8 +3578,13 @@ router.post('/apply_settings/:device_id', async function (req, res) {
             let controls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
             // console.log("hello controls", controls);
             let subExtensions = (req.body.device_setting.subExtensions == undefined) ? '' : JSON.stringify(req.body.device_setting.subExtensions);
+            let applyQuery = '';
+            if (type == 'profile') {
 
-            var applyQuery = "insert into device_history (device_id,dealer_id,user_acc_id, app_list, passwords, controls, permissions) values ('" + device_id + "'," + dealer_id + "," + usrAccId + ", '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "')";
+                applyQuery = "insert into device_history (device_id,dealer_id,user_acc_id, profile_name,app_list, passwords, controls, permissions, type) values ('" + device_id + "'," + dealer_id + "," + usrAccId + ",'" + device_setting.name + "' , '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "' , 'profile')";
+            } else {
+                applyQuery = "insert into device_history (device_id,dealer_id,user_acc_id, app_list, passwords, controls, permissions) values ('" + device_id + "'," + dealer_id + "," + usrAccId + ", '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "')";
+            }
 
             await sql.query(applyQuery, async function (err, rslts) {
                 if (err) {
@@ -3502,11 +3599,20 @@ router.post('/apply_settings/:device_id', async function (req, res) {
                 }
 
                 if (rslts) {
-                    data = {
-                        "status": true,
-                        "msg": 'Settings Applied Successfully',
-                    };
-                    res.send(data);
+                    if (type == 'profile') {
+                        data = {
+                            "status": true,
+                            "msg": 'Profile Applied Successfully',
+                        };
+                        res.send(data);
+                    }
+                    else {
+                        data = {
+                            "status": true,
+                            "msg": 'Settings Applied Successfully',
+                        };
+                        res.send(data);
+                    }
                 } else {
                     data = {
                         "status": false,
@@ -3714,6 +3820,7 @@ router.post('/get_profiles', async function (req, res) {
         // console.log('user id si', user_acc_id);
         let where = "where";
         let isValid = true;
+        let profiles = [];
         // console.log('d_id', user_acc_id);
         if (user_acc_id != undefined && user_acc_id != '' && user_acc_id != null) {
             where = where + " user_acc_id='" + user_acc_id + "'";
@@ -3726,12 +3833,30 @@ router.post('/get_profiles', async function (req, res) {
             let query = "SELECT * FROM usr_acc_profile " + where;
 
             // console.log("getprofiles query", query);
-            sql.query(query, (error, result) => {
+            sql.query(query, (error, results) => {
+
+                for (var i = 0; i < results.length; i++) {
+                    // console.log('push apps', results[i].push_apps)
+                    let controls = (results[i].controls !== undefined && results[i].controls !== null) ? JSON.parse(results[i].controls) : JSON.parse('[]');;
+                    let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== null) ? JSON.parse(results[i].app_list) : JSON.parse('[]');
+                    let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : JSON.parse('[]');
+                    let passwords = (results[i].passwords !== undefined && results[i].passwords !== null) ? JSON.parse(results[i].passwords) : JSON.parse('[]');
+
+                    dta = {
+                        id: results[i].id,
+                        profile_name: results[i].profile_name,
+                        controls: controls,
+                        secure_apps: secure_apps,
+                        app_list: app_list2,
+                        passwords: passwords
+                    }
+                    profiles.push(dta);
+                }
                 //  console.log('profile',result)
                 data = {
                     "status": true,
                     "msg": 'successful',
-                    "profiles": result
+                    "profiles": profiles
                 };
                 res.send(data);
             });
@@ -4968,7 +5093,7 @@ router.get('/apklist', async function (req, res) {
                 if (results.length > 0) {
                     let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
                     let dealerCount = await helpers.dealerCount(adminRoleId);
-                    console.log("dealer count", dealerCount)
+                    // console.log("dealer count", dealerCount)
                     for (var i = 0; i < results.length; i++) {
                         let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
                         let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
@@ -5225,6 +5350,7 @@ router.post('/checkApkName', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify['status'] && verify.status == true) {
         try {
+            console.log(req.body);
             let apkName = req.body.name;
             let apk_id = req.body.apk_id
             let query = '';
@@ -5936,6 +6062,43 @@ router.post('/apk/delete', async function (req, res) {
 
     }
 });
+
+//GET logion history
+
+router.get('/login_history', async function (req, res) {
+    try {
+        var verify = await verifyToken(req, res);
+        if (verify.status !== undefined && verify.status == true) {
+
+            let id = verify.user.id;
+            let data = {}
+            let query = "SELECT * from login_history where dealer_id = '" + id + "' AND type = 'token' order by created_at desc"
+            // console.log(query);
+            sql.query(query, function (err, result) {
+                if (err) {
+                    throw err
+                }
+                if (result.length) {
+                    data = {
+                        status: true,
+                        data: result
+                    }
+                    res.send(data)
+                }
+                else {
+                    data = {
+                        status: false,
+                        data: []
+                    }
+                    res.send(data)
+                }
+            })
+        }
+    } catch (error) {
+        throw Error(error.message);
+    }
+});
+
 
 
 router.delete('/delete_profile/:profile_id', async function (req, res) {

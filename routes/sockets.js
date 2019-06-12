@@ -283,13 +283,13 @@ module.exports.listen = async function (server) {
 
             // ===================================================== Pending Device History ==================================================
             // pending settings for device
-            var setting_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='history' order by created_at desc limit 1";
+
+            var setting_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='profile' order by created_at desc limit 1";
             let setting_res = await sql.query(setting_query);
             if (setting_res.length) {
-                let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND type='history' ";
+
+                let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND (type='history' OR type = 'profile') ";
                 await sql.query(historyUpdate);
-
-
                 socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
                     device_id: device_id,
                     app_list: (setting_res[0].app_list === undefined || setting_res[0].app_list === null || setting_res[0].app_list === '') ? '[]' : setting_res[0].app_list,
@@ -298,12 +298,33 @@ module.exports.listen = async function (server) {
                     extension_list: (setting_res[0].permissions === undefined || setting_res[0].permissions === null || setting_res[0].permissions === '') ? '[]' : setting_res[0].permissions,
                     status: true
                 });
-            } else {
-                socket.emit('get_applied_settings_' + device_id, {
-                    device_id: device_id,
-                    status: false
-                });
+
             }
+            else {
+                var setting_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='history' order by created_at desc limit 1";
+                let setting_res = await sql.query(setting_query);
+                if (setting_res.length) {
+                    let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND type='history' ";
+                    await sql.query(historyUpdate);
+
+
+                    socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
+                        device_id: device_id,
+                        app_list: (setting_res[0].app_list === undefined || setting_res[0].app_list === null || setting_res[0].app_list === '') ? '[]' : setting_res[0].app_list,
+                        passwords: (setting_res[0].passwords === undefined || setting_res[0].passwords === null || setting_res[0].passwords === '') ? '{}' : setting_res[0].passwords,
+                        settings: (setting_res[0].controls === undefined || setting_res[0].controls === null || setting_res[0].controls === '') ? '{}' : setting_res[0].controls,
+                        extension_list: (setting_res[0].permissions === undefined || setting_res[0].permissions === null || setting_res[0].permissions === '') ? '[]' : setting_res[0].permissions,
+                        status: true
+                    });
+                } else {
+                    socket.emit('get_applied_settings_' + device_id, {
+                        device_id: device_id,
+                        status: false
+                    });
+                }
+            }
+
+
 
             // ================================================================ IMEI ===================================================
             // IMEI SOCKET
@@ -323,6 +344,10 @@ module.exports.listen = async function (server) {
                 var mac_address = data.mac;
                 var imei1 = data.imei1
                 var imei2 = data.imei2
+                console.log(data);
+                console.log("IMEI CHANGED");
+
+
                 if (serial_number !== undefined && serial_number !== null && mac_address !== undefined && mac_address !== null) {
 
                     sql.query("UPDATE devices set imei = '" + imei1 + "', imei2 = '" + imei2 + "' WHERE device_id = '" + deviceId + "'")
