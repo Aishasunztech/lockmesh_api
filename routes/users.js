@@ -126,20 +126,7 @@ router.get('/', async function (req, res, next) {
     // res.send({
     //     ip: ip
     // })
-    console.log("Working");
 
-    const result = await mysqldump({
-        connection: {
-            host: 'localhost',
-            user: 'root',
-            password: '',
-            database: 'lockmesh_db',
-        },
-        dumpToFile: './dump.sql',
-    });
-    res.send({
-        result
-    })
 
 
     // var clientip = req.socket.remoteAddress;
@@ -208,6 +195,32 @@ router.get('/', async function (req, res, next) {
     //     console.log(zip.readAsText(zipEntries[i]));
     // }
 });
+
+/*** Add Dealer ***/
+router.post('/create_backup_DB', async function (req, res) {
+
+    res.setHeader('Content-Type', 'application/json');
+
+    var verify = await verifyToken(req, res);
+
+    if (verify.status !== undefined && verify.status == true) {
+        console.log("Working");
+        // let file_name = 
+        const result = await mysqldump({
+            connection: {
+                host: 'localhost',
+                user: 'root',
+                password: '',
+                database: 'lockmesh_db',
+            },
+            dumpToFile: './dump.sql',
+        });
+        res.send({
+            result
+        })
+    }
+});
+
 
 /*****User Registration*****/
 router.post('/Signup', async function (req, res) {
@@ -568,6 +581,9 @@ router.get('/is_admin', async function (req, res) {
 router.get('/user_type', async function (req, res) {
 
 });
+
+
+
 
 /**GET all the devices**/
 router.get('/devices', async function (req, res) {
@@ -3407,6 +3423,55 @@ router.put('/deleteUnlinkDevice', async function (req, res) {
     }
 })
 
+// policy name should be unique
+router.post('/check_policy_name', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify['status'] && verify.status == true) {
+        try {
+            let policy_name = req.body.name !== undefined ? req.body.name : null;
+            let loggedDealerId = verify.user.id;
+            let loggedDealerType = verify.user.user_type;
+            let connectedDealer = verify.user.connected_dealer;
+            let checkExistingQ = "SELECT policy_name FROM policy WHERE policy_name='" + policy_name + "' AND delete_status = 0 ";
+            if (loggedDealerType === ADMIN) {
+
+            } else if (loggedDealerType === DEALER) {
+                let subDealerQ = "SELECT dealer_id FROM dealers WHERE connected_dealer=" + loggedDealerId;
+                let subDealers = await sql.query(subDealerQ);
+                let subDealerArray = [];
+                subDealers.map((dealer) => {
+                    subDealerArray.push(dealer.dealer_id)
+                });
+                if (subDealerArray.length) {
+                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id in (" + subDealerArray.join() + "))"
+                } else {
+                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " )"
+                }
+            } else if (loggedDealerType === SDEALER) {
+                checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id = " + connectedDealer + ")";
+            }
+            let checkExisting = await sql.query(checkExistingQ);
+            if (checkExisting.length) {
+                data = {
+                    status: false,
+                };
+                res.send(data);
+                return;
+            }
+            else {
+                data = {
+                    status: true,
+                };
+                res.send(data);
+                return;
+            }
+        } catch (error) {
+            throw error
+        }
+
+    }
+});
+
 router.post('/save_policy', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
@@ -3423,7 +3488,7 @@ router.post('/save_policy', async function (req, res) {
                 let loggedDealerId = verify.user.id;
                 let loggedDealerType = verify.user.user_type;
                 let connectedDealer = verify.user.connected_dealer;
-                let checkExistingQ = "SELECT policy_name FROM policy WHERE policy_name='" + policy_name + "' ";
+                let checkExistingQ = "SELECT policy_name FROM policy WHERE policy_name='" + policy_name + "' AND delete_status = 0 ";
                 // let checkExisting = await sql.query(checkExistingQ);
 
                 if (loggedDealerType === ADMIN) {
@@ -5809,6 +5874,9 @@ router.post('/save_apk_permissions', async function (req, res) {
 
     }
 })
+
+
+
 
 /** Save Policy Permission **/
 router.post('/save_policy_permissions', async function (req, res) {
