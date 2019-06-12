@@ -3610,7 +3610,7 @@ router.post('/save/profile', async function (req, res) {
             if (result.length == 0 || name == '') {
                 var applyQuery = "insert into usr_acc_profile (profile_name,dealer_id, user_acc_id, app_list,permissions, controls,passwords) values ('" + name + "', '" + dealer_id + "','" + usr_acc_id + "','" + app_list + "','" + permissions + "', '" + controls + "', '" + passwords + "')";
                 // console.log('query insert', applyQuery);
-                console.log(applyQuery, 'thats it');
+                // console.log(applyQuery, 'thats it');
 
                 sql.query(applyQuery, async function (err, rslts) {
                     if (err) throw err;
