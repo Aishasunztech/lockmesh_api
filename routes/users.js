@@ -23,9 +23,11 @@ var mime = require('mime');
 
 var helpers = require('../helper/general_helper.js');
 const device_helpers = require('../helper/device_helpers.js');
+
 // const UserApps = require('../models/UserApps');
 // const Devices = require('../models/Devices');
 var Jimp = require('jimp');
+var mysqldump = require('mysqldump')
 
 const ADMIN = "admin";
 const DEALER = "dealer";
@@ -124,11 +126,26 @@ router.get('/', async function (req, res, next) {
     // res.send({
     //     ip: ip
     // })
+    console.log("Working");
 
-    var clientip = req.socket.remoteAddress;
-    var xffip = req.header('x-real-ip') || req.connection.remoteAddress
-    var ip = xffip ? xffip : clientip;
-    res.send({ client: xffip });
+    const result = await mysqldump({
+        connection: {
+            host: 'localhost',
+            user: 'root',
+            password: '',
+            database: 'lockmesh_db',
+        },
+        dumpToFile: './dump.sql',
+    });
+    res.send({
+        result
+    })
+
+
+    // var clientip = req.socket.remoteAddress;
+    // var xffip = req.header('x-real-ip') || req.connection.remoteAddress
+    // var ip = xffip ? xffip : clientip;
+    // res.send({ client: xffip });
 
     // let filename = "icon_AdSense.png";
     // let filename = "apk-1541677256487.apk.jpg";
