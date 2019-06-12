@@ -1,0 +1,148 @@
+
+
+New Steps
+Step 1 : Admin add dealer from admin panel and we generate link code 
+Step 2 : App user login with this link code
+Step 3 : App user send us the details like serial number,imei,mac address after click on link Device (we will auto generate system device id) 
+Step 4 : We will update this info and display this to the panel 
+Step 5 : After this dealer can add Name, Email, and activate the account (Start and End dates for expiry)
+
+
+New Changes
+-ADD DEVICE and DECLINE DEVICE for web
+-status api for mobile
+
+
+
+Tasks Done:
+1.Add dealer api done- generated link code and sending email also
+2.Get dealers api done  -- all dealers list
+3.dealer login api done
+4.login api for app done
+5.link device for app done
+6.add dealers api done
+7.edit dealers api done
+8.get devices (for particular dealer) api done
+9.delete device from app and web done
+10.status api
+11.edit api
+
+
+
+
+router.post('/screen/adddevice', async function(req, resp) {
+    //res.setHeader('Content-Type', 'application/json');
+    console.log(req);
+    var imei = req.body.imei;
+    var expdate = req.body.expdate;
+    
+    var sql1 = "SELECT * FROM screen_lock_devices WHERE imei = '" + imei + "'";
+    //console.log(sql1);
+    var res = await sql.query(sql1);
+   // console.log(res); 
+   // console.log(res.length);
+
+   // if(res[0].imei !== null && res[0].imei !== ''){
+        if(res.length != 0){
+       // console.log('yes');
+        data = {
+            "status": false,
+            "msg": "Device already added"            
+        };
+        resp.send(data);
+
+    }else{
+        sql.query('INSERT INTO screen_lock_devices (imei,expiry_date) values(?,?)', [imei , expdate], function(error, rows) {
+            //response.end(JSON.stringify(rows));
+            if (error) throw error;
+            data = {
+                "status": true,
+                "msg": "Device added"
+            };
+          
+            resp.send(data);
+        });
+    }
+
+});
+
+Point no 7 
+DEVICE ID, cannot be changed ever for each Mac adddress
+once its assigned system should store it in DB
+I can unlink or Re-link many times, it cannot change DEVICE ID
+
+Unlink doesn't mean delete the whole Device from memory
+it means maybe another Dealer can accept or a Sub Dealer
+once a Device is given a DEVICE ID, it cannot keep changing
+
+because some of our customers Blacklist Devices from re- entering
+Suppose you have a Device and they dont make payment. They can unlink and re-link with a new Dealer....well that Device cannot have two DEVICE ID's simply because it unlinked
+we need a way to Permenantly marry a DEVICE ID to a Device, Mac is one way, IMEI another way
+
+eventualy, we will need to go further and also maybe MAtch the SIM (but for now please MAC and IMEI is enough to cross check if Device was previously linked)
+
+Store all DEVICE ID, MAC, IMEI, etc... in the DataBase of server even if a Device Unlinks....when a new device is linked check if MAC and IMEI match and if they do then assign DEVICE ID previously stored
+ 
+
+
+    var sql1 = "update devices set account_status='suspended' where device_id = '"+ device_id +"'";
+    console.log(sql1);
+
+    var rest = sql.query(sql1 , function(error, results) {
+       
+        if (error) throw error;
+        if(results.affectedRows == 0){
+        data = {
+            "status" : false,
+            "msg" : "Account not suspended.Please try again."
+        } 
+        }else{
+            
+            data = {
+                "status" : true,
+                "msg" : "Account suspended successfully."
+            } 
+
+        }
+        res.send(data);
+    });
+
+
+
+
+
+cron.schedule('*/2 * * * *', () => {
+    var tod_dat = datetime.create();
+    var formatted_dt = tod_dat.format('Y-m-d H:M:S');
+
+   // var sqll = "select * from devices"
+    console.log('running a task every two minutes');
+    var sqll = "select * from devices where device_status = 1";
+    var results = sql.query(sqll);
+
+    for(var i = 0; i < results.length;i++){
+        if(formatted_dt == results[i].expiry_date){
+            var update_sqll = "update devices set status = 'expired' where device_id ='" + results[i].expiry_date + "'";
+            sql.query(update_sqll , function(error, results){
+                if(error) throw error;
+                if(results.affectedRows == 0){
+                    console.log('not done');
+                }else{
+                    console.log('expired');
+                }
+         });
+         
+        }
+        
+  }
+
+  });
+
+{
+	"demail" : "nehaftechiz@gmail.com",
+	"pwd" : "5189QGiG8Y"
+}
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImRlYWxlcl9pZCI6MywiZGVhbGVyX25hbWUiOiJuZWhhIiwiZGVhbGVyX2VtYWlsIjoibmVoYWZ0ZWNoaXpAZ21haWwuY29tIiwibGlua19jb2RlIjoiODU2NDI0IiwiY3JlYXRlZCI6IjIwMTgtMDktMjcgMTc6MDM6NDUiLCJtb2RpZmllZCI6IjIwMTgtMDktMjcgMTc6MDM6NDUifSwiaWF0IjoxNTM5NzU1NzA4LCJleHAiOjE1Mzk4NDIxMDh9.AXHjcWqfIh3K381aKjBkEUZ7gk4sa3U1N7xMl7hXB4I
+
+tech@$321
