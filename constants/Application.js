@@ -8,6 +8,9 @@ module.exports = {
     SOCKET: 'socket',
     TOKEN: "token",
 
+    // APP CONSTANSTS
+    APP_TITLE: 'LockMesh',
+
     // dealers
     DEALER_ACTIVE: "active",
     DEALER_SUSPENDED: "suspended",
