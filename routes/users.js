@@ -29,6 +29,11 @@ const device_helpers = require('../helper/device_helpers.js');
 var Jimp = require('jimp');
 var mysqldump = require('mysqldump')
 
+var archiver = require('archiver');
+// archiver.registerFormat('zip-encryptable', require('archiver-zip-encryptable'));
+
+
+
 const ADMIN = "admin";
 const DEALER = "dealer";
 const SDEALER = "sdealer";
@@ -143,6 +148,13 @@ router.get('/', async function (req, res, next) {
     //     headers: ["c1", "c2", "c3"]
     // }
 
+
+
+
+
+
+    // res.send(tablesName)
+
     // let data1 = await cm.import(options, data, function (err, rows) {
     //     if (err === null) err = false;
     //     // expect(err).to.equal(false);
@@ -236,13 +248,66 @@ router.post('/create_backup_DB', async function (req, res) {
                 password: '',
                 database: 'lockmesh_db',
             },
-            dumpToFile: './uploads/' + file_name,
+            dumpToFile: './db_backup/' + file_name,
         });
-        let data = {
-            status: true,
-            path: file_name
+        let allTables = await sql.query("SELECT TABLE_NAME AS _table FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'lockmesh_db'")
+        // console.log(allTables);
+        let tablesNames = allTables.map(function (item) {
+            return item._table
+        })
+        // console.log(allColumnsNames);
+        var ws;
+        var wb = XLSX.utils.book_new();
+
+        for (let i = 0; i < tablesNames.length; i++) {
+            let tableDate = await sql.query("SELECT * from " + tablesNames[i])
+            if (tableDate.length) {
+                /* make the worksheet */
+                ws = XLSX.utils.json_to_sheet(tableDate);
+
+                /* add to workbook */
+                XLSX.utils.book_append_sheet(wb, ws, tablesNames[i]);
+            }
         }
-        res.send(data)
+        let fileNameCSV = 'testDBBackup' + '_' + Date.now() + ".xlsx";
+        await XLSX.writeFile(wb, path.join(__dirname, "../db_backup/" + fileNameCSV));
+        let userPass = await sql.query("select password from dealers where dealer_id=" + verify.user.id + "")
+        // archiver.registerFormat('zip-encryptable', require('archiver-zip-encryptable'));
+        var archive = archiver('zip', {
+            gzip: true,
+            zlib: { level: 9 },
+            forceLocalTime: true,
+            // password: 'test'
+        });
+
+
+        let zipFileName = "DB_backup" + Date.now() + ".zip"
+        var output = fs.createWriteStream("./db_backup/" + zipFileName);
+
+
+        archive.on('error', function (err) {
+            throw err;
+        });
+        // pipe archive data to the output file
+        archive.pipe(output);
+
+        // append files
+        archive.file(path.join(__dirname, "../db_backup/" + fileNameCSV), { name: 'DataBase_Backup_excel.xlsx' });
+        archive.file(path.join(__dirname, "../db_backup/" + file_name), { name: 'DataBase_Backup_sql.sql' });
+
+        //
+        archive.finalize();
+
+        output.on('close', function () {
+            // console.log(archive.pointer() + ' total bytes');
+            // console.log('archiver has been finalized and the output file descriptor has closed.');
+            let data = {
+                status: true,
+                path: zipFileName
+            }
+            res.send(data)
+        });
+        // let file =  zipFileName
     }
 });
 
@@ -6077,6 +6142,19 @@ router.post('/save_policy_permissions', async function (req, res) {
 
 
 
+/** Get back up DB File **/
+router.get("/getBackupFile/:file", (req, res) => {
+
+    if (fs.existsSync(path.join(__dirname, "../db_backup/" + req.params.file))) {
+        let file = path.join(__dirname, "../db_backup/" + req.params.file);
+        res.sendFile(file);
+    } else {
+        res.send({
+            "status": false,
+            "msg": "file not found"
+        })
+    }
+});
 /** Get image logo **/
 router.get("/getFile/:file", (req, res) => {
 
