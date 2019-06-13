@@ -1282,8 +1282,6 @@ router.put('/undo_delete_user/:user_id', async function (req, res) {
 
 
 
-
-
 /*Get dealers*/
 router.get('/dealers/:pageName', async function (req, res) {
     var verify = await verifyToken(req, res);
@@ -1298,8 +1296,8 @@ router.get('/dealers/:pageName', async function (req, res) {
             var role = await helpers.getDealerTypeIdByName('sdealer');
             where = " AND connected_dealer =" + verify.user.id
         }
-        console.log("where where", where);
-        console.log("select * from dealers where type=" + role + " " + where + " order by created DESC");
+        // console.log("where where", where);
+        // console.log("select * from dealers where type=" + role + " " + where + " order by created DESC");
         if (role) {
             sql.query("select * from dealers where type=" + role + " " + where + " order by created DESC", async function (error, results) {
                 if (error) throw error;
@@ -1322,7 +1320,8 @@ router.get('/dealers/:pageName', async function (req, res) {
                         "unlink_status": results[i].unlink_status,
                         "created": results[i].created,
                         "modified": results[i].modified,
-                        "connected_devices": get_connected_devices
+                        "connected_devices": get_connected_devices,
+                        "devicesList": await helpers.getAllRecordbyDealerId(results[i].dealer_id)
                     };
 
                     if (get_parent_dealer != undefined && get_parent_dealer.length > 0) {
@@ -1350,7 +1349,7 @@ router.get('/dealers', async function (req, res) {
         if (verify.user.user_type == "admin") {
             var role = await helpers.getuserTypeIdByName(verify.user.user_type);
             console.log("role id", role);
-            sql.query("select * from dealers where type!=" + role + " AND type != 4 order by created DESC", async function (error, results) {
+            sql.query("select * from dealers where type!=" + role + " AND type != 4 order by created DESC", async function (error, results) {           
                 if (error) throw error;
 
                 var data = [];
@@ -1361,6 +1360,7 @@ router.get('/dealers', async function (req, res) {
                     }
                     var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].dealer_id + "'");
 
+                    
                     dt = {
                         "status": true,
                         "dealer_id": results[i].dealer_id,
@@ -1369,6 +1369,7 @@ router.get('/dealers', async function (req, res) {
                         "link_code": results[i].link_code,
                         "account_status": results[i].account_status,
                         "unlink_status": results[i].unlink_status,
+                        "connected_dealer": results[i].connected_dealer,
                         "created": results[i].created,
                         "modified": results[i].modified,
                         "connected_devices": get_connected_devices
@@ -1409,7 +1410,8 @@ router.get('/dealers', async function (req, res) {
                         "unlink_status": results[i].unlink_status,
                         "created": results[i].created,
                         "modified": results[i].modified,
-                        "connected_devices": get_connected_devices
+                        "connected_devices": get_connected_devices,
+                        "connected_dealer": results[i].connected_dealer,
                     };
                     data.push(dt);
                 }

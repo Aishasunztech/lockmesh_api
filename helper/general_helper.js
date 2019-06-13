@@ -293,6 +293,25 @@ module.exports = {
 
 		// return deviceId;
 	},
+
+	getAllRecordbyDealerId: async function (dealer_id) {
+		// console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.id = ' + device_id)
+		let results = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.dealer_id = "' + dealer_id + '"');
+		if (results.length) {
+			for (let device of results) {
+				device.finalStatus = device_helpers.checkStatus(device)
+				device.pgp_email = await device_helpers.getPgpEmails(device)
+				device.sim_id = await device_helpers.getSimids(device)
+				device.chat_id = await device_helpers.getChatids(device)
+			}
+
+			return results
+		}
+		else {
+			return [];
+		}
+	},
+
 	checkLinkCode: async function (link_code) {
 
 		let query = "select dealer_id from dealers where link_code = '" + link_code + "';"
