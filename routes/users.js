@@ -29,6 +29,11 @@ const device_helpers = require('../helper/device_helpers.js');
 var Jimp = require('jimp');
 var mysqldump = require('mysqldump')
 
+var archiver = require('archiver');
+// archiver.registerFormat('zip-encryptable', require('archiver-zip-encryptable'));
+
+
+
 const ADMIN = "admin";
 const DEALER = "dealer";
 const SDEALER = "sdealer";
@@ -127,7 +132,35 @@ router.get('/', async function (req, res, next) {
     //     ip: ip
     // })
 
+    // var cm = require('csv-mysql');
 
+    // var data = '"1","2","3"\n"4","5","6"';
+    // var options = {
+    //     mysql: {
+    //         host: 'localhost',
+    //         user: 'root',
+    //         database: 'lockmesh_db',
+    //     },
+    //     csv: {
+    //         comment: '#',
+    //         quote: '"'
+    //     },
+    //     headers: ["c1", "c2", "c3"]
+    // }
+
+
+
+
+
+
+    // res.send(tablesName)
+
+    // let data1 = await cm.import(options, data, function (err, rows) {
+    //     if (err === null) err = false;
+    //     // expect(err).to.equal(false);
+    //     // done();
+    // });
+    // res.send(data1)
 
     // var clientip = req.socket.remoteAddress;
     // var xffip = req.header('x-real-ip') || req.connection.remoteAddress
@@ -204,8 +237,10 @@ router.post('/create_backup_DB', async function (req, res) {
     var verify = await verifyToken(req, res);
 
     if (verify.status !== undefined && verify.status == true) {
-        console.log("Working");
-        // let file_name = 
+        // console.log("Working");
+        let date = new Date();
+        let formattedDate = moment(date).format("YYYY/MM/DD")
+        let file_name = 'dump_' + Constants.APP_TITLE + '_' + Date.now() + '.sql'
         const result = await mysqldump({
             connection: {
                 host: 'localhost',
@@ -213,11 +248,66 @@ router.post('/create_backup_DB', async function (req, res) {
                 password: '',
                 database: 'lockmesh_db',
             },
-            dumpToFile: './dump.sql',
+            dumpToFile: './db_backup/' + file_name,
         });
-        res.send({
-            result
+        let allTables = await sql.query("SELECT TABLE_NAME AS _table FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'lockmesh_db'")
+        // console.log(allTables);
+        let tablesNames = allTables.map(function (item) {
+            return item._table
         })
+        // console.log(allColumnsNames);
+        var ws;
+        var wb = XLSX.utils.book_new();
+
+        for (let i = 0; i < tablesNames.length; i++) {
+            let tableDate = await sql.query("SELECT * from " + tablesNames[i])
+            if (tableDate.length) {
+                /* make the worksheet */
+                ws = XLSX.utils.json_to_sheet(tableDate);
+
+                /* add to workbook */
+                XLSX.utils.book_append_sheet(wb, ws, tablesNames[i]);
+            }
+        }
+        let fileNameCSV = 'testDBBackup' + '_' + Date.now() + ".xlsx";
+        await XLSX.writeFile(wb, path.join(__dirname, "../db_backup/" + fileNameCSV));
+        let userPass = await sql.query("select password from dealers where dealer_id=" + verify.user.id + "")
+        // archiver.registerFormat('zip-encryptable', require('archiver-zip-encryptable'));
+        var archive = archiver('zip', {
+            gzip: true,
+            zlib: { level: 9 },
+            forceLocalTime: true,
+            // password: 'test'
+        });
+
+
+        let zipFileName = "DB_backup" + Date.now() + ".zip"
+        var output = fs.createWriteStream("./db_backup/" + zipFileName);
+
+
+        archive.on('error', function (err) {
+            throw err;
+        });
+        // pipe archive data to the output file
+        archive.pipe(output);
+
+        // append files
+        archive.file(path.join(__dirname, "../db_backup/" + fileNameCSV), { name: 'DataBase_Backup_excel.xlsx' });
+        archive.file(path.join(__dirname, "../db_backup/" + file_name), { name: 'DataBase_Backup_sql.sql' });
+
+        //
+        archive.finalize();
+
+        output.on('close', function () {
+            // console.log(archive.pointer() + ' total bytes');
+            // console.log('archiver has been finalized and the output file descriptor has closed.');
+            let data = {
+                status: true,
+                path: zipFileName
+            }
+            res.send(data)
+        });
+        // let file =  zipFileName
     }
 });
 
@@ -1192,8 +1282,6 @@ router.put('/undo_delete_user/:user_id', async function (req, res) {
 
 
 
-
-
 /*Get dealers*/
 router.get('/dealers/:pageName', async function (req, res) {
     var verify = await verifyToken(req, res);
@@ -1208,8 +1296,8 @@ router.get('/dealers/:pageName', async function (req, res) {
             var role = await helpers.getDealerTypeIdByName('sdealer');
             where = " AND connected_dealer =" + verify.user.id
         }
-        console.log("where where", where);
-        console.log("select * from dealers where type=" + role + " " + where + " order by created DESC");
+        // console.log("where where", where);
+        // console.log("select * from dealers where type=" + role + " " + where + " order by created DESC");
         if (role) {
             sql.query("select * from dealers where type=" + role + " " + where + " order by created DESC", async function (error, results) {
                 if (error) throw error;
@@ -1232,7 +1320,8 @@ router.get('/dealers/:pageName', async function (req, res) {
                         "unlink_status": results[i].unlink_status,
                         "created": results[i].created,
                         "modified": results[i].modified,
-                        "connected_devices": get_connected_devices
+                        "connected_devices": get_connected_devices,
+                        "devicesList": await helpers.getAllRecordbyDealerId(results[i].dealer_id)
                     };
 
                     if (get_parent_dealer != undefined && get_parent_dealer.length > 0) {
@@ -1260,7 +1349,7 @@ router.get('/dealers', async function (req, res) {
         if (verify.user.user_type == "admin") {
             var role = await helpers.getuserTypeIdByName(verify.user.user_type);
             console.log("role id", role);
-            sql.query("select * from dealers where type!=" + role + " AND type != 4 order by created DESC", async function (error, results) {
+            sql.query("select * from dealers where type!=" + role + " AND type != 4 order by created DESC", async function (error, results) {           
                 if (error) throw error;
 
                 var data = [];
@@ -1271,6 +1360,7 @@ router.get('/dealers', async function (req, res) {
                     }
                     var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].dealer_id + "'");
 
+                    
                     dt = {
                         "status": true,
                         "dealer_id": results[i].dealer_id,
@@ -1279,6 +1369,7 @@ router.get('/dealers', async function (req, res) {
                         "link_code": results[i].link_code,
                         "account_status": results[i].account_status,
                         "unlink_status": results[i].unlink_status,
+                        "connected_dealer": results[i].connected_dealer,
                         "created": results[i].created,
                         "modified": results[i].modified,
                         "connected_devices": get_connected_devices
@@ -1319,7 +1410,8 @@ router.get('/dealers', async function (req, res) {
                         "unlink_status": results[i].unlink_status,
                         "created": results[i].created,
                         "modified": results[i].modified,
-                        "connected_devices": get_connected_devices
+                        "connected_devices": get_connected_devices,
+                        "connected_dealer": results[i].connected_dealer,
                     };
                     data.push(dt);
                 }
@@ -6052,6 +6144,19 @@ router.post('/save_policy_permissions', async function (req, res) {
 
 
 
+/** Get back up DB File **/
+router.get("/getBackupFile/:file", (req, res) => {
+
+    if (fs.existsSync(path.join(__dirname, "../db_backup/" + req.params.file))) {
+        let file = path.join(__dirname, "../db_backup/" + req.params.file);
+        res.sendFile(file);
+    } else {
+        res.send({
+            "status": false,
+            "msg": "file not found"
+        })
+    }
+});
 /** Get image logo **/
 router.get("/getFile/:file", (req, res) => {
 
