@@ -293,6 +293,25 @@ module.exports = {
 
 		// return deviceId;
 	},
+
+	getAllRecordbyDealerId: async function (dealer_id) {
+		// console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.id = ' + device_id)
+		let results = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.dealer_id = "' + dealer_id + '"');
+		if (results.length) {
+			for (let device of results) {
+				device.finalStatus = device_helpers.checkStatus(device)
+				device.pgp_email = await device_helpers.getPgpEmails(device)
+				device.sim_id = await device_helpers.getSimids(device)
+				device.chat_id = await device_helpers.getChatids(device)
+			}
+
+			return results
+		}
+		else {
+			return [];
+		}
+	},
+
 	checkLinkCode: async function (link_code) {
 
 		let query = "select dealer_id from dealers where link_code = '" + link_code + "';"
@@ -476,9 +495,7 @@ module.exports = {
 			}
 			if (stdout) {
 				let array = stdout.split(' ');
-				console.log("arr", array);
 				let label = array[1].split('=');
-				console.log("label", label);
 
 				return (label[1]) ? label[1].replace(/\'/g, '') : false;
 			}
@@ -538,8 +555,7 @@ module.exports = {
 		try {
 			let versionName = "aapt dump badging " + filePath + " | grep \"versionName\" | sed -e \"s/.*versionName='//\" -e \"s/' .*//\"";
 			const { stdout, stderr, error } = await exec(versionName);
-			// console.log('stdout:', stdout);
-			// console.log('stderr:', stderr);
+			
 			if (error) {
 				return false;
 			}
@@ -561,8 +577,8 @@ module.exports = {
 			let label = "aapt dump badging " + filePath + " | grep \"application\" | sed -e \"s/.*label='//\" -e \"s/' .*//\""
 				;
 			const { stdout, stderr, error } = await exec(label);
-			// console.log('stdout:', stdout);
-			// console.log('stderr:', stderr);
+			console.log('stdout:', stdout);
+			console.log('stderr:', stderr);
 			if (error) {
 				return false;
 			}
@@ -571,7 +587,12 @@ module.exports = {
 				return false
 			}
 			if (stdout) {
-				return stdout;
+				let array = stdout.split(/\r?\n/);
+				console.log("stdout linux: ", array);
+				let label = array[0].split(':');
+
+				return (label[1]) ? label[1].replace(/\'/g, '') : false;
+
 			}
 			return false;
 
@@ -579,7 +600,6 @@ module.exports = {
 			return await this.getWindowAPKLabelScript(filePath);
 		}
 	},
-
 	// getting
 	getAPKPackageName: async function (filePath) {
 		try {
