@@ -3232,7 +3232,7 @@ router.get('/get_app_permissions', async function (req, res) {
         // console.log('id is the ', req.params);
         let loggedUserType = verify.user.user_type;
         // if (loggedUserType !== Constants.ADMIN) {
-        let query = "select * from default_apps";
+        let query = "select id, unique_name as uniqueName, label, package_name as packageName, icon, extension, visible, default_app, extension_id, created_at from default_apps";
 
         sql.query(query, async (error, apps) => {
 
@@ -3248,7 +3248,7 @@ router.get('/get_app_permissions', async function (req, res) {
                     Extension.push(item);
                 }
 
-                if (item.extension == 0 && item.visible == 1) {
+                if (item.extension == 0 && item.extension_id === 0) {
                     onlyApps.push(item)
                 }
             }
@@ -3263,8 +3263,8 @@ router.get('/get_app_permissions', async function (req, res) {
                         //  console.log('sub ext item', item.guest)
                         // console.log(ext.unique_name, 'dfs',item.unique_name);
                         subExtension.push({
-                            uniqueName: ext.unique_name,
-                            uniqueExtension: item.unique_name,
+                            uniqueName: ext.uniqueName,
+                            uniqueExtension: item.uniqueName,
                             guest: item.guest != undefined ? item.guest : 0,
                             label: item.label,
                             icon: item.icon,
@@ -3280,7 +3280,7 @@ router.get('/get_app_permissions', async function (req, res) {
 
 
                 newExtlist.push({
-                    uniqueName: ext.unique_name,
+                    uniqueName: ext.uniqueName,
                     guest: ext.guest != undefined ? ext.guest : 0,
                     encrypted: ext.encrypted != undefined ? ext.encrypted : 0,
                     enable: ext.enable != undefined ? ext.enable : 0,
