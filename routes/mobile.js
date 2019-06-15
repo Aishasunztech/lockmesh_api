@@ -647,14 +647,14 @@ router.delete('/unlink/:macAddr/:serialNo', async function (req, res) {
     // console.log("serialNo", serial_number);
     if (reslt.status == true) {
         if (!empty(mac_address) && !empty(serial_number)) {
-            let deviceQ = "SELECT id ,device_id FROM devices WHERE mac_address='" + mac_address + "' OR serial_number='" + serial_number + "'";
+            let deviceQ = "SELECT id ,device_id FROM devices WHERE mac_address='" + mac_address + "' AND serial_number='" + serial_number + "'";
             sql.query(deviceQ, async function (error, resp) {
                 if (error) throw (error);
                 if (resp.length) {
                     let device_record = await helpers.getAllRecordbyDeviceId(resp[0].device_id)
                     // console.log(device_record);
                     device_helpers.saveActionHistory(device_record, Constants.DEVICE_UNLINKED)
-                    var query = "DELETE from usr_acc WHERE device_id = " + resp[0].id ;
+                    var query = "DELETE from usr_acc WHERE device_id = " + resp[0].id;
                     console.log(query);
                     await sql.query(query);
                     var sqlDevice = "DELETE from devices where device_id = '" + resp[0].device_id + "'";
