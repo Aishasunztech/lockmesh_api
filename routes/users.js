@@ -1349,7 +1349,7 @@ router.get('/dealers', async function (req, res) {
         if (verify.user.user_type == "admin") {
             var role = await helpers.getuserTypeIdByName(verify.user.user_type);
             console.log("role id", role);
-            sql.query("select * from dealers where type!=" + role + " AND type != 4 order by created DESC", async function (error, results) {           
+            sql.query("select * from dealers where type!=" + role + " AND type != 4 order by created DESC", async function (error, results) {
                 if (error) throw error;
 
                 var data = [];
@@ -1360,7 +1360,7 @@ router.get('/dealers', async function (req, res) {
                     }
                     var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].dealer_id + "'");
 
-                    
+
                     dt = {
                         "status": true,
                         "dealer_id": results[i].dealer_id,
@@ -3232,7 +3232,7 @@ router.get('/get_app_permissions', async function (req, res) {
         // console.log('id is the ', req.params);
         let loggedUserType = verify.user.user_type;
         // if (loggedUserType !== Constants.ADMIN) {
-        let query = "select * from default_apps";
+        let query = "select id, unique_name as uniqueName, label, package_name as packageName, icon, extension, visible, default_app, extension_id, created_at from default_apps";
 
         sql.query(query, async (error, apps) => {
 
@@ -3248,7 +3248,7 @@ router.get('/get_app_permissions', async function (req, res) {
                     Extension.push(item);
                 }
 
-                if (item.extension == 0 && item.visible == 1) {
+                if (item.extension == 0 && item.extension_id === 0) {
                     onlyApps.push(item)
                 }
             }
@@ -3263,8 +3263,8 @@ router.get('/get_app_permissions', async function (req, res) {
                         //  console.log('sub ext item', item.guest)
                         // console.log(ext.unique_name, 'dfs',item.unique_name);
                         subExtension.push({
-                            uniqueName: ext.unique_name,
-                            uniqueExtension: item.unique_name,
+                            uniqueName: ext.uniqueName,
+                            uniqueExtension: item.uniqueName,
                             guest: item.guest != undefined ? item.guest : 0,
                             label: item.label,
                             icon: item.icon,
@@ -3280,7 +3280,7 @@ router.get('/get_app_permissions', async function (req, res) {
 
 
                 newExtlist.push({
-                    uniqueName: ext.unique_name,
+                    uniqueName: ext.uniqueName,
                     guest: ext.guest != undefined ? ext.guest : 0,
                     encrypted: ext.encrypted != undefined ? ext.encrypted : 0,
                     enable: ext.enable != undefined ? ext.enable : 0,
@@ -3521,13 +3521,24 @@ router.post('/check_policy_name', async function (req, res) {
     if (verify['status'] && verify.status == true) {
         try {
             let policy_name = req.body.name !== undefined ? req.body.name : null;
+            let policy_id = req.body.policy_id;
+            console.log(policy_id, 'policy id is')
             let loggedDealerId = verify.user.id;
             let loggedDealerType = verify.user.user_type;
             let connectedDealer = verify.user.connected_dealer;
-            let checkExistingQ = "SELECT policy_name FROM policy WHERE policy_name='" + policy_name + "' AND delete_status = 0 ";
+            let except_id = "";
+            let checkExistingQ = "SELECT policy_name FROM policy WHERE policy_name='" + policy_name + "' AND delete_status = 0 "+ except_id;
             if (loggedDealerType === ADMIN) {
+                if (policy_id != '') {
+                    console.log('if called')
+                    except_id = " AND id !='" + policy_id + "'";
+                    checkExistingQ = checkExistingQ + except_id;
+                }
 
             } else if (loggedDealerType === DEALER) {
+                if (policy_id !== '') {
+                    except_id = " AND id !='" + policy_id + "'";
+                }
                 let subDealerQ = "SELECT dealer_id FROM dealers WHERE connected_dealer=" + loggedDealerId;
                 let subDealers = await sql.query(subDealerQ);
                 let subDealerArray = [];
@@ -3535,14 +3546,15 @@ router.post('/check_policy_name', async function (req, res) {
                     subDealerArray.push(dealer.dealer_id)
                 });
                 if (subDealerArray.length) {
-                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id in (" + subDealerArray.join() + "))"
+                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id in (" + subDealerArray.join() + "))"+except_id
                 } else {
-                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " )"
+                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " )"+except_id
                 }
             } else if (loggedDealerType === SDEALER) {
-                checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id = " + connectedDealer + ")";
+                checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id = " + connectedDealer + ")"+except_id;
             }
             let checkExisting = await sql.query(checkExistingQ);
+            console.log(checkExistingQ, 'query is')
             if (checkExisting.length) {
                 data = {
                     status: false,

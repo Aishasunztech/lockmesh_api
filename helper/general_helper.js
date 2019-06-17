@@ -841,12 +841,12 @@ module.exports = {
 	refactorPolicy: function (policy) {
 		let applist = JSON.parse(policy[0].app_list);
 		applist.forEach((app) => {
-			app.uniqueName = app.unique_name;
-			app.packageName = app.package_name;
+			// app.uniqueName = app.unique_name;
+			// app.packageName = app.package_name;
 			app.defaultApp = app.default_app;
-			delete app.unique_name;
-			delete app.package_name;
-			delete app.default_app;
+			// delete app.unique_name;
+			// delete app.package_name;
+			// delete app.default_app;
 		})
 
 		let permissions = JSON.parse(policy[0].permissions);
