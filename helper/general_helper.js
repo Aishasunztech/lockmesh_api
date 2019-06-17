@@ -771,6 +771,18 @@ module.exports = {
 			}
 		}
 	},
+
+	getDealerByDealerId: async function (id){
+		let query = "SELECT * FROM dealers WHERE dealer_id='"+id+"' limit 1";
+		let result = await sql.query(query);
+
+		if(result && result.length){
+			return result;
+		}else{
+			return [];
+		}
+	},
+
 	formatBytes: function (bytes, decimals = 2) {
 		if (bytes === 0) return '0 Bytes';
 

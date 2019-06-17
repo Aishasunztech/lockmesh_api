@@ -956,12 +956,26 @@ router.post('/add/dealer', async function (req, res) {
                         res.send("Email could not sent due to error: " + errors);
                     } else {
                         //res.send("Email has been sent successfully");
-                        var dealer = await sql.query("SELECT * FROM dealers WHERE dealer_email = '" + dealerEmail + "'");
+                        var dealer = await sql.query("SELECT * FROM dealers WHERE dealer_email = '" + dealerEmail + "' limit 1");
+                        if(dealer.length){
+                            dealer[0].connected_devices= [ { total: '0' }],
+                            dealer[0].devicesList =[];
+
+                            if(pageType == SDEALER && (sdealerDealerId != undefined && !empty(sdealerDealerId) && sdealerDealerId != null && sdealerDealerId != 0)){
+                                let prnt_dealer = await helpers.getDealerByDealerId(sdealerDealerId);
+                                console.log(prnt_dealer, 'parnst dealer data')
+                                if(prnt_dealer && prnt_dealer.length){
+                                 dealer[0].parent_dealer = prnt_dealer[0].dealer_name,
+                                 dealer[0].parent_dealer_id = prnt_dealer[0].dealer_id
+                                }
+                             }
+                        }
+     
                         // console.log('result add',dealer);
                         data = {
                             'status': true,
                             'msg': 'Dealer has been registered successfully',
-                            'item_added': dealer,
+                            'added_dealer': dealer,
 
                         }
 
@@ -4221,11 +4235,11 @@ router.post('/save_policy_changes', async function (req, res) {
         let app_list = record.app_list;
         let policy_note = record.policy_note;
         let policy_name = record.policy_name;
-        console.log(record,'id id', id)
+        // console.log(record,'id id', id)
 
 
         let query = "UPDATE policy SET push_apps = '" + push_apps + "', controls = '" + controls + "', permissions = '" + permissions + "', app_list = '" + app_list + "', policy_note = '" + policy_note + "', policy_name = '" + policy_name + "' WHERE id='" + id + "'";
-        console.log('qerury', query)
+        // console.log('qerury', query)
         sql.query(query, (error, result) => {
             console.log(result, 'relstsdf');
             if (error) throw error;
