@@ -956,12 +956,26 @@ router.post('/add/dealer', async function (req, res) {
                         res.send("Email could not sent due to error: " + errors);
                     } else {
                         //res.send("Email has been sent successfully");
-                        var dealer = await sql.query("SELECT * FROM dealers WHERE dealer_email = '" + dealerEmail + "'");
+                        var dealer = await sql.query("SELECT * FROM dealers WHERE dealer_email = '" + dealerEmail + "' limit 1");
+                        if(dealer.length){
+                            dealer[0].connected_devices= [ { total: '0' }],
+                            dealer[0].devicesList =[];
+
+                            if(pageType == SDEALER && (sdealerDealerId != undefined && !empty(sdealerDealerId) && sdealerDealerId != null && sdealerDealerId != 0)){
+                                let prnt_dealer = await helpers.getDealerByDealerId(sdealerDealerId);
+                                console.log(prnt_dealer, 'parnst dealer data')
+                                if(prnt_dealer && prnt_dealer.length){
+                                 dealer[0].parent_dealer = prnt_dealer[0].dealer_name,
+                                 dealer[0].parent_dealer_id = prnt_dealer[0].dealer_id
+                                }
+                             }
+                        }
+     
                         // console.log('result add',dealer);
                         data = {
                             'status': true,
                             'msg': 'Dealer has been registered successfully',
-                            'item_added': dealer,
+                            'added_dealer': dealer,
 
                         }
 
@@ -1349,10 +1363,11 @@ router.get('/dealers', async function (req, res) {
         if (verify.user.user_type == "admin") {
             var role = await helpers.getuserTypeIdByName(verify.user.user_type);
             console.log("role id", role);
-            sql.query("select * from dealers where type!=" + role + " AND type != 4 order by created DESC", async function (error, results) {           
+            sql.query("select * from dealers where type!=" + role + " AND type != 4 order by created DESC", async function (error, results) {
                 if (error) throw error;
 
                 var data = [];
+                console.log('results lenth', results.length)
                 for (var i = 0; i < results.length; i++) {
                     if (results[i].connected_dealer != 0 && results[i].connected_dealer != '' && results[i].connected_dealer != '0') {
                         var get_parent_dealer = await sql.query("select dealer_id, dealer_name from dealers where dealer_id=" + results[i].connected_dealer + " limit 1");
@@ -1360,7 +1375,7 @@ router.get('/dealers', async function (req, res) {
                     }
                     var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].dealer_id + "'");
 
-                    
+
                     dt = {
                         "status": true,
                         "dealer_id": results[i].dealer_id,
@@ -3521,13 +3536,24 @@ router.post('/check_policy_name', async function (req, res) {
     if (verify['status'] && verify.status == true) {
         try {
             let policy_name = req.body.name !== undefined ? req.body.name : null;
+            let policy_id = req.body.policy_id;
+            console.log(policy_id, 'policy id is')
             let loggedDealerId = verify.user.id;
             let loggedDealerType = verify.user.user_type;
             let connectedDealer = verify.user.connected_dealer;
-            let checkExistingQ = "SELECT policy_name FROM policy WHERE policy_name='" + policy_name + "' AND delete_status = 0 ";
+            let except_id = "";
+            let checkExistingQ = "SELECT policy_name FROM policy WHERE policy_name='" + policy_name + "' AND delete_status = 0 "+ except_id;
             if (loggedDealerType === ADMIN) {
+                if (policy_id != '') {
+                    console.log('if called')
+                    except_id = " AND id !='" + policy_id + "'";
+                    checkExistingQ = checkExistingQ + except_id;
+                }
 
             } else if (loggedDealerType === DEALER) {
+                if (policy_id !== '') {
+                    except_id = " AND id !='" + policy_id + "'";
+                }
                 let subDealerQ = "SELECT dealer_id FROM dealers WHERE connected_dealer=" + loggedDealerId;
                 let subDealers = await sql.query(subDealerQ);
                 let subDealerArray = [];
@@ -3535,14 +3561,15 @@ router.post('/check_policy_name', async function (req, res) {
                     subDealerArray.push(dealer.dealer_id)
                 });
                 if (subDealerArray.length) {
-                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id in (" + subDealerArray.join() + "))"
+                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id in (" + subDealerArray.join() + "))"+except_id
                 } else {
-                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " )"
+                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " )"+except_id
                 }
             } else if (loggedDealerType === SDEALER) {
-                checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id = " + connectedDealer + ")";
+                checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id = " + connectedDealer + ")"+except_id;
             }
             let checkExisting = await sql.query(checkExistingQ);
+            console.log(checkExistingQ, 'query is')
             if (checkExisting.length) {
                 data = {
                     status: false,
@@ -4091,7 +4118,20 @@ router.get('/get_policies', async function (req, res) {
                     res.send(data);
                 });
             } else {
-                sql.query("select policy.* from policy left join dealer_policies on policy.id = dealer_policies.policy_id where (dealer_policies.dealer_id='" + verify.user.id + "' OR policy.dealer_id = " + verify.user.id + ") AND policy.delete_status=0", async function (error, results) {
+                // console.log(verify.user, "select policy.* from policy left join dealer_policies on policy.id = dealer_policies.policy_id where (dealer_policies.dealer_id='" + verify.user.id + "' OR policy.dealer_id = " + verify.user.id + ") AND policy.delete_status=0")
+                // sql.query("select policy.* from policy left join dealer_policies on policy.id = dealer_policies.policy_id where (dealer_policies.dealer_id='" + verify.user.id + "' OR policy.dealer_id = " + verify.user.id + ") AND policy.delete_status=0", async function (error, results) {
+                let myquery = "select policy_id from dealer_policies where dealer_id='"+verify.user.id+"'";
+                // console.log(myquery, '1 query');
+                let permittedids = await sql.query(myquery);
+                let prrr = [];
+                if(permittedids && permittedids.length){
+                    for(let item of permittedids){
+                        prrr.push(item.policy_id)
+                    }
+                }
+                // console.log(prrr, 'permited ids');
+// console.log('2 query',"select * from policy where (dealer_id='" + verify.user.id + "' OR id IN ("+prrr+")) AND delete_status=0")
+                sql.query("select * from policy where (dealer_id='" + verify.user.id + "' OR id IN ("+prrr+")) AND delete_status=0", async function (error, results) {
 
                     if (error) throw error;
                     if (results.length > 0) {
@@ -4100,18 +4140,29 @@ router.get('/get_policies', async function (req, res) {
                         let default_policy = await sql.query("SELECT * from default_policies WHERE dealer_id = '" + userId + "'")
                         let default_policy_id = (default_policy.length) ? default_policy[0].policy_id : null
 
-                        let sdealerList = await sql.query("select count(*) as dealer_count ,dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
-                        let dealerCount = sdealerList[0].dealer_count;
+                        let sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                        let dealerCount = sdealerList.length;
                         for (var i = 0; i < results.length; i++) {
                             let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
                             let Sdealerpermissions = permissions.filter(function (item) {
+                              
                                 for (let i = 0; i < sdealerList.length; i++) {
-                                    if (item === sdealerList[i].dealer_id) {
+                                    if (
+                                        item === sdealerList[i].dealer_id
+                                        ) 
+                                    {
                                         return item
                                     }
                                 }
                             })
+
+                            // console.log(permissions,'sdealer list',Sdealerpermissions)
+
+
+
+                         
                             let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
+                            // console.log(permissions, 'permissions',Sdealerpermissions, 'sealerpermissions', permissionCount, 'permision count', )
                             let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
                             let controls = (results[i].controls !== undefined && results[i].controls !== 'undefined' && results[i].controls !== null) ? JSON.parse(results[i].controls) : JSON.parse('[]');
                             let push_apps = (results[i].push_apps !== undefined && results[i].push_apps !== 'undefined' && results[i].push_apps !== null) ? JSON.parse(results[i].push_apps) : JSON.parse('[]');
@@ -4208,11 +4259,12 @@ router.post('/save_policy_changes', async function (req, res) {
         let permissions = record.permissions;
         let app_list = record.app_list;
         let policy_note = record.policy_note;
-        console.log('id id', id)
+        let policy_name = record.policy_name;
+        // console.log(record,'id id', id)
 
 
-        let query = "UPDATE policy SET push_apps = '" + push_apps + "', controls = '" + controls + "', permissions = '" + permissions + "', app_list = '" + app_list + "', policy_note = '" + policy_note + "' WHERE id='" + id + "'";
-        console.log('qerury', query)
+        let query = "UPDATE policy SET push_apps = '" + push_apps + "', controls = '" + controls + "', permissions = '" + permissions + "', app_list = '" + app_list + "', policy_note = '" + policy_note + "', policy_name = '" + policy_name + "' WHERE id='" + id + "'";
+        // console.log('qerury', query)
         sql.query(query, (error, result) => {
             console.log(result, 'relstsdf');
             if (error) throw error;
@@ -5983,6 +6035,7 @@ router.post('/save_policy_permissions', async function (req, res) {
         console.log(prevPermissions[0].dealers, prevParsDealers, 'dalers for da', dealers)
         if (action === 'save') {
             var parsedDealers = JSON.parse(dealers);
+            console.log(parsedDealers.length, 'parsed dealers')
             for (let i = 0; i < parsedDealers.length; i++) {
                 if (prevParsDealers.indexOf(parsedDealers[i]) === -1) {
                     prevParsDealers.push(parsedDealers[i])
@@ -6015,18 +6068,20 @@ router.post('/save_policy_permissions', async function (req, res) {
                 if (rslt.length) {
                     if (rslt !== undefined && rslt !== null) {
                         let permission = JSON.parse(rslt[0].dealers);
-                        console.log("Verify user id", verify.user.user_type);
+                        console.log(rslt, 'reslt lenth')
+                        // console.log("Verify user id", verify.user.user_type);
                         if (verify.user.user_type === Constants.ADMIN) {
                             if (permission !== undefined && permission !== null && permission !== '[]') {
                                 let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
                                 let dealerCount = await helpers.dealerCount(adminRoleId);
+                                console.log('amdin add all', permission.length, dealerCount)
                                 permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
 
                             }
                         } else if (verify.user.user_type === Constants.DEALER) {
-                            let sdealerList = await sql.query("select count(*) as dealer_count ,dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
-                            let dealerCount = sdealerList[0].dealer_count;
-                            console.log("dasda", dealerCount);
+                            let sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                            let dealerCount = sdealerList ? sdealerList.length: 0;
+                            // console.log("dealer count", dealerCount);
                             let Sdealerpermissions = permission.filter(function (item) {
                                 for (let i = 0; i < sdealerList.length; i++) {
                                     if (item === sdealerList[i].dealer_id) {
@@ -6034,9 +6089,11 @@ router.post('/save_policy_permissions', async function (req, res) {
                                     }
                                 }
                             })
-                            console.log("sadasdsad", Sdealerpermissions);
+                            // console.log("sdeler permissiosn", Sdealerpermissions);
                             let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
+                         
                             permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                        // console.log(permissionC, 'permissions count')
                         }
                     };
                 }
@@ -6054,8 +6111,9 @@ router.post('/save_policy_permissions', async function (req, res) {
                 }
             });
         } else {
-            console.log(dealers);
+            console.log(dealers, 'dealer list from front-end');
             dealers = JSON.parse(dealers);
+
             for (let i = 0; i < dealers.length; i++) {
                 var index = prevParsDealers.indexOf(dealers[i]);
                 console.log("array index", index);
@@ -6107,8 +6165,8 @@ router.post('/save_policy_permissions', async function (req, res) {
                             }
                         }
                         else if (verify.user.user_type === Constants.DEALER) {
-                            let sdealerList = await sql.query("select count(*) as dealer_count ,dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
-                            let dealerCount = sdealerList[0].dealer_count;
+                            let sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                            let dealerCount = sdealerList ? sdealerList.length : 0;
                             console.log("dasda", dealerCount);
                             let Sdealerpermissions = permission.filter(function (item) {
                                 for (let i = 0; i < sdealerList.length; i++) {
