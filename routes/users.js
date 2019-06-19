@@ -4930,6 +4930,27 @@ router.get('/get_sim_ids', async (req, res) => {
     }
 
 });
+
+router.get('/get_all_sim_ids', async (req, res) => {
+    var verify = await verifyToken(req, res);
+    if (verify['status'] !== undefined && verify.status === true) {
+        let query = "select * from sim_ids";
+        sql.query(query, (error, resp) => {
+            res.send({
+                status: false,
+                msg: "data success",
+                data: resp
+            });
+        });
+    } else {
+        res.send({
+            status: false,
+            msg: "access forbidden"
+        })
+    }
+
+});
+
 router.get('/get_used_sim_ids', async (req, res) => {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
@@ -4969,6 +4990,26 @@ router.get('/get_chat_ids', async (req, res) => {
         })
     }
 });
+
+router.get('/get_all_chat_ids', async (req, res) => {
+    var verify = await verifyToken(req, res);
+    if (verify['status'] !== undefined && verify.status === true) {
+        let query = "select * from chat_ids";
+        sql.query(query, (error, resp) => {
+            res.send({
+                status: false,
+                msg: "data success",
+                data: resp
+            });
+        });
+    } else {
+        res.send({
+            status: false,
+            msg: "access forbidden"
+        })
+    }
+});
+
 router.get('/get_used_chat_ids', async (req, res) => {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
@@ -5008,6 +5049,27 @@ router.get('/get_pgp_emails', async (req, res) => {
         })
     }
 });
+
+router.get('/get_all_pgp_emails', async (req, res) => {
+    var verify = await verifyToken(req, res);
+    if (verify['status'] !== undefined && verify.status === true) {
+        let query = "select * from pgp_emails";
+        sql.query(query, (error, resp) => {
+            res.send({
+                status: false,
+                msg: "data success",
+                data: resp
+            });
+        });
+    }
+    else {
+        res.send({
+            status: false,
+            msg: "access forbidden"
+        })
+    }
+});
+
 router.get('/get_used_pgp_emails', async (req, res) => {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
