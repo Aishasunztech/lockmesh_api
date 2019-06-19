@@ -237,76 +237,95 @@ router.post('/create_backup_DB', async function (req, res) {
     var verify = await verifyToken(req, res);
 
     if (verify.status !== undefined && verify.status == true) {
-        // console.log("Working");
-        let date = new Date();
-        let formattedDate = moment(date).format("YYYY/MM/DD")
-        let file_name = 'dump_' + Constants.APP_TITLE + '_' + Date.now() + '.sql'
-        const result = await mysqldump({
-            connection: {
-                host: 'localhost',
-                user: 'root',
-                password: '',
-                database: 'lockmesh_db',
-            },
-            dumpToFile: './db_backup/' + file_name,
-        });
-        let allTables = await sql.query("SELECT TABLE_NAME AS _table FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'lockmesh_db'")
-        // console.log(allTables);
-        let tablesNames = allTables.map(function (item) {
-            return item._table
-        })
-        // console.log(allColumnsNames);
         var ws;
         var wb = XLSX.utils.book_new();
+        let devices = []
+        let query = "SELECT * From acc_action_history WHERE action = 'UNLINKED'";
+        let newArray = await sql.query(query)
+        let results = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 order by devices.id DESC')
+        // console.log('query ', 'select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 ' + where_con + ' order by devices.id DESC')
+        for (var i = 0; i < results.length; i++) {
+            results[i].finalStatus = device_helpers.checkStatus(results[i])
+            results[i].pgp_email = await device_helpers.getPgpEmails(results[i])
+            results[i].sim_id = await device_helpers.getSimids(results[i])
+            results[i].chat_id = await device_helpers.getChatids(results[i])
+            results[i].validity = await device_helpers.checkRemainDays(results[i].created_at, results[i].validity)
+            // dealerData = await device_helpers.getDealerdata(results[i]);
+        }
+        let finalResult = [...results, ...newArray]
+        // console.log('old', finalResult);
+        let checkValue = helpers.checkValue;
+        for (let device of finalResult) {
+            let data = {
+                device_id: checkValue(device.device_id),
+                user_id: checkValue(device.user_id),
+                batch_no: checkValue(device.batch_no),
+                name: checkValue(device.name),
+                dealer_id: checkValue(device.dealer_id),
+                dealer_name: checkValue(device.dealer_name),
+                account_email: checkValue(device.account_email),
+                account_name: checkValue(device.account_name),
+                model: checkValue(device.model),
+                link_code: checkValue(device.link_code),
+                activation_code: checkValue(device.activation_code),
+                pgp_email: checkValue(device.pgp_email),
+                chat_id: checkValue(device.chat_id),
+                sim_id: checkValue(device.sim_id),
+                client_id: checkValue(device.client_id),
+                finalStatus: checkValue(device.finalStatus),
+                ip_address: checkValue(device.ip_address),
+                mac_address: checkValue(device.mac_address),
+                serial_number: checkValue(device.serial_number),
+                imei: checkValue(device.imei),
+                imei2: checkValue(device.imei2),
+                online: checkValue(device.online),
+                simno: checkValue(device.simno),
+                simno2: checkValue(device.simno2),
+                note: checkValue(device.note),
+                prnt_dlr_id: checkValue(device.prnt_dlr_id),
+                prnt_dlr_name: checkValue(device.prnt_dlr_name),
+                connected_dealer: checkValue(device.connected_dealer),
+                start_date: checkValue(device.start_date),
+                expiry_date: checkValue(device.expiry_date),
+                expiry_months: checkValue(device.expiry_months),
+                validity: checkValue(device.validity),
+                updated_at: checkValue(device.updated_at),
+                created_at: checkValue(device.created_at),
+            }
+            devices.push(data)
+        }
+        if (devices.length) {
+            ws = XLSX.utils.json_to_sheet(devices);
+            XLSX.utils.book_append_sheet(wb, ws, 'Devices');
+        }
 
-        for (let i = 0; i < tablesNames.length; i++) {
-            let tableDate = await sql.query("SELECT * from " + tablesNames[i])
+        let userData = await sql.query('select id,user_id,user_name,email,dealer_id from users');
+        if (userData.length) {
+            ws = XLSX.utils.json_to_sheet(userData);
+            XLSX.utils.book_append_sheet(wb, ws, 'Users');
+        }
+        let dealerData = await sql.query('select dealer_id,dealer_name,dealer_email,link_code,connected_dealer ,unlink_status from dealers');
+        if (userData.length) {
+            ws = XLSX.utils.json_to_sheet(dealerData);
+            XLSX.utils.book_append_sheet(wb, ws, 'Dealers');
+        }
+        let IDsTables = ['chat_ids', 'sim_ids', 'pgp_emails'];
+        for (let i = 0; i < IDsTables.length; i++) {
+            let tableDate = await sql.query("SELECT * from " + IDsTables[i])
             if (tableDate.length) {
                 /* make the worksheet */
                 ws = XLSX.utils.json_to_sheet(tableDate);
-
                 /* add to workbook */
-                XLSX.utils.book_append_sheet(wb, ws, tablesNames[i]);
+                XLSX.utils.book_append_sheet(wb, ws, IDsTables[i]);
             }
         }
-        let fileNameCSV = 'testDBBackup' + '_' + Date.now() + ".xlsx";
-        await XLSX.writeFile(wb, path.join(__dirname, "../db_backup/" + fileNameCSV));
-        let userPass = await sql.query("select password from dealers where dealer_id=" + verify.user.id + "")
-        // archiver.registerFormat('zip-encryptable', require('archiver-zip-encryptable'));
-        var archive = archiver('zip', {
-            gzip: true,
-            zlib: { level: 9 },
-            forceLocalTime: true,
-            // password: 'test'
-        });
-
-
-        let zipFileName = "DB_backup" + Date.now() + ".zip"
-        var output = fs.createWriteStream("./db_backup/" + zipFileName);
-
-
-        archive.on('error', function (err) {
-            throw err;
-        });
-        // pipe archive data to the output file
-        archive.pipe(output);
-
-        // append files
-        archive.file(path.join(__dirname, "../db_backup/" + fileNameCSV), { name: 'DataBase_Backup_excel.xlsx' });
-        archive.file(path.join(__dirname, "../db_backup/" + file_name), { name: 'DataBase_Backup_sql.sql' });
-
-        //
-        archive.finalize();
-
-        output.on('close', function () {
-            // console.log(archive.pointer() + ' total bytes');
-            // console.log('archiver has been finalized and the output file descriptor has closed.');
-            let data = {
-                status: true,
-                path: zipFileName
-            }
-            res.send(data)
-        });
+        let fileNameCSV = 'DB_Backup' + '_' + Date.now() + ".xlsx";
+        await XLSX.writeFile(wb, path.join(__dirname, "../db_backup/" + fileNameCSV))
+        let data = {
+            status: true,
+            path: fileNameCSV
+        }
+        res.send(data)
         // let file =  zipFileName
     }
 });
@@ -3542,7 +3561,7 @@ router.post('/check_policy_name', async function (req, res) {
             let loggedDealerType = verify.user.user_type;
             let connectedDealer = verify.user.connected_dealer;
             let except_id = "";
-            let checkExistingQ = "SELECT policy_name FROM policy WHERE policy_name='" + policy_name + "' AND delete_status = 0 "+ except_id;
+            let checkExistingQ = "SELECT policy_name FROM policy WHERE policy_name='" + policy_name + "' AND delete_status = 0 " + except_id;
             if (loggedDealerType === ADMIN) {
                 if (policy_id != '') {
                     console.log('if called')
@@ -3561,12 +3580,12 @@ router.post('/check_policy_name', async function (req, res) {
                     subDealerArray.push(dealer.dealer_id)
                 });
                 if (subDealerArray.length) {
-                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id in (" + subDealerArray.join() + "))"+except_id
+                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id in (" + subDealerArray.join() + "))" + except_id
                 } else {
-                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " )"+except_id
+                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " )" + except_id
                 }
             } else if (loggedDealerType === SDEALER) {
-                checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id = " + connectedDealer + ")"+except_id;
+                checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id = " + connectedDealer + ")" + except_id;
             }
             let checkExisting = await sql.query(checkExistingQ);
             console.log(checkExistingQ, 'query is')
