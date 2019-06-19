@@ -180,9 +180,10 @@ module.exports = {
 	},
 	dealerCount: async (adminRoleId) => {
 
-		var query = "SELECT COUNT(*) as dealer_count FROM dealers WHERE type !=" + adminRoleId;
+		var query = "SELECT COUNT(*) as dealer_count FROM dealers WHERE type !=" + adminRoleId+" AND type!=4";
 		let res = await sql.query(query);
 		if (res.length) {
+			console.log('helper called', res[0])
 			return res[0].dealer_count;
 		} else {
 			return false;
@@ -768,6 +769,18 @@ module.exports = {
 			}
 		}
 	},
+
+	getDealerByDealerId: async function (id){
+		let query = "SELECT * FROM dealers WHERE dealer_id='"+id+"' limit 1";
+		let result = await sql.query(query);
+
+		if(result && result.length){
+			return result;
+		}else{
+			return [];
+		}
+	},
+
 	formatBytes: function (bytes, decimals = 2) {
 		if (bytes === 0) return '0 Bytes';
 
