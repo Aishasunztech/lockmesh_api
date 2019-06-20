@@ -5231,9 +5231,9 @@ router.get('/apklist', async function (req, res) {
                     let dealerRole = await helpers.getuserTypeIdByName(Constants.DEALER);
                     // console.log("Role", dealerRole);
 
-                    let sdealerList = await sql.query("select count(*) as dealer_count ,dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                    let sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
                     // console.log(sdealerList);
-                    let dealerCount = sdealerList[0].dealer_count;
+                    let dealerCount = sdealerList ? sdealerList.length : 0;
                     // console.log("dealer_count ", dealerCount);
                     for (var i = 0; i < results.length; i++) {
                         let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
@@ -5786,8 +5786,8 @@ router.post('/save_apk_permissions', async function (req, res) {
                             }
                         }
                         else if (verify.user.user_type === Constants.DEALER) {
-                            let sdealerList = await sql.query("select count(*) as dealer_count ,dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
-                            let dealerCount = sdealerList[0].dealer_count;
+                            let sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                            let dealerCount = sdealerList ?  sdealerList.length: 0;
                             console.log("dasda", dealerCount);
                             let Sdealerpermissions = permission.filter(function (item) {
                                 for (let i = 0; i < sdealerList.length; i++) {
