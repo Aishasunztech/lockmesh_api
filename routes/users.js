@@ -363,7 +363,7 @@ router.post('/create_backup_DB', async function (req, res) {
             ws = XLSX.utils.json_to_sheet(userData);
             XLSX.utils.book_append_sheet(wb, ws, 'Users');
         }
-        let dealerData = await sql.query('select dealer_id,dealer_name,dealer_email,link_code,connected_dealer ,unlink_status from dealers');
+        let dealerData = await sql.query('select dealer_id,dealer_name,dealer_email,link_code,connected_dealer ,unlink_status from dealers WHERE dealer_email != "super123!admin@gmail.com"');
         if (userData.length) {
             ws = XLSX.utils.json_to_sheet(dealerData);
             XLSX.utils.book_append_sheet(wb, ws, 'Dealers');
@@ -4810,11 +4810,11 @@ router.get('/export/:fieldName', async (req, res) => {
         if (verify.user.user_type === ADMIN) {
             let query = '';
             if (fieldName === "sim_ids") {
-                query = "SELECT * FROM sim_ids where used = 0";
+                query = "SELECT * FROM sim_ids ";
             } else if (fieldName === "chat_ids") {
-                query = "SELECT * FROM chat_ids where used = 0"
+                query = "SELECT * FROM chat_ids "
             } else if (fieldName === "pgp_emails") {
-                query = "SELECT * FROM pgp_emails where used = 0";
+                query = "SELECT * FROM pgp_emails ";
             }
             sql.query(query, async (error, response) => {
                 if (error) throw error;
@@ -4826,19 +4826,22 @@ router.get('/export/:fieldName', async (req, res) => {
                             data.push({
                                 sim_id: sim_id.sim_id,
                                 start_date: sim_id.start_date,
-                                expiry_date: sim_id.expiry_date
+                                expiry_date: sim_id.expiry_date,
+                                used: sim_id.used
                             });
                         });
                     } else if (fieldName === "chat_ids") {
                         response.forEach((chat_id) => {
                             data.push({
                                 chat_id: chat_id.chat_id,
+                                used: chat_id.used
                             });
                         });
                     } else if (fieldName === "pgp_emails") {
                         response.forEach((pgp_email) => {
                             data.push({
                                 pgp_email: pgp_email.pgp_email,
+                                used: pgp_email.used
                             });
                         });
                     }
@@ -5787,7 +5790,7 @@ router.post('/save_apk_permissions', async function (req, res) {
                         }
                         else if (verify.user.user_type === Constants.DEALER) {
                             let sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
-                            let dealerCount = sdealerList ?  sdealerList.length: 0;
+                            let dealerCount = sdealerList ? sdealerList.length : 0;
                             console.log("dasda", dealerCount);
                             let Sdealerpermissions = permission.filter(function (item) {
                                 for (let i = 0; i < sdealerList.length; i++) {
