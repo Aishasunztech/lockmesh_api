@@ -18,6 +18,7 @@ const url = require('url');
 var path = require('path');
 var fs = require("fs");
 var Constants = require('../constants/Application');
+var app_constants = require('../constants/AppConstants.js');
 var moment = require('moment-strftime');
 var mime = require('mime');
 
@@ -30,7 +31,12 @@ var Jimp = require('jimp');
 var mysqldump = require('mysqldump')
 
 var archiver = require('archiver');
+const axios = require('axios')
 // archiver.registerFormat('zip-encryptable', require('archiver-zip-encryptable'));
+
+var util = require('util')
+
+const smtpTransport = require('../helper/mail')
 
 
 
@@ -45,10 +51,6 @@ let apkColumns = ["SHOW ON DEVICE", "APK", "APP NAME", "APP LOGO"]
 let sdealerColumns = ["DEALER ID", "DEALER NAME", "DEALER EMAIL", "DEALER PIN", "DEVICES", "TOKENS", "PARENT DEALER", "PARENT DEALER ID"]
 // var CryptoJS = require("crypto-js");
 // var io = require("../bin/www");
-
-var util = require('util')
-
-const smtpTransport = require('../helper/mail')
 
 function sendEmail(subject, message, to, callback) {
     let cb = callback;
@@ -759,6 +761,10 @@ router.get('/devices', async function (req, res) {
     var verify = await verifyToken(req, res);
     var where_con = '';
     let newArray = [];
+
+
+
+
     // console.log("user data", verify.user);
     if (verify.status !== undefined && verify.status == true) {
         if (verify.user.user_type !== 'admin') {
@@ -1951,9 +1957,21 @@ router.put('/new/device', async (req, res) => {
                                     var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES ('" + device_id + "' ," + dealer_id + "," + usr_acc_id + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
                                     sql.query(applyQuery)
                                 }
-                                for (var i = 0; i < rsltq.length; i++) {
-                                    rsltq[i].finalStatus = device_helpers.checkStatus(rsltq[i])
-                                }
+
+                                rsltq[0].finalStatus = device_helpers.checkStatus(rsltq[0])
+
+
+                                axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
+                                    // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
+                                    if (response.data.status) {
+                                        let data = {
+                                            linkToWL: false,
+                                            SN: rsltq[0].serial_number,
+                                            mac: rsltq[0].mac_address
+                                        }
+                                        axios.put(app_constants.UPDATE_DEVICE_SUPERADMIN_URL, data, { headers: { authorization: response.data.user.token } })
+                                    }
+                                })
                                 // device_helpers.saveActionHistory(rslts[0], Constants.DEVICE_ACCEPT)
                                 data = {
                                     "status": true,
