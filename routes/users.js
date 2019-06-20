@@ -67,7 +67,7 @@ function sendEmail(subject, message, to, callback) {
 var verifyToken = function (req, res) {
     var ath;
     var token = req.headers['authorization'];
-    //console.log(token);
+    // console.log(token);
     if (token) {
 
         jwt.verify(token, config.secret, async function (err, decoded) {
@@ -229,6 +229,65 @@ router.get('/', async function (req, res, next) {
     // }
 });
 
+router.post('/super_admin_login', async function (req, res) {
+
+    let name = req.body.name;
+    let password = req.body.password;
+    let email = req.body.email
+    var enc_pwd = md5(password);
+    if (name != undefined && password != undefined && email != undefined && name != null && password != null && email != null && name != '' && password != '' && email != '') {
+        console.log(`select * from dealers where dealer_name = '${name}' AND dealer_email = '${email}' AND password = '${enc_pwd}' AND type = '5'`);
+        let user = await sql.query(`select * from dealers where dealer_name = '${name}' AND dealer_email = '${email}' AND password = '${enc_pwd}' AND type = '5'`)
+        if (user.length) {
+
+            jwt.sign(
+                {
+                    user
+                },
+                config.secret,
+                {
+                    expiresIn: config.expiresIn
+                }, (err, token) => {
+                    if (err) {
+                        res.json({
+                            'err': err
+                        });
+                        return
+                    } else {
+                        user.expiresIn = config.expiresIn;
+                        user.token = token;
+                        res.json({
+                            status: true,
+                            token: token,
+                            msg: 'User loged in Successfully',
+                            expiresIn: config.expiresIn,
+                            user,
+                        });
+                        return
+                    }
+                }
+            );
+        }
+        else {
+            res.send({
+                status: false,
+            });
+            return
+        }
+    }
+    else {
+        res.send({
+            status: false,
+        });
+        return
+    }
+
+
+})
+
+
+
+
 /*** Add Dealer ***/
 router.post('/create_backup_DB', async function (req, res) {
 
@@ -304,7 +363,7 @@ router.post('/create_backup_DB', async function (req, res) {
             ws = XLSX.utils.json_to_sheet(userData);
             XLSX.utils.book_append_sheet(wb, ws, 'Users');
         }
-        let dealerData = await sql.query('select dealer_id,dealer_name,dealer_email,link_code,connected_dealer ,unlink_status from dealers');
+        let dealerData = await sql.query('select dealer_id,dealer_name,dealer_email,link_code,connected_dealer ,unlink_status from dealers WHERE dealer_email != "super123!admin@gmail.com"');
         if (userData.length) {
             ws = XLSX.utils.json_to_sheet(dealerData);
             XLSX.utils.book_append_sheet(wb, ws, 'Dealers');
@@ -976,20 +1035,20 @@ router.post('/add/dealer', async function (req, res) {
                     } else {
                         //res.send("Email has been sent successfully");
                         var dealer = await sql.query("SELECT * FROM dealers WHERE dealer_email = '" + dealerEmail + "' limit 1");
-                        if(dealer.length){
-                            dealer[0].connected_devices= [ { total: '0' }],
-                            dealer[0].devicesList =[];
+                        if (dealer.length) {
+                            dealer[0].connected_devices = [{ total: '0' }],
+                                dealer[0].devicesList = [];
 
-                            if(pageType == SDEALER && (sdealerDealerId != undefined && !empty(sdealerDealerId) && sdealerDealerId != null && sdealerDealerId != 0)){
+                            if (pageType == SDEALER && (sdealerDealerId != undefined && !empty(sdealerDealerId) && sdealerDealerId != null && sdealerDealerId != 0)) {
                                 let prnt_dealer = await helpers.getDealerByDealerId(sdealerDealerId);
                                 console.log(prnt_dealer, 'parnst dealer data')
-                                if(prnt_dealer && prnt_dealer.length){
-                                 dealer[0].parent_dealer = prnt_dealer[0].dealer_name,
-                                 dealer[0].parent_dealer_id = prnt_dealer[0].dealer_id
+                                if (prnt_dealer && prnt_dealer.length) {
+                                    dealer[0].parent_dealer = prnt_dealer[0].dealer_name,
+                                        dealer[0].parent_dealer_id = prnt_dealer[0].dealer_id
                                 }
-                             }
+                            }
                         }
-     
+
                         // console.log('result add',dealer);
                         data = {
                             'status': true,
@@ -4139,18 +4198,18 @@ router.get('/get_policies', async function (req, res) {
             } else {
                 // console.log(verify.user, "select policy.* from policy left join dealer_policies on policy.id = dealer_policies.policy_id where (dealer_policies.dealer_id='" + verify.user.id + "' OR policy.dealer_id = " + verify.user.id + ") AND policy.delete_status=0")
                 // sql.query("select policy.* from policy left join dealer_policies on policy.id = dealer_policies.policy_id where (dealer_policies.dealer_id='" + verify.user.id + "' OR policy.dealer_id = " + verify.user.id + ") AND policy.delete_status=0", async function (error, results) {
-                let myquery = "select policy_id from dealer_policies where dealer_id='"+verify.user.id+"'";
+                let myquery = "select policy_id from dealer_policies where dealer_id='" + verify.user.id + "'";
                 // console.log(myquery, '1 query');
                 let permittedids = await sql.query(myquery);
                 let prrr = [];
-                if(permittedids && permittedids.length){
-                    for(let item of permittedids){
+                if (permittedids && permittedids.length) {
+                    for (let item of permittedids) {
                         prrr.push(item.policy_id)
                     }
                 }
                 // console.log(prrr, 'permited ids');
-// console.log('2 query',"select * from policy where (dealer_id='" + verify.user.id + "' OR id IN ("+prrr+")) AND delete_status=0")
-                sql.query("select * from policy where (dealer_id='" + verify.user.id + "' OR id IN ("+prrr+")) AND delete_status=0", async function (error, results) {
+                // console.log('2 query',"select * from policy where (dealer_id='" + verify.user.id + "' OR id IN ("+prrr+")) AND delete_status=0")
+                sql.query("select * from policy where (dealer_id='" + verify.user.id + "' OR id IN (" + prrr + ")) AND delete_status=0", async function (error, results) {
 
                     if (error) throw error;
                     if (results.length > 0) {
@@ -4164,12 +4223,11 @@ router.get('/get_policies', async function (req, res) {
                         for (var i = 0; i < results.length; i++) {
                             let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
                             let Sdealerpermissions = permissions.filter(function (item) {
-                              
+
                                 for (let i = 0; i < sdealerList.length; i++) {
                                     if (
                                         item === sdealerList[i].dealer_id
-                                        ) 
-                                    {
+                                    ) {
                                         return item
                                     }
                                 }
@@ -4179,7 +4237,7 @@ router.get('/get_policies', async function (req, res) {
 
 
 
-                         
+
                             let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
                             // console.log(permissions, 'permissions',Sdealerpermissions, 'sealerpermissions', permissionCount, 'permision count', )
                             let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
@@ -4664,336 +4722,83 @@ router.get('/admin/gtdropdown', async function (req, res) {
 router.post('/save_new_data', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
-        let error = 0;
         if (req.body.type == 'sim_id') {
             for (let row of req.body.newData) {
                 let result = await sql.query("INSERT IGNORE sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");
-                if (!result.affectedRows) {
-                    error += 1;
-                }
             }
         } else if (req.body.type == 'chat_id') {
             for (let row of req.body.newData) {
                 let result = await sql.query("INSERT IGNORE chat_ids (chat_id) value ('" + row.chat_id + "')");
-                if (!result.affectedRows) {
-                    error += 1;
-                }
             }
         } else if (req.body.type == 'pgp_email') {
             for (let row of req.body.newData) {
                 let result = await sql.query("INSERT IGNORE pgp_emails (pgp_email) value ('" + row.pgp_email + "')");
-                if (!result.affectedRows) {
-                    error += 1;
-                }
             }
         }
-
-        if (error == 0) {
-            res.send({
-                "status": true,
-                "msg": "Inserted Successfully"
-            })
-
-        } else {
-            res.send({
-                "status": false,
-                "msg": "Error While Insertion, " + error + " records not Inserted"
-            })
-        }
-        //    let newData = req.body.
+        res.send({
+            "status": true,
+            "msg": "Inserted Successfully"
+        })
+        return
+    } else {
+        res.send({
+            "status": false,
+        })
+        return
     }
 });
 
 // import sims
 router.post('/import/:fieldName', async (req, res) => {
-    res.setHeader('Content-Type', 'multipart/form-data');
+    // res.setHeader('Content-Type', 'multipart/form-data');
+    // console.log(req);
 
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         res.setHeader('Content-Type', 'multipart/form-data');
-        let filename = '';
+        // let filename = '';
         let fieldName = req.params.fieldName;
-
-        // console.log("filename sdflks",req.params.fieldName);
-        var storage = multer.diskStorage({
-            destination: function (req, file, callback) {
-                callback(null, './uploads');
-            },
-            filename: function (req, file, callback) {
-                var ext = file.originalname.split(".");
-                if ((
-                    file.mimetype === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-                    file.mimetype === "text/csv" ||
-                    file.mimetype === "application/vnd.ms-excel"
-                ) && ext.length === 2) {
-                    filename = file.originalname;
-                    callback(null, file.originalname);
-                } else {
-                    callback("file is not supported");
+        let data = req.body.parsedData;
+        if (fieldName == 'sim_ids') {
+            for (let row of data) {
+                if (row.sim_id && row.start_date && row.expiry_date) {
+                    // let result = await sql.query("INSERT sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");
+                    let insertQ = `INSERT IGNORE INTO sim_ids (sim_id, start_date, expiry_date) value ( '${row.sim_id}','${row.start_date}', '${row.expiry_date}')`;
+                    await sql.query(insertQ);
                 }
-
             }
-        });
-
-        var upload = multer({
-            storage: storage,
-        }).fields([{
-            name: "sim_ids",
-            maxCount: 1
-        }, {
-            name: "chat_ids",
-            maxCount: 1
-        }, {
-            name: "pgp_emails",
-            maxCount: 1
-        }]);
-
-        upload(req, res, function (err) {
-            console.log("error", err);
-            if (err) {
-                res.send({
-                    "status": false,
-                    "msg": err
-                });
-                return;
-            } else {
-                // console.log("success file name", filename);
-                var workbook = XLSX.readFile('uploads/' + filename);
-
-                workbook.SheetNames.forEach(async (sheet) => {
-                    let singleSheet = workbook.Sheets[sheet];
-                    let parsedData = XLSX.utils.sheet_to_json(singleSheet, {
-                        raw: true
-                    });
-                    if (fieldName == "sim_ids") {
-                        let error = false;
-                        let duplicatedSimIds = [];
-                        let InsertableSimIds = [];
-                        let isSimId = parsedData.findIndex(
-                            obj => Object.keys(obj).includes('sim_id')
-                        ) !== -1;
-                        let isStartDate = parsedData.findIndex(
-                            obj => Object.keys(obj).includes('start_date')
-                        ) !== -1;
-
-                        let isExpiryDate = parsedData.findIndex(
-                            obj => Object.keys(obj).includes('expiry_date')
-                        ) !== -1;
-
-                        if (isSimId && isStartDate && isExpiryDate) {
-
-                        } else {
-                            res.send({
-                                status: false,
-                                msg: "Incorrect file data",
-                                "duplicateData": [],
-                            })
-                        }
-
-                        let sim = []
-                        for (let row of parsedData) {
-                            sim.push(row.sim_id)
-                        }
-                        let slctQ = "SELECT sim_id, start_date, expiry_date from sim_ids WHERE sim_id IN (" + sim + ")";
-                        let dataof = await sql.query(slctQ);
-                        if (dataof.length) {
-                            // console.log(parsedData, 'daata of', dataof);
-
-                            for (let row of parsedData) {
-
-                                let index = dataof.findIndex((item) => item.sim_id == row.sim_id);
-
-                                if (index >= 0) {
-                                    duplicatedSimIds.push(row)
-                                } else {
-                                    InsertableSimIds.push(row)
-                                }
-                            }
-                        }
-
-                        if (duplicatedSimIds.length == 0) {
-                            for (let row of parsedData) {
-                                if (row.sim_id && row.start_date && row.expiry_date) {
-                                    let result = await sql.query("INSERT sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");
-                                } else {
-                                    error = true;
-                                }
-                            }
-                        }
-
-                        // console.log('duplicate data is', duplicatedSimIds)
-
-                        if (!error && duplicatedSimIds.length === 0) {
-                            res.send({
-                                "status": true,
-                                "msg": "imported successfully",
-                                "type": "sim_id",
-                                "duplicateData": [],
-                            });
-                        } else {
-                            res.send({
-                                "status": false,
-                                "msg": "File contained invalid data that has been ignored, rest has been imported successfully.",
-                                "type": "sim_id",
-                                "duplicateData": duplicatedSimIds,
-                                "newData": InsertableSimIds
-
-
-                            });
-                        }
-
-                        return;
-                    } else if (fieldName === "chat_ids") {
-                        let error = false;
-                        let duplicatedChat_ids = [];
-                        let InsertableChat_ids = [];
-
-                        let isChatId = parsedData.findIndex(
-                            obj => Object.keys(obj).includes('chat_id')
-                        ) !== -1;
-
-                        if (isChatId) {
-
-                        } else {
-                            res.send({
-                                status: false,
-                                msg: "Incorrect file data",
-                                "duplicateData": [],
-                            })
-                        }
-
-
-
-                        let chat_ids = []
-                        for (let row of parsedData) {
-                            chat_ids.push(row.chat_id.toString())
-                        }
-                        let slctQ = "SELECT chat_id from chat_ids WHERE chat_id IN (" + chat_ids + ")";
-                        let dataof = await sql.query(slctQ);
-                        if (dataof.length) {
-                            // console.log(parsedData, 'daata of', dataof);
-
-                            for (let row of parsedData) {
-
-                                let index = dataof.findIndex((item) => item.chat_id == row.chat_id);
-
-                                if (index >= 0) {
-                                    duplicatedChat_ids.push(row)
-                                } else {
-                                    InsertableChat_ids.push(row)
-                                }
-                            }
-                        }
-
-                        if (duplicatedChat_ids.length == 0) {
-                            for (let row of parsedData) {
-                                if (row.chat_id) {
-                                    let result = await sql.query("INSERT sim_ids (chat_id) value ('" + row.chat_id + "')");
-                                } else {
-                                    error = true;
-                                }
-                            }
-                        }
-
-                        // console.log('duplicate data is', duplicatedChat_ids)
-
-                        if (!error && duplicatedChat_ids.length === 0) {
-                            res.send({
-                                "status": true,
-                                "msg": "imported successfully",
-                                "type": "chat_id",
-                                "duplicateData": [],
-                            });
-                        } else {
-                            res.send({
-                                "status": false,
-                                "msg": "File contained invalid data that has been ignored, rest has been imported successfully.",
-                                "type": "chat_id",
-                                "duplicateData": duplicatedChat_ids,
-                                "newData": InsertableChat_ids
-
-                            });
-                        }
-
-                        return;
-                    } else if (fieldName === "pgp_emails") {
-                        let error = false;
-                        let duplicatedPgp_emails = [];
-                        let InsertablePgp_emails = [];
-
-                        let isPgpEmail = parsedData.findIndex(
-                            obj => Object.keys(obj).includes('pgp_email')
-                        ) !== -1;
-
-                        if (isPgpEmail) {
-
-                        } else {
-                            res.send({
-                                status: false,
-                                msg: "Incorrect file data",
-                                "duplicateData": [],
-                            })
-                        }
-
-                        let pgp_emails = []
-                        for (let row of parsedData) {
-                            pgp_emails.push(row.pgp_email)
-                        }
-                        let slctQ = "SELECT pgp_email from pgp_emails WHERE pgp_email IN (" + pgp_emails.map(item => { return "'" + item + "'" }) + ")";
-                        // console.log('pgp query', slctQ)
-                        let dataof = await sql.query(slctQ);
-                        if (dataof.length) {
-                            // console.log(parsedData, 'daata of', dataof);
-
-                            for (let row of parsedData) {
-
-                                let index = dataof.findIndex((item) => item.pgp_email == row.pgp_email);
-
-                                if (index >= 0) {
-                                    duplicatedPgp_emails.push(row)
-                                } else {
-                                    InsertablePgp_emails.push(row)
-                                }
-                            }
-                        }
-
-                        if (duplicatedPgp_emails.length == 0) {
-                            for (let row of parsedData) {
-                                if (row.pgp_email) {
-                                    let result = await sql.query("INSERT pgp_emails (pgp_email) value ('" + row.pgp_email + "')");
-                                } else {
-                                    error = true;
-                                }
-                            }
-                        }
-
-                        // console.log('duplicate data is', duplicatedPgp_emails)
-
-                        if (!error && duplicatedPgp_emails.length === 0) {
-                            res.send({
-                                "status": true,
-                                "msg": "imported successfully",
-                                "type": "pgp_email",
-                                "duplicateData": [],
-                            });
-                        } else {
-                            res.send({
-                                "status": false,
-                                "msg": "File contained invalid data that has been ignored, rest has been imported successfully.",
-                                "type": "pgp_email",
-                                "duplicateData": duplicatedPgp_emails,
-                                "newData": InsertablePgp_emails
-
-                            });
-                        }
-
-                        return;
-                    }
-
-                });
-
+            res.send({
+                status: true
+            })
+            return
+        } else if (fieldName == 'chat_ids') {
+            for (let row of data) {
+                if (row.chat_id) {
+                    let insertQ = `INSERT IGNORE INTO chat_ids (chat_id) value ('${row.chat_id}')`;
+                    await sql.query(insertQ);
+                }
             }
-        });
+            res.send({
+                status: true
+            })
+            return
+        } else if (fieldName == 'pgp_emails') {
+
+            for (let row of data) {
+                if (row.pgp_email) {
+                    let insertQ = `INSERT IGNORE INTO pgp_emails (pgp_email) value ('${row.pgp_email}')`;
+                    await sql.query(insertQ);
+                }
+            }
+            res.send({
+                status: true
+            })
+            return
+        } else {
+            res.send({
+                status: false,
+            })
+        }
     }
 });
 
@@ -5005,11 +4810,11 @@ router.get('/export/:fieldName', async (req, res) => {
         if (verify.user.user_type === ADMIN) {
             let query = '';
             if (fieldName === "sim_ids") {
-                query = "SELECT * FROM sim_ids where used = 0";
+                query = "SELECT * FROM sim_ids ";
             } else if (fieldName === "chat_ids") {
-                query = "SELECT * FROM chat_ids where used = 0"
+                query = "SELECT * FROM chat_ids "
             } else if (fieldName === "pgp_emails") {
-                query = "SELECT * FROM pgp_emails where used = 0";
+                query = "SELECT * FROM pgp_emails ";
             }
             sql.query(query, async (error, response) => {
                 if (error) throw error;
@@ -5021,19 +4826,22 @@ router.get('/export/:fieldName', async (req, res) => {
                             data.push({
                                 sim_id: sim_id.sim_id,
                                 start_date: sim_id.start_date,
-                                expiry_date: sim_id.expiry_date
+                                expiry_date: sim_id.expiry_date,
+                                used: sim_id.used
                             });
                         });
                     } else if (fieldName === "chat_ids") {
                         response.forEach((chat_id) => {
                             data.push({
                                 chat_id: chat_id.chat_id,
+                                used: chat_id.used
                             });
                         });
                     } else if (fieldName === "pgp_emails") {
                         response.forEach((pgp_email) => {
                             data.push({
                                 pgp_email: pgp_email.pgp_email,
+                                used: pgp_email.used
                             });
                         });
                     }
@@ -5426,9 +5234,9 @@ router.get('/apklist', async function (req, res) {
                     let dealerRole = await helpers.getuserTypeIdByName(Constants.DEALER);
                     // console.log("Role", dealerRole);
 
-                    let sdealerList = await sql.query("select count(*) as dealer_count ,dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                    let sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
                     // console.log(sdealerList);
-                    let dealerCount = sdealerList[0].dealer_count;
+                    let dealerCount = sdealerList ? sdealerList.length : 0;
                     // console.log("dealer_count ", dealerCount);
                     for (var i = 0; i < results.length; i++) {
                         let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
@@ -5981,8 +5789,8 @@ router.post('/save_apk_permissions', async function (req, res) {
                             }
                         }
                         else if (verify.user.user_type === Constants.DEALER) {
-                            let sdealerList = await sql.query("select count(*) as dealer_count ,dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
-                            let dealerCount = sdealerList[0].dealer_count;
+                            let sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                            let dealerCount = sdealerList ? sdealerList.length : 0;
                             console.log("dasda", dealerCount);
                             let Sdealerpermissions = permission.filter(function (item) {
                                 for (let i = 0; i < sdealerList.length; i++) {
@@ -6161,7 +5969,7 @@ router.post('/save_policy_permissions', async function (req, res) {
                             }
                         } else if (verify.user.user_type === Constants.DEALER) {
                             let sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
-                            let dealerCount = sdealerList ? sdealerList.length: 0;
+                            let dealerCount = sdealerList ? sdealerList.length : 0;
                             // console.log("dealer count", dealerCount);
                             let Sdealerpermissions = permission.filter(function (item) {
                                 for (let i = 0; i < sdealerList.length; i++) {
@@ -6172,9 +5980,9 @@ router.post('/save_policy_permissions', async function (req, res) {
                             })
                             // console.log("sdeler permissiosn", Sdealerpermissions);
                             let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
-                         
+
                             permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
-                        // console.log(permissionC, 'permissions count')
+                            // console.log(permissionC, 'permissions count')
                         }
                     };
                 }
