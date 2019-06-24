@@ -1194,7 +1194,7 @@ router.post('/add/user', async function (req, res) {
         var enc_pwd = md5(user_pwd); //encryted pwd
         // console.log("encrypted password" + enc_pwd);
         if (!empty(userEmail) && !empty(userName)) {
-            var user = await sql.query("SELECT * FROM users WHERE email = '" + userEmail + "'");
+            var user = await sql.query("SELECT * FROM users WHERE email = '" + userEmail + "' AND dealer_id = " + loggedInuid + " AND del_status = 0");
 
             if (user.length > 0) {
                 data = {
@@ -1217,8 +1217,8 @@ router.post('/add/user', async function (req, res) {
                 sendEmail("User Registration", html, verify.user.email)
                 sendEmail("User Registration", html, userEmail)
 
-                //res.send("Email has been sent successfully");
-                var user = await sql.query("SELECT * FROM users WHERE email = '" + userEmail + "'");
+                // res.send(rows.insertId);
+                var user = await sql.query("SELECT * FROM users WHERE id = " + rows.insertId + "");
                 let data = await helpers.getAllRecordbyUserID(userId)
                 user[0].devicesList = data
                 // console.log('result add',dealer);
@@ -1308,7 +1308,7 @@ router.put('/delete_user/:user_id', async function (req, res) {
         var user_id = req.params.user_id
         if (!empty(user_id) && user_id != undefined) {
             let deleteUserQ = "UPDATE users SET del_status = 1 WHERE user_id ='" + user_id + "'";
-            console.log(deleteUserQ);
+            // console.log(deleteUserQ);
             sql.query(deleteUserQ, function (err, result) {
                 if (err) {
                     throw err
@@ -3280,6 +3280,7 @@ router.get('/get_dealer_apps', async function (req, res) {
             getAppsQ = getAppsQ + " WHERE delete_status=0 AND apk_type != 'permanent'";
 
         }
+        // console.log(getAppsQ);
         let apps = await sql.query(getAppsQ);
 
         if (apps.length > 0) {
@@ -5246,7 +5247,7 @@ router.get('/apklist', async function (req, res) {
             });
         }
         else if (verify.user.user_type === DEALER) {
-            sql.query("select dealer_apks.* ,apk_details.* from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.apk_type != 'permanent'", async function (error, results) {
+            sql.query("select dealer_apks.* ,apk_details.* from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.apk_type != 'permanent' AND delete_status = 0", async function (error, results) {
                 if (error) throw error;
                 if (results.length > 0) {
                     let dealerRole = await helpers.getuserTypeIdByName(Constants.DEALER);
@@ -6326,7 +6327,7 @@ router.get('/userList', async function (req, res) {
     if (verify.status !== undefined && verify.status == true) {
         if (verify.user.user_type == ADMIN) {
             var role = await helpers.getuserTypeIdByName(verify.user.user_type);
-            let results = await sql.query("select * from users order by created_at DESC")
+            let results = await sql.query("select * from users where del_status =0 order by created_at DESC")
             if (results.length) {
                 for (let i = 0; i < results.length; i++) {
                     let data = await helpers.getAllRecordbyUserID(results[i].user_id)
@@ -6353,7 +6354,7 @@ router.get('/userList', async function (req, res) {
                     }
                 }
                 console.log("select * from users WHERE dealer_id IN (" + dealer.join() + ") order by created_at DESC");
-                let results = await sql.query("select * from users WHERE dealer_id IN (" + dealer.join() + ") order by created_at DESC")
+                let results = await sql.query("select * from users WHERE dealer_id IN (" + dealer.join() + ") AND del_status = 0 order by created_at DESC")
                 if (results.length) {
                     for (let i = 0; i < results.length; i++) {
                         let data = await helpers.getAllRecordbyUserID(results[i].user_id)
@@ -6371,7 +6372,7 @@ router.get('/userList', async function (req, res) {
             });
         }
         else {
-            let results = await sql.query("select * from users WHERE dealer_id = '" + verify.user.id + "' order by created_at DESC")
+            let results = await sql.query("select * from users WHERE dealer_id = '" + verify.user.id + "' AND del_status = 0 order by created_at DESC")
             if (results.length) {
                 for (let i = 0; i < results.length; i++) {
                     let data = await helpers.getAllRecordbyUserID(results[i].user_id)
