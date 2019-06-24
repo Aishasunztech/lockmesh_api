@@ -18,6 +18,7 @@ const url = require('url');
 var path = require('path');
 var fs = require("fs");
 var Constants = require('../constants/Application');
+var app_constants = require('../constants/AppConstants.js');
 var moment = require('moment-strftime');
 var mime = require('mime');
 
@@ -30,7 +31,12 @@ var Jimp = require('jimp');
 var mysqldump = require('mysqldump')
 
 var archiver = require('archiver');
+const axios = require('axios')
 // archiver.registerFormat('zip-encryptable', require('archiver-zip-encryptable'));
+
+var util = require('util')
+
+const smtpTransport = require('../helper/mail')
 
 
 
@@ -45,10 +51,6 @@ let apkColumns = ["SHOW ON DEVICE", "APK", "APP NAME", "APP LOGO"]
 let sdealerColumns = ["DEALER ID", "DEALER NAME", "DEALER EMAIL", "DEALER PIN", "DEVICES", "TOKENS", "PARENT DEALER", "PARENT DEALER ID"]
 // var CryptoJS = require("crypto-js");
 // var io = require("../bin/www");
-
-var util = require('util')
-
-const smtpTransport = require('../helper/mail')
 
 function sendEmail(subject, message, to, callback) {
     let cb = callback;
@@ -759,6 +761,10 @@ router.get('/devices', async function (req, res) {
     var verify = await verifyToken(req, res);
     var where_con = '';
     let newArray = [];
+
+
+
+
     // console.log("user data", verify.user);
     if (verify.status !== undefined && verify.status == true) {
         if (verify.user.user_type !== 'admin') {
@@ -1188,7 +1194,7 @@ router.post('/add/user', async function (req, res) {
         var enc_pwd = md5(user_pwd); //encryted pwd
         // console.log("encrypted password" + enc_pwd);
         if (!empty(userEmail) && !empty(userName)) {
-            var user = await sql.query("SELECT * FROM users WHERE email = '" + userEmail + "'");
+            var user = await sql.query("SELECT * FROM users WHERE email = '" + userEmail + "' AND dealer_id = " + loggedInuid + " AND del_status = 0");
 
             if (user.length > 0) {
                 data = {
@@ -1211,8 +1217,8 @@ router.post('/add/user', async function (req, res) {
                 sendEmail("User Registration", html, verify.user.email)
                 sendEmail("User Registration", html, userEmail)
 
-                //res.send("Email has been sent successfully");
-                var user = await sql.query("SELECT * FROM users WHERE email = '" + userEmail + "'");
+                // res.send(rows.insertId);
+                var user = await sql.query("SELECT * FROM users WHERE id = " + rows.insertId + "");
                 let data = await helpers.getAllRecordbyUserID(userId)
                 user[0].devicesList = data
                 // console.log('result add',dealer);
@@ -1302,7 +1308,7 @@ router.put('/delete_user/:user_id', async function (req, res) {
         var user_id = req.params.user_id
         if (!empty(user_id) && user_id != undefined) {
             let deleteUserQ = "UPDATE users SET del_status = 1 WHERE user_id ='" + user_id + "'";
-            console.log(deleteUserQ);
+            // console.log(deleteUserQ);
             sql.query(deleteUserQ, function (err, result) {
                 if (err) {
                     throw err
@@ -1951,9 +1957,21 @@ router.put('/new/device', async (req, res) => {
                                     var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES ('" + device_id + "' ," + dealer_id + "," + usr_acc_id + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
                                     sql.query(applyQuery)
                                 }
-                                for (var i = 0; i < rsltq.length; i++) {
-                                    rsltq[i].finalStatus = device_helpers.checkStatus(rsltq[i])
-                                }
+
+                                rsltq[0].finalStatus = device_helpers.checkStatus(rsltq[0])
+
+
+                                axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
+                                    // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
+                                    if (response.data.status) {
+                                        let data = {
+                                            linkToWL: false,
+                                            SN: rsltq[0].serial_number,
+                                            mac: rsltq[0].mac_address
+                                        }
+                                        axios.put(app_constants.UPDATE_DEVICE_SUPERADMIN_URL, data, { headers: { authorization: response.data.user.token } })
+                                    }
+                                })
                                 // device_helpers.saveActionHistory(rslts[0], Constants.DEVICE_ACCEPT)
                                 data = {
                                     "status": true,
@@ -3262,6 +3280,7 @@ router.get('/get_dealer_apps', async function (req, res) {
             getAppsQ = getAppsQ + " WHERE delete_status=0 AND apk_type != 'permanent'";
 
         }
+        // console.log(getAppsQ);
         let apps = await sql.query(getAppsQ);
 
         if (apps.length > 0) {
@@ -5228,7 +5247,7 @@ router.get('/apklist', async function (req, res) {
             });
         }
         else if (verify.user.user_type === DEALER) {
-            sql.query("select dealer_apks.* ,apk_details.* from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.apk_type != 'permanent'", async function (error, results) {
+            sql.query("select dealer_apks.* ,apk_details.* from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.apk_type != 'permanent' AND delete_status = 0", async function (error, results) {
                 if (error) throw error;
                 if (results.length > 0) {
                     let dealerRole = await helpers.getuserTypeIdByName(Constants.DEALER);
@@ -6308,7 +6327,7 @@ router.get('/userList', async function (req, res) {
     if (verify.status !== undefined && verify.status == true) {
         if (verify.user.user_type == ADMIN) {
             var role = await helpers.getuserTypeIdByName(verify.user.user_type);
-            let results = await sql.query("select * from users order by created_at DESC")
+            let results = await sql.query("select * from users where del_status =0 order by created_at DESC")
             if (results.length) {
                 for (let i = 0; i < results.length; i++) {
                     let data = await helpers.getAllRecordbyUserID(results[i].user_id)
@@ -6335,7 +6354,7 @@ router.get('/userList', async function (req, res) {
                     }
                 }
                 console.log("select * from users WHERE dealer_id IN (" + dealer.join() + ") order by created_at DESC");
-                let results = await sql.query("select * from users WHERE dealer_id IN (" + dealer.join() + ") order by created_at DESC")
+                let results = await sql.query("select * from users WHERE dealer_id IN (" + dealer.join() + ") AND del_status = 0 order by created_at DESC")
                 if (results.length) {
                     for (let i = 0; i < results.length; i++) {
                         let data = await helpers.getAllRecordbyUserID(results[i].user_id)
@@ -6353,7 +6372,7 @@ router.get('/userList', async function (req, res) {
             });
         }
         else {
-            let results = await sql.query("select * from users WHERE dealer_id = '" + verify.user.id + "' order by created_at DESC")
+            let results = await sql.query("select * from users WHERE dealer_id = '" + verify.user.id + "' AND del_status = 0 order by created_at DESC")
             if (results.length) {
                 for (let i = 0; i < results.length; i++) {
                     let data = await helpers.getAllRecordbyUserID(results[i].user_id)
@@ -6878,6 +6897,170 @@ cron.schedule('0 0 0 * * *', async () => {
         }
     }
 });
+
+router.put('/save-prices', async function (req, res) {
+    console.log('data is', req.body)
+    // return;
+    let data = req.body.data;
+    if (Object.keys(data.sim).length || Object.keys(data.chat).length || Object.keys(data.pgp).length || Object.keys(data.vpn).length) {
+        // console.log(data, 'data')
+        // let whitelabel_id = req.body.whitelabel_id;
+        // if (whitelabel_id) {
+        // console.log(whitelabel_id, 'whitelableid');
+        let error = 0;
+
+        let month = ''
+        for (var key in data) {
+            if (data.hasOwnProperty(key)) {
+                // console.log(key + " -> " + data[key]);
+                let outerKey = key;
+                let innerObject = data[key];
+                // console.log('iner object is', innerObject)
+                for (var innerKey in innerObject) {
+                    if (innerObject.hasOwnProperty(innerKey)) {
+                        let days = 0;
+                        // console.log(innerKey + " -> " + innerObject[innerKey]);
+                        if (innerObject[innerKey]) {
+
+                            // console.log('is string', string)
+                            let stringarray = [];
+
+                            stringarray = innerKey.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
+                            if (stringarray) {
+                                // console.log(stringarray,'is string lenth', stringarray.length)
+                                if (stringarray.length) {
+                                    month = stringarray[0];
+                                    // console.log('is month', month, stringarray[1])
+                                    if (month && stringarray[1]) {
+                                        // console.log('sring[1]', stringarray[1])
+                                        if (stringarray[1] == 'month') {
+                                            days = parseInt(month) * 30
+                                        } else if (string[1] == 'year') {
+                                            days = parseInt(month) * 365
+                                        } else {
+                                            days = 30
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        // console.log(days, 'days are')
+                        let unit_price = innerKey;
+                        let updateQuery = "UPDATE prices SET unit_price='" + innerObject[innerKey] + "', price_expiry='" + days + "' WHERE price_term='" + innerKey + "' AND price_for='" + key + "'";
+                        // console.log(updateQuery, 'query')
+                        sql.query(updateQuery, async function (err, result) {
+                            if (err) throw err;
+                            if (result) {
+                                console.log('outerKey', outerKey)
+                                if (!result.affectedRows) {
+                                    let insertQuery = "INSERT INTO prices (price_for, unit_price, price_term, price_expiry) VALUES('" +      + "', '" + innerObject[innerKey] + "', '" + unit_price + "', '" + days + "')";
+                                    // console.log('insert query', insertQuery)
+                                    let rslt = await sql.query(insertQuery);
+                                    if (rslt) {
+                                        if (rslt.affectedRows == 0) {
+                                            error++;
+                                        }
+                                    }
+                                    // console.log(rslt, 'inner rslt')
+                                }
+                            }
+                        })
+                    }
+                }
+
+            }
+        }
+        console.log('errors are ', error)
+
+        if (error == 0) {
+            res.send({
+                status: true,
+                msg: 'Prices Set Successfully'
+            })
+        } else {
+            res.send({
+                status: false,
+                msg: 'Some Error Accured'
+            })
+        }
+
+        // } else {
+        //     res.send({
+        //         status: false,
+        //         msg: 'Invalid WhiteLabel'
+        //     })
+        // }
+
+    } else {
+        res.send({
+            status: false,
+            msg: 'Invalid Data'
+        })
+    }
+});
+
+
+// savePackage
+router.post('/save-package', async function (req, res) {
+    console.log('data is', req.body)
+
+    let data = req.body.data;
+    if (data) {
+        // console.log(data, 'data')
+        // let whitelabel_id = req.body.data.whitelabel_id;
+       // if (whitelabel_id) {
+            // console.log(whitelabel_id, 'whitelableid');
+            let days = 0;
+            if (data.pkgTerm) {
+                stringarray = data.pkgTerm.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
+                if (stringarray) {
+                    // console.log(stringarray,'is string lenth', stringarray.length)
+                    if (stringarray.length) {
+                        month = stringarray[0];
+                        // console.log('is month', month, stringarray[1])
+                        if (month && stringarray[1]) {
+                            // console.log('sring[1]', stringarray[1])
+                            if (stringarray[1] == 'month') {
+                                days = parseInt(month) * 30
+                            } else if (string[1] == 'year') {
+                                days = parseInt(month) * 365
+                            } else {
+                                days = 30
+                            }
+                        }
+                    }
+                }
+            }
+            let pkg_features = JSON.stringify(data.pkgFeatures)
+            let insertQuery = "INSERT INTO packages (pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features) VALUES('" + data.pkgName + "', '" + data.pkgTerm + "', '" + data.pkgPrice + "','" + days + "', '" + pkg_features + "')";
+            console.log('query: is::', insertQuery);
+            sql.query(insertQuery, (err, rslt) => {
+                if (err) throw err;
+                if (rslt) {
+                    if (rslt.affectedRows) {
+                        res.send({
+                            status: true,
+                            msg: 'Package Saved Successfully'
+                        })
+                    }
+                }
+            })
+
+        } else {
+            res.send({
+                status: false,
+                msg: 'Invalid Whitelabel'
+            })
+        }
+    // } else {
+    //     res.send({
+    //         status: false,
+    //         msg: 'Invalid Data'
+    //     })
+    // }
+});
+
+
 
 
 module.exports = router;

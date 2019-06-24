@@ -16,6 +16,7 @@ const nodemailer = require('nodemailer');
 var moment = require('moment-strftime');
 const device_helpers = require('../helper/device_helpers.js');
 var Constants = require('../constants/Application');
+var app_constants = require('../constants/AppConstants.js');
 
 const smtpTransport = require('../helper/mail')
 
@@ -198,6 +199,19 @@ router.post('/login', async function (req, resp) {
                                 await sql.query(updateAccount);
                                 device_helpers.saveImeiHistory(chechedDeviceId, serial_number, mac_address, imei1, imei2)
                                 let device_id = await device_helpers.getDvcIDByDeviceID(usrAcc[0].device_id)
+
+                                // Update device details on Super admin
+                                axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
+                                    // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
+                                    if (response.data.status) {
+                                        let data = {
+                                            linkToWL: false,
+                                            SN: serial_number,
+                                            mac: mac_address
+                                        }
+                                        axios.put(app_constants.UPDATE_DEVICE_SUPERADMIN_URL, data, { headers: { authorization: response.data.user.token } })
+                                    }
+                                })
 
                                 const device = {
                                     dId: dealer[0].dealer_id,
