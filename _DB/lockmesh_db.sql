@@ -11,7 +11,7 @@
  Target Server Version : 50724
  File Encoding         : 65001
 
- Date: 25/06/2019 11:39:42
+ Date: 25/06/2019 11:50:33
 */
 
 SET NAMES utf8mb4;
@@ -278,7 +278,7 @@ CREATE TABLE `acl_module_to_user_roles`  (
   INDEX `component_id`(`component_id`) USING BTREE,
   CONSTRAINT `acl_module_to_user_roles_ibfk_1` FOREIGN KEY (`user_role_id`) REFERENCES `user_roles` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `acl_module_to_user_roles_ibfk_2` FOREIGN KEY (`component_id`) REFERENCES `acl_modules` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 59 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 62 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of acl_module_to_user_roles
@@ -313,6 +313,9 @@ INSERT INTO `acl_module_to_user_roles` VALUES (54, 1, 42);
 INSERT INTO `acl_module_to_user_roles` VALUES (55, 2, 42);
 INSERT INTO `acl_module_to_user_roles` VALUES (56, 4, 43);
 INSERT INTO `acl_module_to_user_roles` VALUES (58, 1, 44);
+INSERT INTO `acl_module_to_user_roles` VALUES (59, 1, 45);
+INSERT INTO `acl_module_to_user_roles` VALUES (60, 2, 45);
+INSERT INTO `acl_module_to_user_roles` VALUES (61, 3, 45);
 
 -- ----------------------------
 -- Table structure for acl_modules
@@ -328,7 +331,7 @@ CREATE TABLE `acl_modules`  (
   `uri` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `uri_UNIQUE`(`uri`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 45 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 46 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of acl_modules
@@ -352,9 +355,10 @@ INSERT INTO `acl_modules` VALUES (38, 'Invalid Page', 'InvalidPage', 0, 0, 'comp
 INSERT INTO `acl_modules` VALUES (39, 'App', 'App', 1, 0, NULL, '/app');
 INSERT INTO `acl_modules` VALUES (40, 'Policy', 'Policy', 1, 0, NULL, '/policy');
 INSERT INTO `acl_modules` VALUES (41, 'Users', 'Users', 1, 0, NULL, '/users');
-INSERT INTO `acl_modules` VALUES (42, 'AppMarket', 'AppMarket', 1, 0, NULL, '/app-market');
-INSERT INTO `acl_modules` VALUES (43, 'AutoUpdate', 'AutoUpdate', 1, 0, NULL, '/apk-list/autoupdate');
-INSERT INTO `acl_modules` VALUES (44, 'ManageData', 'ManageData', 1, 0, NULL, '/account/managedata');
+INSERT INTO `acl_modules` VALUES (42, 'App Market', 'AppMarket', 1, 0, NULL, '/app-market');
+INSERT INTO `acl_modules` VALUES (43, 'Auto Update', 'AutoUpdate', 1, 0, NULL, '/apk-list/autoupdate');
+INSERT INTO `acl_modules` VALUES (44, 'Manage Data', 'ManageData', 1, 0, NULL, '/account/managedata');
+INSERT INTO `acl_modules` VALUES (45, 'Set Prices', 'SetPrices', 1, 0, NULL, '/set-prices');
 
 -- ----------------------------
 -- Table structure for apk_details
