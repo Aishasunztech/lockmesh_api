@@ -7235,6 +7235,37 @@ router.post('/save-package', async function (req, res) {
 });
 
 
+router.get('/get-language', async function(req, res){
+    var verify = await verifyToken(req, res);
+    if(verify.status !== undefined && verify.status == true){
+        let dealer_id = verify.user.dealer_id;
+        if(dealer_id){
+            let selectQuery = "SELECT * FROM dealer_language WHERE dealer_id='"+dealer_id+"' LIMIT 1";
+
+            sql.query(selectQuery, (err, rslt)=> {
+                if(err) throw err;
+
+                if(rslt){
+                    if(rslt.length){
+                        res.send({
+                            status: true,
+                            msg: 'success',
+                            data: rslt
+
+                        })
+                    }else{
+                        res.send({
+                            status: false,
+                            msg: 'No data'
+                        })
+                    }
+                }
+            })
+        }
+    }
+})
+
+
 router.patch('/save-language', async function (req, res) {
     var verify = await verifyToken(req, res);
     if(verify.status !== undefined && verify.status == true){
