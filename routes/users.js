@@ -7235,12 +7235,60 @@ router.post('/save-package', async function (req, res) {
 });
 
 
+router.patch('/save-language', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if(verify.status !== undefined && verify.status == true){
+        let language = req.body.language;
+       
+        let dealer_id = verify.user.dealer_id;
+        console.log(dealer_id, 'dealer id is', verify.user)
+        if(dealer_id && language){
+            language = JSON.stringify(language);
+            let updateQuery = "UPDATE dealer_language SET dealer_language='"+language+"' WHERE dealer_id='"+dealer_id+"'"; 
+            sql.query(updateQuery, async (err, rslt)=> {
+                if(err) throw err;
+                if(rslt){
+                    if(rslt.affectedRows){
+                        res.send({
+                            status: true,
+                            msg: 'Language changed Successfully'
+                        })
+                    }else{
+                        let insertQuery = "INSERT INTO dealer_language (dealer_id, dealer_language) VALUES ('"+dealer_id+"', '"+language+"')";
+                        let inserted = sql.query(insertQuery);
+                        if(inserted){
+                            res.send({
+                                status: true,
+                                msg: 'Language changed Successfully'
+                            })
+                        }else{
+                            res.send({
+                                status: false,
+                                msg: 'Error while Process'
+                            })
+                        }
+                    }
+    
+                }else{
+                    res.send({
+                        status: false,
+                        msg: 'Error while Process'
+                    })
+                }
+            })
+        }
+       
+    }
+})
+
+
 
 router.get('/get-prices/:dealer_id', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         // let dealer_id = req.params.dealer_id;
-        let dealer_id = verify.user.dealerId;
+        console.log(verify.user)
+        let dealer_id = verify.user.dealer_id;
         let sim_id = {};
         let chat_id = {};
         let pgp_email = {};
@@ -7330,7 +7378,7 @@ router.get('/get-packages/:dealer_id', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
         // let dealer_id = req.params.dealer_id;
-        let dealer_id = verify.user.dealerId;
+        let dealer_id = verify.user.dealer_id;
         if (dealer_id) {
             let selectQuery = "SELECT * FROM packages WHERE dealer_id='" + dealer_id + "'";
             sql.query(selectQuery, async (err, reslt) => {
