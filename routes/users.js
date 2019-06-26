@@ -1965,18 +1965,19 @@ router.put('/new/device', async (req, res) => {
                                     // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
                                     if (response.data.status) {
                                         let data = {
-                                            linkToWL: false,
+                                            linkToWL: true,
                                             SN: rsltq[0].serial_number,
-                                            mac: rsltq[0].mac_address
+                                            mac: rsltq[0].mac_address,
+                                            device_id: rsltq[0].device_id
                                         }
                                         axios.put(app_constants.UPDATE_DEVICE_SUPERADMIN_URL, data, { headers: { authorization: response.data.user.token } })
                                     }
                                 })
                                 // device_helpers.saveActionHistory(rslts[0], Constants.DEVICE_ACCEPT)
                                 data = {
-                                    "status": true,
-                                    "msg": 'Record updated successfully.',
-                                    "data": rsltq
+                                    status: true,
+                                    msg: 'Record updated successfully.',
+                                    data: rsltq
                                 };
                                 res.send(data);
                                 return;
@@ -2265,26 +2266,32 @@ router.put('/updateProfile/:id', async function (req, res) {
 router.post('/unlink/:id', async function (req, res) {
     var verify = await verifyToken(req, res);
     var device_id = req.params.id;
-    var pgp_email = req.body.device.pgp_email;
-    var chat_id = req.body.device.chat_id;
-    var sim_id = req.body.device.sim_id;
 
     if (verify.status !== undefined && verify.status == true) {
-        let dvcId = await device_helpers.getDvcIDByDeviceID(device_id);
-        console.log('unlinked: ', dvcId);
 
-        if (!empty(device_id)) {
-
-            var sql1 = "DELETE from usr_acc  where device_id = '" + device_id + "'";
-            var rest = sql.query(sql1, async function (error, results) {
-                if (error) throw error;
-                console.log(results);
-                if (results.affectedRows == 0) {
+        if (!empty(device_id)) {            
+            let dvcId = await device_helpers.getDvcIDByDeviceID(device_id);
+            var sql1 = `DELETE from usr_acc  where device_id=${device_id}`;
+            sql.query(sql1, async function (error, results) {
+                if (error){
                     data = {
-                        "status": false,
-                        "msg": "Device not unlinked."
+                        status: false,
+                        msg: "Device not unlinked."
                     }
-                } else {
+                };
+                
+                if (results && results.affectedRows) {
+                    // Update device details on Super admin
+                    axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
+                        // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
+                        if (response.data.status) {
+                            let data = {
+                                linkToWL: false,
+                                device_id: dvcId
+                            }
+                            axios.put(app_constants.UPDATE_DEVICE_SUPERADMIN_URL, data, { headers: { authorization: response.data.user.token } })
+                        }
+                    })
                     var userAccId = await device_helpers.getUsrAccIDbyDvcId(device_id)
                     await sql.query("update pgp_emails set user_acc_id = null WHERE user_acc_id = '" + userAccId + "'");
                     await sql.query("update chat_ids set user_acc_id = null WHERE user_acc_id = '" + userAccId + "'");
@@ -2295,18 +2302,26 @@ router.post('/unlink/:id', async function (req, res) {
                     device_helpers.saveActionHistory(req.body.device, Constants.DEVICE_UNLINKED)
                     require("../bin/www").sendDeviceStatus(dvcId, "unlinked", true);
                     data = {
-                        "status": true,
-                        "msg": "Device unlinked successfully."
+                        status: true,
+                        msg: "Device unlinked successfully."
+                    }
+                } else {
+                    data = {
+                        status: false,
+                        msg: "Device not unlinked."
                     }
                 }
                 res.send(data);
+                return;
             });
 
         } else {
             data = {
-                "status": false,
-                "msg": "Invalid device id."
+                status: false,
+                msg: "Invalid device id."
             }
+            res.send(data);
+            return;
         }
     }
     // console.log('dddddddd', data)

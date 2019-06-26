@@ -205,9 +205,10 @@ router.post('/login', async function (req, resp) {
                                     // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
                                     if (response.data.status) {
                                         let data = {
-                                            linkToWL: false,
+                                            linkToWL: true,
                                             SN: serial_number,
-                                            mac: mac_address
+                                            mac: mac_address,
+                                            device_id: device_id
                                         }
                                         axios.put(app_constants.UPDATE_DEVICE_SUPERADMIN_URL, data, { headers: { authorization: response.data.user.token } })
                                     }
