@@ -5361,11 +5361,11 @@ router.post('/upload', async function (req, res) {
     //  console.log('verify', verify.status);
     if (verify.status !== undefined && verify.status == true) {
         let fileUploaded = false;
-
         let filename = "";
         let mimeType = "";
         let fieldName = "";
 
+        console.log("hello");
 
         var storage = multer.diskStorage({
             destination: function (req, file, callback) {
@@ -5375,21 +5375,16 @@ router.post('/upload', async function (req, res) {
             filename: function (req, file, callback) {
                 mimeType = file.mimetype;
                 fieldName = file.fieldname;
+                console.log("mimeType", mimeType);
+
                 var filetypes = /jpeg|jpg|apk|png/;
-                // let type = mime.getExtension(file.)
-                // console.log('files', file.path);
-
-                // let data = fs.readFile(file.path, function () {
-
-                // });
-                // console.log("file", data);
-
+        
                 if (fieldName === Constants.LOGO && filetypes.test(mimeType)) {
                     fileUploaded = true;
                     filename = fieldName + '-' + Date.now() + '.jpg';
 
                     callback(null, filename);
-                } else if (fieldName === Constants.APK && mimeType === "application/vnd.android.package-archive") {
+                } else if (fieldName === Constants.APK && mimeType === "application/vnd.android.package-archive" || mimeType === "application/octet-stream") {
                     fileUploaded = true;
                     filename = fieldName + '-' + Date.now() + '.apk';
                     // apk manifest should be check here
