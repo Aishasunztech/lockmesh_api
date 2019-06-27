@@ -5482,7 +5482,7 @@ router.post('/checkApkName', async function (req, res) {
             let apk_id = req.body.apk_id
             let query = '';
             // console.log(apk_id);
-            if (apkName != '' || apkName != null) {
+            if (apkName != '' && apkName != null) {
                 if (apk_id == '') {
                     query = "SELECT * from apk_details where app_name = '" + apkName + "' AND delete_status != 1"
                 }
@@ -5504,6 +5504,108 @@ router.post('/checkApkName', async function (req, res) {
                 res.send({
                     status: true
                 })
+            }
+        } catch (error) {
+            throw error
+        }
+
+    }
+});
+// Purchase credits
+router.post('/purchase_credits', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify['status'] && verify.status == true) {
+        try {
+            // console.log(req.body);
+            let credits = req.body.data.credits
+            let method = req.body.data.method
+            let total_price = req.body.data.total
+            let currency_price = req.body.data.currency_price
+            let promo_code = req.body.data.promo_code
+            let currency = req.body.data.currency
+            let dealerId = verify.user.id
+            // console.log(verify.user);
+            console.log(currency_price);
+
+            // return
+            if (credits != undefined && credits != '' && credits != null) {
+
+                if (promo_code != '') {
+
+                } else {
+                    let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
+                    // console.log(query);
+                    sql.query(query, function (err, result) {
+                        if (err) throw err
+                        console.log(result);
+                        if (result.affectedRows > 0) {
+                            if (verify.user.user_type === ADMIN) {
+                                if (method == 'CASH') {
+                                    axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
+                                        if (response.data.status) {
+                                            let data = {
+                                                dealer_id: dealerId,
+                                                dealer_name: verify.user.dealer_name,
+                                                label: Constants.APP_TITLE,
+                                                credits: credits,
+                                                dealer_email: verify.user.email
+                                            }
+                                            axios.post(app_constants.REQUEST_FOR_CREDITS, data, { headers: { authorization: response.data.user.token } }).then((response) => {
+                                                // console.log(response);
+                                                if (response.data.status) {
+                                                    res.send({
+                                                        status: true,
+                                                        msg: response.data.msg
+                                                    })
+
+                                                } else {
+                                                    // console.log("object");
+                                                    res.send({
+                                                        status: false,
+                                                        msg: response.data.msg
+                                                    })
+                                                }
+                                            })
+                                        }
+                                        else {
+                                            // console.log("NOT ALLOWED");
+                                            res.send({
+                                                status: false,
+                                                msg: "Not allowed to make request.",
+                                            })
+                                            return
+                                        }
+                                    })
+
+                                } else {
+
+                                    res.send()
+                                }
+                            } else {
+                                // console.log(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`);
+                                sql.query(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`, function (err, result) {
+                                    if (err) throw err
+                                    if (result && result.affectedRows > 0) {
+                                        res.send({
+                                            status: true,
+                                            msg: "Request submitted successfully.",
+                                        })
+                                        return
+                                    }
+                                    else {
+                                        res.send({
+                                            status: false,
+                                            msg: "Request not submitted please try again.",
+                                        })
+                                    }
+                                })
+
+                            }
+                        } else {
+                            res.send()
+                        }
+                    })
+                }
             }
         } catch (error) {
             throw error
@@ -7496,7 +7598,278 @@ router.patch('/check-package-name', async function (req, res) {
     }
 
 });
+router.post('/update_credit', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify.status !== undefined && verify.status == true) {
+        try {
+            let credits = req.body.data.credits
+            let dealer_id = req.body.data.dealer_id
+            console.log(credits);
+            if (dealer_id !== '' && dealer_id !== undefined && dealer_id !== null) {
+                sql.query("SELECt * from dealer_credits where dealer_id = " + dealer_id, function (err, result) {
+                    if (err) throw err
+                    if (result.length) {
+                        let newCredit = credits + result[0].credits
+                        sql.query("update dealer_credits set credits = " + newCredit + " where dealer_id = " + dealer_id, function (err, reslt) {
+                            if (err) throw err
+                            if (reslt && reslt.affectedRows > 0) {
+                                res.send({
+                                    status: true,
+                                    msg: "Credits added successfully."
+                                })
+                                return
+                            }
+                            else {
+                                res.send({
+                                    status: false,
+                                    msg: "Credits not updated please try again."
+                                })
+                                returns
 
+                            }
+                        })
+                    }
+                    else {
+                        let query = `INSERT into dealer_credits (dealer_id,credits) VALUES (${dealer_id}, ${credits})`;
+                        sql.query(query, function (err, reslt) {
+                            if (err) throw err
+                            if (reslt && reslt.affectedRows > 0) {
+                                res.send({
+                                    status: true,
+                                    msg: "Credits added successfully."
+                                })
+                                return
+                            }
+                            else {
+                                res.send({
+                                    status: false,
+                                    msg: "Credits not updated please try again."
+                                })
+                                returns
+
+                            }
+                        })
+                    }
+                })
+            }
+        } catch (error) {
+            throw error
+        }
+    }
+});
+router.get('/newRequests', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify.status !== undefined && verify.status == true) {
+        try {
+            let query = ''
+            // console.log(verify.user);
+            if (verify.user.user_type === ADMIN) {
+                query = "SELECT * from credit_requests where status = '0' AND dealer_type = 'dealer'"
+            } else {
+                let sdealers = await helpers.getSdealersByDealerId(verify.user.id)
+                // console.log(sdealers);
+                if (sdealers.length) {
+                    query = `SELECT * from credit_requests where status = '0' AND dealer_type = 'sdealer' AND dealer_id IN (${sdealers.join()})`
+                } else {
+                    data = {
+                        "status": false,
+                        "data": []
+                    };
+                    res.send(data);
+                    return
+                }
+            }
+            console.log(query);
+            sql.query(query, function (err, result) {
+                if (err) throw err
+                if (result.length) {
+                    data = {
+                        "status": true,
+                        "data": result
+                    };
+                    res.send(data);
+                    return
+                } else {
+                    data = {
+                        "status": true,
+                        "data": []
+                    };
+                    res.send(data);
+                    return
+                }
+            })
+        } catch (error) {
+            throw error
+        }
+    }
+})
+router.get('/get_user_credits', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify.status !== undefined && verify.status == true) {
+        try {
+            let query = ''
+            query = `SELECT credits from dealer_credits where dealer_id= ${verify.user.id}`
+
+            sql.query(query, function (err, result) {
+                if (err) throw err
+                if (result.length) {
+                    console.log(result);
+                    data = {
+                        "status": true,
+                        "credits": result[0].credits
+                    };
+                    res.send(data);
+                    return
+                } else {
+                    data = {
+                        "status": true,
+                        "credits": 0
+                    };
+                    res.send(data);
+                    return
+                }
+            })
+        } catch (error) {
+            throw err
+        }
+    }
+})
+router.put('/delete_request/:id', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify.status !== undefined && verify.status == true) {
+        try {
+            let id = req.params.id
+            let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
+            console.log(query);
+            sql.query(query, function (err, result) {
+                if (err) throw err
+                if (result.length) {
+
+                    let updateQuery = "update credit_requests set status = 1, del_status = 1 where id= " + id
+                    sql.query(updateQuery, function (err, result) {
+                        if (err) throw err
+                        if (result && result.affectedRows > 0) {
+                            data = {
+                                "status": true,
+                                "msg": "Request deleted successfully."
+                            };
+                            res.send(data);
+                            return
+                        } else {
+                            data = {
+                                "status": false,
+                                "msg": "Request not deleted please try again."
+                            };
+                            res.send(data);
+                            return
+                        }
+                    })
+
+                } else {
+                    data = {
+                        "status": false,
+                        msg: "Request is already deleted"
+                    };
+                    res.send(data);
+                    return
+                }
+            })
+        } catch (error) {
+            throw error
+        }
+    }
+})
+router.put('/accept_request/:id', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify.status !== undefined && verify.status == true) {
+        try {
+            let id = req.params.id
+            let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
+            // console.log(query);
+            sql.query(query, async function (err, result) {
+                if (err) throw err
+                if (result.length) {
+                    let logginUserCredits = await sql.query("select credits from dealer_credits where dealer_id = " + verify.user.id)
+                    if (logginUserCredits.length) {
+                        if (logginUserCredits[0].credits > result[0].credits) {
+                            let dealer_id = result[0].dealer_id
+                            let newCredit = result[0].credits
+                            let deductedCredits = logginUserCredits[0].credits - result[0].credits
+                            let credits = await sql.query("select * from dealer_credits where dealer_id = " + dealer_id);
+                            // console.log(resul);
+                            if (credits.length) {
+                                newCredit = credits[0].credits + result[0].credits
+                            }
+                            sql.query("update dealer_credits set credits = " + newCredit + " where dealer_id = " + dealer_id, async function (err, reslt) {
+                                if (err) throw err
+                                if (reslt && reslt.affectedRows > 0) {
+                                    let updateQuery = "update credit_requests set status = 1 where id= " + id
+                                    await sql.query(updateQuery);
+                                    let userCredits = "update dealer_credits set credits = " + deductedCredits + " where dealer_id = " + verify.user.id;
+                                    await sql.query(userCredits)
+                                    res.send({
+                                        status: true,
+                                        msg: "Credits added successfully.",
+                                        user_credits: deductedCredits
+                                    })
+                                    return
+                                }
+                                else {
+                                    let query = `INSERT into dealer_credits (dealer_id,credits) VALUES (${dealer_id}, ${newCredit})`;
+                                    sql.query(query, async function (err, reslt) {
+                                        if (err) throw err
+                                        if (reslt && reslt.affectedRows > 0) {
+                                            let updateQuery = "update credit_requests set status = 1 where id= " + id
+                                            await sql.query(updateQuery)
+                                            let userCredits = "update dealer_credits set credits = " + deductedCredits + " where dealer_id = " + verify.user.id;
+                                            await sql.query(userCredits)
+                                            res.send({
+                                                status: true,
+                                                msg: "Credits added successfully.",
+                                                user_credits: deductedCredits
+                                            })
+                                            return
+                                        }
+                                        else {
+                                            res.send({
+                                                status: false,
+                                                msg: "Credits not updated please try again."
+                                            })
+                                            returns
+
+                                        }
+                                    })
+                                }
+                            })
+                        }
+                        else {
+                            res.send({
+                                status: false,
+                                msg: "Your credits are not enough to accept a request."
+                            })
+                            return
+                        }
+                    } else {
+                        res.send({
+                            status: false,
+                            msg: "Your credits are not enough to accept a request."
+                        })
+                        return
+                    }
+                } else {
+                    data = {
+                        "status": false,
+                        msg: "Request is already deleted"
+                    };
+                    res.send(data);
+                    return
+                }
+            })
+        } catch (error) {
+            throw error
+        }
+    }
+})
 
 
 module.exports = router;
