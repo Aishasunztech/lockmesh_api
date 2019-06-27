@@ -180,13 +180,28 @@ module.exports = {
 	},
 	dealerCount: async (adminRoleId) => {
 
-		var query = "SELECT COUNT(*) as dealer_count FROM dealers WHERE type !=" + adminRoleId+" AND type!=4";
+		var query = "SELECT COUNT(*) as dealer_count FROM dealers WHERE type !=" + adminRoleId + " AND type!=4";
 		let res = await sql.query(query);
 		if (res.length) {
 			console.log('helper called', res[0])
 			return res[0].dealer_count;
 		} else {
 			return false;
+		}
+	},
+	getSdealersByDealerId: async (dealer_id) => {
+
+		var query = "SELECT * FROM dealers WHERE connected_dealer = " + dealer_id;
+		let res = await sql.query(query);
+		let dealerList = []
+		if (res.length) {
+			dealerList = res.map((item) => {
+				return item.dealer_id
+			})
+			// console.log(dealerList);
+			return dealerList
+		} else {
+			return [];
 		}
 	},
 	isAllowedComponentByUri: async function (componentUri, userId) {
@@ -556,7 +571,7 @@ module.exports = {
 		try {
 			let versionName = "aapt dump badging " + filePath + " | grep \"versionName\" | sed -e \"s/.*versionName='//\" -e \"s/' .*//\"";
 			const { stdout, stderr, error } = await exec(versionName);
-			
+
 			if (error) {
 				return false;
 			}
@@ -770,13 +785,13 @@ module.exports = {
 		}
 	},
 
-	getDealerByDealerId: async function (id){
-		let query = "SELECT * FROM dealers WHERE dealer_id='"+id+"' limit 1";
+	getDealerByDealerId: async function (id) {
+		let query = "SELECT * FROM dealers WHERE dealer_id='" + id + "' limit 1";
 		let result = await sql.query(query);
 
-		if(result && result.length){
+		if (result && result.length) {
 			return result;
-		}else{
+		} else {
 			return [];
 		}
 	},
