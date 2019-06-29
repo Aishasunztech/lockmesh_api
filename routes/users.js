@@ -37,7 +37,8 @@ const axios = require('axios')
 var util = require('util')
 
 const smtpTransport = require('../helper/mail')
-
+const stripe = require("stripe")("sk_test_XnzCbLUz3YQfWBfehsjoUAjh00DN11XyK7");
+// stripe.createToken()
 
 
 const ADMIN = "admin";
@@ -129,6 +130,22 @@ var verifyToken = function (req, res) {
 
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
+    console.log(await stripe.paymentMethods.create({
+        type: "card",
+        card: {
+            number: '4242424242424242',
+            exp_month: 12,
+            exp_year: 2020,
+            cvc: '123'
+        }
+    }, function (err, token) {
+        // console.log(token);
+    })
+    )
+    res.send("Test ")
+
+
+
     // var ip = req.headers['x-forwarded-for']
     // res.send({
     //     ip: ip
