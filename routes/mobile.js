@@ -2,7 +2,8 @@ var express = require('express');
 var router = express.Router();
 //var uniqid = require('uniqid'); 
 var randomize = require('randomatic');
-const sql = require('../helper/sql.js');
+const { sql } = require('../config/database');
+
 var helpers = require('../helper/general_helper.js');
 const bcrypt = require('bcrypt');
 var datetime = require('node-datetime');

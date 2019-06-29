@@ -1,25 +1,45 @@
-"use strict"
+const Sequelize = require('sequelize')
 const mysql = require('mysql');
 var util = require('util');
+var constants = require('./constants');
+
+// sequelize_connection
+const sequelize_conn = new Sequelize(constants.DB_NAME, constants.DB_USERNAME, constants.DB_PASSWORD, {
+    host: constants.DB_HOST,
+    dialect: 'mysql',
+    pool: {
+        max: 10,
+        min: 0,
+        acquire: 30000,
+        idle: 10000
+    }
+})
+
+
+sequelize_conn
+  .authenticate()
+  .then(() => {
+    console.log('Connection has been established successfully.');
+  })
+  .catch(err => {
+    console.error('Unable to connect to the database:', err);
+  });
+
+
+
+
+
 const sqlPool = mysql.createPool({
     //connectionLimit: 1000,
     //connectTimeout: 60 * 60 * 1000,
     //aquireTimeout: 60 * 60 * 1000,
     //timeout: 60 * 60 * 1000,
 
-    host: 'localhost',
-    user: 'root',
-    password: '',
+    host: constants.DB_HOST,
+    user: constants.DB_USERNAME,
+    password: constants.DB_PASSWORD,
+    database: constants.DB_NAME,
 
-    // host: '142.93.102.239',
-    // user: 'root',
-    // password: 'DAtabase$435$',
-
-    // host: '134.209.124.196',
-    // user: 'dbuser',
-    // password: 'DAtabase$435$',
-
-    database: 'lockmesh_db',
     supportBigNumbers: true,
     bigNumberStrings: true,
     dateStrings: true
@@ -42,7 +62,10 @@ sqlPool.getConnection((err, connection) => {
     return
 });
 
-
-
 sqlPool.query = util.promisify(sqlPool.query); // Magic happens here.
-module.exports = sqlPool;
+
+// module.exports = sequelize_conn;
+module.exports = {
+    sequelize_conn: sequelize_conn,
+    sql : sqlPool
+}

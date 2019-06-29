@@ -1,8 +1,10 @@
 var express = require('express');
 var router = express.Router();
+
+const { sql } = require('../config/database');
+
 var generator = require('generate-password');
 var md5 = require('md5');
-const sql = require('../helper/sql.js');
 const bcrypt = require('bcrypt');
 var empty = require('is-empty');
 var datetime = require('node-datetime');
@@ -150,11 +152,6 @@ router.get('/', async function (req, res, next) {
     //     headers: ["c1", "c2", "c3"]
     // }
 
-
-
-
-
-
     // res.send(tablesName)
 
     // let data1 = await cm.import(options, data, function (err, rows) {
@@ -192,7 +189,7 @@ router.get('/', async function (req, res, next) {
     //         console.error("error", err);
     //     });
 
-    // // let file = path.join(__dirname, "../uploads/apk-1541677256487.apk");
+    // let file = path.join(__dirname, "../uploads/apk-1541677256487.apk");
     // let packageName = await helpers.getAPKPackageName(file);
     // let versionName = await helpers.getAPKVersionName(file);
     // let versionCode = await helpers.getAPKVersionCode(file);
@@ -286,8 +283,6 @@ router.post('/super_admin_login', async function (req, res) {
 
 
 })
-
-
 
 
 /*** Add Dealer ***/
@@ -389,12 +384,6 @@ router.post('/create_backup_DB', async function (req, res) {
         res.send(data)
         // let file =  zipFileName
     }
-});
-
-
-/*****User Registration*****/
-router.post('/Signup', async function (req, res) {
-
 });
 
 
