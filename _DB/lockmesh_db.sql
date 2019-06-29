@@ -11,7 +11,7 @@
  Target Server Version : 50724
  File Encoding         : 65001
 
- Date: 25/06/2019 11:50:33
+ Date: 27/06/2019 10:40:43
 */
 
 SET NAMES utf8mb4;
@@ -387,7 +387,7 @@ CREATE TABLE `apk_details`  (
   `modified` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `id`(`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 119 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 120 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of apk_details
@@ -405,6 +405,7 @@ INSERT INTO `apk_details` VALUES (115, 'Secure VPN', 'logo-1560940352883.jpg', '
 INSERT INTO `apk_details` VALUES (116, 'messenger lite test1', 'logo-1560943611431.jpg', 'apk-1560943503921.apk', 'basic', NULL, 'com.facebook.orca', NULL, '154345817', '215.0.0.19.101', '', 43000502, '41.01 MB', NULL, NULL, NULL, 'Off', 0, '2019-06-19 11:26:58', '2019-06-19 11:26:58');
 INSERT INTO `apk_details` VALUES (117, 'AppLocker test', 'logo-1561199683083.jpg', 'apk-1561199736526.apk', 'basic', NULL, 'com.domobile.applock', NULL, '2019030701', '2.8.10', '', 8494808, '8.1 MB', NULL, NULL, '[225]', 'Off', 0, '2019-06-22 10:35:59', '2019-06-22 10:36:11');
 INSERT INTO `apk_details` VALUES (118, 'The Oregon Trail. American Settler', 'logo-1561365337413.jpg', 'apk-1561365169051.apk', 'basic', NULL, 'com.gameloft.android.ANMP.GloftTOHM', NULL, '28921', '2.8.9a', '', 35733998, '34.08 MB', NULL, NULL, NULL, 'On', 0, '2019-06-24 08:35:43', '2019-06-24 09:11:11');
+INSERT INTO `apk_details` VALUES (119, 'testing app on firefox', 'logo-1561535369467.jpg', 'apk-1561535210201.apk', 'basic', NULL, 'com.secure.systemcontrol', NULL, '111', '1.11', '', 2379182, '2.27 MB', NULL, NULL, NULL, 'Off', 0, '2019-06-26 12:49:34', '2019-06-26 12:49:34');
 
 -- ----------------------------
 -- Table structure for apps_info
@@ -424,7 +425,7 @@ CREATE TABLE `apps_info`  (
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `unique_name_constraints`(`unique_name`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 36990 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 36691 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of apps_info
@@ -692,7 +693,7 @@ CREATE TABLE `apps_queue_jobs`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `device_id`(`device_id`) USING BTREE,
   CONSTRAINT `apps_queue_jobs_ibfk_1` FOREIGN KEY (`device_id`) REFERENCES `devices` (`device_id`) ON DELETE CASCADE ON UPDATE NO ACTION
-) ENGINE = InnoDB AUTO_INCREMENT = 160 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for chat_ids
@@ -709,7 +710,7 @@ CREATE TABLE `chat_ids`  (
   UNIQUE INDEX `chat_id_unique`(`chat_id`) USING BTREE,
   INDEX `user_acc_id`(`user_acc_id`) USING BTREE,
   CONSTRAINT `chat_ids_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE SET NULL ON UPDATE SET NULL
-) ENGINE = InnoDB AUTO_INCREMENT = 31 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for dealer_apks
@@ -888,6 +889,24 @@ INSERT INTO `dealer_dropdown_list` VALUES (197, 242, '[\"DEVICE ID\",\"USER ID\"
 INSERT INTO `dealer_dropdown_list` VALUES (198, 228, '[\"ACTIONS\"]', 'devices', '2019-06-21 18:04:58', NULL);
 INSERT INTO `dealer_dropdown_list` VALUES (199, 223, '[\"ACTIONS\"]', 'sdealer', '2019-06-21 18:49:12', NULL);
 INSERT INTO `dealer_dropdown_list` VALUES (200, 225, '[\"PERMISSION\",\"SHOW ON DEVICE\",\"APK\",\"APP NAME\",\"APP LOGO\"]', 'apk', '2019-06-22 10:36:22', '2019-06-22 10:36:27');
+
+-- ----------------------------
+-- Table structure for dealer_language
+-- ----------------------------
+DROP TABLE IF EXISTS `dealer_language`;
+CREATE TABLE `dealer_language`  (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `dealer_id` int(11) NULL DEFAULT NULL,
+  `dealer_language` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `created_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `unique_dealer_id_dealer_language`(`dealer_id`, `dealer_language`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of dealer_language
+-- ----------------------------
+INSERT INTO `dealer_language` VALUES (3, 154, '{\"languageId\":\"english\",\"locale\":\"en\",\"name\":\"English\",\"icon\":\"us\"}', '2019-06-27 10:25:57');
 
 -- ----------------------------
 -- Table structure for dealer_pagination
@@ -1092,7 +1111,7 @@ CREATE TABLE `dealers`  (
   INDEX `type`(`type`) USING BTREE,
   INDEX `connected_dealer`(`connected_dealer`) USING BTREE,
   CONSTRAINT `dealers_ibfk_1` FOREIGN KEY (`type`) REFERENCES `user_roles` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 247 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 246 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of dealers
@@ -1136,7 +1155,7 @@ CREATE TABLE `default_apps`  (
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `unique_name_constraints`(`unique_name`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 23337 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 23213 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of default_apps
@@ -1587,7 +1606,7 @@ CREATE TABLE `login_history`  (
   `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 558 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 560 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of login_history
@@ -1725,6 +1744,8 @@ INSERT INTO `login_history` VALUES (554, NULL, '232', NULL, 'eyJhbGciOiJIUzI1NiI
 INSERT INTO `login_history` VALUES (555, NULL, '223', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoyMjMsImRlYWxlcl9pZCI6MjIzLCJlbWFpbCI6ImJhcnJ5YmFycnlnb29kQGhvdG1haWwuY29tIiwibGFzdE5hbWUiOm51bGwsIm5hbWUiOiJCYXJyeSIsImZpcnN0TmFtZSI6bnVsbCwiZGVhbGVyX25hbWUiOiJCYXJyeSIsImRlYWxlcl9lbWFpbCI6ImJhcnJ5YmFycnlnb29kQGhvdG1haWwuY29tIiwibGlua19jb2RlIjoiNjEwMTkyIiwiY29ubmVjdGVkX2RlYWxlciI6MCwiY29ubmVjdGVkX2RldmljZXMiOlt7InRvdGFsIjoiNCJ9XSwiYWNjb3VudF9zdGF0dXMiOm51bGwsInVzZXJfdHlwZSI6ImRlYWxlciIsImNyZWF0ZWQiOiIyMDE5LTA0LTEwIDA5OjE0OjMwIiwibW9kaWZpZWQiOiIyMDE5LTA0LTEwIDA5OjE0OjMwIiwidHdvX2ZhY3Rvcl9hdXRoIjowLCJpcF9hZGRyZXNzIjoiMTQ3Ljc1LjExMS4yMjgifSwiaWF0IjoxNTYxMzc5NTYxLCJleHAiOjE1NjE0NjU5NjF9.v9tlgDIcLw5n-LSbUuu9XmRHKeQ7Bqeq94MN_do3iNg', '86400s', '147.75.111.228', NULL, 'dealer', 'token', 1, '2019-06-24 12:32:41', NULL);
 INSERT INTO `login_history` VALUES (556, NULL, '224', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoyMjQsImRlYWxlcl9pZCI6MjI0LCJlbWFpbCI6InphaWRAdm9ydGV4YXBwLmNhIiwibGFzdE5hbWUiOm51bGwsIm5hbWUiOiJ6YWlkIiwiZmlyc3ROYW1lIjpudWxsLCJkZWFsZXJfbmFtZSI6InphaWQiLCJkZWFsZXJfZW1haWwiOiJ6YWlkQHZvcnRleGFwcC5jYSIsImxpbmtfY29kZSI6IjQxNzY5NSIsImNvbm5lY3RlZF9kZWFsZXIiOjAsImNvbm5lY3RlZF9kZXZpY2VzIjpbeyJ0b3RhbCI6IjI2In1dLCJhY2NvdW50X3N0YXR1cyI6bnVsbCwidXNlcl90eXBlIjoiZGVhbGVyIiwiY3JlYXRlZCI6IjIwMTktMDQtMTAgMjE6MDY6NTEiLCJtb2RpZmllZCI6IjIwMTktMDQtMTAgMjE6MDY6NTEiLCJ0d29fZmFjdG9yX2F1dGgiOjAsImlwX2FkZHJlc3MiOiI2Ni4xMzEuMjIyLjczIn0sImlhdCI6MTU2MTQxMDc2NiwiZXhwIjoxNTYxNDk3MTY2fQ.p-Ib_uBfwElK53SathLiXlI5kq66cHwo0QAtTnLZL8I', '86400s', '66.131.222.73', NULL, 'dealer', 'token', 1, '2019-06-24 21:12:46', NULL);
 INSERT INTO `login_history` VALUES (557, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImRlYWxlcl9pZCI6MTU0LCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsImxhc3ROYW1lIjoiS2FzaHlhcCIsIm5hbWUiOiJhZG1pbiIsImZpcnN0TmFtZSI6Ik5laGEiLCJkZWFsZXJfbmFtZSI6ImFkbWluIiwiZGVhbGVyX2VtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwibGlua19jb2RlIjoiIiwiY29ubmVjdGVkX2RlYWxlciI6MCwiY29ubmVjdGVkX2RldmljZXMiOlt7InRvdGFsIjoiMCJ9XSwiYWNjb3VudF9zdGF0dXMiOm51bGwsInVzZXJfdHlwZSI6ImFkbWluIiwiY3JlYXRlZCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJtb2RpZmllZCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJ0d29fZmFjdG9yX2F1dGgiOjAsImlwX2FkZHJlc3MiOiI0Mi4yMDEuMTc3LjEyOSJ9LCJpYXQiOjE1NjE0NDI5NTAsImV4cCI6MTU2MTUyOTM1MH0.W2dp56xWbs5VjDDbFiO96vQnZYpiateXO41qF1dXGqI', '86400s', '42.201.177.129', NULL, 'admin', 'token', 1, '2019-06-25 06:09:10', NULL);
+INSERT INTO `login_history` VALUES (558, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImRlYWxlcl9pZCI6MTU0LCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsImxhc3ROYW1lIjoiS2FzaHlhcCIsIm5hbWUiOiJhZG1pbiIsImZpcnN0TmFtZSI6Ik5laGEiLCJkZWFsZXJfbmFtZSI6ImFkbWluIiwiZGVhbGVyX2VtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwibGlua19jb2RlIjoiIiwiY29ubmVjdGVkX2RlYWxlciI6MCwiY29ubmVjdGVkX2RldmljZXMiOlt7InRvdGFsIjoiMCJ9XSwiYWNjb3VudF9zdGF0dXMiOm51bGwsInVzZXJfdHlwZSI6ImFkbWluIiwiY3JlYXRlZCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJtb2RpZmllZCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJ0d29fZmFjdG9yX2F1dGgiOjAsImlwX2FkZHJlc3MiOiI6OmZmZmY6MTI3LjAuMC4xIn0sImlhdCI6MTU2MTUzNDg2NCwiZXhwIjoxNTYxNjIxMjY0fQ.3xa-icNhOYaJa9pev7ns5TU3evoaBs_SxmzqyFC717A', '86400s', '::ffff:127.0.0.1', NULL, 'admin', 'token', 1, '2019-06-26 12:41:04', NULL);
+INSERT INTO `login_history` VALUES (559, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImRlYWxlcl9pZCI6MTU0LCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsImxhc3ROYW1lIjoiS2FzaHlhcCIsIm5hbWUiOiJhZG1pbiIsImZpcnN0TmFtZSI6Ik5laGEiLCJkZWFsZXJfbmFtZSI6ImFkbWluIiwiZGVhbGVyX2VtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwibGlua19jb2RlIjoiIiwiY29ubmVjdGVkX2RlYWxlciI6MCwiY29ubmVjdGVkX2RldmljZXMiOlt7InRvdGFsIjoiMCJ9XSwiYWNjb3VudF9zdGF0dXMiOm51bGwsInVzZXJfdHlwZSI6ImFkbWluIiwiY3JlYXRlZCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJtb2RpZmllZCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJ0d29fZmFjdG9yX2F1dGgiOjAsImlwX2FkZHJlc3MiOiI6OjEifSwiaWF0IjoxNTYxNjEyNTExLCJleHAiOjE1NjE2OTg5MTF9.5DNOjVbpcHbTn0ZV0H4G6zF_Xp53L_2E8aibgMiBtBw', '86400s', '::1', NULL, 'admin', 'token', 1, '2019-06-27 10:15:11', NULL);
 
 -- ----------------------------
 -- Table structure for packages
@@ -1758,7 +1779,7 @@ CREATE TABLE `pgp_emails`  (
   UNIQUE INDEX `unique_pgp_emails`(`pgp_email`) USING BTREE,
   INDEX `user_acc_id`(`user_acc_id`) USING BTREE,
   CONSTRAINT `pgp_emails_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE SET NULL ON UPDATE SET NULL
-) ENGINE = InnoDB AUTO_INCREMENT = 237 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for policy
@@ -1867,7 +1888,7 @@ CREATE TABLE `secure_market_apps`  (
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `apk_id`(`apk_id`) USING BTREE,
   CONSTRAINT `secure_market_apps_ibfk_1` FOREIGN KEY (`apk_id`) REFERENCES `apk_details` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION
-) ENGINE = InnoDB AUTO_INCREMENT = 931 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 930 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of secure_market_apps
@@ -1892,7 +1913,7 @@ CREATE TABLE `sim_ids`  (
   UNIQUE INDEX `sim_id_UNIQUE`(`sim_id`) USING BTREE,
   INDEX `device_id`(`user_acc_id`) USING BTREE,
   CONSTRAINT `sim_ids_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE SET NULL ON UPDATE SET NULL
-) ENGINE = InnoDB AUTO_INCREMENT = 113 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 101 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of sim_ids

@@ -205,9 +205,10 @@ router.post('/login', async function (req, resp) {
                                     // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
                                     if (response.data.status) {
                                         let data = {
-                                            linkToWL: false,
+                                            linkToWL: true,
                                             SN: serial_number,
-                                            mac: mac_address
+                                            mac: mac_address,
+                                            device_id: device_id
                                         }
                                         axios.put(app_constants.UPDATE_DEVICE_SUPERADMIN_URL, data, { headers: { authorization: response.data.user.token } })
                                     }
@@ -738,13 +739,14 @@ router.get('/apklist', async function (req, res) {
 });
 
 
-router.get('/getUpdate/:version/:uniqueName/:label', async (req, res) => {
+router.get('/getUpdate/:version/:packageName', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
-    let verify = await verifyToken(req, res);
-    if (verify.status == true) {
-        let versionName = req.params.version;
-        let uniqueName = req.params.uniqueName;
-        let query = "SELECT * FROM apk_details WHERE package_name = '" + uniqueName + "' AND delete_status=0";
+    // let verify = await verifyToken(req, res);
+    // if (verify.status == true) {
+        let version = req.params.version;
+        let packageName = req.params.packageName;
+        let query = "SELECT * FROM apk_details WHERE package_name = '" + packageName + "' AND delete_status=0";
+        console.log("old", query);
         sql.query(query, function (error, response) {
             // console.log("res", response);
 
@@ -760,7 +762,61 @@ router.get('/getUpdate/:version/:uniqueName/:label', async (req, res) => {
 
             if (response.length) {
                 for (let i = 0; i < response.length; i++) {
-                    if (Number(response[i].version_code) > Number(versionName)) {
+                    if (Number(response[i].version_code) > Number(version)) {
+                        isAvail = true;
+                        res.send({
+                            apk_status: true,
+                            success: true,
+                            apk_url: response[i].apk
+                        });
+
+                        break;
+                    }
+                }
+                if (!isAvail) {
+                    res.send({
+                        apk_status: false,
+                        success: true,
+                        msg: ""
+                    });
+                }
+
+            } else {
+                res.send({
+                    apk_status: false,
+                    success: true,
+                    msg: ""
+                });
+            }
+        })
+    // }
+
+});
+
+router.get('/getUpdate/:version/:packageName/:label', async (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    let verify = await verifyToken(req, res);
+    if (verify.status == true) {
+        let version = req.params.version;
+        let packageName = req.params.packageName;
+        let query = "SELECT * FROM apk_details WHERE package_name = '" + packageName + "' AND delete_status=0";
+        console.log("new", query);
+        sql.query(query, function (error, response) {
+            // console.log("res", response);
+
+            if (error) {
+                res.send({
+                    success: true,
+                    status: false,
+                    msg: "Error in Query"
+                });
+            }
+
+            let isAvail = false;
+
+            if (response.length) {
+                for (let i = 0; i < response.length; i++) {
+                    if (Number(response[i].version_code) > Number(version)) {
                         isAvail = true;
                         res.send({
                             apk_status: true,
