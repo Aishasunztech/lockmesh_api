@@ -37,7 +37,7 @@ const axios = require('axios')
 var util = require('util')
 
 const smtpTransport = require('../helper/mail')
-const stripe = require("stripe")("sk_test_XnzCbLUz3YQfWBfehsjoUAjh00DN11XyK7");
+const stripe = require("stripe")("sk_test_1rS6KC3GoPT8wlOYWSLEQFk6");
 // stripe.createToken()
 
 
@@ -130,18 +130,17 @@ var verifyToken = function (req, res) {
 
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
-    console.log(await stripe.paymentMethods.create({
-        type: "card",
+    stripe.tokens.create({
         card: {
             number: '4242424242424242',
             exp_month: 12,
             exp_year: 2020,
-            cvc: '123'
+            cvc: '1234'
         }
     }, function (err, token) {
-        // console.log(token);
-    })
-    )
+        console.log(err);
+        console.log(token);
+    });
     res.send("Test ")
 
 
@@ -2286,17 +2285,17 @@ router.post('/unlink/:id', async function (req, res) {
 
     if (verify.status !== undefined && verify.status == true) {
 
-        if (!empty(device_id)) {            
+        if (!empty(device_id)) {
             let dvcId = await device_helpers.getDvcIDByDeviceID(device_id);
             var sql1 = `DELETE from usr_acc  where device_id=${device_id}`;
             sql.query(sql1, async function (error, results) {
-                if (error){
+                if (error) {
                     data = {
                         status: false,
                         msg: "Device not unlinked."
                     }
                 };
-                
+
                 if (results && results.affectedRows) {
                     // Update device details on Super admin
                     axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
@@ -5395,7 +5394,7 @@ router.post('/upload', async function (req, res) {
                 console.log("mimeType", mimeType);
 
                 var filetypes = /jpeg|jpg|apk|png/;
-        
+
                 if (fieldName === Constants.LOGO && filetypes.test(mimeType)) {
                     fileUploaded = true;
                     filename = fieldName + '-' + Date.now() + '.jpg';
@@ -5528,7 +5527,7 @@ router.post('/checkApkName', async function (req, res) {
 
     }
 });
-// Purchase credits
+// Purchase credits_CASH
 router.post('/purchase_credits', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify['status'] && verify.status == true) {
@@ -5554,7 +5553,7 @@ router.post('/purchase_credits', async function (req, res) {
                     // console.log(query);
                     sql.query(query, function (err, result) {
                         if (err) throw err
-                        console.log(result);
+                        // console.log(result);
                         if (result.affectedRows > 0) {
                             if (verify.user.user_type === ADMIN) {
                                 if (method == 'CASH') {
@@ -5595,7 +5594,6 @@ router.post('/purchase_credits', async function (req, res) {
                                     })
 
                                 } else {
-
                                     res.send()
                                 }
                             } else {
@@ -5630,6 +5628,140 @@ router.post('/purchase_credits', async function (req, res) {
 
     }
 });
+
+// Purchase credits form Credit card
+router.post('/purchase_credits_CC', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify['status'] && verify.status == true) {
+        try {
+            let credits = req.body.creditInfo.credits
+            let method = req.body.creditInfo.method
+            let total_price = req.body.creditInfo.total * 100
+            let currency_price = req.body.creditInfo.currency_price
+            let promo_code = req.body.creditInfo.promo_code
+            let currency = req.body.creditInfo.currency
+            let cardNumber = req.body.cardInfo.number
+            let cardName = req.body.cardInfo.name
+            let cvc = req.body.cardInfo.cvc
+            let expiryCard = req.body.cardInfo.expiry
+            let dealerId = verify.user.id
+            let stripeToken = null
+            let cardExpiryMonth = expiryCard.slice(0, 2)
+            let cardExpiryYear = 20 + expiryCard.slice(5)
+            // console.log(cardExpiryMonth);
+            // console.log(cardExpiryYear);
+            // console.log(total_price.toFixed(2));
+
+
+            // return
+            if (credits != undefined && credits != '' && credits != null) {
+
+                if (promo_code != '') {
+
+                } else {
+                    let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
+                    // console.log(query);
+                    sql.query(query, function (err, result) {
+                        if (err) throw err
+                        // console.log(result);
+                        if (result.affectedRows > 0) {
+                            stripe.tokens.create({
+                                card: {
+                                    number: cardNumber,
+                                    exp_month: cardExpiryMonth,
+                                    exp_year: cardExpiryYear,
+                                    cvc: cvc
+                                }
+                            }, function (err, token) {
+                                if (err) {
+                                    console.log(err.type);
+                                    switch (err.type) {
+                                        case 'StripeCardError':
+                                            // A declined card error
+                                            console.log(err.message);
+                                            err.message; // => e.g. "Your card's expiration year is invalid."
+                                            break;
+                                        case 'RateLimitError':
+                                            // Too many requests made to the API too quickly
+                                            break;
+                                        case 'StripeInvalidRequestError':
+                                            // Invalid parameters were supplied to Stripe's API
+                                            break;
+                                        case 'StripeAPIError':
+                                            // An error occurred internally with Stripe's API
+                                            break;
+                                        case 'StripeConnectionError':
+                                            // Some kind of error occurred during the HTTPS communication
+                                            break;
+                                        case 'StripeAuthenticationError':
+                                            // You probably used an incorrect API key
+                                            break;
+                                        default:
+                                            // Handle any other types of unexpected errors
+                                            break;
+                                    }
+                                    res.send({
+                                        status: false,
+                                        msg: err.message
+                                    })
+                                    return
+                                } else {
+                                    stripeToken = token
+                                    // console.log(token);
+                                    stripe.charges.create({
+                                        amount: total_price,
+                                        currency: "usd",
+                                        source: stripeToken.id, // obtained with Stripe.js
+                                        metadata: { 'order_id': '6735' }
+                                    }).then((response) => {
+                                        if (response.status == 'succeeded') {
+                                            res.send({
+                                                status: true,
+                                                msg: "Payment has been done.",
+                                            })
+                                            return
+                                        };
+                                    });
+                                }
+                            });
+                            if (verify.user.user_type === ADMIN) {
+
+
+
+                            } else {
+                                // console.log(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`);
+                                sql.query(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`, function (err, result) {
+                                    if (err) throw err
+                                    if (result && result.affectedRows > 0) {
+                                        res.send({
+                                            status: true,
+                                            msg: "Request submitted successfully.",
+                                        })
+                                        return
+                                    }
+                                    else {
+                                        res.send({
+                                            status: false,
+                                            msg: "Request not submitted please try again.",
+                                        })
+                                    }
+                                })
+
+                            }
+                        } else {
+                            res.send()
+                        }
+                    })
+                }
+            }
+        } catch (error) {
+            throw error
+        }
+
+    }
+});
+
+
 
 // add apk. endpoints name should be changed
 router.post('/addApk', async function (req, res) {
@@ -7364,25 +7496,25 @@ router.post('/save-package', async function (req, res) {
 });
 
 
-router.get('/get-language', async function(req, res){
+router.get('/get-language', async function (req, res) {
     var verify = await verifyToken(req, res);
-    if(verify.status !== undefined && verify.status == true){
+    if (verify.status !== undefined && verify.status == true) {
         let dealer_id = verify.user.dealer_id;
-        if(dealer_id){
-            let selectQuery = "SELECT * FROM dealer_language WHERE dealer_id='"+dealer_id+"' LIMIT 1";
+        if (dealer_id) {
+            let selectQuery = "SELECT * FROM dealer_language WHERE dealer_id='" + dealer_id + "' LIMIT 1";
 
-            sql.query(selectQuery, (err, rslt)=> {
-                if(err) throw err;
+            sql.query(selectQuery, (err, rslt) => {
+                if (err) throw err;
 
-                if(rslt){
-                    if(rslt.length){
+                if (rslt) {
+                    if (rslt.length) {
                         res.send({
                             status: true,
                             msg: 'success',
                             data: rslt
 
                         })
-                    }else{
+                    } else {
                         res.send({
                             status: false,
                             msg: 'No data'
@@ -7397,39 +7529,39 @@ router.get('/get-language', async function(req, res){
 
 router.patch('/save-language', async function (req, res) {
     var verify = await verifyToken(req, res);
-    if(verify.status !== undefined && verify.status == true){
+    if (verify.status !== undefined && verify.status == true) {
         let language = req.body.language;
-       
+
         let dealer_id = verify.user.dealer_id;
         console.log(dealer_id, 'dealer id is', verify.user)
-        if(dealer_id && language){
+        if (dealer_id && language) {
             language = JSON.stringify(language);
-            let updateQuery = "UPDATE dealer_language SET dealer_language='"+language+"' WHERE dealer_id='"+dealer_id+"'"; 
-            sql.query(updateQuery, async (err, rslt)=> {
-                if(err) throw err;
-                if(rslt){
-                    if(rslt.affectedRows){
+            let updateQuery = "UPDATE dealer_language SET dealer_language='" + language + "' WHERE dealer_id='" + dealer_id + "'";
+            sql.query(updateQuery, async (err, rslt) => {
+                if (err) throw err;
+                if (rslt) {
+                    if (rslt.affectedRows) {
                         res.send({
                             status: true,
                             msg: 'Language changed Successfully'
                         })
-                    }else{
-                        let insertQuery = "INSERT INTO dealer_language (dealer_id, dealer_language) VALUES ('"+dealer_id+"', '"+language+"')";
+                    } else {
+                        let insertQuery = "INSERT INTO dealer_language (dealer_id, dealer_language) VALUES ('" + dealer_id + "', '" + language + "')";
                         let inserted = sql.query(insertQuery);
-                        if(inserted){
+                        if (inserted) {
                             res.send({
                                 status: true,
                                 msg: 'Language changed Successfully'
                             })
-                        }else{
+                        } else {
                             res.send({
                                 status: false,
                                 msg: 'Error while Process'
                             })
                         }
                     }
-    
-                }else{
+
+                } else {
                     res.send({
                         status: false,
                         msg: 'Error while Process'
@@ -7437,7 +7569,7 @@ router.patch('/save-language', async function (req, res) {
                 }
             })
         }
-       
+
     }
 })
 
