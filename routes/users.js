@@ -5354,24 +5354,22 @@ router.post('/upload', async function (req, res) {
         let mimeType = "";
         let fieldName = "";
 
-        console.log("hello");
 
         var storage = multer.diskStorage({
             destination: function (req, file, callback) {
-                callback(null, './uploads');
+                callback(null, path.join(__dirname, "../uploads/"));
             },
 
             filename: function (req, file, callback) {
                 mimeType = file.mimetype;
                 fieldName = file.fieldname;
-                console.log("mimeType", mimeType);
 
                 var filetypes = /jpeg|jpg|apk|png/;
         
                 if (fieldName === Constants.LOGO && filetypes.test(mimeType)) {
                     fileUploaded = true;
                     filename = fieldName + '-' + Date.now() + '.jpg';
-
+                    console.log("filename", filename);
                     callback(null, filename);
                 } else if (fieldName === Constants.APK && mimeType === "application/vnd.android.package-archive" || mimeType === "application/octet-stream") {
                     fileUploaded = true;
@@ -5405,7 +5403,7 @@ router.post('/upload', async function (req, res) {
             }
 
             if (fileUploaded) {
-
+                console.log("file uploaded")
                 if (fieldName === Constants.APK) {
                     let file = path.join(__dirname, "../uploads/" + filename);
                     let versionCode = await helpers.getAPKVersionCode(file);
@@ -5433,6 +5431,7 @@ router.post('/upload', async function (req, res) {
                         return;
                     }
                 } else if (fieldName === Constants.LOGO) {
+                    console.log("file was image");
                     data = {
                         status: true,
                         msg: 'Uploaded Successfully',
