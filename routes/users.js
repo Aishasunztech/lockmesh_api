@@ -755,6 +755,31 @@ router.get('/user_type', async function (req, res) {
 
 
 
+router.get('/languages', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    let languages = [];
+
+    if (verify.status !== undefined && verify.status == true) {
+        let selectQuery = "SELECT * FROM languages";
+        languages = await sql.query(selectQuery);
+
+        if(languages.length){
+            res.send({
+                "status": true,
+                "data": languages
+            });
+        } else {
+            res.send({
+                status: false,
+                data: []
+            })
+        }
+  
+    } 
+
+});
+
+
 /**GET all the devices**/
 router.get('/devices', async function (req, res) {
 
@@ -2269,17 +2294,17 @@ router.post('/unlink/:id', async function (req, res) {
 
     if (verify.status !== undefined && verify.status == true) {
 
-        if (!empty(device_id)) {            
+        if (!empty(device_id)) {
             let dvcId = await device_helpers.getDvcIDByDeviceID(device_id);
             var sql1 = `DELETE from usr_acc  where device_id=${device_id}`;
             sql.query(sql1, async function (error, results) {
-                if (error){
+                if (error) {
                     data = {
                         status: false,
                         msg: "Device not unlinked."
                     }
                 };
-                
+
                 if (results && results.affectedRows) {
                     // Update device details on Super admin
                     axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
@@ -5378,7 +5403,7 @@ router.post('/upload', async function (req, res) {
                 console.log("mimeType", mimeType);
 
                 var filetypes = /jpeg|jpg|apk|png/;
-        
+
                 if (fieldName === Constants.LOGO && filetypes.test(mimeType)) {
                     fileUploaded = true;
                     filename = fieldName + '-' + Date.now() + '.jpg';
@@ -7347,30 +7372,41 @@ router.post('/save-package', async function (req, res) {
 });
 
 
-router.get('/get-language', async function(req, res){
+router.get('/get-language', async function (req, res) {
     var verify = await verifyToken(req, res);
-    if(verify.status !== undefined && verify.status == true){
+    if (verify.status !== undefined && verify.status == true) {
         let dealer_id = verify.user.dealer_id;
-        if(dealer_id){
-            let selectQuery = "SELECT * FROM dealer_language WHERE dealer_id='"+dealer_id+"' LIMIT 1";
+        if (dealer_id) {
+            let selectQuery = `SELECT LT.key_id, LT.key_value  
+            FROM dealer_language AS DL 
+            JOIN lng_translations AS LT 
+            ON (LT.lng_id = DL.dealer_lng_id) 
+            WHERE dl.dealer_id=${dealer_id}`;
 
-            sql.query(selectQuery, (err, rslt)=> {
-                if(err) throw err;
+            console.log('query is: ', selectQuery);
+            sql.query(selectQuery, (err, rslt) => {
+                if (err)  console.log(err);
+                
+                if (rslt.length) {
+                    let obj ={}
+                    rslt.forEach((elem)=>{
+                        let key_id = elem.key_id;
+                        // obj.push({
+                            obj[key_id] = elem.key_value 
+                        // });
+                    })
+                    res.send({
+                        status: true,
+                        msg: 'success',
+                        data: JSON.stringify(obj)
 
-                if(rslt){
-                    if(rslt.length){
-                        res.send({
-                            status: true,
-                            msg: 'success',
-                            data: rslt
-
-                        })
-                    }else{
-                        res.send({
-                            status: false,
-                            msg: 'No data'
-                        })
-                    }
+                    })
+                } else {
+                    res.send({
+                        status: false,
+                        msg: 'No data',
+                        data: {}
+                    })
                 }
             })
         }
@@ -7380,39 +7416,46 @@ router.get('/get-language', async function(req, res){
 
 router.patch('/save-language', async function (req, res) {
     var verify = await verifyToken(req, res);
-    if(verify.status !== undefined && verify.status == true){
+    if (verify.status !== undefined && verify.status == true) {
+        // console.log('save lang body is: ', req.body);
+        let lang_id = req.body.language.id;
         let language = req.body.language;
-       
+        let dealer_lan_id = req.body.language.language_id;
+        // console.log('------------------------------')
+        // console.log('dealer lang id is: ', dealer_lan_id)
+        // console.log('dealer lang id is: ', language)
+        // console.log('------------------------------')
+
         let dealer_id = verify.user.dealer_id;
         console.log(dealer_id, 'dealer id is', verify.user)
-        if(dealer_id && language){
+        if (dealer_id && language) {
             language = JSON.stringify(language);
-            let updateQuery = "UPDATE dealer_language SET dealer_language='"+language+"' WHERE dealer_id='"+dealer_id+"'"; 
-            sql.query(updateQuery, async (err, rslt)=> {
-                if(err) throw err;
-                if(rslt){
-                    if(rslt.affectedRows){
+            let updateQuery = "UPDATE dealer_language SET dealer_lng_id='" + lang_id + "' WHERE dealer_id='" + dealer_id + "'";
+            sql.query(updateQuery, async (err, rslt) => {
+                if (err) throw err;
+                if (rslt) {
+                    if (rslt.affectedRows) {
                         res.send({
                             status: true,
                             msg: 'Language changed Successfully'
                         })
-                    }else{
-                        let insertQuery = "INSERT INTO dealer_language (dealer_id, dealer_language) VALUES ('"+dealer_id+"', '"+language+"')";
+                    } else {
+                        let insertQuery = "INSERT INTO dealer_language (dealer_id, dealer_lng_id) VALUES ('" + dealer_id + "', '" + lang_id + "')";
                         let inserted = sql.query(insertQuery);
-                        if(inserted){
+                        if (inserted) {
                             res.send({
                                 status: true,
                                 msg: 'Language changed Successfully'
                             })
-                        }else{
+                        } else {
                             res.send({
                                 status: false,
                                 msg: 'Error while Process'
                             })
                         }
                     }
-    
-                }else{
+
+                } else {
                     res.send({
                         status: false,
                         msg: 'Error while Process'
@@ -7420,7 +7463,7 @@ router.patch('/save-language', async function (req, res) {
                 }
             })
         }
-       
+
     }
 })
 
@@ -7870,6 +7913,8 @@ router.put('/accept_request/:id', async function (req, res) {
         }
     }
 })
+
+
 
 
 module.exports = router;
