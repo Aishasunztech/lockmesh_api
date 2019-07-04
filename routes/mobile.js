@@ -338,18 +338,36 @@ router.post('/linkdevice', async function (req, resp) {
             // res2 = dealer
             if (dealer.length) {
 
-                sendEmail("New Device Request", "You have a new device request", dealer[0].dealer_email, function (error, response) {
-                    if (error) throw error;
-                });
-
                 var deviceId = await helpers.getDeviceId(serial_number, mac_address);
                 // var deviceId = await checkDeviceId(device_id, serial_number, mac_address);
+
+                var deviceCheckQuery = "SELECT * FROM devices WHERE device_id = '" + deviceId + "'";
+                let deviceCheckResponse = await sql.query(deviceCheckQuery);
+                if (deviceCheckResponse.length) {
+                    console.log('Some thing bad happend. user should not be here. Devices already exist.', deviceId);
+                    resp.send({
+                        status: false,
+                        msg: "Devices already exist."
+                    });
+                    return
+                }
+
+                sendEmail("New Device Request", "You have a new device request", dealer[0].dealer_email, function (error, response) {
+                    if (error) console.log(error);
+                });
+
 
                 let insertDevice = "INSERT INTO devices (device_id, imei, imei2, ip_address, simno, simno2, serial_number, mac_address, online) values(?,?,?,?,?,?,?,?,?)";
                 sql.query(insertDevice, [deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, Constants.DEVICE_OFFLINE], function (error, deviceRes) {
                     // console.log("Insert Query" , insertDevice, [deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, 'On']);
                     if (error) {
-                        throw Error(error);
+                        //throw Error(error);
+                        console.log(error);
+                        resp.send({
+                            status: false,
+                            msg: error
+                        });
+                        return false;
                     }
                     let dvc_id = deviceRes.insertId;
                     let insertUserAcc = "";
