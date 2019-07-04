@@ -1,47 +1,49 @@
+// ====== libraries
 var express = require('express');
 var router = express.Router();
-
-const { sql } = require('../config/database');
-
 var generator = require('generate-password');
 var md5 = require('md5');
 const bcrypt = require('bcrypt');
 var empty = require('is-empty');
 var datetime = require('node-datetime');
 var cron = require('node-cron');
-//var uniqid = require('uniqid');
 var jwt = require('jsonwebtoken');
 var randomize = require('randomatic');
+//var uniqid = require('uniqid');
 var multer = require('multer');
-var config = require('../helper/config.js');
 
 var XLSX = require('xlsx');
 const url = require('url');
 var path = require('path');
 var fs = require("fs");
-var Constants = require('../constants/Application');
-var app_constants = require('../constants/AppConstants.js');
 var moment = require('moment-strftime');
 var mime = require('mime');
+// var Jimp = require('jimp');
+// var mysqldump = require('mysqldump')
+// var archiver = require('archiver');
+// archiver.registerFormat('zip-encryptable', require('archiver-zip-encryptable'));
 
+const axios = require('axios')
+var util = require('util')
+const stripe = require("stripe")("sk_test_1rS6KC3GoPT8wlOYWSLEQFk6");
+
+// ========= Helper =============
+const { sql } = require('../config/database');
+var config = require('../helper/config.js');
+
+var Constants = require('../constants/Application');
+var app_constants = require('../constants/AppConstants.js');
 var helpers = require('../helper/general_helper.js');
 const device_helpers = require('../helper/device_helpers.js');
 
-// const UserApps = require('../models/UserApps');
-// const Devices = require('../models/Devices');
-var Jimp = require('jimp');
-var mysqldump = require('mysqldump')
-
-var archiver = require('archiver');
-const axios = require('axios')
-// archiver.registerFormat('zip-encryptable', require('archiver-zip-encryptable'));
-
-var util = require('util')
 
 const smtpTransport = require('../helper/mail')
-const stripe = require("stripe")("sk_test_1rS6KC3GoPT8wlOYWSLEQFk6");
 // stripe.createToken()
 
+// ========== Controllers ========
+
+const authController = require('../app/controllers/auth');
+const aclController = require('../app/controllers/acl');
 
 const ADMIN = "admin";
 const DEALER = "dealer";
@@ -129,23 +131,21 @@ var verifyToken = function (req, res) {
 }
 
 
-
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
-    stripe.tokens.create({
-        card: {
-            number: '4242424242424242',
-            exp_month: 12,
-            exp_year: 2020,
-            cvc: '1234'
-        }
-    }, function (err, token) {
-        console.log(err);
-        console.log(token);
-    });
     res.send("Test ")
-
-
+    
+    // stripe.tokens.create({
+    //     card: {
+    //         number: '4242424242424242',
+    //         exp_month: 12,
+    //         exp_year: 2020,
+    //         cvc: '1234'
+    //     }
+    // }, function (err, token) {
+    //     console.log(err);
+    //     console.log(token);
+    // });
 
     // var ip = req.headers['x-forwarded-for']
     // res.send({
@@ -244,416 +244,13 @@ router.get('/', async function (req, res, next) {
     // }
 });
 
-router.post('/super_admin_login', async function (req, res) {
-
-    let name = req.body.name;
-    let password = req.body.password;
-    let email = req.body.email
-    var enc_pwd = md5(password);
-    if (name != undefined && password != undefined && email != undefined && name != null && password != null && email != null && name != '' && password != '' && email != '') {
-        console.log(`select * from dealers where dealer_name = '${name}' AND dealer_email = '${email}' AND password = '${enc_pwd}' AND type = '5'`);
-        let user = await sql.query(`select * from dealers where dealer_name = '${name}' AND dealer_email = '${email}' AND password = '${enc_pwd}' AND type = '5'`)
-        if (user.length) {
-
-            jwt.sign(
-                {
-                    user
-                },
-                config.secret,
-                {
-                    expiresIn: config.expiresIn
-                }, (err, token) => {
-                    if (err) {
-                        res.json({
-                            'err': err
-                        });
-                        return
-                    } else {
-                        user.expiresIn = config.expiresIn;
-                        user.token = token;
-                        res.json({
-                            status: true,
-                            token: token,
-                            msg: 'User loged in Successfully',
-                            expiresIn: config.expiresIn,
-                            user,
-                        });
-                        return
-                    }
-                }
-            );
-        }
-        else {
-            res.send({
-                status: false,
-            });
-            return
-        }
-    }
-    else {
-        res.send({
-            status: false,
-        });
-        return
-    }
-
-
-})
-
-
-/*** Add Dealer ***/
-router.post('/create_backup_DB', async function (req, res) {
-
-    res.setHeader('Content-Type', 'application/json');
-
-    var verify = await verifyToken(req, res);
-
-    if (verify.status !== undefined && verify.status == true) {
-        var ws;
-        var wb = XLSX.utils.book_new();
-        let devices = []
-        let query = "SELECT * From acc_action_history WHERE action = 'UNLINKED'";
-        let newArray = await sql.query(query)
-        let results = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 order by devices.id DESC')
-        // console.log('query ', 'select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 ' + where_con + ' order by devices.id DESC')
-        for (var i = 0; i < results.length; i++) {
-            results[i].finalStatus = device_helpers.checkStatus(results[i])
-            results[i].pgp_email = await device_helpers.getPgpEmails(results[i])
-            results[i].sim_id = await device_helpers.getSimids(results[i])
-            results[i].chat_id = await device_helpers.getChatids(results[i])
-            results[i].validity = await device_helpers.checkRemainDays(results[i].created_at, results[i].validity)
-            // dealerData = await device_helpers.getDealerdata(results[i]);
-        }
-        let finalResult = [...results, ...newArray]
-        // console.log('old', finalResult);
-        let checkValue = helpers.checkValue;
-        for (let device of finalResult) {
-            let data = {
-                device_id: checkValue(device.device_id),
-                user_id: checkValue(device.user_id),
-                batch_no: checkValue(device.batch_no),
-                name: checkValue(device.name),
-                dealer_id: checkValue(device.dealer_id),
-                dealer_name: checkValue(device.dealer_name),
-                account_email: checkValue(device.account_email),
-                account_name: checkValue(device.account_name),
-                model: checkValue(device.model),
-                link_code: checkValue(device.link_code),
-                activation_code: checkValue(device.activation_code),
-                pgp_email: checkValue(device.pgp_email),
-                chat_id: checkValue(device.chat_id),
-                sim_id: checkValue(device.sim_id),
-                client_id: checkValue(device.client_id),
-                finalStatus: checkValue(device.finalStatus),
-                ip_address: checkValue(device.ip_address),
-                mac_address: checkValue(device.mac_address),
-                serial_number: checkValue(device.serial_number),
-                imei: checkValue(device.imei),
-                imei2: checkValue(device.imei2),
-                online: checkValue(device.online),
-                simno: checkValue(device.simno),
-                simno2: checkValue(device.simno2),
-                note: checkValue(device.note),
-                prnt_dlr_id: checkValue(device.prnt_dlr_id),
-                prnt_dlr_name: checkValue(device.prnt_dlr_name),
-                connected_dealer: checkValue(device.connected_dealer),
-                start_date: checkValue(device.start_date),
-                expiry_date: checkValue(device.expiry_date),
-                expiry_months: checkValue(device.expiry_months),
-                validity: checkValue(device.validity),
-                updated_at: checkValue(device.updated_at),
-                created_at: checkValue(device.created_at),
-            }
-            devices.push(data)
-        }
-        if (devices.length) {
-            ws = XLSX.utils.json_to_sheet(devices);
-            XLSX.utils.book_append_sheet(wb, ws, 'Devices');
-        }
-
-        let userData = await sql.query('select id,user_id,user_name,email,dealer_id from users');
-        if (userData.length) {
-            ws = XLSX.utils.json_to_sheet(userData);
-            XLSX.utils.book_append_sheet(wb, ws, 'Users');
-        }
-        let dealerData = await sql.query('select dealer_id,dealer_name,dealer_email,link_code,connected_dealer ,unlink_status from dealers WHERE dealer_email != "super123!admin@gmail.com"');
-        if (userData.length) {
-            ws = XLSX.utils.json_to_sheet(dealerData);
-            XLSX.utils.book_append_sheet(wb, ws, 'Dealers');
-        }
-        let IDsTables = ['chat_ids', 'sim_ids', 'pgp_emails'];
-        for (let i = 0; i < IDsTables.length; i++) {
-            let tableDate = await sql.query("SELECT * from " + IDsTables[i])
-            if (tableDate.length) {
-                /* make the worksheet */
-                ws = XLSX.utils.json_to_sheet(tableDate);
-                /* add to workbook */
-                XLSX.utils.book_append_sheet(wb, ws, IDsTables[i]);
-            }
-        }
-        let fileNameCSV = 'DB_Backup' + '_' + Date.now() + ".xlsx";
-        await XLSX.writeFile(wb, path.join(__dirname, "../db_backup/" + fileNameCSV))
-        let data = {
-            status: true,
-            path: fileNameCSV
-        }
-        res.send(data)
-        // let file =  zipFileName
-    }
-});
+router.post('/super_admin_login', authController.superAdminLogin)
 
 
 /*****User Login*****/
-router.post('/login', async function (req, res) {
-    var email = req.body.demail;
-    var pwd = req.body.pwd;
-    var enc_pwd = md5(pwd);
-    var data = '';
+router.post('/login', authController.login);
 
-    //check for if email is already registered
-    var userQ = "SELECT * FROM dealers WHERE dealer_email = '" + email + "' limit 1";
-    var users = await sql.query(userQ);
-
-    if (users.length == 0) {
-        data = {
-            'status': false,
-            'msg': 'User does not exist',
-            'data': null
-        }
-        res.status(200).send(data);
-    } else {
-
-        var userTypeQuery = "SELECT * FROM user_roles WHERE id =" + users[0].type + " AND status='1'";
-        var userType = await sql.query(userTypeQuery);
-        if (userType.length == 0) {
-
-            data = {
-                'status': false,
-                'msg': 'User does not exist',
-                'data': null
-            }
-            res.status(200).send(data);
-        } else {
-
-            if (users[0].password === enc_pwd) {
-                let dealerStatus = helpers.getDealerStatus(users[0]);
-                if (dealerStatus === Constants.DEALER_SUSPENDED) {
-                    data = {
-                        'status': false,
-                        'msg': 'Your account is suspended',
-                        'data': null
-                    }
-                    res.status(200).send(data);
-                    return;
-                } else if (dealerStatus === Constants.DEALER_UNLINKED) {
-                    data = {
-                        'status': false,
-                        'msg': 'Your account is deleted',
-                        'data': null
-                    }
-                    res.status(200).send(data);
-                    return;
-                } else {
-
-                    if (users[0].is_two_factor_auth === 1 || users[0].is_two_factor_auth === true) {
-                        verificationCode = randomize('0', 6);
-                        verificationCode = await helpers.checkVerificationCode(verificationCode);
-                        let updateVerification = "UPDATE dealers SET verified=0, verification_code='" + md5(verificationCode) + "' WHERE dealer_id=" + users[0].dealer_id;
-                        await sql.query(updateVerification);
-                        let html = "Your Login Code is: " + verificationCode;
-                        sendEmail("Dual Auth Verification", html, users[0].dealer_email, function (error, response) {
-                            if (error) {
-                                throw (error)
-                            } else {
-                                res.send({
-                                    status: true,
-                                    two_factor_auth: true,
-                                    msg: "Verification Code sent to Your Email"
-                                })
-                            }
-
-                        });
-                    } else {
-                        // send email you are successfully logged in
-
-                        var userType = await helpers.getUserType(users[0].dealer_id);
-                        var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + users[0].dealer_id + "'");
-                        var ip = req.header('x-real-ip') || req.connection.remoteAddress
-                        // console.log('object data is ', users[0]);
-
-                        const user = {
-                            id: users[0].dealer_id,
-                            dealer_id: users[0].dealer_id,
-                            email: users[0].dealer_email,
-                            lastName: users[0].last_name,
-                            name: users[0].dealer_name,
-                            firstName: users[0].first_name,
-                            dealer_name: users[0].dealer_name,
-                            dealer_email: users[0].dealer_email,
-                            link_code: users[0].link_code,
-                            connected_dealer: users[0].connected_dealer,
-                            connected_devices: get_connected_devices,
-                            account_status: users[0].account_status,
-                            user_type: userType,
-                            created: users[0].created,
-                            modified: users[0].modified,
-                            two_factor_auth: users[0].is_two_factor_auth,
-                            ip_address: ip,
-                        }
-
-                        jwt.sign(
-                            {
-                                user
-                            },
-                            config.secret,
-                            {
-                                expiresIn: config.expiresIn
-                            }, (err, token) => {
-                                if (err) {
-                                    res.json({
-                                        'err': err
-                                    });
-                                } else {
-                                    user.expiresIn = config.expiresIn;
-                                    // console.log("logged in user", user[0]);
-                                    user.verified = (users[0].is_two_factor_auth === true || users[0].is_two_factor_auth === 1) ? false : true;
-                                    user.token = token;
-
-                                    helpers.saveLogin(user, userType, Constants.TOKEN, 1);
-
-                                    res.json({
-                                        token: token,
-                                        status: true,
-                                        msg: 'User loged in Successfully',
-                                        expiresIn: config.expiresIn,
-                                        user,
-                                        two_factor_auth: false,
-                                    });
-                                }
-                            }
-                        );
-                    }
-
-
-                }
-            } else {
-
-                data = {
-                    'status': false,
-                    'msg': 'Invalid email or password',
-                    'data': null
-                }
-                res.status(200).send(data);
-                return;
-            }
-
-
-        }
-
-    }
-});
-
-router.post('/verify_code', async function (req, res) {
-    let verify_code = req.body.verify_code;
-
-    let checkVerificationQ = "SELECT * FROM dealers WHERE verification_code = '" + md5(verify_code) + "' limit 1";
-    let checkRes = await sql.query(checkVerificationQ);
-    if (checkRes.length) {
-        let updateVerificationQ = "UPDATE dealers SET verified = 1, verification_code=null WHERE dealer_id=" + checkRes[0].dealer_id;
-        // let updateVerificationQ = "UPDATE dealers SET verified = 1 WHERE dealer_id=" + checkRes[0].dealer_id;
-        sql.query(updateVerificationQ, async function (error, response) {
-            if (error) throw (error);
-            if (response.affectedRows) {
-                let dealerStatus = helpers.getDealerStatus(checkRes[0]);
-                console.log("dealer status", dealerStatus);
-                if (dealerStatus === Constants.DEALER_SUSPENDED) {
-                    data = {
-                        'status': false,
-                        'msg': 'Your account is suspended',
-                        'data': null
-                    }
-                    res.status(200).send(data);
-                    return;
-                } else if (dealerStatus === Constants.DEALER_UNLINKED) {
-                    data = {
-                        'status': false,
-                        'msg': 'Your account is deleted',
-                        'data': null
-                    }
-                    res.status(200).send(data);
-                    return;
-                } else {
-
-                    var userType = await helpers.getUserType(checkRes[0].dealer_id);
-
-                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + checkRes[0].dealer_id + "'");
-                    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-                    // console.log('object data is ', users[0]);
-
-                    const user = {
-                        id: checkRes[0].dealer_id,
-                        dealer_id: checkRes[0].dealer_id,
-                        email: checkRes[0].dealer_email,
-                        lastName: checkRes[0].last_name,
-                        name: checkRes[0].dealer_name,
-                        firstName: checkRes[0].first_name,
-                        dealer_name: checkRes[0].dealer_name,
-                        dealer_email: checkRes[0].dealer_email,
-                        link_code: checkRes[0].link_code,
-                        connected_dealer: checkRes[0].connected_dealer,
-                        connected_devices: get_connected_devices,
-                        account_status: checkRes[0].account_status,
-                        user_type: userType,
-                        created: checkRes[0].created,
-                        modified: checkRes[0].modified,
-                        two_factor_auth: checkRes[0].is_two_factor_auth,
-                        ip_address: ip,
-                    }
-
-                    jwt.sign({
-                        user
-                    }, config.secret, {
-                            expiresIn: config.expiresIn
-                        }, (err, token) => {
-                            if (err) {
-                                res.json({
-                                    'err': err
-                                });
-                            } else {
-                                user.expiresIn = config.expiresIn;
-                                user.verified = checkRes[0].verified;
-                                user.token = token;
-                                helpers.saveLogin(user, userType, Constants.TOKEN, 1);
-
-                                res.send({
-                                    token: token,
-                                    status: true,
-                                    msg: 'User loged in Successfully',
-                                    expiresIn: config.expiresIn,
-                                    user
-                                });
-                            }
-                        });
-                }
-            } else {
-                return {
-                    status: false,
-                    msg: "verification code successfully matched",
-                    data: null
-                }
-            }
-        });
-
-    } else {
-        data = {
-            status: false,
-            msg: 'invalid verification code',
-            data: null
-        }
-        res.status(200).send(data);
-    }
-
-});
+router.post('/verify_code', authController.verifyCode);
 
 // enable or disable two factor auth
 router.post('/two_factor_auth', async function (req, res) {
@@ -688,76 +285,16 @@ router.post('/two_factor_auth', async function (req, res) {
 });
 
 
-router.get('/get_allowed_components', async function (req, res) {
-    res.setHeader('Content-Type', 'application/json');
-
-    var verify = await verifyToken(req, res);
-    if (verify['status'] !== undefined && verify.status == true) {
-
-    }
-});
+router.get('/get_allowed_components', aclController.getAllowedComponents);
 
 
-router.post('/check_component', async function (req, res) {
-    res.setHeader('Content-Type', 'application/json');
-
-    var verify = await verifyToken(req, res);
-    if (verify['status'] !== undefined && verify.status == true) {
-        var componentUri = req.body.ComponentUri;
-        var userId = verify.user.id;
-        var result = await helpers.isAllowedComponentByUri(componentUri, userId);
-        let getUser = "SELECT * from dealers where dealer_id =" + userId;
-        let user = await sql.query(getUser);
-        var get_connected_devices = await sql.query("SELECT count(*) as total from usr_acc where dealer_id='" + userId + "'");
-
-        if (user.length) {
-
-            const usr = {
-                id: user[0].dealer_id,
-                dealer_id: user[0].dealer_id,
-                email: user[0].dealer_email,
-                lastName: user[0].last_name,
-                name: user[0].dealer_name,
-                firstName: user[0].first_name,
-                dealer_name: user[0].dealer_name,
-                dealer_email: user[0].dealer_email,
-                link_code: user[0].link_code,
-                connected_dealer: user[0].connected_dealer,
-                connected_devices: get_connected_devices,
-                account_status: user[0].account_status,
-                user_type: verify.user.user_type,
-                created: user[0].created,
-                modified: user[0].modified,
-                two_factor_auth: user[0].is_two_factor_auth,
-                verified: user[0].verified
-            }
-
-            res.json({
-                'status': true,
-                'msg': '',
-                user: usr,
-                ComponentAllowed: result
-            });
-        } else {
-            res.send({
-                status: false,
-                msg: "authentication failed"
-            });
-        }
-    }
-});
+router.post('/check_component', aclController.checkComponent);
 
 /** is_admin **/
-router.get('/is_admin', async function (req, res) {
-
-});
+router.get('/is_admin', aclController.isAdmin);
 
 /** get_user_type **/
-router.get('/user_type', async function (req, res) {
-
-});
-
-
+router.get('/user_type', aclController.getUserType);
 
 
 router.get('/languages', async function (req, res) {
@@ -791,9 +328,6 @@ router.get('/devices', async function (req, res) {
     var verify = await verifyToken(req, res);
     var where_con = '';
     let newArray = [];
-
-
-
 
     // console.log("user data", verify.user);
     if (verify.status !== undefined && verify.status == true) {
@@ -7520,7 +7054,6 @@ router.get('/get-language', async function (req, res) {
             ON (LT.lng_id = DL.dealer_lng_id) 
             WHERE dl.dealer_id=${dealer_id}`;
 
-            console.log('query is: ', selectQuery);
             sql.query(selectQuery, (err, rslt) => {
                 if (err)  console.log(err);
                 
@@ -7959,6 +7492,7 @@ router.put('/delete_request/:id', async function (req, res) {
         }
     }
 })
+
 router.put('/accept_request/:id', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
@@ -8051,7 +7585,106 @@ router.put('/accept_request/:id', async function (req, res) {
     }
 })
 
+/*** Create Backup ***/
+router.post('/create_backup_DB', async function (req, res) {
 
+    res.setHeader('Content-Type', 'application/json');
+
+    var verify = await verifyToken(req, res);
+
+    if (verify.status !== undefined && verify.status == true) {
+        var ws;
+        var wb = XLSX.utils.book_new();
+        let devices = []
+        let query = "SELECT * From acc_action_history WHERE action = 'UNLINKED'";
+        let newArray = await sql.query(query)
+        let results = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 order by devices.id DESC')
+        // console.log('query ', 'select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 ' + where_con + ' order by devices.id DESC')
+        for (var i = 0; i < results.length; i++) {
+            results[i].finalStatus = device_helpers.checkStatus(results[i])
+            results[i].pgp_email = await device_helpers.getPgpEmails(results[i])
+            results[i].sim_id = await device_helpers.getSimids(results[i])
+            results[i].chat_id = await device_helpers.getChatids(results[i])
+            results[i].validity = await device_helpers.checkRemainDays(results[i].created_at, results[i].validity)
+            // dealerData = await device_helpers.getDealerdata(results[i]);
+        }
+        let finalResult = [...results, ...newArray]
+        // console.log('old', finalResult);
+        let checkValue = helpers.checkValue;
+        for (let device of finalResult) {
+            let data = {
+                device_id: checkValue(device.device_id),
+                user_id: checkValue(device.user_id),
+                batch_no: checkValue(device.batch_no),
+                name: checkValue(device.name),
+                dealer_id: checkValue(device.dealer_id),
+                dealer_name: checkValue(device.dealer_name),
+                account_email: checkValue(device.account_email),
+                account_name: checkValue(device.account_name),
+                model: checkValue(device.model),
+                link_code: checkValue(device.link_code),
+                activation_code: checkValue(device.activation_code),
+                pgp_email: checkValue(device.pgp_email),
+                chat_id: checkValue(device.chat_id),
+                sim_id: checkValue(device.sim_id),
+                client_id: checkValue(device.client_id),
+                finalStatus: checkValue(device.finalStatus),
+                ip_address: checkValue(device.ip_address),
+                mac_address: checkValue(device.mac_address),
+                serial_number: checkValue(device.serial_number),
+                imei: checkValue(device.imei),
+                imei2: checkValue(device.imei2),
+                online: checkValue(device.online),
+                simno: checkValue(device.simno),
+                simno2: checkValue(device.simno2),
+                note: checkValue(device.note),
+                prnt_dlr_id: checkValue(device.prnt_dlr_id),
+                prnt_dlr_name: checkValue(device.prnt_dlr_name),
+                connected_dealer: checkValue(device.connected_dealer),
+                start_date: checkValue(device.start_date),
+                expiry_date: checkValue(device.expiry_date),
+                expiry_months: checkValue(device.expiry_months),
+                validity: checkValue(device.validity),
+                updated_at: checkValue(device.updated_at),
+                created_at: checkValue(device.created_at),
+            }
+            devices.push(data)
+        }
+        if (devices.length) {
+            ws = XLSX.utils.json_to_sheet(devices);
+            XLSX.utils.book_append_sheet(wb, ws, 'Devices');
+        }
+
+        let userData = await sql.query('select id,user_id,user_name,email,dealer_id from users');
+        if (userData.length) {
+            ws = XLSX.utils.json_to_sheet(userData);
+            XLSX.utils.book_append_sheet(wb, ws, 'Users');
+        }
+        let dealerData = await sql.query('select dealer_id,dealer_name,dealer_email,link_code,connected_dealer ,unlink_status from dealers WHERE dealer_email != "super123!admin@gmail.com"');
+        if (userData.length) {
+            ws = XLSX.utils.json_to_sheet(dealerData);
+            XLSX.utils.book_append_sheet(wb, ws, 'Dealers');
+        }
+        let IDsTables = ['chat_ids', 'sim_ids', 'pgp_emails'];
+        for (let i = 0; i < IDsTables.length; i++) {
+            let tableDate = await sql.query("SELECT * from " + IDsTables[i])
+            if (tableDate.length) {
+                /* make the worksheet */
+                ws = XLSX.utils.json_to_sheet(tableDate);
+                /* add to workbook */
+                XLSX.utils.book_append_sheet(wb, ws, IDsTables[i]);
+            }
+        }
+        let fileNameCSV = 'DB_Backup' + '_' + Date.now() + ".xlsx";
+        await XLSX.writeFile(wb, path.join(__dirname, "../db_backup/" + fileNameCSV))
+        let data = {
+            status: true,
+            path: fileNameCSV
+        }
+        res.send(data)
+        // let file =  zipFileName
+    }
+});
 
 
 module.exports = router;
