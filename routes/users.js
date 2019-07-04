@@ -756,27 +756,22 @@ router.get('/user_type', async function (req, res) {
 
 
 router.get('/languages', async function (req, res) {
-    var verify = await verifyToken(req, res);
+    // var verify = await verifyToken(req, res);
     let languages = [];
+    let selectQuery = "SELECT * FROM languages";
+    languages = await sql.query(selectQuery);
 
-    if (verify.status !== undefined && verify.status == true) {
-        let selectQuery = "SELECT * FROM languages";
-        languages = await sql.query(selectQuery);
-
-        if(languages.length){
-            res.send({
-                "status": true,
-                "data": languages
-            });
-        } else {
-            res.send({
-                status: false,
-                data: []
-            })
-        }
-  
-    } 
-
+    if (languages.length) {
+        res.send({
+            "status": true,
+            "data": languages
+        });
+    } else {
+        res.send({
+            status: false,
+            data: []
+        })
+    }
 });
 
 
@@ -7385,14 +7380,14 @@ router.get('/get-language', async function (req, res) {
 
             console.log('query is: ', selectQuery);
             sql.query(selectQuery, (err, rslt) => {
-                if (err)  console.log(err);
-                
+                if (err) console.log(err);
+
                 if (rslt.length) {
-                    let obj ={}
-                    rslt.forEach((elem)=>{
+                    let obj = {}
+                    rslt.forEach((elem) => {
                         let key_id = elem.key_id;
                         // obj.push({
-                            obj[key_id] = elem.key_value 
+                        obj[key_id] = elem.key_value
                         // });
                     })
                     res.send({
