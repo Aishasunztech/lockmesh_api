@@ -5,9 +5,6 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var cors = require('cors');
 
-// var indexRouter = require('./routes/index');
-// var usersRouter = require('./routes/users');
-// var mobileRouter = require('./routes/mobile');
 var bodyParser = require('body-parser');
 
 var swaggerUi = require('swagger-ui-express'),
@@ -19,8 +16,10 @@ app.options('*', cors());
 
 // url logging
 app.use(logger('dev'));
+
 // app.use(bodyParser.json({limit: "1000gb"}));
 // app.use(bodyParser.urlencoded({limit: "1000gb", extended: false, parameterLimit:100000000}));
+
 app.use(express.json({ limit: "1000gb" }));
 app.use(express.urlencoded({ limit: "1000gb", extended: false, parameterLimit: 100000000 }));
 app.use(cookieParser());
@@ -41,12 +40,13 @@ app.use(function (req, res, next) {
 
 	next();
 });
-// app.use(fileUpload());
+
 // routes
+app.get('/', function(req, res){
+	res.send("Express");
+})
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 require('./routes/index.js')(app);
-// app.use('/', indexRouter);
-// app.use('/users', usersRouter);
-// app.use('/mobile', mobileRouter);
+
 
 module.exports = app;

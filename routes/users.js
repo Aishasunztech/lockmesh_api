@@ -7514,8 +7514,7 @@ router.get('/get-language', async function (req, res) {
     if (verify.status !== undefined && verify.status == true) {
         let dealer_id = verify.user.dealer_id;
         if (dealer_id) {
-            let selectQuery = `SELECT LT.key_id, LT.key_value  
-            FROM dealer_language AS DL 
+            let selectQuery = `SELECT LT.key_id, LT.key_value FROM dealer_language AS DL 
             JOIN lng_translations AS LT 
             ON (LT.lng_id = DL.dealer_lng_id) 
             WHERE dl.dealer_id=${dealer_id}`;
