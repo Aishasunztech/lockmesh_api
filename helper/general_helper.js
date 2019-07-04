@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
-const sql = require('../helper/sql.js');
+const { sql } = require('../config/database');
+
 var datetime = require('node-datetime');
 // var moment = require('moment');
 // import ADMIN from "../constants/Application";
