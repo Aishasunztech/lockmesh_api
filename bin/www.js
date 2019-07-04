@@ -15,6 +15,7 @@ app.set('port', port);
 var server = http.createServer(app);
 require('../routes/sockets').listen(server);
 
+var crons = require('../crons/index');
 /**
  * Listen on provided port, on all network interfaces.
  */
