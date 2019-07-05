@@ -285,27 +285,22 @@ router.get('/user_type', aclController.getUserType);
 
 
 router.get('/languages', async function (req, res) {
-    var verify = await verifyToken(req, res);
+    // var verify = await verifyToken(req, res);
     let languages = [];
+    let selectQuery = "SELECT * FROM languages";
+    languages = await sql.query(selectQuery);
 
-    if (verify.status !== undefined && verify.status == true) {
-        let selectQuery = "SELECT * FROM languages";
-        languages = await sql.query(selectQuery);
-
-        if (languages.length) {
-            res.send({
-                "status": true,
-                "data": languages
-            });
-        } else {
-            res.send({
-                status: false,
-                data: []
-            })
-        }
-
+    if (languages.length) {
+        res.send({
+            "status": true,
+            "data": languages
+        });
+    } else {
+        res.send({
+            status: false,
+            data: []
+        })
     }
-
 });
 
 
