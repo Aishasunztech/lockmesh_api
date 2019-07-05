@@ -60,7 +60,7 @@ let sdealerColumns = ["DEALER ID", "DEALER NAME", "DEALER EMAIL", "DEALER PIN", 
 
 function sendEmail(subject, message, to, callback) {
     let cb = callback;
-    subject = "Lockmesh.com Team - " + subject
+    subject = `${Constants.APP_TITLE}  - ${subject}`
     let mailOptions = {
         from: "admin@lockmesh.com",
         to: to,
@@ -444,19 +444,19 @@ router.post('/add/dealer', async function (req, res) {
                 var html = '';
                 if (pageType === DEALER) {
 
-                    html = 'Your login details are : <br> ' +
-                        'Email : ' + dealerEmail + '<br> ' +
-                        'Password : ' + dealer_pwd + '<br> ' +
-                        'Dealer id : ' + rows.insertId + '<br> ' +
-                        'Dealer Pin : ' + link_code + '.<br> ' +
-                        'Below is the link to login : <br> http://www.lockmesh.com <br>';
+                    html = `Your login details are : <br>
+                        Email : ${dealerEmail}<br>
+                        Password : ${dealer_pwd} <br>
+                        Dealer id : ${rows.insertId}<br>
+                        Dealer Pin : ${link_code}<br>
+                        Below is the link to login : <br> ${Constants.APP_URL} <br>`;
                 } else {
-                    html = 'Your login details are : <br> ' +
-                        'Email : ' + dealerEmail + '<br> ' +
-                        'Password : ' + dealer_pwd + '<br> ' +
-                        'S-Dealer id : ' + rows.insertId + '<br> ' +
-                        'S-Dealer Pin : ' + link_code + '.<br> ' +
-                        'Below is the link to login : <br> http://www.lockmesh.com <br>';
+                    html = `Your login details are : <br>
+                    Email : ${dealerEmail}<br>
+                    Password : ${dealer_pwd} <br>
+                    Dealer id : ${rows.insertId}<br>
+                    Dealer Pin : ${link_code}<br>
+                    Below is the link to login : <br> ${Constants.APP_URL} <br>`;
                 }
 
 
@@ -6724,7 +6724,7 @@ router.get('/get-language', async function (req, res) {
             sql.query(selectQuery, (err, rslt) => {
                 if (err)  console.log(err);
                 
-                if (rslt.length) {
+                if (rslt && rslt.length) {
                     let obj ={}
                     rslt.forEach((elem)=>{
                         let key_id = elem.key_id;
@@ -6736,14 +6736,15 @@ router.get('/get-language', async function (req, res) {
                         status: true,
                         msg: 'success',
                         data: JSON.stringify(obj)
-
                     })
+                    return;
                 } else {
                     res.send({
                         status: false,
                         msg: 'No data',
                         data: {}
                     })
+                    return;
                 }
             })
         }
