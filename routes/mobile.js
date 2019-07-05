@@ -753,7 +753,6 @@ router.get('/getUpdate/:version/:packageName', async (req, res) => {
     let version = req.params.version;
     let packageName = req.params.packageName;
     let query = "SELECT * FROM apk_details WHERE package_name = '" + packageName + "' AND delete_status=0";
-    console.log("old", query);
     sql.query(query, function (error, response) {
         // console.log("res", response);
 
@@ -761,8 +760,10 @@ router.get('/getUpdate/:version/:packageName', async (req, res) => {
             res.send({
                 success: true,
                 status: false,
+                apk_status: false,
                 msg: "Error in Query"
             });
+            return;
         }
 
         let isAvail = false;
@@ -787,13 +788,14 @@ router.get('/getUpdate/:version/:packageName', async (req, res) => {
                     msg: ""
                 });
             }
-
+            return;
         } else {
             res.send({
                 apk_status: false,
                 success: true,
                 msg: ""
             });
+            return;
         }
     })
     // }
@@ -806,17 +808,19 @@ router.get('/getUpdate/:version/:packageName/:label', async (req, res) => {
     if (verify.status == true) {
         let version = req.params.version;
         let packageName = req.params.packageName;
+        let label = req.params.label;
+
         let query = "SELECT * FROM apk_details WHERE package_name = '" + packageName + "' AND delete_status=0";
-        console.log("new", query);
         sql.query(query, function (error, response) {
             // console.log("res", response);
-
             if (error) {
                 res.send({
                     success: true,
                     status: false,
+                    apk_status: false,
                     msg: "Error in Query"
                 });
+                return;
             }
 
             let isAvail = false;
@@ -841,6 +845,7 @@ router.get('/getUpdate/:version/:packageName/:label', async (req, res) => {
                         msg: ""
                     });
                 }
+                return;
 
             } else {
                 res.send({
@@ -848,6 +853,7 @@ router.get('/getUpdate/:version/:packageName/:label', async (req, res) => {
                     success: true,
                     msg: ""
                 });
+                return;
             }
         })
     }

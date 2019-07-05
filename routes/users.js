@@ -2836,9 +2836,39 @@ router.post('/save_policy', async function (req, res) {
             let policy_name = req.body.data.policy_name !== undefined ? req.body.data.policy_name : null;
             if (policy_name !== null) {
                 let policy_note = req.body.data.policy_note !== undefined ? req.body.data.policy_note : null;
-                let push_apps = req.body.data.push_apps !== undefined ? JSON.stringify(req.body.data.push_apps) : null;
-                let app_list = req.body.data.app_list !== undefined ? JSON.stringify(req.body.data.app_list) : null;
-                let secure_apps = req.body.data.secure_apps !== undefined ? JSON.stringify(req.body.data.secure_apps) : null;
+                let push_apps = null;
+                let app_list = null;
+                let secure_apps = null;
+                if(req.body.data.push_apps !== undefined){
+                    req.body.data.push_apps.forEach((app)=>{
+                        app.guest = (app.guest!==undefined)? app.guest: false;
+                        app.enable = (app.enable!==undefined)? app.enable: false;
+                        app.encrypted = (app.encrypted!==undefined)? app.encrypted: false;
+
+                    });
+                    push_apps = JSON.stringify(req.body.data.push_apps);
+                }
+
+                if(req.body.data.app_list !== undefined){
+                    req.body.data.app_list.forEach((app)=>{
+                        app.guest = (app.guest!==undefined)? app.guest: false;
+                        app.enable = (app.enable!==undefined)? app.enable: false;
+                        app.encrypted = (app.encrypted!==undefined)? app.encrypted: false;
+
+                    });
+                    app_list = JSON.stringify(req.body.data.app_list);
+                }
+                
+                if(req.body.data.secure_apps !== undefined){
+                    req.body.data.secure_apps.forEach((app)=>{
+                        app.guest = (app.guest!==undefined)? app.guest: false;
+                        // app.enable = (app.enable!==undefined)? app.enable: false;
+                        app.encrypted = (app.encrypted!==undefined)? app.encrypted: false;
+
+                    });
+                    secure_apps = JSON.stringify(req.body.data.secure_apps);
+                }
+
                 let system_permissions = req.body.data.system_permissions !== undefined ? JSON.stringify(req.body.data.system_permissions) : null;
 
                 let loggedDealerId = verify.user.id;
