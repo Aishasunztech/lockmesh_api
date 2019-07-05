@@ -8,9 +8,6 @@ module.exports = {
     SOCKET: 'socket',
     TOKEN: "token",
     
-    // APP CONSTANSTS
-    APP_TITLE: 'TitanLocker',
-    APP_URL: "http://www.lockmesh.com",
 
     // dealers
     DEALER_ACTIVE: "active",

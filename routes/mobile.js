@@ -17,22 +17,10 @@ const nodemailer = require('nodemailer');
 var moment = require('moment-strftime');
 const device_helpers = require('../helper/device_helpers.js');
 var Constants = require('../constants/Application');
-var app_constants = require('../constants/AppConstants.js');
+var app_constants = require('../config/constants');
 
-const smtpTransport = require('../helper/mail')
+const { sendEmail } = require('../lib/email');
 
-
-function sendEmail(subject, message, to, callback) {
-    let cb = callback;
-    subject = "Lockmesh.com Team - " + subject
-    let mailOptions = {
-        from: "admin@lockmesh.com",
-        to: to,
-        subject: subject,
-        html: message
-    };
-    smtpTransport.sendMail(mailOptions, cb);
-}
 
 /*Check For Token in the header */
 var verifyToken = function (req, res) {
@@ -762,52 +750,52 @@ router.get('/getUpdate/:version/:packageName', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     // let verify = await verifyToken(req, res);
     // if (verify.status == true) {
-        let version = req.params.version;
-        let packageName = req.params.packageName;
-        let query = "SELECT * FROM apk_details WHERE package_name = '" + packageName + "' AND delete_status=0";
-        console.log("old", query);
-        sql.query(query, function (error, response) {
-            // console.log("res", response);
+    let version = req.params.version;
+    let packageName = req.params.packageName;
+    let query = "SELECT * FROM apk_details WHERE package_name = '" + packageName + "' AND delete_status=0";
+    console.log("old", query);
+    sql.query(query, function (error, response) {
+        // console.log("res", response);
 
-            if (error) {
-                res.send({
-                    success: true,
-                    status: false,
-                    msg: "Error in Query"
-                });
-            }
+        if (error) {
+            res.send({
+                success: true,
+                status: false,
+                msg: "Error in Query"
+            });
+        }
 
-            let isAvail = false;
+        let isAvail = false;
 
-            if (response.length) {
-                for (let i = 0; i < response.length; i++) {
-                    if (Number(response[i].version_code) > Number(version)) {
-                        isAvail = true;
-                        res.send({
-                            apk_status: true,
-                            success: true,
-                            apk_url: response[i].apk
-                        });
-
-                        break;
-                    }
-                }
-                if (!isAvail) {
+        if (response.length) {
+            for (let i = 0; i < response.length; i++) {
+                if (Number(response[i].version_code) > Number(version)) {
+                    isAvail = true;
                     res.send({
-                        apk_status: false,
+                        apk_status: true,
                         success: true,
-                        msg: ""
+                        apk_url: response[i].apk
                     });
-                }
 
-            } else {
+                    break;
+                }
+            }
+            if (!isAvail) {
                 res.send({
                     apk_status: false,
                     success: true,
                     msg: ""
                 });
             }
-        })
+
+        } else {
+            res.send({
+                apk_status: false,
+                success: true,
+                msg: ""
+            });
+        }
+    })
     // }
 
 });
