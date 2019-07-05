@@ -8,7 +8,7 @@ var empty = require('is-empty');
 var mime = require('mime');
 const axios = require('axios');
 
-const Constants = require('../../constants/application');
+const Constants = require('../../constants/Application');
 const device_helpers = require('../../helper/device_helpers');
 const general_helpers = require('../../helper/general_helper');
 const moment = require('moment')

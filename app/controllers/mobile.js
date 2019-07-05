@@ -10,7 +10,7 @@ const device_helpers = require('../../helpers/device_helpers');
 const general_helpers = require('../../helpers/general_helpers');
 const { sql } = require('../../config/database');
 const constants = require('../../config/constants');
-const app_constants = require('../../constants/application');
+const app_constants = require('../../constants/Application');
 
 
 exports.systemLogin = async function (req, res) {
