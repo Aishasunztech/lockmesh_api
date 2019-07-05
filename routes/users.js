@@ -5381,7 +5381,7 @@ router.post('/upload', async function (req, res) {
         let mimeType = "";
         let fieldName = "";
 
-        console.log("hello");
+        console.log("File Uploading started.");
 
         var storage = multer.diskStorage({
             destination: function (req, file, callback) {
@@ -5407,7 +5407,7 @@ router.post('/upload', async function (req, res) {
                     // helpers.getAPKVersionCode(req.files.apk);
                     callback(null, filename);
                 } else {
-                    callback("file not supported");
+                    callback("File type is not supported.");
                 }
             }
         });
@@ -5427,7 +5427,7 @@ router.post('/upload', async function (req, res) {
             if (err) {
                 return res.send({
                     status: false,
-                    msg: "Error while Uploading"
+                    msg: "Error: "+ err
                 });
             }
 
@@ -5444,7 +5444,7 @@ router.post('/upload', async function (req, res) {
 
                         data = {
                             status: true,
-                            msg: 'Uploaded Successfully',
+                            msg: 'Success: App Uploaded Successfully.',
                             fileName: filename,
                             size: formatByte
 
@@ -5454,7 +5454,7 @@ router.post('/upload', async function (req, res) {
                     } else {
                         data = {
                             status: false,
-                            msg: "Error while Uploading",
+                            msg: "Error: Unable to read APP properties.",
                         };
                         res.send(data);
                         return;
@@ -5462,7 +5462,7 @@ router.post('/upload', async function (req, res) {
                 } else if (fieldName === Constants.LOGO) {
                     data = {
                         status: true,
-                        msg: 'Uploaded Successfully',
+                        msg: 'Success: App logo Uploaded Successfully.',
                         fileName: filename,
                     };
                     res.send(data);
@@ -5470,7 +5470,7 @@ router.post('/upload', async function (req, res) {
                 } else {
                     data = {
                         status: false,
-                        msg: "Error while Uploading"
+                        msg: "Error: Unauthorized file uploading attempt."
                     }
                     res.send(data);
                     return;
@@ -5478,7 +5478,7 @@ router.post('/upload', async function (req, res) {
             } else {
                 data = {
                     status: false,
-                    msg: "Error while Uploading",
+                    msg: "Error: Uploaded file is corrupt.",
                 };
                 res.send(data);
                 return;
