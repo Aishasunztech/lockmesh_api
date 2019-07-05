@@ -1,7 +1,6 @@
 var express = require('express');
-const sql = require('../helper/sql.js');
-// var multer = require('multer');
-// var upload = multer({ dest: 'uploads/' });
+const { sql } = require('../config/database');
+
 var fs = require("fs");
 var path = require('path');
 

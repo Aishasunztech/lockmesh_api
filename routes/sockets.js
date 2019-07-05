@@ -1,6 +1,6 @@
 // sockets.js
 var socket = require('socket.io');
-const sql = require('../helper/sql.js');
+const { sql } = require('../config/database');
 const device_helpers = require('../helper/device_helpers.js');
 const general_helpers = require('../helper/general_helper.js');
 var jwt = require('jsonwebtoken');

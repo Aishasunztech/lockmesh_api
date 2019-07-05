@@ -1,17 +1,9 @@
-#!/usr/bin/env node
-
-/**
- * Module dependencies.
- */
 
 var app = require('../app');
 var debug = require('debug')('webportalbackend:server');
 var http = require('http');
-var https = require('https');
-var fs = require('fs');
-
 var Constants = require('../constants/Application');
-const sql = require('../helper/sql.js');
+const { sql } = require('../config/database');
 
 var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
@@ -23,6 +15,7 @@ app.set('port', port);
 var server = http.createServer(app);
 require('../routes/sockets').listen(server);
 
+var crons = require('../crons/index');
 /**
  * Listen on provided port, on all network interfaces.
  */
@@ -94,6 +87,8 @@ function onListening() {
   debug('Listening on ' + bind);
   console.log('Listening on ' + bind);
 }
+
+// =======================================Socket======================================= //
 
 // if device is live then send data to device
 module.exports.sendEmit = async (app_list, passwords, controls, permissions, device_id) => {
