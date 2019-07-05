@@ -18,10 +18,7 @@ var path = require('path');
 var fs = require("fs");
 var moment = require('moment-strftime');
 var mime = require('mime');
-// var Jimp = require('jimp');
-// var mysqldump = require('mysqldump')
-// var archiver = require('archiver');
-// archiver.registerFormat('zip-encryptable', require('archiver-zip-encryptable'));
+
 
 const axios = require('axios')
 var util = require('util')
@@ -58,7 +55,6 @@ let apkColumns = ["SHOW ON DEVICE", "APK", "APP NAME", "APP LOGO"]
 let sdealerColumns = ["DEALER ID", "DEALER NAME", "DEALER EMAIL", "DEALER PIN", "DEVICES", "TOKENS", "PARENT DEALER", "PARENT DEALER ID"]
 // var CryptoJS = require("crypto-js");
 // var io = require("../bin/www");
-
 
 
 /*Check For Token in the header */
