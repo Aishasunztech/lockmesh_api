@@ -7050,4 +7050,29 @@ router.post('/create_backup_DB', async function (req, res) {
 });
 
 
+router.get('/get_csv_ids', async (req, res) => {
+    var verify = await verifyToken(req, res);
+    if (verify['status'] !== undefined && verify.status === true) {
+        let pgp_query = "select * from pgp_emails";
+        let pgp_emails = await sql.query(pgp_query)
+        let chat_query = "select * from chat_ids";
+        let chat_ids = await sql.query(chat_query)
+        let sim_query = "select * from sim_ids";
+        let sim_ids = await sql.query(sim_query)
+
+        res.send({
+            status: true,
+            pgp_emails,
+            chat_ids,
+            sim_ids
+        })
+    }
+    else {
+        res.send({
+            status: false,
+        })
+    }
+});
+
+
 module.exports = router;
