@@ -36,8 +36,8 @@ var app_constants = require('../constants/AppConstants.js');
 var helpers = require('../helper/general_helper.js');
 const device_helpers = require('../helper/device_helpers.js');
 
-
 const smtpTransport = require('../helper/mail')
+
 // stripe.createToken()
 
 // ========== Controllers ========
@@ -135,7 +135,7 @@ var verifyToken = function (req, res) {
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
     res.send("Test ")
-    
+
     // stripe.tokens.create({
     //     card: {
     //         number: '4242424242424242',
@@ -306,7 +306,7 @@ router.get('/languages', async function (req, res) {
         let selectQuery = "SELECT * FROM languages";
         languages = await sql.query(selectQuery);
 
-        if(languages.length){
+        if (languages.length) {
             res.send({
                 "status": true,
                 "data": languages
@@ -317,8 +317,8 @@ router.get('/languages', async function (req, res) {
                 data: []
             })
         }
-  
-    } 
+
+    }
 
 });
 
@@ -4557,15 +4557,19 @@ router.get('/get_used_chat_ids', async (req, res) => {
         })
     }
 });
-router.post('/releaseCSV/:fieldName', async (req, res) => {
+router.post('/delete_CSV_ids/:fieldName', async (req, res) => {
     var verify = await verifyToken(req, res);
     var fieldName = req.params.fieldName
     var ids = req.body.ids
+    // console.log(ids);
     if (verify['status'] !== undefined && verify.status === true) {
-        // console.log(fieldName, ids);
+        console.log(fieldName, ids);
         if (fieldName === 'pgp_email') {
-            let query = "UPDATE pgp_emails set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
-            // console.log(query);
+            var idsName = ids.map((item) => {
+                return item.pgp_email
+            })
+            let query = "DELETE FROM pgp_emails where pgp_email IN ('" + idsName.join("','") + "')";
+            console.log(query);
             sql.query(query, (error, resp) => {
                 if (error) throw error
                 if (resp.affectedRows) {
@@ -4587,43 +4591,42 @@ router.post('/releaseCSV/:fieldName', async (req, res) => {
             });
         }
         else if (fieldName === 'sim_id') {
-            let query = "UPDATE sim_ids set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
-            // console.log(query);
+            var idsName = ids.map((item) => {
+                return item.sim_id
+            })
+            let query = "DELETE FROM sim_ids where sim_id IN (" + idsName.join() + ")";
+            console.log(query);
             sql.query(query, (error, resp) => {
                 if (error) throw error
                 if (resp.affectedRows) {
-                    let query = "select * from sim_ids where used=1";
-                    sql.query(query, (error, resp) => {
-                        res.send({
-                            status: true,
-                            type: 'sim',
-                            msg: "CSV Released Successfully.",
-                            data: resp
-                        });
+                    res.send({
+                        status: true,
+                        type: 'sim',
+                        msg: "CSV Released Successfully.",
+                        data: resp
                     });
                 } else {
                     res.send({
-                        status: true,
+                        status: false,
                         msg: "CSV Not Released.",
                     });
                 }
             });
         }
         else if (fieldName === 'chat_id') {
-            let query = "UPDATE chat_ids set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
-            // console.log(query);
+            var idsName = ids.map((item) => {
+                return item.chat_id
+            })
+            let query = "DELETE FROM chat_ids where chat_id IN (" + idsName.join() + ")";
+            console.log(query);
             sql.query(query, (error, resp) => {
                 if (error) throw error
                 if (resp.affectedRows) {
-
-                    let query = "select * from chat_ids where used=1";
-                    sql.query(query, (error, resp) => {
-                        res.send({
-                            status: true,
-                            type: 'chat',
-                            msg: "CSV Released Successfully.",
-                            data: resp
-                        });
+                    res.send({
+                        status: true,
+                        type: 'chat',
+                        msg: "CSV Released Successfully.",
+                        data: resp
                     });
                 } else {
                     res.send({
@@ -4835,7 +4838,7 @@ router.post('/upload', async function (req, res) {
             if (err) {
                 return res.send({
                     status: false,
-                    msg: "Error: "+ err
+                    msg: "Error: " + err
                 });
             }
 
@@ -6722,14 +6725,14 @@ router.get('/get-language', async function (req, res) {
             WHERE dl.dealer_id=${dealer_id}`;
 
             sql.query(selectQuery, (err, rslt) => {
-                if (err)  console.log(err);
-                
+                if (err) console.log(err);
+
                 if (rslt && rslt.length) {
-                    let obj ={}
-                    rslt.forEach((elem)=>{
+                    let obj = {}
+                    rslt.forEach((elem) => {
                         let key_id = elem.key_id;
                         // obj.push({
-                            obj[key_id] = elem.key_value 
+                        obj[key_id] = elem.key_value
                         // });
                     })
                     res.send({
