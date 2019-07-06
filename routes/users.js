@@ -2052,6 +2052,7 @@ router.post('/resetpwd', async function (req, res) {
                 sendEmail(subject, message, email, function (errors, response) {
                     if (errors) {
                         res.send("Email could not sent due to error: " + errors);
+                        return;
                     } else {
 
                         var sq = "update dealers set password = '" + enc_pwd + "' where dealer_id = '" + dealer_id + "'";
@@ -2061,32 +2062,32 @@ router.post('/resetpwd', async function (req, res) {
                             if (error) throw error;
 
                             if (rows.affectedRows == 0) {
-                                console.log('false');
                                 data = {
                                     "status": false,
                                     "data": rows
                                 };
                                 res.send(data);
+                                return;
                             } else {
-                                console.log('success');
                                 data = {
 
                                     "status": true,
                                     "msg": "Password changed successfully.Please check your email."
                                 };
                                 res.send(data);
+                                return;
                             }
                         });
                     }
 
                 });
             } else {
-                console.log('reslult', result);
                 data = {
                     "status": false,
                     "msg": 'Invalid User and Password'
                 };
                 res.send(data);
+                return;
             }
 
 
@@ -2096,12 +2097,16 @@ router.post('/resetpwd', async function (req, res) {
                 status: false,
                 "msg": "Invalid details"
             });
+            return;
         }
     }
 
 });
 
 
+
+/*Get All Dealers */
+router.get('/dealers', dealerController.getAllDealers);
 
 /*Get dealers*/
 router.get('/dealers/:pageName', async function (req, res) {
@@ -2158,90 +2163,6 @@ router.get('/dealers/:pageName', async function (req, res) {
                 res.send(data);
             });
         }
-    }
-});
-
-/*Get All Dealers */
-router.get('/dealers', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    if (verify.status !== undefined && verify.status == true) {
-        console.log("userType: " + verify.user.user_type);
-
-        if (verify.user.user_type == "admin") {
-            var role = await helpers.getuserTypeIdByName(verify.user.user_type);
-            console.log("role id", role);
-            sql.query("select * from dealers where type!=" + role + " AND type != 4 order by created DESC", async function (error, results) {
-                if (error) throw error;
-
-                var data = [];
-                console.log('results lenth', results.length)
-                for (var i = 0; i < results.length; i++) {
-                    if (results[i].connected_dealer != 0 && results[i].connected_dealer != '' && results[i].connected_dealer != '0') {
-                        var get_parent_dealer = await sql.query("select dealer_id, dealer_name from dealers where dealer_id=" + results[i].connected_dealer + " limit 1");
-                        console.log(get_parent_dealer);
-                    }
-                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].dealer_id + "'");
-
-
-                    dt = {
-                        "status": true,
-                        "dealer_id": results[i].dealer_id,
-                        "dealer_name": results[i].dealer_name,
-                        "dealer_email": results[i].dealer_email,
-                        "link_code": results[i].link_code,
-                        "account_status": results[i].account_status,
-                        "unlink_status": results[i].unlink_status,
-                        "connected_dealer": results[i].connected_dealer,
-                        "created": results[i].created,
-                        "modified": results[i].modified,
-                        "connected_devices": get_connected_devices
-                    };
-
-                    if (get_parent_dealer != undefined && get_parent_dealer.length > 0) {
-                        dt.parent_dealer = get_parent_dealer[0].dealer_name;
-                        dt.parent_dealer_id = get_parent_dealer[0].dealer_id;
-                    } else {
-                        dt.parent_dealer = "";
-                        dt.parent_dealer_id = "";
-                    }
-
-                    data.push(dt);
-                }
-                res.send(data);
-            });
-        } else {
-
-            var role = await helpers.getuserTypeIdByName(verify.user.user_type);
-            console.log("role id", role);
-            sql.query("select * from dealers where connected_dealer = '" + verify.user.id + "' AND  type = 3 order by created DESC", async function (error, results) {
-                if (error) throw error;
-                // console.log("select * from dealers where connected_dealer = '" + verify.user.id + "' AND  type = 2 order by created DESC");
-                var data = [];
-                console.log(results);
-                for (var i = 0; i < results.length; i++) {
-
-                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].id + "'");
-
-                    dt = {
-                        "status": true,
-                        "dealer_id": results[i].dealer_id,
-                        "dealer_name": results[i].dealer_name,
-                        "dealer_email": results[i].dealer_email,
-                        "link_code": results[i].link_code,
-                        "account_status": results[i].account_status,
-                        "unlink_status": results[i].unlink_status,
-                        "created": results[i].created,
-                        "modified": results[i].modified,
-                        "connected_devices": get_connected_devices,
-                        "connected_dealer": results[i].connected_dealer,
-                    };
-                    data.push(dt);
-                }
-                console.log("Dealers Data", data);
-                res.send(data);
-            });
-        }
-
     }
 });
 
