@@ -18,10 +18,7 @@ var path = require('path');
 var fs = require("fs");
 var moment = require('moment-strftime');
 var mime = require('mime');
-// var Jimp = require('jimp');
-// var mysqldump = require('mysqldump')
-// var archiver = require('archiver');
-// archiver.registerFormat('zip-encryptable', require('archiver-zip-encryptable'));
+
 
 const axios = require('axios')
 var util = require('util')
@@ -32,20 +29,21 @@ const { sql } = require('../config/database');
 var config = require('../helper/config.js');
 
 var Constants = require('../constants/Application');
-var app_constants = require('../constants/AppConstants.js');
+var app_constants = require('../config/constants');
 var helpers = require('../helper/general_helper.js');
 const device_helpers = require('../helper/device_helpers.js');
 
-const smtpTransport = require('../helper/mail')
+//=========== Custom Libraries =========
+const { sendEmail } = require('../lib/email');
 
-// stripe.createToken()
 
 // ========== Controllers ========
-
 const authController = require('../app/controllers/auth');
 const aclController = require('../app/controllers/acl');
 const deviceController = require('../app/controllers/device');
+const dealerController = require('../app/controllers/dealer');
 
+// constants
 const ADMIN = "admin";
 const DEALER = "dealer";
 const SDEALER = "sdealer";
@@ -58,18 +56,6 @@ let sdealerColumns = ["DEALER ID", "DEALER NAME", "DEALER EMAIL", "DEALER PIN", 
 // var CryptoJS = require("crypto-js");
 // var io = require("../bin/www");
 
-function sendEmail(subject, message, to, callback) {
-    let cb = callback;
-    subject = `${Constants.APP_TITLE}  - ${subject}`
-    let mailOptions = {
-        from: "admin@lockmesh.com",
-        to: to,
-        subject: subject,
-        html: message
-    };
-    // console.log("hello smtp", smtpTransport);
-    smtpTransport.sendMail(mailOptions, cb);
-}
 
 /*Check For Token in the header */
 var verifyToken = function (req, res) {
@@ -299,27 +285,22 @@ router.get('/user_type', aclController.getUserType);
 
 
 router.get('/languages', async function (req, res) {
-    var verify = await verifyToken(req, res);
+    // var verify = await verifyToken(req, res);
     let languages = [];
+    let selectQuery = "SELECT * FROM languages";
+    languages = await sql.query(selectQuery);
 
-    if (verify.status !== undefined && verify.status == true) {
-        let selectQuery = "SELECT * FROM languages";
-        languages = await sql.query(selectQuery);
-
-        if (languages.length) {
-            res.send({
-                "status": true,
-                "data": languages
-            });
-        } else {
-            res.send({
-                status: false,
-                data: []
-            })
-        }
-
+    if (languages.length) {
+        res.send({
+            "status": true,
+            "data": languages
+        });
+    } else {
+        res.send({
+            status: false,
+            data: []
+        })
     }
-
 });
 
 
@@ -449,20 +430,27 @@ router.post('/add/dealer', async function (req, res) {
                         Password : ${dealer_pwd} <br>
                         Dealer id : ${rows.insertId}<br>
                         Dealer Pin : ${link_code}<br>
-                        Below is the link to login : <br> ${Constants.APP_URL} <br>`;
+                        Below is the link to login : <br> ${app_constants.HOST} <br>`;
                 } else {
                     html = `Your login details are : <br>
-                    Email : ${dealerEmail}<br>
-                    Password : ${dealer_pwd} <br>
-                    Dealer id : ${rows.insertId}<br>
-                    Dealer Pin : ${link_code}<br>
-                    Below is the link to login : <br> ${Constants.APP_URL} <br>`;
+                        Email : ${dealerEmail}<br>
+                        Password : ${dealer_pwd} <br>
+                        Dealer id : ${rows.insertId}<br>
+                        Dealer Pin : ${link_code}<br>
+                        Below is the link to login : <br> ${app_constants.HOST} <br>`;
                 }
 
 
                 sendEmail("Account Registration", html, dealerEmail, async function (errors, response) {
                     if (error) {
-                        res.send("Email could not sent due to error: " + errors);
+                        data = {
+                            status: true,
+                            msg: "Email could not sent due to error: " + errors,
+                            added_dealer: dealer,
+
+                        }
+                        res.send(data);
+                        return;
                     } else {
                         //res.send("Email has been sent successfully");
                         var dealer = await sql.query("SELECT * FROM dealers WHERE dealer_email = '" + dealerEmail + "' limit 1");
@@ -482,13 +470,13 @@ router.post('/add/dealer', async function (req, res) {
 
                         // console.log('result add',dealer);
                         data = {
-                            'status': true,
-                            'msg': 'Dealer has been registered successfully',
-                            'added_dealer': dealer,
+                            status: true,
+                            msg: 'Dealer has been registered successfully',
+                            added_dealer: dealer,
 
                         }
-
-                        res.status(200).send(data);
+                        res.send(data);
+                        return;
                     }
 
                 });
@@ -803,150 +791,6 @@ router.put('/undo_delete_user/:user_id', async function (req, res) {
     }
 });
 
-
-
-/*Get dealers*/
-router.get('/dealers/:pageName', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    if (verify.status !== undefined && verify.status == true) {
-        let where = "";
-        console.log("pageName", req.params.pageName);
-        console.log("userType: " + verify.user.user_type);
-
-        if (verify.user.user_type == "admin") {
-            var role = await helpers.getDealerTypeIdByName(req.params.pageName);
-        } else if (verify.user.user_type == "dealer") {
-            var role = await helpers.getDealerTypeIdByName('sdealer');
-            where = " AND connected_dealer =" + verify.user.id
-        }
-        // console.log("where where", where);
-        // console.log("select * from dealers where type=" + role + " " + where + " order by created DESC");
-        if (role) {
-            sql.query("select * from dealers where type=" + role + " " + where + " order by created DESC", async function (error, results) {
-                if (error) throw error;
-                console.log(results.length);
-                var data = [];
-                for (var i = 0; i < results.length; i++) {
-                    if (results[i].connected_dealer != 0 && results[i].connected_dealer != '' && results[i].connected_dealer != '0') {
-                        var get_parent_dealer = await sql.query("select dealer_id, dealer_name from dealers where dealer_id=" + results[i].connected_dealer + " limit 1");
-                        console.log(get_parent_dealer);
-                    }
-                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].dealer_id + "'");
-
-                    dt = {
-                        "status": true,
-                        "dealer_id": results[i].dealer_id,
-                        "dealer_name": results[i].dealer_name,
-                        "dealer_email": results[i].dealer_email,
-                        "link_code": results[i].link_code,
-                        "account_status": results[i].account_status,
-                        "unlink_status": results[i].unlink_status,
-                        "created": results[i].created,
-                        "modified": results[i].modified,
-                        "connected_devices": get_connected_devices,
-                        "devicesList": await helpers.getAllRecordbyDealerId(results[i].dealer_id)
-                    };
-
-                    if (get_parent_dealer != undefined && get_parent_dealer.length > 0) {
-                        dt.parent_dealer = get_parent_dealer[0].dealer_name;
-                        dt.parent_dealer_id = get_parent_dealer[0].dealer_id;
-                    } else {
-                        dt.parent_dealer = "";
-                        dt.parent_dealer_id = "";
-                    }
-
-                    data.push(dt);
-                }
-                res.send(data);
-            });
-        }
-    }
-});
-
-/*Get All Dealers */
-router.get('/dealers', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    if (verify.status !== undefined && verify.status == true) {
-        console.log("userType: " + verify.user.user_type);
-
-        if (verify.user.user_type == "admin") {
-            var role = await helpers.getuserTypeIdByName(verify.user.user_type);
-            console.log("role id", role);
-            sql.query("select * from dealers where type!=" + role + " AND type != 4 order by created DESC", async function (error, results) {
-                if (error) throw error;
-
-                var data = [];
-                console.log('results lenth', results.length)
-                for (var i = 0; i < results.length; i++) {
-                    if (results[i].connected_dealer != 0 && results[i].connected_dealer != '' && results[i].connected_dealer != '0') {
-                        var get_parent_dealer = await sql.query("select dealer_id, dealer_name from dealers where dealer_id=" + results[i].connected_dealer + " limit 1");
-                        console.log(get_parent_dealer);
-                    }
-                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].dealer_id + "'");
-
-
-                    dt = {
-                        "status": true,
-                        "dealer_id": results[i].dealer_id,
-                        "dealer_name": results[i].dealer_name,
-                        "dealer_email": results[i].dealer_email,
-                        "link_code": results[i].link_code,
-                        "account_status": results[i].account_status,
-                        "unlink_status": results[i].unlink_status,
-                        "connected_dealer": results[i].connected_dealer,
-                        "created": results[i].created,
-                        "modified": results[i].modified,
-                        "connected_devices": get_connected_devices
-                    };
-
-                    if (get_parent_dealer != undefined && get_parent_dealer.length > 0) {
-                        dt.parent_dealer = get_parent_dealer[0].dealer_name;
-                        dt.parent_dealer_id = get_parent_dealer[0].dealer_id;
-                    } else {
-                        dt.parent_dealer = "";
-                        dt.parent_dealer_id = "";
-                    }
-
-                    data.push(dt);
-                }
-                res.send(data);
-            });
-        } else {
-
-            var role = await helpers.getuserTypeIdByName(verify.user.user_type);
-            console.log("role id", role);
-            sql.query("select * from dealers where connected_dealer = '" + verify.user.id + "' AND  type = 3 order by created DESC", async function (error, results) {
-                if (error) throw error;
-                // console.log("select * from dealers where connected_dealer = '" + verify.user.id + "' AND  type = 2 order by created DESC");
-                var data = [];
-                console.log(results);
-                for (var i = 0; i < results.length; i++) {
-
-                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].id + "'");
-
-                    dt = {
-                        "status": true,
-                        "dealer_id": results[i].dealer_id,
-                        "dealer_name": results[i].dealer_name,
-                        "dealer_email": results[i].dealer_email,
-                        "link_code": results[i].link_code,
-                        "account_status": results[i].account_status,
-                        "unlink_status": results[i].unlink_status,
-                        "created": results[i].created,
-                        "modified": results[i].modified,
-                        "connected_devices": get_connected_devices,
-                        "connected_dealer": results[i].connected_dealer,
-                    };
-                    data.push(dt);
-                }
-                console.log("Dealers Data", data);
-                res.send(data);
-            });
-        }
-
-    }
-});
-
 /***Add devices (not using) ***/
 router.post('/create/device_profile', async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
@@ -1250,8 +1094,6 @@ router.post('/transfer/device_profile', async (req, res) => {
 
     }
 });
-
-
 
 router.put('/new/device', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
@@ -2165,11 +2007,8 @@ router.post('/resetpwd', async function (req, res) {
     var verify = await verifyToken(req, res);
     var isReset = false;
     if (verify.status !== undefined && verify.status == true) {
-        console.log('body data');
-        console.log(req.body);
         var user = verify.user;
         if (req.body.pageName != undefined && req.body.pageName != "") {
-            console.log('user type', user.user_type);
             if (user.user_type === ADMIN || user.user_type === DEALER) {
                 var newpwd = generator.generate({
                     length: 10,
@@ -2179,7 +2018,6 @@ router.post('/resetpwd', async function (req, res) {
                 var query = "SELECT password FROM dealers WHERE dealer_id=" + req.body.dealer_id + " limit 1";
                 var rslt = await sql.query(query);
                 var curntPassword = rslt[0].password;
-                console.log(curntPassword, 'password');
             }
         } else {
 
@@ -2197,7 +2035,7 @@ router.post('/resetpwd', async function (req, res) {
         if (!empty(email) && !empty(newpwd) && !empty(dealer_id)) {
 
             var query = "SELECT link_code from dealers where dealer_id=" + dealer_id + " AND password='" + curntPassword + "' limit 1";
-            console.log(query);
+
 
             var result = await sql.query(query);
             if (result.length) {
@@ -2263,342 +2101,165 @@ router.post('/resetpwd', async function (req, res) {
 
 });
 
-/** Edit Dealer (Admin panel) **/
 
-router.put('/edit/dealers', async function (req, res) {
+
+/*Get dealers*/
+router.get('/dealers/:pageName', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var name = req.body.name;
-    var email = req.body.email;
-    var dealer_id = req.body.dealer_id;
-    var setFields = "";
-    var alreadyAvailable = false;
-    var mailgiven = false;
-
     if (verify.status !== undefined && verify.status == true) {
-        if (!empty(dealer_id) && (!empty(name) || !empty(email))) {
-            if (!empty(email) && email != '' && email != null) {
-                mailgiven = true;
-                let checkMail = await sql.query("select dealer_id from dealers where dealer_email='" + email + "' and dealer_id !=" + dealer_id);
-                // console.log("select dealer_id from dealers where dealer_email='" + email +"' and dealer_id !="+ dealer_id);
-                if (checkMail.length) {
-                    alreadyAvailable = true;
-                }
-                setFields = setFields + "dealer_email='" + email + "' ";
-            }
+        let where = "";
+        console.log("pageName", req.params.pageName);
+        console.log("userType: " + verify.user.user_type);
 
-            let dealer_email = await sql.query("SELECT * from dealers where dealer_email = '" + email + "' AND dealer_id = " + dealer_id)
-            var dealer_pwd = generator.generate({
-                length: 10,
-                numbers: true
-            });
-            var enc_pwd = md5(dealer_pwd);
-            if (!empty(name) && name != '' && name != null) {
-                if (mailgiven == true && alreadyAvailable == false && dealer_email.length === 0) {
-                    setFields = setFields + ", dealer_name='" + name + "'" + ",password = '" + enc_pwd + "'";
-                } else {
-                    setFields = " dealer_name='" + name + "'";
-
-                }
-            }
-            var query = "UPDATE dealers set " + setFields + " where dealer_id = " + dealer_id + "";
-            // var query = "UPDATE dealers set dealer_name = '" + req.body.name + "' , dealer_email = '" + req.body.email + "' where dealer_id = " + dealer_id + "";
-
-            // console.log(query);
-
-            sql.query(query, async function (error, row) {
-
-                if (row.affectedRows != 0) {
-                    if (dealer_email.length === 0 && alreadyAvailable === false) {
-                        html = 'Your login details are : <br> ' +
-                            'Email : ' + email + '<br> ' +
-                            'Password : ' + dealer_pwd + '<br> ' +
-                            'Below is the link to login : <br> http://www.lockmesh.com <br>';
-                        sendEmail("Account Registration", html, email, function (error, response) {
-                            if (error) {
-                                throw (error)
-                            } else {
-                                res.send({
-                                    status: true,
-                                    msg: 'Record updated successfully. Email has been sent.',
-                                    "alreadyAvailable": alreadyAvailable
-                                })
-                            }
-                        });
-                    } else {
-                        data = {
-                            "status": true,
-                            "msg": 'Record updated successfully.',
-                            "data": row,
-                            "alreadyAvailable": alreadyAvailable
-                        };
-                        res.send(data);
+        if (verify.user.user_type == "admin") {
+            var role = await helpers.getDealerTypeIdByName(req.params.pageName);
+        } else if (verify.user.user_type == "dealer") {
+            var role = await helpers.getDealerTypeIdByName('sdealer');
+            where = " AND connected_dealer =" + verify.user.id
+        }
+        // console.log("where where", where);
+        // console.log("select * from dealers where type=" + role + " " + where + " order by created DESC");
+        if (role) {
+            sql.query("select * from dealers where type=" + role + " " + where + " order by created DESC", async function (error, results) {
+                if (error) throw error;
+                console.log(results.length);
+                var data = [];
+                for (var i = 0; i < results.length; i++) {
+                    if (results[i].connected_dealer != 0 && results[i].connected_dealer != '' && results[i].connected_dealer != '0') {
+                        var get_parent_dealer = await sql.query("select dealer_id, dealer_name from dealers where dealer_id=" + results[i].connected_dealer + " limit 1");
+                        console.log(get_parent_dealer);
                     }
-                } else {
-                    data = {
-                        "status": true,
-                        "msg": 'Record not updated.'
-                    };
-                    res.send(data);
+                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].dealer_id + "'");
 
+                    dt = {
+                        "status": true,
+                        "dealer_id": results[i].dealer_id,
+                        "dealer_name": results[i].dealer_name,
+                        "dealer_email": results[i].dealer_email,
+                        "link_code": results[i].link_code,
+                        "account_status": results[i].account_status,
+                        "unlink_status": results[i].unlink_status,
+                        "created": results[i].created,
+                        "modified": results[i].modified,
+                        "connected_devices": get_connected_devices,
+                        "devicesList": await helpers.getAllRecordbyDealerId(results[i].dealer_id)
+                    };
+
+                    if (get_parent_dealer != undefined && get_parent_dealer.length > 0) {
+                        dt.parent_dealer = get_parent_dealer[0].dealer_name;
+                        dt.parent_dealer_id = get_parent_dealer[0].dealer_id;
+                    } else {
+                        dt.parent_dealer = "";
+                        dt.parent_dealer_id = "";
+                    }
+
+                    data.push(dt);
                 }
+                res.send(data);
             });
-        } else {
-            data = {
-                "status": false,
-                "msg": "Please enter valid details"
-            }
-            res.send(data);
         }
     }
 });
+
+/*Get All Dealers */
+router.get('/dealers', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify.status !== undefined && verify.status == true) {
+        console.log("userType: " + verify.user.user_type);
+
+        if (verify.user.user_type == "admin") {
+            var role = await helpers.getuserTypeIdByName(verify.user.user_type);
+            console.log("role id", role);
+            sql.query("select * from dealers where type!=" + role + " AND type != 4 order by created DESC", async function (error, results) {
+                if (error) throw error;
+
+                var data = [];
+                console.log('results lenth', results.length)
+                for (var i = 0; i < results.length; i++) {
+                    if (results[i].connected_dealer != 0 && results[i].connected_dealer != '' && results[i].connected_dealer != '0') {
+                        var get_parent_dealer = await sql.query("select dealer_id, dealer_name from dealers where dealer_id=" + results[i].connected_dealer + " limit 1");
+                        console.log(get_parent_dealer);
+                    }
+                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].dealer_id + "'");
+
+
+                    dt = {
+                        "status": true,
+                        "dealer_id": results[i].dealer_id,
+                        "dealer_name": results[i].dealer_name,
+                        "dealer_email": results[i].dealer_email,
+                        "link_code": results[i].link_code,
+                        "account_status": results[i].account_status,
+                        "unlink_status": results[i].unlink_status,
+                        "connected_dealer": results[i].connected_dealer,
+                        "created": results[i].created,
+                        "modified": results[i].modified,
+                        "connected_devices": get_connected_devices
+                    };
+
+                    if (get_parent_dealer != undefined && get_parent_dealer.length > 0) {
+                        dt.parent_dealer = get_parent_dealer[0].dealer_name;
+                        dt.parent_dealer_id = get_parent_dealer[0].dealer_id;
+                    } else {
+                        dt.parent_dealer = "";
+                        dt.parent_dealer_id = "";
+                    }
+
+                    data.push(dt);
+                }
+                res.send(data);
+            });
+        } else {
+
+            var role = await helpers.getuserTypeIdByName(verify.user.user_type);
+            console.log("role id", role);
+            sql.query("select * from dealers where connected_dealer = '" + verify.user.id + "' AND  type = 3 order by created DESC", async function (error, results) {
+                if (error) throw error;
+                // console.log("select * from dealers where connected_dealer = '" + verify.user.id + "' AND  type = 2 order by created DESC");
+                var data = [];
+                console.log(results);
+                for (var i = 0; i < results.length; i++) {
+
+                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].id + "'");
+
+                    dt = {
+                        "status": true,
+                        "dealer_id": results[i].dealer_id,
+                        "dealer_name": results[i].dealer_name,
+                        "dealer_email": results[i].dealer_email,
+                        "link_code": results[i].link_code,
+                        "account_status": results[i].account_status,
+                        "unlink_status": results[i].unlink_status,
+                        "created": results[i].created,
+                        "modified": results[i].modified,
+                        "connected_devices": get_connected_devices,
+                        "connected_dealer": results[i].connected_dealer,
+                    };
+                    data.push(dt);
+                }
+                console.log("Dealers Data", data);
+                res.send(data);
+            });
+        }
+
+    }
+});
+
+
+/** Edit Dealer (Admin panel) **/
+router.put('/edit/dealers', dealerController.editDealers);
 
 /** Delete Dealer from admin Panel**/
-
-router.post('/dealer/delete/', async function (req, res) {
-
-    var verify = await verifyToken(req, res);
-    var dealer_id = req.body.dealer_id;
-
-    if (verify.status !== undefined && verify.status == true) {
-        console.log('dealer_id', dealer_id);
-        if (!empty(dealer_id)) {
-            var qury = "UPDATE dealers set unlink_status = 1 where dealer_id = '" + dealer_id + "'";
-
-            sql.query(qury, async function (error, row) {
-
-                var qury1 = "UPDATE dealers set unlink_status = 1 where connected_dealer = '" + dealer_id + "'";
-                var rslt = await sql.query(qury1);
-
-                if (row.affectedRows != 0 && rslt.affectedRows != 0) {
-                    data = {
-                        "status": true,
-                        "msg": 'Dealer and Sub-Dealer deleted successfully.',
-                        "data": row
-                    };
-                    res.send(data);
-                } else if (row.affectedRows != 0) {
-                    data = {
-                        "status": true,
-                        "msg": 'Dealer deleted successfully.',
-                        "data": row
-                    };
-                    res.send(data);
-                } else {
-                    data = {
-                        "status": false,
-                        "msg": 'Record not deleted.'
-                    };
-                    res.send(data);
-
-
-                }
-                console.log('data', data);
-
-            });
-
-        } else {
-            data = {
-                "status": false,
-                "msg": 'Invalid Dealer.',
-            };
-            res.send(data);
-
-        }
-    }
-});
-
-/** Suspend Dealer **/
-router.post('/dealer/suspend', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    let dealer_id = req.body.dealer_id;
-
-    console.log('user statur', verify.status);
-
-    if (verify.status !== undefined && verify.status == true) {
-        console.log('id', dealer_id);
-        if (!empty(dealer_id)) {
-            console.log('dealer_id');
-            console.log(dealer_id);
-            //suspend dealer
-            var qury = "UPDATE dealers set account_status = 'suspended' where dealer_id = '" + dealer_id + "'";
-
-            sql.query(qury, async function (error, row) {
-                //suspend sub dealer                                                                                                                 
-                var qury1 = "UPDATE dealers set account_status = 'suspended' where connected_dealer = '" + dealer_id + "'";
-                var rslt = await sql.query(qury1);
-                console.log(qury1);
-                console.log(rslt);
-
-                if (row.affectedRows != 0 && rslt.affectedRows != 0) {
-
-                    data = {
-                        "status": true,
-                        "msg": 'Dealer and Sub-Dealer suspended successfully.',
-                        "data": row
-                    };
-                    res.send(data);
-                } else if (row.affectedRows != 0) {
-                    data = {
-                        "status": true,
-                        "msg": 'Dealer suspended successfully.',
-                        "data": row
-                    };
-                    res.send(data);
-                } else {
-                    data = {
-                        "status": false,
-                        "msg": 'Dealer not suspended.'
-                    };
-                    res.send(data);
-                }
-            });
-
-        } else {
-            data = {
-                "status": false,
-                "msg": 'Invalid Dealer.',
-            };
-            res.send(data);
-
-        }
-    }
-
-});
-
-/** Activate Dealer **/
-router.post('/dealer/activate', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    var dealer_id = req.body.dealer_id;
-
-    if (verify.status !== undefined && verify.status == true) {
-        console.log('dealer_id', dealer_id);
-        if (!empty(dealer_id)) {
-            var qury = "UPDATE dealers set account_status = '' where dealer_id = '" + dealer_id + "'";
-
-            sql.query(qury, async function (error, row) {
-                var qury1 = "UPDATE dealers set account_status = '' where connected_dealer = '" + dealer_id + "'";
-                var rslt = await sql.query(qury1);
-                if (row.affectedRows != 0 && rslt.affectedRows != 0) {
-                    data = {
-                        "status": true,
-                        "msg": 'Dealer and S Dealer activated successfully.',
-                        "data": row
-                    };
-                    res.send(data);
-                } else if (row.affectedRows != 0) {
-                    data = {
-                        "status": true,
-                        "msg": 'Dealer activated successfully.',
-                        "data": row
-                    };
-                    res.send(data);
-                } else {
-                    data = {
-                        "status": true,
-                        "msg": 'Dealer not activated.'
-                    };
-                    res.send(data);
-
-                }
-                console.log('status', data)
-            });
-
-        } else {
-            data = {
-                "status": false,
-                "msg": 'Invalid Dealer.',
-            };
-            res.send(data);
-
-        }
-    }
-
-});
-
-
-
-/** Get all S Dealers of Dealers**/
-router.get('/sdealers/:dealer_id', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    if (verify.status !== undefined && verify.status == true) {
-        sql.query("select * from dealers where connected_dealer = '" + req.params.dealer_id + "' and type='sdealer' order by created DESC", async function (error, results) {
-            if (error) throw error;
-            //console.log(results.length);
-            var data = [];
-            for (var i = 0; i < results.length; i++) {
-                var get_connected_devices = await sql.query("select count(*) as total from devices where dealer_id='" + results[i].dealer_id + "'");
-                //console.log("select count(*) from devices where dealer_id='" + results[i].dealer_id + "'");
-
-                dt = {
-                    "status": true,
-                    //  "data": {
-                    "sdealer_id": results[i].dealer_id,
-                    "sdealer_name": results[i].dealer_name,
-                    "sdealer_email": results[i].dealer_email,
-                    "sdealer_link_code": results[i].link_code,
-                    "sdealer_account_status": results[i].account_status,
-                    "sdealer_unlink_status": results[i].unlink_status,
-                    "sdealer_created": results[i].created,
-                    "sdealer_modified": results[i].modified,
-                    "sdealer_connected_devices": get_connected_devices
-                    //  }
-
-                };
-                data.push(dt);
-            }
-            res.send(data);
-        });
-    }
-});
-
+router.post('/dealer/delete/', dealerController.deleteDealer);
 
 /** Undo Dealer / S-Dealer **/
-router.post('/dealer/undo', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    var dealer_id = req.body.dealer_id;
+router.post('/dealer/undo', dealerController.undoDealer);
 
-    if (verify.status !== undefined && verify.status == true) {
-        if (!empty(dealer_id)) {
-            var qury = "UPDATE dealers set unlink_status = '0' where dealer_id = '" + dealer_id + "'";
+/** Suspend Dealer **/
+router.post('/dealer/suspend', dealerController.suspendDealer);
 
-            sql.query(qury, async function (error, row) {
-                var qury1 = "UPDATE dealers set unlink_status = '0' where connected_dealer = '" + dealer_id + "'";
-                var rslt = await sql.query(qury1);
-
-                if (row.affectedRows != 0 && rslt.affectedRows != 0) {
-                    data = {
-                        "status": true,
-                        "msg": 'Dealer and S-Dealer added again.',
-                        "data": row
-                    };
-                    res.send(data);
-                } else if (row.affectedRows != 0) {
-                    data = {
-                        "status": true,
-                        "msg": 'Dealer added again.',
-                        "data": row
-                    };
-                    res.send(data);
-                } else {
-                    data = {
-                        "status": false,
-                        "msg": 'Dealer not added.'
-                    };
-                    res.send(data);
-                }
-            });
-
-        } else {
-            data = {
-                "status": false,
-                "msg": 'Invalid Dealer.',
-            };
-            res.send(data);
-
-        }
-    }
-
-});
+/** Activate Dealer **/
+router.post('/dealer/activate', dealerController.activateDealer);
 
 
 /** Get Device Details of Dealers (Connect Page) **/
@@ -2660,6 +2321,7 @@ router.get('/connect/:device_id', async function (req, res) {
         res.send(_data);
     }
 });
+
 /** Get get App Job Queue  (Connect Page) **/
 router.get('/getAppJobQueue/:device_id', async function (req, res) {
     // console.log('api check is caled')
@@ -3136,9 +2798,39 @@ router.post('/save_policy', async function (req, res) {
             let policy_name = req.body.data.policy_name !== undefined ? req.body.data.policy_name : null;
             if (policy_name !== null) {
                 let policy_note = req.body.data.policy_note !== undefined ? req.body.data.policy_note : null;
-                let push_apps = req.body.data.push_apps !== undefined ? JSON.stringify(req.body.data.push_apps) : null;
-                let app_list = req.body.data.app_list !== undefined ? JSON.stringify(req.body.data.app_list) : null;
-                let secure_apps = req.body.data.secure_apps !== undefined ? JSON.stringify(req.body.data.secure_apps) : null;
+                let push_apps = null;
+                let app_list = null;
+                let secure_apps = null;
+                if (req.body.data.push_apps !== undefined) {
+                    req.body.data.push_apps.forEach((app) => {
+                        app.guest = (app.guest !== undefined) ? app.guest : false;
+                        app.enable = (app.enable !== undefined) ? app.enable : false;
+                        app.encrypted = (app.encrypted !== undefined) ? app.encrypted : false;
+
+                    });
+                    push_apps = JSON.stringify(req.body.data.push_apps);
+                }
+
+                if (req.body.data.app_list !== undefined) {
+                    req.body.data.app_list.forEach((app) => {
+                        app.guest = (app.guest !== undefined) ? app.guest : false;
+                        app.enable = (app.enable !== undefined) ? app.enable : false;
+                        app.encrypted = (app.encrypted !== undefined) ? app.encrypted : false;
+
+                    });
+                    app_list = JSON.stringify(req.body.data.app_list);
+                }
+
+                if (req.body.data.secure_apps !== undefined) {
+                    req.body.data.secure_apps.forEach((app) => {
+                        app.guest = (app.guest !== undefined) ? app.guest : false;
+                        // app.enable = (app.enable!==undefined)? app.enable: false;
+                        app.encrypted = (app.encrypted !== undefined) ? app.encrypted : false;
+
+                    });
+                    secure_apps = JSON.stringify(req.body.data.secure_apps);
+                }
+
                 let system_permissions = req.body.data.system_permissions !== undefined ? JSON.stringify(req.body.data.system_permissions) : null;
 
                 let loggedDealerId = verify.user.id;
@@ -6719,9 +6411,9 @@ router.get('/get-language', async function (req, res) {
     if (verify.status !== undefined && verify.status == true) {
         let dealer_id = verify.user.dealer_id;
         if (dealer_id) {
-            let selectQuery = `SELECT LT.key_id, LT.key_value FROM dealer_language AS DL 
+            let selectQuery = `SELECT LT.key_id, LT.key_value FROM dealer_language AS dl 
             JOIN lng_translations AS LT 
-            ON (LT.lng_id = DL.dealer_lng_id) 
+            ON (LT.lng_id = dl.dealer_lng_id) 
             WHERE dl.dealer_id=${dealer_id}`;
 
             sql.query(selectQuery, (err, rslt) => {

@@ -13,20 +13,9 @@ var helpers = require('../../helper/general_helper.js');
 const device_helpers = require('../../helper/device_helpers.js');
 
 var Constants = require('../../constants/Application');
-const smtpTransport = require('../../helper/mail')
 
-function sendEmail(subject, message, to, callback) {
-    let cb = callback;
-    subject = "Lockmesh.com Team - " + subject
-    let mailOptions = {
-        from: "admin@lockmesh.com",
-        to: to,
-        subject: subject,
-        html: message
-    };
-    // console.log("hello smtp", smtpTransport);
-    smtpTransport.sendMail(mailOptions, cb);
-}
+const {sendEmail} = require('../../lib/email');
+
 
 /*****User Login*****/
 exports.login = async function (req, res) {
@@ -90,7 +79,7 @@ exports.login = async function (req, res) {
 						let html = "Your Login Code is: " + verificationCode;
 						sendEmail("Dual Auth Verification", html, users[0].dealer_email, function (error, response) {
 							if (error) {
-								console.log(error);
+								
 								res.send({
 									status: false,
 									two_factor_auth: true,
