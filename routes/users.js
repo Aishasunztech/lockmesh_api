@@ -2245,39 +2245,6 @@ router.get('/dealers', async function (req, res) {
     }
 });
 
-/** Get all S Dealers of Dealers**/
-router.get('/sdealers/:dealer_id', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    if (verify.status !== undefined && verify.status == true) {
-        sql.query("select * from dealers where connected_dealer = '" + req.params.dealer_id + "' and type='sdealer' order by created DESC", async function (error, results) {
-            if (error) throw error;
-            //console.log(results.length);
-            var data = [];
-            for (var i = 0; i < results.length; i++) {
-                var get_connected_devices = await sql.query("select count(*) as total from devices where dealer_id='" + results[i].dealer_id + "'");
-                //console.log("select count(*) from devices where dealer_id='" + results[i].dealer_id + "'");
-
-                dt = {
-                    "status": true,
-                    //  "data": {
-                    "sdealer_id": results[i].dealer_id,
-                    "sdealer_name": results[i].dealer_name,
-                    "sdealer_email": results[i].dealer_email,
-                    "sdealer_link_code": results[i].link_code,
-                    "sdealer_account_status": results[i].account_status,
-                    "sdealer_unlink_status": results[i].unlink_status,
-                    "sdealer_created": results[i].created,
-                    "sdealer_modified": results[i].modified,
-                    "sdealer_connected_devices": get_connected_devices
-                    //  }
-
-                };
-                data.push(dt);
-            }
-            res.send(data);
-        });
-    }
-});
 
 /** Edit Dealer (Admin panel) **/
 router.put('/edit/dealers', dealerController.editDealers);
