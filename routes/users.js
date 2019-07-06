@@ -448,7 +448,9 @@ router.post('/create/device_profile', async function (req, res) {
                 var values = ") VALUES ('" + name + "', '" + model + "'";
                 // var values = ") VALUES ('" + activation_code + "', '" + name + "', '" + client_id + "', '" + chat_id + "', '" + model + "', '" + email + "', '" + pgp_email + "', " + exp_month + ", " + dealer_id + ", 0, 0 ";
                 sql.query(checkDealer, async (error, response) => {
-                    if (error) throw (error);
+                    if (error) {
+                        console.log(error);
+                    }
 
                     if (response.length) {
                         if (response[0].connected_dealer != 0) {
@@ -457,7 +459,9 @@ router.post('/create/device_profile', async function (req, res) {
                             insertDevice = insertDevice + values + ")";
                         }
                         sql.query(insertDevice, async (err, resp) => {
-                            if (err) throw (err);
+                            if (err){
+                                console.log(err)
+                            }
                             console.log("inserted id", resp.insertId);
                             let dvc_id = resp.insertId;
                             var insertUser_acc = "INSERT INTO usr_acc (device_id, user_id, activation_code, client_id , account_email,expiry_months, dealer_id, link_code ,device_status, activation_status, expiry_date , note,validity  "
@@ -468,7 +472,9 @@ router.post('/create/device_profile', async function (req, res) {
                             if (resp.affectedRows) {
                                 sql.query(insertUser_acc, async (err, resp) => {
 
-                                    if (err) throw (err);
+                                    if (err){
+                                        console.log(err)
+                                    }
                                     let user_acc_id = resp.insertId;
 
                                     console.log("affectedRows", resp.affectedRows);
@@ -570,7 +576,9 @@ router.post('/transfer/device_profile', async (req, res) => {
             // console.log('qerury', query);
             sql.query(query, async (err, resp) => {
                 // console.log('query reslut response', resp)
-                if (err) throw (err);
+                if (err){
+                    console.log(err)
+                }
                 if (resp.affectedRows) {
 
                     var code = randomize('0', 7);
@@ -1630,7 +1638,7 @@ router.put('/deleteUnlinkDevice', async function (req, res) {
 
 
     } catch (error) {
-        throw Error(error.message);
+        console.log(error)
     }
 })
 
@@ -1778,7 +1786,7 @@ router.put('/delete_user/:user_id', async function (req, res) {
             // console.log(deleteUserQ);
             sql.query(deleteUserQ, function (err, result) {
                 if (err) {
-                    throw err
+                    console.log(err)
                 }
                 if (result && result.affectedRows !== 0) {
                     data = {
@@ -1816,7 +1824,7 @@ router.put('/undo_delete_user/:user_id', async function (req, res) {
             console.log(deleteUserQ);
             sql.query(deleteUserQ, function (err, result) {
                 if (err) {
-                    throw err
+                    console.log(err)
                 }
                 if (result && result.affectedRows !== 0) {
                     data = {
@@ -2174,7 +2182,7 @@ router.get('/dealer/gtdropdown/:dropdownType', async function (req, res) {
         let dropdownType = req.params.dropdownType;
         sql.query("select * from dealer_dropdown_list where dealer_id = " + dealer_id + " AND type = '" + dropdownType + "'", function (err, rslts) {
             if (err) {
-                throw (err);
+                console.log(err)
             }
 
             if (rslts.length == 0) {
@@ -2260,7 +2268,7 @@ router.get('/dealer/getPagination/:dropdownType', async function (req, res) {
         let dropdownType = req.params.dropdownType;
         sql.query("select record_per_page from dealer_pagination where dealer_id = " + dealer_id + " AND type = '" + dropdownType + "'", function (err, rslts) {
             if (err) {
-                throw (err);
+                console.log(err)
             }
 
             if (rslts.length == 0) {
@@ -2656,7 +2664,7 @@ router.post('/check_policy_name', async function (req, res) {
                 return;
             }
         } catch (error) {
-            throw error
+            console.log(error);
         }
 
     }
@@ -2743,7 +2751,9 @@ router.post('/save_policy', async function (req, res) {
                 var applyQuery = "INSERT INTO policy (policy_name, policy_note, command_name, app_list, push_apps, controls, permissions, dealer_id, dealer_type, dealers,status) VALUES ('" + policy_name + "', '" + policy_note + "', '" + command_name + "', '" + app_list + "', '" + push_apps + "', '" + system_permissions + "', '" + secure_apps + "', '" + loggedDealerId + "', '" + loggedDealerType + "', '[]',1)";
 
                 sql.query(applyQuery, async function (err, rslts) {
-                    if (err) throw err;
+                    if (err){
+                        console.log(err)
+                    }
                     // console.log('query/........... ', applyQuery)
 
                     if (rslts.affectedRows) {
@@ -2772,7 +2782,7 @@ router.post('/save_policy', async function (req, res) {
 
         }
     } catch (error) {
-        throw Error(error.message);
+        console.log(error)
     }
 
 });
@@ -2796,7 +2806,7 @@ router.post('/apply_policy/:device_id', async function (req, res) {
                     var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES ('" + device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
                     sql.query(applyQuery, async function (err, policyApplied) {
                         if (err) {
-                            throw err;
+                            console.log(err)
                         }
 
                         if (policyApplied && policyApplied.affectedRows) {
@@ -2837,7 +2847,7 @@ router.post('/apply_policy/:device_id', async function (req, res) {
             }
         }
     } catch (error) {
-        throw Error(error.message);
+        console.log(error)
     }
 });
 
@@ -2871,7 +2881,9 @@ router.post('/save/profile', async function (req, res) {
                 // console.log(applyQuery, 'thats it');
 
                 sql.query(applyQuery, async function (err, rslts) {
-                    if (err) throw err;
+                    if (err){
+                        console.log(err)
+                    }
                     // console.log(rslts, 'rslt is query')
                     if (rslts.affectedRows) {
                         data = {
@@ -2901,7 +2913,7 @@ router.post('/save/profile', async function (req, res) {
 
         }
     } catch (error) {
-        throw Error(error.message);
+        console.log(error)
     }
 });
 
@@ -2936,7 +2948,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
 
             await sql.query(applyQuery, async function (err, rslts) {
                 if (err) {
-                    throw err;
+                    console.log(err);
                 }
 
                 let isOnline = await device_helpers.isDeviceOnline(device_id);
@@ -2973,7 +2985,7 @@ router.post('/apply_settings/:device_id', async function (req, res) {
 
         }
     } catch (error) {
-        throw Error(error.message);
+        console.log(error)
     }
 
 });
@@ -2997,7 +3009,7 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
 
             sql.query(applyQuery, async function (err, rslts) {
                 if (err) {
-                    throw err;
+                    console.log(err);
                 }
                 if (rslts) {
                     let isOnline = await device_helpers.isDeviceOnline(device_id);
@@ -3035,7 +3047,7 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
 
         }
     } catch (error) {
-        throw Error(error.message);
+        console.log(error)
     }
 });
 
@@ -3059,7 +3071,7 @@ router.post('/apply_pullapps/:device_id', async function (req, res) {
 
             sql.query(applyQuery, async function (err, rslts) {
                 if (err) {
-                    throw err;
+                    console.log(err);
                 }
                 if (rslts) {
 
@@ -3093,7 +3105,7 @@ router.post('/apply_pullapps/:device_id', async function (req, res) {
 
         }
     } catch (error) {
-        throw Error(error.message);
+        console.log(error)
     }
 });
 
@@ -3961,7 +3973,7 @@ router.post('/checkApkName', async function (req, res) {
                 })
             }
         } catch (error) {
-            throw error
+            console.log(error);
         }
 
     }
@@ -3991,7 +4003,9 @@ router.post('/purchase_credits', async function (req, res) {
                     let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
                     // console.log(query);
                     sql.query(query, function (err, result) {
-                        if (err) throw err
+                        if (err){
+                            console.log(err);
+                        }
                         // console.log(result);
                         if (result.affectedRows > 0) {
                             if (verify.user.user_type === ADMIN) {
@@ -4038,7 +4052,9 @@ router.post('/purchase_credits', async function (req, res) {
                             } else {
                                 // console.log(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`);
                                 sql.query(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`, function (err, result) {
-                                    if (err) throw err
+                                    if (err){
+                                        console.log(err);
+                                    }
                                     if (result && result.affectedRows > 0) {
                                         res.send({
                                             status: true,
@@ -4062,7 +4078,7 @@ router.post('/purchase_credits', async function (req, res) {
                 }
             }
         } catch (error) {
-            throw error
+            console.log(error);
         }
 
     }
@@ -4101,7 +4117,9 @@ router.post('/purchase_credits_CC', async function (req, res) {
                     let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
                     // console.log(query);
                     sql.query(query, function (err, result) {
-                        if (err) throw err
+                        if (err){
+                            console.log(err);
+                        }
                         // console.log(result);
                         if (result.affectedRows > 0) {
                             stripe.tokens.create({
@@ -4196,7 +4214,7 @@ router.post('/purchase_credits_CC', async function (req, res) {
                 }
             }
         } catch (error) {
-            throw error
+            console.log(error)
         }
 
     }
@@ -4500,7 +4518,9 @@ router.post('/save_apk_permissions', async function (req, res) {
             }
 
             sql.query(updateAPKQ, async (error, result) => {
-                if (error) throw (error);
+                if (error) {
+                    console.log(error);
+                }
                 let permissionC = [];
                 let rslt = await sql.query("select dealers from apk_details where id='" + apkId + "' order by id ASC")
                 if (rslt !== undefined && rslt !== null) {
@@ -4582,7 +4602,9 @@ router.post('/save_apk_permissions', async function (req, res) {
             }
 
             sql.query(updateAPKQ, async (error, result) => {
-                if (error) throw (error);
+                if (error) {
+                    console.log(error);
+                }
                 let permissionC = [];
                 let rslt = await sql.query("select dealers from apk_details where id='" + apkId + "' order by id ASC")
                 if (rslt.length) {
@@ -4678,7 +4700,9 @@ router.post('/save_policy_permissions', async function (req, res) {
             }
 
             sql.query(updateAPKQ, async (error, result) => {
-                if (error) throw (error);
+                if (error) {
+                    console.log(error);
+                }
                 let permissionC = [];
                 let rslt = await sql.query("select dealers from policy where id='" + policyId + "' order by id ASC")
                 if (rslt.length) {
@@ -4764,7 +4788,9 @@ router.post('/save_policy_permissions', async function (req, res) {
             }
 
             sql.query(updateAPKQ, async (error, result) => {
-                if (error) throw (error);
+                if (error) {
+                    console.log(error);
+                }
                 let permissionC = [];
                 let rslt = await sql.query("select dealers from policy where id='" + policyId + "' order by id ASC")
                 if (rslt.length) {
@@ -4925,7 +4951,7 @@ router.get('/login_history', async function (req, res) {
             // console.log(query);
             sql.query(query, function (err, result) {
                 if (err) {
-                    throw err
+                    console.log(err)
                 }
                 if (result.length) {
                     data = {
@@ -4944,7 +4970,7 @@ router.get('/login_history', async function (req, res) {
             })
         }
     } catch (error) {
-        throw Error(error.message);
+        console.log(error)
     }
 });
 
@@ -6093,7 +6119,9 @@ router.post('/update_credit', async function (req, res) {
                     else {
                         let query = `INSERT into dealer_credits (dealer_id,credits) VALUES (${dealer_id}, ${credits})`;
                         sql.query(query, function (err, reslt) {
-                            if (err) throw err
+                            if (err){
+                                console.log(err);
+                            }
                             if (reslt && reslt.affectedRows > 0) {
                                 res.send({
                                     status: true,
@@ -6142,7 +6170,9 @@ router.get('/newRequests', async function (req, res) {
             }
             console.log(query);
             sql.query(query, function (err, result) {
-                if (err) throw err
+                if (err){
+                    console.log(err);
+                }
                 if (result.length) {
                     data = {
                         "status": true,
@@ -6172,7 +6202,9 @@ router.get('/get_user_credits', async function (req, res) {
             query = `SELECT credits from dealer_credits where dealer_id= ${verify.user.id}`
 
             sql.query(query, function (err, result) {
-                if (err) throw err
+                if (err){
+                    console.log(err);
+                }
                 if (result.length) {
                     console.log(result);
                     data = {
@@ -6203,12 +6235,16 @@ router.put('/delete_request/:id', async function (req, res) {
             let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
             console.log(query);
             sql.query(query, function (err, result) {
-                if (err) throw err
+                if (err){
+                    console.log(err);
+                }
                 if (result.length) {
 
                     let updateQuery = "update credit_requests set status = 1, del_status = 1 where id= " + id
                     sql.query(updateQuery, function (err, result) {
-                        if (err) throw err
+                        if (err){
+                            console.log(err);
+                        }
                         if (result && result.affectedRows > 0) {
                             data = {
                                 "status": true,
@@ -6249,7 +6285,9 @@ router.put('/accept_request/:id', async function (req, res) {
             let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
             // console.log(query);
             sql.query(query, async function (err, result) {
-                if (err) throw err
+                if (err){
+                    console.log(err);
+                }
                 if (result.length) {
                     let logginUserCredits = await sql.query("select credits from dealer_credits where dealer_id = " + verify.user.id)
                     if (logginUserCredits.length) {
@@ -6263,7 +6301,9 @@ router.put('/accept_request/:id', async function (req, res) {
                                 newCredit = credits[0].credits + result[0].credits
                             }
                             sql.query("update dealer_credits set credits = " + newCredit + " where dealer_id = " + dealer_id, async function (err, reslt) {
-                                if (err) throw err
+                                if (err){
+                                    console.log(err);
+                                }
                                 if (reslt && reslt.affectedRows > 0) {
                                     let updateQuery = "update credit_requests set status = 1 where id= " + id
                                     await sql.query(updateQuery);
@@ -6279,7 +6319,9 @@ router.put('/accept_request/:id', async function (req, res) {
                                 else {
                                     let query = `INSERT into dealer_credits (dealer_id,credits) VALUES (${dealer_id}, ${newCredit})`;
                                     sql.query(query, async function (err, reslt) {
-                                        if (err) throw err
+                                        if (err){
+                                            console.log(err);
+                                        }
                                         if (reslt && reslt.affectedRows > 0) {
                                             let updateQuery = "update credit_requests set status = 1 where id= " + id
                                             await sql.query(updateQuery)
