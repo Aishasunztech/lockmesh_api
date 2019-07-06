@@ -115,5 +115,11 @@ module.exports = {
     LOGO: "logo",
 
     APK_ON: 'On',
-    APK_OFF: 'Off'
+    APK_OFF: 'Off',
+
+    // Default Columns
+    deviceColumns : ["DEVICE ID", "USER ID", "REMAINING DAYS", "FLAGGED", "STATUS", "MODE", "DEVICE NAME", "ACTIVATION CODE", "ACCOUNT EMAIL", "PGP EMAIL", "CHAT ID", "CLIENT ID", "DEALER ID", "DEALER PIN", "MAC ADDRESS", "SIM ID", "IMEI 1", "SIM 1", "IMEI 2", "SIM 2", "SERIAL NUMBER", "MODEL", "START DATE", "EXPIRY DATE", "DEALER NAME", "S-DEALER", "S-DEALER NAME"],
+    dealerColumns : ["DEALER ID", "DEALER NAME", "DEALER EMAIL", "DEALER PIN", "DEVICES", "TOKENS"],
+    apkColumns : ["SHOW ON DEVICE", "APK", "APP NAME", "APP LOGO"],
+    sdealerColumns : ["DEALER ID", "DEALER NAME", "DEALER EMAIL", "DEALER PIN", "DEVICES", "TOKENS", "PARENT DEALER", "PARENT DEALER ID"],
 }
