@@ -49,12 +49,6 @@ const DEALER = "dealer";
 const SDEALER = "sdealer";
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
 let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no"
-let deviceColumns = ["DEVICE ID", "USER ID", "REMAINING DAYS", "FLAGGED", "STATUS", "MODE", "DEVICE NAME", "ACTIVATION CODE", "ACCOUNT EMAIL", "PGP EMAIL", "CHAT ID", "CLIENT ID", "DEALER ID", "DEALER PIN", "MAC ADDRESS", "SIM ID", "IMEI 1", "SIM 1", "IMEI 2", "SIM 2", "SERIAL NUMBER", "MODEL", "START DATE", "EXPIRY DATE", "DEALER NAME", "S-DEALER", "S-DEALER NAME"]
-let dealerColumns = ["DEALER ID", "DEALER NAME", "DEALER EMAIL", "DEALER PIN", "DEVICES", "TOKENS"];
-let apkColumns = ["SHOW ON DEVICE", "APK", "APP NAME", "APP LOGO"]
-let sdealerColumns = ["DEALER ID", "DEALER NAME", "DEALER EMAIL", "DEALER PIN", "DEVICES", "TOKENS", "PARENT DEALER", "PARENT DEALER ID"]
-// var CryptoJS = require("crypto-js");
-// var io = require("../bin/www");
 
 
 /*Check For Token in the header */
@@ -292,8 +286,8 @@ router.get('/languages', async function (req, res) {
 
     if (languages.length) {
         res.send({
-            "status": true,
-            "data": languages
+            status: true,
+            data: languages
         });
     } else {
         res.send({
@@ -304,492 +298,16 @@ router.get('/languages', async function (req, res) {
 });
 
 
+// ============== Devices ============ //
+
 /**GET all the devices**/
 router.get('/devices', deviceController.devices);
 
+// add new device
+router.put('/new/device', deviceController.acceptDevice);
+
 /**GET New the devices**/
-router.get('/new/devices', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    var where_con = '';
-
-    if (verify['status'] !== undefined && verify.status == true) {
-        if (verify.user.user_type !== 'admin') {
-            if (verify.user.user_type === 'dealer') {
-                // console.log('done of dealer', verify.user.id)
-                where_con = 'AND (usr_acc.dealer_id =' + verify.user.id + ' OR usr_acc.prnt_dlr_id =' + verify.user.id + ')';
-            } else {
-                where_con = 'AND usr_acc.dealer_id = ' + verify.user.id + ' ';
-            }
-            sql.query('select devices.*  ,' + usr_acc_query_text + ' from devices left join usr_acc on  devices.id = usr_acc.device_id WHERE ((usr_acc.device_status=0 OR usr_acc.device_status="0") AND (usr_acc.unlink_status=0 OR usr_acc.unlink_status="0") AND (usr_acc.activation_status IS NULL)) AND devices.reject_status = 0 ' + where_con + ' order by devices.id DESC', function (error, results, fields) {
-                // console.log('select devices.*  ,' + usr_acc_query_text + ' from devices left join usr_acc on  devices.id = usr_acc.device_id WHERE ((usr_acc.device_status=0 OR usr_acc.device_status="0") AND (usr_acc.unlink_status=0 OR usr_acc.unlink_status="0") AND (usr_acc.activation_status IS NULL)) AND devices.reject_status = 0 ' + where_con + ' order by devices.id DESC');
-                if (error) throw error;
-                data = {
-                    "status": true,
-                    "data": results
-                };
-                res.send(data);
-            });
-        } else {
-            data = {
-                "status": false,
-            };
-            res.send(data);
-        }
-    }
-});
-
-/*** Add Dealer ***/
-router.post('/add/dealer', async function (req, res) {
-
-    res.setHeader('Content-Type', 'application/json');
-
-    var verify = await verifyToken(req, res);
-
-    if (verify.status !== undefined && verify.status == true) {
-        var dealerName = req.body.name;
-        // console.log("dealerName:", req.body.name);
-        var loggedInuid = verify.user.id;
-        let userType = await helpers.getUserType(loggedInuid);
-        // console.log('userType', userType);
-        var dealerEmail = req.body.email;
-        // console.log("dealerEmail: " + dealerEmail);
-
-        var pageType = req.body.pageType;
-        // console.log("pageType: " + pageType);
-
-        if (userType == SDEALER || (userType == DEALER && pageType == DEALER)) {
-            data = {
-                "status": false,
-                "msg": "invalid operation",
-            }
-            res.send(data);
-        }
-        let sdealerDealerId = 0;
-
-        if (userType == ADMIN && pageType == SDEALER) {
-            sdealerDealerId = req.body.dealerId;
-        } else if (userType == DEALER && pageType == SDEALER) {
-            sdealerDealerId = loggedInuid;
-        }
-        //console.log("dealerId: " + dealerId);
-
-        var link_code = randomize('0', 6);
-        link_code = await helpers.checkLinkCode(link_code)
-        // console.log("link_code: " + link_code);
-
-        // console.log("dealerType: " + userType);
-        var type = await helpers.getDealerTypeIdByName(pageType);
-
-        // console.log("dealerType converted: " + type);
-
-        var dealer_pwd = generator.generate({
-            length: 10,
-            numbers: true
-        });
-        // console.log("dealer_pwd: " + dealer_pwd);
-
-
-        var enc_pwd = md5(dealer_pwd); //encryted pwd
-        // console.log("encrypted password" + enc_pwd);
-        if (!empty(dealerEmail) && !empty(dealerName)) {
-            var dealer = await sql.query("SELECT * FROM dealers WHERE dealer_email = '" + dealerEmail + "'");
-
-            if (dealer.length > 0) {
-                data = {
-                    'status': false,
-                    'msg': 'Dealer Already Registered. Please use another email.',
-                }
-
-                res.status(200).send(data);
-                return;
-            }
-
-            var sql1 = "INSERT INTO dealers (connected_dealer, dealer_name, dealer_email, password, link_code , type , modified, created)";
-            if (sdealerDealerId != undefined && !empty(sdealerDealerId) && sdealerDealerId != null && sdealerDealerId != 0) {
-                sql1 += " VALUES (" + sdealerDealerId + ", '" + dealerName + "','" + dealerEmail + "', '" + enc_pwd + "','" + link_code + "', '" + type + "', NOW(), NOW())";
-            } else {
-                sql1 += " VALUES (0, '" + dealerName + "','" + dealerEmail + "', '" + enc_pwd + "','" + link_code + "', '" + type + "', NOW(), NOW())";
-            }
-            console.log("insert query" + sql1);
-
-            sql.query(sql1, function (error, rows) {
-                if (error) throw error;
-                if (rows.affectedRows) {
-
-                    sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('" + rows.insertId + "', '" + JSON.stringify(deviceColumns) + "', 'devices') ")
-                    sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('" + rows.insertId + "', '" + JSON.stringify(dealerColumns) + "', 'dealer') ")
-                    sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('" + rows.insertId + "', '" + JSON.stringify(sdealerColumns) + "', 'sdealer') ")
-                    sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('" + rows.insertId + "', '" + JSON.stringify(apkColumns) + "', 'apk') ")
-                }
-
-                var html = '';
-                if (pageType === DEALER) {
-
-                    html = `Your login details are : <br>
-                        Email : ${dealerEmail}<br>
-                        Password : ${dealer_pwd} <br>
-                        Dealer id : ${rows.insertId}<br>
-                        Dealer Pin : ${link_code}<br>
-                        Below is the link to login : <br> ${app_constants.HOST} <br>`;
-                } else {
-                    html = `Your login details are : <br>
-                        Email : ${dealerEmail}<br>
-                        Password : ${dealer_pwd} <br>
-                        Dealer id : ${rows.insertId}<br>
-                        Dealer Pin : ${link_code}<br>
-                        Below is the link to login : <br> ${app_constants.HOST} <br>`;
-                }
-
-
-                sendEmail("Account Registration", html, dealerEmail, async function (errors, response) {
-                    if (error) {
-                        data = {
-                            status: true,
-                            msg: "Email could not sent due to error: " + errors,
-                            added_dealer: dealer,
-
-                        }
-                        res.send(data);
-                        return;
-                    } else {
-                        //res.send("Email has been sent successfully");
-                        var dealer = await sql.query("SELECT * FROM dealers WHERE dealer_email = '" + dealerEmail + "' limit 1");
-                        if (dealer.length) {
-                            dealer[0].connected_devices = [{ total: '0' }],
-                                dealer[0].devicesList = [];
-
-                            if (pageType == SDEALER && (sdealerDealerId != undefined && !empty(sdealerDealerId) && sdealerDealerId != null && sdealerDealerId != 0)) {
-                                let prnt_dealer = await helpers.getDealerByDealerId(sdealerDealerId);
-                                console.log(prnt_dealer, 'parnst dealer data')
-                                if (prnt_dealer && prnt_dealer.length) {
-                                    dealer[0].parent_dealer = prnt_dealer[0].dealer_name,
-                                        dealer[0].parent_dealer_id = prnt_dealer[0].dealer_id
-                                }
-                            }
-                        }
-
-                        // console.log('result add',dealer);
-                        data = {
-                            status: true,
-                            msg: 'Dealer has been registered successfully',
-                            added_dealer: dealer,
-
-                        }
-                        res.send(data);
-                        return;
-                    }
-
-                });
-
-            });
-
-        } else {
-            data = {
-                'status': false,
-                'msg': 'Invalid email or name'
-            }
-            res.status(200).send(data);
-        }
-
-    }
-    // res.setHeader('Content-Type', 'application/json');
-
-    // var verify = verifyToken(req, res);
-
-    // var dealerName = req.body.name;
-    // // var sdealerName = req.body.sdealerName;
-    // var dealerEmail = req.body.email;
-    // console.log("dealerEmail: " + dealerEmail);
-
-    // // var sdealerEmail = req.body.sdealerEmail;
-    // var pageType = req.body.pageType;
-    // console.log("pageType: " + pageType);
-
-    // var dealerId = req.body.dealerId;
-    // console.log("dealerId: " + dealerId);
-
-    // var link_code = randomize('0', 6);
-    // // var link_code = Math.floor(Math.random() * 900000) + 100000;
-    // console.log("link_code: " + link_code);
-
-    // console.log("dealerType: " + req.body.type);
-    // var type = await helpers.getDealerTypeIdByName(req.body.type);
-    // console.log("dealerType converted: " + type);
-
-    // var dealer_pwd = generator.generate({
-    //     length: 10,
-    //     numbers: true
-    // });
-    // console.log("dealer_pwd: " + dealer_pwd);
-
-    // var enc_pwd = md5(dealer_pwd); //encryted pwd
-    // console.log("encrypted password" + enc_pwd);
-
-    // if (verify.status == true) {
-    //     if (!empty(dealerEmail) && !empty(dealerName)) {
-    //         var dealer = await sql.query("SELECT * FROM dealers WHERE dealer_email = '" + dealerEmail + "'");
-
-    //         if (dealer.length > 0) {
-    //             data = {
-    //                 'status': false,
-    //                 'msg': 'Dealer Already Registered.Please use another email id.',
-    //             }
-
-    //             res.status(200).send(data);
-    //             return;
-    //         }
-
-    //         var sql1 = "INSERT INTO dealers (connected_dealer, dealer_name, dealer_email, password, link_code , type , modified, created)";
-    //         if (!empty(dealerId) && dealerId != null && dealerId != 0) {
-    //             sql1 += " VALUES (" + dealerId + ", '" + dealerName + "','" + dealerEmail + "', '" + enc_pwd + "','" + link_code + "', '" + type + "', NOW(), NOW())";
-    //         } else {
-    //             sql1 += " VALUES (0, '" + dealerName + "','" + dealerEmail + "', '" + enc_pwd + "','" + link_code + "', '" + type + "', NOW(), NOW())";
-    //         }
-    //         console.log("insert query" + sql1);
-
-    //         sql.query(sql1, function (error, rows) {
-    //             if (error) throw error;
-
-    //             var html = 'Your login details are : <br> ' +
-    //                 'Email : ' + dealerEmail + '<br> ' +
-    //                 'Password : ' + dealer_pwd + '<br> ' +
-    //                 'Dealer id : ' + rows.insertId + '<br> ' +
-    //                 'Dealer Pin : ' + link_code + '.<br> ' +
-    //                 'Below is the link to login : <br> http://www.lockmesh.com <br>';
-
-    //             sendEmail("Account Registration", html, dealerEmail, function (errors, response) {
-    //                 if (error) {
-    //                     res.send("Email could not sent due to error: " + errors);
-    //                 } else {
-    //                     //res.send("Email has been sent successfully");
-    //                     data = {
-    //                         'status': true,
-    //                         'msg': 'Dealer has been registered successfully',
-
-    //                     }
-
-    //                     res.status(200).send(data);
-    //                 }
-
-    //             });
-
-    //         });
-
-    //     } else {
-    //         data = {
-    //             'status': false,
-    //             'msg': 'Invalid email or name'
-    //         }
-    //         res.status(200).send(data);
-    //     }
-    // }
-});
-
-
-/*** Add User ***/
-router.post('/add/user', async function (req, res) {
-
-    res.setHeader('Content-Type', 'application/json');
-
-    var verify = await verifyToken(req, res);
-
-    if (verify.status !== undefined && verify.status == true) {
-        var userName = req.body.name;
-        var loggedInuid = verify.user.id;
-        var userEmail = req.body.email;
-
-        var userId = randomize('0', 6);
-        userId = 'ID' + await helpers.checkUserId(userId)
-        var user_pwd = generator.generate({
-            length: 10,
-            numbers: true
-        });
-        var enc_pwd = md5(user_pwd); //encryted pwd
-        // console.log("encrypted password" + enc_pwd);
-        if (!empty(userEmail) && !empty(userName)) {
-            var user = await sql.query("SELECT * FROM users WHERE email = '" + userEmail + "' AND dealer_id = " + loggedInuid + " AND del_status = 0");
-
-            if (user.length > 0) {
-                data = {
-                    'status': false,
-                    'msg': 'User Already Registered. Please use another email.',
-                }
-                res.status(200).send(data);
-                return;
-            }
-
-            var sql1 = "INSERT INTO users (user_id, user_name, email, password, dealer_id , type)";
-            sql1 += " VALUES ('" + userId + "', '" + userName + "','" + userEmail + "', '" + enc_pwd + "','" + loggedInuid + "', 4)";
-            sql.query(sql1, async function (error, rows) {
-                if (error) throw error;
-
-                var html = 'User details are : <br> ' +
-                    'User ID : ' + userId + '.<br> ' +
-                    'Name : ' + userName + '<br> ' +
-                    'Email : ' + userEmail + '<br> '
-                sendEmail("User Registration", html, verify.user.email)
-                sendEmail("User Registration", html, userEmail)
-
-                // res.send(rows.insertId);
-                var user = await sql.query("SELECT * FROM users WHERE id = " + rows.insertId + "");
-                let data = await helpers.getAllRecordbyUserID(userId)
-                user[0].devicesList = data
-                // console.log('result add',dealer);
-                data = {
-                    'status': true,
-                    'msg': 'User has been registered successfully.',
-                    'user': user,
-                }
-                res.status(200).send(data);
-
-            });
-
-        } else {
-            data = {
-                'status': false,
-                'msg': 'Invalid email or name'
-            }
-            res.status(200).send(data);
-        }
-    }
-});
-
-/*** Edit User ***/
-router.post('/edit/user', async function (req, res) {
-
-    res.setHeader('Content-Type', 'application/json');
-
-    var verify = await verifyToken(req, res);
-
-    if (verify.status !== undefined && verify.status == true) {
-        var userName = req.body.name;
-        var userEmail = req.body.email;
-        var user_id = req.body.user_id
-        if (!empty(userEmail) && !empty(userName)) {
-            var user = await sql.query("SELECT * FROM users WHERE email = '" + userEmail + "' AND user_id != '" + user_id + "'");
-
-            if (user.length > 0) {
-                data = {
-                    'status': false,
-                    'msg': 'User Already Registered. Please use another email.',
-                }
-                res.status(200).send(data);
-                return;
-            }
-            let PrevUserData = await helpers.getUserDataByUserId(user_id)
-            var sql1 = "UPDATE users set user_name ='" + userName + "',  email = '" + userEmail + "' WHERE user_id ='" + user_id + "'";
-            sql.query(sql1, async function (error, rows) {
-                if (error) throw error;
-
-                if (PrevUserData[0].email != userEmail) {
-
-                    var html = 'User details are : <br> ' +
-                        'User ID : ' + user_id + '.<br> ' +
-                        'Name : ' + userName + '<br> ' +
-                        'Email : ' + userEmail + '<br> '
-                    sendEmail("User info Changed Successfully", html, verify.user.email)
-                    sendEmail("User Info Changed Successfully", html, userEmail)
-                }
-
-                //res.send("Email has been sent successfully");
-                let userData = await helpers.getUserDataByUserId(user_id)
-                let data = await helpers.getAllRecordbyUserID(user_id)
-                userData[0].devicesList = data
-
-                data = {
-                    'status': true,
-                    'msg': 'User Info has been changed successfully.',
-                    'user': userData,
-                }
-                res.status(200).send(data);
-
-            });
-
-        } else {
-            data = {
-                'status': false,
-                'msg': 'Invalid email or name'
-            }
-            res.status(200).send(data);
-        }
-    }
-});
-/*** DELETE User ***/
-router.put('/delete_user/:user_id', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    if (verify.status !== undefined && verify.status == true) {
-        var user_id = req.params.user_id
-        if (!empty(user_id) && user_id != undefined) {
-            let deleteUserQ = "UPDATE users SET del_status = 1 WHERE user_id ='" + user_id + "'";
-            // console.log(deleteUserQ);
-            sql.query(deleteUserQ, function (err, result) {
-                if (err) {
-                    throw err
-                }
-                if (result && result.affectedRows !== 0) {
-                    data = {
-                        'status': true,
-                        'msg': 'User deleted successfully.'
-                    }
-                    res.send(data);
-                    return
-                } else {
-                    data = {
-                        'status': true,
-                        'msg': 'User not deleted try again later.'
-                    }
-                    res.send(data);
-                    return
-                }
-            })
-        } else {
-            data = {
-                'status': false,
-                'msg': 'Invalid User.'
-            }
-            res.send(data);
-            return
-        }
-    }
-});
-/***UNDO DELETE User ***/
-router.put('/undo_delete_user/:user_id', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    if (verify.status !== undefined && verify.status == true) {
-        var user_id = req.params.user_id
-        if (!empty(user_id) && user_id != undefined) {
-            let deleteUserQ = "UPDATE users SET del_status = 0 WHERE user_id ='" + user_id + "'";
-            console.log(deleteUserQ);
-            sql.query(deleteUserQ, function (err, result) {
-                if (err) {
-                    throw err
-                }
-                if (result && result.affectedRows !== 0) {
-                    data = {
-                        'status': true,
-                        'msg': 'User added again successfully.'
-                    }
-                    res.send(data);
-                    return
-                } else {
-                    data = {
-                        'status': true,
-                        'msg': 'User not added try again later.'
-                    }
-                    res.send(data);
-                    return
-                }
-            })
-        } else {
-            data = {
-                'status': false,
-                'msg': 'Invalid User.'
-            }
-            res.send(data);
-            return
-        }
-    }
-});
+router.get('/new/devices', deviceController.newDevices);
 
 /***Add devices (not using) ***/
 router.post('/create/device_profile', async function (req, res) {
@@ -930,7 +448,9 @@ router.post('/create/device_profile', async function (req, res) {
                 var values = ") VALUES ('" + name + "', '" + model + "'";
                 // var values = ") VALUES ('" + activation_code + "', '" + name + "', '" + client_id + "', '" + chat_id + "', '" + model + "', '" + email + "', '" + pgp_email + "', " + exp_month + ", " + dealer_id + ", 0, 0 ";
                 sql.query(checkDealer, async (error, response) => {
-                    if (error) throw (error);
+                    if (error) {
+                        console.log(error);
+                    }
 
                     if (response.length) {
                         if (response[0].connected_dealer != 0) {
@@ -939,7 +459,9 @@ router.post('/create/device_profile', async function (req, res) {
                             insertDevice = insertDevice + values + ")";
                         }
                         sql.query(insertDevice, async (err, resp) => {
-                            if (err) throw (err);
+                            if (err){
+                                console.log(err)
+                            }
                             console.log("inserted id", resp.insertId);
                             let dvc_id = resp.insertId;
                             var insertUser_acc = "INSERT INTO usr_acc (device_id, user_id, activation_code, client_id , account_email,expiry_months, dealer_id, link_code ,device_status, activation_status, expiry_date , note,validity  "
@@ -950,7 +472,9 @@ router.post('/create/device_profile', async function (req, res) {
                             if (resp.affectedRows) {
                                 sql.query(insertUser_acc, async (err, resp) => {
 
-                                    if (err) throw (err);
+                                    if (err){
+                                        console.log(err)
+                                    }
                                     let user_acc_id = resp.insertId;
 
                                     console.log("affectedRows", resp.affectedRows);
@@ -970,7 +494,9 @@ router.post('/create/device_profile', async function (req, res) {
 
                                         sql.query("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name, dealers.connected_dealer from devices left join usr_acc on devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 and devices.id='" + dvc_id + "'", async function (error, results, fields) {
 
-                                            if (error) throw error;
+                                            if (error) {
+                                                console.log(error);
+                                            }
                                             // console.log("user data list ", results)
 
                                             results[0].finalStatus = device_helpers.checkStatus(results[0])
@@ -1050,7 +576,9 @@ router.post('/transfer/device_profile', async (req, res) => {
             // console.log('qerury', query);
             sql.query(query, async (err, resp) => {
                 // console.log('query reslut response', resp)
-                if (err) throw (err);
+                if (err){
+                    console.log(err)
+                }
                 if (resp.affectedRows) {
 
                     var code = randomize('0', 7);
@@ -1095,184 +623,8 @@ router.post('/transfer/device_profile', async (req, res) => {
     }
 });
 
-router.put('/new/device', async (req, res) => {
-    res.setHeader('Content-Type', 'application/json');
-    var verify = await verifyToken(req, res);
-    if (verify['status'] !== undefined && verify.status === true) {
-        let loggedDealerId = verify.user.id;
-        let loggedDealerType = verify.user.user_type;
-        let user_id = req.body.user_id;
 
-        let userData = await helpers.getUserDataByUserId(user_id);
-
-        let device_id = req.body.device_id;
-        let device_name = userData[0].name;
-        let device_email = userData[0].email;
-        let client_id = req.body.client_id;
-        let model = req.body.model;
-        let dealer_id = req.body.dealer_id;
-        let connected_dealer = req.body.connected_dealer;
-        let usr_acc_id = req.body.usr_acc_id;
-        let usr_device_id = req.body.usr_device_id
-        let policy_id = req.body.policy_id;
-
-        // let s_dealer_id = req.body.s_dealer;
-        // let expiray_date = req.body.expiray_date;
-
-        let sim_id = (req.body.sim_id == undefined) ? '' : req.body.sim_id;
-        let chat_id = (req.body.chat_id == undefined) ? '' : req.body.chat_id;
-        let pgp_email = (req.body.pgp_email == undefined) ? '' : req.body.pgp_email;
-        var trial_status = 0
-
-        let start_date = req.body.start_date;
-        if (req.body.expiry_date === '' || req.body.expiry_date === null) {
-            var status = 'expired';
-        } else if (req.body.expiry_date == 0) {
-            var status = 'trial';
-            trial_status = 1;
-            // req.body.expiry_date = 
-        }
-        else {
-            var status = 'active';
-        }
-        if (req.body.expiry_date == 0) {
-            var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
-            var expiry_date = moment(trailDate).format("YYYY/MM/DD")
-        } else {
-            let exp_month = req.body.expiry_date;
-            var expiry_date = helpers.getExpDateByMonth(start_date, exp_month);
-        }
-        // console.log(expiry_date);
-        // console.log(device_id);
-        if (!empty(usr_device_id)) {
-
-            var checkDevice = "SELECT * from devices LEFT JOIN usr_acc ON usr_acc.device_id = devices.id WHERE devices.device_id = '" + device_id + "' ";
-            let checkDealer = "SELECT * from dealers where dealer_id =" + dealer_id;
-            // let checkConnectedDealer = "SELECT * from dealers where dealer_id =" + connected_dealer;
-
-            let dealer = await sql.query(checkDealer);
-
-            // let connected = await sql.query(checkConnectedDealer);
-            if (loggedDealerType === SDEALER) {
-                checkDevice = checkDevice + " AND usr_acc.dealer_id = " + loggedDealerId;
-            } else if (loggedDealerType === DEALER) {
-                checkDevice = checkDevice + " AND (usr_acc.dealer_id =" + loggedDealerId + " OR usr_acc.prnt_dlr_id =" + loggedDealerId + ") ";
-            }
-            else if (loggedDealerType === ADMIN) {
-                checkDevice = checkDevice;
-            }
-            else {
-                res.send({
-                    status: false,
-                    msg: "New Device Not Added Please try Again"
-                });
-                return;
-            }
-            console.log(checkDevice);
-            sql.query(checkDevice, async function (error, rows) {
-                if (rows.length) {
-
-                    let checkUniquePgp = "SELECT pgp_email from pgp_emails WHERE (pgp_email= '" + pgp_email + "' AND used=1)";
-                    let checkDevicepgp = await sql.query(checkUniquePgp);
-
-                    let checkUnique = "SELECT usr_acc.* from usr_acc WHERE account_email= '" + device_email + "' AND device_id != '" + device_id + "' AND user_id != '" + user_id + "'"
-                    sql.query(checkUnique, async (error, success) => {
-                        if (success.length || checkDevicepgp.length) {
-                            res.send({
-                                status: false,
-                                "msg": "Account Email OR PGP Email already taken"
-                            });
-                        }
-                        else if (dealer_id !== 0 && dealer_id !== null) {
-
-                            if (connected_dealer !== 0) {
-
-                                // let common_Query = "UPDATE devices set name = '" + device_name + "', email = '" + device_email + "', pgp_email='" + pgp_email + "', chat_id='" + chat_id + "', sim_id='" + sim_id + "', client_id ='" + client_id + "', model = '" + req.body.model + "'"
-                                // let common_Query2 = " status = '" + status + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' where device_id = '" + device_id + "'";
-                                common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE id = '" + usr_device_id + "'"
-                                // let common_Query2 = " status = '" + status + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' where device_id = '" + device_id + "'";
-                                usr_acc_Query = "UPDATE usr_acc set user_id = '" + user_id + "' , account_email = '" + device_email + "', status = '" + status + "',trial_status = '" + trial_status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "', prnt_dlr_id=" + dealer_id + ", prnt_dlr_name='" + dealer[0].dealer_name + "' WHERE device_id = '" + usr_device_id + "'"
-                                // 
-                                // let sql1 = common_Query + ", s_dealer_name = '" + rslt1[0].dealer_name + "', s_dealer = '" + req.body.s_dealer + "'" + common_Query2;
-                                // console.log("UPafet Quety", usr_acc_Query);
-                            } else {
-
-                                common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE id = '" + usr_device_id + "'"
-                                usr_acc_Query = "UPDATE usr_acc set user_id = '" + user_id + "' , account_email = '" + device_email + "', status = '" + status + "',trial_status = '" + trial_status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' WHERE device_id = '" + usr_device_id + "'"
-                                // let sql1 = common_Query + ", s_dealer_name = '" + rslt1[0].dealer_name + "', s_dealer = '" + req.body.s_dealer + "'" + common_Query2;
-                                // console.log("UPafet Quety", usr_acc_Query);
-                            }
-
-
-                            sql.query(common_Query, async function (error, result) {
-                                await sql.query(usr_acc_Query)
-                                let updateChatIds = 'update chat_ids set user_acc_id = ' + usr_acc_id + ', used=1 where chat_id ="' + chat_id + '"';
-                                await sql.query(updateChatIds);
-                                let updateSimIds = 'update sim_ids set user_acc_id = ' + usr_acc_id + ', used=1 where sim_id ="' + sim_id + '"';
-                                await sql.query(updateSimIds)
-                                let updatePgpEmails = 'update pgp_emails set user_acc_id = ' + usr_acc_id + ', used=1 where pgp_email ="' + pgp_email + '"';
-                                await sql.query(updatePgpEmails);
-
-                                var slctquery = "select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.user_acc_id = usr_acc.device_id where devices.device_id = '" + device_id + "'";
-                                // console.log(slctquery);
-                                rsltq = await sql.query(slctquery);
-                                // console.log(rsltq);
-
-                                if (policy_id !== '') {
-                                    var slctpolicy = "select * from policy where id = " + policy_id + "";
-                                    let policy = await sql.query(slctpolicy);
-                                    var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES ('" + device_id + "' ," + dealer_id + "," + usr_acc_id + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
-                                    sql.query(applyQuery)
-                                }
-
-                                rsltq[0].finalStatus = device_helpers.checkStatus(rsltq[0])
-
-
-                                axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
-                                    // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
-                                    if (response.data.status) {
-                                        let data = {
-                                            linkToWL: true,
-                                            SN: rsltq[0].serial_number,
-                                            mac: rsltq[0].mac_address,
-                                            device_id: rsltq[0].device_id
-                                        }
-                                        axios.put(app_constants.UPDATE_DEVICE_SUPERADMIN_URL, data, { headers: { authorization: response.data.user.token } })
-                                    }
-                                })
-                                // device_helpers.saveActionHistory(rslts[0], Constants.DEVICE_ACCEPT)
-                                data = {
-                                    status: true,
-                                    msg: 'Record updated successfully.',
-                                    data: rsltq
-                                };
-                                res.send(data);
-                                return;
-                            });
-                        } else {
-                            res.send({
-                                status: false,
-                                msg: "device is not added"
-                            });
-                        }
-                    });
-
-                } else {
-
-                }
-            });
-
-        } else {
-            res.send({
-                status: false,
-                msg: "Device Not Added Try Again"
-            })
-        }
-    }
-});
-
-
-/**UPDATE Devices details**/
+/**UPDATE Device details**/
 router.put('/edit/devices', async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
     var verify = await verifyToken(req, res);
@@ -1469,7 +821,9 @@ router.put('/delete/:device_id', async function (req, res) {
                     // sql.query("UPDATE usr_acc set unlink_status = 1 WHERE device_id = '" + usr_device_id + "'")
                     //response.end(JSON.stringify(rows));
                     // console.log(results);
-                    if (error) throw error;
+                    if (error) {
+                        console.log(error);
+                    }
                     if (results.affectedRows !== 0) {
                         var sqlDevice = "DELETE from devices where device_id = '" + req.params.device_id + "'";
                         sql.query(sqlDevice);
@@ -1497,37 +851,6 @@ router.put('/delete/:device_id', async function (req, res) {
         }
     }
 });
-
-
-/**UPDATE Profile details  **/
-router.put('/updateProfile/:id', async function (req, res) {
-    res.setHeader('Content-Type', 'application/json');
-
-    var verify = await verifyToken(req, res);
-    if (verify.status !== undefined && verify.status == true) {
-        sql.query('UPDATE dealers SET `dealer_name` = ? where `dealer_id` = ?', [req.body.name, req.body.dealerId], function (error, rows, status) {
-
-            if (error) throw error;
-            if (status) {
-                data = {
-                    "status": false,
-                    "data": req.body,
-                    "msg": "Error While Updating Profile"
-                };
-            } else {
-                data = {
-                    "status": true,
-                    "data": req.body,
-                    "msg": "Profile Updated Successfully"
-                };
-            }
-
-            console.log('success');
-            res.send(data);
-        });
-    }
-});
-
 
 /** Unlink Device  **/
 router.post('/unlink/:id', async function (req, res) {
@@ -1614,7 +937,9 @@ router.post('/suspend/:id', async function (req, res) {
                 var sql1 = "update usr_acc set account_status='suspended' where device_id = '" + device_id + "'";
 
                 var rest = sql.query(sql1, async function (error, results) {
-                    if (error) throw error;
+                    if (error) {
+                        console.log(error);
+                    }
                     if (results.affectedRows == 0) {
 
 
@@ -1624,7 +949,9 @@ router.post('/suspend/:id', async function (req, res) {
                         }
                     } else {
                         sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
-                            if (error) throw error;
+                            if (error) {
+                                console.log(error);
+                            }
                             console.log('lolo else', resquery[0])
 
                             if (resquery.length) {
@@ -1659,7 +986,9 @@ router.post('/suspend/:id', async function (req, res) {
                     var sql1 = "update usr_acc set account_status='suspended' where device_id = '" + device_id + "'";
 
                     var rest = sql.query(sql1, async function (error, results) {
-                        if (error) throw error;
+                        if (error) {
+                            console.log(error);
+                        }
                         if (results.affectedRows == 0) {
 
                             data = {
@@ -1670,7 +999,9 @@ router.post('/suspend/:id', async function (req, res) {
 
 
                             sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
-                                if (error) throw error;
+                                if (error) {
+                                    console.log(error);
+                                }
                                 // console.log('lolo else', resquery[0])
 
                                 if (resquery.length) {
@@ -1716,6 +1047,127 @@ router.post('/suspend/:id', async function (req, res) {
     }
 
 });
+
+/** Activate Device **/
+router.post('/activate/:id', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    var device_id = req.params.id;
+    var tod_dat = datetime.create();
+    var formatted_dt = tod_dat.format('Y-m-d H:M:S');
+
+    if (verify.status !== undefined && verify.status == true) {
+        var sql2 = "select * from usr_acc where device_id = '" + device_id + "'";
+        var gtres = await sql.query(sql2);
+
+        if (!empty(device_id)) {
+
+            if (gtres[0].expiry_date == '' || gtres[0].expiry_date == null) {
+
+                var sql1 = "update usr_acc set account_status='' where device_id = '" + device_id + "'";
+
+                var rest = sql.query(sql1, function (error, results) {
+                    if (error) {
+                        console.log(error);
+                    }
+                    if (results.affectedRows == 0) {
+                        data = {
+                            "status": false,
+                            "msg": "Device not activated.Please try again."
+                        }
+                    } else {
+                        sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
+                            if (error) {
+                                console.log(error);
+                            }
+                            console.log('lolo else', resquery[0])
+
+                            if (resquery.length) {
+                                resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
+                                resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
+                                resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
+                                resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
+                                // dealerData = await getDealerdata(res[i]);
+                                require("../bin/www").sendDeviceStatus(resquery[0].device_id, "active", true);
+                                data = {
+                                    "data": resquery[0],
+                                    "status": true,
+                                    "msg": "Device activated successfully."
+                                }
+                                device_helpers.saveActionHistory(resquery[0], Constants.DEVICE_ACTIVATED)
+                                res.send(data);
+
+                            }
+                        })
+
+                    }
+
+                });
+
+            } else {
+
+                if (gtres[0].expiry_date > formatted_dt) {
+
+                    var sql1 = "update usr_acc set account_status='' where device_id = '" + device_id + "'";
+
+                    var rest = sql.query(sql1, function (error, results) {
+                        if (error) {
+                            console.log(error);
+                        }
+                        if (results.affectedRows == 0) {
+                            data = {
+                                "status": false,
+                                "msg": "Device not activated.Please try again."
+                            }
+                        } else {
+                            sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
+                                if (error) {
+                                    console.log(error);
+                                }
+                                console.log('lolo else', resquery[0])
+
+                                if (resquery.length) {
+                                    resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
+                                    resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
+                                    resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
+                                    resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
+                                    // dealerData = await getDealerdata(res[i]);
+                                    require("../bin/www").sendDeviceStatus(resquery[0].device_id, "active", true);
+                                    data = {
+                                        "data": resquery[0],
+                                        "status": true,
+                                        "msg": "Device activated successfully."
+                                    }
+                                    device_helpers.saveActionHistory(resquery[0], Constants.DEVICE_ACTIVATED)
+                                    res.send(data);
+
+                                }
+                            })
+
+                        }
+
+                    });
+
+                } else {
+
+                    data = {
+                        "status": false,
+                        "msg": "Device cannnot be activated.It is expired already."
+                    }
+                    res.send(data);
+                }
+            }
+
+        } else {
+            data = {
+                "status": false,
+                "msg": "Invalid Device."
+            }
+            res.send(data);
+        }
+    }
+
+});
+
 router.post('/wipe/:id', async function (req, res) {
     var verify = await verifyToken(req, res);
     var device_id = req.params.id;
@@ -1725,9 +1177,11 @@ router.post('/wipe/:id', async function (req, res) {
         if (!empty(device_id)) {
 
             var sql1 = "update usr_acc set wipe_status='wipe' where device_id = '" + device_id + "'";
-            console.log(sql1);
+
             var rest = sql.query(sql1, async function (error, results) {
-                if (error) throw error;
+                if (error) {
+                    console.log(error)   
+                }
                 if (results.affectedRows == 0) {
                     data = {
                         "status": false,
@@ -1738,7 +1192,9 @@ router.post('/wipe/:id', async function (req, res) {
                     require("../bin/www").sendDeviceStatus(gtres[0].device_id, Constants.DEVICE_WIPE);
 
                     sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
-                        if (error) throw error;
+                        if (error) {
+                            console.log(error);
+                        }
                         // console.log('lolo else', resquery[0])
 
                         if (resquery.length) {
@@ -1780,7 +1236,9 @@ router.post('/UnflagDevice/:id', async function (req, res) {
         if (!empty(device_id)) {
             var sql1 = "update devices set flagged= 'Not flagged' where device_id='" + device_id + "'";
             var rest = sql.query(sql1, async function (error, results) {
-                if (error) throw error;
+                if (error) {
+                    console.log(error);
+                }
                 else if (results.affectedRows == 0) {
                     data = {
                         "status": false,
@@ -1789,7 +1247,9 @@ router.post('/UnflagDevice/:id', async function (req, res) {
                     res.send(data);
                 } else {
                     await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.device_id= "' + device_id + '"', async function (error, resquery, fields) {
-                        if (error) throw error;
+                        if (error) {
+                            console.log(error);
+                        }
                         console.log('lolo else', resquery[0])
 
                         if (resquery.length) {
@@ -1887,381 +1347,6 @@ router.post('/flagDevice/:id', async function (req, res) {
     }
 })
 
-/** Activate Device **/
-router.post('/activate/:id', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    var device_id = req.params.id;
-    var tod_dat = datetime.create();
-    var formatted_dt = tod_dat.format('Y-m-d H:M:S');
-
-    if (verify.status !== undefined && verify.status == true) {
-        var sql2 = "select * from usr_acc where device_id = '" + device_id + "'";
-        var gtres = await sql.query(sql2);
-
-        if (!empty(device_id)) {
-
-            if (gtres[0].expiry_date == '' || gtres[0].expiry_date == null) {
-
-                var sql1 = "update usr_acc set account_status='' where device_id = '" + device_id + "'";
-
-                var rest = sql.query(sql1, function (error, results) {
-                    if (error) throw error;
-                    if (results.affectedRows == 0) {
-                        data = {
-                            "status": false,
-                            "msg": "Device not activated.Please try again."
-                        }
-                    } else {
-                        sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
-                            if (error) throw error;
-                            console.log('lolo else', resquery[0])
-
-                            if (resquery.length) {
-                                resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
-                                resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
-                                resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
-                                resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
-                                // dealerData = await getDealerdata(res[i]);
-                                require("../bin/www").sendDeviceStatus(resquery[0].device_id, "active", true);
-                                data = {
-                                    "data": resquery[0],
-                                    "status": true,
-                                    "msg": "Device activated successfully."
-                                }
-                                device_helpers.saveActionHistory(resquery[0], Constants.DEVICE_ACTIVATED)
-                                res.send(data);
-
-                            }
-                        })
-
-                    }
-
-                });
-
-            } else {
-
-                if (gtres[0].expiry_date > formatted_dt) {
-
-                    var sql1 = "update usr_acc set account_status='' where device_id = '" + device_id + "'";
-
-                    var rest = sql.query(sql1, function (error, results) {
-                        if (error) throw error;
-                        if (results.affectedRows == 0) {
-                            data = {
-                                "status": false,
-                                "msg": "Device not activated.Please try again."
-                            }
-                        } else {
-                            sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
-                                if (error) throw error;
-                                console.log('lolo else', resquery[0])
-
-                                if (resquery.length) {
-                                    resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
-                                    resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
-                                    resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
-                                    resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
-                                    // dealerData = await getDealerdata(res[i]);
-                                    require("../bin/www").sendDeviceStatus(resquery[0].device_id, "active", true);
-                                    data = {
-                                        "data": resquery[0],
-                                        "status": true,
-                                        "msg": "Device activated successfully."
-                                    }
-                                    device_helpers.saveActionHistory(resquery[0], Constants.DEVICE_ACTIVATED)
-                                    res.send(data);
-
-                                }
-                            })
-
-                        }
-
-                    });
-
-                } else {
-
-                    data = {
-                        "status": false,
-                        "msg": "Device cannnot be activated.It is expired already."
-                    }
-                    res.send(data);
-                }
-            }
-
-        } else {
-            data = {
-                "status": false,
-                "msg": "Invalid Device."
-            }
-            res.send(data);
-        }
-    }
-
-});
-
-
-
-/** Reset password dealers (Admin Panel) **/
-router.post('/resetpwd', async function (req, res) {
-
-    var verify = await verifyToken(req, res);
-    var isReset = false;
-    if (verify.status !== undefined && verify.status == true) {
-        var user = verify.user;
-        if (req.body.pageName != undefined && req.body.pageName != "") {
-            if (user.user_type === ADMIN || user.user_type === DEALER) {
-                var newpwd = generator.generate({
-                    length: 10,
-                    numbers: true
-                });
-                isReset = true;
-                var query = "SELECT password FROM dealers WHERE dealer_id=" + req.body.dealer_id + " limit 1";
-                var rslt = await sql.query(query);
-                var curntPassword = rslt[0].password;
-            }
-        } else {
-
-            if (req.body.newpwd != undefined) {
-                var newpwd = req.body.newpwd;
-                var curntPassword = md5(req.body.curntpwd);
-            }
-        }
-        // console.log("new password " + newpwd);
-        var email = req.body.dealer_email;
-        var dealer_id = req.body.dealer_id;
-        var enc_pwd = md5(newpwd); // encryted pwd
-
-
-        if (!empty(email) && !empty(newpwd) && !empty(dealer_id)) {
-
-            var query = "SELECT link_code from dealers where dealer_id=" + dealer_id + " AND password='" + curntPassword + "' limit 1";
-
-
-            var result = await sql.query(query);
-            if (result.length) {
-                // console.log('error');
-                if (isReset) {
-
-                    var subject = "Password Reset";
-                    var message = 'Your login details are : <br> Email : ' + email + '<br> Password : ' + newpwd + '<br> Dealer id : ' + dealer_id + '<br> Dealer Pin : ' + result[0].link_code + '.<br> Below is the link to login : <br> http://www.lockmesh.com <br>';
-                } else {
-                    var subject = "Password Change";
-                    var message = 'You have changed your password in your Lockmesh.com account. <br><br> This is just to inform you about the activity. If it was not you, please immediately contact your provider to reset the password.';
-                }
-
-                sendEmail(subject, message, email, function (errors, response) {
-                    if (errors) {
-                        res.send("Email could not sent due to error: " + errors);
-                    } else {
-
-                        var sq = "update dealers set password = '" + enc_pwd + "' where dealer_id = '" + dealer_id + "'";
-                        sql.query(sq, function (error, rows) {
-
-
-                            if (error) throw error;
-
-                            if (rows.affectedRows == 0) {
-                                console.log('false');
-                                data = {
-                                    "status": false,
-                                    "data": rows
-                                };
-                                res.send(data);
-                            } else {
-                                console.log('success');
-                                data = {
-
-                                    "status": true,
-                                    "msg": "Password changed successfully.Please check your email."
-                                };
-                                res.send(data);
-                            }
-                        });
-                    }
-
-                });
-            } else {
-                console.log('reslult', result);
-                data = {
-                    "status": false,
-                    "msg": 'Invalid User and Password'
-                };
-                res.send(data);
-            }
-
-
-        } else {
-
-            res.json({
-                status: false,
-                "msg": "Invalid details"
-            });
-        }
-    }
-
-});
-
-
-
-/*Get dealers*/
-router.get('/dealers/:pageName', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    if (verify.status !== undefined && verify.status == true) {
-        let where = "";
-        console.log("pageName", req.params.pageName);
-        console.log("userType: " + verify.user.user_type);
-
-        if (verify.user.user_type == "admin") {
-            var role = await helpers.getDealerTypeIdByName(req.params.pageName);
-        } else if (verify.user.user_type == "dealer") {
-            var role = await helpers.getDealerTypeIdByName('sdealer');
-            where = " AND connected_dealer =" + verify.user.id
-        }
-        // console.log("where where", where);
-        // console.log("select * from dealers where type=" + role + " " + where + " order by created DESC");
-        if (role) {
-            sql.query("select * from dealers where type=" + role + " " + where + " order by created DESC", async function (error, results) {
-                if (error) throw error;
-                console.log(results.length);
-                var data = [];
-                for (var i = 0; i < results.length; i++) {
-                    if (results[i].connected_dealer != 0 && results[i].connected_dealer != '' && results[i].connected_dealer != '0') {
-                        var get_parent_dealer = await sql.query("select dealer_id, dealer_name from dealers where dealer_id=" + results[i].connected_dealer + " limit 1");
-                        console.log(get_parent_dealer);
-                    }
-                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].dealer_id + "'");
-
-                    dt = {
-                        "status": true,
-                        "dealer_id": results[i].dealer_id,
-                        "dealer_name": results[i].dealer_name,
-                        "dealer_email": results[i].dealer_email,
-                        "link_code": results[i].link_code,
-                        "account_status": results[i].account_status,
-                        "unlink_status": results[i].unlink_status,
-                        "created": results[i].created,
-                        "modified": results[i].modified,
-                        "connected_devices": get_connected_devices,
-                        "devicesList": await helpers.getAllRecordbyDealerId(results[i].dealer_id)
-                    };
-
-                    if (get_parent_dealer != undefined && get_parent_dealer.length > 0) {
-                        dt.parent_dealer = get_parent_dealer[0].dealer_name;
-                        dt.parent_dealer_id = get_parent_dealer[0].dealer_id;
-                    } else {
-                        dt.parent_dealer = "";
-                        dt.parent_dealer_id = "";
-                    }
-
-                    data.push(dt);
-                }
-                res.send(data);
-            });
-        }
-    }
-});
-
-/*Get All Dealers */
-router.get('/dealers', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    if (verify.status !== undefined && verify.status == true) {
-        console.log("userType: " + verify.user.user_type);
-
-        if (verify.user.user_type == "admin") {
-            var role = await helpers.getuserTypeIdByName(verify.user.user_type);
-            console.log("role id", role);
-            sql.query("select * from dealers where type!=" + role + " AND type != 4 order by created DESC", async function (error, results) {
-                if (error) throw error;
-
-                var data = [];
-                console.log('results lenth', results.length)
-                for (var i = 0; i < results.length; i++) {
-                    if (results[i].connected_dealer != 0 && results[i].connected_dealer != '' && results[i].connected_dealer != '0') {
-                        var get_parent_dealer = await sql.query("select dealer_id, dealer_name from dealers where dealer_id=" + results[i].connected_dealer + " limit 1");
-                        console.log(get_parent_dealer);
-                    }
-                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].dealer_id + "'");
-
-
-                    dt = {
-                        "status": true,
-                        "dealer_id": results[i].dealer_id,
-                        "dealer_name": results[i].dealer_name,
-                        "dealer_email": results[i].dealer_email,
-                        "link_code": results[i].link_code,
-                        "account_status": results[i].account_status,
-                        "unlink_status": results[i].unlink_status,
-                        "connected_dealer": results[i].connected_dealer,
-                        "created": results[i].created,
-                        "modified": results[i].modified,
-                        "connected_devices": get_connected_devices
-                    };
-
-                    if (get_parent_dealer != undefined && get_parent_dealer.length > 0) {
-                        dt.parent_dealer = get_parent_dealer[0].dealer_name;
-                        dt.parent_dealer_id = get_parent_dealer[0].dealer_id;
-                    } else {
-                        dt.parent_dealer = "";
-                        dt.parent_dealer_id = "";
-                    }
-
-                    data.push(dt);
-                }
-                res.send(data);
-            });
-        } else {
-
-            var role = await helpers.getuserTypeIdByName(verify.user.user_type);
-            console.log("role id", role);
-            sql.query("select * from dealers where connected_dealer = '" + verify.user.id + "' AND  type = 3 order by created DESC", async function (error, results) {
-                if (error) throw error;
-                // console.log("select * from dealers where connected_dealer = '" + verify.user.id + "' AND  type = 2 order by created DESC");
-                var data = [];
-                console.log(results);
-                for (var i = 0; i < results.length; i++) {
-
-                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].id + "'");
-
-                    dt = {
-                        "status": true,
-                        "dealer_id": results[i].dealer_id,
-                        "dealer_name": results[i].dealer_name,
-                        "dealer_email": results[i].dealer_email,
-                        "link_code": results[i].link_code,
-                        "account_status": results[i].account_status,
-                        "unlink_status": results[i].unlink_status,
-                        "created": results[i].created,
-                        "modified": results[i].modified,
-                        "connected_devices": get_connected_devices,
-                        "connected_dealer": results[i].connected_dealer,
-                    };
-                    data.push(dt);
-                }
-                console.log("Dealers Data", data);
-                res.send(data);
-            });
-        }
-
-    }
-});
-
-
-/** Edit Dealer (Admin panel) **/
-router.put('/edit/dealers', dealerController.editDealers);
-
-/** Delete Dealer from admin Panel**/
-router.post('/dealer/delete/', dealerController.deleteDealer);
-
-/** Undo Dealer / S-Dealer **/
-router.post('/dealer/undo', dealerController.undoDealer);
-
-/** Suspend Dealer **/
-router.post('/dealer/suspend', dealerController.suspendDealer);
-
-/** Activate Dealer **/
-router.post('/dealer/activate', dealerController.activateDealer);
-
-
 /** Get Device Details of Dealers (Connect Page) **/
 router.get('/connect/:device_id', async function (req, res) {
     // console.log('api check is caled')
@@ -2279,7 +1364,9 @@ router.get('/connect/:device_id', async function (req, res) {
             // console.log("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id where " + where);
             await sql.query("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id where " + where, async function (error, results) {
 
-                if (error) throw error;
+                if (error) {
+                    console.log(error);
+                }
                 // console.log('rslt done', results);
                 if (results.length == 0) {
                     _data = {
@@ -2365,158 +1452,6 @@ router.patch('/sync-device', async function (req, res) {
             });
         }
     }
-});
-
-/** Get logged in Dealer permitted apps  **/
-router.get('/get_dealer_apps', async function (req, res) {
-    // console.log('apoi recivedx')
-    var verify = await verifyToken(req, res);
-    if (verify.status !== undefined && verify.status == true) {
-        let loggedUserId = verify.user.id;
-        let loggedUserType = verify.user.user_type;
-
-        let getAppsQ = "SELECT apk_details.* FROM apk_details ";
-        if (loggedUserType !== Constants.ADMIN) {
-            getAppsQ = getAppsQ + " JOIN dealer_apks on dealer_apks.apk_id = apk_details.id WHERE dealer_apks.dealer_id =" + loggedUserId + " AND delete_status=0 AND apk_type != 'permanent'";
-        } else {
-            getAppsQ = getAppsQ + " WHERE delete_status=0 AND apk_type != 'permanent'";
-
-        }
-        // console.log(getAppsQ);
-        let apps = await sql.query(getAppsQ);
-
-        if (apps.length > 0) {
-            let data = []
-            for (var i = 0; i < apps.length; i++) {
-                dta = {
-                    apk_id: apps[i].id,
-                    apk_name: apps[i].app_name,
-                    logo: apps[i].logo,
-                    apk: apps[i].apk,
-                    package_name: apps[i].package_name,
-                    version_name: apps[i].version_name,
-                    guest: false,
-                    encrypted: false,
-                    enable: false,
-                    apk_status: apps[i].status,
-                    deleteable: (apps[i].apk_type == "permanent") ? false : true
-                }
-                data.push(dta);
-            }
-
-            return res.json({
-                status: true,
-                list: data
-            });
-
-        } else {
-            data = {
-                status: false,
-                msg: "No result found",
-                list: []
-            }
-
-            res.send(data);
-        }
-    }
-});
-
-router.get('/get_usr_acc_id/:device_id', async function (req, res) {
-    var verify = await verifyToken(req, res);
-
-    if (verify.status !== undefined && verify.status == true) {
-        //console.log('id is the ', req.params);
-        let query = "select usr_acc.id from usr_acc left join devices on devices.id=usr_acc.device_id where devices.device_id='" + req.params.device_id + "'";
-
-        await sql.query(query, async (error, rslt) => {
-            // console.log(query, 'rslt id ', rslt)
-            res.send({
-                status: true,
-                user_acount_id: rslt[0].id,
-            });
-        })
-    }
-})
-
-
-router.get('/get_app_permissions', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    // console.log('get app permisiion si sdaf', verify.status)
-    if (verify.status !== undefined && verify.status == true) {
-        // console.log('id is the ', req.params);
-        let loggedUserType = verify.user.user_type;
-        // if (loggedUserType !== Constants.ADMIN) {
-        let query = "select id, unique_name as uniqueName, label, package_name as packageName, icon, extension, visible, default_app, extension_id, created_at from default_apps";
-
-        sql.query(query, async (error, apps) => {
-
-            if (error) throw error;
-            // console.log(query, 'rslt  ', apps);
-            let Extension = [];
-            let onlyApps = [];
-            for (let item of apps) {
-                let subExtension = [];
-                // console.log("extenstion id", item.extension_id);
-                if (item.extension === 1 && item.extension_id === 0) {
-                    // console.log('main', item)
-                    Extension.push(item);
-                }
-
-                if (item.extension == 0 && item.extension_id === 0) {
-                    onlyApps.push(item)
-                }
-            }
-
-            let newExtlist = [];
-            for (let ext of Extension) {
-                let subExtension = [];
-
-                for (let item of apps) {
-                    // console.log(ext.id, item.extension_id);
-                    if (ext.id === item.extension_id) {
-                        //  console.log('sub ext item', item.guest)
-                        // console.log(ext.unique_name, 'dfs',item.unique_name);
-                        subExtension.push({
-                            uniqueName: ext.uniqueName,
-                            uniqueExtension: item.uniqueName,
-                            guest: item.guest != undefined ? item.guest : 0,
-                            label: item.label,
-                            icon: item.icon,
-                            encrypted: item.encrypted != undefined ? item.encrypted : 0,
-                            id: item.id,
-                            device_id: item.device_id,
-                            app_id: item.id,
-                            default_app: item.default_app
-                        });
-                    }
-
-                }
-
-
-                newExtlist.push({
-                    uniqueName: ext.uniqueName,
-                    guest: ext.guest != undefined ? ext.guest : 0,
-                    encrypted: ext.encrypted != undefined ? ext.encrypted : 0,
-                    enable: ext.enable != undefined ? ext.enable : 0,
-                    label: ext.label,
-                    subExtension: subExtension,
-                    extension: ext.extension,
-                    default_app: ext.default_app,
-                    visible: ext.visible
-
-                })
-            }
-
-
-            res.send({
-                status: true,
-                extensions: newExtlist,
-                appPermissions: onlyApps
-            });
-        })
-    }
-    // }
-
 });
 
 /** Get Device Details of Dealers (Connect Page) **/
@@ -2637,28 +1572,6 @@ router.get('/get_apps/:device_id', async function (req, res) {
     }
 });
 
-// router.get('default_apps', async function (req, res) {
-//     var verify = await verifyToken(req, res);
-//     if (verify['status'] !== undefined && verify.status === true) {
-//         var query = 'SELECT apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon from default_apps as apps_info ';
-//         // console.log(query);
-//         sql.query(query, async (error, apps) => {
-//             if (error) {
-//                 throw Error("Query Expection");
-//             }
-
-//             res.send({
-//                 status: true,
-//                 app_list: apps,
-
-//             });
-
-//         });
-
-//     }
-// })
-
-
 router.put('/deleteUnlinkDevice', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
@@ -2725,566 +1638,742 @@ router.put('/deleteUnlinkDevice', async function (req, res) {
 
 
     } catch (error) {
-        throw Error(error.message);
+        console.log(error)
     }
 })
 
-// policy name should be unique
-router.post('/check_policy_name', async function (req, res) {
+// ====================== Users ==================== //
+
+/*** Add User ***/
+router.post('/add/user', async function (req, res) {
+
+    res.setHeader('Content-Type', 'application/json');
+
     var verify = await verifyToken(req, res);
-    if (verify['status'] && verify.status == true) {
-        try {
-            let policy_name = req.body.name !== undefined ? req.body.name : null;
-            let policy_id = req.body.policy_id;
-            console.log(policy_id, 'policy id is')
-            let loggedDealerId = verify.user.id;
-            let loggedDealerType = verify.user.user_type;
-            let connectedDealer = verify.user.connected_dealer;
-            let except_id = "";
-            let checkExistingQ = "SELECT policy_name FROM policy WHERE policy_name='" + policy_name + "' AND delete_status = 0 " + except_id;
-            if (loggedDealerType === ADMIN) {
-                if (policy_id != '') {
-                    console.log('if called')
-                    except_id = " AND id !='" + policy_id + "'";
-                    checkExistingQ = checkExistingQ + except_id;
-                }
 
-            } else if (loggedDealerType === DEALER) {
-                if (policy_id !== '') {
-                    except_id = " AND id !='" + policy_id + "'";
-                }
-                let subDealerQ = "SELECT dealer_id FROM dealers WHERE connected_dealer=" + loggedDealerId;
-                let subDealers = await sql.query(subDealerQ);
-                let subDealerArray = [];
-                subDealers.map((dealer) => {
-                    subDealerArray.push(dealer.dealer_id)
-                });
-                if (subDealerArray.length) {
-                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id in (" + subDealerArray.join() + "))" + except_id
-                } else {
-                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " )" + except_id
-                }
-            } else if (loggedDealerType === SDEALER) {
-                checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id = " + connectedDealer + ")" + except_id;
-            }
-            let checkExisting = await sql.query(checkExistingQ);
-            console.log(checkExistingQ, 'query is')
-            if (checkExisting.length) {
+    if (verify.status !== undefined && verify.status == true) {
+        var userName = req.body.name;
+        var loggedInuid = verify.user.id;
+        var userEmail = req.body.email;
+
+        var userId = randomize('0', 6);
+        userId = 'ID' + await helpers.checkUserId(userId)
+        var user_pwd = generator.generate({
+            length: 10,
+            numbers: true
+        });
+        var enc_pwd = md5(user_pwd); //encryted pwd
+        // console.log("encrypted password" + enc_pwd);
+        if (!empty(userEmail) && !empty(userName)) {
+            var user = await sql.query("SELECT * FROM users WHERE email = '" + userEmail + "' AND dealer_id = " + loggedInuid + " AND del_status = 0");
+
+            if (user.length > 0) {
                 data = {
-                    status: false,
-                };
-                res.send(data);
-                return;
-            }
-            else {
-                data = {
-                    status: true,
-                };
-                res.send(data);
-                return;
-            }
-        } catch (error) {
-            throw error
-        }
-
-    }
-});
-
-router.post('/save_policy', async function (req, res) {
-    try {
-        var verify = await verifyToken(req, res);
-        if (verify.status !== undefined && verify.status == true) {
-
-            let policy_name = req.body.data.policy_name !== undefined ? req.body.data.policy_name : null;
-            if (policy_name !== null) {
-                let policy_note = req.body.data.policy_note !== undefined ? req.body.data.policy_note : null;
-                let push_apps = null;
-                let app_list = null;
-                let secure_apps = null;
-                if (req.body.data.push_apps !== undefined) {
-                    req.body.data.push_apps.forEach((app) => {
-                        app.guest = (app.guest !== undefined) ? app.guest : false;
-                        app.enable = (app.enable !== undefined) ? app.enable : false;
-                        app.encrypted = (app.encrypted !== undefined) ? app.encrypted : false;
-
-                    });
-                    push_apps = JSON.stringify(req.body.data.push_apps);
+                    'status': false,
+                    'msg': 'User Already Registered. Please use another email.',
                 }
-
-                if (req.body.data.app_list !== undefined) {
-                    req.body.data.app_list.forEach((app) => {
-                        app.guest = (app.guest !== undefined) ? app.guest : false;
-                        app.enable = (app.enable !== undefined) ? app.enable : false;
-                        app.encrypted = (app.encrypted !== undefined) ? app.encrypted : false;
-
-                    });
-                    app_list = JSON.stringify(req.body.data.app_list);
-                }
-
-                if (req.body.data.secure_apps !== undefined) {
-                    req.body.data.secure_apps.forEach((app) => {
-                        app.guest = (app.guest !== undefined) ? app.guest : false;
-                        // app.enable = (app.enable!==undefined)? app.enable: false;
-                        app.encrypted = (app.encrypted !== undefined) ? app.encrypted : false;
-
-                    });
-                    secure_apps = JSON.stringify(req.body.data.secure_apps);
-                }
-
-                let system_permissions = req.body.data.system_permissions !== undefined ? JSON.stringify(req.body.data.system_permissions) : null;
-
-                let loggedDealerId = verify.user.id;
-                let loggedDealerType = verify.user.user_type;
-                let connectedDealer = verify.user.connected_dealer;
-                let checkExistingQ = "SELECT policy_name FROM policy WHERE policy_name='" + policy_name + "' AND delete_status = 0 ";
-                // let checkExisting = await sql.query(checkExistingQ);
-
-                if (loggedDealerType === ADMIN) {
-
-                } else if (loggedDealerType === DEALER) {
-                    let subDealerQ = "SELECT dealer_id FROM dealers WHERE connected_dealer=" + loggedDealerId;
-                    let subDealers = await sql.query(subDealerQ);
-                    let subDealerArray = [];
-                    subDealers.map((dealer) => {
-                        subDealerArray.push(dealer.dealer_id)
-                    });
-                    if (subDealerArray.length) {
-                        checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id in (" + subDealerArray.join() + "))"
-                    } else {
-                        checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " )"
-                    }
-                } else if (loggedDealerType === SDEALER) {
-                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id = " + connectedDealer + ")";
-                }
-                let checkExisting = await sql.query(checkExistingQ);
-                if (checkExisting.length) {
-                    data = {
-                        status: false,
-                        msg: 'Policy name has already been taken',
-
-                    };
-                    res.send(data);
-                    return;
-                }
-                var command_name = '#' + policy_name.replace(/ /g, "_");
-
-                var applyQuery = "INSERT INTO policy (policy_name, policy_note, command_name, app_list, push_apps, controls, permissions, dealer_id, dealer_type, dealers,status) VALUES ('" + policy_name + "', '" + policy_note + "', '" + command_name + "', '" + app_list + "', '" + push_apps + "', '" + system_permissions + "', '" + secure_apps + "', '" + loggedDealerId + "', '" + loggedDealerType + "', '[]',1)";
-
-                sql.query(applyQuery, async function (err, rslts) {
-                    if (err) throw err;
-                    // console.log('query/........... ', applyQuery)
-
-                    if (rslts.affectedRows) {
-                        data = {
-                            status: true,
-                            msg: 'Policy Saved Successfully',
-
-                        };
-                    } else {
-                        data = {
-                            status: false,
-                            msg: 'Policy Couldn\'t be saved'
-                        }
-                    }
-                    res.send(data);
-                    return;
-                })
-            } else {
-                data = {
-                    status: false,
-                    msg: 'Policy Couldn\'t be saved'
-                }
-                res.send(data);
+                res.status(200).send(data);
                 return;
             }
 
-        }
-    } catch (error) {
-        throw Error(error.message);
-    }
+            var sql1 = "INSERT INTO users (user_id, user_name, email, password, dealer_id , type)";
+            sql1 += " VALUES ('" + userId + "', '" + userName + "','" + userEmail + "', '" + enc_pwd + "','" + loggedInuid + "', 4)";
+            sql.query(sql1, async function (error, rows) {
+                if (error) {
+                    console.log(error);
+                }
 
-});
+                var html = 'User details are : <br> ' +
+                    'User ID : ' + userId + '.<br> ' +
+                    'Name : ' + userName + '<br> ' +
+                    'Email : ' + userEmail + '<br> '
+                sendEmail("User Registration", html, verify.user.email)
+                sendEmail("User Registration", html, userEmail)
 
-
-
-router.post('/save/profile', async function (req, res) {
-    try {
-        var verify = await verifyToken(req, res);
-        if (verify.status !== undefined && verify.status == true) {
-            // console.log('body is', req.body)
-            let name = req.body.profileName;
-            let dealer_id = verify.user.id;
-            let usr_acc_id = req.body.usr_acc_id;
-
-            let app_list = (req.body.device_setting.app_list == undefined) ? '' : JSON.stringify(req.body.device_setting.app_list);
-
-            let passwords = (req.body.device_setting.passwords == undefined) ? '' : JSON.stringify(req.body.device_setting.passwords);
-
-
-            let controls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
-
-            let permissions = (req.body.device_setting.extensions == undefined) ? '' : JSON.stringify(req.body.device_setting.extensions);
-
-            var query = "select id from usr_acc_profile where profile_name = '" + name + "'";
-
-            let result = await sql.query(query);
-
-
-            if (result.length == 0 || name == '') {
-                var applyQuery = "insert into usr_acc_profile (profile_name,dealer_id, user_acc_id, app_list,permissions, controls,passwords) values ('" + name + "', '" + dealer_id + "','" + usr_acc_id + "','" + app_list + "','" + permissions + "', '" + controls + "', '" + passwords + "')";
-                // console.log('query insert', applyQuery);
-                // console.log(applyQuery, 'thats it');
-
-                sql.query(applyQuery, async function (err, rslts) {
-                    if (err) throw err;
-                    // console.log(rslts, 'rslt is query')
-                    if (rslts.affectedRows) {
-                        data = {
-                            "status": true,
-                            "msg": 'Profile Saved Successfully',
-                            "data": rslts
-                        };
-                        res.send(data);
-                    } else {
-                        data = {
-                            "status": false,
-                            "msg": 'Profile Name is already Exist',
-                        };
-                        res.send(data);
-                    }
-
-
-                });
-
-            } else {
+                // res.send(rows.insertId);
+                var user = await sql.query("SELECT * FROM users WHERE id = " + rows.insertId + "");
+                let data = await helpers.getAllRecordbyUserID(userId)
+                user[0].devicesList = data
+                // console.log('result add',dealer);
                 data = {
-                    "status": false,
-                    "msg": 'Profile Name is already Exist',
-                };
-                res.send(data);
-            }
-
-        }
-    } catch (error) {
-        throw Error(error.message);
-    }
-});
-
-
-router.post('/apply_settings/:device_id', async function (req, res) {
-    try {
-        var verify = await verifyToken(req, res);
-        if (verify.status !== undefined && verify.status == true) {
-            let device_id = req.params.device_id;
-
-            let usrAccId = req.body.usr_acc_id;
-            let type = req.body.device_setting.type
-
-            let dealer_id = verify.user.id
-
-            let device_setting = req.body.device_setting;
-
-            let app_list = (device_setting.app_list === undefined) ? '' : JSON.stringify(device_setting.app_list);
-
-            let passwords = (device_setting.passwords === undefined) ? '' : JSON.stringify(device_setting.passwords);
-
-            let controls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
-            // console.log("hello controls", controls);
-            let subExtensions = (req.body.device_setting.subExtensions == undefined) ? '' : JSON.stringify(req.body.device_setting.subExtensions);
-            let applyQuery = '';
-            if (type == 'profile') {
-
-                applyQuery = "insert into device_history (device_id,dealer_id,user_acc_id, profile_name,app_list, passwords, controls, permissions, type) values ('" + device_id + "'," + dealer_id + "," + usrAccId + ",'" + device_setting.name + "' , '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "' , 'profile')";
-            } else {
-                applyQuery = "insert into device_history (device_id,dealer_id,user_acc_id, app_list, passwords, controls, permissions) values ('" + device_id + "'," + dealer_id + "," + usrAccId + ", '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "')";
-            }
-
-            await sql.query(applyQuery, async function (err, rslts) {
-                if (err) {
-                    throw err;
+                    'status': true,
+                    'msg': 'User has been registered successfully.',
+                    'user': user,
                 }
+                res.status(200).send(data);
 
-                let isOnline = await device_helpers.isDeviceOnline(device_id);
-                let permissions = subExtensions;
-
-                if (isOnline) {
-                    require("../bin/www").sendEmit(app_list, passwords, controls, permissions, device_id);
-                }
-
-                if (rslts) {
-                    if (type == 'profile') {
-                        data = {
-                            "status": true,
-                            "msg": 'Profile Applied Successfully',
-                        };
-                        res.send(data);
-                    }
-                    else {
-                        data = {
-                            "status": true,
-                            "msg": 'Settings Applied Successfully',
-                        };
-                        res.send(data);
-                    }
-                } else {
-                    data = {
-                        "status": false,
-                        "msg": 'Error while Processing',
-                    };
-                    res.send(data);
-                }
-
-            });
-
-        }
-    } catch (error) {
-        throw Error(error.message);
-    }
-
-});
-
-router.post('/apply_pushapps/:device_id', async function (req, res) {
-    try {
-        var verify = await verifyToken(req, res);
-        if (verify.status !== undefined && verify.status == true) {
-            let device_id = req.params.device_id;
-
-            let dealer_id = verify.user.id
-
-            let usrAccId = req.body.usrAccId;
-
-            let push_apps = req.body.push_apps;
-            let noOfApps = push_apps.length
-
-            let apps = (push_apps === undefined) ? '' : JSON.stringify(push_apps);
-
-            var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, push_apps, type) VALUES ('" + device_id + "'," + dealer_id + "," + usrAccId + ", '" + apps + "', 'push_apps')";
-
-            sql.query(applyQuery, async function (err, rslts) {
-                if (err) {
-                    throw err;
-                }
-                if (rslts) {
-                    let isOnline = await device_helpers.isDeviceOnline(device_id);
-                    //job Queue query
-                    var loadDeviceQ = "INSERT INTO apps_queue_jobs (device_id,action,type,total_apps,is_in_process) " + " VALUES ('" + device_id + "', 'push', 'push', " + noOfApps + " ,1)"
-                    // var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
-                    await sql.query(loadDeviceQ)
-
-                    if (isOnline) {
-
-                        require("../bin/www").applyPushApps(apps, device_id);
-                        data = {
-                            "status": true,
-                            "online": true,
-                            noOfApps: noOfApps
-                        };
-                    }
-                    else {
-                        require("../bin/www").applyPushApps(apps, device_id);
-                        data = {
-                            "status": true,
-                            noOfApps: noOfApps
-                        };
-                    }
-                    res.send(data);
-                } else {
-                    data = {
-                        "status": false,
-                        "msg": 'Error while Processing',
-                    };
-                    res.send(data);
-                }
-
-            });
-
-        }
-    } catch (error) {
-        throw Error(error.message);
-    }
-});
-
-router.post('/apply_policy/:device_id', async function (req, res) {
-    try {
-        var verify = await verifyToken(req, res);
-        if (verify.status !== undefined && verify.status == true) {
-            let device_id = req.params.device_id;
-            let dealer_id = verify.user.id
-            let userAccId = req.body.userAccId;
-            let policy_id = req.body.policyId;
-            if (device_id !== null || device_id !== '' || device_id !== undefined || device_id !== 'undefined' || policy_id !== null || policy_id !== '' || policy_id !== undefined || policy_id !== 'undefined') {
-
-                let getPolicyQ = "SELECT * FROM policy WHERE id =" + policy_id;
-                let policy = await sql.query(getPolicyQ)
-
-                if (policy.length) {
-                    policy = helpers.refactorPolicy(policy);
-
-                    var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES ('" + device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
-                    sql.query(applyQuery, async function (err, policyApplied) {
-                        if (err) {
-                            throw err;
-                        }
-
-                        if (policyApplied && policyApplied.affectedRows) {
-
-                            let isOnline = await device_helpers.isDeviceOnline(device_id, policy[0]);
-                            // var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
-                            var loadDeviceQ = "INSERT INTO policy_queue_jobs (policy_id,device_id,is_in_process) " + " VALUES ('" + policy_id + "','" + device_id + "',1)"
-                            // console.log(loadDeviceQ)
-                            await sql.query(loadDeviceQ)
-                            if (isOnline) {
-                                require("../bin/www").getPolicy(device_id, policy[0]);
-
-                                data = {
-                                    status: true,
-                                    online: true,
-                                };
-                            } else {
-                                require("../bin/www").getPolicy(device_id, policy[0]);
-                                data = {
-                                    status: true,
-
-                                };
-                            }
-                            res.send(data);
-                            return;
-                        } else {
-                            data = {
-                                status: false,
-                                msg: 'Error while Processing',
-                            };
-                            res.send(data);
-                        }
-
-                    });
-                } else {
-
-                }
-            }
-        }
-    } catch (error) {
-        throw Error(error.message);
-    }
-});
-
-router.post('/apply_pullapps/:device_id', async function (req, res) {
-    try {
-        var verify = await verifyToken(req, res);
-        if (verify.status !== undefined && verify.status == true) {
-            let device_id = req.params.device_id;
-
-            let usrAccId = req.body.usrAccId;
-
-            let dealer_id = verify.user.id
-            let pull_apps = req.body.pull_apps;
-            let noOfApps = pull_apps.length
-
-            let apps = (pull_apps === undefined) ? '' : JSON.stringify(pull_apps);
-
-            var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, pull_apps, type) VALUES ('" + device_id + "'," + dealer_id + "," + usrAccId + ", '" + apps + "', 'pull_apps')";
-
-            sql.query(applyQuery, async function (err, rslts) {
-                if (err) {
-                    throw err;
-                }
-                if (rslts) {
-
-                    let isOnline = await device_helpers.isDeviceOnline(device_id);
-                    var loadDeviceQ = "INSERT INTO apps_queue_jobs (device_id,action,type,total_apps,is_in_process) " + " VALUES ('" + device_id + "', 'pull', 'pull', " + noOfApps + " ,1)"
-                    // var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
-                    await sql.query(loadDeviceQ)
-                    if (isOnline) {
-                        data = {
-                            "status": true,
-                            "online": true,
-                            noOfApps: noOfApps
-                        };
-                    } else {
-                        data = {
-                            "status": true,
-                            noOfApps: noOfApps
-                        };
-                    }
-                    res.send(data);
-                    require("../bin/www").getPullApps(apps, device_id);
-                } else {
-                    data = {
-                        "status": false,
-                        "msg": 'Error while Processing',
-                    };
-                    res.send(data);
-                }
-
-            });
-
-        }
-    } catch (error) {
-        throw Error(error.message);
-    }
-});
-
-router.post('/get_profiles', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    if (verify.status === true) {
-        let userId = verify.user.id;
-        let userType = await helpers.getUserType(userId);
-        let user_acc_id = await device_helpers.getUserAccountId(req.body.device_id);
-        // console.log('user id si', user_acc_id);
-        let where = "where";
-        let isValid = true;
-        let profiles = [];
-        // console.log('d_id', user_acc_id);
-        if (user_acc_id != undefined && user_acc_id != '' && user_acc_id != null) {
-            where = where + " user_acc_id='" + user_acc_id + "'";
-
-        } else {
-            where = "";
-        }
-
-        if (isValid) {
-            let query = "SELECT * FROM usr_acc_profile " + where;
-
-            // console.log("getprofiles query", query);
-            sql.query(query, (error, results) => {
-
-                for (var i = 0; i < results.length; i++) {
-                    // console.log('push apps', results[i].push_apps)
-                    let controls = (results[i].controls !== undefined && results[i].controls !== null) ? JSON.parse(results[i].controls) : JSON.parse('[]');;
-                    let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== null) ? JSON.parse(results[i].app_list) : JSON.parse('[]');
-                    let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : JSON.parse('[]');
-                    let passwords = (results[i].passwords !== undefined && results[i].passwords !== null) ? JSON.parse(results[i].passwords) : JSON.parse('[]');
-
-                    dta = {
-                        id: results[i].id,
-                        profile_name: results[i].profile_name,
-                        controls: controls,
-                        secure_apps: secure_apps,
-                        app_list: app_list2,
-                        passwords: passwords
-                    }
-                    profiles.push(dta);
-                }
-                //  console.log('profile',result)
-                data = {
-                    "status": true,
-                    "msg": 'successful',
-                    "profiles": profiles
-                };
-                res.send(data);
             });
 
         } else {
             data = {
-                "status": false,
-                "msg": 'Invalid User'
-            };
+                'status': false,
+                'msg': 'Invalid email or name'
+            }
+            res.status(200).send(data);
+        }
+    }
+});
+
+/*** Edit User ***/
+router.post('/edit/user', async function (req, res) {
+
+    res.setHeader('Content-Type', 'application/json');
+
+    var verify = await verifyToken(req, res);
+
+    if (verify.status !== undefined && verify.status == true) {
+        var userName = req.body.name;
+        var userEmail = req.body.email;
+        var user_id = req.body.user_id
+        if (!empty(userEmail) && !empty(userName)) {
+            var user = await sql.query("SELECT * FROM users WHERE email = '" + userEmail + "' AND user_id != '" + user_id + "'");
+
+            if (user.length > 0) {
+                data = {
+                    'status': false,
+                    'msg': 'User Already Registered. Please use another email.',
+                }
+                res.status(200).send(data);
+                return;
+            }
+            let PrevUserData = await helpers.getUserDataByUserId(user_id)
+            var sql1 = "UPDATE users set user_name ='" + userName + "',  email = '" + userEmail + "' WHERE user_id ='" + user_id + "'";
+            sql.query(sql1, async function (error, rows) {
+                if (error) {
+                    console.log(error);
+                }
+
+                if (PrevUserData[0].email != userEmail) {
+
+                    var html = 'User details are : <br> ' +
+                        'User ID : ' + user_id + '.<br> ' +
+                        'Name : ' + userName + '<br> ' +
+                        'Email : ' + userEmail + '<br> '
+                    sendEmail("User info Changed Successfully", html, verify.user.email)
+                    sendEmail("User Info Changed Successfully", html, userEmail)
+                }
+
+                //res.send("Email has been sent successfully");
+                let userData = await helpers.getUserDataByUserId(user_id)
+                let data = await helpers.getAllRecordbyUserID(user_id)
+                userData[0].devicesList = data
+
+                data = {
+                    'status': true,
+                    'msg': 'User Info has been changed successfully.',
+                    'user': userData,
+                }
+                res.status(200).send(data);
+
+            });
+
+        } else {
+            data = {
+                'status': false,
+                'msg': 'Invalid email or name'
+            }
+            res.status(200).send(data);
+        }
+    }
+});
+/*** DELETE User ***/
+router.put('/delete_user/:user_id', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify.status !== undefined && verify.status == true) {
+        var user_id = req.params.user_id
+        if (!empty(user_id) && user_id != undefined) {
+            let deleteUserQ = "UPDATE users SET del_status = 1 WHERE user_id ='" + user_id + "'";
+            // console.log(deleteUserQ);
+            sql.query(deleteUserQ, function (err, result) {
+                if (err) {
+                    console.log(err)
+                }
+                if (result && result.affectedRows !== 0) {
+                    data = {
+                        'status': true,
+                        'msg': 'User deleted successfully.'
+                    }
+                    res.send(data);
+                    return
+                } else {
+                    data = {
+                        'status': true,
+                        'msg': 'User not deleted try again later.'
+                    }
+                    res.send(data);
+                    return
+                }
+            })
+        } else {
+            data = {
+                'status': false,
+                'msg': 'Invalid User.'
+            }
             res.send(data);
+            return
+        }
+    }
+});
+/***UNDO DELETE User ***/
+router.put('/undo_delete_user/:user_id', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify.status !== undefined && verify.status == true) {
+        var user_id = req.params.user_id
+        if (!empty(user_id) && user_id != undefined) {
+            let deleteUserQ = "UPDATE users SET del_status = 0 WHERE user_id ='" + user_id + "'";
+            console.log(deleteUserQ);
+            sql.query(deleteUserQ, function (err, result) {
+                if (err) {
+                    console.log(err)
+                }
+                if (result && result.affectedRows !== 0) {
+                    data = {
+                        'status': true,
+                        'msg': 'User added again successfully.'
+                    }
+                    res.send(data);
+                    return
+                } else {
+                    data = {
+                        'status': true,
+                        'msg': 'User not added try again later.'
+                    }
+                    res.send(data);
+                    return
+                }
+            })
+        } else {
+            data = {
+                'status': false,
+                'msg': 'Invalid User.'
+            }
+            res.send(data);
+            return
+        }
+    }
+});
+
+
+
+
+/**UPDATE Profile details  **/
+router.put('/updateProfile/:id', async function (req, res) {
+    res.setHeader('Content-Type', 'application/json');
+
+    var verify = await verifyToken(req, res);
+    if (verify.status !== undefined && verify.status == true) {
+        sql.query('UPDATE dealers SET `dealer_name` = ? where `dealer_id` = ?', [req.body.name, req.body.dealerId], function (error, rows, status) {
+
+            if (error) {
+                console.log(error);
+            }
+            if (status) {
+                data = {
+                    "status": false,
+                    "data": req.body,
+                    "msg": "Error While Updating Profile"
+                };
+            } else {
+                data = {
+                    "status": true,
+                    "data": req.body,
+                    "msg": "Profile Updated Successfully"
+                };
+            }
+
+            console.log('success');
+            res.send(data);
+        });
+    }
+});
+
+
+/** Reset password dealers (Admin Panel) **/
+router.post('/resetpwd', async function (req, res) {
+
+    var verify = await verifyToken(req, res);
+    var isReset = false;
+    if (verify.status !== undefined && verify.status == true) {
+        var user = verify.user;
+        if (req.body.pageName != undefined && req.body.pageName != "") {
+            if (user.user_type === ADMIN || user.user_type === DEALER) {
+                var newpwd = generator.generate({
+                    length: 10,
+                    numbers: true
+                });
+                isReset = true;
+                var query = "SELECT password FROM dealers WHERE dealer_id=" + req.body.dealer_id + " limit 1";
+                var rslt = await sql.query(query);
+                var curntPassword = rslt[0].password;
+            }
+        } else {
+
+            if (req.body.newpwd != undefined) {
+                var newpwd = req.body.newpwd;
+                var curntPassword = md5(req.body.curntpwd);
+            }
+        }
+        // console.log("new password " + newpwd);
+        var email = req.body.dealer_email;
+        var dealer_id = req.body.dealer_id;
+        var enc_pwd = md5(newpwd); // encryted pwd
+
+
+        if (!empty(email) && !empty(newpwd) && !empty(dealer_id)) {
+
+            var query = "SELECT link_code from dealers where dealer_id=" + dealer_id + " AND password='" + curntPassword + "' limit 1";
+
+
+            var result = await sql.query(query);
+            if (result.length) {
+                // console.log('error');
+                if (isReset) {
+
+                    var subject = "Password Reset";
+                    var message = 'Your login details are : <br> Email : ' + email + '<br> Password : ' + newpwd + '<br> Dealer id : ' + dealer_id + '<br> Dealer Pin : ' + result[0].link_code + '.<br> Below is the link to login : <br> http://www.lockmesh.com <br>';
+                } else {
+                    var subject = "Password Change";
+                    var message = 'You have changed your password in your Lockmesh.com account. <br><br> This is just to inform you about the activity. If it was not you, please immediately contact your provider to reset the password.';
+                }
+
+                sendEmail(subject, message, email, function (errors, response) {
+                    if (errors) {
+                        res.send("Email could not sent due to error: " + errors);
+                        return;
+                    } else {
+
+                        var sq = "update dealers set password = '" + enc_pwd + "' where dealer_id = '" + dealer_id + "'";
+                        sql.query(sq, function (error, rows) {
+
+
+                            if (error) {
+                                console.log(error);
+                            }
+
+                            if (rows.affectedRows == 0) {
+                                data = {
+                                    "status": false,
+                                    "data": rows
+                                };
+                                res.send(data);
+                                return;
+                            } else {
+                                data = {
+
+                                    "status": true,
+                                    "msg": "Password changed successfully.Please check your email."
+                                };
+                                res.send(data);
+                                return;
+                            }
+                        });
+                    }
+
+                });
+            } else {
+                data = {
+                    "status": false,
+                    "msg": 'Invalid User and Password'
+                };
+                res.send(data);
+                return;
+            }
+
+
+        } else {
+
+            res.json({
+                status: false,
+                "msg": "Invalid details"
+            });
+            return;
         }
     }
 
 });
 
+// =================== Dealers ================= //
+/*Get All Dealers */
+router.get('/dealers', dealerController.getAllDealers);
+
+/*Get dealers*/
+router.get('/dealers/:pageName', dealerController.getDealers);
+
+/*** Add Dealer ***/
+router.post('/add/dealer', dealerController.addDealer);
+
+/** Edit Dealer (Admin panel) **/
+router.put('/edit/dealers', dealerController.editDealers);
+
+/** Delete Dealer from admin Panel**/
+router.post('/dealer/delete/', dealerController.deleteDealer);
+
+/** Undo Dealer / S-Dealer **/
+router.post('/dealer/undo', dealerController.undoDealer);
+
+/** Suspend Dealer **/
+router.post('/dealer/suspend', dealerController.suspendDealer);
+
+/** Activate Dealer **/
+router.post('/dealer/activate', dealerController.activateDealer);
+
+
+/** Get logged in Dealer permitted apps  **/
+router.get('/get_dealer_apps', async function (req, res) {
+    // console.log('apoi recivedx')
+    var verify = await verifyToken(req, res);
+    if (verify.status !== undefined && verify.status == true) {
+        let loggedUserId = verify.user.id;
+        let loggedUserType = verify.user.user_type;
+
+        let getAppsQ = "SELECT apk_details.* FROM apk_details ";
+        if (loggedUserType !== Constants.ADMIN) {
+            getAppsQ = getAppsQ + " JOIN dealer_apks on dealer_apks.apk_id = apk_details.id WHERE dealer_apks.dealer_id =" + loggedUserId + " AND delete_status=0 AND apk_type != 'permanent'";
+        } else {
+            getAppsQ = getAppsQ + " WHERE delete_status=0 AND apk_type != 'permanent'";
+
+        }
+        // console.log(getAppsQ);
+        let apps = await sql.query(getAppsQ);
+
+        if (apps.length > 0) {
+            let data = []
+            for (var i = 0; i < apps.length; i++) {
+                dta = {
+                    apk_id: apps[i].id,
+                    apk_name: apps[i].app_name,
+                    logo: apps[i].logo,
+                    apk: apps[i].apk,
+                    package_name: apps[i].package_name,
+                    version_name: apps[i].version_name,
+                    guest: false,
+                    encrypted: false,
+                    enable: false,
+                    apk_status: apps[i].status,
+                    deleteable: (apps[i].apk_type == "permanent") ? false : true
+                }
+                data.push(dta);
+            }
+
+            return res.json({
+                status: true,
+                list: data
+            });
+
+        } else {
+            data = {
+                status: false,
+                msg: "No result found",
+                list: []
+            }
+
+            res.send(data);
+        }
+    }
+});
+
+router.get('/get_usr_acc_id/:device_id', async function (req, res) {
+    var verify = await verifyToken(req, res);
+
+    if (verify.status !== undefined && verify.status == true) {
+        //console.log('id is the ', req.params);
+        let query = "select usr_acc.id from usr_acc left join devices on devices.id=usr_acc.device_id where devices.device_id='" + req.params.device_id + "'";
+
+        await sql.query(query, async (error, rslt) => {
+            // console.log(query, 'rslt id ', rslt)
+            res.send({
+                status: true,
+                user_acount_id: rslt[0].id,
+            });
+        })
+    }
+})
+
+
+router.get('/get_app_permissions', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    // console.log('get app permisiion si sdaf', verify.status)
+    if (verify.status !== undefined && verify.status == true) {
+        // console.log('id is the ', req.params);
+        let loggedUserType = verify.user.user_type;
+        // if (loggedUserType !== Constants.ADMIN) {
+        let query = "select id, unique_name as uniqueName, label, package_name as packageName, icon, extension, visible, default_app, extension_id, created_at from default_apps";
+
+        sql.query(query, async (error, apps) => {
+
+            if (error) {
+                console.log(error)
+            };
+;            // console.log(query, 'rslt  ', apps);
+           let Extension = [];
+            let onlyApps = [];
+            for (let item of apps) {
+                let subExtension = [];
+                // console.log("extenstion id", item.extension_id);
+                if (item.extension === 1 && item.extension_id === 0) {
+                    // console.log('main', item)
+                    Extension.push(item);
+                }
+
+                if (item.extension == 0 && item.extension_id === 0) {
+                    onlyApps.push(item)
+                }
+            }
+
+            let newExtlist = [];
+            for (let ext of Extension) {
+                let subExtension = [];
+
+                for (let item of apps) {
+                    // console.log(ext.id, item.extension_id);
+                    if (ext.id === item.extension_id) {
+                        //  console.log('sub ext item', item.guest)
+                        // console.log(ext.unique_name, 'dfs',item.unique_name);
+                        subExtension.push({
+                            uniqueName: ext.uniqueName,
+                            uniqueExtension: item.uniqueName,
+                            guest: item.guest != undefined ? item.guest : 0,
+                            label: item.label,
+                            icon: item.icon,
+                            encrypted: item.encrypted != undefined ? item.encrypted : 0,
+                            id: item.id,
+                            device_id: item.device_id,
+                            app_id: item.id,
+                            default_app: item.default_app
+                        });
+                    }
+
+                }
+
+
+                newExtlist.push({
+                    uniqueName: ext.uniqueName,
+                    guest: ext.guest != undefined ? ext.guest : 0,
+                    encrypted: ext.encrypted != undefined ? ext.encrypted : 0,
+                    enable: ext.enable != undefined ? ext.enable : 0,
+                    label: ext.label,
+                    subExtension: subExtension,
+                    extension: ext.extension,
+                    default_app: ext.default_app,
+                    visible: ext.visible
+
+                })
+            }
+
+
+            res.send({
+                status: true,
+                extensions: newExtlist,
+                appPermissions: onlyApps
+            });
+        })
+    }
+    // }
+
+});
+
+/** Get Dropdown Selected Items **/
+router.get('/dealer/gtdropdown/:dropdownType', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    // console.log('done or not');
+    if (verify.status !== undefined && verify.status == true) {
+        // console.log('data from req', req.params.dropdownType);
+        let dealer_id = verify.user.id;
+        let dropdownType = req.params.dropdownType;
+        sql.query("select * from dealer_dropdown_list where dealer_id = " + dealer_id + " AND type = '" + dropdownType + "'", function (err, rslts) {
+            if (err) {
+                console.log(err)
+            }
+
+            if (rslts.length == 0) {
+                data = {
+                    "status": false,
+                    "msg": "No data found",
+                    "data": '[]'
+                };
+                res.send(data);
+            } else {
+                if (rslts[0].selected_items != '' && rslts[0].selected_items != null) {
+                    var str = rslts[0].selected_items;
+
+                    data = {
+                        "status": true,
+                        "data": str
+                    };
+                    res.send(data);
+                } else {
+                    data = {
+                        "status": false,
+                        "msg": "No data found",
+                        "data": '[]'
+                    };
+                    res.send(data);
+                }
+            }
+        });
+    }
+});
+
+router.post('/dealer/dropdown', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify.status !== undefined && verify.status == true) {
+        var selected_items = req.body.selected_items;
+        var dropdownType = req.body.pageName;
+        var dealer_id = verify.user.id;
+        var squery = "select * from dealer_dropdown_list where dealer_id = " + dealer_id + " AND type ='" + dropdownType + "'";
+        // console.log('query', squery);
+        var srslt = await sql.query(squery);
+        // console.log('query result', srslt);
+
+        if (srslt.length == 0) {
+            var squery = sql.query("insert into dealer_dropdown_list (dealer_id, selected_items, type) values (" + dealer_id + ", '" + selected_items + "', '" + dropdownType + "')", function (err, rslts) {
+                data = {
+                    "status": true,
+                    "msg": 'Items Added.',
+                    "data": rslts
+                };
+                res.send(data);
+            });
+        } else {
+
+            sql.query("update dealer_dropdown_list set selected_items = '" + selected_items + "' where type='" + dropdownType + "' AND dealer_id='" + dealer_id + "'", function (err, row) {
+                // console.log('squery data ', 'rowws', row);
+                if (row.affectedRows != 0) {
+                    data = {
+                        "status": true,
+                        "msg": 'Items Updated.',
+                        "data": row
+                    };
+                    res.send(data);
+                } else {
+                    data = {
+                        "status": false,
+                        "msg": 'Items Not Updated.',
+                        "data": row
+                    };
+                    res.send(data);
+
+                }
+            });
+        }
+    }
+});
+
+router.get('/dealer/getPagination/:dropdownType', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    // console.log('done or not');
+    if (verify.status !== undefined && verify.status == true) {
+        // console.log('data from req', req.params.dropdownType);
+        let dealer_id = verify.user.id;
+        let dropdownType = req.params.dropdownType;
+        sql.query("select record_per_page from dealer_pagination where dealer_id = " + dealer_id + " AND type = '" + dropdownType + "'", function (err, rslts) {
+            if (err) {
+                console.log(err)
+            }
+
+            if (rslts.length == 0) {
+                data = {
+                    "status": false,
+                    "msg": "No data found",
+                    "data": '10'
+                };
+                res.send(data);
+            } else {
+
+                data = {
+                    "status": true,
+                    "data": rslts[0].record_per_page
+
+                };
+                res.send(data);
+
+            }
+        });
+    }
+});
+
+router.post('/dealer/postPagination', async function (req, res) {
+    // console.log("Working")
+    var verify = await verifyToken(req, res);
+    if (verify.status !== undefined && verify.status == true) {
+        var selectedValue = req.body.selectedValue;
+        var dropdownType = req.body.pageName;
+        var dealer_id = verify.user.id;
+        var squery = "select * from dealer_pagination where dealer_id = " + dealer_id + " AND type ='" + dropdownType + "'";
+        var srslt = await sql.query(squery);
+
+        if (srslt.length == 0) {
+            var squery = sql.query("insert into dealer_pagination (dealer_id, record_per_page, type) values (" + dealer_id + ", '" + selectedValue + "', '" + dropdownType + "')", function (err, rslts) {
+                data = {
+                    status: true,
+                    msg: 'record Added.',
+                    data: rslts
+                };
+                res.send(data);
+            });
+        } else {
+
+            sql.query("update dealer_pagination set record_per_page = '" + selectedValue + "' where type='" + dropdownType + "' AND dealer_id='" + dealer_id + "'", function (err, row) {
+                // console.log('squery data ', 'rowws', row);
+                if (row && row.affectedRows !== 0) {
+                    data = {
+                        status: true,
+                        msg: 'Items Updated.',
+                        data: row
+                    };
+
+                    res.send(data);
+                } else {
+                    data = {
+                        status: false,
+                        msg: 'Items Not Updated.',
+                        data: row
+                    };
+                    res.send(data);
+
+                }
+            });
+        }
+    }
+});
+
+
+/** Dealer and S Dealer Info **/
+router.get('/getinfo', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify.status !== undefined && verify.status == true) {
+        var getinfo = "select * from dealers where dealer_id='" + verify.user.id + "'";
+
+        sql.query(getinfo, async function (err, rows) {
+            if (verify.user.user_type != 'sdealer') {
+                data = {
+                    "status": true,
+                    "dealer_id": rows[0].dealer_id,
+                    "dealer_name": rows[0].dealer_name,
+                    "dealer_email": rows[0].dealer_email,
+                    "link_code": rows[0].link_code
+                }
+            } else {
+                var gtdealername = await sql.query("select * from dealers where dealer_id = '" + rows[0].connected_dealer + "'");
+                data = {
+                    "status": true,
+                    "dealer_id": rows[0].dealer_id,
+                    "connected_dealer": gtdealername[0].dealer_name,
+                    "dealer_name": rows[0].dealer_name,
+                    "dealer_email": rows[0].dealer_email,
+                    "link_code": rows[0].link_code
+                }
+                res.send(data);
+            }
+            res.send(data);
+        });
+
+    }
+});
+
+// =========== Policy ============= //
+
+// policy name should be unique
 
 router.get('/get_policies', async function (req, res) {
     var verify = await verifyToken(req, res);
@@ -3362,7 +2451,10 @@ router.get('/get_policies', async function (req, res) {
                 // console.log('2 query',"select * from policy where (dealer_id='" + verify.user.id + "' OR id IN ("+prrr+")) AND delete_status=0")
                 sql.query("select * from policy where (dealer_id='" + verify.user.id + "' OR id IN (" + prrr + ")) AND delete_status=0", async function (error, results) {
 
-                    if (error) throw error;
+                    if (error) {
+                        console.lo
+g(error)   
+                    }
                     if (results.length > 0) {
                         // console.log(results);
                         let dealerRole = await helpers.getuserTypeIdByName(Constants.DEALER);
@@ -3456,7 +2548,9 @@ router.post('/change_policy_status', async function (req, res) {
 
         sql.query(query, (error, result) => {
 
-            if (error) throw error;
+            if (error) {
+                console.log(error);
+            }
             // console.log(result, 'relstsdf')
             if (result.affectedRows) {
                 data = {
@@ -3495,7 +2589,9 @@ router.post('/save_policy_changes', async function (req, res) {
         // console.log('qerury', query)
         sql.query(query, (error, result) => {
             console.log(result, 'relstsdf');
-            if (error) throw error;
+            if (error) {
+                console.log(error);
+            }
             if (result.affectedRows) {
                 data = {
                     "status": true,
@@ -3513,6 +2609,566 @@ router.post('/save_policy_changes', async function (req, res) {
         });
     }
 })
+
+router.post('/check_policy_name', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify['status'] && verify.status == true) {
+        try {
+            let policy_name = req.body.name !== undefined ? req.body.name : null;
+            let policy_id = req.body.policy_id;
+            console.log(policy_id, 'policy id is')
+            let loggedDealerId = verify.user.id;
+            let loggedDealerType = verify.user.user_type;
+            let connectedDealer = verify.user.connected_dealer;
+            let except_id = "";
+            let checkExistingQ = "SELECT policy_name FROM policy WHERE policy_name='" + policy_name + "' AND delete_status = 0 " + except_id;
+            if (loggedDealerType === ADMIN) {
+                if (policy_id != '') {
+                    console.log('if called')
+                    except_id = " AND id !='" + policy_id + "'";
+                    checkExistingQ = checkExistingQ + except_id;
+                }
+
+            } else if (loggedDealerType === DEALER) {
+                if (policy_id !== '') {
+                    except_id = " AND id !='" + policy_id + "'";
+                }
+                let subDealerQ = "SELECT dealer_id FROM dealers WHERE connected_dealer=" + loggedDealerId;
+                let subDealers = await sql.query(subDealerQ);
+                let subDealerArray = [];
+                subDealers.map((dealer) => {
+                    subDealerArray.push(dealer.dealer_id)
+                });
+                if (subDealerArray.length) {
+                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id in (" + subDealerArray.join() + "))" + except_id
+                } else {
+                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " )" + except_id
+                }
+            } else if (loggedDealerType === SDEALER) {
+                checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id = " + connectedDealer + ")" + except_id;
+            }
+            let checkExisting = await sql.query(checkExistingQ);
+            console.log(checkExistingQ, 'query is')
+            if (checkExisting.length) {
+                data = {
+                    status: false,
+                };
+                res.send(data);
+                return;
+            }
+            else {
+                data = {
+                    status: true,
+                };
+                res.send(data);
+                return;
+            }
+        } catch (error) {
+            console.log(error);
+        }
+
+    }
+});
+
+router.post('/save_policy', async function (req, res) {
+    try {
+        var verify = await verifyToken(req, res);
+        if (verify.status !== undefined && verify.status == true) {
+
+            let policy_name = req.body.data.policy_name !== undefined ? req.body.data.policy_name : null;
+            if (policy_name !== null) {
+                let policy_note = req.body.data.policy_note !== undefined ? req.body.data.policy_note : null;
+                let push_apps = null;
+                let app_list = null;
+                let secure_apps = null;
+                if (req.body.data.push_apps !== undefined) {
+                    req.body.data.push_apps.forEach((app) => {
+                        app.guest = (app.guest !== undefined) ? app.guest : false;
+                        app.enable = (app.enable !== undefined) ? app.enable : false;
+                        app.encrypted = (app.encrypted !== undefined) ? app.encrypted : false;
+
+                    });
+                    push_apps = JSON.stringify(req.body.data.push_apps);
+                }
+
+                if (req.body.data.app_list !== undefined) {
+                    req.body.data.app_list.forEach((app) => {
+                        app.guest = (app.guest !== undefined) ? app.guest : false;
+                        app.enable = (app.enable !== undefined) ? app.enable : false;
+                        app.encrypted = (app.encrypted !== undefined) ? app.encrypted : false;
+
+                    });
+                    app_list = JSON.stringify(req.body.data.app_list);
+                }
+
+                if (req.body.data.secure_apps !== undefined) {
+                    req.body.data.secure_apps.forEach((app) => {
+                        app.guest = (app.guest !== undefined) ? app.guest : false;
+                        // app.enable = (app.enable!==undefined)? app.enable: false;
+                        app.encrypted = (app.encrypted !== undefined) ? app.encrypted : false;
+
+                    });
+                    secure_apps = JSON.stringify(req.body.data.secure_apps);
+                }
+
+                let system_permissions = req.body.data.system_permissions !== undefined ? JSON.stringify(req.body.data.system_permissions) : null;
+
+                let loggedDealerId = verify.user.id;
+                let loggedDealerType = verify.user.user_type;
+                let connectedDealer = verify.user.connected_dealer;
+                let checkExistingQ = "SELECT policy_name FROM policy WHERE policy_name='" + policy_name + "' AND delete_status = 0 ";
+                // let checkExisting = await sql.query(checkExistingQ);
+
+                if (loggedDealerType === ADMIN) {
+
+                } else if (loggedDealerType === DEALER) {
+                    let subDealerQ = "SELECT dealer_id FROM dealers WHERE connected_dealer=" + loggedDealerId;
+                    let subDealers = await sql.query(subDealerQ);
+                    let subDealerArray = [];
+                    subDealers.map((dealer) => {
+                        subDealerArray.push(dealer.dealer_id)
+                    });
+                    if (subDealerArray.length) {
+                        checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id in (" + subDealerArray.join() + "))"
+                    } else {
+                        checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " )"
+                    }
+                } else if (loggedDealerType === SDEALER) {
+                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id = " + connectedDealer + ")";
+                }
+                let checkExisting = await sql.query(checkExistingQ);
+                if (checkExisting.length) {
+                    data = {
+                        status: false,
+                        msg: 'Policy name has already been taken',
+
+                    };
+                    res.send(data);
+                    return;
+                }
+                var command_name = '#' + policy_name.replace(/ /g, "_");
+
+                var applyQuery = "INSERT INTO policy (policy_name, policy_note, command_name, app_list, push_apps, controls, permissions, dealer_id, dealer_type, dealers,status) VALUES ('" + policy_name + "', '" + policy_note + "', '" + command_name + "', '" + app_list + "', '" + push_apps + "', '" + system_permissions + "', '" + secure_apps + "', '" + loggedDealerId + "', '" + loggedDealerType + "', '[]',1)";
+
+                sql.query(applyQuery, async function (err, rslts) {
+                    if (err){
+                        console.log(err)
+                    }
+                    // console.log('query/........... ', applyQuery)
+
+                    if (rslts.affectedRows) {
+                        data = {
+                            status: true,
+                            msg: 'Policy Saved Successfully',
+
+                        };
+                    } else {
+                        data = {
+                            status: false,
+                            msg: 'Policy Couldn\'t be saved'
+                        }
+                    }
+                    res.send(data);
+                    return;
+                })
+            } else {
+                data = {
+                    status: false,
+                    msg: 'Policy Couldn\'t be saved'
+                }
+                res.send(data);
+                return;
+            }
+
+        }
+    } catch (error) {
+        console.log(error)
+    }
+
+});
+
+router.post('/apply_policy/:device_id', async function (req, res) {
+    try {
+        var verify = await verifyToken(req, res);
+        if (verify.status !== undefined && verify.status == true) {
+            let device_id = req.params.device_id;
+            let dealer_id = verify.user.id
+            let userAccId = req.body.userAccId;
+            let policy_id = req.body.policyId;
+            if (device_id !== null || device_id !== '' || device_id !== undefined || device_id !== 'undefined' || policy_id !== null || policy_id !== '' || policy_id !== undefined || policy_id !== 'undefined') {
+
+                let getPolicyQ = "SELECT * FROM policy WHERE id =" + policy_id;
+                let policy = await sql.query(getPolicyQ)
+
+                if (policy.length) {
+                    policy = helpers.refactorPolicy(policy);
+
+                    var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES ('" + device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
+                    sql.query(applyQuery, async function (err, policyApplied) {
+                        if (err) {
+                            console.log(err)
+                        }
+
+                        if (policyApplied && policyApplied.affectedRows) {
+
+                            let isOnline = await device_helpers.isDeviceOnline(device_id, policy[0]);
+                            // var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
+                            var loadDeviceQ = "INSERT INTO policy_queue_jobs (policy_id,device_id,is_in_process) " + " VALUES ('" + policy_id + "','" + device_id + "',1)"
+                            // console.log(loadDeviceQ)
+                            await sql.query(loadDeviceQ)
+                            if (isOnline) {
+                                require("../bin/www").getPolicy(device_id, policy[0]);
+
+                                data = {
+                                    status: true,
+                                    online: true,
+                                };
+                            } else {
+                                require("../bin/www").getPolicy(device_id, policy[0]);
+                                data = {
+                                    status: true,
+
+                                };
+                            }
+                            res.send(data);
+                            return;
+                        } else {
+                            data = {
+                                status: false,
+                                msg: 'Error while Processing',
+                            };
+                            res.send(data);
+                        }
+
+                    });
+                } else {
+
+                }
+            }
+        }
+    } catch (error) {
+        console.log(error)
+    }
+});
+
+
+router.post('/save/profile', async function (req, res) {
+    try {
+        var verify = await verifyToken(req, res);
+        if (verify.status !== undefined && verify.status == true) {
+            // console.log('body is', req.body)
+            let name = req.body.profileName;
+            let dealer_id = verify.user.id;
+            let usr_acc_id = req.body.usr_acc_id;
+
+            let app_list = (req.body.device_setting.app_list == undefined) ? '' : JSON.stringify(req.body.device_setting.app_list);
+
+            let passwords = (req.body.device_setting.passwords == undefined) ? '' : JSON.stringify(req.body.device_setting.passwords);
+
+
+            let controls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
+
+            let permissions = (req.body.device_setting.extensions == undefined) ? '' : JSON.stringify(req.body.device_setting.extensions);
+
+            var query = "select id from usr_acc_profile where profile_name = '" + name + "'";
+
+            let result = await sql.query(query);
+
+
+            if (result.length == 0 || name == '') {
+                var applyQuery = "insert into usr_acc_profile (profile_name,dealer_id, user_acc_id, app_list,permissions, controls,passwords) values ('" + name + "', '" + dealer_id + "','" + usr_acc_id + "','" + app_list + "','" + permissions + "', '" + controls + "', '" + passwords + "')";
+                // console.log('query insert', applyQuery);
+                // console.log(applyQuery, 'thats it');
+
+                sql.query(applyQuery, async function (err, rslts) {
+                    if (err){
+                        console.log(err)
+                    }
+                    // console.log(rslts, 'rslt is query')
+                    if (rslts.affectedRows) {
+                        data = {
+                            "status": true,
+                            "msg": 'Profile Saved Successfully',
+                            "data": rslts
+                        };
+                        res.send(data);
+                    } else {
+                        data = {
+                            "status": false,
+                            "msg": 'Profile Name is already Exist',
+                        };
+                        res.send(data);
+                    }
+
+
+                });
+
+            } else {
+                data = {
+                    "status": false,
+                    "msg": 'Profile Name is already Exist',
+                };
+                res.send(data);
+            }
+
+        }
+    } catch (error) {
+        console.log(error)
+    }
+});
+
+
+router.post('/apply_settings/:device_id', async function (req, res) {
+    try {
+        var verify = await verifyToken(req, res);
+        if (verify.status !== undefined && verify.status == true) {
+            let device_id = req.params.device_id;
+
+            let usrAccId = req.body.usr_acc_id;
+            let type = req.body.device_setting.type
+
+            let dealer_id = verify.user.id
+
+            let device_setting = req.body.device_setting;
+
+            let app_list = (device_setting.app_list === undefined) ? '' : JSON.stringify(device_setting.app_list);
+
+            let passwords = (device_setting.passwords === undefined) ? '' : JSON.stringify(device_setting.passwords);
+
+            let controls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
+            // console.log("hello controls", controls);
+            let subExtensions = (req.body.device_setting.subExtensions == undefined) ? '' : JSON.stringify(req.body.device_setting.subExtensions);
+            let applyQuery = '';
+            if (type == 'profile') {
+
+                applyQuery = "insert into device_history (device_id,dealer_id,user_acc_id, profile_name,app_list, passwords, controls, permissions, type) values ('" + device_id + "'," + dealer_id + "," + usrAccId + ",'" + device_setting.name + "' , '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "' , 'profile')";
+            } else {
+                applyQuery = "insert into device_history (device_id,dealer_id,user_acc_id, app_list, passwords, controls, permissions) values ('" + device_id + "'," + dealer_id + "," + usrAccId + ", '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "')";
+            }
+
+            await sql.query(applyQuery, async function (err, rslts) {
+                if (err) {
+                    console.log(err);
+                }
+
+                let isOnline = await device_helpers.isDeviceOnline(device_id);
+                let permissions = subExtensions;
+
+                if (isOnline) {
+                    require("../bin/www").sendEmit(app_list, passwords, controls, permissions, device_id);
+                }
+
+                if (rslts) {
+                    if (type == 'profile') {
+                        data = {
+                            "status": true,
+                            "msg": 'Profile Applied Successfully',
+                        };
+                        res.send(data);
+                    }
+                    else {
+                        data = {
+                            "status": true,
+                            "msg": 'Settings Applied Successfully',
+                        };
+                        res.send(data);
+                    }
+                } else {
+                    data = {
+                        "status": false,
+                        "msg": 'Error while Processing',
+                    };
+                    res.send(data);
+                }
+
+            });
+
+        }
+    } catch (error) {
+        console.log(error)
+    }
+
+});
+
+router.post('/apply_pushapps/:device_id', async function (req, res) {
+    try {
+        var verify = await verifyToken(req, res);
+        if (verify.status !== undefined && verify.status == true) {
+            let device_id = req.params.device_id;
+
+            let dealer_id = verify.user.id
+
+            let usrAccId = req.body.usrAccId;
+
+            let push_apps = req.body.push_apps;
+            let noOfApps = push_apps.length
+
+            let apps = (push_apps === undefined) ? '' : JSON.stringify(push_apps);
+
+            var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, push_apps, type) VALUES ('" + device_id + "'," + dealer_id + "," + usrAccId + ", '" + apps + "', 'push_apps')";
+
+            sql.query(applyQuery, async function (err, rslts) {
+                if (err) {
+                    console.log(err);
+                }
+                if (rslts) {
+                    let isOnline = await device_helpers.isDeviceOnline(device_id);
+                    //job Queue query
+                    var loadDeviceQ = "INSERT INTO apps_queue_jobs (device_id,action,type,total_apps,is_in_process) " + " VALUES ('" + device_id + "', 'push', 'push', " + noOfApps + " ,1)"
+                    // var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
+                    await sql.query(loadDeviceQ)
+
+                    if (isOnline) {
+
+                        require("../bin/www").applyPushApps(apps, device_id);
+                        data = {
+                            "status": true,
+                            "online": true,
+                            noOfApps: noOfApps
+                        };
+                    }
+                    else {
+                        require("../bin/www").applyPushApps(apps, device_id);
+                        data = {
+                            "status": true,
+                            noOfApps: noOfApps
+                        };
+                    }
+                    res.send(data);
+                } else {
+                    data = {
+                        "status": false,
+                        "msg": 'Error while Processing',
+                    };
+                    res.send(data);
+                }
+
+            });
+
+        }
+    } catch (error) {
+        console.log(error)
+    }
+});
+
+
+
+router.post('/apply_pullapps/:device_id', async function (req, res) {
+    try {
+        var verify = await verifyToken(req, res);
+        if (verify.status !== undefined && verify.status == true) {
+            let device_id = req.params.device_id;
+
+            let usrAccId = req.body.usrAccId;
+
+            let dealer_id = verify.user.id
+            let pull_apps = req.body.pull_apps;
+            let noOfApps = pull_apps.length
+
+            let apps = (pull_apps === undefined) ? '' : JSON.stringify(pull_apps);
+
+            var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, pull_apps, type) VALUES ('" + device_id + "'," + dealer_id + "," + usrAccId + ", '" + apps + "', 'pull_apps')";
+
+            sql.query(applyQuery, async function (err, rslts) {
+                if (err) {
+                    console.log(err);
+                }
+                if (rslts) {
+
+                    let isOnline = await device_helpers.isDeviceOnline(device_id);
+                    var loadDeviceQ = "INSERT INTO apps_queue_jobs (device_id,action,type,total_apps,is_in_process) " + " VALUES ('" + device_id + "', 'pull', 'pull', " + noOfApps + " ,1)"
+                    // var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
+                    await sql.query(loadDeviceQ)
+                    if (isOnline) {
+                        data = {
+                            "status": true,
+                            "online": true,
+                            noOfApps: noOfApps
+                        };
+                    } else {
+                        data = {
+                            "status": true,
+                            noOfApps: noOfApps
+                        };
+                    }
+                    res.send(data);
+                    require("../bin/www").getPullApps(apps, device_id);
+                } else {
+                    data = {
+                        "status": false,
+                        "msg": 'Error while Processing',
+                    };
+                    res.send(data);
+                }
+
+            });
+
+        }
+    } catch (error) {
+        console.log(error)
+    }
+});
+
+router.post('/get_profiles', async function (req, res) {
+    var verify = await verifyToken(req, res);
+    if (verify.status === true) {
+        let userId = verify.user.id;
+        let userType = await helpers.getUserType(userId);
+        let user_acc_id = await device_helpers.getUserAccountId(req.body.device_id);
+        // console.log('user id si', user_acc_id);
+        let where = "where";
+        let isValid = true;
+        let profiles = [];
+        // console.log('d_id', user_acc_id);
+        if (user_acc_id != undefined && user_acc_id != '' && user_acc_id != null) {
+            where = where + " user_acc_id='" + user_acc_id + "'";
+
+        } else {
+            where = "";
+        }
+
+        if (isValid) {
+            let query = "SELECT * FROM usr_acc_profile " + where;
+
+            // console.log("getprofiles query", query);
+            sql.query(query, (error, results) => {
+
+                for (var i = 0; i < results.length; i++) {
+                    // console.log('push apps', results[i].push_apps)
+                    let controls = (results[i].controls !== undefined && results[i].controls !== null) ? JSON.parse(results[i].controls) : JSON.parse('[]');;
+                    let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== null) ? JSON.parse(results[i].app_list) : JSON.parse('[]');
+                    let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : JSON.parse('[]');
+                    let passwords = (results[i].passwords !== undefined && results[i].passwords !== null) ? JSON.parse(results[i].passwords) : JSON.parse('[]');
+
+                    dta = {
+                        id: results[i].id,
+                        profile_name: results[i].profile_name,
+                        controls: controls,
+                        secure_apps: secure_apps,
+                        app_list: app_list2,
+                        passwords: passwords
+                    }
+                    profiles.push(dta);
+                }
+                //  console.log('profile',result)
+                data = {
+                    "status": true,
+                    "msg": 'successful',
+                    "profiles": profiles
+                };
+                res.send(data);
+            });
+
+        } else {
+            data = {
+                "status": false,
+                "msg": 'Invalid User'
+            };
+            res.send(data);
+        }
+    }
+
+});
 
 
 router.post('/get_device_history', async function (req, res) {
@@ -3548,326 +3204,6 @@ router.post('/get_device_history', async function (req, res) {
     }
 
 });
-
-// router.post('/get_profiles', async function (req, res) {
-//     var verify = verifyToken(req, res);
-//     if (verify.status === true) {
-//         let userId = verify.user.id;
-//         let userType = await helpers.getUserType(userId);
-//         let profileType = "";
-//         let where = "";
-//         let isValid = true;
-// // console.log('d_id', req.body.device_id);
-//         if (req.body.device_id != undefined && req.body.device_id != '' && req.body.device_id != null) {
-//             profileType = "history";
-//             where = where + " user_acc_id='" + req.body.device_id + "' AND type= '" + profileType + "' ";
-
-//         } else {
-//             where = where + " type!='history' ";
-//         }
-
-//         if (userType != ADMIN) {
-//             if (userType == DEALER) {
-//                 where = where + " AND ((type='profile' AND dealer_id=" + userId + ") OR type='policy')";
-//             } else {
-//                 let connected_dealer = verify.user.connected_dealer;
-//                 if (connected_dealer != undefined && connected_dealer != '' && connected_dealer != null && connected_dealer != 0) {
-//                     where = where + " AND ((type='profile' AND dealer_id=" + connected_dealer + ") OR type='policy')";
-//                 } else {
-//                     isValid = false;
-//                 }
-//             }
-//         }
-//         // console.log(where);
-//         if (isValid) {
-//             let query = "SELECT * FROM device_history where " + where;
-//             console.log("getprofiles query", query);
-//             sql.query(query, (error, result) => {
-//                 console.log("now reslt", result);
-//                 data = {
-//                     "status": true,
-//                     "msg": 'successful',
-//                     "profiles": result
-//                 };
-//                 res.send(data);
-//             });
-
-//         } else {
-//             data = {
-//                 "status": false,
-//                 "msg": 'Invalid User'
-//             };
-//             res.send(data);
-//         }
-//     }
-
-// });
-
-/** Save Dropdown Items Dealers/Sub Dealers **/
-router.post('/dealer/dropdown', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    if (verify.status !== undefined && verify.status == true) {
-        var selected_items = req.body.selected_items;
-        var dropdownType = req.body.pageName;
-        var dealer_id = verify.user.id;
-        var squery = "select * from dealer_dropdown_list where dealer_id = " + dealer_id + " AND type ='" + dropdownType + "'";
-        // console.log('query', squery);
-        var srslt = await sql.query(squery);
-        // console.log('query result', srslt);
-
-        if (srslt.length == 0) {
-            var squery = sql.query("insert into dealer_dropdown_list (dealer_id, selected_items, type) values (" + dealer_id + ", '" + selected_items + "', '" + dropdownType + "')", function (err, rslts) {
-                data = {
-                    "status": true,
-                    "msg": 'Items Added.',
-                    "data": rslts
-                };
-                res.send(data);
-            });
-        } else {
-
-            sql.query("update dealer_dropdown_list set selected_items = '" + selected_items + "' where type='" + dropdownType + "' AND dealer_id='" + dealer_id + "'", function (err, row) {
-                // console.log('squery data ', 'rowws', row);
-                if (row.affectedRows != 0) {
-                    data = {
-                        "status": true,
-                        "msg": 'Items Updated.',
-                        "data": row
-                    };
-                    res.send(data);
-                } else {
-                    data = {
-                        "status": false,
-                        "msg": 'Items Not Updated.',
-                        "data": row
-                    };
-                    res.send(data);
-
-                }
-            });
-        }
-    }
-});
-
-router.post('/dealer/postPagination', async function (req, res) {
-    // console.log("Working")
-    var verify = await verifyToken(req, res);
-    if (verify.status !== undefined && verify.status == true) {
-        var selectedValue = req.body.selectedValue;
-        var dropdownType = req.body.pageName;
-        var dealer_id = verify.user.id;
-        var squery = "select * from dealer_pagination where dealer_id = " + dealer_id + " AND type ='" + dropdownType + "'";
-        var srslt = await sql.query(squery);
-
-        if (srslt.length == 0) {
-            var squery = sql.query("insert into dealer_pagination (dealer_id, record_per_page, type) values (" + dealer_id + ", '" + selectedValue + "', '" + dropdownType + "')", function (err, rslts) {
-                data = {
-                    status: true,
-                    msg: 'record Added.',
-                    data: rslts
-                };
-                res.send(data);
-            });
-        } else {
-
-            sql.query("update dealer_pagination set record_per_page = '" + selectedValue + "' where type='" + dropdownType + "' AND dealer_id='" + dealer_id + "'", function (err, row) {
-                // console.log('squery data ', 'rowws', row);
-                if (row && row.affectedRows !== 0) {
-                    data = {
-                        status: true,
-                        msg: 'Items Updated.',
-                        data: row
-                    };
-
-                    res.send(data);
-                } else {
-                    data = {
-                        status: false,
-                        msg: 'Items Not Updated.',
-                        data: row
-                    };
-                    res.send(data);
-
-                }
-            });
-        }
-    }
-});
-
-router.get('/dealer/getPagination/:dropdownType', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    // console.log('done or not');
-    if (verify.status !== undefined && verify.status == true) {
-        // console.log('data from req', req.params.dropdownType);
-        let dealer_id = verify.user.id;
-        let dropdownType = req.params.dropdownType;
-        sql.query("select record_per_page from dealer_pagination where dealer_id = " + dealer_id + " AND type = '" + dropdownType + "'", function (err, rslts) {
-            if (err) {
-                throw (err);
-            }
-
-            if (rslts.length == 0) {
-                data = {
-                    "status": false,
-                    "msg": "No data found",
-                    "data": '10'
-                };
-                res.send(data);
-            } else {
-
-                data = {
-                    "status": true,
-                    "data": rslts[0].record_per_page
-
-                };
-                res.send(data);
-
-            }
-        });
-    }
-});
-
-/** Get Dropdown Selected Items **/
-router.get('/dealer/gtdropdown/:dropdownType', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    // console.log('done or not');
-    if (verify.status !== undefined && verify.status == true) {
-        // console.log('data from req', req.params.dropdownType);
-        let dealer_id = verify.user.id;
-        let dropdownType = req.params.dropdownType;
-        sql.query("select * from dealer_dropdown_list where dealer_id = " + dealer_id + " AND type = '" + dropdownType + "'", function (err, rslts) {
-            if (err) {
-                throw (err);
-            }
-
-            if (rslts.length == 0) {
-                data = {
-                    "status": false,
-                    "msg": "No data found",
-                    "data": '[]'
-                };
-                res.send(data);
-            } else {
-                if (rslts[0].selected_items != '' && rslts[0].selected_items != null) {
-                    var str = rslts[0].selected_items;
-
-                    data = {
-                        "status": true,
-                        "data": str
-                    };
-                    res.send(data);
-                } else {
-                    data = {
-                        "status": false,
-                        "msg": "No data found",
-                        "data": '[]'
-                    };
-                    res.send(data);
-                }
-            }
-        });
-    }
-});
-
-/** Dealer and S Dealer Info **/
-router.get('/getinfo', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    if (verify.status !== undefined && verify.status == true) {
-        var getinfo = "select * from dealers where dealer_id='" + verify.user.id + "'";
-
-        sql.query(getinfo, async function (err, rows) {
-            if (verify.user.user_type != 'sdealer') {
-                data = {
-                    "status": true,
-                    "dealer_id": rows[0].dealer_id,
-                    "dealer_name": rows[0].dealer_name,
-                    "dealer_email": rows[0].dealer_email,
-                    "link_code": rows[0].link_code
-                }
-            } else {
-                var gtdealername = await sql.query("select * from dealers where dealer_id = '" + rows[0].connected_dealer + "'");
-                data = {
-                    "status": true,
-                    "dealer_id": rows[0].dealer_id,
-                    "connected_dealer": gtdealername[0].dealer_name,
-                    "dealer_name": rows[0].dealer_name,
-                    "dealer_email": rows[0].dealer_email,
-                    "link_code": rows[0].link_code
-                }
-                res.send(data);
-            }
-            res.send(data);
-        });
-
-    }
-});
-
-/** Save Dropdown Items Admin **/
-router.post('/admin/dropdown', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    if (verify.status !== undefined && verify.status == true) {
-        //  console.log(req.body.selected_items);
-        if (!empty(req.body.selected_items)) {
-            sql.query("update users set selected_items = '" + req.body.selected_items + "' where email = 'admin@gmail.com' and role = 'admin'", function (err, row) {
-
-                if (row.affectedRows != 0) {
-                    data = {
-                        "status": true,
-                        "msg": 'Items Updated.',
-                        "data": row
-                    };
-                    res.send(data);
-                } else {
-                    data = {
-                        "status": true,
-                        "msg": 'Items Not Updated.',
-                        "data": row
-                    };
-                    res.send(data);
-
-                }
-            });
-        }
-
-    }
-});
-
-/** Get Dropdown Selected Items **/
-router.get('/admin/gtdropdown', async function (req, res) {
-    var verify = await verifyToken(req, res);
-    if (verify.status !== undefined && verify.status == true) {
-        sql.query("select * from users where email = 'admin@gmail.com' and role = 'admin'", function (err, rslts) {
-            if (rslts.length == 0) {
-                data = {
-                    "status": true,
-                    "msg": "No data found"
-                };
-                res.send(data);
-            } else {
-
-                if (rslts[0].selected_items != '' && rslts[0].selected_items != null) {
-                    var str = rslts[0].selected_items;
-
-                    data = {
-                        "status": true,
-                        "data": str
-                    };
-                    res.send(data);
-                } else {
-                    data = {
-                        "status": false,
-                        "msg": "No data found"
-                    };
-                    res.send(data);
-                }
-
-            }
-
-        });
-
-    }
-});
-
 
 
 router.post('/save_new_data', async function (req, res) {
@@ -3968,7 +3304,9 @@ router.get('/export/:fieldName', async (req, res) => {
                 query = "SELECT * FROM pgp_emails ";
             }
             sql.query(query, async (error, response) => {
-                if (error) throw error;
+                if (error) {
+                    console.log(error);
+                }
                 if (response.length) {
                     var data = [];
 
@@ -4249,21 +3587,19 @@ router.get('/get_used_chat_ids', async (req, res) => {
         })
     }
 });
-router.post('/delete_CSV_ids/:fieldName', async (req, res) => {
+router.post('/releaseCSV/:fieldName', async (req, res) => {
     var verify = await verifyToken(req, res);
     var fieldName = req.params.fieldName
     var ids = req.body.ids
-    // console.log(ids);
     if (verify['status'] !== undefined && verify.status === true) {
-        console.log(fieldName, ids);
+        // console.log(fieldName, ids);
         if (fieldName === 'pgp_email') {
-            var idsName = ids.map((item) => {
-                return item.pgp_email
-            })
-            let query = "DELETE FROM pgp_emails where pgp_email IN ('" + idsName.join("','") + "')";
-            console.log(query);
+            let query = "UPDATE pgp_emails set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
+            // console.log(query);
             sql.query(query, (error, resp) => {
-                if (error) throw error
+                if (error) {
+                    console.log(error);
+                }
                 if (resp.affectedRows) {
                     let query = "select * from pgp_emails where used=1";
                     sql.query(query, (error, resp) => {
@@ -4283,42 +3619,47 @@ router.post('/delete_CSV_ids/:fieldName', async (req, res) => {
             });
         }
         else if (fieldName === 'sim_id') {
-            var idsName = ids.map((item) => {
-                return item.sim_id
-            })
-            let query = "DELETE FROM sim_ids where sim_id IN (" + idsName.join() + ")";
-            console.log(query);
+            let query = "UPDATE sim_ids set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
+            // console.log(query);
             sql.query(query, (error, resp) => {
-                if (error) throw error
+                if (error) {
+                    console.log(error);
+                }
                 if (resp.affectedRows) {
-                    res.send({
-                        status: true,
-                        type: 'sim',
-                        msg: "CSV Released Successfully.",
-                        data: resp
+                    let query = "select * from sim_ids where used=1";
+                    sql.query(query, (error, resp) => {
+                        res.send({
+                            status: true,
+                            type: 'sim',
+                            msg: "CSV Released Successfully.",
+                            data: resp
+                        });
                     });
                 } else {
                     res.send({
-                        status: false,
+                        status: true,
                         msg: "CSV Not Released.",
                     });
                 }
             });
         }
         else if (fieldName === 'chat_id') {
-            var idsName = ids.map((item) => {
-                return item.chat_id
-            })
-            let query = "DELETE FROM chat_ids where chat_id IN (" + idsName.join() + ")";
-            console.log(query);
+            let query = "UPDATE chat_ids set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
+            // console.log(query);
             sql.query(query, (error, resp) => {
-                if (error) throw error
+                if (error) {
+                    console.log(error);
+                }
                 if (resp.affectedRows) {
-                    res.send({
-                        status: true,
-                        type: 'chat',
-                        msg: "CSV Released Successfully.",
-                        data: resp
+
+                    let query = "select * from chat_ids where used=1";
+                    sql.query(query, (error, resp) => {
+                        res.send({
+                            status: true,
+                            type: 'chat',
+                            msg: "CSV Released Successfully.",
+                            data: resp
+                        });
                     });
                 } else {
                     res.send({
@@ -4340,7 +3681,9 @@ router.get('/apklist', async function (req, res) {
     if (verify.status !== undefined && verify.status == true) {
         if (verify.user.user_type === ADMIN) {
             sql.query("select * from apk_details where delete_status=0 AND apk_type != 'permanent' order by id ASC", async function (error, results) {
-                if (error) throw error;
+                if (error) {
+                    console.log(error);
+                }
 
                 if (results.length > 0) {
                     let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
@@ -4383,7 +3726,9 @@ router.get('/apklist', async function (req, res) {
         }
         else if (verify.user.user_type === DEALER) {
             sql.query("select dealer_apks.* ,apk_details.* from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.apk_type != 'permanent' AND delete_status = 0", async function (error, results) {
-                if (error) throw error;
+                if (error) {
+                    console.log(error);
+                }
                 if (results.length > 0) {
                     let dealerRole = await helpers.getuserTypeIdByName(Constants.DEALER);
                     // console.log("Role", dealerRole);
@@ -4434,7 +3779,9 @@ router.get('/apklist', async function (req, res) {
             });
         } else if (verify.user.user_type === AUTO_UPDATE_ADMIN) {
             sql.query("select * from apk_details where delete_status=0 AND apk_type = 'permanent' order by id ASC", async function (error, results) {
-                if (error) throw error;
+                if (error) {
+                    console.log(error);
+                }
                 if (results.length > 0) {
                     // console.log("dealer_count ", dealerCount);
                     for (var i = 0; i < results.length; i++) {
@@ -4626,7 +3973,7 @@ router.post('/checkApkName', async function (req, res) {
                 })
             }
         } catch (error) {
-            throw error
+            console.log(error);
         }
 
     }
@@ -4656,7 +4003,9 @@ router.post('/purchase_credits', async function (req, res) {
                     let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
                     // console.log(query);
                     sql.query(query, function (err, result) {
-                        if (err) throw err
+                        if (err){
+                            console.log(err);
+                        }
                         // console.log(result);
                         if (result.affectedRows > 0) {
                             if (verify.user.user_type === ADMIN) {
@@ -4703,7 +4052,9 @@ router.post('/purchase_credits', async function (req, res) {
                             } else {
                                 // console.log(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`);
                                 sql.query(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`, function (err, result) {
-                                    if (err) throw err
+                                    if (err){
+                                        console.log(err);
+                                    }
                                     if (result && result.affectedRows > 0) {
                                         res.send({
                                             status: true,
@@ -4727,7 +4078,7 @@ router.post('/purchase_credits', async function (req, res) {
                 }
             }
         } catch (error) {
-            throw error
+            console.log(error);
         }
 
     }
@@ -4766,7 +4117,9 @@ router.post('/purchase_credits_CC', async function (req, res) {
                     let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
                     // console.log(query);
                     sql.query(query, function (err, result) {
-                        if (err) throw err
+                        if (err){
+                            console.log(err);
+                        }
                         // console.log(result);
                         if (result.affectedRows > 0) {
                             stripe.tokens.create({
@@ -4835,7 +4188,9 @@ router.post('/purchase_credits_CC', async function (req, res) {
                             } else {
                                 // console.log(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`);
                                 sql.query(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`, function (err, result) {
-                                    if (err) throw err
+                                    if (err) {
+                                        console.log(err)
+                                    }
                                     if (result && result.affectedRows > 0) {
                                         res.send({
                                             status: true,
@@ -4859,7 +4214,7 @@ router.post('/purchase_credits_CC', async function (req, res) {
                 }
             }
         } catch (error) {
-            throw error
+            console.log(error)
         }
 
     }
@@ -4939,7 +4294,9 @@ router.post('/addApk', async function (req, res) {
                         }
 
 
-                        if (err) throw err;
+                        if (err) {
+                            console.log(err)
+                        };
                         data = {
                             status: true,
                             msg: "Apk is uploaded",
@@ -5035,7 +4392,9 @@ router.post('/edit/apk', async function (req, res) {
 
                     sql.query("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_bytes='" + apk_stats.size + "',  apk_size='" + formatByte + "'  where id = '" + req.body.apk_id + "'", function (err, rslts) {
 
-                        if (err) throw err;
+                        if (err) {
+                            console.log(err)
+                        };
                         data = {
                             status: true,
                             msg: "Record Updated"
@@ -5083,7 +4442,9 @@ router.post('/toggle', async function (req, res) {
 
         if (!empty(req.body.status) && !empty(req.body.apk_id)) {
             sql.query("update apk_details set status = '" + req.body.status + "' where id = '" + req.body.apk_id + "'", function (err, result) {
-                if (err) throw err;
+                if (err) {
+                    console.log(err)
+                };
 
                 if (result.affectedRows != 0) {
                     data = {
@@ -5157,7 +4518,9 @@ router.post('/save_apk_permissions', async function (req, res) {
             }
 
             sql.query(updateAPKQ, async (error, result) => {
-                if (error) throw (error);
+                if (error) {
+                    console.log(error);
+                }
                 let permissionC = [];
                 let rslt = await sql.query("select dealers from apk_details where id='" + apkId + "' order by id ASC")
                 if (rslt !== undefined && rslt !== null) {
@@ -5239,7 +4602,9 @@ router.post('/save_apk_permissions', async function (req, res) {
             }
 
             sql.query(updateAPKQ, async (error, result) => {
-                if (error) throw (error);
+                if (error) {
+                    console.log(error);
+                }
                 let permissionC = [];
                 let rslt = await sql.query("select dealers from apk_details where id='" + apkId + "' order by id ASC")
                 if (rslt.length) {
@@ -5335,7 +4700,9 @@ router.post('/save_policy_permissions', async function (req, res) {
             }
 
             sql.query(updateAPKQ, async (error, result) => {
-                if (error) throw (error);
+                if (error) {
+                    console.log(error);
+                }
                 let permissionC = [];
                 let rslt = await sql.query("select dealers from policy where id='" + policyId + "' order by id ASC")
                 if (rslt.length) {
@@ -5421,7 +4788,9 @@ router.post('/save_policy_permissions', async function (req, res) {
             }
 
             sql.query(updateAPKQ, async (error, result) => {
-                if (error) throw (error);
+                if (error) {
+                    console.log(error);
+                }
                 let permissionC = [];
                 let rslt = await sql.query("select dealers from policy where id='" + policyId + "' order by id ASC")
                 if (rslt.length) {
@@ -5527,7 +4896,9 @@ router.post('/apk/delete', async function (req, res) {
             sql.query("update `apk_details` set delete_status='1' WHERE id='" + req.body.apk_id + "'", async function (error, results) {
                 console.log(results);
 
-                if (error) throw error;
+                if (error) {
+                    console.log(error);
+                }
                 if (results.affectedRows == 0) {
                     data = {
                         "status": false,
@@ -5580,7 +4951,7 @@ router.get('/login_history', async function (req, res) {
             // console.log(query);
             sql.query(query, function (err, result) {
                 if (err) {
-                    throw err
+                    console.log(err)
                 }
                 if (result.length) {
                     data = {
@@ -5599,7 +4970,7 @@ router.get('/login_history', async function (req, res) {
             })
         }
     } catch (error) {
-        throw Error(error.message);
+        console.log(error)
     }
 });
 
@@ -5614,7 +4985,9 @@ router.delete('/delete_profile/:profile_id', async function (req, res) {
             sql.query("delete from device_history WHERE id=" + req.params.profile_id, function (error, results) {
                 // console.log(results);
                 //response.end(JSON.stringify(rows));
-                if (error) throw error;
+                if (error) {
+                    console.log(error);
+                }
                 if (results.affectedRows == 0) {
                     data = {
                         "status": false,
@@ -5709,7 +5082,9 @@ router.get('/userList', async function (req, res) {
             }
         } else if (verify.user.user_type === DEALER) {
             sql.query("select dealer_id from dealers where connected_dealer = '" + verify.user.id + "' AND  type = 3 order by created DESC", async function (error, result) {
-                if (error) throw error;
+                if (error) {
+                    console.log(error);
+                }
                 dealer = [verify.user.id]
                 console.log(result);
                 if (result.length) {
@@ -5828,7 +5203,10 @@ router.post('/transferApps', async function (req, res) {
             where = "AND (secure_market_apps.dealer_type = 'admin' OR secure_market_apps.dealer_id = '" + verify.user.id + "')"
         }
         sql.query("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id, secure_market_apps.is_restrict_uninstall  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'" + where + " ORDER BY created_at desc", async function (err, results) {
-            if (err) throw err;
+            if (err) {
+                console.log(err);
+            }
+
             if (results.length) {
                 apklist.forEach((item, index) => {
                     for (let i = 0; i < results.length; i++) {
@@ -5864,6 +5242,7 @@ router.post('/transferApps', async function (req, res) {
             "status": false,
         }
         res.send(data)
+        return;
     }
 });
 
@@ -5887,7 +5266,10 @@ router.get('/marketApplist', async function (req, res) {
         }
         // console.log("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 " + where + "ORDER BY created_at desc");
         sql.query("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id , secure_market_apps.is_restrict_uninstall  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'" + where + "ORDER BY created_at desc", async function (err, results) {
-            if (err) throw err;
+            if (err) {
+                console.log(err);
+            }
+
             if (results.length) {
                 apklist.forEach((item, index) => {
                     for (let i = 0; i < results.length; i++) {
@@ -5922,6 +5304,7 @@ router.get('/marketApplist', async function (req, res) {
             status: false
         }
         res.send(data)
+        return;
     }
 });
 
@@ -5935,7 +5318,9 @@ router.put('/handleUninstall/:apk_id', async function (req, res) {
             let apk_id = req.params.apk_id;
             // console.log("UPDATE secure_market_apps SET is_restrict_uninstall = " + is_restricted + " WHERE apk_id ='" + apk_id + "'");
             sql.query("UPDATE secure_market_apps SET is_restrict_uninstall = " + is_restricted + " WHERE apk_id ='" + apk_id + "'", function (err, results) {
-                if (err) throw err
+                if (err) {
+                    console.log(err)
+                }
                 if (results.affectedRows) {
                     data = {
                         status: true,
@@ -5955,7 +5340,7 @@ router.put('/handleUninstall/:apk_id', async function (req, res) {
             })
         }
     } catch (error) {
-        throw Error(error.message);
+        console.log(error);
     }
 });
 
@@ -5990,7 +5375,10 @@ router.post('/writeImei/:device_id', async function (req, res) {
                     }
                     let newImei = JSON.stringify(prevImei)
                     sql.query("INSERT INTO device_history (device_id,dealer_id,user_acc_id, imei, type) VALUES ('" + device_id + "'," + dealer_id + "," + usrAccId + ", '" + newImei + "', 'imei')", async function (err, results) {
-                        if (err) throw err;
+                        if (err) {
+                            console.log(err)
+                        }
+
                         if (results.affectedRows) {
                             var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
                             await sql.query(loadDeviceQ)
@@ -6030,8 +5418,9 @@ router.post('/writeImei/:device_id', async function (req, res) {
 
                     sql.query(applyQuery, async function (err, rslts) {
                         if (err) {
-                            throw err;
+                            console.log(err)
                         }
+
                         if (rslts) {
                             // var applyPushQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
                             // await sql.query(applyPushQ)
@@ -6070,7 +5459,7 @@ router.post('/writeImei/:device_id', async function (req, res) {
             }
         }
     } catch (error) {
-        throw Error(error.message);
+        console.log(error);
     }
 });
 
@@ -6117,7 +5506,7 @@ router.get('/get_activities/:device_id', async function (req, res) {
             res.send(data);
         }
     } catch (error) {
-        throw Error(error.message);
+        console.log(error);
     }
 });
 
@@ -6147,7 +5536,7 @@ router.post('/set_default_policy', async function (req, res) {
             res.send(data);
         }
     } catch (error) {
-        throw Error(error.message);
+        console.log(error);
     }
 });
 
@@ -6169,9 +5558,11 @@ router.put('/force_update', async function (req, res) {
                     })
                 } else {
                     let usr_acc = await device_helpers.getUserAccByDeviceId(device_id);
-                    let historyQ = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, type) VALUES ('" + device_id + "'," + dealer_id + "," + usr_acc.id + ",'" + Constants.DEVICE_HISTORY_FORCE_UPDATE + "')";
+                    let historyQ = "INSERT INTO device_history (device_id, dealer_id, user_acc_id, type) VALUES ('" + device_id + "', " + dealer_id + ", " + usr_acc.id + ", '" + Constants.DEVICE_HISTORY_FORCE_UPDATE + "')";
                     sql.query(historyQ, function (error, resp) {
-                        if (error) throw (error);
+                        if (error) {
+                            console.log(error);
+                        };
                         res.send({
                             status: true,
                             msg: "force update will apply when device will come online"
@@ -6289,7 +5680,10 @@ router.patch('/save-prices', async function (req, res) {
                                 let updateQuery = "UPDATE prices SET unit_price='" + innerObject[innerKey] + "', price_expiry='" + days + "', dealer_id='" + dealer_id + "' WHERE price_term='" + innerKey + "' AND price_for='" + key + "'";
                                 // console.log(updateQuery, 'query')
                                 sql.query(updateQuery, async function (err, result) {
-                                    if (err) throw err;
+                                    if (err) {
+                                        console.log(err)    
+                                    }
+
                                     if (result) {
                                         // console.log('outerKey', outerKey)
                                         if (!result.affectedRows) {
@@ -6377,7 +5771,10 @@ router.post('/save-package', async function (req, res) {
                 let pkg_features = JSON.stringify(data.pkgFeatures)
                 let insertQuery = "INSERT INTO packages (pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, dealer_id) VALUES('" + data.pkgName + "', '" + data.pkgTerm + "', '" + data.pkgPrice + "','" + days + "', '" + pkg_features + "', '" + dealer_id + "')";
                 sql.query(insertQuery, async (err, rslt) => {
-                    if (err) throw err;
+                    if (err) {
+                        console.log(err)
+                    }
+
                     if (rslt) {
                         if (rslt.affectedRows) {
                             insertedRecord = await sql.query("SELECT * FROM packages WHERE dealer_id='" + dealer_id + "' AND id='" + rslt.insertId + "'")
@@ -6465,7 +5862,10 @@ router.patch('/save-language', async function (req, res) {
             language = JSON.stringify(language);
             let updateQuery = "UPDATE dealer_language SET dealer_lng_id='" + lang_id + "' WHERE dealer_id='" + dealer_id + "'";
             sql.query(updateQuery, async (err, rslt) => {
-                if (err) throw err;
+                if (err) {
+                    console.log(err)
+                }
+
                 if (rslt) {
                     if (rslt.affectedRows) {
                         res.send({
@@ -6515,7 +5915,9 @@ router.get('/get-prices/:dealer_id', async function (req, res) {
         if (dealer_id) {
             let selectQuery = "SELECT * FROM prices WHERE dealer_id='" + dealer_id + "'";
             sql.query(selectQuery, async (err, reslt) => {
-                if (err) throw err;
+                if (err) {
+                    console.log(err)
+                }
                 if (reslt) {
                     console.log('result for get prices are is ', reslt);
 
@@ -6601,7 +6003,10 @@ router.get('/get-packages/:dealer_id', async function (req, res) {
         if (dealer_id) {
             let selectQuery = "SELECT * FROM packages WHERE dealer_id='" + dealer_id + "'";
             sql.query(selectQuery, async (err, reslt) => {
-                if (err) throw err;
+                if (err) {
+                    console.log(err)    
+                }
+
                 if (reslt) {
                     console.log('result for get prices are is ', reslt);
 
@@ -6670,7 +6075,7 @@ router.patch('/check-package-name', async function (req, res) {
             }
         }
     } catch (error) {
-        throw error
+        console.log(error);
     }
 
 });
@@ -6683,11 +6088,17 @@ router.post('/update_credit', async function (req, res) {
             console.log(credits);
             if (dealer_id !== '' && dealer_id !== undefined && dealer_id !== null) {
                 sql.query("SELECt * from dealer_credits where dealer_id = " + dealer_id, function (err, result) {
-                    if (err) throw err
+                    if (err){
+                        console.log(err)    
+                    }
+
                     if (result.length) {
                         let newCredit = credits + result[0].credits
                         sql.query("update dealer_credits set credits = " + newCredit + " where dealer_id = " + dealer_id, function (err, reslt) {
-                            if (err) throw err
+                            if (err) {
+                                console.log(err)
+                            }
+
                             if (reslt && reslt.affectedRows > 0) {
                                 res.send({
                                     status: true,
@@ -6708,7 +6119,9 @@ router.post('/update_credit', async function (req, res) {
                     else {
                         let query = `INSERT into dealer_credits (dealer_id,credits) VALUES (${dealer_id}, ${credits})`;
                         sql.query(query, function (err, reslt) {
-                            if (err) throw err
+                            if (err){
+                                console.log(err);
+                            }
                             if (reslt && reslt.affectedRows > 0) {
                                 res.send({
                                     status: true,
@@ -6729,7 +6142,7 @@ router.post('/update_credit', async function (req, res) {
                 })
             }
         } catch (error) {
-            throw error
+            console.log(error)
         }
     }
 });
@@ -6757,7 +6170,9 @@ router.get('/newRequests', async function (req, res) {
             }
             console.log(query);
             sql.query(query, function (err, result) {
-                if (err) throw err
+                if (err){
+                    console.log(err);
+                }
                 if (result.length) {
                     data = {
                         "status": true,
@@ -6775,7 +6190,7 @@ router.get('/newRequests', async function (req, res) {
                 }
             })
         } catch (error) {
-            throw error
+            console.log(error)
         }
     }
 })
@@ -6787,7 +6202,9 @@ router.get('/get_user_credits', async function (req, res) {
             query = `SELECT credits from dealer_credits where dealer_id= ${verify.user.id}`
 
             sql.query(query, function (err, result) {
-                if (err) throw err
+                if (err){
+                    console.log(err);
+                }
                 if (result.length) {
                     console.log(result);
                     data = {
@@ -6806,7 +6223,7 @@ router.get('/get_user_credits', async function (req, res) {
                 }
             })
         } catch (error) {
-            throw err
+            console.log(error);
         }
     }
 })
@@ -6818,12 +6235,16 @@ router.put('/delete_request/:id', async function (req, res) {
             let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
             console.log(query);
             sql.query(query, function (err, result) {
-                if (err) throw err
+                if (err){
+                    console.log(err);
+                }
                 if (result.length) {
 
                     let updateQuery = "update credit_requests set status = 1, del_status = 1 where id= " + id
                     sql.query(updateQuery, function (err, result) {
-                        if (err) throw err
+                        if (err){
+                            console.log(err);
+                        }
                         if (result && result.affectedRows > 0) {
                             data = {
                                 "status": true,
@@ -6851,7 +6272,7 @@ router.put('/delete_request/:id', async function (req, res) {
                 }
             })
         } catch (error) {
-            throw error
+            console.log(error)
         }
     }
 })
@@ -6864,7 +6285,9 @@ router.put('/accept_request/:id', async function (req, res) {
             let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
             // console.log(query);
             sql.query(query, async function (err, result) {
-                if (err) throw err
+                if (err){
+                    console.log(err);
+                }
                 if (result.length) {
                     let logginUserCredits = await sql.query("select credits from dealer_credits where dealer_id = " + verify.user.id)
                     if (logginUserCredits.length) {
@@ -6878,7 +6301,9 @@ router.put('/accept_request/:id', async function (req, res) {
                                 newCredit = credits[0].credits + result[0].credits
                             }
                             sql.query("update dealer_credits set credits = " + newCredit + " where dealer_id = " + dealer_id, async function (err, reslt) {
-                                if (err) throw err
+                                if (err){
+                                    console.log(err);
+                                }
                                 if (reslt && reslt.affectedRows > 0) {
                                     let updateQuery = "update credit_requests set status = 1 where id= " + id
                                     await sql.query(updateQuery);
@@ -6894,7 +6319,9 @@ router.put('/accept_request/:id', async function (req, res) {
                                 else {
                                     let query = `INSERT into dealer_credits (dealer_id,credits) VALUES (${dealer_id}, ${newCredit})`;
                                     sql.query(query, async function (err, reslt) {
-                                        if (err) throw err
+                                        if (err){
+                                            console.log(err);
+                                        }
                                         if (reslt && reslt.affectedRows > 0) {
                                             let updateQuery = "update credit_requests set status = 1 where id= " + id
                                             await sql.query(updateQuery)
@@ -6943,7 +6370,7 @@ router.put('/accept_request/:id', async function (req, res) {
                 }
             })
         } catch (error) {
-            throw error
+            console.log(error);
         }
     }
 })
@@ -6962,7 +6389,6 @@ router.post('/create_backup_DB', async function (req, res) {
         let query = "SELECT * From acc_action_history WHERE action = 'UNLINKED'";
         let newArray = await sql.query(query)
         let results = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 order by devices.id DESC')
-        // console.log('query ', 'select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 ' + where_con + ' order by devices.id DESC')
         for (var i = 0; i < results.length; i++) {
             results[i].finalStatus = device_helpers.checkStatus(results[i])
             results[i].pgp_email = await device_helpers.getPgpEmails(results[i])
