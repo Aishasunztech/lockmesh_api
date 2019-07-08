@@ -20,6 +20,7 @@ var Constants = require('../constants/Application');
 var app_constants = require('../config/constants');
 
 const { sendEmail } = require('../lib/email');
+const axios = require('axios')
 
 
 /*Check For Token in the header */

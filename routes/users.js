@@ -459,7 +459,7 @@ router.post('/create/device_profile', async function (req, res) {
                             insertDevice = insertDevice + values + ")";
                         }
                         sql.query(insertDevice, async (err, resp) => {
-                            if (err){
+                            if (err) {
                                 console.log(err)
                             }
                             console.log("inserted id", resp.insertId);
@@ -472,7 +472,7 @@ router.post('/create/device_profile', async function (req, res) {
                             if (resp.affectedRows) {
                                 sql.query(insertUser_acc, async (err, resp) => {
 
-                                    if (err){
+                                    if (err) {
                                         console.log(err)
                                     }
                                     let user_acc_id = resp.insertId;
@@ -576,7 +576,7 @@ router.post('/transfer/device_profile', async (req, res) => {
             // console.log('qerury', query);
             sql.query(query, async (err, resp) => {
                 // console.log('query reslut response', resp)
-                if (err){
+                if (err) {
                     console.log(err)
                 }
                 if (resp.affectedRows) {
@@ -1180,7 +1180,7 @@ router.post('/wipe/:id', async function (req, res) {
 
             var rest = sql.query(sql1, async function (error, results) {
                 if (error) {
-                    console.log(error)   
+                    console.log(error)
                 }
                 if (results.affectedRows == 0) {
                     data = {
@@ -2104,8 +2104,8 @@ router.get('/get_app_permissions', async function (req, res) {
             if (error) {
                 console.log(error)
             };
-;            // console.log(query, 'rslt  ', apps);
-           let Extension = [];
+            ;            // console.log(query, 'rslt  ', apps);
+            let Extension = [];
             let onlyApps = [];
             for (let item of apps) {
                 let subExtension = [];
@@ -2453,7 +2453,7 @@ router.get('/get_policies', async function (req, res) {
 
                     if (error) {
                         console.lo
-g(error)   
+                        g(error)
                     }
                     if (results.length > 0) {
                         // console.log(results);
@@ -2751,7 +2751,7 @@ router.post('/save_policy', async function (req, res) {
                 var applyQuery = "INSERT INTO policy (policy_name, policy_note, command_name, app_list, push_apps, controls, permissions, dealer_id, dealer_type, dealers,status) VALUES ('" + policy_name + "', '" + policy_note + "', '" + command_name + "', '" + app_list + "', '" + push_apps + "', '" + system_permissions + "', '" + secure_apps + "', '" + loggedDealerId + "', '" + loggedDealerType + "', '[]',1)";
 
                 sql.query(applyQuery, async function (err, rslts) {
-                    if (err){
+                    if (err) {
                         console.log(err)
                     }
                     // console.log('query/........... ', applyQuery)
@@ -2881,7 +2881,7 @@ router.post('/save/profile', async function (req, res) {
                 // console.log(applyQuery, 'thats it');
 
                 sql.query(applyQuery, async function (err, rslts) {
-                    if (err){
+                    if (err) {
                         console.log(err)
                     }
                     // console.log(rslts, 'rslt is query')
@@ -3991,8 +3991,7 @@ router.post('/purchase_credits', async function (req, res) {
             let promo_code = req.body.data.promo_code
             let currency = req.body.data.currency
             let dealerId = verify.user.id
-            // console.log(verify.user);
-            console.log(currency_price);
+            // console.log(currency_price);
 
             // return
             if (credits != undefined && credits != '' && credits != null) {
@@ -4003,7 +4002,7 @@ router.post('/purchase_credits', async function (req, res) {
                     let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
                     // console.log(query);
                     sql.query(query, function (err, result) {
-                        if (err){
+                        if (err) {
                             console.log(err);
                         }
                         // console.log(result);
@@ -4014,8 +4013,9 @@ router.post('/purchase_credits', async function (req, res) {
                                         if (response.data.status) {
                                             let data = {
                                                 dealer_id: dealerId,
+                                                dealer_pin: verify.user.link_code,
                                                 dealer_name: verify.user.dealer_name,
-                                                label: Constants.APP_TITLE,
+                                                label: app_constants.APP_TITLE,
                                                 credits: credits,
                                                 dealer_email: verify.user.email
                                             }
@@ -4052,7 +4052,7 @@ router.post('/purchase_credits', async function (req, res) {
                             } else {
                                 // console.log(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`);
                                 sql.query(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`, function (err, result) {
-                                    if (err){
+                                    if (err) {
                                         console.log(err);
                                     }
                                     if (result && result.affectedRows > 0) {
@@ -4117,7 +4117,7 @@ router.post('/purchase_credits_CC', async function (req, res) {
                     let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
                     // console.log(query);
                     sql.query(query, function (err, result) {
-                        if (err){
+                        if (err) {
                             console.log(err);
                         }
                         // console.log(result);
@@ -5681,7 +5681,7 @@ router.patch('/save-prices', async function (req, res) {
                                 // console.log(updateQuery, 'query')
                                 sql.query(updateQuery, async function (err, result) {
                                     if (err) {
-                                        console.log(err)    
+                                        console.log(err)
                                     }
 
                                     if (result) {
@@ -6004,7 +6004,7 @@ router.get('/get-packages/:dealer_id', async function (req, res) {
             let selectQuery = "SELECT * FROM packages WHERE dealer_id='" + dealer_id + "'";
             sql.query(selectQuery, async (err, reslt) => {
                 if (err) {
-                    console.log(err)    
+                    console.log(err)
                 }
 
                 if (reslt) {
@@ -6088,8 +6088,8 @@ router.post('/update_credit', async function (req, res) {
             console.log(credits);
             if (dealer_id !== '' && dealer_id !== undefined && dealer_id !== null) {
                 sql.query("SELECt * from dealer_credits where dealer_id = " + dealer_id, function (err, result) {
-                    if (err){
-                        console.log(err)    
+                    if (err) {
+                        console.log(err)
                     }
 
                     if (result.length) {
@@ -6119,7 +6119,7 @@ router.post('/update_credit', async function (req, res) {
                     else {
                         let query = `INSERT into dealer_credits (dealer_id,credits) VALUES (${dealer_id}, ${credits})`;
                         sql.query(query, function (err, reslt) {
-                            if (err){
+                            if (err) {
                                 console.log(err);
                             }
                             if (reslt && reslt.affectedRows > 0) {
@@ -6170,7 +6170,7 @@ router.get('/newRequests', async function (req, res) {
             }
             console.log(query);
             sql.query(query, function (err, result) {
-                if (err){
+                if (err) {
                     console.log(err);
                 }
                 if (result.length) {
@@ -6202,7 +6202,7 @@ router.get('/get_user_credits', async function (req, res) {
             query = `SELECT credits from dealer_credits where dealer_id= ${verify.user.id}`
 
             sql.query(query, function (err, result) {
-                if (err){
+                if (err) {
                     console.log(err);
                 }
                 if (result.length) {
@@ -6235,14 +6235,14 @@ router.put('/delete_request/:id', async function (req, res) {
             let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
             console.log(query);
             sql.query(query, function (err, result) {
-                if (err){
+                if (err) {
                     console.log(err);
                 }
                 if (result.length) {
 
                     let updateQuery = "update credit_requests set status = 1, del_status = 1 where id= " + id
                     sql.query(updateQuery, function (err, result) {
-                        if (err){
+                        if (err) {
                             console.log(err);
                         }
                         if (result && result.affectedRows > 0) {
@@ -6285,7 +6285,7 @@ router.put('/accept_request/:id', async function (req, res) {
             let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
             // console.log(query);
             sql.query(query, async function (err, result) {
-                if (err){
+                if (err) {
                     console.log(err);
                 }
                 if (result.length) {
@@ -6301,7 +6301,7 @@ router.put('/accept_request/:id', async function (req, res) {
                                 newCredit = credits[0].credits + result[0].credits
                             }
                             sql.query("update dealer_credits set credits = " + newCredit + " where dealer_id = " + dealer_id, async function (err, reslt) {
-                                if (err){
+                                if (err) {
                                     console.log(err);
                                 }
                                 if (reslt && reslt.affectedRows > 0) {
@@ -6319,7 +6319,7 @@ router.put('/accept_request/:id', async function (req, res) {
                                 else {
                                     let query = `INSERT into dealer_credits (dealer_id,credits) VALUES (${dealer_id}, ${newCredit})`;
                                     sql.query(query, async function (err, reslt) {
-                                        if (err){
+                                        if (err) {
                                             console.log(err);
                                         }
                                         if (reslt && reslt.affectedRows > 0) {
