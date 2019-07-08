@@ -373,7 +373,7 @@ exports.acceptDevice = async function (req, res) {
             var expiry_date = moment(trailDate).format("YYYY/MM/DD")
         } else {
             let exp_month = req.body.expiry_date;
-            var expiry_date = helpers.getExpDateByMonth(start_date, exp_month);
+            var expiry_date = general_helpers.getExpDateByMonth(start_date, exp_month);
         }
 
         if (!empty(usr_device_id)) {
@@ -384,11 +384,11 @@ exports.acceptDevice = async function (req, res) {
             let dealer = await sql.query(checkDealer);
 
             // let connected = await sql.query(checkConnectedDealer);
-            if (loggedDealerType === SDEALER) {
+            if (loggedDealerType === constants.SDEALER) {
                 checkDevice = checkDevice + " AND usr_acc.dealer_id = " + loggedDealerId;
-            } else if (loggedDealerType === DEALER) {
+            } else if (loggedDealerType === constants.DEALER) {
                 checkDevice = checkDevice + " AND (usr_acc.dealer_id =" + loggedDealerId + " OR usr_acc.prnt_dlr_id =" + loggedDealerId + ") ";
-            } else if (loggedDealerType === ADMIN) {
+            } else if (loggedDealerType === constants.ADMIN) {
                 checkDevice = checkDevice;
             } else {
                 res.send({
