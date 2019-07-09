@@ -1,9 +1,25 @@
-var express = require('express');
-var router = express.Router();
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
-});
+// middlewares
+var authMiddleware = require('../config/auth');
+var moment = require('moment-strftime');
 
-module.exports = router;
+var crypto = require("crypto");
+var md5 = require('md5');
+
+// routes
+// var authRoutes = require('./auth');
+var userRoutes = require('./users');
+var mobileRoutes = require('./mobile');
+
+
+module.exports = function (app) {
+
+  app.use('/mobile', mobileRoutes);
+  app.use('/users', userRoutes);
+  
+  // app.group('/', function (router) {
+  //   router.use('/mobile', mobileRoutes);
+  //   router.use('/users', userRoutes);
+  // });
+
+}

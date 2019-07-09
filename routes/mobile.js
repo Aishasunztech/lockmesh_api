@@ -2,13 +2,14 @@ var express = require('express');
 var router = express.Router();
 //var uniqid = require('uniqid'); 
 var randomize = require('randomatic');
-const sql = require('../helper/sql.js');
+const { sql } = require('../config/database');
+
 var helpers = require('../helper/general_helper.js');
 const bcrypt = require('bcrypt');
 var datetime = require('node-datetime');
 var empty = require('is-empty');
 var jwt = require('jsonwebtoken');
-var config = require('../helper/config.js');
+// var config = require('../helper/config.js');
 var path = require('path');
 var md5 = require('md5');
 var fs = require("fs");
@@ -16,21 +17,12 @@ const nodemailer = require('nodemailer');
 var moment = require('moment-strftime');
 const device_helpers = require('../helper/device_helpers.js');
 var Constants = require('../constants/Application');
+var app_constants = require('../config/constants');
 
-const smtpTransport = require('../helper/mail')
+const constants = require('../config/constants');
+const { sendEmail } = require('../lib/email');
+const axios = require('axios')
 
-
-function sendEmail(subject, message, to, callback) {
-    let cb = callback;
-    subject = "Lockmesh.com Team - " + subject
-    let mailOptions = {
-        from: "admin@lockmesh.com",
-        to: to,
-        subject: subject,
-        html: message
-    };
-    smtpTransport.sendMail(mailOptions, cb);
-}
 
 /*Check For Token in the header */
 var verifyToken = function (req, res) {
@@ -42,7 +34,7 @@ var verifyToken = function (req, res) {
     if (token) {
 
         // verifies secret and checks exp
-        jwt.verify(token, config.secret, function (err, decoded) {
+        jwt.verify(token, constants.SECRET, function (err, decoded) {
             // console.log(err);
             if (err) {
                 ath = {
@@ -128,8 +120,8 @@ router.post('/login', async function (req, resp) {
 
                     jwt.sign({
                         device
-                    }, config.secret, {
-                            expiresIn: config.expiresIn
+                    }, constants.SECRET, {
+                            expiresIn: constants.EXPIRES_IN
                         }, (err, token) => {
                             if (err) {
                                 resp.json({
@@ -199,6 +191,20 @@ router.post('/login', async function (req, resp) {
                                 device_helpers.saveImeiHistory(chechedDeviceId, serial_number, mac_address, imei1, imei2)
                                 let device_id = await device_helpers.getDvcIDByDeviceID(usrAcc[0].device_id)
 
+                                // Update device details on Super admin
+                                axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
+                                    // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
+                                    if (response.data.status) {
+                                        let data = {
+                                            linkToWL: true,
+                                            SN: serial_number,
+                                            mac: mac_address,
+                                            device_id: device_id
+                                        }
+                                        axios.put(app_constants.UPDATE_DEVICE_SUPERADMIN_URL, data, { headers: { authorization: response.data.user.token } })
+                                    }
+                                })
+
                                 const device = {
                                     dId: dealer[0].dealer_id,
                                     dealer_pin: dealer[0].link_code,
@@ -209,8 +215,8 @@ router.post('/login', async function (req, resp) {
 
                                 jwt.sign({
                                     device
-                                }, config.secret, {
-                                        expiresIn: config.expiresIn
+                                }, constants.SECRET, {
+                                        expiresIn: constants.EXPIRES_IN
                                     }, (err, token) => {
                                         if (err) {
                                             resp.json({
@@ -271,9 +277,9 @@ router.post('/systemlogin', async function (req, res) {
     jwt.sign({
         sysmtemInfo
     },
-        config.secret,
+        constants.SECRET,
         {
-            expiresIn: config.expiresIn
+            expiresIn: constants.EXPIRES_IN
         },
         (err, token) => {
             if (err) {
@@ -322,18 +328,36 @@ router.post('/linkdevice', async function (req, resp) {
             // res2 = dealer
             if (dealer.length) {
 
-                sendEmail("New Device Request", "You have a new device request", dealer[0].dealer_email, function (error, response) {
-                    if (error) throw error;
-                });
-
                 var deviceId = await helpers.getDeviceId(serial_number, mac_address);
                 // var deviceId = await checkDeviceId(device_id, serial_number, mac_address);
+
+                var deviceCheckQuery = "SELECT * FROM devices WHERE device_id = '" + deviceId + "'";
+                let deviceCheckResponse = await sql.query(deviceCheckQuery);
+                if (deviceCheckResponse.length) {
+                    console.log('Some thing bad happend. user should not be here. Devices already exist.', deviceId);
+                    resp.send({
+                        status: false,
+                        msg: "Devices already exist."
+                    });
+                    return
+                }
+
+                sendEmail("New Device Request", "You have a new device request", dealer[0].dealer_email, function (error, response) {
+                    if (error) console.log(error);
+                });
+
 
                 let insertDevice = "INSERT INTO devices (device_id, imei, imei2, ip_address, simno, simno2, serial_number, mac_address, online) values(?,?,?,?,?,?,?,?,?)";
                 sql.query(insertDevice, [deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, Constants.DEVICE_OFFLINE], function (error, deviceRes) {
                     // console.log("Insert Query" , insertDevice, [deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, 'On']);
                     if (error) {
-                        throw Error(error);
+                        //throw Error(error);
+                        console.log(error);
+                        resp.send({
+                            status: false,
+                            msg: error
+                        });
+                        return false;
                     }
                     let dvc_id = deviceRes.insertId;
                     let insertUserAcc = "";
@@ -647,14 +671,14 @@ router.delete('/unlink/:macAddr/:serialNo', async function (req, res) {
     // console.log("serialNo", serial_number);
     if (reslt.status == true) {
         if (!empty(mac_address) && !empty(serial_number)) {
-            let deviceQ = "SELECT id ,device_id FROM devices WHERE mac_address='" + mac_address + "' OR serial_number='" + serial_number + "'";
+            let deviceQ = "SELECT id ,device_id FROM devices WHERE mac_address='" + mac_address + "' AND serial_number='" + serial_number + "'";
             sql.query(deviceQ, async function (error, resp) {
                 if (error) throw (error);
                 if (resp.length) {
                     let device_record = await helpers.getAllRecordbyDeviceId(resp[0].device_id)
                     // console.log(device_record);
                     device_helpers.saveActionHistory(device_record, Constants.DEVICE_UNLINKED)
-                    var query = "DELETE from usr_acc WHERE device_id = " + resp[0].id ;
+                    var query = "DELETE from usr_acc WHERE device_id = " + resp[0].id;
                     console.log(query);
                     await sql.query(query);
                     var sqlDevice = "DELETE from devices where device_id = '" + resp[0].device_id + "'";
@@ -724,29 +748,88 @@ router.get('/apklist', async function (req, res) {
 });
 
 
-router.get('/getUpdate/:version/:uniqueName/:label', async (req, res) => {
+router.get('/getUpdate/:version/:packageName', async (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    // let verify = await verifyToken(req, res);
+    // if (verify.status == true) {
+    let version = req.params.version;
+    let packageName = req.params.packageName;
+    let query = "SELECT * FROM apk_details WHERE package_name = '" + packageName + "' AND delete_status=0";
+    sql.query(query, function (error, response) {
+        // console.log("res", response);
+
+        if (error) {
+            res.send({
+                success: true,
+                status: false,
+                apk_status: false,
+                msg: "Error in Query"
+            });
+            return;
+        }
+
+        let isAvail = false;
+
+        if (response.length) {
+            for (let i = 0; i < response.length; i++) {
+                if (Number(response[i].version_code) > Number(version)) {
+                    isAvail = true;
+                    res.send({
+                        apk_status: true,
+                        success: true,
+                        apk_url: response[i].apk
+                    });
+
+                    break;
+                }
+            }
+            if (!isAvail) {
+                res.send({
+                    apk_status: false,
+                    success: true,
+                    msg: ""
+                });
+            }
+            return;
+        } else {
+            res.send({
+                apk_status: false,
+                success: true,
+                msg: ""
+            });
+            return;
+        }
+    })
+    // }
+
+});
+
+router.get('/getUpdate/:version/:packageName/:label', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     let verify = await verifyToken(req, res);
     if (verify.status == true) {
-        let versionName = req.params.version;
-        let uniqueName = req.params.uniqueName;
-        let query = "SELECT * FROM apk_details WHERE package_name = '" + uniqueName + "' AND delete_status=0";
+        let version = req.params.version;
+        let packageName = req.params.packageName;
+        let label = req.params.label;
+
+        let query = "SELECT * FROM apk_details WHERE package_name = '" + packageName + "' AND delete_status=0";
         sql.query(query, function (error, response) {
             // console.log("res", response);
-
             if (error) {
                 res.send({
                     success: true,
                     status: false,
+                    apk_status: false,
                     msg: "Error in Query"
                 });
+                return;
             }
 
             let isAvail = false;
 
             if (response.length) {
                 for (let i = 0; i < response.length; i++) {
-                    if (Number(response[i].version_code) > Number(versionName)) {
+                    if (Number(response[i].version_code) > Number(version)) {
                         isAvail = true;
                         res.send({
                             apk_status: true,
@@ -764,6 +847,7 @@ router.get('/getUpdate/:version/:uniqueName/:label', async (req, res) => {
                         msg: ""
                     });
                 }
+                return;
 
             } else {
                 res.send({
@@ -771,6 +855,7 @@ router.get('/getUpdate/:version/:uniqueName/:label', async (req, res) => {
                     success: true,
                     msg: ""
                 });
+                return;
             }
         })
     }
@@ -847,8 +932,8 @@ router.post('/device_status', async function (req, res) {
 
                         jwt.sign({
                             dvc
-                        }, config.secret, {
-                                expiresIn: config.expiresIn
+                        }, constants.SECRET, {
+                                expiresIn: constants.EXPIRES_IN
                             }, (err, token) => {
 
                                 if (err) {
@@ -905,8 +990,8 @@ router.post('/device_status', async function (req, res) {
 
                     jwt.sign({
                         dvc
-                    }, config.secret, {
-                            expiresIn: config.expiresIn
+                    }, constants.SECRET, {
+                            expiresIn: constants.EXPIRES_IN
                         }, (err, token) => {
 
                             if (err) {
@@ -989,8 +1074,8 @@ router.post('/device_status', async function (req, res) {
 
                         jwt.sign({
                             dvc
-                        }, config.secret, {
-                                expiresIn: config.expiresIn
+                        }, constants.SECRET, {
+                                expiresIn: constants.EXPIRES_IN
                             }, (err, token) => {
 
                                 if (err) {
@@ -1047,8 +1132,8 @@ router.post('/device_status', async function (req, res) {
 
                     jwt.sign({
                         dvc
-                    }, config.secret, {
-                            expiresIn: config.expiresIn
+                    }, constants.SECRET, {
+                            expiresIn: constants.EXPIRES_IN
                         }, (err, token) => {
 
                             if (err) {
@@ -1134,8 +1219,8 @@ router.post('/device_status', async function (req, res) {
 
                         jwt.sign({
                             dvc
-                        }, config.secret, {
-                                expiresIn: config.expiresIn
+                        }, constants.SECRET, {
+                                expiresIn: constants.EXPIRES_IN
                             }, (err, token) => {
 
                                 if (err) {
@@ -1192,8 +1277,8 @@ router.post('/device_status', async function (req, res) {
 
                     jwt.sign({
                         dvc
-                    }, config.secret, {
-                            expiresIn: config.expiresIn
+                    }, constants.SECRET, {
+                            expiresIn: constants.EXPIRES_IN
                         }, (err, token) => {
 
                             if (err) {

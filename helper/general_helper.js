@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
-const sql = require('../helper/sql.js');
+const { sql } = require('../config/database');
+
 var datetime = require('node-datetime');
 // var moment = require('moment');
 // import ADMIN from "../constants/Application";
@@ -18,6 +19,29 @@ var path = require('path');
 
 let usr_acc_query_text = "usr_acc.id,usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.user_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity"
 module.exports = {
+	convertToLang: async function (user_id, constant) {
+		var d_lng_id=1;
+		if (user_id != undefined && user_id != '' && user_id != null) {
+			var sQry = `SELECT dealer_lng_id FROM dealer_language WHERE dealer_id = '${user_id}' LIMIT 1`;
+			var dLang = await sql.query(sQry);
+			d_lng_id = dLang[0].dealer_lng_id;
+		}
+		// if (d_lng_id == undefined || d_lng_id == '' || d_lng_id == null || d_lng_id == '0') {
+		// 	d_lng_id = 1;
+		// }
+
+		var sTranslation = `SELECT key_id, key_value FROM lng_translations WHERE lng_id = ${d_lng_id} AND key_id = '${constant}'`;
+		let resp = await sql.query(sTranslation);
+		if (resp.length) {
+			return resp[0].key_value;
+		} else {
+			return constant;
+		}
+
+		// } else {
+		// 	return constant;
+		// }
+	},
 	isAdmin: async function (userId) {
 		var query1 = "SELECT type FROM dealers where dealer_id =" + userId;
 		var user = await sql.query(query1);
@@ -180,12 +204,28 @@ module.exports = {
 	},
 	dealerCount: async (adminRoleId) => {
 
-		var query = "SELECT COUNT(*) as dealer_count FROM dealers WHERE type !=" + adminRoleId;
+		var query = "SELECT COUNT(*) as dealer_count FROM dealers WHERE type !=" + adminRoleId + " AND type!=4";
 		let res = await sql.query(query);
 		if (res.length) {
+			console.log('helper called', res[0])
 			return res[0].dealer_count;
 		} else {
 			return false;
+		}
+	},
+	getSdealersByDealerId: async (dealer_id) => {
+
+		var query = "SELECT * FROM dealers WHERE connected_dealer = " + dealer_id;
+		let res = await sql.query(query);
+		let dealerList = []
+		if (res.length) {
+			dealerList = res.map((item) => {
+				return item.dealer_id
+			})
+			// console.log(dealerList);
+			return dealerList
+		} else {
+			return [];
 		}
 	},
 	isAllowedComponentByUri: async function (componentUri, userId) {
@@ -293,6 +333,25 @@ module.exports = {
 
 		// return deviceId;
 	},
+
+	getAllRecordbyDealerId: async function (dealer_id) {
+		// console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.id = ' + device_id)
+		let results = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.dealer_id = "' + dealer_id + '"');
+		if (results.length) {
+			for (let device of results) {
+				device.finalStatus = device_helpers.checkStatus(device)
+				device.pgp_email = await device_helpers.getPgpEmails(device)
+				device.sim_id = await device_helpers.getSimids(device)
+				device.chat_id = await device_helpers.getChatids(device)
+			}
+
+			return results
+		}
+		else {
+			return [];
+		}
+	},
+
 	checkLinkCode: async function (link_code) {
 
 		let query = "select dealer_id from dealers where link_code = '" + link_code + "';"
@@ -476,9 +535,7 @@ module.exports = {
 			}
 			if (stdout) {
 				let array = stdout.split(' ');
-				console.log("arr", array);
 				let label = array[1].split('=');
-				console.log("label", label);
 
 				return (label[1]) ? label[1].replace(/\'/g, '') : false;
 			}
@@ -538,8 +595,7 @@ module.exports = {
 		try {
 			let versionName = "aapt dump badging " + filePath + " | grep \"versionName\" | sed -e \"s/.*versionName='//\" -e \"s/' .*//\"";
 			const { stdout, stderr, error } = await exec(versionName);
-			// console.log('stdout:', stdout);
-			// console.log('stderr:', stderr);
+
 			if (error) {
 				return false;
 			}
@@ -561,8 +617,8 @@ module.exports = {
 			let label = "aapt dump badging " + filePath + " | grep \"application\" | sed -e \"s/.*label='//\" -e \"s/' .*//\""
 				;
 			const { stdout, stderr, error } = await exec(label);
-			// console.log('stdout:', stdout);
-			// console.log('stderr:', stderr);
+			console.log('stdout:', stdout);
+			console.log('stderr:', stderr);
 			if (error) {
 				return false;
 			}
@@ -571,7 +627,12 @@ module.exports = {
 				return false
 			}
 			if (stdout) {
-				return stdout;
+				let array = stdout.split(/\r?\n/);
+				console.log("stdout linux: ", array);
+				let label = array[0].split(':');
+
+				return (label[1]) ? label[1].replace(/\'/g, '') : false;
+
 			}
 			return false;
 
@@ -579,7 +640,6 @@ module.exports = {
 			return await this.getWindowAPKLabelScript(filePath);
 		}
 	},
-
 	// getting
 	getAPKPackageName: async function (filePath) {
 		try {
@@ -748,6 +808,18 @@ module.exports = {
 			}
 		}
 	},
+
+	getDealerByDealerId: async function (id) {
+		let query = "SELECT * FROM dealers WHERE dealer_id='" + id + "' limit 1";
+		let result = await sql.query(query);
+
+		if (result && result.length) {
+			return result;
+		} else {
+			return [];
+		}
+	},
+
 	formatBytes: function (bytes, decimals = 2) {
 		if (bytes === 0) return '0 Bytes';
 
@@ -821,12 +893,12 @@ module.exports = {
 	refactorPolicy: function (policy) {
 		let applist = JSON.parse(policy[0].app_list);
 		applist.forEach((app) => {
-			app.uniqueName = app.unique_name;
-			app.packageName = app.package_name;
+			// app.uniqueName = app.unique_name;
+			// app.packageName = app.package_name;
 			app.defaultApp = app.default_app;
-			delete app.unique_name;
-			delete app.package_name;
-			delete app.default_app;
+			// delete app.unique_name;
+			// delete app.package_name;
+			// delete app.default_app;
 		})
 
 		let permissions = JSON.parse(policy[0].permissions);

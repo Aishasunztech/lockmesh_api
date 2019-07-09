@@ -1,18 +1,20 @@
 // sockets.js
 var socket = require('socket.io');
-const sql = require('../helper/sql.js');
+const { sql } = require('../config/database');
 const device_helpers = require('../helper/device_helpers.js');
 const general_helpers = require('../helper/general_helper.js');
 var jwt = require('jsonwebtoken');
-var config = require('../helper/config.js');
+// var config = require('../helper/config.js');
 var Constants = require('../constants/Application');
+
+const constants = require('../config/constants');
 
 // verify token
 const verifyToken = function (token) {
     // check header or url parameters or post parameters for token
     if (token !== undefined && token !== null && token !== '' && token !== 'undefined') {
         // verifies secret and checks exp
-        return jwt.verify(token.replace(/['"]+/g, ''), config.secret, function (err, decoded) {
+        return jwt.verify(token.replace(/['"]+/g, ''), constants.SECRET, function (err, decoded) {
             if (err) {
                 return false;
             } else {
@@ -69,17 +71,20 @@ module.exports.listen = async function (server) {
     // ===============================================================================
     // io.of('/') is for middleware not for path
     // ===============================================================================
-
+    io.origins((origin, callback) => {
+        callback();
+        // if(origin === "http://localhost:3001"){
+        // } else {
+        //     callback()
+        // }
+    });
+    
     io.listen(server);
-
+    
     // check origins of incoming request
-    // io.origins((origin, callback) => {
-    //     // if (origin !== 'https://foo.example.com') {
-    //     //     return callback('origin not allowed', false);
-    //     // }
-    //     console.log("origins: "+ origin);
-    //     callback();
-    // });
+    
+    // io.origins('*:*');
+    
 
     // middleware for socket incoming and outgoing requests
     io.use(async function (socket, next) {
