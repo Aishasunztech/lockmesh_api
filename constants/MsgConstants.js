@@ -167,7 +167,7 @@ module.exports = {
     SUCCESS: "successful.id", // successful
     ERROR: "error.id", // error
     ERROR_WHILE_UPLOADING: "Error.While.Uploading.id", // Error While Uploading
-    UPLOADED_SUCCESSFULLY: "Uploaded.Successfully.id", // Uploaded Successfully /*NEW
+    UPLOADED_SUCCESSFULLY: "Uploaded.Successfully.id", // Uploaded Successfully
     ERROR_PROC: "error.while.processing.id", // Error while Processing
     NOT_DELETE: "not.deleted.id", // Not Deleted, Try Again!
     NO_DATA_FOUND: "no.data.found.id", // No data found    

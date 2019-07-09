@@ -2,7 +2,8 @@ module.exports = {
 	APP_TITLE: 'Lockmesh',
 	HOST: "http://localhost:3000",
 	SECRET: 'kepitsecretwithauth!@#',
-	EXPIRES_IN: '86400s',
+  	// EXPIRES_IN: '3s',
+  	EXPIRES_IN: '86400s',
 
 	// SMTP Constants
 	SMTP_HOST: 'smtp.office365.com',

@@ -8,13 +8,13 @@ var randomize = require('randomatic');
 
 // helpers
 const { sql } = require('../../config/database');
-var config = require('../../helper/config.js');
 var helpers = require('../../helper/general_helper.js');
 const device_helpers = require('../../helper/device_helpers.js');
 
-var Constants = require('../../constants/Application');
+var app_constants = require('../../constants/Application');
 var MsgConstants = require('../../constants/MsgConstants');
 
+const constants = require('../../config/constants');
 const {sendEmail} = require('../../lib/email');
 
 
@@ -54,7 +54,7 @@ exports.login = async function (req, res) {
 
 			if (users[0].password === enc_pwd) {
 				let dealerStatus = helpers.getDealerStatus(users[0]);
-				if (dealerStatus === Constants.DEALER_SUSPENDED) {
+				if (dealerStatus === app_constants.DEALER_SUSPENDED) {
 					data = {
 						status: false,
 						msg: await helpers.convertToLang("", MsgConstants.YOUR_ACCOUNT_IS_SUSPENDED), // 'Your account is suspended',
@@ -62,7 +62,7 @@ exports.login = async function (req, res) {
 					}
 					res.send(data);
 					return;
-				} else if (dealerStatus === Constants.DEALER_UNLINKED) {
+				} else if (dealerStatus === app_constants.DEALER_UNLINKED) {
 					data = {
 						status: false,
 						msg: await helpers.convertToLang("", MsgConstants.YOUR_ACCOUNT_IS_DELETED), // 'Your account is deleted',
@@ -129,9 +129,9 @@ exports.login = async function (req, res) {
 							{
 								user
 							},
-							config.secret,
+							constants.SECRET,
 							{
-								expiresIn: config.expiresIn
+								expiresIn: constants.EXPIRES_IN
 							}, async function (err, token) {
 								if (err) {
 									res.send({
@@ -140,18 +140,18 @@ exports.login = async function (req, res) {
 									});
 									return;
 								} else {
-									user.expiresIn = config.expiresIn;
+									user.expiresIn = constants.EXPIRES_IN;
 									// console.log("logged in user", user[0]);
 									user.verified = (users[0].is_two_factor_auth === true || users[0].is_two_factor_auth === 1) ? false : true;
 									user.token = token;
 
-									helpers.saveLogin(user, userType, Constants.TOKEN, 1);
+									helpers.saveLogin(user, userType, app_constants.TOKEN, 1);
 
 									res.send({
 										token: token,
 										status: true,
 										msg: await helpers.convertToLang("", MsgConstants.USER_LOGED_IN_SUCCESSFULLY), // 'User loged in Successfully',
-										expiresIn: config.expiresIn,
+										expiresIn: constants.EXPIRES_IN,
 										user,
 										two_factor_auth: false,
 									});
@@ -200,7 +200,7 @@ exports.verifyCode = async function (req, res) {
 
             if (response.affectedRows) {
                 let dealerStatus = helpers.getDealerStatus(checkRes[0]);
-                if (dealerStatus === Constants.DEALER_SUSPENDED) {
+                if (dealerStatus === app_constants.DEALER_SUSPENDED) {
                     data = {
                         status: false,
                         msg: await helpers.convertToLang("", MsgConstants.YOUR_ACCOUNT_IS_SUSPENDED), // 'Your account is suspended',
@@ -208,7 +208,7 @@ exports.verifyCode = async function (req, res) {
                     }
                     res.send(data);
                     return;
-                } else if (dealerStatus === Constants.DEALER_UNLINKED) {
+                } else if (dealerStatus === app_constants.DEALER_UNLINKED) {
                     data = {
                         status: false,
                         msg: await helpers.convertToLang("", MsgConstants.YOUR_ACCOUNT_IS_DELETED), // 'Your account is deleted',
@@ -244,8 +244,8 @@ exports.verifyCode = async function (req, res) {
 
                     jwt.sign({
                         user
-                    }, config.secret, {
-                            expiresIn: config.expiresIn
+                    }, constants.SECRET, {
+                            expiresIn: constants.EXPIRES_IN
                         }, async function (err, token) {
                             if (err) {
                                 res.send({
@@ -253,16 +253,16 @@ exports.verifyCode = async function (req, res) {
 								});
 								return;
                             } else {
-                                user.expiresIn = config.expiresIn;
+                                user.expiresIn = constants.EXPIRES_IN;
                                 user.verified = checkRes[0].verified;
                                 user.token = token;
-                                helpers.saveLogin(user, userType, Constants.TOKEN, 1);
+                                helpers.saveLogin(user, userType, app_constants.TOKEN, 1);
 
                                 res.send({
                                     token: token,
                                     status: true,
                                     msg: await helpers.convertToLang("", MsgConstants.USER_LOGED_IN_SUCCESSFULLY), // 'User loged in Successfully',
-                                    expiresIn: config.expiresIn,
+                                    expiresIn: constants.EXPIRES_IN,
                                     user
 								});
 								return;
@@ -306,9 +306,9 @@ exports.superAdminLogin = async function (req, res) {
                 {
                     user
                 },
-                config.secret,
+                constants.SECRET,
                 {
-                    expiresIn: config.expiresIn
+                    expiresIn: constants.EXPIRES_IN
                 }, async function (err, token) {
                     if (err) {
                         res.send({
@@ -316,13 +316,13 @@ exports.superAdminLogin = async function (req, res) {
                         });
                         return
                     } else {
-                        user.expiresIn = config.expiresIn;
+                        user.expiresIn = constants.EXPIRES_IN;
                         user.token = token;
                         res.send({
                             status: true,
                             token: token,
                             msg: await helpers.convertToLang("", MsgConstants.USER_LOGED_IN_SUCCESSFULLY), // 'User loged in Successfully',
-                            expiresIn: config.expiresIn,
+                            expiresIn: constants.EXPIRES_IN,
                             user,
                         });
                         return

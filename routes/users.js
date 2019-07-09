@@ -23,7 +23,7 @@ const stripe = require("stripe")("sk_test_1rS6KC3GoPT8wlOYWSLEQFk6");
 
 // ========= Helper =============
 const { sql } = require('../config/database');
-var config = require('../helper/config.js');
+// var config = require('../helper/config.js');
 
 var Constants = require('../constants/Application');
 var MsgConstants = require('../constants/MsgConstants');
@@ -33,6 +33,7 @@ var helpers = require('../helper/general_helper.js');
 const device_helpers = require('../helper/device_helpers.js');
 
 //=========== Custom Libraries =========
+const constants = require('../config/constants');
 const { sendEmail } = require('../lib/email');
 
 
@@ -57,7 +58,7 @@ var verifyToken = async function (req, res) {
     // console.log(token);
     if (token) {
 
-        jwt.verify(token, config.secret, async function (err, decoded) {
+        jwt.verify(token, constants.SECRET, async function (err, decoded) {
             if (err) {
                 ath = {
                     status: false,

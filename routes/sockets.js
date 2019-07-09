@@ -4,15 +4,17 @@ const { sql } = require('../config/database');
 const device_helpers = require('../helper/device_helpers.js');
 const general_helpers = require('../helper/general_helper.js');
 var jwt = require('jsonwebtoken');
-var config = require('../helper/config.js');
+// var config = require('../helper/config.js');
 var Constants = require('../constants/Application');
+
+const constants = require('../config/constants');
 
 // verify token
 const verifyToken = function (token) {
     // check header or url parameters or post parameters for token
     if (token !== undefined && token !== null && token !== '' && token !== 'undefined') {
         // verifies secret and checks exp
-        return jwt.verify(token.replace(/['"]+/g, ''), config.secret, function (err, decoded) {
+        return jwt.verify(token.replace(/['"]+/g, ''), constants.SECRET, function (err, decoded) {
             if (err) {
                 return false;
             } else {
