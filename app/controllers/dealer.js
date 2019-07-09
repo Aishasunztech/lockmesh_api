@@ -241,7 +241,7 @@ exports.addDealer = async function (req, res) {
                 sql1 += ` VALUES (0, '${dealerName}', '${dealerEmail}', '${enc_pwd}', '${link_code}', '${type}', NOW(), NOW())`;
             }
 
-            sql.query(sql1, function (error, rows) {
+            sql.query(sql1, async function (error, rows) {
                 if (error) {
                     console.log(error);
                     return;
@@ -421,7 +421,7 @@ exports.editDealers = async function (req, res) {
                             Below is the link to login : <br> 
                             ${app_constants.HOST} <br>`;
 
-                    sendEmail("Account Registration", html, email, function (error, response) {
+                    sendEmail("Account Registration", html, email, async function (error, response) {
                         if (error) {
                             console.log(error)
                             res.send({

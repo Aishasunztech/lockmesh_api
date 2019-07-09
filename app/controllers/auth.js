@@ -13,6 +13,7 @@ var helpers = require('../../helper/general_helper.js');
 const device_helpers = require('../../helper/device_helpers.js');
 
 var Constants = require('../../constants/Application');
+var MsgConstants = require('../../constants/MsgConstants');
 
 const {sendEmail} = require('../../lib/email');
 
@@ -31,7 +32,7 @@ exports.login = async function (req, res) {
 	if (users.length == 0) {
 		data = {
 			status: false,
-			msg: 'User does not exist',
+			msg: await helpers.convertToLang("", MsgConstants.USER_DOES_NOT_EXIST), // 'User does not exist',
 			data: null
 		}
 		res.send(data);
@@ -44,7 +45,7 @@ exports.login = async function (req, res) {
 
 			data = {
 				status: false,
-				msg: 'User does not exist',
+				msg: await helpers.convertToLang("", MsgConstants.USER_DOES_NOT_EXIST), // 'User does not exist',
 				data: null
 			}
 			res.send(data);
@@ -56,7 +57,7 @@ exports.login = async function (req, res) {
 				if (dealerStatus === Constants.DEALER_SUSPENDED) {
 					data = {
 						status: false,
-						msg: 'Your account is suspended',
+						msg: await helpers.convertToLang("", MsgConstants.YOUR_ACCOUNT_IS_SUSPENDED), // 'Your account is suspended',
 						data: null
 					}
 					res.send(data);
@@ -64,7 +65,7 @@ exports.login = async function (req, res) {
 				} else if (dealerStatus === Constants.DEALER_UNLINKED) {
 					data = {
 						status: false,
-						msg: 'Your account is deleted',
+						msg: await helpers.convertToLang("", MsgConstants.YOUR_ACCOUNT_IS_DELETED), // 'Your account is deleted',
 						data: null
 					}
 					res.send(data);
@@ -77,20 +78,20 @@ exports.login = async function (req, res) {
 						let updateVerification = `UPDATE dealers SET verified=0, verification_code='${md5(verificationCode)}' WHERE dealer_id=${users[0].dealer_id}`;
 						await sql.query(updateVerification);
 						let html = "Your Login Code is: " + verificationCode;
-						sendEmail("Dual Auth Verification", html, users[0].dealer_email, function (error, response) {
+						sendEmail("Dual Auth Verification", html, users[0].dealer_email, async function (error, response) {
 							if (error) {
 								
 								res.send({
 									status: false,
 									two_factor_auth: true,
-									msg: error
+									msg: await helpers.convertToLang("", MsgConstants.ERROR), // error
 								});
 								return;
 							} else {
 								res.send({
 									status: true,
 									two_factor_auth: true,
-									msg: "Verification Code sent to Your Email"
+									msg: await helpers.convertToLang("", MsgConstants.VERIFICATION_CODE_SENT_TO_YOUR_EMAIL), // "Verification Code sent to Your Email"
 								});
 								return;
 							}
@@ -131,7 +132,7 @@ exports.login = async function (req, res) {
 							config.secret,
 							{
 								expiresIn: config.expiresIn
-							}, (err, token) => {
+							}, async function (err, token) {
 								if (err) {
 									res.send({
 										status: false,
@@ -149,7 +150,7 @@ exports.login = async function (req, res) {
 									res.send({
 										token: token,
 										status: true,
-										msg: 'User loged in Successfully',
+										msg: await helpers.convertToLang("", MsgConstants.USER_LOGED_IN_SUCCESSFULLY), // 'User loged in Successfully',
 										expiresIn: config.expiresIn,
 										user,
 										two_factor_auth: false,
@@ -166,7 +167,7 @@ exports.login = async function (req, res) {
 
 				data = {
 					status: false,
-					msg: 'Invalid email or password',
+					msg: await helpers.convertToLang("", MsgConstants.INVALID_EMAIL_OR_PASSWORD), // 'Invalid email or password',
 					data: null
 				}
 				res.send(data);
@@ -191,7 +192,7 @@ exports.verifyCode = async function (req, res) {
             if (error) {
 				res.send({
                     status: false,
-                    msg: 'invalid verification code',
+                    msg: await helpers.convertToLang("", MsgConstants.INVALID_VERIFICATION_CODE), // 'invalid verification code',
                     data: null
 				})
 				return;
@@ -202,7 +203,7 @@ exports.verifyCode = async function (req, res) {
                 if (dealerStatus === Constants.DEALER_SUSPENDED) {
                     data = {
                         status: false,
-                        msg: 'Your account is suspended',
+                        msg: await helpers.convertToLang("", MsgConstants.YOUR_ACCOUNT_IS_SUSPENDED), // 'Your account is suspended',
                         data: null
                     }
                     res.send(data);
@@ -210,7 +211,7 @@ exports.verifyCode = async function (req, res) {
                 } else if (dealerStatus === Constants.DEALER_UNLINKED) {
                     data = {
                         status: false,
-                        msg: 'Your account is deleted',
+                        msg: await helpers.convertToLang("", MsgConstants.YOUR_ACCOUNT_IS_DELETED), // 'Your account is deleted',
                         data: null
                     }
                     res.status(200).send(data);
@@ -245,7 +246,7 @@ exports.verifyCode = async function (req, res) {
                         user
                     }, config.secret, {
                             expiresIn: config.expiresIn
-                        }, (err, token) => {
+                        }, async function (err, token) {
                             if (err) {
                                 res.send({
                                     'err': err
@@ -260,7 +261,7 @@ exports.verifyCode = async function (req, res) {
                                 res.send({
                                     token: token,
                                     status: true,
-                                    msg: 'User loged in Successfully',
+                                    msg: await helpers.convertToLang("", MsgConstants.USER_LOGED_IN_SUCCESSFULLY), // 'User loged in Successfully',
                                     expiresIn: config.expiresIn,
                                     user
 								});
@@ -271,7 +272,7 @@ exports.verifyCode = async function (req, res) {
             } else {
                 res.send({
                     status: false,
-                    msg: 'invalid verification code',
+                    msg: await helpers.convertToLang("", MsgConstants.INVALID_VERIFICATION_CODE), // 'invalid verification code',
                     data: null
 				})
 				return;
@@ -281,7 +282,7 @@ exports.verifyCode = async function (req, res) {
     } else {
         data = {
             status: false,
-            msg: 'invalid verification code',
+            msg: await helpers.convertToLang("", MsgConstants.INVALID_VERIFICATION_CODE), // 'invalid verification code',
             data: null
         }
 		res.send(data);
@@ -308,7 +309,7 @@ exports.superAdminLogin = async function (req, res) {
                 config.secret,
                 {
                     expiresIn: config.expiresIn
-                }, (err, token) => {
+                }, async function (err, token) {
                     if (err) {
                         res.send({
                             'err': err
@@ -320,7 +321,7 @@ exports.superAdminLogin = async function (req, res) {
                         res.send({
                             status: true,
                             token: token,
-                            msg: 'User loged in Successfully',
+                            msg: await helpers.convertToLang("", MsgConstants.USER_LOGED_IN_SUCCESSFULLY), // 'User loged in Successfully',
                             expiresIn: config.expiresIn,
                             user,
                         });

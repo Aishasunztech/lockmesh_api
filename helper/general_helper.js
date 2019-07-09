@@ -20,30 +20,27 @@ var path = require('path');
 let usr_acc_query_text = "usr_acc.id,usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.user_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity"
 module.exports = {
 	convertToLang: async function (user_id, constant) {
-		console.log('id is: ', user_id, " constant is: ", constant);
-		var sQry = `SELECT dealer_lng_id FROM dealer_language WHERE dealer_id = ${user_id} LIMIT 1`;
-		console.log('sQry: ', sQry);
-		var dLang = await sql.query(sQry);
-		var d_lng_id = dLang.dealer_lng_id;
-		if (d_lng_id == undefined || d_lng_id == '' || d_lng_id == null) {
-			d_lng_id = 1;
+		var d_lng_id=1;
+		if (user_id != undefined || user_id != '' || user_id != null) {
+			var sQry = `SELECT dealer_lng_id FROM dealer_language WHERE dealer_id = '${user_id}' LIMIT 1`;
+			var dLang = await sql.query(sQry);
+			d_lng_id = dLang[0].dealer_lng_id;
 		}
-		if (d_lng_id) {
-			console.log('dealer lng id: ', d_lng_id);
-			var sTranslation = `SELECT key_id, key_value FROM lng_translations WHERE lng_id = '${d_lng_id}' AND key_id = '${constant}'`;
-			console.log('sTranslation is: ', sTranslation);
-			let resp = await sql.query(sTranslation);
-			console.log(constant, 'Translation resp is: ', resp);
-			if (resp.length) {
-				return resp[0].key_value;
-			} else {
-				return constant;
-			}
+		// if (d_lng_id == undefined || d_lng_id == '' || d_lng_id == null || d_lng_id == '0') {
+		// 	d_lng_id = 1;
+		// }
 
+		var sTranslation = `SELECT key_id, key_value FROM lng_translations WHERE lng_id = ${d_lng_id} AND key_id = '${constant}'`;
+		let resp = await sql.query(sTranslation);
+		if (resp.length) {
+			return resp[0].key_value;
 		} else {
 			return constant;
 		}
 
+		// } else {
+		// 	return constant;
+		// }
 	},
 	isAdmin: async function (userId) {
 		var query1 = "SELECT type FROM dealers where dealer_id =" + userId;

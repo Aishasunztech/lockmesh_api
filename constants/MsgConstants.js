@@ -16,7 +16,7 @@ module.exports = {
     DEALER_NOT_SUSP: "dealer.not.suspend.id", // Dealer not suspended.
     DELAER_NOT_ACTIV: "dealer.not.activated.id", // Dealer not activated.
     DEALER_ACTIV_SUCC: "dealer.activated.succ.id", // Dealer activated successfully.
-    
+
 
     //***************** Users ***************/
 
@@ -26,7 +26,7 @@ module.exports = {
     DUAL_AUTH_SUCC_ENBL: "dual.auth.succ.enabled.id", // Dual Authentication is Successfully enabled
     DUAL_AUTH_SUCC_DISABL: "dual.auth.succ.disabled.id", // Dual Authentication is Successfully disabled
     DUAL_AUTH_NOT_ENBL: "dual.auth.not.enabled.id", // Dual Authentication could not be enabled
-   
+
     USER_ALRDY_REG: "user.already.registered.id", // User Already Registered. Please use another email.
     USER_REG_SUCC: "user.registered.succ.id", // User has been registered successfully.
     USER_INFO_CHANGE_SUCC: "user.info.changed.succ.id", // User Info has been changed successfully.
@@ -49,7 +49,7 @@ module.exports = {
     ACCESS_FORBIDDEN: "access.forbidden.id", // access forbidden
 
     CSV_RELEASED_SUCCESSFULLY: "CSV.Released.Successfully.id", // CSV Released Successfully.
-    CSV_NOT_RELEASED : "CSV.Not.Released.id", // CSV Not Released.
+    CSV_NOT_RELEASED: "CSV.Not.Released.id", // CSV Not Released.
     APP_UPLOADED_SUCCESSFULLY: "App.Uploaded.Successfully.id", // Success: App Uploaded Successfully
     UNABLE_TO_READ_APP_PROPERTIES: "Unable.to.read.APP.properties.id", //  Error! Unable to read APP properties
     APP_LOGO_UPLOADED_SUCCESSFULLY: "App.logo.Uploaded.Successfully.id", // Success! App logo Uploaded Successfully.
@@ -106,7 +106,7 @@ module.exports = {
 
 
 
-   
+
     DEVICE_NOT_UNLNK: "device.not.unlinked.id", // Device not unlinked.
     DEVICE_UNLNK_SUCC: "device.unlinked.succ.id", // Device unlinked successfully.
     ACC_NOT_SUSP: "account.not.suspended.id", // Account not suspended.Please try again.
@@ -141,9 +141,24 @@ module.exports = {
     DEVICE_NOT_FOUND: "device.not.found.id", // No Device found
     DEVICE_DEL_SUCC: "device.deleted.succ.id", // Device deleted successfully.
     DEVICE_NOT_DEL: "device.not.delete.id", // Device not deleted.
-    
+
+
+
+    //****************** Auth Controllers *****************/ /*NEW
+    USER_DOES_NOT_EXIST: "User.does.not.exist.id", // User does not exist
+    YOUR_ACCOUNT_IS_SUSPENDED: "Your.account.is.suspended.id", // Your account is suspended
+    YOUR_ACCOUNT_IS_DELETED: "Your.account.is.Deleted.id", // Your account is Deleted
+    VERIFICATION_CODE_SENT_TO_YOUR_EMAIL: "Verification.Code.sent.to.Your.Email.id", // Verification Code sent to Your Email
+    USER_LOGED_IN_SUCCESSFULLY: "User.loged.in.Successfully.id", // User loged in Successfully
+    INVALID_VERIFICATION_CODE: "invalid.verification.code.id", // Invalid verification code
+
+    //****************** Device Controllers *****************/ /*NEW
+    NEW_DEVICE_NOT_ADDED: "New.Device.Not.Added.id", // New Device Not Added Please try Again
+
+
     //****************** Common *****************/
     INVALID_EMAIL_NAME: "invalid.email.or.name.id", // Invalid email or name
+    INVALID_EMAIL_OR_PASSWORD: "Invalid.email.or.password.id", // Invalid email or password
     RECORD_NOT_UPD: "record.not.updated.id", // Record not updated.
     ENTER_VALID_DETAIL: "enter.valid.detail.id", // Please enter valid details
     RECORD_NOT_DEL: "record.not.delete.id", // Record not deleted.
@@ -152,6 +167,7 @@ module.exports = {
     SUCCESS: "successful.id", // successful
     ERROR: "error.id", // error
     ERROR_WHILE_UPLOADING: "Error.While.Uploading.id", // Error While Uploading
+    UPLOADED_SUCCESSFULLY: "Uploaded.Successfully.id", // Uploaded Successfully /*NEW
     ERROR_PROC: "error.while.processing.id", // Error while Processing
     NOT_DELETE: "not.deleted.id", // Not Deleted, Try Again!
     NO_DATA_FOUND: "no.data.found.id", // No data found    

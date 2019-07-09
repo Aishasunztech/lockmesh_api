@@ -11,6 +11,8 @@ var randomize = require('randomatic');
 var moment = require('moment-strftime');
 
 const constants = require('../../constants/Application');
+var MsgConstants = require('../../constants/MsgConstants');
+
 const device_helpers = require('../../helper/device_helpers');
 const general_helpers = require('../../helper/general_helper');
 const verifyToken = require('../../config/auth');
@@ -186,7 +188,7 @@ exports.devices = async function (req, res) {
 //     } else {
 //         res.send({
 //             status: false,
-//             msg: "No data found",
+//             msg: await helpers.convertToLang(loggedInuid, MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND), // "No data found",
 //             devices: []
 //         })
 //     }
@@ -220,7 +222,7 @@ exports.devices = async function (req, res) {
 //         } else {
 //             res.send({
 //                 status: false,
-//                 msg: "No data found"
+//                 msg: await helpers.convertToLang(loggedInuid, MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND), // "No data found"
 //             })
 //         }
 //         if (updateQ != '') {
@@ -230,7 +232,7 @@ exports.devices = async function (req, res) {
 //                     console.log(err);
 //                     res.send({
 //                         status: false,
-//                         msg: "Error occur"
+//                         msg: await helpers.convertToLang(loggedInuid, MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND), // "Error occur"
 //                     });
 //                 } else {
 //                     let selectQuery = `SELECT devices.*, white_labels.name as whitelabel FROM devices LEFT JOIN white_labels ON (devices.whitelabel_id = white_labels.id) WHERE devices.id = ${id}`;
@@ -241,7 +243,7 @@ exports.devices = async function (req, res) {
 //                             console.log(err);
 //                             res.send({
 //                                 status: false,
-//                                 msg: "Error occur"
+//                                 msg: await helpers.convertToLang(loggedInuid, MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND), // "Error occur"
 //                             });
 //                         } else if (devices.length) {
 //                             devices.forEach((device) => {
@@ -257,13 +259,13 @@ exports.devices = async function (req, res) {
 //                             res.send({
 //                                 status: true,
 //                                 devices: devices,
-//                                 msg: "Offline Device Status Successfully Updated!"
+//                                 msg: await helpers.convertToLang(loggedInuid, MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND), // "Offline Device Status Successfully Updated!"
 //                             })
 //                         } else {
 //                             res.send({
 //                                 status: false,
 //                                 devices: [],
-//                                 msg: "Failed to update Offline Device Status!",
+//                                 msg: await helpers.convertToLang(loggedInuid, MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND), // "Failed to update Offline Device Status!",
 //                             })
 //                         }
 //                     });
@@ -274,14 +276,14 @@ exports.devices = async function (req, res) {
 //         } else {
 //             res.send({
 //                 status: false,
-//                 msg: "Query not run"
+//                 msg: await helpers.convertToLang(loggedInuid, MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND), // "Query not run"
 //             })
 //         }
 //     } catch (error) {
 //         console.log(error);
 //         res.send({
 //             status: false,
-//             msg: "exception for deviceStatus",
+//             msg: await helpers.convertToLang(loggedInuid, MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND), // "exception for deviceStatus",
 //         });
 //         return;
 //     }
@@ -292,7 +294,6 @@ exports.devices = async function (req, res) {
 // /**GET New the devices**/
 exports.newDevices = async function (req, res) {
     var verify = await verifyToken(req, res);
-    
     if (verify['status'] !== undefined && verify.status == true) {
         
         var where_con = '';
@@ -397,7 +398,7 @@ exports.acceptDevice = async function (req, res) {
             } else {
                 res.send({
                     status: false,
-                    msg: "New Device Not Added Please try Again"
+                    msg: await helpers.convertToLang(loggedDealerId, MsgConstants.NEW_DEVICE_NOT_ADDED), // "New Device Not Added Please try Again"
                 });
                 return;
             }
@@ -407,7 +408,7 @@ exports.acceptDevice = async function (req, res) {
                     console.log(checkDeviceError)
                     res.send({
                         status: false,
-                        msg: "New Device Not Added Please try Again"
+                        msg: await helpers.convertToLang(loggedDealerId, MsgConstants.NEW_DEVICE_NOT_ADDED), // "New Device Not Added Please try Again"
                     });
                     return;
                 }
@@ -423,7 +424,7 @@ exports.acceptDevice = async function (req, res) {
                             console.log(checkUniqueEror)
                             res.send({
                                 status: false,
-                                msg: "New Device Not Added Please try Again"
+                                msg: await helpers.convertToLang(loggedDealerId, MsgConstants.NEW_DEVICE_NOT_ADDED), // "New Device Not Added Please try Again"
                             });
                             return;
                         }
@@ -453,7 +454,7 @@ exports.acceptDevice = async function (req, res) {
                                     console.log(commonQueryError);
                                     res.send({
                                         status: false,
-                                        msg: "New Device Not Added Please try Again"
+                                        msg: await helpers.convertToLang(loggedDealerId, MsgConstants.NEW_DEVICE_NOT_ADDED), // "New Device Not Added Please try Again"
                                     });
                                     return;
                                 }
@@ -499,7 +500,7 @@ exports.acceptDevice = async function (req, res) {
                                 
                                 data = {
                                     status: true,
-                                    msg: 'Record updated successfully.',
+                                    msg: await helpers.convertToLang(loggedDealerId, MsgConstants.RECORD_UPD_SUCC), // 'Record updated successfully.',
                                     data: rsltq
                                 };
                                 res.send(data);
@@ -509,7 +510,7 @@ exports.acceptDevice = async function (req, res) {
                         } else {
                             res.send({
                                 status: false,
-                                msg: "device is not added"
+                                msg: await helpers.convertToLang(loggedDealerId, MsgConstants.NEW_DEVICE_NOT_ADDED), // "device is not added"
                             });
                             return;
                         }
@@ -518,7 +519,7 @@ exports.acceptDevice = async function (req, res) {
                 } else {
                     res.send({
                         status: false,
-                        msg: "New Device Not Added Please try Again"
+                        msg: await helpers.convertToLang(loggedDealerId, MsgConstants.NEW_DEVICE_NOT_ADDED), // "New Device Not Added Please try Again"
                     });
                     return;
                 }
@@ -527,7 +528,7 @@ exports.acceptDevice = async function (req, res) {
         } else {
             res.send({
                 status: false,
-                msg: "Device Not Added Try Again"
+                msg: await helpers.convertToLang(loggedDealerId, MsgConstants.NEW_DEVICE_NOT_ADDED), // "Device Not Added Try Again"
             });
             return;
         }
