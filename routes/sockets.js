@@ -69,17 +69,15 @@ module.exports.listen = async function (server) {
     // ===============================================================================
     // io.of('/') is for middleware not for path
     // ===============================================================================
-
+    
     io.listen(server);
-
+    
+    // io.origins('*:*');
     // check origins of incoming request
-    // io.origins((origin, callback) => {
-    //     // if (origin !== 'https://foo.example.com') {
-    //     //     return callback('origin not allowed', false);
-    //     // }
-    //     console.log("origins: "+ origin);
-    //     callback();
-    // });
+    
+    io.origins((origin, callback) => {
+        callback();
+    });
 
     // middleware for socket incoming and outgoing requests
     io.use(async function (socket, next) {
