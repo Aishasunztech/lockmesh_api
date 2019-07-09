@@ -3807,8 +3807,7 @@ router.post('/purchase_credits', async function (req, res) {
             let promo_code = req.body.data.promo_code
             let currency = req.body.data.currency
             let dealerId = verify.user.id
-            // console.log(verify.user);
-            console.log(currency_price);
+            // console.log(currency_price);
 
             // return
             if (credits != undefined && credits != '' && credits != null) {
@@ -3830,8 +3829,9 @@ router.post('/purchase_credits', async function (req, res) {
                                         if (response.data.status) {
                                             let data = {
                                                 dealer_id: dealerId,
+                                                dealer_pin: verify.user.link_code,
                                                 dealer_name: verify.user.dealer_name,
-                                                label: Constants.APP_TITLE,
+                                                label: app_constants.APP_TITLE,
                                                 credits: credits,
                                                 dealer_email: verify.user.email
                                             }
@@ -6319,6 +6319,31 @@ router.post('/create_backup_DB', async function (req, res) {
         }
         res.send(data)
         // let file =  zipFileName
+    }
+});
+
+
+router.get('/get_csv_ids', async (req, res) => {
+    var verify = await verifyToken(req, res);
+    if (verify['status'] !== undefined && verify.status === true) {
+        let pgp_query = "select * from pgp_emails";
+        let pgp_emails = await sql.query(pgp_query)
+        let chat_query = "select * from chat_ids";
+        let chat_ids = await sql.query(chat_query)
+        let sim_query = "select * from sim_ids";
+        let sim_ids = await sql.query(sim_query)
+
+        res.send({
+            status: true,
+            pgp_emails,
+            chat_ids,
+            sim_ids
+        })
+    }
+    else {
+        res.send({
+            status: false,
+        })
     }
 });
 
