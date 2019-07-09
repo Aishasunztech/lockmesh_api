@@ -9,6 +9,8 @@ var mime = require('mime');
 const axios = require('axios');
 
 const Constants = require('../../constants/Application');
+var MsgConstants = require('../../constants/MsgConstants');
+
 const device_helpers = require('../../helpers/device_helpers');
 const general_helpers = require('../../helpers/general_helpers');
 const moment = require('moment')
@@ -50,7 +52,7 @@ exports.apklist = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: "No result found",
+                msg: await general_helpers.convertToLang("", MsgConstants.NO_DATA_FOUND), // "No result found",
                 list: []
             }
             res.send(data);
@@ -106,7 +108,7 @@ exports.uploadApk = async function (req, res) {
     } else {
         res.send({
             status: false,
-            msg: "Error while uploading"
+            msg: await general_helpers.convertToLang("", MsgConstants.ERROR_WHILE_UPLOADING), // "Error while uploading"
         })
         return;
     }
@@ -135,13 +137,13 @@ exports.uploadApk = async function (req, res) {
                 if (error) {
                     res.send({
                         status: false,
-                        msg: "Error while uploading"
+                        msg: await general_helpers.convertToLang("", MsgConstants.ERROR_WHILE_UPLOADING), // "Error while uploading"
                     })
                 }
                 console.log(fileName);
                 data = {
                     status: true,
-                    msg: 'Uploaded Successfully',
+                    msg: await general_helpers.convertToLang("", MsgConstants.UPLOADED_SUCCESSFULLY), // 'Uploaded Successfully',
                     fileName: fileName,
                     size: formatByte
                 };
@@ -151,7 +153,7 @@ exports.uploadApk = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: "Error while Uploading",
+                msg: await general_helpers.convertToLang("", MsgConstants.ERROR_WHILE_UPLOADING), // "Error while Uploading",
             };
             res.send(data);
             return;
@@ -168,12 +170,12 @@ exports.uploadApk = async function (req, res) {
             if (error) {
                 res.send({
                     status: false,
-                    msg: "Error while uploading"
+                    msg: await general_helpers.convertToLang("", MsgConstants.ERROR_WHILE_UPLOADING), // "Error while uploading"
                 })
             }
             data = {
                 status: true,
-                msg: 'Uploaded Successfully',
+                msg: await general_helpers.convertToLang("", MsgConstants.UPLOADED_SUCCESSFULLY), // 'Uploaded Successfully',
                 fileName: fileName,
                 size: formatByte
 
@@ -185,7 +187,7 @@ exports.uploadApk = async function (req, res) {
     else {
         data = {
             status: false,
-            msg: "Error while Uploading"
+            msg: await general_helpers.convertToLang("", MsgConstants.ERROR_WHILE_UPLOADING), // "Error while Uploading"
         }
         res.send(data);
         return;
@@ -262,7 +264,7 @@ exports.addApk = async function (req, res) {
                     if (err) throw err;
                     data = {
                         status: true,
-                        msg: "Apk is uploaded",
+                        msg: await general_helpers.convertToLang("", MsgConstants.APK_IS_UPLOADED), // "Apk is uploaded",
                         data: dta
                     };
                     res.send(data);
@@ -273,7 +275,7 @@ exports.addApk = async function (req, res) {
                 console.log("file not found");
                 res.send({
                     status: false,
-                    msg: "Error While Uploading"
+                    msg: await general_helpers.convertToLang("", MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
                 })
                 return;
             }
@@ -281,7 +283,7 @@ exports.addApk = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: "Error While Uploading"
+                msg: await general_helpers.convertToLang("", MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
             };
             res.send(data);
             return;
@@ -290,7 +292,7 @@ exports.addApk = async function (req, res) {
         console.log(error);
         data = {
             status: false,
-            msg: "Error while Uploading",
+            msg: await general_helpers.convertToLang("", MsgConstants.ERROR_WHILE_UPLOADING), // "Error while Uploading",
         };
         return;
     }
@@ -304,7 +306,7 @@ exports.deleteApk = async function (req, res) {
             if (results.affectedRows == 0) {
                 data = {
                     "status": false,
-                    "msg": "Apk not deleted.",
+                    "msg": await general_helpers.convertToLang("", MsgConstants.APK_NOT_DELETED), // "Apk not deleted.",
                     "rdlt": results
                 };
             } else {
@@ -314,13 +316,13 @@ exports.deleteApk = async function (req, res) {
 
                     data = {
                         "status": true,
-                        "msg": "Apk deleted successfully.",
+                        "msg": await general_helpers.convertToLang("", MsgConstants.APK_DELETED_SUCCESSFULLY), // "Apk deleted successfully.",
                         "apk": result[0]
                     };
                 } else {
                     data = {
                         "status": false,
-                        "msg": "Apk not deleted.",
+                        "msg": await general_helpers.convertToLang("", MsgConstants.APK_NOT_DELETED), // "Apk not deleted.",
                         "rdlt": results
                     };
                 }
@@ -331,7 +333,7 @@ exports.deleteApk = async function (req, res) {
     } else {
         data = {
             "status": false,
-            "msg": "Some error occurred."
+            "msg": await general_helpers.convertToLang("", MsgConstants.ERROR), // "Some error occurred."
 
         }
         res.send(data);
@@ -398,7 +400,7 @@ exports.editApk = async function (req, res) {
                     if (err) throw err;
                     data = {
                         status: true,
-                        msg: "Record Updated"
+                        msg: await general_helpers.convertToLang("", MsgConstants.RECORD_UPD_SUCC), // "Record Updated"
 
                     };
                     res.send(data);
@@ -409,7 +411,7 @@ exports.editApk = async function (req, res) {
             } else {
                 data = {
                     status: false,
-                    msg: "Error While Uploading"
+                    msg: await general_helpers.convertToLang("", MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
                 };
                 res.send(data);
                 return;
@@ -418,7 +420,7 @@ exports.editApk = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: "Error While Uploading"
+                msg: await general_helpers.convertToLang("", MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
             };
             res.send(data);
             return;
@@ -426,7 +428,7 @@ exports.editApk = async function (req, res) {
     } catch (error) {
         data = {
             status: false,
-            msg: "Error while Uploading",
+            msg: await general_helpers.convertToLang("", MsgConstants.ERROR_WHILE_UPLOADING), // "Error while Uploading",
         };
         res.send(data);
         return;

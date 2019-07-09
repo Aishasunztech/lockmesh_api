@@ -53,7 +53,7 @@ let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_
 
 
 /*Check For Token in the header */
-var verifyToken = function (req, res) {
+var verifyToken = async function (req, res) {
     var ath;
     var token = req.headers['authorization'];
     // console.log(token);
@@ -104,10 +104,11 @@ var verifyToken = function (req, res) {
             status: false,
             success: false
         };
-        return res.status(403).send({
+        var data = {
             success: false,
             msg: await helpers.convertToLang("", MsgConstants.NO_TOKEN_PROVIDE), // No token provided.'
-        });
+        }
+        return res.status(403).send(data);
     }
     return ath;
 }
@@ -124,7 +125,7 @@ router.get('/', async function (req, res, next) {
     //         exp_year: 2020,
     //         cvc: '1234'
     //     }
-    // }, function (err, token) {
+    // }, async function (err, token) {
     //     console.log(err);
     //     console.log(token);
     // });
@@ -152,7 +153,7 @@ router.get('/', async function (req, res, next) {
 
     // res.send(tablesName)
 
-    // let data1 = await cm.import(options, data, function (err, rows) {
+    // let data1 = await cm.import(options, data, async function (err, rows) {
     //     if (err === null) err = false;
     //     // expect(err).to.equal(false);
     //     // done();
@@ -547,7 +548,7 @@ router.post('/create/device_profile', async function (req, res) {
     }
 });
 
-router.post('/transfer/device_profile', async (req, res) => {
+router.post('/transfer/device_profile', async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
@@ -564,7 +565,7 @@ router.post('/transfer/device_profile', async (req, res) => {
             where: {
                 device_id: device_id
             }
-        }).then((response, err) => {
+        }).then( async function (response, err) {
             console.log(err, 'oject res', response[0]['dataValues']);
             let new_object = response[0]['dataValues'];
             // new_object['device_id'] = device_id_new;
@@ -576,7 +577,7 @@ router.post('/transfer/device_profile', async (req, res) => {
             var value = ") VALUES ('" + device_id_new + "', '" + activation_code + "', '" + new_object.name + "', '" + new_object.client_id + "', '" + new_object.chat_id + "', '" + new_object.model + "', '" + new_object.email + "', '" + new_object.pgp_email + "', '" + new_object.expiry_months + "', '" + new_object.dealer_id + "', 0, 0 , '" + new_object.ip_address + "', '" + new_object.sim_id + "', '" + new_object.simno + "', '" + new_object.imei + "', '" + new_object.sim_id2 + "', '" + new_object.simno2 + "', '" + new_object.imei2 + "', '" + new_object.serial_number + "', '" + new_object.mac_address + "', '" + new_object.s_dealer + "', '" + new_object.s_dealer_name + "', '" + new_object.account + "', '" + new_object.fcm_token + "', '" + new_object.account_status + "', '" + new_object.start_date + "', '" + new_object.expiry_date + "', '" + new_object.link_code + "' )";
             let query = insertDevice + value;
             // console.log('qerury', query);
-            sql.query(query, async (err, resp) => {
+            sql.query(query, async function (err, resp) {
                 // console.log('query reslut response', resp)
                 if (err) {
                     console.log(err)
@@ -714,7 +715,7 @@ router.put('/edit/devices', async function (req, res) {
                 if (rows.length) {
                     let checkUniquePgp = "SELECT * from pgp_emails WHERE pgp_email= '" + pgp_email + "' AND user_acc_id != '' AND user_acc_id != '" + usr_acc_id + "'"
                     // let checkUnique = "SELECT usr_acc.* from usr_acc WHERE account_email= '" + device_email + "' AND device_id != '" + device_id + "'"
-                    sql.query(checkUniquePgp, async (error, success) => {
+                    sql.query(checkUniquePgp, async function (error, success) {
                         if (success.length) {
                             res.send({
                                 status: false,
@@ -875,7 +876,7 @@ router.post('/unlink/:id', async function (req, res) {
 
                 if (results && results.affectedRows) {
                     // Update device details on Super admin
-                    axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
+                    axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then(async function (response) {
                         // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
                         if (response.data.status) {
                             let data = {
@@ -1070,7 +1071,7 @@ router.post('/activate/:id', async function (req, res) {
 
                 var sql1 = "update usr_acc set account_status='' where device_id = '" + device_id + "'";
 
-                var rest = sql.query(sql1, function (error, results) {
+                var rest = sql.query(sql1, async function (error, results) {
                     if (error) {
                         console.log(error);
                     }
@@ -1114,7 +1115,7 @@ router.post('/activate/:id', async function (req, res) {
 
                     var sql1 = "update usr_acc set account_status='' where device_id = '" + device_id + "'";
 
-                    var rest = sql.query(sql1, function (error, results) {
+                    var rest = sql.query(sql1, async function (error, results) {
                         if (error) {
                             console.log(error);
                         }
@@ -1450,7 +1451,7 @@ router.patch('/sync-device', async function (req, res) {
         let deviceId = req.body.device_id;
         if (!empty(deviceId)) {
             let query = "SELECT * FROM devices WHERE device_id = '" + deviceId + "' and online = '" + Constants.DEVICE_ONLINE + "'";
-            sql.query(query, function (error, response) {
+            sql.query(query, async function (error, response) {
                 if (error) console.log(error);
                 if (response.length) {
                     require("../bin/www").syncDevice(deviceId);
@@ -1802,7 +1803,7 @@ router.put('/delete_user/:user_id', async function (req, res) {
         if (!empty(user_id) && user_id != undefined) {
             let deleteUserQ = "UPDATE users SET del_status = 1 WHERE user_id ='" + user_id + "'";
             // console.log(deleteUserQ);
-            sql.query(deleteUserQ, function (err, result) {
+            sql.query(deleteUserQ, async function (err, result) {
                 if (err) {
                     console.log(err)
                 }
@@ -1842,7 +1843,7 @@ router.put('/undo_delete_user/:user_id', async function (req, res) {
         if (!empty(user_id) && user_id != undefined) {
             let deleteUserQ = "UPDATE users SET del_status = 0 WHERE user_id ='" + user_id + "'";
             console.log(deleteUserQ);
-            sql.query(deleteUserQ, function (err, result) {
+            sql.query(deleteUserQ, async function (err, result) {
                 if (err) {
                     console.log(err)
                 }
@@ -1884,7 +1885,7 @@ router.put('/updateProfile/:id', async function (req, res) {
     var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
 
-        sql.query('UPDATE dealers SET `dealer_name` = ? where `dealer_id` = ?', [req.body.name, req.body.dealerId], function (error, rows, status) {
+        sql.query('UPDATE dealers SET `dealer_name` = ? where `dealer_id` = ?', [req.body.name, req.body.dealerId], async function (error, rows, status) {
 
             if (error) {
                 console.log(error);
@@ -1960,14 +1961,14 @@ router.post('/resetpwd', async function (req, res) {
                     var message = 'You have changed your password in your Lockmesh.com account. <br><br> This is just to inform you about the activity. If it was not you, please immediately contact your provider to reset the password.';
                 }
 
-                sendEmail(subject, message, email, function (errors, response) {
+                sendEmail(subject, message, email, async function (errors, response) {
                     if (errors) {
                         res.send("Email could not sent due to error: " + errors);
                         return;
                     } else {
 
                         var sq = "update dealers set password = '" + enc_pwd + "' where dealer_id = '" + dealer_id + "'";
-                        sql.query(sq, function (error, rows) {
+                        sql.query(sq, async function (error, rows) {
 
 
                             if (error) {
@@ -2205,7 +2206,7 @@ router.get('/dealer/gtdropdown/:dropdownType', async function (req, res) {
         // console.log('data from req', req.params.dropdownType);
         let dealer_id = verify.user.id;
         let dropdownType = req.params.dropdownType;
-        sql.query("select * from dealer_dropdown_list where dealer_id = " + dealer_id + " AND type = '" + dropdownType + "'", function (err, rslts) {
+        sql.query("select * from dealer_dropdown_list where dealer_id = " + dealer_id + " AND type = '" + dropdownType + "'", async function (err, rslts) {
             if (err) {
                 console.log(err)
             }
@@ -2253,7 +2254,7 @@ router.post('/dealer/dropdown', async function (req, res) {
         // console.log('query result', srslt);
 
         if (srslt.length == 0) {
-            var squery = sql.query("insert into dealer_dropdown_list (dealer_id, selected_items, type) values (" + dealer_id + ", '" + selected_items + "', '" + dropdownType + "')", function (err, rslts) {
+            var squery = sql.query("insert into dealer_dropdown_list (dealer_id, selected_items, type) values (" + dealer_id + ", '" + selected_items + "', '" + dropdownType + "')", async function (err, rslts) {
                 data = {
                     "status": true,
                     "msg": await helpers.convertToLang(loggedInuid, MsgConstants.ITEMS_ADDED), // Items Added.
@@ -2263,7 +2264,7 @@ router.post('/dealer/dropdown', async function (req, res) {
             });
         } else {
 
-            sql.query("update dealer_dropdown_list set selected_items = '" + selected_items + "' where type='" + dropdownType + "' AND dealer_id='" + dealer_id + "'", function (err, row) {
+            sql.query("update dealer_dropdown_list set selected_items = '" + selected_items + "' where type='" + dropdownType + "' AND dealer_id='" + dealer_id + "'", async function (err, row) {
                 // console.log('squery data ', 'rowws', row);
                 if (row.affectedRows != 0) {
                     data = {
@@ -2294,7 +2295,7 @@ router.get('/dealer/getPagination/:dropdownType', async function (req, res) {
         // console.log('data from req', req.params.dropdownType);
         let dealer_id = verify.user.id;
         let dropdownType = req.params.dropdownType;
-        sql.query("select record_per_page from dealer_pagination where dealer_id = " + dealer_id + " AND type = '" + dropdownType + "'", function (err, rslts) {
+        sql.query("select record_per_page from dealer_pagination where dealer_id = " + dealer_id + " AND type = '" + dropdownType + "'", async function (err, rslts) {
             if (err) {
                 console.log(err)
             }
@@ -2331,7 +2332,7 @@ router.post('/dealer/postPagination', async function (req, res) {
         var srslt = await sql.query(squery);
 
         if (srslt.length == 0) {
-            var squery = sql.query("insert into dealer_pagination (dealer_id, record_per_page, type) values (" + dealer_id + ", '" + selectedValue + "', '" + dropdownType + "')", function (err, rslts) {
+            var squery = sql.query("insert into dealer_pagination (dealer_id, record_per_page, type) values (" + dealer_id + ", '" + selectedValue + "', '" + dropdownType + "')", async function (err, rslts) {
                 data = {
                     status: true,
                     msg: await helpers.convertToLang(dealer_id, MsgConstants.ITEMS_ADDED), // record Added.',
@@ -2341,7 +2342,7 @@ router.post('/dealer/postPagination', async function (req, res) {
             });
         } else {
 
-            sql.query("update dealer_pagination set record_per_page = '" + selectedValue + "' where type='" + dropdownType + "' AND dealer_id='" + dealer_id + "'", function (err, row) {
+            sql.query("update dealer_pagination set record_per_page = '" + selectedValue + "' where type='" + dropdownType + "' AND dealer_id='" + dealer_id + "'", async function (err, row) {
                 // console.log('squery data ', 'rowws', row);
                 if (row && row.affectedRows !== 0) {
                     data = {
@@ -2575,7 +2576,7 @@ router.post('/change_policy_status', async function (req, res) {
         let query = "UPDATE policy SET " + key + " = '" + value + "' WHERE id='" + id + "'";
 
 
-        sql.query(query, (error, result) => {
+        sql.query(query, async function (error, result) {
 
             if (error) {
                 console.log(error);
@@ -2617,7 +2618,7 @@ router.post('/save_policy_changes', async function (req, res) {
 
         let query = "UPDATE policy SET push_apps = '" + push_apps + "', controls = '" + controls + "', permissions = '" + permissions + "', app_list = '" + app_list + "', policy_note = '" + policy_note + "', policy_name = '" + policy_name + "' WHERE id='" + id + "'";
         // console.log('qerury', query)
-        sql.query(query, (error, result) => {
+        sql.query(query, async function (error, result) {
             console.log(result, 'relstsdf');
             if (error) {
                 console.log(error);
@@ -3162,7 +3163,7 @@ router.post('/get_profiles', async function (req, res) {
             let query = "SELECT * FROM usr_acc_profile " + where;
 
             // console.log("getprofiles query", query);
-            sql.query(query, (error, results) => {
+            sql.query(query, async function (error, results) {
 
                 for (var i = 0; i < results.length; i++) {
                     // console.log('push apps', results[i].push_apps)
@@ -3215,7 +3216,7 @@ router.post('/get_device_history', async function (req, res) {
             where = where + " user_acc_id='" + user_acc_id + "'";
 
             let query = "SELECT * FROM device_history " + where;
-            sql.query(query, (error, result) => {
+            sql.query(query, async function (error, result) {
                 data = {
                     "status": true,
                     "msg": await helpers.convertToLang(userId, MsgConstants.SUCCESS), // successful',
@@ -3410,7 +3411,7 @@ router.get('/get_sim_ids', async (req, res) => {
     var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from sim_ids where used=0";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
                 msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
@@ -3431,7 +3432,7 @@ router.get('/get_all_sim_ids', async (req, res) => {
     var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from sim_ids";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
                 msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
@@ -3447,12 +3448,12 @@ router.get('/get_all_sim_ids', async (req, res) => {
 
 });
 
-router.get('/get_used_sim_ids', async (req, res) => {
+router.get('/get_used_sim_ids', async function (req, res) {
     var verify = await verifyToken(req, res);
     var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from sim_ids where used=1";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
                 msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
@@ -3474,7 +3475,7 @@ router.get('/get_chat_ids', async (req, res) => {
     var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from chat_ids where used=0";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
                 msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
@@ -3494,7 +3495,7 @@ router.get('/get_all_chat_ids', async (req, res) => {
     var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from chat_ids";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
                 msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
@@ -3514,7 +3515,7 @@ router.get('/get_used_chat_ids', async (req, res) => {
     var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from chat_ids where used=1";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
                 msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
@@ -3535,7 +3536,7 @@ router.get('/get_pgp_emails', async (req, res) => {
     var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from pgp_emails where used=0";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
                 msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
@@ -3556,7 +3557,7 @@ router.get('/get_all_pgp_emails', async (req, res) => {
     var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from pgp_emails";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
                 msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
@@ -3577,7 +3578,7 @@ router.get('/get_used_pgp_emails', async (req, res) => {
     var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from pgp_emails where used=1 AND user_acc_id is null";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
                 msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
@@ -3597,7 +3598,7 @@ router.get('/get_used_sim_ids', async (req, res) => {
     var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from sim_ids where used=1 AND user_acc_id is null";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
                 msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
@@ -3617,7 +3618,7 @@ router.get('/get_used_chat_ids', async (req, res) => {
     var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from chat_ids where used=1 AND user_acc_id is null";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
                 msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
@@ -3642,13 +3643,13 @@ router.post('/releaseCSV/:fieldName', async (req, res) => {
         if (fieldName === 'pgp_email') {
             let query = "UPDATE pgp_emails set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
             // console.log(query);
-            sql.query(query, (error, resp) => {
+            sql.query(query, async function (error, resp) {
                 if (error) {
                     console.log(error);
                 }
                 if (resp.affectedRows) {
                     let query = "select * from pgp_emails where used=1";
-                    sql.query(query, (error, resp) => {
+                    sql.query(query, async function (error, resp) {
                         res.send({
                             status: true,
                             type: 'pgp',
@@ -3667,13 +3668,13 @@ router.post('/releaseCSV/:fieldName', async (req, res) => {
         else if (fieldName === 'sim_id') {
             let query = "UPDATE sim_ids set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
             // console.log(query);
-            sql.query(query, (error, resp) => {
+            sql.query(query, async function (error, resp) {
                 if (error) {
                     console.log(error);
                 }
                 if (resp.affectedRows) {
                     let query = "select * from sim_ids where used=1";
-                    sql.query(query, (error, resp) => {
+                    sql.query(query, async function (error, resp) {
                         res.send({
                             status: true,
                             type: 'sim',
@@ -3692,14 +3693,14 @@ router.post('/releaseCSV/:fieldName', async (req, res) => {
         else if (fieldName === 'chat_id') {
             let query = "UPDATE chat_ids set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
             // console.log(query);
-            sql.query(query, (error, resp) => {
+            sql.query(query, async function (error, resp) {
                 if (error) {
                     console.log(error);
                 }
                 if (resp.affectedRows) {
 
                     let query = "select * from chat_ids where used=1";
-                    sql.query(query, (error, resp) => {
+                    sql.query(query, async function (error, resp) {
                         res.send({
                             status: true,
                             type: 'chat',
@@ -4052,7 +4053,7 @@ router.post('/purchase_credits', async function (req, res) {
                 } else {
                     let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
                     // console.log(query);
-                    sql.query(query, function (err, result) {
+                    sql.query(query, async function (err, result) {
                         if (err) {
                             console.log(err);
                         }
@@ -4060,7 +4061,7 @@ router.post('/purchase_credits', async function (req, res) {
                         if (result.affectedRows > 0) {
                             if (verify.user.user_type === ADMIN) {
                                 if (method == 'CASH') {
-                                    axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
+                                    axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then( async function (response) {
                                         if (response.data.status) {
                                             let data = {
                                                 dealer_id: dealerId,
@@ -4069,7 +4070,7 @@ router.post('/purchase_credits', async function (req, res) {
                                                 credits: credits,
                                                 dealer_email: verify.user.email
                                             }
-                                            axios.post(app_constants.REQUEST_FOR_CREDITS, data, { headers: { authorization: response.data.user.token } }).then((response) => {
+                                            axios.post(app_constants.REQUEST_FOR_CREDITS, data, { headers: { authorization: response.data.user.token } }).then(async function (response) {
                                                 // console.log(response);
                                                 if (response.data.status) {
                                                     res.send({
@@ -4101,7 +4102,7 @@ router.post('/purchase_credits', async function (req, res) {
                                 }
                             } else {
                                 // console.log(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`);
-                                sql.query(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`, function (err, result) {
+                                sql.query(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`, async function (err, result) {
                                     if (err) {
                                         console.log(err);
                                     }
@@ -4167,7 +4168,7 @@ router.post('/purchase_credits_CC', async function (req, res) {
                 } else {
                     let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
                     // console.log(query);
-                    sql.query(query, function (err, result) {
+                    sql.query(query, async function (err, result) {
                         if (err) {
                             console.log(err);
                         }
@@ -4180,7 +4181,7 @@ router.post('/purchase_credits_CC', async function (req, res) {
                                     exp_year: cardExpiryYear,
                                     cvc: cvc
                                 }
-                            }, function (err, token) {
+                            }, async function (err, token) {
                                 if (err) {
                                     console.log(err.type);
                                     switch (err.type) {
@@ -4221,7 +4222,7 @@ router.post('/purchase_credits_CC', async function (req, res) {
                                         currency: "usd",
                                         source: stripeToken.id, // obtained with Stripe.js
                                         metadata: { 'order_id': '6735' }
-                                    }).then((response) => {
+                                    }).then(async function (response) {
                                         if (response.status == 'succeeded') {
                                             res.send({
                                                 status: true,
@@ -4238,7 +4239,7 @@ router.post('/purchase_credits_CC', async function (req, res) {
 
                             } else {
                                 // console.log(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`);
-                                sql.query(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`, function (err, result) {
+                                sql.query(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`, async function (err, result) {
                                     if (err) {
                                         console.log(err)
                                     }
@@ -4442,7 +4443,7 @@ router.post('/edit/apk', async function (req, res) {
                     let formatByte = helpers.formatBytes(apk_stats.size);
                     // console.log("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_byte='" + apk_stats.size + "',  apk_size='"+ formatByte +"'  where id = '" + req.body.apk_id + "'");
 
-                    sql.query("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_bytes='" + apk_stats.size + "',  apk_size='" + formatByte + "'  where id = '" + req.body.apk_id + "'", function (err, rslts) {
+                    sql.query("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_bytes='" + apk_stats.size + "',  apk_size='" + formatByte + "'  where id = '" + req.body.apk_id + "'", async function (err, rslts) {
 
                         if (err) {
                             console.log(err)
@@ -4493,7 +4494,7 @@ router.post('/toggle', async function (req, res) {
     if (verify.status !== undefined && verify.status == true) {
 
         if (!empty(req.body.status) && !empty(req.body.apk_id)) {
-            sql.query("update apk_details set status = '" + req.body.status + "' where id = '" + req.body.apk_id + "'", function (err, result) {
+            sql.query("update apk_details set status = '" + req.body.status + "' where id = '" + req.body.apk_id + "'", async function (err, result) {
                 if (err) {
                     console.log(err)
                 };
@@ -4899,7 +4900,7 @@ router.post('/save_policy_permissions', async function (req, res) {
 
 
 /** Get back up DB File **/
-router.get("/getBackupFile/:file", (req, res) => {
+router.get("/getBackupFile/:file", async function (req, res) {
     var verify = await verifyToken(req, res);
     var loggedInuid = verify.user.id;
     if (fs.existsSync(path.join(__dirname, "../db_backup/" + req.params.file))) {
@@ -4913,7 +4914,7 @@ router.get("/getBackupFile/:file", (req, res) => {
     }
 });
 /** Get image logo **/
-router.get("/getFile/:file", (req, res) => {
+router.get("/getFile/:file", async function (req, res) {
     var verify = await verifyToken(req, res);
     var loggedInuid = verify.user.id;
     if (fs.existsSync(path.join(__dirname, "../uploads/" + req.params.file))) {
@@ -5006,7 +5007,7 @@ router.get('/login_history', async function (req, res) {
             let data = {}
             let query = "SELECT * from login_history where dealer_id = '" + id + "' AND type = 'token' order by created_at desc"
             // console.log(query);
-            sql.query(query, function (err, result) {
+            sql.query(query, async function (err, result) {
                 if (err) {
                     console.log(err)
                 }
@@ -5040,7 +5041,7 @@ router.delete('/delete_profile/:profile_id', async function (req, res) {
     if (verify.status !== undefined && verify.status == true) {
         if (!empty(req.params.profile_id)) {
 
-            sql.query("delete from device_history WHERE id=" + req.params.profile_id, function (error, results) {
+            sql.query("delete from device_history WHERE id=" + req.params.profile_id, async function (error, results) {
                 // console.log(results);
                 //response.end(JSON.stringify(rows));
                 if (error) {
@@ -5101,7 +5102,7 @@ router.get('/get_imei_history/:device_id', async function (req, res) {
     var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from imei_history where device_id = '" + req.params.device_id + "'";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: true,
                 msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
@@ -5380,7 +5381,7 @@ router.put('/handleUninstall/:apk_id', async function (req, res) {
             let is_restricted = (req.body.value) ? 0 : 1;
             let apk_id = req.params.apk_id;
             // console.log("UPDATE secure_market_apps SET is_restrict_uninstall = " + is_restricted + " WHERE apk_id ='" + apk_id + "'");
-            sql.query("UPDATE secure_market_apps SET is_restrict_uninstall = " + is_restricted + " WHERE apk_id ='" + apk_id + "'", function (err, results) {
+            sql.query("UPDATE secure_market_apps SET is_restrict_uninstall = " + is_restricted + " WHERE apk_id ='" + apk_id + "'", async function (err, results) {
                 if (err) {
                     console.log(err)
                 }
@@ -5626,7 +5627,7 @@ router.put('/force_update', async function (req, res) {
                 } else {
                     let usr_acc = await device_helpers.getUserAccByDeviceId(device_id);
                     let historyQ = "INSERT INTO device_history (device_id, dealer_id, user_acc_id, type) VALUES ('" + device_id + "', " + dealer_id + ", " + usr_acc.id + ", '" + Constants.DEVICE_HISTORY_FORCE_UPDATE + "')";
-                    sql.query(historyQ, function (error, resp) {
+                    sql.query(historyQ, async function (error, resp) {
                         if (error) {
                             console.log(error);
                         };
@@ -5884,7 +5885,7 @@ router.get('/get-language', async function (req, res) {
             ON (LT.lng_id = dl.dealer_lng_id) 
             WHERE dl.dealer_id=${dealer_id}`;
 
-            sql.query(selectQuery, (err, rslt) => {
+            sql.query(selectQuery, async function (err, rslt) {
                 if (err) console.log(err);
 
                 if (rslt && rslt.length) {
@@ -6163,14 +6164,14 @@ router.post('/update_credit', async function (req, res) {
             let dealer_id = req.body.data.dealer_id
             console.log(credits);
             if (dealer_id !== '' && dealer_id !== undefined && dealer_id !== null) {
-                sql.query("SELECt * from dealer_credits where dealer_id = " + dealer_id, function (err, result) {
+                sql.query("SELECt * from dealer_credits where dealer_id = " + dealer_id, async function (err, result) {
                     if (err) {
                         console.log(err)
                     }
 
                     if (result.length) {
                         let newCredit = credits + result[0].credits
-                        sql.query("update dealer_credits set credits = " + newCredit + " where dealer_id = " + dealer_id, function (err, reslt) {
+                        sql.query("update dealer_credits set credits = " + newCredit + " where dealer_id = " + dealer_id, async function (err, reslt) {
                             if (err) {
                                 console.log(err)
                             }
@@ -6194,7 +6195,7 @@ router.post('/update_credit', async function (req, res) {
                     }
                     else {
                         let query = `INSERT into dealer_credits (dealer_id,credits) VALUES (${dealer_id}, ${credits})`;
-                        sql.query(query, function (err, reslt) {
+                        sql.query(query, async function (err, reslt) {
                             if (err) {
                                 console.log(err);
                             }
@@ -6246,7 +6247,7 @@ router.get('/newRequests', async function (req, res) {
                 }
             }
             console.log(query);
-            sql.query(query, function (err, result) {
+            sql.query(query, async function (err, result) {
                 if (err) {
                     console.log(err);
                 }
@@ -6279,7 +6280,7 @@ router.get('/get_user_credits', async function (req, res) {
             let query = ''
             query = `SELECT credits from dealer_credits where dealer_id= ${verify.user.id}`
 
-            sql.query(query, function (err, result) {
+            sql.query(query, async function (err, result) {
                 if (err) {
                     console.log(err);
                 }
@@ -6313,14 +6314,14 @@ router.put('/delete_request/:id', async function (req, res) {
             let id = req.params.id
             let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
             console.log(query);
-            sql.query(query, function (err, result) {
+            sql.query(query, async function (err, result) {
                 if (err) {
                     console.log(err);
                 }
                 if (result.length) {
 
                     let updateQuery = "update credit_requests set status = 1, del_status = 1 where id= " + id
-                    sql.query(updateQuery, function (err, result) {
+                    sql.query(updateQuery, async function (err, result) {
                         if (err) {
                             console.log(err);
                         }
