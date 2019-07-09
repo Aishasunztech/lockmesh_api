@@ -21,7 +21,7 @@ let usr_acc_query_text = "usr_acc.id,usr_acc.user_id, usr_acc.device_id as usr_d
 module.exports = {
 	convertToLang: async function (user_id, constant) {
 		var d_lng_id=1;
-		if (user_id != undefined || user_id != '' || user_id != null) {
+		if (user_id != undefined && user_id != '' && user_id != null) {
 			var sQry = `SELECT dealer_lng_id FROM dealer_language WHERE dealer_id = '${user_id}' LIMIT 1`;
 			var dLang = await sql.query(sQry);
 			d_lng_id = dLang[0].dealer_lng_id;
