@@ -3,13 +3,10 @@ var express = require('express');
 var router = express.Router();
 var generator = require('generate-password');
 var md5 = require('md5');
-const bcrypt = require('bcrypt');
 var empty = require('is-empty');
 var datetime = require('node-datetime');
-var cron = require('node-cron');
 var jwt = require('jsonwebtoken');
 var randomize = require('randomatic');
-//var uniqid = require('uniqid');
 var multer = require('multer');
 
 var XLSX = require('xlsx');
@@ -31,6 +28,7 @@ var config = require('../helper/config.js');
 var Constants = require('../constants/Application');
 var MsgConstants = require('../constants/MsgConstants');
 var app_constants = require('../config/constants');
+
 var helpers = require('../helper/general_helper.js');
 const device_helpers = require('../helper/device_helpers.js');
 
