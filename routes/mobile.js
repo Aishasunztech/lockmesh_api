@@ -9,7 +9,7 @@ const bcrypt = require('bcrypt');
 var datetime = require('node-datetime');
 var empty = require('is-empty');
 var jwt = require('jsonwebtoken');
-var config = require('../helper/config.js');
+// var config = require('../helper/config.js');
 var path = require('path');
 var md5 = require('md5');
 var fs = require("fs");
@@ -19,6 +19,7 @@ const device_helpers = require('../helper/device_helpers.js');
 var Constants = require('../constants/Application');
 var app_constants = require('../config/constants');
 
+const constants = require('../config/constants');
 const { sendEmail } = require('../lib/email');
 
 
@@ -32,7 +33,7 @@ var verifyToken = function (req, res) {
     if (token) {
 
         // verifies secret and checks exp
-        jwt.verify(token, config.secret, function (err, decoded) {
+        jwt.verify(token, constants.SECRET, function (err, decoded) {
             // console.log(err);
             if (err) {
                 ath = {
@@ -118,8 +119,8 @@ router.post('/login', async function (req, resp) {
 
                     jwt.sign({
                         device
-                    }, config.secret, {
-                            expiresIn: config.expiresIn
+                    }, constants.SECRET, {
+                            expiresIn: constants.EXPIRES_IN
                         }, (err, token) => {
                             if (err) {
                                 resp.json({
@@ -213,8 +214,8 @@ router.post('/login', async function (req, resp) {
 
                                 jwt.sign({
                                     device
-                                }, config.secret, {
-                                        expiresIn: config.expiresIn
+                                }, constants.SECRET, {
+                                        expiresIn: constants.EXPIRES_IN
                                     }, (err, token) => {
                                         if (err) {
                                             resp.json({
@@ -275,9 +276,9 @@ router.post('/systemlogin', async function (req, res) {
     jwt.sign({
         sysmtemInfo
     },
-        config.secret,
+        constants.SECRET,
         {
-            expiresIn: config.expiresIn
+            expiresIn: constants.EXPIRES_IN
         },
         (err, token) => {
             if (err) {
@@ -930,8 +931,8 @@ router.post('/device_status', async function (req, res) {
 
                         jwt.sign({
                             dvc
-                        }, config.secret, {
-                                expiresIn: config.expiresIn
+                        }, constants.SECRET, {
+                                expiresIn: constants.EXPIRES_IN
                             }, (err, token) => {
 
                                 if (err) {
@@ -988,8 +989,8 @@ router.post('/device_status', async function (req, res) {
 
                     jwt.sign({
                         dvc
-                    }, config.secret, {
-                            expiresIn: config.expiresIn
+                    }, constants.SECRET, {
+                            expiresIn: constants.EXPIRES_IN
                         }, (err, token) => {
 
                             if (err) {
@@ -1072,8 +1073,8 @@ router.post('/device_status', async function (req, res) {
 
                         jwt.sign({
                             dvc
-                        }, config.secret, {
-                                expiresIn: config.expiresIn
+                        }, constants.SECRET, {
+                                expiresIn: constants.EXPIRES_IN
                             }, (err, token) => {
 
                                 if (err) {
@@ -1130,8 +1131,8 @@ router.post('/device_status', async function (req, res) {
 
                     jwt.sign({
                         dvc
-                    }, config.secret, {
-                            expiresIn: config.expiresIn
+                    }, constants.SECRET, {
+                            expiresIn: constants.EXPIRES_IN
                         }, (err, token) => {
 
                             if (err) {
@@ -1217,8 +1218,8 @@ router.post('/device_status', async function (req, res) {
 
                         jwt.sign({
                             dvc
-                        }, config.secret, {
-                                expiresIn: config.expiresIn
+                        }, constants.SECRET, {
+                                expiresIn: constants.EXPIRES_IN
                             }, (err, token) => {
 
                                 if (err) {
@@ -1275,8 +1276,8 @@ router.post('/device_status', async function (req, res) {
 
                     jwt.sign({
                         dvc
-                    }, config.secret, {
-                            expiresIn: config.expiresIn
+                    }, constants.SECRET, {
+                            expiresIn: constants.EXPIRES_IN
                         }, (err, token) => {
 
                             if (err) {

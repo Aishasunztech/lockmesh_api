@@ -2,6 +2,7 @@ module.exports = {
 	PROJECT_NAME: 'SuperAdmin',
 	HOST: "http://localhost:8042",
 	SECRET: 'kepitsecretwithauth!@#',
+  	// EXPIRES_IN: '3s',
   	EXPIRES_IN: '86400s',
 
 	// SMTP Constants
