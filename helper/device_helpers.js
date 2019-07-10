@@ -10,18 +10,25 @@ var Constants = require('../constants/Application');
 
 module.exports = {
     onlineOflineDevice: async function (deviceId = null, sessionId, status) {
-        let query = "";
-        if (deviceId !== null) {
-            query = "UPDATE devices SET session_id='" + sessionId + "', online='" + status + "' WHERE device_id='" + deviceId + "';";
-        } else {
-            query = "UPDATE devices SET online = '" + status + "', session_id=null WHERE session_id='" + sessionId.replace(/['"]+/g, '') + "'";
+        console.log("Online ofline device", deviceId, sessionId, status);
+        try {
+            let query = "";
+            if (deviceId !== null) {
+                query = "UPDATE devices SET session_id='" + sessionId + "', online='" + status + "' WHERE device_id='" + deviceId + "';";
+            } else {
+                query = "UPDATE devices SET online = '" + status + "', session_id=null WHERE session_id='" + sessionId.replace(/['"]+/g, '') + "'";
+            }
+
+            let res = await sql.query(query);
+            if (res) {
+                return true;
+            }
+            return false;
+        }
+        catch (error) {
+            console.log("UPDATE devices SET session_id='" + sessionId + "', online='" + status + "' WHERE device_id='" + deviceId + "'")
         }
 
-        let res = await sql.query(query);
-        if (res) {
-            return true;
-        }
-        return false;
     },
     getSessionIdByDeviceId: async function (deviceId) {
         var query = "SELECT session_id FROM devices WHERE device_id ='" + deviceId + "';";

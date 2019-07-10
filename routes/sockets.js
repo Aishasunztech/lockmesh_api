@@ -71,19 +71,21 @@ module.exports.listen = async function (server) {
     // ===============================================================================
     // io.of('/') is for middleware not for path
     // ===============================================================================
-    io.origins((origin, callback) => {
-        callback();
-        // if(origin === "http://localhost:3001"){
-        // } else {
-        //     callback()
-        // }
-    });
+    
     
     io.listen(server);
     
+    // io.origins('*:*');
+    // io.origins((origin, callback) => {
+    //     callback();
+    //     // if(origin === "http://localhost:3001"){
+    //     // } else {
+    //     //     callback()
+    //     // }
+    // });
+    
     // check origins of incoming request
     
-    // io.origins('*:*');
     
 
     // middleware for socket incoming and outgoing requests

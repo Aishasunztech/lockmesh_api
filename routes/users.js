@@ -4691,7 +4691,7 @@ router.get("/getBackupFile/:file", async function (req, res) {
 });
 /** Get image logo **/
 router.get("/getFile/:file", async function (req, res) {
-    var verify = await verifyToken(req, res);
+    // var verify = await verifyToken(req, res);
     // var loggedInuid = verify.user.id;
     if (fs.existsSync(path.join(__dirname, "../uploads/" + req.params.file))) {
         let file = path.join(__dirname, "../uploads/" + req.params.file);
