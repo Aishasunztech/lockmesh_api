@@ -11,8 +11,10 @@ const verifyToken = require('../../config/auth');
 // 
 const general_helpers = require('../../helper/general_helper');
 
+
 // Constants
 const app_constants = require('../../config/constants');
+var MsgConstants = require('../../constants/MsgConstants');
 const constants = require('../../constants/Application');
 
 exports.getAllDealers = async function (req, res) {
@@ -223,11 +225,10 @@ exports.addDealer = async function (req, res) {
             var enc_pwd = md5(dealer_pwd); //encryted pwd
 
             var dealer = await sql.query(`SELECT * FROM dealers WHERE dealer_email = '${dealerEmail}'`);
-
             if (dealer.length > 0) {
                 data = {
                     status: false,
-                    msg: 'Dealer Already Registered. Please use another email.',
+                    msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.DEALER_ALREADY_REG), // Dealer Already Registered. Please use another email.
                 }
                 res.send(data);
                 return;
@@ -240,7 +241,7 @@ exports.addDealer = async function (req, res) {
                 sql1 += ` VALUES (0, '${dealerName}', '${dealerEmail}', '${enc_pwd}', '${link_code}', '${type}', NOW(), NOW())`;
             }
 
-            sql.query(sql1, function (error, rows) {
+            sql.query(sql1, async function (error, rows) {
                 if (error) {
                     console.log(error);
                     return;
@@ -298,7 +299,7 @@ exports.addDealer = async function (req, res) {
                             if (emailError) {
                                 data = {
                                     status: true,
-                                    msg: "Email could not sent due to error: " + emailError,
+                                    msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.EMAIL_NOT_SENT) + emailError, // Email could not sent due to error: " + emailError,
                                     added_dealer: dealer,
                                 }
                                 res.send(data);
@@ -307,7 +308,7 @@ exports.addDealer = async function (req, res) {
                             // console.log('result add',dealer);
                             data = {
                                 status: true,
-                                msg: 'Dealer has been registered successfully',
+                                msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.DEALER_REG_SUCC), // Dealer has been registered successfully
                                 added_dealer: dealer,
 
                             }
@@ -316,7 +317,7 @@ exports.addDealer = async function (req, res) {
                         } else {
                             data = {
                                 status: false,
-                                msg: 'Dealer could not be added'
+                                msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.DEALER_NOT_ADDED), // Dealer could not be added
                             }
                             res.send(data);
                             return;
@@ -326,7 +327,7 @@ exports.addDealer = async function (req, res) {
                 } else {
                     data = {
                         status: false,
-                        msg: 'Dealer could not be added'
+                        msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.DEALER_NOT_ADDED), // Dealer could not be added
                     }
                     res.send(data);
                     return;
@@ -338,7 +339,7 @@ exports.addDealer = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: 'Invalid email or name'
+                msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.INVALID_EMAIL_NAME), // Invalid email or name
             }
             res.send(data);
             return;
@@ -350,6 +351,8 @@ exports.addDealer = async function (req, res) {
 exports.editDealers = async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
+
         var name = req.body.name;
         var email = req.body.email;
         var dealer_id = req.body.dealer_id;
@@ -371,7 +374,7 @@ exports.editDealers = async function (req, res) {
 
                         data = {
                             status: true,
-                            msg: 'Email is already in use of other dealer',
+                            msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.EMAIL_ALREDY_USED_DEALER), // Email is already in use of other dealer
                             data: row,
                             alreadyAvailable: alreadyAvailable
                         };
@@ -392,7 +395,7 @@ exports.editDealers = async function (req, res) {
             } else {
                 res.send({
                     status: false,
-                    msg: "Dealer not found to Update"
+                    msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.EMAIL_ALREDY_USED_DEALER), // Dealer not found to Update"
                 });
                 return;
             }
@@ -418,19 +421,19 @@ exports.editDealers = async function (req, res) {
                             Below is the link to login : <br> 
                             ${app_constants.HOST} <br>`;
 
-                    sendEmail("Account Registration", html, email, function (error, response) {
+                    sendEmail("Account Registration", html, email, async function (error, response) {
                         if (error) {
                             console.log(error)
                             res.send({
                                 status: true,
-                                msg: 'Record updated successfully. Email not sent',
+                                msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.RECORD_UPD_SUCC_EMAIL_NOT_SEND), // Record updated successfully. Email not sent
                                 alreadyAvailable: alreadyAvailable
                             })
                             return;
                         } else {
                             res.send({
                                 status: true,
-                                msg: 'Record updated successfully. Email has been sent.',
+                                msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.RECORD_UPD_SUCC_EMAIL_SEND), // Record updated successfully. Email has been sent.
                                 alreadyAvailable: alreadyAvailable
                             })
                             return;
@@ -440,7 +443,7 @@ exports.editDealers = async function (req, res) {
                 } else {
                     data = {
                         status: true,
-                        msg: 'Record not updated.'
+                        msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.RECORD_NOT_UPD), // Record not updated.
                     };
                     res.send(data);
                     return;
@@ -449,7 +452,7 @@ exports.editDealers = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: "Please enter valid details"
+                msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.ENTER_VALID_DETAIL), // Please enter valid details
             }
             res.send(data);
             return;
@@ -464,6 +467,7 @@ exports.deleteDealer = async function (req, res) {
     var dealer_id = req.body.dealer_id;
 
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
 
         if (!empty(dealer_id)) {
             var qury = `UPDATE dealers SET unlink_status = 1 WHERE dealer_id = ${dealer_id} `;
@@ -485,7 +489,7 @@ exports.deleteDealer = async function (req, res) {
                 if (row && row.affectedRows !== 0) {
                     data = {
                         status: true,
-                        msg: 'Dealer deleted successfully.',
+                        msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.DEALER_DEL_SUCC), // Dealer deleted successfully.
                         data: row
                     };
                     res.send(data);
@@ -493,7 +497,7 @@ exports.deleteDealer = async function (req, res) {
                 } else {
                     data = {
                         "status": false,
-                        "msg": 'Record not deleted.'
+                        "msg": await general_helpers.convertToLang(loggedInuid, MsgConstants.RECORD_NOT_DEL), // Record not deleted.
                     };
                     res.send(data);
                     return;
@@ -504,7 +508,7 @@ exports.deleteDealer = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: 'Invalid Dealer.',
+                msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.INVALID_DEALER), // Invalid Dealer.
             };
             res.send(data);
             return;
@@ -517,6 +521,7 @@ exports.undoDealer = async function (req, res) {
     var verify = await verifyToken(req, res);
 
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         var dealer_id = req.body.dealer_id;
         if (!empty(dealer_id)) {
             var qury = "UPDATE dealers set unlink_status = '0' where dealer_id = '" + dealer_id + "'";
@@ -537,7 +542,7 @@ exports.undoDealer = async function (req, res) {
                 if (row && row.affectedRows != 0) {
                     data = {
                         status: true,
-                        msg: 'Dealer added again.',
+                        msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.DEALER_ADDED_AGAIN), // Dealer added again.
                         data: row
                     };
                     res.send(data);
@@ -545,7 +550,7 @@ exports.undoDealer = async function (req, res) {
                 } else {
                     data = {
                         status: false,
-                        msg: 'Dealer not added.'
+                        msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.DEALER_NOT_ADDED), // Dealer not added.
                     };
                     res.send(data);
                     return;
@@ -555,7 +560,7 @@ exports.undoDealer = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: 'Invalid Dealer.',
+                msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.INVALID_DEALER), // Invalid Dealer.
             };
             res.send(data);
             return;
@@ -567,6 +572,7 @@ exports.undoDealer = async function (req, res) {
 exports.suspendDealer = async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         let dealer_id = req.body.dealer_id;
 
         if (!empty(dealer_id)) {
@@ -591,7 +597,7 @@ exports.suspendDealer = async function (req, res) {
                 if (row.affectedRows != 0) {
                     data = {
                         status: true,
-                        msg: 'Dealer suspended successfully.',
+                        msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.DEALER_SUSP_SUCC), // Dealer suspended successfully.
                         data: row
                     };
                     res.send(data);
@@ -599,7 +605,7 @@ exports.suspendDealer = async function (req, res) {
                 } else {
                     data = {
                         status: false,
-                        msg: 'Dealer not suspended.'
+                        msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.DEALER_NOT_SUSP), // Dealer not suspended.                    
                     };
                     res.send(data);
                     return;
@@ -609,7 +615,7 @@ exports.suspendDealer = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: 'Invalid Dealer.',
+                msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.INVALID_DEALER), // Invalid Dealer.',
             };
             res.send(data);
             return;
@@ -622,6 +628,7 @@ exports.activateDealer = async function (req, res) {
     var verify = await verifyToken(req, res);
 
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         var dealer_id = req.body.dealer_id;
 
         if (!empty(dealer_id)) {
@@ -641,7 +648,7 @@ exports.activateDealer = async function (req, res) {
                 if (row && row.affectedRows != 0) {
                     data = {
                         status: true,
-                        msg: 'Dealer activated successfully.',
+                        msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.DEALER_ACTIV_SUCC), // Dealer activated successfully.
                         data: row
                     };
                     res.send(data);
@@ -649,7 +656,7 @@ exports.activateDealer = async function (req, res) {
                 } else {
                     data = {
                         status: true,
-                        msg: 'Dealer not activated.'
+                        msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.DELAER_NOT_ACTIV), // Dealer not activated.'
                     };
                     res.send(data);
                     return;
@@ -660,7 +667,7 @@ exports.activateDealer = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: 'Invalid Dealer.',
+                msg: await general_helpers.convertToLang(loggedInuid, MsgConstants.INVALID_DEALER), // Invalid Dealer.',
             };
             res.send(data);
             return;
