@@ -293,7 +293,7 @@ router.get('/is_admin', aclController.isAdmin);
 /** get_user_type **/
 router.get('/user_type', aclController.getUserType);
 
-router.get('/languages', languageController.languages)
+// router.get('/languages', languageController.languages)
 // router.get('/languages', async function (req, res) {
 //     // var verify = req.decoded;
 //     let languages = [];

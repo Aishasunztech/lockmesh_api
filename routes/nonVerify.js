@@ -7,6 +7,7 @@ var router = express.Router();
 var path = require('path');
 var fs = require("fs");
 var backupController = require('../app/controllers/backup')
+var languageController = require('../app/controllers/language')
 const helpers = require('../helper/general_helper');
 var MsgConstants = require('../constants/MsgConstants');
 
@@ -39,6 +40,9 @@ router.get("/getFile/:file", async function (req, res) {
     }
 
 });
+
+
+router.get('/languages', languageController.languages)
 
 
 module.exports = router;
