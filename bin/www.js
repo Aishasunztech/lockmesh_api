@@ -11,11 +11,11 @@ app.set('port', port);
 /**
  * Create HTTP server.
  */
-
 var server = http.createServer(app);
+
 require('../routes/sockets').listen(server);
 
-var crons = require('../crons/index');
+require('../crons/index');
 /**
  * Listen on provided port, on all network interfaces.
  */
