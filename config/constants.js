@@ -1,5 +1,5 @@
 module.exports = {
-	PROJECT_NAME: 'SuperAdmin',
+	PROJECT_NAME: 'LockMesh',
 	HOST: "http://localhost:8042",
 	SECRET: 'kepitsecretwithauth!@#',
   	// EXPIRES_IN: '3s',

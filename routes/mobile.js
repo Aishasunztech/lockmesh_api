@@ -749,8 +749,7 @@ router.get('/apklist', async function (req, res) {
 
 router.get('/getUpdate/:version/:packageName', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
-    // let verify = await verifyToken(req, res);
-    // if (verify.status == true) {
+    
     let version = req.params.version;
     let packageName = req.params.packageName;
     let query = "SELECT * FROM apk_details WHERE package_name = '" + packageName + "' AND delete_status=0";
@@ -805,8 +804,8 @@ router.get('/getUpdate/:version/:packageName', async (req, res) => {
 
 router.get('/getUpdate/:version/:packageName/:label', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
-    let verify = await verifyToken(req, res);
-    if (verify.status == true) {
+    let verify = req.decoded;
+    if (verify) {
         let version = req.params.version;
         let packageName = req.params.packageName;
         let label = req.params.label;
@@ -863,8 +862,6 @@ router.get('/getUpdate/:version/:packageName/:label', async (req, res) => {
 
 /** Get Apk **/
 router.get("/getApk/:apk", async (req, res) => {
-    // let verify = await verifyToken(req, res);
-    // if(verify['status']!==undefined && verify.status===true){
     let file = path.join(__dirname, "../uploads/" + req.params.apk + '.apk');
     if (fs.existsSync(file)) {
         res.sendFile(file);
