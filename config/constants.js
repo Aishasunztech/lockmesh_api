@@ -1,9 +1,11 @@
+module.exports.SUPERADMIN_URL = "http://localhost:8042",
+
 module.exports = {
 	APP_TITLE: 'Lockmesh',
 	HOST: "http://localhost:3000",
+	PORT: "",
 	SECRET: 'kepitsecretwithauth!@#',
-  	// EXPIRES_IN: '3s',
-  	EXPIRES_IN: '86400s',
+	EXPIRES_IN: '86400s',
 
 	// SMTP Constants
 	SMTP_HOST: 'smtp.office365.com',
@@ -26,9 +28,11 @@ module.exports = {
 	BASE_CURRENCY: 'USD',
 
 	// SUPERADMIN URLs
-	SUPERADMIN_LOGIN_URL: 'http://localhost:8042/api/v1/auth/white_label_login',
-	UPDATE_DEVICE_SUPERADMIN_URL: 'http://localhost:8042/api/v1/users/update_device_details',
-	REQUEST_FOR_CREDITS: 'http://localhost:8042/api/v1/users/request_for_credits',
+	
+	SUPERADMIN_LOGIN_URL: `${this.SUPERADMIN_URL}/api/v1/auth/white_label_login`,
+	UPDATE_DEVICE_SUPERADMIN_URL: `${this.SUPERADMIN_URL}/api/v1/users/update_device_details`,
+	REQUEST_FOR_CREDITS: `${this.SUPERADMIN_URL}/api/v1/users/request_for_credits`,
+	
 	SUPERADMIN_USER_CREDENTIALS: {
 		email: 'whiteLabelAdmin!786@gmial.com',
 		password: 'whiteLabel@Admin!786'
