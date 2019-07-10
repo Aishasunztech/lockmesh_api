@@ -3,13 +3,10 @@ var express = require('express');
 var router = express.Router();
 var generator = require('generate-password');
 var md5 = require('md5');
-const bcrypt = require('bcrypt');
 var empty = require('is-empty');
 var datetime = require('node-datetime');
-var cron = require('node-cron');
 var jwt = require('jsonwebtoken');
 var randomize = require('randomatic');
-//var uniqid = require('uniqid');
 var multer = require('multer');
 
 var XLSX = require('xlsx');
@@ -26,14 +23,17 @@ const stripe = require("stripe")("sk_test_1rS6KC3GoPT8wlOYWSLEQFk6");
 
 // ========= Helper =============
 const { sql } = require('../config/database');
-var config = require('../helper/config.js');
+// var config = require('../helper/config.js');
 
 var Constants = require('../constants/Application');
+var MsgConstants = require('../constants/MsgConstants');
 var app_constants = require('../config/constants');
+
 var helpers = require('../helper/general_helper.js');
 const device_helpers = require('../helper/device_helpers.js');
 
 //=========== Custom Libraries =========
+const constants = require('../config/constants');
 const { sendEmail } = require('../lib/email');
 
 
@@ -52,13 +52,13 @@ let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_
 
 
 /*Check For Token in the header */
-var verifyToken = function (req, res) {
+var verifyToken = async function (req, res) {
     var ath;
     var token = req.headers['authorization'];
     // console.log(token);
     if (token) {
 
-        jwt.verify(token, config.secret, async function (err, decoded) {
+        jwt.verify(token, constants.SECRET, async function (err, decoded) {
             if (err) {
                 ath = {
                     status: false,
@@ -66,7 +66,7 @@ var verifyToken = function (req, res) {
                 };
                 return res.json({
                     success: false,
-                    msg: 'Failed to authenticate token.'
+                    msg: await helpers.convertToLang("", MsgConstants.FAILED_AUTH_TOKEN), // Failed to authenticate token.
                 });
             } else {
                 // if everything is good, save to request for use in other routes
@@ -85,14 +85,14 @@ var verifyToken = function (req, res) {
                 //     ath.status = false;
                 //     return res.json({
                 //         success: false,
-                //         msg: 'Failed to authenticate token.'
+                //         msg: await helpers.convertToLang(loggedInuid, MsgConstants.DEALER_ACTIV_SUCC), // 'Failed to authenticate token.'
                 //     });
                 // }
                 // } else {
                 //     ath.status = false;
                 //     return res.json({
                 //         success: false,
-                //         msg: 'Failed to authenticate token.'
+                //         msg: await helpers.convertToLang(loggedInuid, MsgConstants.DEALER_ACTIV_SUCC), // 'Failed to authenticate token.'
                 //     });
                 // } 
 
@@ -103,10 +103,11 @@ var verifyToken = function (req, res) {
             status: false,
             success: false
         };
-        return res.status(403).send({
+        var data = {
             success: false,
-            msg: 'No token provided.'
-        });
+            msg: await helpers.convertToLang("", MsgConstants.NO_TOKEN_PROVIDE), // No token provided.'
+        }
+        return res.status(403).send(data);
     }
     return ath;
 }
@@ -114,7 +115,7 @@ var verifyToken = function (req, res) {
 
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
-    res.send("Test ")
+    res.send("Test")
 
     // stripe.tokens.create({
     //     card: {
@@ -123,7 +124,7 @@ router.get('/', async function (req, res, next) {
     //         exp_year: 2020,
     //         cvc: '1234'
     //     }
-    // }, function (err, token) {
+    // }, async function (err, token) {
     //     console.log(err);
     //     console.log(token);
     // });
@@ -151,7 +152,7 @@ router.get('/', async function (req, res, next) {
 
     // res.send(tablesName)
 
-    // let data1 = await cm.import(options, data, function (err, rows) {
+    // let data1 = await cm.import(options, data, async function (err, rows) {
     //     if (err === null) err = false;
     //     // expect(err).to.equal(false);
     //     // done();
@@ -245,20 +246,20 @@ router.post('/two_factor_auth', async function (req, res) {
             if (isEnable) {
                 res.send({
                     status: true,
-                    msg: "Dual Authentication is Successfully enabled",
+                    msg: await helpers.convertToLang(loggedDealerId, MsgConstants.DUAL_AUTH_SUCC_ENBL), // Dual Authentication is Successfully enabled
                     isEnable: isEnable
                 })
             } else {
                 res.send({
                     status: true,
-                    msg: "Dual Authentication is Successfully disabled",
+                    msg: await helpers.convertToLang(loggedDealerId, MsgConstants.DUAL_AUTH_SUCC_DISABL), // Dual Authentication is Successfully disabled
                     isEnable: isEnable
                 })
             }
         } else {
             res.send({
                 status: false,
-                msg: "Dual Authentication could not be enabled"
+                msg: await helpers.convertToLang(loggedDealerId, MsgConstants.DUAL_AUTH_NOT_ENBL), // Dual Authentication could not be enabled
             })
         }
 
@@ -310,242 +311,9 @@ router.put('/new/device', deviceController.acceptDevice);
 router.get('/new/devices', deviceController.newDevices);
 
 /***Add devices (not using) ***/
-router.post('/create/device_profile', async function (req, res) {
-    res.setHeader('Content-Type', 'application/json');
-    var verify = await verifyToken(req, res);
-    if (verify.status !== undefined && verify.status == true) {
-        // var dataStag = [];
-        var code = randomize('0', 7);
-        var activation_code = await helpers.checkActivationCode(code);
-        var client_id = req.body.client_id;
-        var chat_id = req.body.chat_id ? req.body.chat_id : '';
-        var model = req.body.model;
-        var user_id = req.body.user_id;
+router.post('/create/device_profile', deviceController.createPreactivations);
 
-        let userData = await helpers.getUserDataByUserId(user_id)
-
-        var name = userData[0].user_name;
-        var email = userData[0].email;
-        var pgp_email = req.body.pgp_email;
-        var start_date = req.body.start_date;
-        var note = req.body.note;
-        var validity = req.body.validity;
-        var duplicate = req.body.duplicate ? req.body.duplicate : 0;
-        var link_code = await device_helpers.getLinkCodeByDealerId(verify.user.id)
-        if (req.body.expiry_date == 0) {
-            var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
-            var expiry_date = moment(trailDate).format("YYYY/MM/DD")
-        } else {
-            let exp_month = req.body.expiry_date;
-            var expiry_date = helpers.getExpDateByMonth(start_date, exp_month);
-        }
-
-        var exp_month = req.body.expiry_date;
-        var dealer_id = verify.user.dealer_id;
-        var sim_id = req.body.sim_id ? req.body.sim_id : '';
-        var loggedUserId = verify.user.id;
-        var loggedUserType = verify.user.type;
-        let policy_id = req.body.policy_id ? req.body.policy_id : '';
-        if (loggedUserType === ADMIN) {
-            //    dealer_id= req.body.dealer_id;
-        }
-        if (duplicate > 0) {
-            let pgpEmail = "SELECT pgp_email from pgp_emails WHERE used=0";
-            let pgp_emails = await sql.query(pgpEmail);
-            let chatIds = "SELECT chat_id from chat_ids WHERE used=0";
-            let chat_ids = await sql.query(chatIds);
-            let simIds = "SELECT sim_id from sim_ids WHERE used=0";
-            let sim_ids = await sql.query(simIds);
-            let activationCodes = []
-            let deviceIds = []
-            let batch_no = new Date().valueOf();
-            const addDuplicateActivations = async () => {
-                for (let i = 0; i < duplicate; i++) {
-                    let code = randomize('0', 7);
-                    var activationCode = await helpers.checkActivationCode(code);
-                    activationCodes.push(activationCode);
-                    // deviceIds.push("'" + deviceId + "'");
-                    let chat_id = (chat_ids[i]) ? chat_ids[i].chat_id : null;
-                    let sim_id = (sim_ids[i]) ? sim_ids[i].sim_id : null;
-                    let pgp_email = (pgp_emails[i]) ? pgp_emails[i].pgp_email : null;
-                    // console.log(pgp_emails[i].pgp_email, chat_ids[i].chat_id, sim_isim_id, activationCode, deviceId);
-
-                    var insertDevice = "INSERT INTO devices (name , created_at ) VALUES ('" + name + "', NOW())";
-                    let resp = await sql.query(insertDevice)
-                    // console.log("inserted id", resp.insertId);
-                    let dvc_id = resp.insertId;
-                    deviceIds.push(dvc_id);
-                    var insertUser_acc = "INSERT INTO usr_acc (device_id , user_id,batch_no, activation_code, expiry_months, dealer_id,link_code, device_status, activation_status, expiry_date,note,validity,account_email,account_name "
-                    var User_acc_values = ") VALUES ('" + dvc_id + "', '" + user_id + "', '" + batch_no + "', '" + activationCode + "',  " + exp_month + ", " + dealer_id + ", '" + link_code + "' ,  0, 0 ,'" + expiry_date + "','" + note + "','" + validity + "','" + email + "','" + name + "')";
-                    insertUser_acc = insertUser_acc + User_acc_values;
-                    if (resp.insertId) {
-                        let resps = await sql.query(insertUser_acc)
-                        let user_acc_id = resps.insertId;
-                        // console.log("affectedRows", resps.affectedRows);
-                        if (resps.affectedRows) {
-                            let updateChatIds = 'update chat_ids set used=1, user_acc_id="' + user_acc_id + '" where chat_id ="' + chat_id + '"';
-                            await sql.query(updateChatIds);
-                            let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + user_acc_id + '" where sim_id ="' + sim_id + '"';
-                            await sql.query(updateSimIds)
-                            let updatePgpEmails = 'update pgp_emails set used=1, user_acc_id="' + user_acc_id + '" where pgp_email ="' + pgp_email + '"';
-                            await sql.query(updatePgpEmails);
-                            if (policy_id !== '') {
-                                var slctpolicy = "select * from policy where id = " + policy_id + "";
-                                let policy = await sql.query(slctpolicy);
-                                var applyQuery = "INSERT INTO device_history (dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES (" + dealer_id + "," + user_acc_id + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
-                                sql.query(applyQuery)
-                            }
-                        }
-
-                    }
-
-                }
-            }
-            await addDuplicateActivations()
-            html = 'Amount of activation codes : ' + activationCodes.length + '<br> ' + 'Activation Codes are following : <br>' + activationCodes.join("<br>") + '.<br> ';
-
-            sendEmail("Activation codes successfuly generated.", html, verify.user.dealer_email);
-            // console.log("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name, dealers.connected_dealer from devices left join usr_acc on devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 and devices.device_id IN (" + deviceIds.join() + ")");
-            var slctquery = "select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id where devices.id IN (" + deviceIds.join() + ")";
-            // console.log(slctquery);
-            rsltq = await sql.query(slctquery);
-            // console.log(rsltq);
-            for (var i = 0; i < rsltq.length; i++) {
-                rsltq[i].finalStatus = device_helpers.checkStatus(rsltq[i])
-                rsltq[i].pgp_email = await device_helpers.getPgpEmails(rsltq[i])
-                rsltq[i].sim_id = await device_helpers.getSimids(rsltq[i])
-                rsltq[i].chat_id = await device_helpers.getChatids(rsltq[i])
-                await device_helpers.saveActionHistory(rsltq[i], Constants.DEVICE_PRE_ACTIVATION);
-            }
-            data = {
-                "status": true,
-                "msg": 'Pre-activations added succcessfully.Email sends to your account.',
-                "data": rsltq
-            };
-            res.send({
-                status: true,
-                data: data
-            })
-            return;
-        } else {
-            let checkUnique = "SELECT account_email from usr_acc WHERE account_email= '" + email + "' AND user_id != '" + user_id + "'";
-            let checkUniquePgp = "SELECT pgp_email from pgp_emails WHERE (pgp_email= '" + pgp_email + "' AND used=1)";
-
-            let checkDevice = await sql.query(checkUnique);
-            let checkDevicepgp = await sql.query(checkUniquePgp);
-
-            if (checkDevice.length || checkDevicepgp.length) {
-                res.send({
-                    status: false,
-                    msg: "Account email or PGP email already taken"
-                });
-                return;
-            } else {
-                var checkDealer = "SELECT * FROM dealers WHERE dealer_id = " + dealer_id;
-
-                var insertDevice = "INSERT INTO devices (name, model ";
-
-                var values = ") VALUES ('" + name + "', '" + model + "'";
-                // var values = ") VALUES ('" + activation_code + "', '" + name + "', '" + client_id + "', '" + chat_id + "', '" + model + "', '" + email + "', '" + pgp_email + "', " + exp_month + ", " + dealer_id + ", 0, 0 ";
-                sql.query(checkDealer, async (error, response) => {
-                    if (error) {
-                        console.log(error);
-                    }
-
-                    if (response.length) {
-                        if (response[0].connected_dealer != 0) {
-                            // insertDevice = insertDevice + ", connected_dealer " + values + ",  " + response[0].connected_dealer + ")"
-                        } else {
-                            insertDevice = insertDevice + values + ")";
-                        }
-                        sql.query(insertDevice, async (err, resp) => {
-                            if (err){
-                                console.log(err)
-                            }
-                            console.log("inserted id", resp.insertId);
-                            let dvc_id = resp.insertId;
-                            var insertUser_acc = "INSERT INTO usr_acc (device_id, user_id, activation_code, client_id , account_email,expiry_months, dealer_id, link_code ,device_status, activation_status, expiry_date , note,validity  "
-                            // var insertDevice = "INSERT INTO devices ( activation_code, name, client_id, chat_id, model, email, pgp_email, expiry_months, dealer_id, device_status, activation_status ";
-                            var User_acc_values = ") VALUES ('" + dvc_id + "','" + user_id + "', '" + activation_code + "', '" + client_id + "', '" + email + "',  " + exp_month + ", " + dealer_id + ",'" + link_code + "' ,  0, 0 ,'" + expiry_date + "','" + note + "','" + validity + "')";
-                            insertUser_acc = insertUser_acc + User_acc_values;
-                            console.log(insertUser_acc);
-                            if (resp.affectedRows) {
-                                sql.query(insertUser_acc, async (err, resp) => {
-
-                                    if (err){
-                                        console.log(err)
-                                    }
-                                    let user_acc_id = resp.insertId;
-
-                                    console.log("affectedRows", resp.affectedRows);
-                                    if (resp && resp.affectedRows) {
-                                        let updateChatIds = 'update chat_ids set used=1, user_acc_id="' + user_acc_id + '" where chat_id ="' + chat_id + '"';
-                                        await sql.query(updateChatIds);
-                                        let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + user_acc_id + '" where sim_id ="' + sim_id + '"';
-                                        await sql.query(updateSimIds)
-                                        let updatePgpEmails = 'update pgp_emails set used=1, user_acc_id="' + user_acc_id + '" where pgp_email ="' + pgp_email + '"';
-                                        await sql.query(updatePgpEmails);
-                                        if (policy_id !== '') {
-                                            var slctpolicy = "select * from policy where id = " + policy_id + "";
-                                            let policy = await sql.query(slctpolicy);
-                                            var applyQuery = "INSERT INTO device_history (dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES (" + dealer_id + "," + user_acc_id + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
-                                            sql.query(applyQuery)
-                                        }
-
-                                        sql.query("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name, dealers.connected_dealer from devices left join usr_acc on devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 and devices.id='" + dvc_id + "'", async function (error, results, fields) {
-
-                                            if (error) {
-                                                console.log(error);
-                                            }
-                                            // console.log("user data list ", results)
-
-                                            results[0].finalStatus = device_helpers.checkStatus(results[0])
-                                            results[0].pgp_email = await device_helpers.getPgpEmails(results[0])
-                                            results[0].sim_id = await device_helpers.getSimids(results[0])
-                                            results[0].chat_id = await device_helpers.getChatids(results[0])
-
-                                            // dealerData = await device_helpers.getDealerdata(results[i]);
-                                            device_helpers.saveActionHistory(results[0], Constants.DEVICE_PRE_ACTIVATION)
-                                            data = {
-                                                "status": true,
-                                                "msg": 'Pre-activation added succcessfully.',
-                                                "data": results
-                                            };
-
-                                            res.send({
-                                                status: true,
-                                                data: data
-                                            })
-                                            return;
-                                        })
-
-
-                                        // console.log('devices f', results);
-
-                                    } else {
-                                        res.send({
-                                            status: false,
-                                            msg: "Device couldn't added"
-                                        });
-                                        return;
-                                    }
-
-                                });
-                            }
-
-
-                        })
-
-                    } else {
-
-                    }
-                });
-            }
-        }
-    }
-});
-
-router.post('/transfer/device_profile', async (req, res) => {
+router.post('/transfer/device_profile', async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
@@ -562,7 +330,7 @@ router.post('/transfer/device_profile', async (req, res) => {
             where: {
                 device_id: device_id
             }
-        }).then((response, err) => {
+        }).then(async function (response, err) {
             console.log(err, 'oject res', response[0]['dataValues']);
             let new_object = response[0]['dataValues'];
             // new_object['device_id'] = device_id_new;
@@ -574,9 +342,9 @@ router.post('/transfer/device_profile', async (req, res) => {
             var value = ") VALUES ('" + device_id_new + "', '" + activation_code + "', '" + new_object.name + "', '" + new_object.client_id + "', '" + new_object.chat_id + "', '" + new_object.model + "', '" + new_object.email + "', '" + new_object.pgp_email + "', '" + new_object.expiry_months + "', '" + new_object.dealer_id + "', 0, 0 , '" + new_object.ip_address + "', '" + new_object.sim_id + "', '" + new_object.simno + "', '" + new_object.imei + "', '" + new_object.sim_id2 + "', '" + new_object.simno2 + "', '" + new_object.imei2 + "', '" + new_object.serial_number + "', '" + new_object.mac_address + "', '" + new_object.s_dealer + "', '" + new_object.s_dealer_name + "', '" + new_object.account + "', '" + new_object.fcm_token + "', '" + new_object.account_status + "', '" + new_object.start_date + "', '" + new_object.expiry_date + "', '" + new_object.link_code + "' )";
             let query = insertDevice + value;
             // console.log('qerury', query);
-            sql.query(query, async (err, resp) => {
+            sql.query(query, async function (err, resp) {
                 // console.log('query reslut response', resp)
-                if (err){
+                if (err) {
                     console.log(err)
                 }
                 if (resp.affectedRows) {
@@ -599,7 +367,7 @@ router.post('/transfer/device_profile', async (req, res) => {
                         status: true,
                         data: {
                             "status": true,
-                            "msg": 'Record Transfered Successfully.',
+                            "msg": await helpers.convertToLang(loggedDealerId, MsgConstants.RECORD_TRANSF_SUCC), // Record Transfered Successfully.
                         }
                     });
                 } else {
@@ -607,7 +375,7 @@ router.post('/transfer/device_profile', async (req, res) => {
                         status: false,
                         data: {
                             "status": false,
-                            "msg": 'Error While Transfere .',
+                            "msg": await helpers.convertToLang(loggedDealerId, MsgConstants.ERR_TRANSF), // Error While Transfere.
                         }
                     });
                 }
@@ -712,11 +480,11 @@ router.put('/edit/devices', async function (req, res) {
                 if (rows.length) {
                     let checkUniquePgp = "SELECT * from pgp_emails WHERE pgp_email= '" + pgp_email + "' AND user_acc_id != '' AND user_acc_id != '" + usr_acc_id + "'"
                     // let checkUnique = "SELECT usr_acc.* from usr_acc WHERE account_email= '" + device_email + "' AND device_id != '" + device_id + "'"
-                    sql.query(checkUniquePgp, async (error, success) => {
+                    sql.query(checkUniquePgp, async function (error, success) {
                         if (success.length) {
                             res.send({
                                 status: false,
-                                "msg": "PGP email already taken"
+                                "msg": await helpers.convertToLang(loggedDealerId, MsgConstants.PGP_EMAIL_ALRDY_TKN), // PGP email already taken
                             });
                         } else {
                             common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE id = '" + usr_device_id + "'";
@@ -770,7 +538,7 @@ router.put('/edit/devices', async function (req, res) {
 
                                 data = {
                                     "status": true,
-                                    "msg": 'Record updated successfully.',
+                                    "msg": await helpers.convertToLang(loggedDealerId, MsgConstants.RECORD_UPD_SUCC), // Record updated successfully.
                                     "data": rsltq
                                 };
                                 res.send(data);
@@ -783,7 +551,7 @@ router.put('/edit/devices', async function (req, res) {
                 } else {
                     res.send({
                         status: false,
-                        msg: "No Device found"
+                        msg: await helpers.convertToLang(loggedDealerId, MsgConstants.DEVICE_NOT_FOUND), // No Device found
                     })
                 }
 
@@ -829,12 +597,12 @@ router.put('/delete/:device_id', async function (req, res) {
                         sql.query(sqlDevice);
                         data = {
                             "status": true,
-                            "msg": "Device deleted successfully.",
+                            "msg": await helpers.convertToLang(loggedUserId, MsgConstants.DEVICE_DEL_SUCC), // Device deleted successfully.
                         };
                     } else {
                         data = {
                             "status": false,
-                            "msg": "Device not deleted.",
+                            "msg": await helpers.convertToLang(loggedUserId, MsgConstants.DEVICE_NOT_DEL), // Device not deleted.
                             "fld": fields,
                             "rdlt": results
                         };
@@ -844,7 +612,7 @@ router.put('/delete/:device_id', async function (req, res) {
             } else {
                 data = {
                     "status": false,
-                    "msg": "Device not deleted.",
+                    "msg": await helpers.convertToLang(loggedUserId, MsgConstants.DEVICE_NOT_DEL), // Device not deleted.
                 };
                 res.send(data)
             }
@@ -858,6 +626,7 @@ router.post('/unlink/:id', async function (req, res) {
     var device_id = req.params.id;
 
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
 
         if (!empty(device_id)) {
             let dvcId = await device_helpers.getDvcIDByDeviceID(device_id);
@@ -866,13 +635,13 @@ router.post('/unlink/:id', async function (req, res) {
                 if (error) {
                     data = {
                         status: false,
-                        msg: "Device not unlinked."
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.DEVICE_NOT_UNLNK), // Device not unlinked."
                     }
                 };
 
                 if (results && results.affectedRows) {
                     // Update device details on Super admin
-                    axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
+                    axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then(async function (response) {
                         // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
                         if (response.data.status) {
                             let data = {
@@ -893,12 +662,12 @@ router.post('/unlink/:id', async function (req, res) {
                     require("../bin/www").sendDeviceStatus(dvcId, "unlinked", true);
                     data = {
                         status: true,
-                        msg: "Device unlinked successfully."
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.DEVICE_UNLNK_SUCC), // Device unlinked successfully.
                     }
                 } else {
                     data = {
                         status: false,
-                        msg: "Device not unlinked."
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.DEVICE_NOT_UNLNK), // Device not unlinked.
                     }
                 }
                 res.send(data);
@@ -908,7 +677,7 @@ router.post('/unlink/:id', async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: "Invalid device id."
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.INVALID_DEVICE_ID), // Invalid device id.
             }
             res.send(data);
             return;
@@ -925,6 +694,7 @@ router.post('/suspend/:id', async function (req, res) {
     var formatted_dt = tod_dat.format('Y-m-d H:M:S');
 
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         var sql2 = "select * from usr_acc where device_id = '" + device_id + "'";
         var gtres = await sql.query(sql2);
 
@@ -945,7 +715,7 @@ router.post('/suspend/:id', async function (req, res) {
 
                         data = {
                             "status": false,
-                            "msg": "Account not suspended.Please try again."
+                            "msg": await helpers.convertToLang(loggedInuid, MsgConstants.ACC_NOT_SUSP), // Account not suspended.Please try again.
                         }
                     } else {
                         sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
@@ -963,7 +733,7 @@ router.post('/suspend/:id', async function (req, res) {
                                 data = {
                                     "data": resquery[0],
                                     "status": true,
-                                    "msg": "Account suspended successfully."
+                                    "msg": await helpers.convertToLang(loggedInuid, MsgConstants.ACC_SUSP_SUCC), // Account suspended successfully.
                                 }
                                 device_helpers.saveActionHistory(resquery[0], Constants.DEVICE_SUSPENDED)
                                 require("../bin/www").sendDeviceStatus(resquery[0].device_id, "suspended");
@@ -993,7 +763,7 @@ router.post('/suspend/:id', async function (req, res) {
 
                             data = {
                                 "status": false,
-                                "msg": "Account not suspended.Please try again."
+                                "msg": await helpers.convertToLang(loggedInuid, MsgConstants.ACC_NOT_SUSP), // Account not suspended.Please try again."
                             }
                         } else {
 
@@ -1013,7 +783,7 @@ router.post('/suspend/:id', async function (req, res) {
                                     data = {
                                         "data": resquery[0],
                                         "status": true,
-                                        "msg": "Account suspended successfully."
+                                        "msg": await helpers.convertToLang(loggedInuid, MsgConstants.ACC_SUSP_SUCC), // Account suspended successfully."
                                     }
                                     device_helpers.saveActionHistory(resquery[0], Constants.DEVICE_SUSPENDED)
                                     require("../bin/www").sendDeviceStatus(resquery[0].device_id, "suspended");
@@ -1031,7 +801,7 @@ router.post('/suspend/:id', async function (req, res) {
 
                     data = {
                         "status": false,
-                        "msg": "Can't suspend !!! Account Already Expired."
+                        "msg": await helpers.convertToLang(loggedInuid, MsgConstants.NOT_SUSP_ACC_EXP), // Can't suspend !!! Account Already Expired."
                     }
                     res.send(data);
                 }
@@ -1040,7 +810,7 @@ router.post('/suspend/:id', async function (req, res) {
         } else {
             data = {
                 "status": false,
-                "msg": "Invalid Device."
+                "msg": await helpers.convertToLang(loggedInuid, MsgConstants.INVALID_DEVICE), // Invalid Device."
             }
             res.send(data);
         }
@@ -1056,6 +826,7 @@ router.post('/activate/:id', async function (req, res) {
     var formatted_dt = tod_dat.format('Y-m-d H:M:S');
 
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         var sql2 = "select * from usr_acc where device_id = '" + device_id + "'";
         var gtres = await sql.query(sql2);
 
@@ -1065,14 +836,14 @@ router.post('/activate/:id', async function (req, res) {
 
                 var sql1 = "update usr_acc set account_status='' where device_id = '" + device_id + "'";
 
-                var rest = sql.query(sql1, function (error, results) {
+                var rest = sql.query(sql1, async function (error, results) {
                     if (error) {
                         console.log(error);
                     }
                     if (results.affectedRows == 0) {
                         data = {
                             "status": false,
-                            "msg": "Device not activated.Please try again."
+                            "msg": await helpers.convertToLang(loggedInuid, MsgConstants.DEVICE_NOT_ACTIV), // Device not activated.Please try again."
                         }
                     } else {
                         sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
@@ -1091,7 +862,7 @@ router.post('/activate/:id', async function (req, res) {
                                 data = {
                                     "data": resquery[0],
                                     "status": true,
-                                    "msg": "Device activated successfully."
+                                    "msg": await helpers.convertToLang(loggedInuid, MsgConstants.DEVICE_ACTIV_SUCC), // Device activated successfully.
                                 }
                                 device_helpers.saveActionHistory(resquery[0], Constants.DEVICE_ACTIVATED)
                                 res.send(data);
@@ -1109,14 +880,14 @@ router.post('/activate/:id', async function (req, res) {
 
                     var sql1 = "update usr_acc set account_status='' where device_id = '" + device_id + "'";
 
-                    var rest = sql.query(sql1, function (error, results) {
+                    var rest = sql.query(sql1, async function (error, results) {
                         if (error) {
                             console.log(error);
                         }
                         if (results.affectedRows == 0) {
                             data = {
                                 "status": false,
-                                "msg": "Device not activated.Please try again."
+                                "msg": await helpers.convertToLang(loggedInuid, MsgConstants.DEVICE_NOT_ACTIV), // Device not activated.Please try again."
                             }
                         } else {
                             sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
@@ -1135,7 +906,7 @@ router.post('/activate/:id', async function (req, res) {
                                     data = {
                                         "data": resquery[0],
                                         "status": true,
-                                        "msg": "Device activated successfully."
+                                        "msg": await helpers.convertToLang(loggedInuid, MsgConstants.DEVICE_ACTIV_SUCC), // Device activated successfully."
                                     }
                                     device_helpers.saveActionHistory(resquery[0], Constants.DEVICE_ACTIVATED)
                                     res.send(data);
@@ -1151,7 +922,7 @@ router.post('/activate/:id', async function (req, res) {
 
                     data = {
                         "status": false,
-                        "msg": "Device cannnot be activated.It is expired already."
+                        "msg": await helpers.convertToLang(loggedInuid, MsgConstants.DEVICE_NOT_ACTIV_EXP), // Device cannnot be activated.It is expired already.
                     }
                     res.send(data);
                 }
@@ -1160,7 +931,7 @@ router.post('/activate/:id', async function (req, res) {
         } else {
             data = {
                 "status": false,
-                "msg": "Invalid Device."
+                "msg": await helpers.convertToLang(loggedInuid, MsgConstants.INVALID_DEVICE), // Invalid Device."
             }
             res.send(data);
         }
@@ -1172,6 +943,7 @@ router.post('/wipe/:id', async function (req, res) {
     var verify = await verifyToken(req, res);
     var device_id = req.params.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         var sql2 = "select * from devices where id = '" + device_id + "'";
         var gtres = await sql.query(sql2);
         if (!empty(device_id)) {
@@ -1180,12 +952,12 @@ router.post('/wipe/:id', async function (req, res) {
 
             var rest = sql.query(sql1, async function (error, results) {
                 if (error) {
-                    console.log(error)   
+                    console.log(error)
                 }
                 if (results.affectedRows == 0) {
                     data = {
                         "status": false,
-                        "msg": "Device not wiped.Please try again."
+                        "msg": await helpers.convertToLang(loggedInuid, MsgConstants.DEVICE_NOT_WIPE), // Device not wiped.Please try again.
                     }
                     res.send(data);
                 } else {
@@ -1208,7 +980,7 @@ router.post('/wipe/:id', async function (req, res) {
                             data = {
                                 "data": resquery[0],
                                 "status": true,
-                                "msg": "Device Wiped successfully."
+                                "msg": await helpers.convertToLang(loggedInuid, MsgConstants.DEVICE_WIPE_SUCC), // Device Wiped successfully.
                             }
                             res.send(data);
                         }
@@ -1221,7 +993,7 @@ router.post('/wipe/:id', async function (req, res) {
         } else {
             data = {
                 "status": false,
-                "msg": "Invalid Device."
+                "msg": await helpers.convertToLang(loggedInuid, MsgConstants.INVALID_DEVICE), // Invalid Device."
             }
             res.send(data);
         }
@@ -1232,7 +1004,7 @@ router.post('/UnflagDevice/:id', async function (req, res) {
     var verify = await verifyToken(req, res);
     var device_id = req.params.id;
     if (verify.status !== undefined && verify.status == true) {
-
+        var loggedInuid = verify.user.id;
         if (!empty(device_id)) {
             var sql1 = "update devices set flagged= 'Not flagged' where device_id='" + device_id + "'";
             var rest = sql.query(sql1, async function (error, results) {
@@ -1242,7 +1014,7 @@ router.post('/UnflagDevice/:id', async function (req, res) {
                 else if (results.affectedRows == 0) {
                     data = {
                         "status": false,
-                        "msg": "Device not Unflagged.Please try again."
+                        "msg": await helpers.convertToLang(loggedInuid, MsgConstants.DEVICE_NOT_UNFLAG), // Device not Unflagged.Please try again.
                     }
                     res.send(data);
                 } else {
@@ -1261,7 +1033,7 @@ router.post('/UnflagDevice/:id', async function (req, res) {
                             data = {
                                 // "data": resquery[0],
                                 "status": true,
-                                "msg": "Device Unflagged successfully."
+                                "msg": await helpers.convertToLang(loggedInuid, MsgConstants.DEVICE_UNFLAG_SUCC), // Device Unflagged successfully.
                             }
                         }
                         device_helpers.saveActionHistory(resquery[0], Constants.DEVICE_UNFLAGGED)
@@ -1277,7 +1049,7 @@ router.post('/UnflagDevice/:id', async function (req, res) {
 
         data = {
             "status": false,
-            "msg": "Device Is not unflagged.Please try again"
+            "msg": await helpers.convertToLang(loggedInuid, MsgConstants.DEVICE_NOT_UNFLAG), // Device Is not unflagged.Please try again"
         }
         res.send(data);
     }
@@ -1289,6 +1061,7 @@ router.post('/flagDevice/:id', async function (req, res) {
     var option = req.body.data
     // console.log(option);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         var sql2 = "select * from devices where id = '" + device_id + "'";
         var gtres = await sql.query(sql2);
         if (!empty(device_id)) {
@@ -1303,7 +1076,7 @@ router.post('/flagDevice/:id', async function (req, res) {
                 if (results.affectedRows == 0) {
                     data = {
                         "status": false,
-                        "msg": "Device not Flagged.Please try again."
+                        "msg": await helpers.convertToLang(loggedInuid, MsgConstants.DEVICE_NOT_FLAG), // Device not Flagged.Please try again."
                     }
                 } else {
                     require("../bin/www").sendDeviceStatus(gtres[0].device_id, "suspended");
@@ -1322,7 +1095,7 @@ router.post('/flagDevice/:id', async function (req, res) {
                         data = {
                             "data": resquery[0],
                             "status": true,
-                            "msg": "Device Flagged successfully."
+                            "msg": await helpers.convertToLang(loggedInuid, MsgConstants.DEVICE_FLAG_SUCC), // Device Flagged successfully."
                         }
 
                         res.send(data);
@@ -1332,7 +1105,7 @@ router.post('/flagDevice/:id', async function (req, res) {
             } else {
                 data = {
                     "status": false,
-                    "msg": "Device Already Flagged"
+                    "msg": await helpers.convertToLang(loggedInuid, MsgConstants.DEVICE_ALRDY_FLAG), // Device Already Flagged
                 }
                 res.send(data);
             }
@@ -1340,7 +1113,7 @@ router.post('/flagDevice/:id', async function (req, res) {
         } else {
             data = {
                 "status": false,
-                "msg": "Invalid Device."
+                "msg": await helpers.convertToLang(loggedInuid, MsgConstants.INVALID_DEVICE), // Invalid Device."
             }
             res.send(data);
         }
@@ -1352,6 +1125,7 @@ router.get('/connect/:device_id', async function (req, res) {
     // console.log('api check is caled')
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         if (!empty(req.params.device_id)) {
             let userId = verify.user.id;
             //  console.log(verify.user);
@@ -1371,7 +1145,7 @@ router.get('/connect/:device_id', async function (req, res) {
                 if (results.length == 0) {
                     _data = {
                         status: false,
-                        msg: "No details found"
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.NO_DETAIL_FOUND), // No details found
                     };
                 } else {
                     var query = "select * from dealers where dealer_id =" + results[0].dealer_id;
@@ -1392,7 +1166,7 @@ router.get('/connect/:device_id', async function (req, res) {
 
                     _data = {
                         status: true,
-                        msg: "success",
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // success
                         data: device_data
                     };
                 }
@@ -1402,7 +1176,7 @@ router.get('/connect/:device_id', async function (req, res) {
         } else {
             _data = {
                 status: false,
-                msg: "Device not found"
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.DEVICE_NOT_FOUND), // Device not found
             };
         }
         res.send(_data);
@@ -1414,6 +1188,7 @@ router.get('/getAppJobQueue/:device_id', async function (req, res) {
     // console.log('api check is caled')
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         let device_id = req.params.device_id;
         if (!empty(device_id)) {
 
@@ -1426,7 +1201,7 @@ router.get('/getAppJobQueue/:device_id', async function (req, res) {
         } else {
             _data = {
                 status: false,
-                msg: "Device not found"
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.DEVICE_NOT_FOUND), // Device not found"
             };
         }
         res.send(_data);
@@ -1437,17 +1212,18 @@ router.get('/getAppJobQueue/:device_id', async function (req, res) {
 router.patch('/sync-device', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         let deviceId = req.body.device_id;
         if (!empty(deviceId)) {
             let query = "SELECT * FROM devices WHERE device_id = '" + deviceId + "' and online = '" + Constants.DEVICE_ONLINE + "'";
-            sql.query(query, function (error, response) {
+            sql.query(query, async function (error, response) {
                 if (error) console.log(error);
                 if (response.length) {
                     require("../bin/www").syncDevice(deviceId);
                 }
                 res.send({
                     status: true,
-                    msg: "device synced successfully"
+                    msg: await helpers.convertToLang(loggedInuid, MsgConstants.DEVICE_SYNC_SUCC), // device synced successfully
                 })
             });
         }
@@ -1458,6 +1234,7 @@ router.patch('/sync-device', async function (req, res) {
 router.get('/get_apps/:device_id', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         if (!empty(req.params.device_id)) {
             // var query = 'SELECT user_apps.*, apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon from user_apps LEFT JOIN apps_info on user_apps.app_id = apps_info.id LEFT JOIN devices on user_apps.device_id=devices.id where devices.device_id ="' + req.params.device_id + '"';
             // console.log(query);
@@ -1576,6 +1353,8 @@ router.put('/deleteUnlinkDevice', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
         if (verify.status !== undefined && verify.status == true) {
+            var loggedInuid = verify.user.id;
+
             let insertError = 0;
             let NotDeleted = [];
             let deletedDevices = [];
@@ -1621,7 +1400,7 @@ router.put('/deleteUnlinkDevice', async function (req, res) {
             if (insertError === 0) {
                 data = {
                     'status': true,
-                    'msg': 'Deleted Successfully',
+                    'msg': await helpers.convertToLang(loggedInuid, MsgConstants.DEVICE_DEL_SUCC), // Deleted Successfully',
                     'data': deletedDevices
                 }
                 res.send(data);
@@ -1630,7 +1409,7 @@ router.put('/deleteUnlinkDevice', async function (req, res) {
 
                 data = {
                     'status': false,
-                    'msg': NotDeleted.toString() + ' Not Deleted, Try Again!'
+                    'msg': NotDeleted.toString() + await helpers.convertToLang(loggedInuid, MsgConstants.NOT_DELETE),
                 }
                 res.send(data);
             }
@@ -1652,8 +1431,10 @@ router.post('/add/user', async function (req, res) {
     var verify = await verifyToken(req, res);
 
     if (verify.status !== undefined && verify.status == true) {
-        var userName = req.body.name;
         var loggedInuid = verify.user.id;
+
+        var loggedInuid = verify.user.id;
+        var userName = req.body.name;
         var userEmail = req.body.email;
 
         var userId = randomize('0', 6);
@@ -1670,7 +1451,7 @@ router.post('/add/user', async function (req, res) {
             if (user.length > 0) {
                 data = {
                     'status': false,
-                    'msg': 'User Already Registered. Please use another email.',
+                    'msg': await helpers.convertToLang(loggedInuid, MsgConstants.USER_ALRDY_REG), // User Already Registered. Please use another email.
                 }
                 res.status(200).send(data);
                 return;
@@ -1697,7 +1478,7 @@ router.post('/add/user', async function (req, res) {
                 // console.log('result add',dealer);
                 data = {
                     'status': true,
-                    'msg': 'User has been registered successfully.',
+                    'msg': await helpers.convertToLang(loggedInuid, MsgConstants.USER_REG_SUCC), // User has been registered successfully.
                     'user': user,
                 }
                 res.status(200).send(data);
@@ -1707,7 +1488,7 @@ router.post('/add/user', async function (req, res) {
         } else {
             data = {
                 'status': false,
-                'msg': 'Invalid email or name'
+                'msg': await helpers.convertToLang(loggedInuid, MsgConstants.INVALID_EMAIL_NAME), // Invalid email or name
             }
             res.status(200).send(data);
         }
@@ -1722,6 +1503,8 @@ router.post('/edit/user', async function (req, res) {
     var verify = await verifyToken(req, res);
 
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
+
         var userName = req.body.name;
         var userEmail = req.body.email;
         var user_id = req.body.user_id
@@ -1731,7 +1514,7 @@ router.post('/edit/user', async function (req, res) {
             if (user.length > 0) {
                 data = {
                     'status': false,
-                    'msg': 'User Already Registered. Please use another email.',
+                    'msg': await helpers.convertToLang(loggedInuid, MsgConstants.USER_ALRDY_REG), // User Already Registered. Please use another email.',
                 }
                 res.status(200).send(data);
                 return;
@@ -1760,7 +1543,7 @@ router.post('/edit/user', async function (req, res) {
 
                 data = {
                     'status': true,
-                    'msg': 'User Info has been changed successfully.',
+                    'msg': await helpers.convertToLang(loggedInuid, MsgConstants.USER_INFO_CHANGE_SUCC), // User Info has been changed successfully.
                     'user': userData,
                 }
                 res.status(200).send(data);
@@ -1770,7 +1553,7 @@ router.post('/edit/user', async function (req, res) {
         } else {
             data = {
                 'status': false,
-                'msg': 'Invalid email or name'
+                'msg': await helpers.convertToLang(loggedInuid, MsgConstants.INVALID_EMAIL_NAME), // Invalid email or name'
             }
             res.status(200).send(data);
         }
@@ -1780,25 +1563,26 @@ router.post('/edit/user', async function (req, res) {
 router.put('/delete_user/:user_id', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         var user_id = req.params.user_id
         if (!empty(user_id) && user_id != undefined) {
             let deleteUserQ = "UPDATE users SET del_status = 1 WHERE user_id ='" + user_id + "'";
             // console.log(deleteUserQ);
-            sql.query(deleteUserQ, function (err, result) {
+            sql.query(deleteUserQ, async function (err, result) {
                 if (err) {
                     console.log(err)
                 }
                 if (result && result.affectedRows !== 0) {
                     data = {
                         'status': true,
-                        'msg': 'User deleted successfully.'
+                        'msg': await helpers.convertToLang(loggedInuid, MsgConstants.USER_DEL_SUCC), // User deleted successfully.
                     }
                     res.send(data);
                     return
                 } else {
                     data = {
                         'status': true,
-                        'msg': 'User not deleted try again later.'
+                        'msg': await helpers.convertToLang(loggedInuid, MsgConstants.USER_NOT_DEL_SUCC), // User not deleted try again later.'
                     }
                     res.send(data);
                     return
@@ -1807,7 +1591,7 @@ router.put('/delete_user/:user_id', async function (req, res) {
         } else {
             data = {
                 'status': false,
-                'msg': 'Invalid User.'
+                'msg': await helpers.convertToLang(loggedInuid, MsgConstants.INVALID_USER), // Invalid User.
             }
             res.send(data);
             return
@@ -1818,25 +1602,27 @@ router.put('/delete_user/:user_id', async function (req, res) {
 router.put('/undo_delete_user/:user_id', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
+
         var user_id = req.params.user_id
         if (!empty(user_id) && user_id != undefined) {
             let deleteUserQ = "UPDATE users SET del_status = 0 WHERE user_id ='" + user_id + "'";
             console.log(deleteUserQ);
-            sql.query(deleteUserQ, function (err, result) {
+            sql.query(deleteUserQ, async function (err, result) {
                 if (err) {
                     console.log(err)
                 }
                 if (result && result.affectedRows !== 0) {
                     data = {
                         'status': true,
-                        'msg': 'User added again successfully.'
+                        'msg': await helpers.convertToLang(loggedInuid, MsgConstants.USER_ADD_AGAIN), // User added again successfully.
                     }
                     res.send(data);
                     return
                 } else {
                     data = {
                         'status': true,
-                        'msg': 'User not added try again later.'
+                        'msg': await helpers.convertToLang(loggedInuid, MsgConstants.USER_NOT_ADD), // User not added try again later.
                     }
                     res.send(data);
                     return
@@ -1845,7 +1631,7 @@ router.put('/undo_delete_user/:user_id', async function (req, res) {
         } else {
             data = {
                 'status': false,
-                'msg': 'Invalid User.'
+                'msg': await helpers.convertToLang(loggedInuid, MsgConstants.INVALID_USER), // Invalid User.'
             }
             res.send(data);
             return
@@ -1862,7 +1648,9 @@ router.put('/updateProfile/:id', async function (req, res) {
 
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
-        sql.query('UPDATE dealers SET `dealer_name` = ? where `dealer_id` = ?', [req.body.name, req.body.dealerId], function (error, rows, status) {
+        var loggedInuid = verify.user.id;
+
+        sql.query('UPDATE dealers SET `dealer_name` = ? where `dealer_id` = ?', [req.body.name, req.body.dealerId], async function (error, rows, status) {
 
             if (error) {
                 console.log(error);
@@ -1871,13 +1659,13 @@ router.put('/updateProfile/:id', async function (req, res) {
                 data = {
                     "status": false,
                     "data": req.body,
-                    "msg": "Error While Updating Profile"
+                    "msg": await helpers.convertToLang(loggedInuid, MsgConstants.ERR_UP_PROFILE), // Error While Updating Profile
                 };
             } else {
                 data = {
                     "status": true,
                     "data": req.body,
-                    "msg": "Profile Updated Successfully"
+                    "msg": await helpers.convertToLang(loggedInuid, MsgConstants.PROFILE_UP_SUCC), // Profile Updated Successfully
                 };
             }
 
@@ -1894,6 +1682,8 @@ router.post('/resetpwd', async function (req, res) {
     var verify = await verifyToken(req, res);
     var isReset = false;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
+
         var user = verify.user;
         if (req.body.pageName != undefined && req.body.pageName != "") {
             if (user.user_type === ADMIN || user.user_type === DEALER) {
@@ -1936,14 +1726,14 @@ router.post('/resetpwd', async function (req, res) {
                     var message = 'You have changed your password in your Lockmesh.com account. <br><br> This is just to inform you about the activity. If it was not you, please immediately contact your provider to reset the password.';
                 }
 
-                sendEmail(subject, message, email, function (errors, response) {
+                sendEmail(subject, message, email, async function (errors, response) {
                     if (errors) {
                         res.send("Email could not sent due to error: " + errors);
                         return;
                     } else {
 
                         var sq = "update dealers set password = '" + enc_pwd + "' where dealer_id = '" + dealer_id + "'";
-                        sql.query(sq, function (error, rows) {
+                        sql.query(sq, async function (error, rows) {
 
 
                             if (error) {
@@ -1961,7 +1751,7 @@ router.post('/resetpwd', async function (req, res) {
                                 data = {
 
                                     "status": true,
-                                    "msg": "Password changed successfully.Please check your email."
+                                    "msg": await helpers.convertToLang(loggedInuid, MsgConstants.PASS_CHANGE_SUCC), // Password changed successfully.Please check your email.
                                 };
                                 res.send(data);
                                 return;
@@ -1973,7 +1763,7 @@ router.post('/resetpwd', async function (req, res) {
             } else {
                 data = {
                     "status": false,
-                    "msg": 'Invalid User and Password'
+                    "msg": await helpers.convertToLang(loggedInuid, MsgConstants.INVALID_USER_AND_PASS), // Invalid User and Password'
                 };
                 res.send(data);
                 return;
@@ -1984,7 +1774,7 @@ router.post('/resetpwd', async function (req, res) {
 
             res.json({
                 status: false,
-                "msg": "Invalid details"
+                "msg": await helpers.convertToLang(loggedInuid, MsgConstants.ENTER_VALID_DETAIL), // Invalid details"
             });
             return;
         }
@@ -2063,7 +1853,7 @@ router.get('/get_dealer_apps', async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: "No result found",
+                msg: await helpers.convertToLang(loggedUserId, MsgConstants.NO_DATA_FOUND), // No result found
                 list: []
             }
 
@@ -2104,8 +1894,8 @@ router.get('/get_app_permissions', async function (req, res) {
             if (error) {
                 console.log(error)
             };
-;            // console.log(query, 'rslt  ', apps);
-           let Extension = [];
+            ;            // console.log(query, 'rslt  ', apps);
+            let Extension = [];
             let onlyApps = [];
             for (let item of apps) {
                 let subExtension = [];
@@ -2177,10 +1967,11 @@ router.get('/dealer/gtdropdown/:dropdownType', async function (req, res) {
     var verify = await verifyToken(req, res);
     // console.log('done or not');
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         // console.log('data from req', req.params.dropdownType);
         let dealer_id = verify.user.id;
         let dropdownType = req.params.dropdownType;
-        sql.query("select * from dealer_dropdown_list where dealer_id = " + dealer_id + " AND type = '" + dropdownType + "'", function (err, rslts) {
+        sql.query("select * from dealer_dropdown_list where dealer_id = " + dealer_id + " AND type = '" + dropdownType + "'", async function (err, rslts) {
             if (err) {
                 console.log(err)
             }
@@ -2188,7 +1979,7 @@ router.get('/dealer/gtdropdown/:dropdownType', async function (req, res) {
             if (rslts.length == 0) {
                 data = {
                     "status": false,
-                    "msg": "No data found",
+                    "msg": await helpers.convertToLang(loggedInuid, MsgConstants.NO_DATA_FOUND), // No data found",
                     "data": '[]'
                 };
                 res.send(data);
@@ -2204,7 +1995,7 @@ router.get('/dealer/gtdropdown/:dropdownType', async function (req, res) {
                 } else {
                     data = {
                         "status": false,
-                        "msg": "No data found",
+                        "msg": await helpers.convertToLang(loggedInuid, MsgConstants.NO_DATA_FOUND), // No data found",
                         "data": '[]'
                     };
                     res.send(data);
@@ -2217,6 +2008,8 @@ router.get('/dealer/gtdropdown/:dropdownType', async function (req, res) {
 router.post('/dealer/dropdown', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
+
         var selected_items = req.body.selected_items;
         var dropdownType = req.body.pageName;
         var dealer_id = verify.user.id;
@@ -2226,29 +2019,29 @@ router.post('/dealer/dropdown', async function (req, res) {
         // console.log('query result', srslt);
 
         if (srslt.length == 0) {
-            var squery = sql.query("insert into dealer_dropdown_list (dealer_id, selected_items, type) values (" + dealer_id + ", '" + selected_items + "', '" + dropdownType + "')", function (err, rslts) {
+            var squery = sql.query("insert into dealer_dropdown_list (dealer_id, selected_items, type) values (" + dealer_id + ", '" + selected_items + "', '" + dropdownType + "')", async function (err, rslts) {
                 data = {
                     "status": true,
-                    "msg": 'Items Added.',
+                    "msg": await helpers.convertToLang(loggedInuid, MsgConstants.ITEMS_ADDED), // Items Added.
                     "data": rslts
                 };
                 res.send(data);
             });
         } else {
 
-            sql.query("update dealer_dropdown_list set selected_items = '" + selected_items + "' where type='" + dropdownType + "' AND dealer_id='" + dealer_id + "'", function (err, row) {
+            sql.query("update dealer_dropdown_list set selected_items = '" + selected_items + "' where type='" + dropdownType + "' AND dealer_id='" + dealer_id + "'", async function (err, row) {
                 // console.log('squery data ', 'rowws', row);
                 if (row.affectedRows != 0) {
                     data = {
                         "status": true,
-                        "msg": 'Items Updated.',
+                        "msg": await helpers.convertToLang(loggedInuid, MsgConstants.ITEMS_UP), // Items Updated.',
                         "data": row
                     };
                     res.send(data);
                 } else {
                     data = {
                         "status": false,
-                        "msg": 'Items Not Updated.',
+                        "msg": await helpers.convertToLang(loggedInuid, MsgConstants.ITEMS_NOT_UP), // Items Not Updated.',
                         "data": row
                     };
                     res.send(data);
@@ -2263,10 +2056,11 @@ router.get('/dealer/getPagination/:dropdownType', async function (req, res) {
     var verify = await verifyToken(req, res);
     // console.log('done or not');
     if (verify.status !== undefined && verify.status == true) {
+
         // console.log('data from req', req.params.dropdownType);
         let dealer_id = verify.user.id;
         let dropdownType = req.params.dropdownType;
-        sql.query("select record_per_page from dealer_pagination where dealer_id = " + dealer_id + " AND type = '" + dropdownType + "'", function (err, rslts) {
+        sql.query("select record_per_page from dealer_pagination where dealer_id = " + dealer_id + " AND type = '" + dropdownType + "'", async function (err, rslts) {
             if (err) {
                 console.log(err)
             }
@@ -2274,7 +2068,7 @@ router.get('/dealer/getPagination/:dropdownType', async function (req, res) {
             if (rslts.length == 0) {
                 data = {
                     "status": false,
-                    "msg": "No data found",
+                    "msg": await helpers.convertToLang(dealer_id, MsgConstants.NO_DATA_FOUND), // No data found",
                     "data": '10'
                 };
                 res.send(data);
@@ -2303,22 +2097,22 @@ router.post('/dealer/postPagination', async function (req, res) {
         var srslt = await sql.query(squery);
 
         if (srslt.length == 0) {
-            var squery = sql.query("insert into dealer_pagination (dealer_id, record_per_page, type) values (" + dealer_id + ", '" + selectedValue + "', '" + dropdownType + "')", function (err, rslts) {
+            var squery = sql.query("insert into dealer_pagination (dealer_id, record_per_page, type) values (" + dealer_id + ", '" + selectedValue + "', '" + dropdownType + "')", async function (err, rslts) {
                 data = {
                     status: true,
-                    msg: 'record Added.',
+                    msg: await helpers.convertToLang(dealer_id, MsgConstants.ITEMS_ADDED), // record Added.',
                     data: rslts
                 };
                 res.send(data);
             });
         } else {
 
-            sql.query("update dealer_pagination set record_per_page = '" + selectedValue + "' where type='" + dropdownType + "' AND dealer_id='" + dealer_id + "'", function (err, row) {
+            sql.query("update dealer_pagination set record_per_page = '" + selectedValue + "' where type='" + dropdownType + "' AND dealer_id='" + dealer_id + "'", async function (err, row) {
                 // console.log('squery data ', 'rowws', row);
                 if (row && row.affectedRows !== 0) {
                     data = {
                         status: true,
-                        msg: 'Items Updated.',
+                        msg: await helpers.convertToLang(dealer_id, MsgConstants.ITEMS_UP), // Items Updated.',
                         data: row
                     };
 
@@ -2326,7 +2120,7 @@ router.post('/dealer/postPagination', async function (req, res) {
                 } else {
                     data = {
                         status: false,
-                        msg: 'Items Not Updated.',
+                        msg: await helpers.convertToLang(dealer_id, MsgConstants.ITEMS_NOT_UP), // Items Not Updated.',
                         data: row
                     };
                     res.send(data);
@@ -2429,7 +2223,7 @@ router.get('/get_policies', async function (req, res) {
                     }
                     data = {
                         "status": true,
-                        "msg": 'successful',
+                        "msg": await helpers.convertToLang(userId, MsgConstants.SUCCESS), // successful',
                         "policies": policies
                     };
                     // console.log(data);
@@ -2449,11 +2243,17 @@ router.get('/get_policies', async function (req, res) {
                 }
                 // console.log(prrr, 'permited ids');
                 // console.log('2 query',"select * from policy where (dealer_id='" + verify.user.id + "' OR id IN ("+prrr+")) AND delete_status=0")
-                sql.query("select * from policy where (dealer_id='" + verify.user.id + "' OR id IN (" + prrr + ")) AND delete_status=0", async function (error, results) {
+                let query = ''
+                if (prrr.length) {
+                    query = "select * from policy where (dealer_id='" + verify.user.id + "' OR id IN (" + prrr + ")) AND delete_status=0"
+                }
+                else {
+                    query = "select * from policy where dealer_id='" + verify.user.id + "' AND delete_status=0"
+                }
+                sql.query(query, async function (error, results) {
 
                     if (error) {
-                        console.lo
-g(error)   
+                        console.log(error)
                     }
                     if (results.length > 0) {
                         // console.log(results);
@@ -2509,14 +2309,14 @@ g(error)
                         }
                         return res.json({
                             "status": true,
-                            "msg": 'successful',
+                            "msg": await helpers.convertToLang(userId, MsgConstants.SUCCESS), // successful',
                             "policies": policies
                         });
 
                     } else {
                         data = {
                             status: false,
-                            msg: "No result found",
+                            msg: await helpers.convertToLang(userId, MsgConstants.NO_DATA_FOUND), // No result found",
                             policies: []
                         }
                         res.send(data);
@@ -2526,7 +2326,7 @@ g(error)
         } else {
             data = {
                 "status": false,
-                "msg": 'Invalid User',
+                "msg": await helpers.convertToLang(userId, MsgConstants.INVALID_USER), // Invalid User',
                 "policies": []
             };
             res.send(data);
@@ -2539,6 +2339,7 @@ g(error)
 router.post('/change_policy_status', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status === true) {
+        var loggedInuid = verify.user.id;
         let id = req.body.id;
         let value = req.body.value == true ? 1 : 0;
         let key = req.body.key;
@@ -2546,7 +2347,7 @@ router.post('/change_policy_status', async function (req, res) {
         let query = "UPDATE policy SET " + key + " = '" + value + "' WHERE id='" + id + "'";
 
 
-        sql.query(query, (error, result) => {
+        sql.query(query, async function (error, result) {
 
             if (error) {
                 console.log(error);
@@ -2555,13 +2356,13 @@ router.post('/change_policy_status', async function (req, res) {
             if (result.affectedRows) {
                 data = {
                     "status": true,
-                    "msg": 'successful'
+                    "msg": await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // successful'
                 };
                 res.send(data);
             } else {
                 data = {
                     "status": false,
-                    "msg": 'error'
+                    "msg": await helpers.convertToLang(loggedInuid, MsgConstants.ERROR), // error'
                 };
                 res.send(data);
             }
@@ -2573,6 +2374,7 @@ router.post('/change_policy_status', async function (req, res) {
 router.post('/save_policy_changes', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status === true) {
+        var loggedInuid = verify.user.id;
         // console.log('body of kth e', req.body);
         let record = req.body;
         let id = record.id;
@@ -2587,7 +2389,7 @@ router.post('/save_policy_changes', async function (req, res) {
 
         let query = "UPDATE policy SET push_apps = '" + push_apps + "', controls = '" + controls + "', permissions = '" + permissions + "', app_list = '" + app_list + "', policy_note = '" + policy_note + "', policy_name = '" + policy_name + "' WHERE id='" + id + "'";
         // console.log('qerury', query)
-        sql.query(query, (error, result) => {
+        sql.query(query, async function (error, result) {
             console.log(result, 'relstsdf');
             if (error) {
                 console.log(error);
@@ -2595,13 +2397,13 @@ router.post('/save_policy_changes', async function (req, res) {
             if (result.affectedRows) {
                 data = {
                     "status": true,
-                    "msg": 'Policy Updated Successfully'
+                    "msg": await helpers.convertToLang(loggedInuid, MsgConstants.PLCY_UP_SUCC), // Policy Updated Successfully
                 };
                 res.send(data);
             } else {
                 data = {
                     "status": false,
-                    "msg": 'error'
+                    "msg": await helpers.convertToLang(loggedInuid, MsgConstants.ERROR), // error'
                 };
                 res.send(data);
             }
@@ -2613,6 +2415,7 @@ router.post('/save_policy_changes', async function (req, res) {
 router.post('/check_policy_name', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify['status'] && verify.status == true) {
+        var loggedInuid = verify.user.id;
         try {
             let policy_name = req.body.name !== undefined ? req.body.name : null;
             let policy_id = req.body.policy_id;
@@ -2674,7 +2477,7 @@ router.post('/save_policy', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
         if (verify.status !== undefined && verify.status == true) {
-
+            var loggedInuid = verify.user.id;
             let policy_name = req.body.data.policy_name !== undefined ? req.body.data.policy_name : null;
             if (policy_name !== null) {
                 let policy_note = req.body.data.policy_note !== undefined ? req.body.data.policy_note : null;
@@ -2740,7 +2543,7 @@ router.post('/save_policy', async function (req, res) {
                 if (checkExisting.length) {
                     data = {
                         status: false,
-                        msg: 'Policy name has already been taken',
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.PLCY_NAME_ALRDY_TKN), // Policy name has already been taken
 
                     };
                     res.send(data);
@@ -2751,7 +2554,7 @@ router.post('/save_policy', async function (req, res) {
                 var applyQuery = "INSERT INTO policy (policy_name, policy_note, command_name, app_list, push_apps, controls, permissions, dealer_id, dealer_type, dealers,status) VALUES ('" + policy_name + "', '" + policy_note + "', '" + command_name + "', '" + app_list + "', '" + push_apps + "', '" + system_permissions + "', '" + secure_apps + "', '" + loggedDealerId + "', '" + loggedDealerType + "', '[]',1)";
 
                 sql.query(applyQuery, async function (err, rslts) {
-                    if (err){
+                    if (err) {
                         console.log(err)
                     }
                     // console.log('query/........... ', applyQuery)
@@ -2759,13 +2562,13 @@ router.post('/save_policy', async function (req, res) {
                     if (rslts.affectedRows) {
                         data = {
                             status: true,
-                            msg: 'Policy Saved Successfully',
+                            msg: await helpers.convertToLang(loggedInuid, MsgConstants.PLCY_SAV_SUCC), // Policy Saved Successfully
 
                         };
                     } else {
                         data = {
                             status: false,
-                            msg: 'Policy Couldn\'t be saved'
+                            msg: await helpers.convertToLang(loggedInuid, MsgConstants.PLCY_NOT_SAV), // Policy Couldn\'t be saved'
                         }
                     }
                     res.send(data);
@@ -2774,7 +2577,7 @@ router.post('/save_policy', async function (req, res) {
             } else {
                 data = {
                     status: false,
-                    msg: 'Policy Couldn\'t be saved'
+                    msg: await helpers.convertToLang(loggedInuid, MsgConstants.PLCY_NOT_SAV), // Policy Couldn\'t be saved'
                 }
                 res.send(data);
                 return;
@@ -2835,7 +2638,7 @@ router.post('/apply_policy/:device_id', async function (req, res) {
                         } else {
                             data = {
                                 status: false,
-                                msg: 'Error while Processing',
+                                msg: await helpers.convertToLang(dealer_id, MsgConstants.ERROR_PROC), // Error while Processing',
                             };
                             res.send(data);
                         }
@@ -2881,21 +2684,21 @@ router.post('/save/profile', async function (req, res) {
                 // console.log(applyQuery, 'thats it');
 
                 sql.query(applyQuery, async function (err, rslts) {
-                    if (err){
+                    if (err) {
                         console.log(err)
                     }
                     // console.log(rslts, 'rslt is query')
                     if (rslts.affectedRows) {
                         data = {
                             "status": true,
-                            "msg": 'Profile Saved Successfully',
+                            "msg": await helpers.convertToLang(dealer_id, MsgConstants.PROFILE_SAV_SUCC), // Profile Saved Successfully
                             "data": rslts
                         };
                         res.send(data);
                     } else {
                         data = {
                             "status": false,
-                            "msg": 'Profile Name is already Exist',
+                            "msg": await helpers.convertToLang(dealer_id, MsgConstants.PROFILE_NAME_IS_ALREADY_EXIST), // Profile Name is already Exist
                         };
                         res.send(data);
                     }
@@ -2906,7 +2709,7 @@ router.post('/save/profile', async function (req, res) {
             } else {
                 data = {
                     "status": false,
-                    "msg": 'Profile Name is already Exist',
+                    "msg": await helpers.convertToLang(dealer_id, MsgConstants.PROFILE_NAME_IS_ALREADY_EXIST), // Profile Name is already Exist',
                 };
                 res.send(data);
             }
@@ -2962,21 +2765,21 @@ router.post('/apply_settings/:device_id', async function (req, res) {
                     if (type == 'profile') {
                         data = {
                             "status": true,
-                            "msg": 'Profile Applied Successfully',
+                            "msg": await helpers.convertToLang(dealer_id, MsgConstants.PROFILE_APPLIED_SUCCESSFULLY), // Profile Applied Successfully
                         };
                         res.send(data);
                     }
                     else {
                         data = {
                             "status": true,
-                            "msg": 'Settings Applied Successfully',
+                            "msg": await helpers.convertToLang(dealer_id, MsgConstants.SETTINGS_APPLIED_SUCCESSFULLY), // Settings Applied Successfully',
                         };
                         res.send(data);
                     }
                 } else {
                     data = {
                         "status": false,
-                        "msg": 'Error while Processing',
+                        "msg": await helpers.convertToLang(dealer_id, MsgConstants.ERROR_PROC), // Error while Processing',
                     };
                     res.send(data);
                 }
@@ -3038,7 +2841,7 @@ router.post('/apply_pushapps/:device_id', async function (req, res) {
                 } else {
                     data = {
                         "status": false,
-                        "msg": 'Error while Processing',
+                        "msg": await helpers.convertToLang(dealer_id, MsgConstants.ERROR_PROC), // Error while Processing',
                     };
                     res.send(data);
                 }
@@ -3096,7 +2899,7 @@ router.post('/apply_pullapps/:device_id', async function (req, res) {
                 } else {
                     data = {
                         "status": false,
-                        "msg": 'Error while Processing',
+                        "msg": await helpers.convertToLang(dealer_id, MsgConstants.ERROR_PROC), // Error while Processing',
                     };
                     res.send(data);
                 }
@@ -3131,7 +2934,7 @@ router.post('/get_profiles', async function (req, res) {
             let query = "SELECT * FROM usr_acc_profile " + where;
 
             // console.log("getprofiles query", query);
-            sql.query(query, (error, results) => {
+            sql.query(query, async function (error, results) {
 
                 for (var i = 0; i < results.length; i++) {
                     // console.log('push apps', results[i].push_apps)
@@ -3153,7 +2956,7 @@ router.post('/get_profiles', async function (req, res) {
                 //  console.log('profile',result)
                 data = {
                     "status": true,
-                    "msg": 'successful',
+                    "msg": await helpers.convertToLang(userId, MsgConstants.SUCCESS), // successful',
                     "profiles": profiles
                 };
                 res.send(data);
@@ -3162,7 +2965,7 @@ router.post('/get_profiles', async function (req, res) {
         } else {
             data = {
                 "status": false,
-                "msg": 'Invalid User'
+                "msg": await helpers.convertToLang(userId, MsgConstants.INVALID_USER), // Invalid User'
             };
             res.send(data);
         }
@@ -3184,10 +2987,10 @@ router.post('/get_device_history', async function (req, res) {
             where = where + " user_acc_id='" + user_acc_id + "'";
 
             let query = "SELECT * FROM device_history " + where;
-            sql.query(query, (error, result) => {
+            sql.query(query, async function (error, result) {
                 data = {
                     "status": true,
-                    "msg": 'successful',
+                    "msg": await helpers.convertToLang(userId, MsgConstants.SUCCESS), // successful',
                     "profiles": result
                 };
                 res.send(data);
@@ -3197,7 +3000,7 @@ router.post('/get_device_history', async function (req, res) {
             where = "";
             data = {
                 "status": false,
-                "msg": 'Invalid User'
+                "msg": await helpers.convertToLang(userId, MsgConstants.INVALID_USER), // Invalid User'
             };
             res.send(data);
         }
@@ -3209,6 +3012,7 @@ router.post('/get_device_history', async function (req, res) {
 router.post('/save_new_data', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         if (req.body.type == 'sim_id') {
             for (let row of req.body.newData) {
                 let result = await sql.query("INSERT IGNORE sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");
@@ -3224,7 +3028,7 @@ router.post('/save_new_data', async function (req, res) {
         }
         res.send({
             "status": true,
-            "msg": "Inserted Successfully"
+            "msg": await helpers.convertToLang(loggedInuid, MsgConstants.INSERTED_SUCCESSFULLY), // Inserted Successfully"
         })
         return
     } else {
@@ -3242,6 +3046,7 @@ router.post('/import/:fieldName', async (req, res) => {
 
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         res.setHeader('Content-Type', 'multipart/form-data');
         // let filename = '';
         let fieldName = req.params.fieldName;
@@ -3292,6 +3097,7 @@ router.post('/import/:fieldName', async (req, res) => {
 router.get('/export/:fieldName', async (req, res) => {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         console.log("exporting data");
         let fieldName = req.params.fieldName;
         if (verify.user.user_type === ADMIN) {
@@ -3356,7 +3162,7 @@ router.get('/export/:fieldName', async (req, res) => {
                     } else {
                         res.send({
                             status: false,
-                            msg: "no data to import"
+                            msg: await helpers.convertToLang(loggedInuid, MsgConstants.NO_DATA_TO_IMPORT), // "no data to import"
                         })
                     }
 
@@ -3365,7 +3171,7 @@ router.get('/export/:fieldName', async (req, res) => {
         } else {
             res.send({
                 status: false,
-                msg: "access forbidden"
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
             })
         }
     }
@@ -3374,170 +3180,183 @@ router.get('/export/:fieldName', async (req, res) => {
 router.get('/get_sim_ids', async (req, res) => {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         let query = "select * from sim_ids where used=0";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: "data success",
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
                 data: resp
             });
         });
-    } else {
-        res.send({
-            status: false,
-            msg: "access forbidden"
-        })
     }
+    // else {
+    //     res.send({
+    //         status: false,
+    //         msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+    //     })
+    // }
 
 });
 
 router.get('/get_all_sim_ids', async (req, res) => {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         let query = "select * from sim_ids";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: "data success",
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
                 data: resp
             });
         });
-    } else {
-        res.send({
-            status: false,
-            msg: "access forbidden"
-        })
     }
+    // else {
+    //     res.send({
+    //         status: false,
+    //         msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+    //     })
+    // }
 
 });
 
-router.get('/get_used_sim_ids', async (req, res) => {
+router.get('/get_used_sim_ids', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         let query = "select * from sim_ids where used=1";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: "data success",
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
                 data: resp
             });
         });
     }
-    else {
-        res.send({
-            status: false,
-            msg: "access forbidden"
-        })
-    }
+    // else {
+    //     res.send({
+    //         status: false,
+    //         msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+    //     })
+    // }
 });
 
 
 router.get('/get_chat_ids', async (req, res) => {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         let query = "select * from chat_ids where used=0";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: "data success",
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
                 data: resp
             });
         });
-    } else {
-        res.send({
-            status: false,
-            msg: "access forbidden"
-        })
     }
+    // else {
+    //     res.send({
+    //         status: false,
+    //         msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+    //     })
+    // }
 });
 
 router.get('/get_all_chat_ids', async (req, res) => {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         let query = "select * from chat_ids";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: "data success",
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
                 data: resp
             });
         });
-    } else {
-        res.send({
-            status: false,
-            msg: "access forbidden"
-        })
     }
+    // else {
+    //     res.send({
+    //         status: false,
+    //         msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+    //     })
+    // }
 });
 
 router.get('/get_used_chat_ids', async (req, res) => {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         let query = "select * from chat_ids where used=1";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: "data success",
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
                 data: resp
             });
         });
     }
-    else {
-        res.send({
-            status: false,
-            msg: "access forbidden"
-        })
-    }
+    // else {
+    //     res.send({
+    //         status: false,
+    //         msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+    //     })
+    // }
 });
 
 router.get('/get_pgp_emails', async (req, res) => {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         let query = "select * from pgp_emails where used=0";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: "data success",
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
                 data: resp
             });
         });
     }
-    else {
-        res.send({
-            status: false,
-            msg: "access forbidden"
-        })
-    }
+    // else {
+    //     res.send({
+    //         status: false,
+    //         msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+    //     })
+    // }
 });
 
 router.get('/get_all_pgp_emails', async (req, res) => {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         let query = "select * from pgp_emails";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: "data success",
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
                 data: resp
             });
         });
     }
-    else {
-        res.send({
-            status: false,
-            msg: "access forbidden"
-        })
-    }
+    // else {
+    //     res.send({
+    //         status: false,
+    //         msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+    //     })
+    // }
 });
 
 router.get('/get_used_pgp_emails', async (req, res) => {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         let query = "select * from pgp_emails where used=1 AND user_acc_id is null";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: "data success",
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
                 data: resp
             });
         });
@@ -3545,18 +3364,19 @@ router.get('/get_used_pgp_emails', async (req, res) => {
     else {
         res.send({
             status: false,
-            msg: "access forbidden"
+            msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
         })
     }
 });
 router.get('/get_used_sim_ids', async (req, res) => {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         let query = "select * from sim_ids where used=1 AND user_acc_id is null";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: "data success",
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
                 data: resp
             });
         });
@@ -3564,18 +3384,19 @@ router.get('/get_used_sim_ids', async (req, res) => {
     else {
         res.send({
             status: false,
-            msg: "access forbidden"
+            msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
         })
     }
 });
 router.get('/get_used_chat_ids', async (req, res) => {
     var verify = await verifyToken(req, res);
+    var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from chat_ids where used=1 AND user_acc_id is null";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: "data success",
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
                 data: resp
             });
         });
@@ -3583,7 +3404,7 @@ router.get('/get_used_chat_ids', async (req, res) => {
     else {
         res.send({
             status: false,
-            msg: "access forbidden"
+            msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
         })
     }
 });
@@ -3592,28 +3413,29 @@ router.post('/releaseCSV/:fieldName', async (req, res) => {
     var fieldName = req.params.fieldName
     var ids = req.body.ids
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         // console.log(fieldName, ids);
         if (fieldName === 'pgp_email') {
             let query = "UPDATE pgp_emails set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
             // console.log(query);
-            sql.query(query, (error, resp) => {
+            sql.query(query, async function (error, resp) {
                 if (error) {
                     console.log(error);
                 }
                 if (resp.affectedRows) {
                     let query = "select * from pgp_emails where used=1";
-                    sql.query(query, (error, resp) => {
+                    sql.query(query, async function (error, resp) {
                         res.send({
                             status: true,
                             type: 'pgp',
-                            msg: "CSV Released Successfully.",
+                            msg: await helpers.convertToLang(loggedInuid, MsgConstants.CSV_RELEASED_SUCCESSFULLY), // "CSV Released Successfully.",
                             data: resp
                         });
                     });
                 } else {
                     res.send({
                         status: false,
-                        msg: "CSV Not Released.",
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.CSV_NOT_RELEASED), // "CSV Not Released.",
                     });
                 }
             });
@@ -3621,24 +3443,24 @@ router.post('/releaseCSV/:fieldName', async (req, res) => {
         else if (fieldName === 'sim_id') {
             let query = "UPDATE sim_ids set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
             // console.log(query);
-            sql.query(query, (error, resp) => {
+            sql.query(query, async function (error, resp) {
                 if (error) {
                     console.log(error);
                 }
                 if (resp.affectedRows) {
                     let query = "select * from sim_ids where used=1";
-                    sql.query(query, (error, resp) => {
+                    sql.query(query, async function (error, resp) {
                         res.send({
                             status: true,
                             type: 'sim',
-                            msg: "CSV Released Successfully.",
+                            msg: await helpers.convertToLang(loggedInuid, MsgConstants.CSV_RELEASED_SUCCESSFULLY), // "CSV Released Successfully.",
                             data: resp
                         });
                     });
                 } else {
                     res.send({
                         status: true,
-                        msg: "CSV Not Released.",
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.CSV_NOT_RELEASED), // "CSV Not Released.",
                     });
                 }
             });
@@ -3646,25 +3468,25 @@ router.post('/releaseCSV/:fieldName', async (req, res) => {
         else if (fieldName === 'chat_id') {
             let query = "UPDATE chat_ids set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
             // console.log(query);
-            sql.query(query, (error, resp) => {
+            sql.query(query, async function (error, resp) {
                 if (error) {
                     console.log(error);
                 }
                 if (resp.affectedRows) {
 
                     let query = "select * from chat_ids where used=1";
-                    sql.query(query, (error, resp) => {
+                    sql.query(query, async function (error, resp) {
                         res.send({
                             status: true,
                             type: 'chat',
-                            msg: "CSV Released Successfully.",
+                            msg: await helpers.convertToLang(loggedInuid, MsgConstants.CSV_RELEASED_SUCCESSFULLY), // "CSV Released Successfully.",
                             data: resp
                         });
                     });
                 } else {
                     res.send({
                         status: false,
-                        msg: "CSV Not Released.",
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.CSV_NOT_RELEASED), // "CSV Not Released.",
                     });
                 }
             });
@@ -3679,6 +3501,7 @@ router.get('/apklist', async function (req, res) {
     var verify = await verifyToken(req, res);
     var data = [];
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         if (verify.user.user_type === ADMIN) {
             sql.query("select * from apk_details where delete_status=0 AND apk_type != 'permanent' order by id ASC", async function (error, results) {
                 if (error) {
@@ -3716,7 +3539,7 @@ router.get('/apklist', async function (req, res) {
                 } else {
                     data = {
                         status: false,
-                        msg: "No result found",
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.NO_DATA_FOUND), // "No result found",
                         list: []
                     }
                     res.send(data);
@@ -3771,7 +3594,7 @@ router.get('/apklist', async function (req, res) {
                 } else {
                     data = {
                         status: false,
-                        msg: "No result found",
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.NO_DATA_FOUND), // "No result found",
                         list: []
                     }
                     res.send(data);
@@ -3807,7 +3630,7 @@ router.get('/apklist', async function (req, res) {
                 } else {
                     data = {
                         status: false,
-                        msg: "No result found",
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.NO_DATA_FOUND), // "No result found",
                         list: []
                     }
                     res.send(data);
@@ -3827,6 +3650,7 @@ router.post('/upload', async function (req, res) {
     var verify = await verifyToken(req, res);
     //  console.log('verify', verify.status);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         let fileUploaded = false;
         let filename = "";
         let mimeType = "";
@@ -3877,7 +3701,7 @@ router.post('/upload', async function (req, res) {
             if (err) {
                 return res.send({
                     status: false,
-                    msg: "Error: " + err
+                    msg: await helpers.convertToLang(loggedInuid, MsgConstants.ERROR) + err, // "Error: " + err
                 });
             }
 
@@ -3894,7 +3718,7 @@ router.post('/upload', async function (req, res) {
 
                         data = {
                             status: true,
-                            msg: 'Success: App Uploaded Successfully.',
+                            msg: await helpers.convertToLang(loggedInuid, MsgConstants.APP_UPLOADED_SUCCESSFULLY), // 'Success: App Uploaded Successfully.',
                             fileName: filename,
                             size: formatByte
 
@@ -3904,7 +3728,7 @@ router.post('/upload', async function (req, res) {
                     } else {
                         data = {
                             status: false,
-                            msg: "Error: Unable to read APP properties.",
+                            msg: await helpers.convertToLang(loggedInuid, MsgConstants.UNABLE_TO_READ_APP_PROPERTIES), // "Error: Unable to read APP properties.",
                         };
                         res.send(data);
                         return;
@@ -3913,7 +3737,7 @@ router.post('/upload', async function (req, res) {
                     console.log("file was image");
                     data = {
                         status: true,
-                        msg: 'Success: App logo Uploaded Successfully.',
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.APP_LOGO_UPLOADED_SUCCESSFULLY), // 'Success: App logo Uploaded Successfully.',
                         fileName: filename,
                     };
                     res.send(data);
@@ -3921,7 +3745,7 @@ router.post('/upload', async function (req, res) {
                 } else {
                     data = {
                         status: false,
-                        msg: "Error: Unauthorized file uploading attempt."
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.UNAUTHORIZED_FILE_UPLOADING_ATTEMPT), // "Error: Unauthorized file uploading attempt."
                     }
                     res.send(data);
                     return;
@@ -3929,7 +3753,7 @@ router.post('/upload', async function (req, res) {
             } else {
                 data = {
                     status: false,
-                    msg: "Error: Uploaded file is corrupt.",
+                    msg: await helpers.convertToLang(loggedInuid, MsgConstants.UPLOADED_FILE_IS_CORRUPT), // "Error: Uploaded file is corrupt.",
                 };
                 res.send(data);
                 return;
@@ -3943,6 +3767,7 @@ router.post('/upload', async function (req, res) {
 router.post('/checkApkName', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify['status'] && verify.status == true) {
+        var loggedInuid = verify.user.id;
         try {
             console.log(req.body);
             let apkName = req.body.name;
@@ -3982,6 +3807,7 @@ router.post('/checkApkName', async function (req, res) {
 router.post('/purchase_credits', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify['status'] && verify.status == true) {
+        var loggedInuid = verify.user.id;
         try {
             // console.log(req.body);
             let credits = req.body.data.credits
@@ -3991,8 +3817,7 @@ router.post('/purchase_credits', async function (req, res) {
             let promo_code = req.body.data.promo_code
             let currency = req.body.data.currency
             let dealerId = verify.user.id
-            // console.log(verify.user);
-            console.log(currency_price);
+            // console.log(currency_price);
 
             // return
             if (credits != undefined && credits != '' && credits != null) {
@@ -4002,24 +3827,25 @@ router.post('/purchase_credits', async function (req, res) {
                 } else {
                     let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
                     // console.log(query);
-                    sql.query(query, function (err, result) {
-                        if (err){
+                    sql.query(query, async function (err, result) {
+                        if (err) {
                             console.log(err);
                         }
                         // console.log(result);
                         if (result.affectedRows > 0) {
                             if (verify.user.user_type === ADMIN) {
                                 if (method == 'CASH') {
-                                    axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
+                                    axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then(async function (response) {
                                         if (response.data.status) {
                                             let data = {
                                                 dealer_id: dealerId,
+                                                dealer_pin: verify.user.link_code,
                                                 dealer_name: verify.user.dealer_name,
-                                                label: Constants.APP_TITLE,
+                                                label: app_constants.APP_TITLE,
                                                 credits: credits,
                                                 dealer_email: verify.user.email
                                             }
-                                            axios.post(app_constants.REQUEST_FOR_CREDITS, data, { headers: { authorization: response.data.user.token } }).then((response) => {
+                                            axios.post(app_constants.REQUEST_FOR_CREDITS, data, { headers: { authorization: response.data.user.token } }).then(async function (response) {
                                                 // console.log(response);
                                                 if (response.data.status) {
                                                     res.send({
@@ -4040,7 +3866,7 @@ router.post('/purchase_credits', async function (req, res) {
                                             // console.log("NOT ALLOWED");
                                             res.send({
                                                 status: false,
-                                                msg: "Not allowed to make request.",
+                                                msg: await helpers.convertToLang(loggedInuid, MsgConstants.NOT_ALLOWED_TO_MAKE_REQUEST), // "Not allowed to make request.",
                                             })
                                             return
                                         }
@@ -4051,21 +3877,21 @@ router.post('/purchase_credits', async function (req, res) {
                                 }
                             } else {
                                 // console.log(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`);
-                                sql.query(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`, function (err, result) {
-                                    if (err){
+                                sql.query(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`, async function (err, result) {
+                                    if (err) {
                                         console.log(err);
                                     }
                                     if (result && result.affectedRows > 0) {
                                         res.send({
                                             status: true,
-                                            msg: "Request submitted successfully.",
+                                            msg: await helpers.convertToLang(loggedInuid, MsgConstants.REQUEST_SUBMITTED_SUCCESSFULLY), // "Request submitted successfully.",
                                         })
                                         return
                                     }
                                     else {
                                         res.send({
                                             status: false,
-                                            msg: "Request not submitted please try again.",
+                                            msg: await helpers.convertToLang(loggedInuid, MsgConstants.REQUEST_NOT_SUBMITTED_SUCCESSFULLY), // "Request not submitted please try again.",
                                         })
                                     }
                                 })
@@ -4088,6 +3914,7 @@ router.post('/purchase_credits', async function (req, res) {
 router.post('/purchase_credits_CC', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify['status'] && verify.status == true) {
+        var loggedInuid = verify.user.id;
         try {
             let credits = req.body.creditInfo.credits
             let method = req.body.creditInfo.method
@@ -4116,8 +3943,8 @@ router.post('/purchase_credits_CC', async function (req, res) {
                 } else {
                     let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
                     // console.log(query);
-                    sql.query(query, function (err, result) {
-                        if (err){
+                    sql.query(query, async function (err, result) {
+                        if (err) {
                             console.log(err);
                         }
                         // console.log(result);
@@ -4129,7 +3956,7 @@ router.post('/purchase_credits_CC', async function (req, res) {
                                     exp_year: cardExpiryYear,
                                     cvc: cvc
                                 }
-                            }, function (err, token) {
+                            }, async function (err, token) {
                                 if (err) {
                                     console.log(err.type);
                                     switch (err.type) {
@@ -4170,11 +3997,11 @@ router.post('/purchase_credits_CC', async function (req, res) {
                                         currency: "usd",
                                         source: stripeToken.id, // obtained with Stripe.js
                                         metadata: { 'order_id': '6735' }
-                                    }).then((response) => {
+                                    }).then(async function (response) {
                                         if (response.status == 'succeeded') {
                                             res.send({
                                                 status: true,
-                                                msg: "Payment has been done.",
+                                                msg: await helpers.convertToLang(loggedInuid, MsgConstants.PAYMENT_HAS_BEEN_DONE), // "Payment has been done.",
                                             })
                                             return
                                         };
@@ -4187,21 +4014,21 @@ router.post('/purchase_credits_CC', async function (req, res) {
 
                             } else {
                                 // console.log(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`);
-                                sql.query(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`, function (err, result) {
+                                sql.query(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`, async function (err, result) {
                                     if (err) {
                                         console.log(err)
                                     }
                                     if (result && result.affectedRows > 0) {
                                         res.send({
                                             status: true,
-                                            msg: "Request submitted successfully.",
+                                            msg: await helpers.convertToLang(loggedInuid, MsgConstants.REQUEST_SUBMITTED_SUCCESSFULLY), // "Request submitted successfully.",
                                         })
                                         return
                                     }
                                     else {
                                         res.send({
                                             status: false,
-                                            msg: "Request not submitted please try again.",
+                                            msg: await helpers.convertToLang(loggedInuid, MsgConstants.REQUEST_NOT_SUBMITTED_SUCCESSFULLY), // "Request not submitted please try again.",
                                         })
                                     }
                                 })
@@ -4226,8 +4053,8 @@ router.post('/purchase_credits_CC', async function (req, res) {
 router.post('/addApk', async function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
     var verify = await verifyToken(req, res);
-
     if (verify['status'] && verify.status == true) {
+        var loggedInuid = verify.user.id;
         try {
             let logo = req.body.logo;
             let apk = req.body.apk;
@@ -4299,7 +4126,7 @@ router.post('/addApk', async function (req, res) {
                         };
                         data = {
                             status: true,
-                            msg: "Apk is uploaded",
+                            msg: await helpers.convertToLang(loggedInuid, MsgConstants.APK_IS_UPLOADED), // "Apk is uploaded",
                             data: dta
                         };
                         res.send(data);
@@ -4310,7 +4137,7 @@ router.post('/addApk', async function (req, res) {
                     console.log("file not found");
                     res.send({
                         status: false,
-                        msg: "Error While Uploading"
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
                     })
                     return;
                 }
@@ -4318,7 +4145,7 @@ router.post('/addApk', async function (req, res) {
             } else {
                 data = {
                     status: false,
-                    msg: "Error While Uploading"
+                    msg: await helpers.convertToLang(loggedInuid, MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
                 };
                 res.send(data);
                 return;
@@ -4327,7 +4154,7 @@ router.post('/addApk', async function (req, res) {
             console.log(error);
             data = {
                 status: false,
-                msg: "Error while Uploading",
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.ERROR_WHILE_UPLOADING), // "Error while Uploading",
             };
             return;
         }
@@ -4340,6 +4167,7 @@ router.post('/edit/apk', async function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
     var verify = await verifyToken(req, res);
     if (verify['status'] && verify.status == true) {
+        var loggedInuid = verify.user.id;
         try {
             let logo = req.body.logo;
             let apk = req.body.apk;
@@ -4390,14 +4218,14 @@ router.post('/edit/apk', async function (req, res) {
                     let formatByte = helpers.formatBytes(apk_stats.size);
                     // console.log("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_byte='" + apk_stats.size + "',  apk_size='"+ formatByte +"'  where id = '" + req.body.apk_id + "'");
 
-                    sql.query("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_bytes='" + apk_stats.size + "',  apk_size='" + formatByte + "'  where id = '" + req.body.apk_id + "'", function (err, rslts) {
+                    sql.query("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_bytes='" + apk_stats.size + "',  apk_size='" + formatByte + "'  where id = '" + req.body.apk_id + "'", async function (err, rslts) {
 
                         if (err) {
                             console.log(err)
                         };
                         data = {
                             status: true,
-                            msg: "Record Updated"
+                            msg: await helpers.convertToLang(loggedInuid, MsgConstants.RECORD_UPD_SUCC), // "Record Updated"
 
                         };
                         res.send(data);
@@ -4408,7 +4236,7 @@ router.post('/edit/apk', async function (req, res) {
                 } else {
                     data = {
                         status: false,
-                        msg: "Error While Uploading"
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
                     };
                     res.send(data);
                     return;
@@ -4417,7 +4245,7 @@ router.post('/edit/apk', async function (req, res) {
             } else {
                 data = {
                     status: false,
-                    msg: "Error While Uploading"
+                    msg: await helpers.convertToLang(loggedInuid, MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
                 };
                 res.send(data);
                 return;
@@ -4425,7 +4253,7 @@ router.post('/edit/apk', async function (req, res) {
         } catch (error) {
             data = {
                 status: false,
-                msg: "Error while Uploading",
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.ERROR_WHILE_UPLOADING), // "Error while Uploading",
             };
             res.send(data);
             return;
@@ -4437,11 +4265,11 @@ router.post('/edit/apk', async function (req, res) {
 /** Toggle Apk Admin Panel (On / Off) **/
 router.post('/toggle', async function (req, res) {
     var verify = await verifyToken(req, res);
-
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
 
         if (!empty(req.body.status) && !empty(req.body.apk_id)) {
-            sql.query("update apk_details set status = '" + req.body.status + "' where id = '" + req.body.apk_id + "'", function (err, result) {
+            sql.query("update apk_details set status = '" + req.body.status + "' where id = '" + req.body.apk_id + "'", async function (err, result) {
                 if (err) {
                     console.log(err)
                 };
@@ -4449,13 +4277,13 @@ router.post('/toggle', async function (req, res) {
                 if (result.affectedRows != 0) {
                     data = {
                         "status": true,
-                        "msg": 'Status Updated.'
+                        "msg": await helpers.convertToLang(loggedInuid, MsgConstants.STATUS_UPDATED), // Status Updated.'
                     };
                     res.send(data);
                 } else {
                     data = {
                         "status": false,
-                        "msg": 'Status Not Updated.'
+                        "msg": await helpers.convertToLang(loggedInuid, MsgConstants.STATUS_NOT_UPDATED), // Status Not Updated.'
 
                     };
                     res.send(data);
@@ -4465,7 +4293,7 @@ router.post('/toggle', async function (req, res) {
         } else {
             data = {
                 "status": false,
-                "msg": 'Some error occurred.'
+                "msg": await helpers.convertToLang(loggedInuid, MsgConstants.ERROR), // Some error occurred.'
             };
             res.send(data);
         }
@@ -4478,6 +4306,7 @@ router.post('/save_apk_permissions', async function (req, res) {
     var verify = await verifyToken(req, res);
     // console.log(req.body.action);
     if (verify['status'] !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         var action = req.body.action
         let apkId = req.body.apkId;
         let dealers = req.body.dealers;
@@ -4555,13 +4384,13 @@ router.post('/save_apk_permissions', async function (req, res) {
                 if (result.affectedRows) {
                     res.send({
                         status: true,
-                        msg: "Permission saved successfully",
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.PERMISSION_SAVED_SUCCESSFULLY), // "Permission saved successfully",
                         permission_count: permissionC,
                     })
                 } else {
                     res.send({
                         status: false,
-                        msg: "Permission couldn't be saved"
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.PERMISSION_NOT_SAVED), // "Permission couldn't be saved"
                     })
                 }
             });
@@ -4641,13 +4470,13 @@ router.post('/save_apk_permissions', async function (req, res) {
                 if (result.affectedRows) {
                     res.send({
                         status: true,
-                        msg: "Permission Removed successfully",
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.PERMISSION_REMOVED_SUCCESSFULLY), // "Permission Removed successfully",
                         permission_count: permissionC,
                     })
                 } else {
                     res.send({
                         status: false,
-                        msg: "Permission couldn't be saved"
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.PERMISSION_NOT_SAVED), // "Permission couldn't be saved"
                     })
                 }
             });
@@ -4664,6 +4493,7 @@ router.post('/save_apk_permissions', async function (req, res) {
 router.post('/save_policy_permissions', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         var action = req.body.action
         let policyId = req.body.policyId;
         let dealers = req.body.dealers;
@@ -4740,13 +4570,13 @@ router.post('/save_policy_permissions', async function (req, res) {
                 if (result.affectedRows) {
                     res.send({
                         status: true,
-                        msg: "Permission saved successfully",
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.PERMISSION_SAVED_SUCCESSFULLY), // "Permission saved successfully",
                         permission_count: permissionC,
                     })
                 } else {
                     res.send({
                         status: false,
-                        msg: "Permission couldn't be saved"
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.PERMISSION_NOT_SAVED), // "Permission couldn't be saved"
                     })
                 }
             });
@@ -4827,13 +4657,13 @@ router.post('/save_policy_permissions', async function (req, res) {
                 if (result.affectedRows) {
                     res.send({
                         status: true,
-                        msg: "Permission Removed successfully",
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.PERMISSION_REMOVED_SUCCESSFULLY), // "Permission Removed successfully",
                         permission_count: permissionC,
                     })
                 } else {
                     res.send({
                         status: false,
-                        msg: "Permission couldn't be saved"
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.PERMISSION_NOT_SAVED), // "Permission couldn't be saved"
                     })
                 }
             });
@@ -4845,21 +4675,24 @@ router.post('/save_policy_permissions', async function (req, res) {
 
 
 /** Get back up DB File **/
-router.get("/getBackupFile/:file", (req, res) => {
-
+router.get("/getBackupFile/:file", async function (req, res) {
+    var verify = await verifyToken(req, res);
+    // var loggedInuid = verify.user.id;
     if (fs.existsSync(path.join(__dirname, "../db_backup/" + req.params.file))) {
         let file = path.join(__dirname, "../db_backup/" + req.params.file);
         res.sendFile(file);
     } else {
         res.send({
             "status": false,
-            "msg": "file not found"
+            // "msg": await helpers.convertToLang(loggedInuid, MsgConstants.FILE_NOT_FOUND), // file not found"
+            "msg": "File not found", // file not found"
         })
     }
 });
 /** Get image logo **/
-router.get("/getFile/:file", (req, res) => {
-
+router.get("/getFile/:file", async function (req, res) {
+    // var verify = await verifyToken(req, res);
+    // var loggedInuid = verify.user.id;
     if (fs.existsSync(path.join(__dirname, "../uploads/" + req.params.file))) {
         let file = path.join(__dirname, "../uploads/" + req.params.file);
         let fileMimeType = mime.getType(file);
@@ -4871,13 +4704,14 @@ router.get("/getFile/:file", (req, res) => {
         // } else {
         //     res.send({
         //         "status": false,
-        //         "msg": "file not found"
+        //         "msg": await helpers.convertToLang(loggedInuid, MsgConstants.DEALER_ACTIV_SUCC), // file not found"
         //     })
         // }
     } else {
         res.send({
             "status": false,
-            "msg": "file not found"
+            // "msg": await helpers.convertToLang(loggedInuid, MsgConstants.FILE_NOT_FOUND), // file not found"
+            "msg": "File not found.", // file not found"
         })
     }
 
@@ -4889,7 +4723,7 @@ router.get("/getFile/:file", (req, res) => {
 router.post('/apk/delete', async function (req, res) {
 
     var verify = await verifyToken(req, res);
-
+    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
         if (!empty(req.body.apk_id)) {
 
@@ -4902,7 +4736,7 @@ router.post('/apk/delete', async function (req, res) {
                 if (results.affectedRows == 0) {
                     data = {
                         "status": false,
-                        "msg": "Apk not deleted.",
+                        "msg": await helpers.convertToLang(loggedInuid, MsgConstants.APK_NOT_DELETED), // Apk not deleted.",
                         "rdlt": results
                     };
                 } else {
@@ -4912,13 +4746,13 @@ router.post('/apk/delete', async function (req, res) {
 
                         data = {
                             "status": true,
-                            "msg": "Apk deleted successfully.",
+                            "msg": await helpers.convertToLang(loggedInuid, MsgConstants.APK_DELETED_SUCCESSFULLY), // Apk deleted successfully.",
                             "apk": result[0]
                         };
                     } else {
                         data = {
                             "status": false,
-                            "msg": "Apk not deleted.",
+                            "msg": await helpers.convertToLang(loggedInuid, MsgConstants.APK_NOT_DELETED), // Apk not deleted.",
                             "rdlt": results
                         };
                     }
@@ -4929,7 +4763,7 @@ router.post('/apk/delete', async function (req, res) {
         } else {
             data = {
                 "status": false,
-                "msg": "Some error occurred."
+                "msg": await helpers.convertToLang(loggedInuid, MsgConstants.ERROR), // Some error occurred."
 
             }
             res.send(data);
@@ -4943,13 +4777,14 @@ router.post('/apk/delete', async function (req, res) {
 router.get('/login_history', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
+        var loggedInuid = verify.user.id;
         if (verify.status !== undefined && verify.status == true) {
 
             let id = verify.user.id;
             let data = {}
             let query = "SELECT * from login_history where dealer_id = '" + id + "' AND type = 'token' order by created_at desc"
             // console.log(query);
-            sql.query(query, function (err, result) {
+            sql.query(query, async function (err, result) {
                 if (err) {
                     console.log(err)
                 }
@@ -4978,11 +4813,12 @@ router.get('/login_history', async function (req, res) {
 
 router.delete('/delete_profile/:profile_id', async function (req, res) {
     var verify = await verifyToken(req, res);
+    var loggedInuid = verify.user.id;
 
     if (verify.status !== undefined && verify.status == true) {
         if (!empty(req.params.profile_id)) {
 
-            sql.query("delete from device_history WHERE id=" + req.params.profile_id, function (error, results) {
+            sql.query("delete from device_history WHERE id=" + req.params.profile_id, async function (error, results) {
                 // console.log(results);
                 //response.end(JSON.stringify(rows));
                 if (error) {
@@ -4991,26 +4827,27 @@ router.delete('/delete_profile/:profile_id', async function (req, res) {
                 if (results.affectedRows == 0) {
                     data = {
                         "status": false,
-                        "msg": "Apk not deleted.",
+                        "msg": await helpers.convertToLang(loggedInuid, MsgConstants.APK_NOT_DELETED), // Apk not deleted.",
                         "fld": fields,
                         "rdlt": results
                     };
                 } else {
                     data = {
                         "status": true,
-                        "msg": "Apk deleted successfully.",
+                        "msg": await helpers.convertToLang(loggedInuid, MsgConstants.APK_DELETED_SUCCESSFULLY), // Apk deleted successfully.",
 
                     };
                 }
                 res.send(data);
+                return;
             });
         } else {
             data = {
                 "status": false,
-                "msg": "Some error occurred."
-
+                "msg": await helpers.convertToLang(loggedInuid, MsgConstants.ERROR), // Some error occurred."
             }
             res.send(data);
+            return;
         }
 
     }
@@ -5020,31 +4857,33 @@ router.delete('/delete_profile/:profile_id', async function (req, res) {
 router.post('/check_pass', async function (req, res) {
     console.log(req.body);
     var verify = await verifyToken(req, res);
+    var loggedInuid = verify.user.id;
     if (verify.status) {
         let pwd = md5(req.body.user.password);
         let query_res = await sql.query("select * from dealers where dealer_id=" + verify.user.id + " and password='" + pwd + "'");
         if (query_res.length) {
             res.send({
-                "password_matched": true
+                password_matched: true
             });
             return;
         }
     }
-    data = {
-        "password_matched": false
-    }
-    res.send(data);
+    res.send({
+        password_matched: false
+    });
+    return;
 });
 
 // Get Imei history
 router.get('/get_imei_history/:device_id', async function (req, res) {
     var verify = await verifyToken(req, res);
+    var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
         let query = "select * from imei_history where device_id = '" + req.params.device_id + "'";
-        sql.query(query, (error, resp) => {
+        sql.query(query, async function (error, resp) {
             res.send({
                 status: true,
-                msg: "data success",
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // "data success",
                 data: resp
             });
         });
@@ -5052,7 +4891,7 @@ router.get('/get_imei_history/:device_id', async function (req, res) {
     else {
         res.send({
             status: false,
-            msg: "access forbidden"
+            msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
         })
     }
 
@@ -5143,6 +4982,7 @@ router.post('/transferApps', async function (req, res) {
 
     let appKeys = req.body.data
     var verify = await verifyToken(req, res);
+    var loggedInuid = verify.user.id;
     let toDelete = (appKeys.length === 0) ? "''" : appKeys.join(',')
     if (verify.status !== undefined && verify.status == true) {
         let dealer_type = verify.user.user_type;
@@ -5217,7 +5057,7 @@ router.post('/transferApps', async function (req, res) {
                 })
                 data = {
                     status: true,
-                    msg: 'Apps Transfered Sussecfully',
+                    msg: await helpers.convertToLang(loggedInuid, MsgConstants.APPS_TRANSFERED_SUSSECFULLY), // 'Apps Transfered Sussecfully',
                     data: {
                         marketApplist: results,
                         availableApps: apklist
@@ -5227,7 +5067,7 @@ router.post('/transferApps', async function (req, res) {
             } else {
                 data = {
                     status: true,
-                    msg: 'Apps Transfered Sussecfully',
+                    msg: await helpers.convertToLang(loggedInuid, MsgConstants.APPS_TRANSFERED_SUSSECFULLY), // 'Apps Transfered Sussecfully',
                     data: {
                         marketApplist: [],
                         availableApps: apklist
@@ -5254,6 +5094,7 @@ router.get('/marketApplist', async function (req, res) {
     var data = [];
     let apklist = []
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         where = '';
         if (verify.user.user_type !== ADMIN) {
             apklist = await sql.query("select dealer_apks.* ,apk_details.* from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'")
@@ -5314,17 +5155,18 @@ router.put('/handleUninstall/:apk_id', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
         if (verify.status !== undefined && verify.status == true) {
+            var loggedInuid = verify.user.id;
             let is_restricted = (req.body.value) ? 0 : 1;
             let apk_id = req.params.apk_id;
             // console.log("UPDATE secure_market_apps SET is_restrict_uninstall = " + is_restricted + " WHERE apk_id ='" + apk_id + "'");
-            sql.query("UPDATE secure_market_apps SET is_restrict_uninstall = " + is_restricted + " WHERE apk_id ='" + apk_id + "'", function (err, results) {
+            sql.query("UPDATE secure_market_apps SET is_restrict_uninstall = " + is_restricted + " WHERE apk_id ='" + apk_id + "'", async function (err, results) {
                 if (err) {
                     console.log(err)
                 }
                 if (results.affectedRows) {
                     data = {
                         status: true,
-                        msg: "Uninstall permission changed."
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.UNINSTALL_PERMISSION_CHANGED), // "Uninstall permission changed."
                     }
                     res.send(data);
                     return
@@ -5332,7 +5174,7 @@ router.put('/handleUninstall/:apk_id', async function (req, res) {
                 else {
                     data = {
                         status: false,
-                        msg: "Uninstall permission not changed. Please try again later."
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.UNINSTALL_PERMISSION_NOT_CHANGED), // "Uninstall permission not changed. Please try again later."
                     }
                     res.send(data);
 
@@ -5349,6 +5191,7 @@ router.post('/writeImei/:device_id', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
         if (verify.status !== undefined && verify.status == true) {
+            var loggedInuid = verify.user.id;
             let device_id = req.params.device_id;
             let usrAccId = req.body.usrAccId;
             let dealer_id = verify.user.id
@@ -5402,7 +5245,7 @@ router.post('/writeImei/:device_id', async function (req, res) {
                         } else {
                             data = {
                                 "status": false,
-                                "msg": 'Error while Processing',
+                                "msg": await helpers.convertToLang(loggedInuid, MsgConstants.ERROR_PROC), // Error while Processing',
                             };
                             res.send(data);
                         }
@@ -5444,7 +5287,7 @@ router.post('/writeImei/:device_id', async function (req, res) {
                         } else {
                             data = {
                                 "status": false,
-                                "msg": 'Error while Processing',
+                                "msg": await helpers.convertToLang(loggedInuid, MsgConstants.ERROR_PROC), // Error while Processing',
                             };
                             res.send(data);
                         }
@@ -5453,7 +5296,7 @@ router.post('/writeImei/:device_id', async function (req, res) {
             } else {
                 data = {
                     "status": false,
-                    "msg": "Invalid IMEI number, please make sure you are using a valid IMEI number and try again",
+                    "msg": await helpers.convertToLang(loggedInuid, MsgConstants.INVALID_IMEI_NUMBER), // Invalid IMEI number, please make sure you are using a valid IMEI number and try again",
                 };
                 res.send(data);
             }
@@ -5468,6 +5311,7 @@ router.get('/get_activities/:device_id', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
         if (verify.status !== undefined && verify.status == true) {
+            var loggedInuid = verify.user.id;
 
             let device_id = req.params.device_id
             let activities = [];
@@ -5515,6 +5359,7 @@ router.post('/set_default_policy', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
         if (verify.status !== undefined && verify.status == true) {
+            var loggedInuid = verify.user.id;
             let enable = req.body.enable
             let policy_id = req.body.policy_id
 
@@ -5531,7 +5376,7 @@ router.post('/set_default_policy', async function (req, res) {
             }
             data = {
                 "status": true,
-                "msg": 'Default policy changed successfully'
+                "msg": await helpers.convertToLang(loggedInuid, MsgConstants.DEFAULT_POLICY_CHANGED_SUCCESSFULLY), // Default policy changed successfully'
             };
             res.send(data);
         }
@@ -5543,6 +5388,7 @@ router.post('/set_default_policy', async function (req, res) {
 router.put('/force_update', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         let device_id = req.body.device_id;
         let dealer_id = verify.user.id
         if (!empty(device_id)) {
@@ -5554,31 +5400,31 @@ router.put('/force_update', async function (req, res) {
                     require("../bin/www").forceCheckUpdate(device[0].device_id);
                     res.send({
                         status: true,
-                        msg: "force update has been applied"
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.FORCE_UPDATE_HAS_BEEN_APPLIED), // "force update has been applied"
                     })
                 } else {
                     let usr_acc = await device_helpers.getUserAccByDeviceId(device_id);
                     let historyQ = "INSERT INTO device_history (device_id, dealer_id, user_acc_id, type) VALUES ('" + device_id + "', " + dealer_id + ", " + usr_acc.id + ", '" + Constants.DEVICE_HISTORY_FORCE_UPDATE + "')";
-                    sql.query(historyQ, function (error, resp) {
+                    sql.query(historyQ, async function (error, resp) {
                         if (error) {
                             console.log(error);
                         };
                         res.send({
                             status: true,
-                            msg: "force update will apply when device will come online"
+                            msg: await helpers.convertToLang(loggedInuid, MsgConstants.FORCE_UPDATE_WILL_APPLY), // "force update will apply when device will come online"
                         })
                     });
                 }
             } else {
                 res.send({
                     status: false,
-                    msg: "Device not Found"
+                    msg: await helpers.convertToLang(loggedInuid, MsgConstants.DEVICE_NOT_FOUND), // "Device not Found"
                 })
             }
         } else {
             res.send({
                 status: false,
-                msg: "Device not Found"
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.DEVICE_NOT_FOUND), // "Device not Found"
             })
         }
     }
@@ -5595,6 +5441,7 @@ router.post('/authenticate_update_user', async function (req, res) {
     var userType = await helpers.getDealerTypeIdByName(AUTO_UPDATE_ADMIN);
     var verify = await verifyToken(req, res);
     if (verify.status) {
+        var loggedInuid = verify.user.id;
         // console.log("select * from dealers where type = '" + userType + "' and dealer_email='" + email + "' and password='" + enc_pwd + "'");
         let query_res = await sql.query("select * from dealers where type = '" + userType + "' and dealer_email='" + email + "' and password='" + enc_pwd + "'");
         if (query_res.length) {
@@ -5630,6 +5477,7 @@ router.patch('/save-prices', async function (req, res) {
     // console.log('save-prices data at server is', req.body)
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         let data = req.body.data;
         if (data) {
             // console.log(data, 'data')
@@ -5681,7 +5529,7 @@ router.patch('/save-prices', async function (req, res) {
                                 // console.log(updateQuery, 'query')
                                 sql.query(updateQuery, async function (err, result) {
                                     if (err) {
-                                        console.log(err)    
+                                        console.log(err)
                                     }
 
                                     if (result) {
@@ -5709,26 +5557,26 @@ router.patch('/save-prices', async function (req, res) {
                 if (error == 0) {
                     res.send({
                         status: true,
-                        msg: 'Prices Set Successfully'
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.PRICES_SET_SUCCESSFULLY), // 'Prices Set Successfully'
                     })
                 } else {
                     res.send({
                         status: false,
-                        msg: 'Some Error Accured'
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.ERROR), // 'Some Error Accured'
                     })
                 }
 
             } else {
                 res.send({
                     status: false,
-                    msg: 'Invalid Dealer'
+                    msg: await helpers.convertToLang(loggedInuid, MsgConstants.INVALID_DEALER), // 'Invalid Dealer'
                 })
             }
 
         } else {
             res.send({
                 status: false,
-                msg: 'Invalid Data'
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.INVALID_DATA), // 'Invalid Data'
             })
         }
     }
@@ -5739,6 +5587,7 @@ router.post('/save-package', async function (req, res) {
     console.log('data is', req.body)
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         // console.log(verify.user, 'user is the ')
         let data = req.body.data;
         let dealer_id = verify.user.dealer_id;
@@ -5780,7 +5629,7 @@ router.post('/save-package', async function (req, res) {
                             insertedRecord = await sql.query("SELECT * FROM packages WHERE dealer_id='" + dealer_id + "' AND id='" + rslt.insertId + "'")
                             res.send({
                                 status: true,
-                                msg: 'Package Saved Successfully',
+                                msg: await helpers.convertToLang(loggedInuid, MsgConstants.PACKAGE_SAVED_SUCCESSFULLY), // 'Package Saved Successfully',
                                 data: insertedRecord
                             })
                         }
@@ -5790,13 +5639,13 @@ router.post('/save-package', async function (req, res) {
             } else {
                 res.send({
                     status: false,
-                    msg: 'Invalid Dealer'
+                    msg: await helpers.convertToLang(loggedInuid, MsgConstants.INVALID_DEALER), // 'Invalid Dealer'
                 })
             }
         } else {
             res.send({
                 status: false,
-                msg: 'Invalid Data'
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.INVALID_DATA), // 'Invalid Data'
             })
         }
     }
@@ -5806,6 +5655,7 @@ router.post('/save-package', async function (req, res) {
 router.get('/get-language', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         let dealer_id = verify.user.dealer_id;
         if (dealer_id) {
             let selectQuery = `SELECT LT.key_id, LT.key_value FROM dealer_language AS dl 
@@ -5813,7 +5663,7 @@ router.get('/get-language', async function (req, res) {
             ON (LT.lng_id = dl.dealer_lng_id) 
             WHERE dl.dealer_id=${dealer_id}`;
 
-            sql.query(selectQuery, (err, rslt) => {
+            sql.query(selectQuery, async function (err, rslt) {
                 if (err) console.log(err);
 
                 if (rslt && rslt.length) {
@@ -5826,14 +5676,14 @@ router.get('/get-language', async function (req, res) {
                     })
                     res.send({
                         status: true,
-                        msg: 'success',
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.SUCCESS), // 'success',
                         data: JSON.stringify(obj)
                     })
                     return;
                 } else {
                     res.send({
                         status: false,
-                        msg: 'No data',
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.NO_DATA_FOUND), // 'No data',
                         data: {}
                     })
                     return;
@@ -5847,6 +5697,7 @@ router.get('/get-language', async function (req, res) {
 router.patch('/save-language', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         // console.log('save lang body is: ', req.body);
         let lang_id = req.body.language.id;
         let language = req.body.language;
@@ -5870,7 +5721,7 @@ router.patch('/save-language', async function (req, res) {
                     if (rslt.affectedRows) {
                         res.send({
                             status: true,
-                            msg: 'Language changed Successfully'
+                            msg: await helpers.convertToLang(loggedInuid, MsgConstants.LANGUAGE_CHANGED_SUCCESSFULLY), // 'Language changed Successfully'
                         })
                     } else {
                         let insertQuery = "INSERT INTO dealer_language (dealer_id, dealer_lng_id) VALUES ('" + dealer_id + "', '" + lang_id + "')";
@@ -5878,12 +5729,12 @@ router.patch('/save-language', async function (req, res) {
                         if (inserted) {
                             res.send({
                                 status: true,
-                                msg: 'Language changed Successfully'
+                                msg: await helpers.convertToLang(loggedInuid, MsgConstants.LANGUAGE_CHANGED_SUCCESSFULLY), // 'Language changed Successfully'
                             })
                         } else {
                             res.send({
                                 status: false,
-                                msg: 'Error while Process'
+                                msg: await helpers.convertToLang(loggedInuid, MsgConstants.ERROR_PROC), // 'Error while Process'
                             })
                         }
                     }
@@ -5891,7 +5742,7 @@ router.patch('/save-language', async function (req, res) {
                 } else {
                     res.send({
                         status: false,
-                        msg: 'Error while Process'
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.ERROR_PROC), // 'Error while Process'
                     })
                 }
             })
@@ -5905,6 +5756,7 @@ router.patch('/save-language', async function (req, res) {
 router.get('/get-prices/:dealer_id', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         // let dealer_id = req.params.dealer_id;
         console.log(verify.user)
         let dealer_id = verify.user.dealer_id;
@@ -5942,7 +5794,7 @@ router.get('/get-prices/:dealer_id', async function (req, res) {
                         console.log(data, 'reslt data of prices')
                         res.send({
                             status: true,
-                            msg: "Data found",
+                            msg: await helpers.convertToLang(loggedInuid, MsgConstants.DATA_FOUND), // "Data found",
                             data: data
 
                         })
@@ -5956,7 +5808,7 @@ router.get('/get-prices/:dealer_id', async function (req, res) {
 
                         res.send({
                             status: true,
-                            msg: "Data found",
+                            msg: await helpers.convertToLang(loggedInuid, MsgConstants.DATA_FOUND), // "Data found",
                             data: data
                         })
                     }
@@ -5971,7 +5823,7 @@ router.get('/get-prices/:dealer_id', async function (req, res) {
 
                     res.send({
                         status: true,
-                        msg: "Data found",
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.DATA_FOUND), // "Data found",
                         data: data
                     })
                 }
@@ -5987,7 +5839,7 @@ router.get('/get-prices/:dealer_id', async function (req, res) {
 
             res.send({
                 status: false,
-                msg: 'Invalid dealer_id',
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.INVALID_DEALER_ID), // 'Invalid dealer_id',
                 data: data
 
             })
@@ -5997,6 +5849,7 @@ router.get('/get-prices/:dealer_id', async function (req, res) {
 
 router.get('/get-packages/:dealer_id', async function (req, res) {
     var verify = await verifyToken(req, res);
+    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
         // let dealer_id = req.params.dealer_id;
         let dealer_id = verify.user.dealer_id;
@@ -6004,7 +5857,7 @@ router.get('/get-packages/:dealer_id', async function (req, res) {
             let selectQuery = "SELECT * FROM packages WHERE dealer_id='" + dealer_id + "'";
             sql.query(selectQuery, async (err, reslt) => {
                 if (err) {
-                    console.log(err)    
+                    console.log(err)
                 }
 
                 if (reslt) {
@@ -6014,14 +5867,14 @@ router.get('/get-packages/:dealer_id', async function (req, res) {
                         console.log(reslt, 'reslt data of prices')
                         res.send({
                             status: true,
-                            msg: "Data found",
+                            msg: await helpers.convertToLang(loggedInuid, MsgConstants.DATA_FOUND), // "Data found",
                             data: reslt
 
                         })
                     } else {
                         res.send({
                             status: true,
-                            msg: "Data found",
+                            msg: await helpers.convertToLang(loggedInuid, MsgConstants.DATA_FOUND), // "Data found",
                             data: []
 
                         })
@@ -6031,7 +5884,7 @@ router.get('/get-packages/:dealer_id', async function (req, res) {
 
                     res.send({
                         status: true,
-                        msg: "Data found",
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.DATA_FOUND), // "Data found",
                         data: []
                     })
                 }
@@ -6040,7 +5893,7 @@ router.get('/get-packages/:dealer_id', async function (req, res) {
 
             res.send({
                 status: false,
-                msg: 'Invalid dealer_id',
+                msg: await helpers.convertToLang(loggedInuid, MsgConstants.INVALID_DEALER_ID), // 'Invalid dealer_id',
                 data: []
 
             })
@@ -6052,6 +5905,7 @@ router.patch('/check-package-name', async function (req, res) {
 
     try {
         var verify = await verifyToken(req, res);
+        var loggedInuid = verify.user.id;
         if (verify.status !== undefined && verify.status == true) {
             let name = req.body.name !== undefined ? req.body.name : null;
 
@@ -6081,20 +5935,21 @@ router.patch('/check-package-name', async function (req, res) {
 });
 router.post('/update_credit', async function (req, res) {
     var verify = await verifyToken(req, res);
+    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
         try {
             let credits = req.body.data.credits
             let dealer_id = req.body.data.dealer_id
             console.log(credits);
             if (dealer_id !== '' && dealer_id !== undefined && dealer_id !== null) {
-                sql.query("SELECt * from dealer_credits where dealer_id = " + dealer_id, function (err, result) {
-                    if (err){
-                        console.log(err)    
+                sql.query("SELECt * from dealer_credits where dealer_id = " + dealer_id, async function (err, result) {
+                    if (err) {
+                        console.log(err)
                     }
 
                     if (result.length) {
                         let newCredit = credits + result[0].credits
-                        sql.query("update dealer_credits set credits = " + newCredit + " where dealer_id = " + dealer_id, function (err, reslt) {
+                        sql.query("update dealer_credits set credits = " + newCredit + " where dealer_id = " + dealer_id, async function (err, reslt) {
                             if (err) {
                                 console.log(err)
                             }
@@ -6102,14 +5957,14 @@ router.post('/update_credit', async function (req, res) {
                             if (reslt && reslt.affectedRows > 0) {
                                 res.send({
                                     status: true,
-                                    msg: "Credits added successfully."
+                                    msg: await helpers.convertToLang(loggedInuid, MsgConstants.CREDITS_ADDED_SUCCESSFULLY), // "Credits added successfully."
                                 })
                                 return
                             }
                             else {
                                 res.send({
                                     status: false,
-                                    msg: "Credits not updated please try again."
+                                    msg: await helpers.convertToLang(loggedInuid, MsgConstants.CREDITS_NOT_UPDATED), // "Credits not updated please try again."
                                 })
                                 returns
 
@@ -6118,21 +5973,21 @@ router.post('/update_credit', async function (req, res) {
                     }
                     else {
                         let query = `INSERT into dealer_credits (dealer_id,credits) VALUES (${dealer_id}, ${credits})`;
-                        sql.query(query, function (err, reslt) {
-                            if (err){
+                        sql.query(query, async function (err, reslt) {
+                            if (err) {
                                 console.log(err);
                             }
                             if (reslt && reslt.affectedRows > 0) {
                                 res.send({
                                     status: true,
-                                    msg: "Credits added successfully."
+                                    msg: await helpers.convertToLang(loggedInuid, MsgConstants.CREDITS_ADDED_SUCCESSFULLY), // "Credits added successfully."
                                 })
                                 return
                             }
                             else {
                                 res.send({
                                     status: false,
-                                    msg: "Credits not updated please try again."
+                                    msg: await helpers.convertToLang(loggedInuid, MsgConstants.CREDITS_NOT_UPDATED), // "Credits not updated please try again."
                                 })
                                 returns
 
@@ -6149,6 +6004,7 @@ router.post('/update_credit', async function (req, res) {
 router.get('/newRequests', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         try {
             let query = ''
             // console.log(verify.user);
@@ -6169,8 +6025,8 @@ router.get('/newRequests', async function (req, res) {
                 }
             }
             console.log(query);
-            sql.query(query, function (err, result) {
-                if (err){
+            sql.query(query, async function (err, result) {
+                if (err) {
                     console.log(err);
                 }
                 if (result.length) {
@@ -6197,12 +6053,13 @@ router.get('/newRequests', async function (req, res) {
 router.get('/get_user_credits', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         try {
             let query = ''
             query = `SELECT credits from dealer_credits where dealer_id= ${verify.user.id}`
 
-            sql.query(query, function (err, result) {
-                if (err){
+            sql.query(query, async function (err, result) {
+                if (err) {
                     console.log(err);
                 }
                 if (result.length) {
@@ -6230,32 +6087,33 @@ router.get('/get_user_credits', async function (req, res) {
 router.put('/delete_request/:id', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         try {
             let id = req.params.id
             let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
             console.log(query);
-            sql.query(query, function (err, result) {
-                if (err){
+            sql.query(query, async function (err, result) {
+                if (err) {
                     console.log(err);
                 }
                 if (result.length) {
 
                     let updateQuery = "update credit_requests set status = 1, del_status = 1 where id= " + id
-                    sql.query(updateQuery, function (err, result) {
-                        if (err){
+                    sql.query(updateQuery, async function (err, result) {
+                        if (err) {
                             console.log(err);
                         }
                         if (result && result.affectedRows > 0) {
                             data = {
                                 "status": true,
-                                "msg": "Request deleted successfully."
+                                "msg": await helpers.convertToLang(loggedInuid, MsgConstants.REQUEST_DELETED_SUCCESSFULLY), // Request deleted successfully."
                             };
                             res.send(data);
                             return
                         } else {
                             data = {
                                 "status": false,
-                                "msg": "Request not deleted please try again."
+                                "msg": await helpers.convertToLang(loggedInuid, MsgConstants.REQUEST_NOT_DELETED), // Request not deleted please try again."
                             };
                             res.send(data);
                             return
@@ -6265,7 +6123,7 @@ router.put('/delete_request/:id', async function (req, res) {
                 } else {
                     data = {
                         "status": false,
-                        msg: "Request is already deleted"
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.REQUEST_IS_ALREADY_DELETED), // "Request is already deleted"
                     };
                     res.send(data);
                     return
@@ -6280,12 +6138,13 @@ router.put('/delete_request/:id', async function (req, res) {
 router.put('/accept_request/:id', async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         try {
             let id = req.params.id
             let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
             // console.log(query);
             sql.query(query, async function (err, result) {
-                if (err){
+                if (err) {
                     console.log(err);
                 }
                 if (result.length) {
@@ -6301,7 +6160,7 @@ router.put('/accept_request/:id', async function (req, res) {
                                 newCredit = credits[0].credits + result[0].credits
                             }
                             sql.query("update dealer_credits set credits = " + newCredit + " where dealer_id = " + dealer_id, async function (err, reslt) {
-                                if (err){
+                                if (err) {
                                     console.log(err);
                                 }
                                 if (reslt && reslt.affectedRows > 0) {
@@ -6311,7 +6170,7 @@ router.put('/accept_request/:id', async function (req, res) {
                                     await sql.query(userCredits)
                                     res.send({
                                         status: true,
-                                        msg: "Credits added successfully.",
+                                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.CREDITS_ADDED_SUCCESSFULLY), // "Credits added successfully.",
                                         user_credits: deductedCredits
                                     })
                                     return
@@ -6319,7 +6178,7 @@ router.put('/accept_request/:id', async function (req, res) {
                                 else {
                                     let query = `INSERT into dealer_credits (dealer_id,credits) VALUES (${dealer_id}, ${newCredit})`;
                                     sql.query(query, async function (err, reslt) {
-                                        if (err){
+                                        if (err) {
                                             console.log(err);
                                         }
                                         if (reslt && reslt.affectedRows > 0) {
@@ -6329,7 +6188,7 @@ router.put('/accept_request/:id', async function (req, res) {
                                             await sql.query(userCredits)
                                             res.send({
                                                 status: true,
-                                                msg: "Credits added successfully.",
+                                                msg: await helpers.convertToLang(loggedInuid, MsgConstants.CREDITS_ADDED_SUCCESSFULLY), // "Credits added successfully.",
                                                 user_credits: deductedCredits
                                             })
                                             return
@@ -6337,7 +6196,7 @@ router.put('/accept_request/:id', async function (req, res) {
                                         else {
                                             res.send({
                                                 status: false,
-                                                msg: "Credits not updated please try again."
+                                                msg: await helpers.convertToLang(loggedInuid, MsgConstants.CREDITS_NOT_UPDATED), // "Credits not updated please try again."
                                             })
                                             returns
 
@@ -6349,21 +6208,21 @@ router.put('/accept_request/:id', async function (req, res) {
                         else {
                             res.send({
                                 status: false,
-                                msg: "Your credits are not enough to accept a request."
+                                msg: await helpers.convertToLang(loggedInuid, MsgConstants.CREDITS_NOT_ENOUGH_ACCEPT_REQUEST), // "Your credits are not enough to accept a request."
                             })
                             return
                         }
                     } else {
                         res.send({
                             status: false,
-                            msg: "Your credits are not enough to accept a request."
+                            msg: await helpers.convertToLang(loggedInuid, MsgConstants.CREDITS_NOT_ENOUGH_ACCEPT_REQUEST), // "Your credits are not enough to accept a request."
                         })
                         return
                     }
                 } else {
                     data = {
                         "status": false,
-                        msg: "Request is already deleted"
+                        msg: await helpers.convertToLang(loggedInuid, MsgConstants.REQUEST_IS_ALREADY_DELETED), // "Request is already deleted"
                     };
                     res.send(data);
                     return
@@ -6381,8 +6240,8 @@ router.post('/create_backup_DB', async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
 
     var verify = await verifyToken(req, res);
-
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         var ws;
         var wb = XLSX.utils.book_new();
         let devices = []
@@ -6472,6 +6331,31 @@ router.post('/create_backup_DB', async function (req, res) {
         }
         res.send(data)
         // let file =  zipFileName
+    }
+});
+
+
+router.get('/get_csv_ids', async (req, res) => {
+    var verify = await verifyToken(req, res);
+    if (verify['status'] !== undefined && verify.status === true) {
+        let pgp_query = "select * from pgp_emails";
+        let pgp_emails = await sql.query(pgp_query)
+        let chat_query = "select * from chat_ids";
+        let chat_ids = await sql.query(chat_query)
+        let sim_query = "select * from sim_ids";
+        let sim_ids = await sql.query(sim_query)
+
+        res.send({
+            status: true,
+            pgp_emails,
+            chat_ids,
+            sim_ids
+        })
+    }
+    else {
+        res.send({
+            status: false,
+        })
     }
 });
 
