@@ -116,7 +116,7 @@ exports.devices = async function (req, res) {
                 device.usr_device_id = checkValue(device.usr_device_id)
                 device.validity = checkValue(device.validity)
             }
-            
+
             // let dumyData = finalResult;
             // let newResultArray = [];
             // for (let device of finalResult) {
@@ -295,10 +295,10 @@ exports.devices = async function (req, res) {
 exports.newDevices = async function (req, res) {
     var verify = await verifyToken(req, res);
     if (verify['status'] !== undefined && verify.status == true) {
-        
+
         var where_con = '';
         if (verify.user.user_type !== constants.ADMIN) {
-            
+
             if (verify.user.user_type === constants.DEALER) {
                 // console.log('done of dealer', verify.user.id)
                 where_con = ` AND (usr_acc.dealer_id =${verify.user.id} OR usr_acc.prnt_dlr_id = ${verify.user.id}) `;
@@ -313,7 +313,7 @@ exports.newDevices = async function (req, res) {
                         status: false,
                     };
                     res.send(data);
-                    return; 
+                    return;
                 }
 
                 data = {
@@ -404,7 +404,7 @@ exports.acceptDevice = async function (req, res) {
             }
 
             sql.query(checkDevice, async function (checkDeviceError, rows) {
-                if(checkDeviceError){
+                if (checkDeviceError) {
                     console.log(checkDeviceError)
                     res.send({
                         status: false,
@@ -420,7 +420,7 @@ exports.acceptDevice = async function (req, res) {
 
                     let checkUnique = `SELECT usr_acc.* FROM usr_acc WHERE account_email= '${device_email}' AND device_id != '${device_id}' AND user_id != '${user_id}'`
                     sql.query(checkUnique, async (checkUniqueEror, success) => {
-                        if(checkUniqueEror){
+                        if (checkUniqueEror) {
                             console.log(checkUniqueEror)
                             res.send({
                                 status: false,
@@ -440,9 +440,9 @@ exports.acceptDevice = async function (req, res) {
                             if (connected_dealer !== 0) {
 
                                 common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE id = '" + usr_device_id + "'"
-                                
+
                                 usr_acc_Query = "UPDATE usr_acc set user_id = '" + user_id + "' , account_email = '" + device_email + "', status = '" + status + "',trial_status = '" + trial_status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "', prnt_dlr_id=" + dealer_id + ", prnt_dlr_name='" + dealer[0].dealer_name + "' WHERE device_id = '" + usr_device_id + "'"
-                                
+
                             } else {
 
                                 common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE id = '" + usr_device_id + "'"
@@ -450,7 +450,7 @@ exports.acceptDevice = async function (req, res) {
                             }
 
                             sql.query(common_Query, async function (commonQueryError, result) {
-                                if(commonQueryError){
+                                if (commonQueryError) {
                                     console.log(commonQueryError);
                                     res.send({
                                         status: false,
@@ -460,13 +460,13 @@ exports.acceptDevice = async function (req, res) {
                                 }
 
                                 await sql.query(usr_acc_Query)
-                                
+
                                 let updateChatIds = 'update chat_ids set user_acc_id = ' + usr_acc_id + ', used=1 where chat_id ="' + chat_id + '"';
                                 await sql.query(updateChatIds);
-                                
+
                                 let updateSimIds = 'update sim_ids set user_acc_id = ' + usr_acc_id + ', used=1 where sim_id ="' + sim_id + '"';
                                 await sql.query(updateSimIds)
-                                
+
                                 let updatePgpEmails = 'update pgp_emails set user_acc_id = ' + usr_acc_id + ', used=1 where pgp_email ="' + pgp_email + '"';
                                 await sql.query(updatePgpEmails);
 
@@ -497,10 +497,10 @@ exports.acceptDevice = async function (req, res) {
                                         axios.put(app_constants.UPDATE_DEVICE_SUPERADMIN_URL, data, { headers: { authorization: response.data.user.token } })
                                     }
                                 })
-                                
+
                                 data = {
                                     status: true,
-                                    msg: await helpers.convertToLang(loggedDealerId, MsgConstants.RECORD_UPD_SUCC), // 'Record updated successfully.',
+                                    msg: "Record updated successfully.", // 'Record updated successfully.',
                                     data: rsltq
                                 };
                                 res.send(data);
@@ -589,14 +589,14 @@ exports.createPreactivations = async function (req, res) {
                     let code = randomize('0', 7);
                     var activationCode = await general_helpers.checkActivationCode(code);
                     activationCodes.push(activationCode);
-                    
+
                     let chat_id = (chat_ids[i]) ? chat_ids[i].chat_id : null;
                     let sim_id = (sim_ids[i]) ? sim_ids[i].sim_id : null;
                     let pgp_email = (pgp_emails[i]) ? pgp_emails[i].pgp_email : null;
-                    
+
                     var insertDevice = `INSERT INTO devices (name) VALUES ('${name}')`;
                     let resp = await sql.query(insertDevice)
-                    
+
                     let dvc_id = resp.insertId;
                     deviceIds.push(dvc_id);
                     var insertUser_acc = "INSERT INTO usr_acc (device_id , user_id,batch_no, activation_code, expiry_months, dealer_id,link_code, device_status, activation_status, expiry_date, note, validity,account_email, account_name "
@@ -683,7 +683,7 @@ exports.createPreactivations = async function (req, res) {
                             insertDevice = insertDevice + values + ")";
                         }
                         sql.query(insertDevice, async (err, resp) => {
-                            if (err){
+                            if (err) {
                                 console.log(err)
                             }
                             console.log("inserted id", resp.insertId);
@@ -692,11 +692,11 @@ exports.createPreactivations = async function (req, res) {
                             // var insertDevice = "INSERT INTO devices ( activation_code, name, client_id, chat_id, model, email, pgp_email, expiry_months, dealer_id, device_status, activation_status ";
                             var User_acc_values = ") VALUES ('" + dvc_id + "','" + user_id + "', '" + activation_code + "', '" + client_id + "', '" + email + "',  " + exp_month + ", " + dealer_id + ",'" + link_code + "' ,  0, 0 ,'" + expiry_date + "','" + note + "','" + validity + "')";
                             insertUser_acc = insertUser_acc + User_acc_values;
-                            
+
                             if (resp.affectedRows) {
                                 sql.query(insertUser_acc, async (err, resp) => {
 
-                                    if (err){
+                                    if (err) {
                                         console.log(err)
                                     }
                                     let user_acc_id = resp.insertId;

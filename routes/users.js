@@ -330,7 +330,7 @@ router.post('/transfer/device_profile', async function (req, res) {
             where: {
                 device_id: device_id
             }
-        }).then( async function (response, err) {
+        }).then(async function (response, err) {
             console.log(err, 'oject res', response[0]['dataValues']);
             let new_object = response[0]['dataValues'];
             // new_object['device_id'] = device_id_new;
@@ -942,8 +942,8 @@ router.post('/activate/:id', async function (req, res) {
 router.post('/wipe/:id', async function (req, res) {
     var verify = await verifyToken(req, res);
     var device_id = req.params.id;
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         var sql2 = "select * from devices where id = '" + device_id + "'";
         var gtres = await sql.query(sql2);
         if (!empty(device_id)) {
@@ -1003,8 +1003,8 @@ router.post('/wipe/:id', async function (req, res) {
 router.post('/UnflagDevice/:id', async function (req, res) {
     var verify = await verifyToken(req, res);
     var device_id = req.params.id;
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         if (!empty(device_id)) {
             var sql1 = "update devices set flagged= 'Not flagged' where device_id='" + device_id + "'";
             var rest = sql.query(sql1, async function (error, results) {
@@ -1060,8 +1060,8 @@ router.post('/flagDevice/:id', async function (req, res) {
     var device_id = req.params.id;
     var option = req.body.data
     // console.log(option);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         var sql2 = "select * from devices where id = '" + device_id + "'";
         var gtres = await sql.query(sql2);
         if (!empty(device_id)) {
@@ -1124,8 +1124,8 @@ router.post('/flagDevice/:id', async function (req, res) {
 router.get('/connect/:device_id', async function (req, res) {
     // console.log('api check is caled')
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         if (!empty(req.params.device_id)) {
             let userId = verify.user.id;
             //  console.log(verify.user);
@@ -1187,8 +1187,8 @@ router.get('/connect/:device_id', async function (req, res) {
 router.get('/getAppJobQueue/:device_id', async function (req, res) {
     // console.log('api check is caled')
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         let device_id = req.params.device_id;
         if (!empty(device_id)) {
 
@@ -1211,8 +1211,8 @@ router.get('/getAppJobQueue/:device_id', async function (req, res) {
 // resync device
 router.patch('/sync-device', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         let deviceId = req.body.device_id;
         if (!empty(deviceId)) {
             let query = "SELECT * FROM devices WHERE device_id = '" + deviceId + "' and online = '" + Constants.DEVICE_ONLINE + "'";
@@ -1233,8 +1233,8 @@ router.patch('/sync-device', async function (req, res) {
 /** Get Device Details of Dealers (Connect Page) **/
 router.get('/get_apps/:device_id', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         if (!empty(req.params.device_id)) {
             // var query = 'SELECT user_apps.*, apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon from user_apps LEFT JOIN apps_info on user_apps.app_id = apps_info.id LEFT JOIN devices on user_apps.device_id=devices.id where devices.device_id ="' + req.params.device_id + '"';
             // console.log(query);
@@ -1352,8 +1352,8 @@ router.get('/get_apps/:device_id', async function (req, res) {
 router.put('/deleteUnlinkDevice', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
-        var loggedInuid = verify.user.id;
         if (verify.status !== undefined && verify.status == true) {
+            var loggedInuid = verify.user.id;
 
             let insertError = 0;
             let NotDeleted = [];
@@ -1430,8 +1430,8 @@ router.post('/add/user', async function (req, res) {
 
     var verify = await verifyToken(req, res);
 
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
 
         var loggedInuid = verify.user.id;
         var userName = req.body.name;
@@ -1502,8 +1502,8 @@ router.post('/edit/user', async function (req, res) {
 
     var verify = await verifyToken(req, res);
 
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
 
         var userName = req.body.name;
         var userEmail = req.body.email;
@@ -1562,8 +1562,8 @@ router.post('/edit/user', async function (req, res) {
 /*** DELETE User ***/
 router.put('/delete_user/:user_id', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         var user_id = req.params.user_id
         if (!empty(user_id) && user_id != undefined) {
             let deleteUserQ = "UPDATE users SET del_status = 1 WHERE user_id ='" + user_id + "'";
@@ -1601,8 +1601,8 @@ router.put('/delete_user/:user_id', async function (req, res) {
 /***UNDO DELETE User ***/
 router.put('/undo_delete_user/:user_id', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
 
         var user_id = req.params.user_id
         if (!empty(user_id) && user_id != undefined) {
@@ -1647,8 +1647,8 @@ router.put('/updateProfile/:id', async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
 
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
 
         sql.query('UPDATE dealers SET `dealer_name` = ? where `dealer_id` = ?', [req.body.name, req.body.dealerId], async function (error, rows, status) {
 
@@ -1681,8 +1681,8 @@ router.post('/resetpwd', async function (req, res) {
 
     var verify = await verifyToken(req, res);
     var isReset = false;
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
 
         var user = verify.user;
         if (req.body.pageName != undefined && req.body.pageName != "") {
@@ -1966,8 +1966,8 @@ router.get('/get_app_permissions', async function (req, res) {
 router.get('/dealer/gtdropdown/:dropdownType', async function (req, res) {
     var verify = await verifyToken(req, res);
     // console.log('done or not');
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         // console.log('data from req', req.params.dropdownType);
         let dealer_id = verify.user.id;
         let dropdownType = req.params.dropdownType;
@@ -2007,8 +2007,8 @@ router.get('/dealer/gtdropdown/:dropdownType', async function (req, res) {
 
 router.post('/dealer/dropdown', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
 
         var selected_items = req.body.selected_items;
         var dropdownType = req.body.pageName;
@@ -2243,11 +2243,17 @@ router.get('/get_policies', async function (req, res) {
                 }
                 // console.log(prrr, 'permited ids');
                 // console.log('2 query',"select * from policy where (dealer_id='" + verify.user.id + "' OR id IN ("+prrr+")) AND delete_status=0")
-                sql.query("select * from policy where (dealer_id='" + verify.user.id + "' OR id IN (" + prrr + ")) AND delete_status=0", async function (error, results) {
+                let query = ''
+                if (prrr.length) {
+                    query = "select * from policy where (dealer_id='" + verify.user.id + "' OR id IN (" + prrr + ")) AND delete_status=0"
+                }
+                else {
+                    query = "select * from policy where dealer_id='" + verify.user.id + "' AND delete_status=0"
+                }
+                sql.query(query, async function (error, results) {
 
                     if (error) {
-                        console.lo
-                        g(error)
+                        console.log(error)
                     }
                     if (results.length > 0) {
                         // console.log(results);
@@ -2332,8 +2338,8 @@ router.get('/get_policies', async function (req, res) {
 
 router.post('/change_policy_status', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status === true) {
+        var loggedInuid = verify.user.id;
         let id = req.body.id;
         let value = req.body.value == true ? 1 : 0;
         let key = req.body.key;
@@ -2367,8 +2373,8 @@ router.post('/change_policy_status', async function (req, res) {
 
 router.post('/save_policy_changes', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status === true) {
+        var loggedInuid = verify.user.id;
         // console.log('body of kth e', req.body);
         let record = req.body;
         let id = record.id;
@@ -2408,8 +2414,8 @@ router.post('/save_policy_changes', async function (req, res) {
 
 router.post('/check_policy_name', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify['status'] && verify.status == true) {
+        var loggedInuid = verify.user.id;
         try {
             let policy_name = req.body.name !== undefined ? req.body.name : null;
             let policy_id = req.body.policy_id;
@@ -2470,8 +2476,8 @@ router.post('/check_policy_name', async function (req, res) {
 router.post('/save_policy', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
-        var loggedInuid = verify.user.id;
         if (verify.status !== undefined && verify.status == true) {
+            var loggedInuid = verify.user.id;
             let policy_name = req.body.data.policy_name !== undefined ? req.body.data.policy_name : null;
             if (policy_name !== null) {
                 let policy_note = req.body.data.policy_note !== undefined ? req.body.data.policy_note : null;
@@ -3005,8 +3011,8 @@ router.post('/get_device_history', async function (req, res) {
 
 router.post('/save_new_data', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         if (req.body.type == 'sim_id') {
             for (let row of req.body.newData) {
                 let result = await sql.query("INSERT IGNORE sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");
@@ -3039,8 +3045,8 @@ router.post('/import/:fieldName', async (req, res) => {
     // console.log(req);
 
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         res.setHeader('Content-Type', 'multipart/form-data');
         // let filename = '';
         let fieldName = req.params.fieldName;
@@ -3090,8 +3096,8 @@ router.post('/import/:fieldName', async (req, res) => {
 
 router.get('/export/:fieldName', async (req, res) => {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         console.log("exporting data");
         let fieldName = req.params.fieldName;
         if (verify.user.user_type === ADMIN) {
@@ -3173,8 +3179,8 @@ router.get('/export/:fieldName', async (req, res) => {
 
 router.get('/get_sim_ids', async (req, res) => {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         let query = "select * from sim_ids where used=0";
         sql.query(query, async function (error, resp) {
             res.send({
@@ -3183,19 +3189,20 @@ router.get('/get_sim_ids', async (req, res) => {
                 data: resp
             });
         });
-    } else {
-        res.send({
-            status: false,
-            msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
-        })
     }
+    // else {
+    //     res.send({
+    //         status: false,
+    //         msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+    //     })
+    // }
 
 });
 
 router.get('/get_all_sim_ids', async (req, res) => {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         let query = "select * from sim_ids";
         sql.query(query, async function (error, resp) {
             res.send({
@@ -3204,19 +3211,20 @@ router.get('/get_all_sim_ids', async (req, res) => {
                 data: resp
             });
         });
-    } else {
-        res.send({
-            status: false,
-            msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
-        })
     }
+    // else {
+    //     res.send({
+    //         status: false,
+    //         msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+    //     })
+    // }
 
 });
 
 router.get('/get_used_sim_ids', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         let query = "select * from sim_ids where used=1";
         sql.query(query, async function (error, resp) {
             res.send({
@@ -3226,19 +3234,19 @@ router.get('/get_used_sim_ids', async function (req, res) {
             });
         });
     }
-    else {
-        res.send({
-            status: false,
-            msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
-        })
-    }
+    // else {
+    //     res.send({
+    //         status: false,
+    //         msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+    //     })
+    // }
 });
 
 
 router.get('/get_chat_ids', async (req, res) => {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         let query = "select * from chat_ids where used=0";
         sql.query(query, async function (error, resp) {
             res.send({
@@ -3247,18 +3255,19 @@ router.get('/get_chat_ids', async (req, res) => {
                 data: resp
             });
         });
-    } else {
-        res.send({
-            status: false,
-            msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
-        })
     }
+    // else {
+    //     res.send({
+    //         status: false,
+    //         msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+    //     })
+    // }
 });
 
 router.get('/get_all_chat_ids', async (req, res) => {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         let query = "select * from chat_ids";
         sql.query(query, async function (error, resp) {
             res.send({
@@ -3267,18 +3276,19 @@ router.get('/get_all_chat_ids', async (req, res) => {
                 data: resp
             });
         });
-    } else {
-        res.send({
-            status: false,
-            msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
-        })
     }
+    // else {
+    //     res.send({
+    //         status: false,
+    //         msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+    //     })
+    // }
 });
 
 router.get('/get_used_chat_ids', async (req, res) => {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         let query = "select * from chat_ids where used=1";
         sql.query(query, async function (error, resp) {
             res.send({
@@ -3288,18 +3298,18 @@ router.get('/get_used_chat_ids', async (req, res) => {
             });
         });
     }
-    else {
-        res.send({
-            status: false,
-            msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
-        })
-    }
+    // else {
+    //     res.send({
+    //         status: false,
+    //         msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+    //     })
+    // }
 });
 
 router.get('/get_pgp_emails', async (req, res) => {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         let query = "select * from pgp_emails where used=0";
         sql.query(query, async function (error, resp) {
             res.send({
@@ -3309,18 +3319,18 @@ router.get('/get_pgp_emails', async (req, res) => {
             });
         });
     }
-    else {
-        res.send({
-            status: false,
-            msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
-        })
-    }
+    // else {
+    //     res.send({
+    //         status: false,
+    //         msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+    //     })
+    // }
 });
 
 router.get('/get_all_pgp_emails', async (req, res) => {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         let query = "select * from pgp_emails";
         sql.query(query, async function (error, resp) {
             res.send({
@@ -3330,18 +3340,18 @@ router.get('/get_all_pgp_emails', async (req, res) => {
             });
         });
     }
-    else {
-        res.send({
-            status: false,
-            msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
-        })
-    }
+    // else {
+    //     res.send({
+    //         status: false,
+    //         msg: await helpers.convertToLang(loggedInuid, MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+    //     })
+    // }
 });
 
 router.get('/get_used_pgp_emails', async (req, res) => {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         let query = "select * from pgp_emails where used=1 AND user_acc_id is null";
         sql.query(query, async function (error, resp) {
             res.send({
@@ -3360,8 +3370,8 @@ router.get('/get_used_pgp_emails', async (req, res) => {
 });
 router.get('/get_used_sim_ids', async (req, res) => {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         let query = "select * from sim_ids where used=1 AND user_acc_id is null";
         sql.query(query, async function (error, resp) {
             res.send({
@@ -3402,8 +3412,8 @@ router.post('/releaseCSV/:fieldName', async (req, res) => {
     var verify = await verifyToken(req, res);
     var fieldName = req.params.fieldName
     var ids = req.body.ids
-    var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         // console.log(fieldName, ids);
         if (fieldName === 'pgp_email') {
             let query = "UPDATE pgp_emails set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
@@ -3490,8 +3500,8 @@ router.post('/releaseCSV/:fieldName', async (req, res) => {
 router.get('/apklist', async function (req, res) {
     var verify = await verifyToken(req, res);
     var data = [];
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         if (verify.user.user_type === ADMIN) {
             sql.query("select * from apk_details where delete_status=0 AND apk_type != 'permanent' order by id ASC", async function (error, results) {
                 if (error) {
@@ -3639,8 +3649,8 @@ router.post('/upload', async function (req, res) {
 
     var verify = await verifyToken(req, res);
     //  console.log('verify', verify.status);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         let fileUploaded = false;
         let filename = "";
         let mimeType = "";
@@ -3756,8 +3766,8 @@ router.post('/upload', async function (req, res) {
 // add apk. endpoints name should be changed
 router.post('/checkApkName', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify['status'] && verify.status == true) {
+        var loggedInuid = verify.user.id;
         try {
             console.log(req.body);
             let apkName = req.body.name;
@@ -3796,8 +3806,8 @@ router.post('/checkApkName', async function (req, res) {
 // Purchase credits_CASH
 router.post('/purchase_credits', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify['status'] && verify.status == true) {
+        var loggedInuid = verify.user.id;
         try {
             // console.log(req.body);
             let credits = req.body.data.credits
@@ -3825,7 +3835,7 @@ router.post('/purchase_credits', async function (req, res) {
                         if (result.affectedRows > 0) {
                             if (verify.user.user_type === ADMIN) {
                                 if (method == 'CASH') {
-                                    axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then( async function (response) {
+                                    axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then(async function (response) {
                                         if (response.data.status) {
                                             let data = {
                                                 dealer_id: dealerId,
@@ -3903,8 +3913,8 @@ router.post('/purchase_credits', async function (req, res) {
 // Purchase credits form Credit card
 router.post('/purchase_credits_CC', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify['status'] && verify.status == true) {
+        var loggedInuid = verify.user.id;
         try {
             let credits = req.body.creditInfo.credits
             let method = req.body.creditInfo.method
@@ -4043,8 +4053,8 @@ router.post('/purchase_credits_CC', async function (req, res) {
 router.post('/addApk', async function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify['status'] && verify.status == true) {
+        var loggedInuid = verify.user.id;
         try {
             let logo = req.body.logo;
             let apk = req.body.apk;
@@ -4156,8 +4166,8 @@ router.post('/addApk', async function (req, res) {
 router.post('/edit/apk', async function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify['status'] && verify.status == true) {
+        var loggedInuid = verify.user.id;
         try {
             let logo = req.body.logo;
             let apk = req.body.apk;
@@ -4255,8 +4265,8 @@ router.post('/edit/apk', async function (req, res) {
 /** Toggle Apk Admin Panel (On / Off) **/
 router.post('/toggle', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
 
         if (!empty(req.body.status) && !empty(req.body.apk_id)) {
             sql.query("update apk_details set status = '" + req.body.status + "' where id = '" + req.body.apk_id + "'", async function (err, result) {
@@ -4294,9 +4304,9 @@ router.post('/toggle', async function (req, res) {
 /** Save apk Permissions**/
 router.post('/save_apk_permissions', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     // console.log(req.body.action);
     if (verify['status'] !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         var action = req.body.action
         let apkId = req.body.apkId;
         let dealers = req.body.dealers;
@@ -4482,8 +4492,8 @@ router.post('/save_apk_permissions', async function (req, res) {
 /** Save Policy Permission **/
 router.post('/save_policy_permissions', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         var action = req.body.action
         let policyId = req.body.policyId;
         let dealers = req.body.dealers;
@@ -4667,21 +4677,22 @@ router.post('/save_policy_permissions', async function (req, res) {
 /** Get back up DB File **/
 router.get("/getBackupFile/:file", async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
+    // var loggedInuid = verify.user.id;
     if (fs.existsSync(path.join(__dirname, "../db_backup/" + req.params.file))) {
         let file = path.join(__dirname, "../db_backup/" + req.params.file);
         res.sendFile(file);
     } else {
         res.send({
             "status": false,
-            "msg": await helpers.convertToLang(loggedInuid, MsgConstants.FILE_NOT_FOUND), // file not found"
+            // "msg": await helpers.convertToLang(loggedInuid, MsgConstants.FILE_NOT_FOUND), // file not found"
+            "msg": "File not found", // file not found"
         })
     }
 });
 /** Get image logo **/
 router.get("/getFile/:file", async function (req, res) {
-    var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
+    // var verify = await verifyToken(req, res);
+    // var loggedInuid = verify.user.id;
     if (fs.existsSync(path.join(__dirname, "../uploads/" + req.params.file))) {
         let file = path.join(__dirname, "../uploads/" + req.params.file);
         let fileMimeType = mime.getType(file);
@@ -4699,7 +4710,8 @@ router.get("/getFile/:file", async function (req, res) {
     } else {
         res.send({
             "status": false,
-            "msg": await helpers.convertToLang(loggedInuid, MsgConstants.FILE_NOT_FOUND), // file not found"
+            // "msg": await helpers.convertToLang(loggedInuid, MsgConstants.FILE_NOT_FOUND), // file not found"
+            "msg": "File not found.", // file not found"
         })
     }
 
@@ -5079,10 +5091,10 @@ router.post('/transferApps', async function (req, res) {
 router.get('/marketApplist', async function (req, res) {
 
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     var data = [];
     let apklist = []
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         where = '';
         if (verify.user.user_type !== ADMIN) {
             apklist = await sql.query("select dealer_apks.* ,apk_details.* from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'")
@@ -5142,8 +5154,8 @@ router.get('/marketApplist', async function (req, res) {
 router.put('/handleUninstall/:apk_id', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
-        var loggedInuid = verify.user.id;
         if (verify.status !== undefined && verify.status == true) {
+            var loggedInuid = verify.user.id;
             let is_restricted = (req.body.value) ? 0 : 1;
             let apk_id = req.params.apk_id;
             // console.log("UPDATE secure_market_apps SET is_restrict_uninstall = " + is_restricted + " WHERE apk_id ='" + apk_id + "'");
@@ -5178,8 +5190,8 @@ router.put('/handleUninstall/:apk_id', async function (req, res) {
 router.post('/writeImei/:device_id', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
-        var loggedInuid = verify.user.id;
         if (verify.status !== undefined && verify.status == true) {
+            var loggedInuid = verify.user.id;
             let device_id = req.params.device_id;
             let usrAccId = req.body.usrAccId;
             let dealer_id = verify.user.id
@@ -5298,8 +5310,8 @@ router.post('/writeImei/:device_id', async function (req, res) {
 router.get('/get_activities/:device_id', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
-        var loggedInuid = verify.user.id;
         if (verify.status !== undefined && verify.status == true) {
+            var loggedInuid = verify.user.id;
 
             let device_id = req.params.device_id
             let activities = [];
@@ -5346,8 +5358,8 @@ router.get('/get_activities/:device_id', async function (req, res) {
 router.post('/set_default_policy', async function (req, res) {
     try {
         var verify = await verifyToken(req, res);
-        var loggedInuid = verify.user.id;
         if (verify.status !== undefined && verify.status == true) {
+            var loggedInuid = verify.user.id;
             let enable = req.body.enable
             let policy_id = req.body.policy_id
 
@@ -5375,8 +5387,8 @@ router.post('/set_default_policy', async function (req, res) {
 
 router.put('/force_update', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify['status'] !== undefined && verify.status === true) {
+        var loggedInuid = verify.user.id;
         let device_id = req.body.device_id;
         let dealer_id = verify.user.id
         if (!empty(device_id)) {
@@ -5428,8 +5440,8 @@ router.post('/authenticate_update_user', async function (req, res) {
     var data = '';
     var userType = await helpers.getDealerTypeIdByName(AUTO_UPDATE_ADMIN);
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status) {
+        var loggedInuid = verify.user.id;
         // console.log("select * from dealers where type = '" + userType + "' and dealer_email='" + email + "' and password='" + enc_pwd + "'");
         let query_res = await sql.query("select * from dealers where type = '" + userType + "' and dealer_email='" + email + "' and password='" + enc_pwd + "'");
         if (query_res.length) {
@@ -5464,8 +5476,8 @@ router.post('/authenticate_update_user', async function (req, res) {
 router.patch('/save-prices', async function (req, res) {
     // console.log('save-prices data at server is', req.body)
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         let data = req.body.data;
         if (data) {
             // console.log(data, 'data')
@@ -5574,8 +5586,8 @@ router.patch('/save-prices', async function (req, res) {
 router.post('/save-package', async function (req, res) {
     console.log('data is', req.body)
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         // console.log(verify.user, 'user is the ')
         let data = req.body.data;
         let dealer_id = verify.user.dealer_id;
@@ -5642,8 +5654,8 @@ router.post('/save-package', async function (req, res) {
 
 router.get('/get-language', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         let dealer_id = verify.user.dealer_id;
         if (dealer_id) {
             let selectQuery = `SELECT LT.key_id, LT.key_value FROM dealer_language AS dl 
@@ -5684,8 +5696,8 @@ router.get('/get-language', async function (req, res) {
 
 router.patch('/save-language', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         // console.log('save lang body is: ', req.body);
         let lang_id = req.body.language.id;
         let language = req.body.language;
@@ -5743,8 +5755,8 @@ router.patch('/save-language', async function (req, res) {
 
 router.get('/get-prices/:dealer_id', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         // let dealer_id = req.params.dealer_id;
         console.log(verify.user)
         let dealer_id = verify.user.dealer_id;
@@ -5991,8 +6003,8 @@ router.post('/update_credit', async function (req, res) {
 });
 router.get('/newRequests', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         try {
             let query = ''
             // console.log(verify.user);
@@ -6040,8 +6052,8 @@ router.get('/newRequests', async function (req, res) {
 })
 router.get('/get_user_credits', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         try {
             let query = ''
             query = `SELECT credits from dealer_credits where dealer_id= ${verify.user.id}`
@@ -6074,8 +6086,8 @@ router.get('/get_user_credits', async function (req, res) {
 })
 router.put('/delete_request/:id', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         try {
             let id = req.params.id
             let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
@@ -6125,8 +6137,8 @@ router.put('/delete_request/:id', async function (req, res) {
 
 router.put('/accept_request/:id', async function (req, res) {
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         try {
             let id = req.params.id
             let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
@@ -6228,8 +6240,8 @@ router.post('/create_backup_DB', async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
 
     var verify = await verifyToken(req, res);
-    var loggedInuid = verify.user.id;
     if (verify.status !== undefined && verify.status == true) {
+        var loggedInuid = verify.user.id;
         var ws;
         var wb = XLSX.utils.book_new();
         let devices = []
