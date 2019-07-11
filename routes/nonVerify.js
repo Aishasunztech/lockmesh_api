@@ -6,6 +6,7 @@ var express = require('express');
 var router = express.Router();
 var path = require('path');
 var fs = require("fs");
+var mime = require('mime');
 var backupController = require('../app/controllers/backup')
 var languageController = require('../app/controllers/language')
 const helpers = require('../helper/general_helper');
@@ -17,6 +18,7 @@ router.get("/getBackupFile/:file", backupController.getBackupFiles);
 /** Get image logo **/
 router.get("/getFile/:file", async function (req, res) {
     // var loggedInuid = req.decoded.user.id;
+    console.log(path.join(__dirname, "../uploads/" + req.params.file))
     if (fs.existsSync(path.join(__dirname, "../uploads/" + req.params.file))) {
         let file = path.join(__dirname, "../uploads/" + req.params.file);
         let fileMimeType = mime.getType(file);

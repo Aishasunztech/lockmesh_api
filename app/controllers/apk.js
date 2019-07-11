@@ -122,7 +122,7 @@ exports.uploadApk = async function (req, res) {
     console.log(formatByte);
 
     if (fieldName === Constants.APK) {
-        // let file = path.join(__dirname, "../uploads/" + filename);
+        // let file = path.join(__dirname, "../../uploads/" + filename);
         let versionCode = await general_helpers.getAPKVersionCode(filePath);
         // console.log("version code", versionCode);
         // let apk_stats = fs.statSync(file);
@@ -131,7 +131,7 @@ exports.uploadApk = async function (req, res) {
         if (versionCode) {
 
             fileName = fieldName + '-' + Date.now() + '.apk';
-            let target_path = path.join(__dirname, "../../uploads/" + fileName);
+            let target_path = path.join(__dirname, "../../../uploads/" + fileName);
 
             general_helpers.move(filePath, target_path, async function (error) {
                 console.log(error);
@@ -164,7 +164,7 @@ exports.uploadApk = async function (req, res) {
 
 
         fileName = fieldName + '-' + Date.now() + '.jpg';
-        let target_path = path.join(__dirname, "../../uploads/" + fileName);
+        let target_path = path.join(__dirname, "../../../uploads/" + fileName);
 
         general_helpers.move(filePath, target_path, async function (error) {
             console.log(error);
@@ -201,7 +201,7 @@ exports.addApk = async function (req, res) {
         let apk_name = req.body.name;
         if (!empty(logo) && !empty(apk) && !empty(apk_name)) {
 
-            let file = path.join(__dirname, "../../uploads/" + apk);
+            let file = path.join(__dirname, "../../../uploads/" + apk);
             console.log("File", file);
             if (fs.existsSync(file)) {
                 let versionCode = '';
@@ -349,7 +349,7 @@ exports.editApk = async function (req, res) {
         let apk_name = req.body.name;
         if (!empty(logo) && !empty(apk) && !empty(apk_name)) {
             // console.log("object");
-            let file = path.join(__dirname, "../../uploads/" + apk);
+            let file = path.join(__dirname, "../../../uploads/" + apk);
             // console.log(file);
             if (fs.existsSync(file)) {
                 let versionCode = '';
@@ -600,7 +600,7 @@ exports.upload = async function (req, res) {
 
         var storage = multer.diskStorage({
             destination: function (req, file, callback) {
-                callback(null, path.join(__dirname, "../uploads/"));
+                callback(null, path.join(__dirname, "../../uploads/"));
             },
 
             filename: function (req, file, callback) {
@@ -648,7 +648,7 @@ exports.upload = async function (req, res) {
             if (fileUploaded) {
                 console.log("file uploaded")
                 if (fieldName === Constants.APK) {
-                    let file = path.join(__dirname, "../uploads/" + filename);
+                    let file = path.join(__dirname, "../../uploads/" + filename);
                     let versionCode = await helpers.getAPKVersionCode(file);
                     console.log("version code", versionCode);
                     let apk_stats = fs.statSync(file);
