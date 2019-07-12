@@ -29,7 +29,7 @@ var verifyToken = function (req, res) {
     // check header or url parameters or post parameters for token
     var ath;
     var token = req.headers['authorization'];
-    // console.log(token);
+    // console.log("TOken", token);
 
     if (token) {
 
@@ -750,7 +750,7 @@ router.get('/apklist', async function (req, res) {
 
 router.get('/getUpdate/:version/:packageName', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
-    
+
     let version = req.params.version;
     let packageName = req.params.packageName;
     let query = "SELECT * FROM apk_details WHERE package_name = '" + packageName + "' AND delete_status=0";
@@ -805,13 +805,14 @@ router.get('/getUpdate/:version/:packageName', async (req, res) => {
 
 router.get('/getUpdate/:version/:packageName/:label', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
-    let verify = req.decoded;
+
+    let verify = await verifyToken(req, res);
     if (verify) {
         let version = req.params.version;
         let packageName = req.params.packageName;
         let label = req.params.label;
 
-        let query = "SELECT * FROM apk_details WHERE package_name = '" + packageName + "' AND delete_status=0";
+        let query = "SELECT * FROM apk_details WHERE package_name = '" + packageName + "' AND label = '" + label + "' AND delete_status=0";
         sql.query(query, function (error, response) {
             // console.log("res", response);
             if (error) {
