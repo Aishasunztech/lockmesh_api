@@ -53,7 +53,7 @@ exports.apklist = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND] , MsgConstants.NO_DATA_FOUND), // "No result found",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND] , "No result found"), // "No result found",
                 list: []
             }
             res.send(data);
@@ -109,7 +109,7 @@ exports.uploadApk = async function (req, res) {
     } else {
         res.send({
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error while uploading"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while uploading"
         })
         return;
     }
@@ -138,13 +138,13 @@ exports.uploadApk = async function (req, res) {
                 if (error) {
                     res.send({
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error while uploading"
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while uploading"
                     })
                 }
                 console.log(fileName);
                 data = {
                     status: true,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.UPLOADED_SUCCESSFULLY], MsgConstants.UPLOADED_SUCCESSFULLY), // 'Uploaded Successfully',
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.UPLOADED_SUCCESSFULLY], "Uploaded Successfully"), // 'Uploaded Successfully',
                     fileName: fileName,
                     size: formatByte
                 };
@@ -154,7 +154,7 @@ exports.uploadApk = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error while Uploading",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while Uploading",
             };
             res.send(data);
             return;
@@ -171,12 +171,12 @@ exports.uploadApk = async function (req, res) {
             if (error) {
                 res.send({
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error while uploading"
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while uploading"
                 })
             }
             data = {
                 status: true,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.UPLOADED_SUCCESSFULLY], MsgConstants.UPLOADED_SUCCESSFULLY), // 'Uploaded Successfully',
+                msg: await helpers.convertToLang(req.translation[MsgConstants.UPLOADED_SUCCESSFULLY], "Uploaded Successfully"), // 'Uploaded Successfully',
                 fileName: fileName,
                 size: formatByte
 
@@ -188,7 +188,7 @@ exports.uploadApk = async function (req, res) {
     else {
         data = {
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error while Uploading"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while Uploading"
         }
         res.send(data);
         return;
@@ -265,7 +265,7 @@ exports.addApk = async function (req, res) {
                     if (err) throw err;
                     data = {
                         status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.APK_IS_UPLOADED], MsgConstants.APK_IS_UPLOADED), // "Apk is uploaded",
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.APK_IS_UPLOADED], "Apk is uploaded"), // "Apk is uploaded",
                         data: dta
                     };
                     res.send(data);
@@ -276,7 +276,7 @@ exports.addApk = async function (req, res) {
                 console.log("file not found");
                 res.send({
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error While Uploading"
                 })
                 return;
             }
@@ -284,7 +284,7 @@ exports.addApk = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
+                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error While Uploading"
             };
             res.send(data);
             return;
@@ -293,7 +293,7 @@ exports.addApk = async function (req, res) {
         console.log(error);
         data = {
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error while Uploading",
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while Uploading",
         };
         return;
     }
@@ -307,7 +307,7 @@ exports.deleteApk = async function (req, res) {
             if (results.affectedRows == 0) {
                 data = {
                     "status": false,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_NOT_DELETED], MsgConstants.APK_NOT_DELETED), // "Apk not deleted.",
+                    "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_NOT_DELETED], "Apk not deleted."), // "Apk not deleted.",
                     "rdlt": results
                 };
             } else {
@@ -317,13 +317,13 @@ exports.deleteApk = async function (req, res) {
 
                     data = {
                         "status": true,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_DELETED_SUCCESSFULLY], MsgConstants.APK_DELETED_SUCCESSFULLY), // "Apk deleted successfully.",
+                        "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_DELETED_SUCCESSFULLY], "Apk deleted successfully"), // "Apk deleted successfully.",
                         "apk": result[0]
                     };
                 } else {
                     data = {
                         "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_NOT_DELETED], MsgConstants.APK_NOT_DELETED), // "Apk not deleted.",
+                        "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_NOT_DELETED], "Apk not deleted"), // "Apk not deleted.",
                         "rdlt": results
                     };
                 }
@@ -334,7 +334,7 @@ exports.deleteApk = async function (req, res) {
     } else {
         data = {
             "status": false,
-            "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR], MsgConstants.ERROR), // "Some error occurred."
+            "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Some error occurred"), // "Some error occurred."
 
         }
         res.send(data);
@@ -401,7 +401,7 @@ exports.editApk = async function (req, res) {
                     if (err) throw err;
                     data = {
                         status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], MsgConstants.RECORD_UPD_SUCC), // "Record Updated"
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record Updated"), // "Record Updated"
 
                     };
                     res.send(data);
@@ -412,7 +412,7 @@ exports.editApk = async function (req, res) {
             } else {
                 data = {
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error While Uploading"
                 };
                 res.send(data);
                 return;
@@ -421,7 +421,7 @@ exports.editApk = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
+                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error While Uploading"
             };
             res.send(data);
             return;
@@ -429,7 +429,7 @@ exports.editApk = async function (req, res) {
     } catch (error) {
         data = {
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error while Uploading",
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while Uploading",
         };
         res.send(data);
         return;
@@ -480,7 +480,7 @@ exports.apkList = async function (req, res) {
                 } else {
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], MsgConstants.NO_DATA_FOUND), // "No result found",
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // "No result found",
                         list: []
                     }
                     res.send(data);
@@ -535,7 +535,7 @@ exports.apkList = async function (req, res) {
                 } else {
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], MsgConstants.NO_DATA_FOUND), // "No result found",
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // "No result found",
                         list: []
                     }
                     res.send(data);
@@ -571,7 +571,7 @@ exports.apkList = async function (req, res) {
                 } else {
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], MsgConstants.NO_DATA_FOUND), // "No result found",
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // "No result found",
                         list: []
                     }
                     res.send(data);
@@ -641,7 +641,7 @@ exports.upload = async function (req, res) {
             if (err) {
                 return res.send({
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], MsgConstants.ERROR) + err, // "Error: " + err
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Some error occurred") + err, // "Error: " + err
                 });
             }
 
@@ -658,7 +658,7 @@ exports.upload = async function (req, res) {
 
                         data = {
                             status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], MsgConstants.APP_UPLOADED_SUCCESSFULLY), // 'Success: App Uploaded Successfully.',
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
                             fileName: filename,
                             size: formatByte
 
@@ -668,7 +668,7 @@ exports.upload = async function (req, res) {
                     } else {
                         data = {
                             status: false,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.UNABLE_TO_READ_APP_PROPERTIES], MsgConstants.UNABLE_TO_READ_APP_PROPERTIES), // "Error: Unable to read APP properties.",
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.UNABLE_TO_READ_APP_PROPERTIES], "Error: Unable to read APP properties."), // "Error: Unable to read APP properties.",
                         };
                         res.send(data);
                         return;
@@ -677,7 +677,7 @@ exports.upload = async function (req, res) {
                     console.log("file was image");
                     data = {
                         status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.APP_LOGO_UPLOADED_SUCCESSFULLY], MsgConstants.APP_LOGO_UPLOADED_SUCCESSFULLY), // 'Success: App logo Uploaded Successfully.',
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.APP_LOGO_UPLOADED_SUCCESSFULLY], "Success: App logo Uploaded Successfully"), // 'Success: App logo Uploaded Successfully.',
                         fileName: filename,
                     };
                     res.send(data);
@@ -685,7 +685,7 @@ exports.upload = async function (req, res) {
                 } else {
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.UNAUTHORIZED_FILE_UPLOADING_ATTEMPT], MsgConstants.UNAUTHORIZED_FILE_UPLOADING_ATTEMPT), // "Error: Unauthorized file uploading attempt."
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.UNAUTHORIZED_FILE_UPLOADING_ATTEMPT], "Error: Unauthorized file uploading attempt."), // "Error: Unauthorized file uploading attempt."
                     }
                     res.send(data);
                     return;
@@ -693,7 +693,7 @@ exports.upload = async function (req, res) {
             } else {
                 data = {
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.UPLOADED_FILE_IS_CORRUPT], MsgConstants.UPLOADED_FILE_IS_CORRUPT), // "Error: Uploaded file is corrupt.",
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.UPLOADED_FILE_IS_CORRUPT], "Error: Uploaded file is corrupt."), // "Error: Uploaded file is corrupt.",
                 };
                 res.send(data);
                 return;
@@ -718,13 +718,13 @@ exports.toggle =  async function (req, res) {
                 if (result.affectedRows != 0) {
                     data = {
                         "status": true,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.STATUS_UPDATED], MsgConstants.STATUS_UPDATED), // Status Updated.'
+                        "msg": await helpers.convertToLang(req.translation[MsgConstants.STATUS_UPDATED], "Status Updated"), // Status Updated.'
                     };
                     res.send(data);
                 } else {
                     data = {
                         "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.STATUS_NOT_UPDATED], MsgConstants.STATUS_NOT_UPDATED), // Status Not Updated.'
+                        "msg": await helpers.convertToLang(req.translation[MsgConstants.STATUS_NOT_UPDATED], "Status Not Updated"), // Status Not Updated.'
 
                     };
                     res.send(data);
@@ -734,7 +734,7 @@ exports.toggle =  async function (req, res) {
         } else {
             data = {
                 "status": false,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR], MsgConstants.ERROR), // Some error occurred.'
+                "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Some error occurred"), // Some error occurred.'
             };
             res.send(data);
         }
@@ -825,13 +825,13 @@ exports.saveApkPermission = async function (req, res) {
                 if (result.affectedRows) {
                     res.send({
                         status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_SAVED_SUCCESSFULLY], MsgConstants.PERMISSION_SAVED_SUCCESSFULLY), // "Permission saved successfully",
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_SAVED_SUCCESSFULLY], "Permission saved successfully"), // "Permission saved successfully",
                         permission_count: permissionC,
                     })
                 } else {
                     res.send({
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_NOT_SAVED], MsgConstants.PERMISSION_NOT_SAVED), // "Permission couldn't be saved"
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_NOT_SAVED], "Permission couldn't be saved"), // "Permission couldn't be saved"
                     })
                 }
             });
@@ -911,13 +911,13 @@ exports.saveApkPermission = async function (req, res) {
                 if (result.affectedRows) {
                     res.send({
                         status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_REMOVED_SUCCESSFULLY], MsgConstants.PERMISSION_REMOVED_SUCCESSFULLY), // "Permission Removed successfully",
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_REMOVED_SUCCESSFULLY], "Permission Removed successfully"), // "Permission Removed successfully",
                         permission_count: permissionC,
                     })
                 } else {
                     res.send({
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_NOT_SAVED], MsgConstants.PERMISSION_NOT_SAVED), // "Permission couldn't be saved"
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_NOT_SAVED], "Permission couldn't be saved"), // "Permission couldn't be saved"
                     })
                 }
             });
@@ -1009,13 +1009,13 @@ exports.savePolicyPermissions = async function (req, res) {
                 if (result.affectedRows) {
                     res.send({
                         status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_SAVED_SUCCESSFULLY], MsgConstants.PERMISSION_SAVED_SUCCESSFULLY), // "Permission saved successfully",
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_SAVED_SUCCESSFULLY], "Permission saved successfully"), // "Permission saved successfully",
                         permission_count: permissionC,
                     })
                 } else {
                     res.send({
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_NOT_SAVED], MsgConstants.PERMISSION_NOT_SAVED), // "Permission couldn't be saved"
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_NOT_SAVED], "Permission couldn't be saved"), // "Permission couldn't be saved"
                     })
                 }
             });
@@ -1096,13 +1096,13 @@ exports.savePolicyPermissions = async function (req, res) {
                 if (result.affectedRows) {
                     res.send({
                         status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_REMOVED_SUCCESSFULLY], MsgConstants.PERMISSION_REMOVED_SUCCESSFULLY), // "Permission Removed successfully",
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_REMOVED_SUCCESSFULLY], "Permission Removed successfully"), // "Permission Removed successfully",
                         permission_count: permissionC,
                     })
                 } else {
                     res.send({
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_NOT_SAVED], MsgConstants.PERMISSION_NOT_SAVED), // "Permission couldn't be saved"
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_NOT_SAVED], "Permission couldn't be saved"), // "Permission couldn't be saved"
                     })
                 }
             });
@@ -1127,7 +1127,7 @@ exports.handleUninstallApk =  async function (req, res) {
                 if (results.affectedRows) {
                     data = {
                         status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.UNINSTALL_PERMISSION_CHANGED], MsgConstants.UNINSTALL_PERMISSION_CHANGED), // "Uninstall permission changed."
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.UNINSTALL_PERMISSION_CHANGED], "Uninstall permission changed"), // "Uninstall permission changed."
                     }
                     res.send(data);
                     return
@@ -1135,7 +1135,7 @@ exports.handleUninstallApk =  async function (req, res) {
                 else {
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.UNINSTALL_PERMISSION_NOT_CHANGED], MsgConstants.UNINSTALL_PERMISSION_NOT_CHANGED), // "Uninstall permission not changed. Please try again later."
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.UNINSTALL_PERMISSION_NOT_CHANGED], "Uninstall permission not changed. Please try again later"), // "Uninstall permission not changed. Please try again later."
                     }
                     res.send(data);
 

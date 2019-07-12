@@ -42,7 +42,7 @@ exports.addUser = async function (req, res) {
             if (user.length > 0) {
                 data = {
                     'status': false,
-                    'msg': await helpers.convertToLang(req.translation[MsgConstants.USER_ALRDY_REG], MsgConstants.USER_ALRDY_REG), // User Already Registered. Please use another email.
+                    'msg': await helpers.convertToLang(req.translation[MsgConstants.USER_ALRDY_REG], "User Already Registered. Please use another email"), // User Already Registered. Please use another email.
                 }
                 res.status(200).send(data);
                 return;
@@ -69,7 +69,7 @@ exports.addUser = async function (req, res) {
                 // console.log('result add',dealer);
                 data = {
                     'status': true,
-                    'msg': await helpers.convertToLang(req.translation[MsgConstants.USER_REG_SUCC], MsgConstants.USER_REG_SUCC), // User has been registered successfully.
+                    'msg': await helpers.convertToLang(req.translation[MsgConstants.USER_REG_SUCC], "User has been registered successfully"), // User has been registered successfully.
                     'user': user,
                 }
                 res.status(200).send(data);
@@ -79,7 +79,7 @@ exports.addUser = async function (req, res) {
         } else {
             data = {
                 'status': false,
-                'msg': await helpers.convertToLang(req.translation[MsgConstants.INVALID_EMAIL_NAME], MsgConstants.INVALID_EMAIL_NAME), // Invalid email or name
+                'msg': await helpers.convertToLang(req.translation[MsgConstants.INVALID_EMAIL_NAME], "Invalid email or name"), // Invalid email or name
             }
             res.status(200).send(data);
         }
@@ -104,7 +104,7 @@ exports.editUser =  async function (req, res) {
             if (user.length > 0) {
                 data = {
                     'status': false,
-                    'msg': await helpers.convertToLang(req.translation[MsgConstants.USER_ALRDY_REG], MsgConstants.USER_ALRDY_REG), // User Already Registered. Please use another email.',
+                    'msg': await helpers.convertToLang(req.translation[MsgConstants.USER_ALRDY_REG], "User Already Registered. Please use another email"), // User Already Registered. Please use another email.',
                 }
                 res.status(200).send(data);
                 return;
@@ -133,7 +133,7 @@ exports.editUser =  async function (req, res) {
 
                 data = {
                     'status': true,
-                    'msg': await helpers.convertToLang(req.translation[MsgConstants.USER_INFO_CHANGE_SUCC], MsgConstants.USER_INFO_CHANGE_SUCC), // User Info has been changed successfully.
+                    'msg': await helpers.convertToLang(req.translation[MsgConstants.USER_INFO_CHANGE_SUCC], "User Info has been changed successfully"), // User Info has been changed successfully.
                     'user': userData,
                 }
                 res.status(200).send(data);
@@ -143,7 +143,7 @@ exports.editUser =  async function (req, res) {
         } else {
             data = {
                 'status': false,
-                'msg': await helpers.convertToLang(req.translation[MsgConstants.INVALID_EMAIL_NAME], MsgConstants.INVALID_EMAIL_NAME), // Invalid email or name'
+                'msg': await helpers.convertToLang(req.translation[MsgConstants.INVALID_EMAIL_NAME], "Invalid email or name"), // Invalid email or name'
             }
             res.status(200).send(data);
         }
@@ -164,14 +164,14 @@ exports.deleteUser = async function (req, res) {
                 if (result && result.affectedRows !== 0) {
                     data = {
                         'status': true,
-                        'msg': await helpers.convertToLang(req.translation[MsgConstants.USER_DEL_SUCC], MsgConstants.USER_DEL_SUCC), // User deleted successfully.
+                        'msg': await helpers.convertToLang(req.translation[MsgConstants.USER_DEL_SUCC], "User deleted successfully"), // User deleted successfully.
                     }
                     res.send(data);
                     return
                 } else {
                     data = {
                         'status': true,
-                        'msg': await helpers.convertToLang(req.translation[MsgConstants.USER_NOT_DEL_SUCC], MsgConstants.USER_NOT_DEL_SUCC), // User not deleted try again later.'
+                        'msg': await helpers.convertToLang(req.translation[MsgConstants.USER_NOT_DEL_SUCC], "User not deleted try again later"), // User not deleted try again later.'
                     }
                     res.send(data);
                     return
@@ -180,7 +180,7 @@ exports.deleteUser = async function (req, res) {
         } else {
             data = {
                 'status': false,
-                'msg': await helpers.convertToLang(req.translation[MsgConstants.INVALID_USER], MsgConstants.INVALID_USER), // Invalid User.
+                'msg': await helpers.convertToLang(req.translation[MsgConstants.INVALID_USER], "Invalid User"), // Invalid User.
             }
             res.send(data);
             return
@@ -204,14 +204,14 @@ exports.undoDeleteUser =  async function (req, res) {
                 if (result && result.affectedRows !== 0) {
                     data = {
                         'status': true,
-                        'msg': await helpers.convertToLang(req.translation[MsgConstants.USER_ADD_AGAIN], MsgConstants.USER_ADD_AGAIN), // User added again successfully.
+                        'msg': await helpers.convertToLang(req.translation[MsgConstants.USER_ADD_AGAIN], "User added again successfully"), // User added again successfully.
                     }
                     res.send(data);
                     return
                 } else {
                     data = {
                         'status': true,
-                        'msg': await helpers.convertToLang(req.translation[MsgConstants.USER_NOT_ADD], MsgConstants.USER_NOT_ADD), // User not added try again later.
+                        'msg': await helpers.convertToLang(req.translation[MsgConstants.USER_NOT_ADD], "User not added try again later."), // User not added try again later.
                     }
                     res.send(data);
                     return
@@ -220,7 +220,7 @@ exports.undoDeleteUser =  async function (req, res) {
         } else {
             data = {
                 'status': false,
-                'msg': await helpers.convertToLang(req.translation[MsgConstants.INVALID_USER], MsgConstants.INVALID_USER), // Invalid User.'
+                'msg': await helpers.convertToLang(req.translation[MsgConstants.INVALID_USER], "Invalid User"), // Invalid User.'
             }
             res.send(data);
             return
@@ -244,13 +244,13 @@ exports.updateProfile = async function (req, res) {
                 data = {
                     "status": false,
                     "data": req.body,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.ERR_UP_PROFILE], MsgConstants.ERR_UP_PROFILE), // Error While Updating Profile
+                    "msg": await helpers.convertToLang(req.translation[MsgConstants.ERR_UP_PROFILE], "Error While Updating Profile"), // Error While Updating Profile
                 };
             } else {
                 data = {
                     "status": true,
                     "data": req.body,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.PROFILE_UP_SUCC], MsgConstants.PROFILE_UP_SUCC), // Profile Updated Successfully
+                    "msg": await helpers.convertToLang(req.translation[MsgConstants.PROFILE_UP_SUCC], "Profile Updated Successfully"), // Profile Updated Successfully
                 };
             }
 
@@ -355,14 +355,14 @@ exports.checkProfile = async function (req, res) {
                 if (results.affectedRows == 0) {
                     data = {
                         "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_NOT_DELETED], MsgConstants.APK_NOT_DELETED), // Apk not deleted.",
+                        "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_NOT_DELETED], "Apk not deleted"), // Apk not deleted.",
                         "fld": fields,
                         "rdlt": results
                     };
                 } else {
                     data = {
                         "status": true,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_DELETED_SUCCESSFULLY], MsgConstants.APK_DELETED_SUCCESSFULLY), // Apk deleted successfully.",
+                        "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_DELETED_SUCCESSFULLY], "Apk deleted successfully"), // Apk deleted successfully.",
 
                     };
                 }
@@ -371,7 +371,7 @@ exports.checkProfile = async function (req, res) {
         } else {
             data = {
                 "status": false,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR], MsgConstants.ERROR), // Some error occurred."
+                "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Some error occurred"), // Some error occurred."
 
             }
             res.send(data);

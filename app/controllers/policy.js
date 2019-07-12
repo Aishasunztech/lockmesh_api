@@ -68,7 +68,7 @@ exports.getPolicies = async function (req, res) {
                     }
                     data = {
                         "status": true,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // successful',
+                        "msg": await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "successful"), // successful',
                         "policies": policies
                     };
                     // console.log(data);
@@ -154,14 +154,14 @@ exports.getPolicies = async function (req, res) {
                         }
                         return res.json({
                             "status": true,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // successful',
+                            "msg": await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "successful"), // successful',
                             "policies": policies
                         });
 
                     } else {
                         data = {
                             status: false,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], MsgConstants.NO_DATA_FOUND), // No result found",
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // No result found",
                             policies: []
                         }
                         res.send(data);
@@ -171,7 +171,7 @@ exports.getPolicies = async function (req, res) {
         } else {
             data = {
                 "status": false,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_USER], MsgConstants.INVALID_USER), // Invalid User',
+                "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_USER], "Invalid User"), // Invalid User',
                 "policies": []
             };
             res.send(data);
@@ -235,7 +235,7 @@ exports.getPolicies = async function (req, res) {
 //                     }
 //                     data = {
 //                         "status": true,
-//                         "msg": await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // successful',
+//                         "msg": await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "successful"), // successful',
 //                         "policies": policies
 //                     };
 //                     // console.log(data);
@@ -317,14 +317,14 @@ exports.getPolicies = async function (req, res) {
 //                         }
 //                         return res.json({
 //                             "status": true,
-//                             "msg": await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // successful',
+//                             "msg": await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "successful"), // successful',
 //                             "policies": policies
 //                         });
 
 //                     } else {
 //                         data = {
 //                             status: false,
-//                             msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], MsgConstants.NO_DATA_FOUND), // No result found",
+//                             msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // No result found",
 //                             policies: []
 //                         }
 //                         res.send(data);
@@ -334,7 +334,7 @@ exports.getPolicies = async function (req, res) {
 //         } else {
 //             data = {
 //                 "status": false,
-//                 "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_USER], MsgConstants.INVALID_USER), // Invalid User',
+//                 "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_USER], "Invalid User"), // Invalid User',
 //                 "policies": []
 //             };
 //             res.send(data);
@@ -365,13 +365,13 @@ exports.changePolicyStatus = async function (req, res) {
             if (result.affectedRows) {
                 data = {
                     "status": true,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // successful'
+                    "msg": await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "successful"), // successful'
                 };
                 res.send(data);
             } else {
                 data = {
                     "status": false,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR], MsgConstants.ERROR), // error'
+                    "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR], "ERROR"), // error'
                 };
                 res.send(data);
             }
@@ -408,13 +408,13 @@ exports.savePolicyChanges = async function (req, res) {
             if (result.affectedRows) {
                 data = {
                     "status": true,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.PLCY_UP_SUCC], MsgConstants.PLCY_UP_SUCC), // Policy Updated Successfully
+                    "msg": await helpers.convertToLang(req.translation[MsgConstants.PLCY_UP_SUCC], "Policy Updated Successfully"), // Policy Updated Successfully
                 };
                 res.send(data);
             } else {
                 data = {
                     "status": false,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR], MsgConstants.ERROR), // error'
+                    "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR], "ERROR"), // error'
                 };
                 res.send(data);
             }
@@ -557,7 +557,7 @@ exports.savePolicy = async function (req, res) {
                 if (checkExisting.length) {
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.PLCY_NAME_ALRDY_TKN], MsgConstants.PLCY_NAME_ALRDY_TKN), // Policy name has already been taken
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PLCY_NAME_ALRDY_TKN], "Policy name has already been taken"), // Policy name has already been taken
 
                     };
                     res.send(data);
@@ -582,13 +582,13 @@ exports.savePolicy = async function (req, res) {
                         }
                         data = {
                             status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.PLCY_SAV_SUCC], MsgConstants.PLCY_SAV_SUCC), // Policy Saved Successfully
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.PLCY_SAV_SUCC], "Policy Saved Successfully"), // Policy Saved Successfully
                             data: addedPolicy
                         };
                     } else {
                         data = {
                             status: false,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.PLCY_NOT_SAV], MsgConstants.PLCY_NOT_SAV), // Policy Couldn\'t be saved'
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.PLCY_NOT_SAV], "Policy Couldn\'t be saved"), // Policy Couldn\'t be saved'
                         }
                     }
                     res.send(data);
@@ -598,7 +598,7 @@ exports.savePolicy = async function (req, res) {
             } else {
                 data = {
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.PLCY_NOT_SAV], MsgConstants.PLCY_NOT_SAV), // Policy Couldn\'t be saved'
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.PLCY_NOT_SAV], "Policy Couldn\'t be saved"), // Policy Couldn\'t be saved'
                 }
                 res.send(data);
                 return;
@@ -661,7 +661,7 @@ exports.applyPolicy = async function (req, res) {
                         } else {
                             data = {
                                 status: false,
-                                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], MsgConstants.ERROR_PROC), // Error while Processing',
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"), // Error while Processing',
                             };
                             res.send(data);
                         }
@@ -699,7 +699,7 @@ exports.setDefaultPolicy = async function (req, res) {
             }
             data = {
                 "status": true,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.DEFAULT_POLICY_CHANGED_SUCCESSFULLY], MsgConstants.DEFAULT_POLICY_CHANGED_SUCCESSFULLY), // Default policy changed successfully'
+                "msg": await helpers.convertToLang(req.translation[MsgConstants.DEFAULT_POLICY_CHANGED_SUCCESSFULLY], "Default policy changed successfully"), // Default policy changed successfully'
             };
             res.send(data);
         }

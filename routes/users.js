@@ -24,7 +24,7 @@ const stripe = require("stripe")("sk_test_1rS6KC3GoPT8wlOYWSLEQFk6");
 const { sql } = require('../config/database');
 // var config = require('../helper/config.js');
 
-var Constants = require('../constants/Application'); 
+var Constants = require('../constants/Application');
 var MsgConstants = require('../constants/MsgConstants');
 var app_constants = require('../config/constants');
 
