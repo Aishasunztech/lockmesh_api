@@ -4,10 +4,11 @@ module.exports = {
     ADMIN: "admin",
     DEALER: "dealer",
     SDEALER: "sdealer",
+    AUTO_UPDATE_ADMIN: "auto_update_admin",
+    
     DEVICE: 'device',
     SOCKET: 'socket',
     TOKEN: "token",
-    
 
     // dealers
     DEALER_ACTIVE: "active",

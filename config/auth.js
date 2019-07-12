@@ -1,128 +1,119 @@
 const jwt = require('jsonwebtoken');
 const config = require('./constants');
+const { sql } = require('../config/database');
 
-// module.exports = function(req, res, next) {
-//     var ath;
-//     var token = req.headers['authorization'];
-//     if (token) {
+module.exports = (req, res, next) => {
 
-//         jwt.verify(token, config.SECRET, async function (err, decoded) {
-//             if (err) {
-//                 ath = {
-//                     status: false,
-//                     success: false
-//                 };
-//                 return res.json({
-//                     success: false,
-//                     msg: 'Failed to authenticate token.'
-//                 });
-
-//             } else {
-//                 // if everything is good, save to request for use in other routes
-//                 // let result = await helpers.getLoginByToken(token);
-//                 // console.log("decoding", result);
-//                 // if(result){
-//                 // if(result.status === true || result.status === 1){
-//                 req.decoded = decoded;
-//                 req.decoded.status = true;
-//                 req.decoded.success = true;
-//                 ath = decoded;
-//                 next();
-//                 // console.log(ath);
-
-
-//                 // } else {
-//                 //     ath.status = false;
-//                 //     return res.json({
-//                 //         success: false,
-//                 //         msg: 'Failed to authenticate token.'
-//                 //     });
-//                 // }
-//                 // } else {
-//                 //     ath.status = false;
-//                 //     return res.json({
-//                 //         success: false,
-//                 //         msg: 'Failed to authenticate token.'
-//                 //     });
-//                 // } 
-
-//             }
-//         });
-//     } else {
-//         ath = {
-//             status: false,
-//             success: false
-//         };
-//         return res.send({
-//             success: false,
-//             msg: 'No token provided.'
-//         });
-//     }
-//     return ath;
-// };
-
-module.exports = function(req, res) {
     var ath;
     var token = req.headers['authorization'];
-    if (token) {
-
-        jwt.verify(token, config.SECRET, async function (err, decoded) {
-            if (err) {
-                ath = {
-                    status: false,
-                    success: false
-                };
-                res.json({
-                    success: false,
-                    msg: 'Failed to authenticate token.'
-                });
-
-            } else {
-                // if everything is good, save to request for use in other routes
-                // let result = await helpers.getLoginByToken(token);
-                // console.log("decoding", result);
-                // if(result){
-                // if(result.status === true || result.status === 1){
-                req.decoded = decoded;
-                req.decoded.status = true;
-                req.decoded.success = true;
-                ath = decoded;
-                // next();
-                // console.log(ath);
-
-
-                // } else {
-                //     ath.status = false;
-                //     return res.json({
-                //         success: false,
-                //         msg: 'Failed to authenticate token.'
-                //     });
-                // }
-                // } else {
-                //     ath.status = false;
-                //     return res.json({
-                //         success: false,
-                //         msg: 'Failed to authenticate token.'
-                //     });
-                // } 
-
-            }
-        });
-    } else {
-        ath = {
-            status: false,
-            success: false
-        };
-        res.send({
-            success: false,
-            msg: 'No token provided.'
-        });
-    }
-    return ath;
-};
-
     
-    
+    // try {
+        if (token) {
+            jwt.verify(token, config.SECRET, async function (err, decoded) {
+                if (err) {
+                    ath = {
+                        status: false,
+                        success: false
+                    };
+                    return res.json({
+                        success: false,
+                        msg: 'Failed to authenticate token.'
+                    });
+
+                } else {
+                    req.decoded = decoded;
+                    req.decoded.status = true;
+                    req.decoded.success = true;
+                    ath = decoded;
+
+                    if (ath.user) {
+                        var user_id = ath.user.id
+
+                        var d_lng_id = 1;
+
+                        if (user_id != undefined && user_id != '' && user_id != null) {
+                            var sQry = `SELECT dealer_lng_id FROM dealer_language WHERE dealer_id = ${user_id} LIMIT 1`;
+                            var dLang = await sql.query(sQry);
+                            if (dLang.length) {
+                                d_lng_id = dLang[0].dealer_lng_id;
+                            }
+                        }
+
+                        if (d_lng_id == undefined || d_lng_id === "undefined" || d_lng_id == '' || d_lng_id == null || d_lng_id === 'null' || d_lng_id == '0') {
+                            d_lng_id = 1;
+                        }
+
+                        var sTranslation = `SELECT * FROM lng_translations WHERE lng_id = ${d_lng_id} LIMIT 1`;
+                        let resp = await sql.query(sTranslation);
+                        if (resp.length) {
+                            let obj = {}
+                            resp.forEach((elem) => {
+                                let key_id = elem.key_id;
+                                obj[key_id] = elem.key_value
+                            })
+                            req.translation = obj;
+                        }
+
+                        next();
+                    } else {
+                        ath = {
+                            status: false,
+                            success: false
+                        };
+                        return res.send({
+                            success: false,
+                            msg: 'No User Found'
+                        });
+                    }
+                    // console.log(req.translation, "Translation")
+
+                    // if everything is good, save to request for use in other routes
+                    // let result = await helpers.getLoginByToken(token);
+                    // console.log("decoding", result);
+                    // if(result){
+                    // if(result.status === true || result.status === 1){
+                    // console.log(nextFunc)
+                    // console.log(ath);
+
+
+                    // } else {
+                    //     ath.status = false;
+                    //     return res.json({
+                    //         success: false,
+                    //         msg: 'Failed to authenticate token.'
+                    //     });
+                    // }
+                    // } else {
+                    //     ath.status = false;
+                    //     return res.json({
+                    //         success: false,
+                    //         msg: 'Failed to authenticate token.'
+                    //     });
+                    // } 
+
+                }
+            });
+
+
+        } else {
+            ath = {
+                status: false,
+                success: false
+            };
+            return res.send({
+                success: false,
+                msg: 'No token provided.'
+            });
+        }
+        return ath;
+
+    // } catch (error) {
+    //     console.log(error);
+    // }
+}
+
+
+
 
 
 
