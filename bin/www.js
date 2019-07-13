@@ -1,3 +1,4 @@
+require('dotenv').config()
 
 var app = require('../app');
 var debug = require('debug')('webportalbackend:server');
