@@ -748,41 +748,32 @@ router.get('/apklist', async function (req, res) {
 });
 
 
-router.get('/getUpdate/:version/:packageName', async (req, res) => {
+router.get('/getUpdate/:version/:packageName/:label', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
 
-    let version = req.params.version;
-    let packageName = req.params.packageName;
-    let query = "SELECT * FROM apk_details WHERE package_name = '" + packageName + "' AND delete_status=0";
-    sql.query(query, function (error, response) {
-        // console.log("res", response);
+    let verify = await verifyToken(req, res);
+    if (verify.status) {
+        let version = req.params.version;
+        let packageName = req.params.packageName;
+        let label = req.params.label;
+        let apk_url = null;
+        let getUpdateQ = "SELECT * FROM apk_details WHERE package_name = '" + packageName + "' AND label = '" + label + "' AND delete_status=0";
+        let updateApks = await sql.query(getUpdateQ);
 
-        if (error) {
-            res.send({
-                success: true,
-                status: false,
-                apk_status: false,
-                msg: "Error in Query"
-            });
-            return;
-        }
-
-        let isAvail = false;
-
-        if (response.length) {
-            for (let i = 0; i < response.length; i++) {
-                if (Number(response[i].version_code) > Number(version)) {
-                    isAvail = true;
-                    res.send({
-                        apk_status: true,
-                        success: true,
-                        apk_url: response[i].apk
-                    });
-
+        if (updateApks.length) {
+            for (let i = 0; i < updateApks.length; i++) {
+                if (Number(updateApks[i].version_code) > Number(version)) {
+                    apk_url = updateApks[i].apk;
                     break;
                 }
             }
-            if (!isAvail) {
+            if (apk_url) {
+                res.send({
+                    apk_status: true,
+                    success: true,
+                    apk_url: apk_url
+                });
+            } else {
                 res.send({
                     apk_status: false,
                     success: true,
@@ -790,6 +781,7 @@ router.get('/getUpdate/:version/:packageName', async (req, res) => {
                 });
             }
             return;
+
         } else {
             res.send({
                 apk_status: false,
@@ -798,66 +790,6 @@ router.get('/getUpdate/:version/:packageName', async (req, res) => {
             });
             return;
         }
-    })
-    // }
-
-});
-
-router.get('/getUpdate/:version/:packageName/:label', async (req, res) => {
-    res.setHeader('Content-Type', 'application/json');
-
-    let verify = await verifyToken(req, res);
-    if (verify) {
-        let version = req.params.version;
-        let packageName = req.params.packageName;
-        let label = req.params.label;
-
-        let query = "SELECT * FROM apk_details WHERE package_name = '" + packageName + "' AND label = '" + label + "' AND delete_status=0";
-        sql.query(query, function (error, response) {
-            // console.log("res", response);
-            if (error) {
-                res.send({
-                    success: true,
-                    status: false,
-                    apk_status: false,
-                    msg: "Error in Query"
-                });
-                return;
-            }
-
-            let isAvail = false;
-
-            if (response.length) {
-                for (let i = 0; i < response.length; i++) {
-                    if (Number(response[i].version_code) > Number(version)) {
-                        isAvail = true;
-                        res.send({
-                            apk_status: true,
-                            success: true,
-                            apk_url: response[i].apk
-                        });
-
-                        break;
-                    }
-                }
-                if (!isAvail) {
-                    res.send({
-                        apk_status: false,
-                        success: true,
-                        msg: ""
-                    });
-                }
-                return;
-
-            } else {
-                res.send({
-                    apk_status: false,
-                    success: true,
-                    msg: ""
-                });
-                return;
-            }
-        })
     }
 
 });

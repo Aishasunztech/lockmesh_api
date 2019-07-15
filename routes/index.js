@@ -15,9 +15,6 @@ var nonVerifyRoutes = require('./nonVerify');
 
 // var userController = require('../app/controllers/user');
 
-
-
-
 module.exports = function (app) {
 
   app.use('/mobile', mobileRoutes);
@@ -28,11 +25,5 @@ module.exports = function (app) {
     authMiddleware,
     userRoutes);
 
-  // app.use('/users/languages' , userController.languages)
-
-  // app.group('/', function (router) {
-  //   router.use('/mobile', mobileRoutes);
-  //   router.use('/users', userRoutes);
-  // });
 
 }
