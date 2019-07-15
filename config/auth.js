@@ -27,7 +27,8 @@ module.exports = (req, res, next) => {
                     ath = decoded;
 
                     if (ath.user) {
-                        var user_id = ath.user.id
+                        var user_id = ath.user.id;
+                        console.log('user is: ', ath.user);
 
                         var d_lng_id = 1;
 
@@ -43,7 +44,7 @@ module.exports = (req, res, next) => {
                             d_lng_id = 1;
                         }
 
-                        var sTranslation = `SELECT * FROM lng_translations WHERE lng_id = ${d_lng_id} LIMIT 1`;
+                        var sTranslation = `SELECT * FROM lng_translations WHERE lng_id = ${d_lng_id}`;
                         let resp = await sql.query(sTranslation);
                         if (resp.length) {
                             let obj = {}
