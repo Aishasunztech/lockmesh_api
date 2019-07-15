@@ -74,7 +74,7 @@ exports.getPolicies = async function (req, res) {
                 });
             } else {
                 let myquery = `SELECT policy_id FROM dealer_policies WHERE dealer_id='${verify.user.id}'`;
-                
+
                 let permittedids = await sql.query(myquery);
                 let prrr = [];
                 if (permittedids && permittedids.length) {
@@ -197,49 +197,6 @@ exports.changePolicyStatus = async function (req, res) {
                 data = {
                     "status": true,
                     "msg": await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // successful'
-                };
-                res.send(data);
-            } else {
-                data = {
-                    "status": false,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR], MsgConstants.ERROR), // error'
-                };
-                res.send(data);
-            }
-
-        });
-    }
-}
-
-
-exports.savePolicyChanges = async function (req, res) {
-    var verify = req.decoded;
-
-    // if (verify.status === true) {
-    if (verify) {
-        // console.log('body of kth e', req.body);
-        let record = req.body;
-        let id = record.id;
-        let push_apps = record.push_apps;
-        let controls = record.controls;
-        let permissions = record.permissions;
-        let app_list = record.app_list;
-        let policy_note = record.policy_note;
-        let policy_name = record.policy_name;
-        // console.log(record,'id id', id)
-
-
-        let query = "UPDATE policy SET push_apps = '" + push_apps + "', controls = '" + controls + "', permissions = '" + permissions + "', app_list = '" + app_list + "', policy_note = '" + policy_note + "', policy_name = '" + policy_name + "' WHERE id='" + id + "'";
-        // console.log('qerury', query)
-        sql.query(query, async function (error, result) {
-            console.log(result, 'relstsdf');
-            if (error) {
-                console.log(error);
-            }
-            if (result.affectedRows) {
-                data = {
-                    "status": true,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.PLCY_UP_SUCC], MsgConstants.PLCY_UP_SUCC), // Policy Updated Successfully
                 };
                 res.send(data);
             } else {
@@ -403,10 +360,10 @@ exports.savePolicy = async function (req, res) {
                 let appListSize = objectsize(app_list);
                 let secureAppsSize = objectsize(secure_apps);
                 let sysPermissionSize = objectsize(system_permissions)
-                
+
                 let policyObjSize = helpers.formatBytes(pushAppsSize + appListSize + secureAppsSize + sysPermissionSize)
                 let policyActualSize = helpers.formatBytes(pushAppFileSize + appListSize + secureAppsSize + sysPermissionSize);
-                
+
                 var command_name = '#' + policy_name.replace(/ /g, "_");
 
                 var applyQuery = `INSERT INTO policy (policy_name, policy_note, command_name, app_list, push_apps, controls, permissions, dealer_id, dealer_type, dealers, status, object_size, policy_size) VALUES ('${policy_name}', '${policy_note}', '${command_name}', '${app_list}', '${push_apps}', '${system_permissions}', '${secure_apps}', '${loggedDealerId}', '${loggedDealerType}', '[]', 1, '${policyObjSize}', '${policyActualSize}')`;
@@ -453,6 +410,78 @@ exports.savePolicy = async function (req, res) {
 
 }
 
+exports.savePolicyChanges = async function (req, res) {
+    try {
+        var verify = req.decoded;
+        if (verify) {
+            // console.log('body of kth e', req.body);
+            let record = req.body;
+            let id = record.id;
+            let push_apps = record.push_apps;
+            let controls = record.controls;
+            let permissions = record.permissions;
+            let app_list = record.app_list;
+            let policy_note = record.policy_note;
+            let policy_name = record.policy_name;
+    
+            let pushAppFileSize = 0;
+    
+            if (push_apps !== undefined) {
+                let parsedPushApps = JSON.parse(push_apps);
+                parsedPushApps.forEach((app) => {
+                    app.guest = (app.guest !== undefined) ? app.guest : false;
+                    app.enable = (app.enable !== undefined) ? app.enable : false;
+                    app.encrypted = (app.encrypted !== undefined) ? app.encrypted : false;
+                    console.log("app:", app.apk);
+                    let file_size = helpers.getFileSize(app.apk);
+                    pushAppFileSize = pushAppFileSize + file_size;
+                });
+                push_apps = JSON.stringify(parsedPushApps);
+            }
+    
+            let pushAppsSize = objectsize(push_apps);
+            let appListSize = objectsize(app_list);
+            let secureAppsSize = objectsize(permissions);
+            let sysPermissionSize = objectsize(controls);
+    
+            let policyObjSize = helpers.formatBytes(pushAppsSize + appListSize + secureAppsSize + sysPermissionSize)
+            let policyActualSize = helpers.formatBytes(pushAppFileSize + appListSize + secureAppsSize + sysPermissionSize);
+    
+            let query = `UPDATE policy SET push_apps = '${push_apps}', controls = '${controls}', permissions = '${permissions}', app_list = '${app_list}', policy_note = '${policy_note}', policy_name = '${policy_name}', object_size = '${policyObjSize}', policy_size = '${policyActualSize}' WHERE id=${id}`;
+    
+            sql.query(query, async function (error, result) {
+    
+                if (error) {
+                    data = {
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], MsgConstants.ERROR), // error'
+                    };
+                    res.send(data);
+                    return;
+                }
+    
+                if (result && result.affectedRows) {
+                    data = {
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PLCY_UP_SUCC], MsgConstants.PLCY_UP_SUCC), // Policy Updated Successfully
+                    };
+                    res.send(data);
+                    return;
+                } else {
+                    data = {
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], MsgConstants.ERROR), // error'
+                    };
+                    res.send(data);
+                    return;
+                }
+    
+            });
+        }
+    } catch (error) {
+        console.log(error);
+    }
+}
 
 exports.applyPolicy = async function (req, res) {
     try {
