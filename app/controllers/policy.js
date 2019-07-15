@@ -432,7 +432,6 @@ exports.savePolicyChanges = async function (req, res) {
                     app.guest = (app.guest !== undefined) ? app.guest : false;
                     app.enable = (app.enable !== undefined) ? app.enable : false;
                     app.encrypted = (app.encrypted !== undefined) ? app.encrypted : false;
-                    console.log("app:", app.apk);
                     let file_size = helpers.getFileSize(app.apk);
                     pushAppFileSize = pushAppFileSize + file_size;
                 });
