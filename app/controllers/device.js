@@ -302,7 +302,7 @@ exports.devices = async function (req, res) {
 // /**GET New the devices**/
 exports.newDevices = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
-        if(verify) {
+    if (verify) {
         // console.log("Dealer_Translations" , req.translation)
         var where_con = '';
         if (verify.user.user_type !== constants.ADMIN) {
@@ -344,7 +344,7 @@ exports.newDevices = async function (req, res) {
 exports.acceptDevice = async function (req, res) {
     // res.setHeader('Content-Type', 'application/json');
     var verify = req.decoded; // await verifyToken(req, res);
-    if (verify){
+    if (verify) {
         let loggedDealerId = verify.user.id;
         let loggedDealerType = verify.user.user_type;
         let user_id = req.body.user_id;
@@ -546,10 +546,10 @@ exports.acceptDevice = async function (req, res) {
 
 
 
-exports.transferDeviceProfile =  async function (req, res) {
+exports.transferDeviceProfile = async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
     var verify = req.decoded // await verifyToken(req, res);
-    if (verify){
+    if (verify) {
         let loggedDealerId = verify.user.id;
         let loggedDealerType = verify.user.user_type;
         let device_id = req.body.device_id;
@@ -628,10 +628,10 @@ exports.editDevices = async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
     var verify = req.decoded // await verifyToken(req, res);
 
-        if(verify) {
+    if (verify) {
 
         if (!empty(req.body.usr_device_id)) {
-
+            console.log(req.body);
             let loggedDealerId = verify.user.id;
             let loggedDealerType = verify.user.user_type;
 
@@ -653,7 +653,8 @@ exports.editDevices = async function (req, res) {
             var validity = req.body.validity;
             // let s_dealer_id = req.body.s_dealer;
             let start_date = req.body.start_date;
-            // let expiray_date = req.body.expiray_date;
+
+            console.log(finalStatus);
 
             let sim_id = (req.body.sim_id == undefined) ? '' : req.body.sim_id;
             let chat_id = (req.body.chat_id == undefined) ? '' : req.body.chat_id;
@@ -669,30 +670,14 @@ exports.editDevices = async function (req, res) {
             else if (finalStatus === constants.DEVICE_PRE_ACTIVATION) {
                 var status = ''
             }
-            else {
+            else if (finalStatus === constants.DEVICE_EXPIRED) {
+                var status = 'expired';
+            } else {
                 var status = 'active';
             }
-            if (req.body.expiry_date == 0) {
-                if (finalStatus === constants.DEVICE_PRE_ACTIVATION || finalStatus === constants.DEVICE_TRIAL) {
-                    var expiry_date = req.body.expiry_date
-                }
-                else {
-                    let exp_month = req.body.expiry_date;
-                    var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
-                    var expiry_date = moment(trailDate).format("YYYY/MM/DD")
-                }
-            } else {
-                let exp_month = req.body.expiry_date;
-                var expiry_date = helpers.getExpDateByMonth(start_date, exp_month);
-            }
-            // console.log('month', g_months, 'year', g_years);
-            // console.log('date now', expiry_date);
 
-            // let checkDealer = "SELECT * from dealers where dealer_id =" + dealer_id;
 
-            // let dealer = await sql.query(checkDealer);
-
-            var checkDevice = "SELECT start_date from usr_acc WHERE device_id = '" + usr_device_id + "' ";
+            var checkDevice = "SELECT start_date ,expiry_date from usr_acc WHERE device_id = '" + usr_device_id + "'";
             if (loggedDealerType === SDEALER) {
                 checkDevice = checkDevice + " AND dealer_id = " + loggedDealerId;
             } else if (loggedDealerType === DEALER) {
@@ -709,6 +694,7 @@ exports.editDevices = async function (req, res) {
             // console.log(checkDevice);
             sql.query(checkDevice, async function (error, rows) {
                 if (rows.length) {
+
                     let checkUniquePgp = "SELECT * from pgp_emails WHERE pgp_email= '" + pgp_email + "' AND user_acc_id != '' AND user_acc_id != '" + usr_acc_id + "'"
                     // let checkUnique = "SELECT usr_acc.* from usr_acc WHERE account_email= '" + device_email + "' AND device_id != '" + device_id + "'"
                     sql.query(checkUniquePgp, async function (error, success) {
@@ -718,6 +704,33 @@ exports.editDevices = async function (req, res) {
                                 "msg": await helpers.convertToLang(req.translation[MsgConstants.PGP_EMAIL_ALRDY_TKN], "PGP email already taken"), // PGP email already taken
                             });
                         } else {
+
+                            if (req.body.expiry_date == 0) {
+                                if (finalStatus === constants.DEVICE_PRE_ACTIVATION || finalStatus === constants.DEVICE_TRIAL) {
+                                    var expiry_date = req.body.expiry_date
+                                }
+                                else {
+                                    let exp_month = req.body.expiry_date;
+                                    var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
+                                    var expiry_date = moment(trailDate).format("YYYY/MM/DD")
+                                }
+                            } else if (req.body.expiry_date === 1 || req.body.expiry_date === 3 || req.body.expiry_date === 6 || req.body.expiry_date === 12) {
+                                let exp_month = req.body.expiry_date;
+                                var expiry_date = helpers.getExpDateByMonth(rows[0].expiry_date, exp_month);
+                                // console.log(expiry_date);
+                                let currentDate = moment(new Date()).format("YYYY/MM/DD")
+                                console.log(currentDate, expiry_date);
+                                if (currentDate < expiry_date) {
+                                    console.log(device);
+                                    require("../bin/www").sendDeviceStatus(device_id, "active", true);
+                                    status = 'active'
+                                }
+                            }
+                            else {
+                                var expiry_date = req.body.expiry_date
+                            }
+
+
                             common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE id = '" + usr_device_id + "'";
                             if (finalStatus !== constants.DEVICE_PRE_ACTIVATION) {
                                 if (expiry_date == 0) {
@@ -803,7 +816,7 @@ exports.deleteDevice = async function (req, res) {
     var verify = req.decoded // await verifyToken(req, res);
 
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         if (!empty(req.params.device_id)) {
             let userType = verify.user.user_type;
             let loggedUserId = verify.user.id;
@@ -853,13 +866,13 @@ exports.deleteDevice = async function (req, res) {
 }
 
 
-exports.unlinkDevice =  async function (req, res) {
+exports.unlinkDevice = async function (req, res) {
     var verify = req.decoded // await verifyToken(req, res);
     var device_id = req.params.id;
 
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
-        
+    if (verify) {
+
 
         if (!empty(device_id)) {
             let dvcId = await device_helpers.getDvcIDByDeviceID(device_id);
@@ -922,7 +935,7 @@ exports.createDeviceProfile = async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
     var verify = req.decoded; // await verifyToken(req, res);
     if (verify) {
-        
+
         // var dataStag = [];
         var code = randomize('0', 7);
         var activation_code = await helpers.checkActivationCode(code);
@@ -1162,8 +1175,8 @@ exports.suspendAccountDevices = async function (req, res) {
     var formatted_dt = tod_dat.format('Y-m-d H:M:S');
 
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
-        
+    if (verify) {
+
         var sql2 = "select * from usr_acc where device_id = '" + device_id + "'";
         var gtres = await sql.query(sql2);
 
@@ -1287,15 +1300,15 @@ exports.suspendAccountDevices = async function (req, res) {
 
 }
 
-exports.activateDevice =  async function (req, res) {
+exports.activateDevice = async function (req, res) {
     var verify = req.decoded // await verifyToken(req, res);
     var device_id = req.params.id;
     var tod_dat = datetime.create();
     var formatted_dt = tod_dat.format('Y-m-d H:M:S');
 
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
-        
+    if (verify) {
+
         var sql2 = "select * from usr_acc where device_id = '" + device_id + "'";
         var gtres = await sql.query(sql2);
 
@@ -1412,7 +1425,7 @@ exports.wipeDevice = async function (req, res) {
     var verify = req.decoded // await verifyToken(req, res);
     var device_id = req.params.id;
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var sql2 = "select * from devices where id = '" + device_id + "'";
         var gtres = await sql.query(sql2);
         if (!empty(device_id)) {
@@ -1473,9 +1486,9 @@ exports.wipeDevice = async function (req, res) {
 exports.unflagDevice = async function (req, res) {
     var verify = req.decoded // await verifyToken(req, res);
     var device_id = req.params.id;
-    
+
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         if (!empty(device_id)) {
             var sql1 = "update devices set flagged= 'Not flagged' where device_id='" + device_id + "'";
             var rest = sql.query(sql1, async function (error, results) {
@@ -1532,9 +1545,9 @@ exports.flagDevice = async function (req, res) {
     var device_id = req.params.id;
     var option = req.body.data
     // console.log(option);
-  
+
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var sql2 = "select * from devices where id = '" + device_id + "'";
         var gtres = await sql.query(sql2);
         if (!empty(device_id)) {
@@ -1599,9 +1612,9 @@ exports.flagDevice = async function (req, res) {
 exports.connectDevice = async function (req, res) {
     // console.log('api check is caled')
     var verify = req.decoded // await verifyToken(req, res);
-  
+
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         if (!empty(req.params.device_id)) {
             let userId = verify.user.id;
             //  console.log(verify.user);
@@ -1660,11 +1673,11 @@ exports.connectDevice = async function (req, res) {
 }
 
 
-exports.getAppJobQueueOfDevice =  async function (req, res) {
+exports.getAppJobQueueOfDevice = async function (req, res) {
     // console.log('api check is caled')
     var verify = req.decoded // await verifyToken(req, res);
-   
-        if (verify) {
+
+    if (verify) {
         let device_id = req.params.device_id;
         if (!empty(device_id)) {
 
@@ -1687,8 +1700,8 @@ exports.getAppJobQueueOfDevice =  async function (req, res) {
 
 exports.resyncDevice = async function (req, res) {
     var verify = req.decoded // await verifyToken(req, res);
-   
-        if (verify) {
+
+    if (verify) {
         let deviceId = req.body.device_id;
         if (!empty(deviceId)) {
             let query = "SELECT * FROM devices WHERE device_id = '" + deviceId + "' and online = '" + constants.DEVICE_ONLINE + "'";
@@ -1707,10 +1720,10 @@ exports.resyncDevice = async function (req, res) {
 }
 
 
-exports.getAppsOfDevice =  async function (req, res) {
+exports.getAppsOfDevice = async function (req, res) {
     var verify = req.decoded // await verifyToken(req, res);
-   
-        if (verify) {
+
+    if (verify) {
         if (!empty(req.params.device_id)) {
             // var query = 'SELECT user_apps.*, apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon from user_apps LEFT JOIN apps_info on user_apps.app_id = apps_info.id LEFT JOIN devices on user_apps.device_id=devices.id where devices.device_id ="' + req.params.device_id + '"';
             // console.log(query);
@@ -1829,8 +1842,8 @@ exports.getAppsOfDevice =  async function (req, res) {
 exports.deleteUnlinkDevice = async function (req, res) {
     try {
         var verify = req.decoded // await verifyToken(req, res);
-        
-            if (verify) {
+
+        if (verify) {
 
             let insertError = 0;
             let NotDeleted = [];
@@ -1903,7 +1916,7 @@ exports.applySettings = async function (req, res) {
     try {
         var verify = req.decoded // await verifyToken(req, res);
         // if (verify.status !== undefined && verify.status == true) {
-            if (verify) {
+        if (verify) {
             let device_id = req.params.device_id;
 
             let usrAccId = req.body.usr_acc_id;
@@ -1972,11 +1985,11 @@ exports.applySettings = async function (req, res) {
 
 }
 
-exports.applyPushApps =  async function (req, res) {
+exports.applyPushApps = async function (req, res) {
     try {
         var verify = req.decoded // await verifyToken(req, res);
         // if (verify.status !== undefined && verify.status == true) {
-            if (verify) {
+        if (verify) {
             let device_id = req.params.device_id;
 
             let dealer_id = verify.user.id
@@ -2034,11 +2047,11 @@ exports.applyPushApps =  async function (req, res) {
     }
 }
 
-exports.applyPullApps =  async function (req, res) {
+exports.applyPullApps = async function (req, res) {
     try {
         var verify = req.decoded // await verifyToken(req, res);
         // if (verify.status !== undefined && verify.status == true) {
-            if (verify) {
+        if (verify) {
             let device_id = req.params.device_id;
 
             let usrAccId = req.body.usrAccId;
@@ -2095,7 +2108,7 @@ exports.applyPullApps =  async function (req, res) {
 
 exports.getDeviceHistory = async function (req, res) {
     var verify = req.decoded // await verifyToken(req, res);
-        if(verify) {
+    if (verify) {
         let userId = verify.user.id;
         let userType = await helpers.getUserType(userId);
         let user_acc_id = await device_helpers.getUserAccountId(req.body.device_id);
@@ -2128,11 +2141,11 @@ exports.getDeviceHistory = async function (req, res) {
 }
 
 
-exports.writeIMEI =  async function (req, res) {
+exports.writeIMEI = async function (req, res) {
     try {
         var verify = req.decoded // await verifyToken(req, res);
-        
-            if (verify) {
+
+        if (verify) {
             let device_id = req.params.device_id;
             let usrAccId = req.body.usrAccId;
             let dealer_id = verify.user.id
@@ -2250,8 +2263,8 @@ exports.writeIMEI =  async function (req, res) {
 exports.getActivities = async function (req, res) {
     try {
         var verify = req.decoded // await verifyToken(req, res);
-        
-            if (verify) {
+
+        if (verify) {
 
             let device_id = req.params.device_id
             let activities = [];
@@ -2295,10 +2308,10 @@ exports.getActivities = async function (req, res) {
 }
 
 
-exports.getIMEI_History =   async function (req, res) {
+exports.getIMEI_History = async function (req, res) {
     var verify = req.decoded // await verifyToken(req, res);
- 
-    if (verify){
+
+    if (verify) {
         let query = "select * from imei_history where device_id = '" + req.params.device_id + "'";
         sql.query(query, async function (error, resp) {
             res.send({
