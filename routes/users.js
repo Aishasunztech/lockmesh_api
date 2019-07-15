@@ -72,14 +72,14 @@ router.post('/two_factor_auth', async function (req, res) {
             if (isEnable) {
                 data = {
                     status: true,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.DUAL_AUTH_SUCC_ENBL], MsgConstants.DUAL_AUTH_SUCC_ENBL), // Dual Authentication is Successfully enabled
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.DUAL_AUTH_SUCC_ENBL], "Dual Authentication is Successfully enabled"), // Dual Authentication is Successfully enabled
                     isEnable: isEnable
                 }
                 res.send(data)
             } else {
                 data = {
                     status: true,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.DUAL_AUTH_SUCC_DISABL], MsgConstants.DUAL_AUTH_SUCC_DISABL), // Dual Authentication is Successfully disabled
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.DUAL_AUTH_SUCC_DISABL], "Dual Authentication is Successfully disabled"), // Dual Authentication is Successfully disabled
                     isEnable: isEnable
                 }
                 res.send(data)
@@ -87,7 +87,7 @@ router.post('/two_factor_auth', async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.DUAL_AUTH_NOT_ENBL], MsgConstants.DUAL_AUTH_NOT_ENBL), // Dual Authentication could not be enabled
+                msg: await helpers.convertToLang(req.translation[MsgConstants.DUAL_AUTH_NOT_ENBL], "Dual Authentication could not be enabled"), // Dual Authentication could not be enabled
             }
             res.send(data)
         }
@@ -440,7 +440,7 @@ router.post('/addApk', async function (req, res) {
                         };
                         data = {
                             status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.APK_IS_UPLOADED], MsgConstants.APK_IS_UPLOADED), // "Apk is uploaded",
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.APK_IS_UPLOADED], "Apk is uploaded"), // "Apk is uploaded",
                             data: dta
                         };
                         res.send(data);
@@ -451,7 +451,7 @@ router.post('/addApk', async function (req, res) {
                     console.log("file not found");
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error While Uploading"), // "Error While Uploading"
                     }
                     res.send(data)
                     return;
@@ -460,7 +460,7 @@ router.post('/addApk', async function (req, res) {
             } else {
                 data = {
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error While Uploading"), // "Error While Uploading"
                 };
                 res.send(data);
                 return;
@@ -469,7 +469,7 @@ router.post('/addApk', async function (req, res) {
             console.log(error);
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error while Uploading",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error While Uploading"), // "Error while Uploading",
             };
             return;
         }
@@ -541,7 +541,7 @@ router.post('/edit/apk', async function (req, res) {
                         };
                         data = {
                             status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], MsgConstants.RECORD_UPD_SUCC), // "Record Updated"
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record Updated"), // "Record Updated"
 
                         };
                         res.send(data);
@@ -552,7 +552,7 @@ router.post('/edit/apk', async function (req, res) {
                 } else {
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error While Uploading"), // "Error While Uploading"
                     };
                     res.send(data);
                     return;
@@ -561,7 +561,7 @@ router.post('/edit/apk', async function (req, res) {
             } else {
                 data = {
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error While Uploading"), // "Error While Uploading"
                 };
                 res.send(data);
                 return;
@@ -569,7 +569,7 @@ router.post('/edit/apk', async function (req, res) {
         } catch (error) {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error while Uploading",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error While Uploading"), // "Error while Uploading",
             };
             res.send(data);
             return;
@@ -596,7 +596,7 @@ router.post('/apk/delete', async function (req, res) {
                 if (results.affectedRows == 0) {
                     data = {
                         "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_NOT_DELETED], MsgConstants.APK_NOT_DELETED), // Apk not deleted.",
+                        "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_NOT_DELETED], "Apk not deleted"), // Apk not deleted.",
                         "rdlt": results
                     };
                 } else {
@@ -606,13 +606,13 @@ router.post('/apk/delete', async function (req, res) {
 
                         data = {
                             "status": true,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_DELETED_SUCCESSFULLY], MsgConstants.APK_DELETED_SUCCESSFULLY), // Apk deleted successfully.",
+                            "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_DELETED_SUCCESSFULLY], "Apk deleted successfully"), // Apk deleted successfully.",
                             "apk": result[0]
                         };
                     } else {
                         data = {
                             "status": false,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_NOT_DELETED], MsgConstants.APK_NOT_DELETED), // Apk not deleted.",
+                            "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_NOT_DELETED], "Apk not deleted"), // Apk not deleted.",
                             "rdlt": results
                         };
                     }
@@ -623,7 +623,7 @@ router.post('/apk/delete', async function (req, res) {
         } else {
             data = {
                 "status": false,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR], MsgConstants.ERROR), // Some error occurred."
+                "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Some error occurred"), // Some error occurred."
 
             }
             res.send(data);
@@ -736,7 +736,7 @@ router.put('/force_update', async function (req, res) {
                     require("../bin/www").forceCheckUpdate(device[0].device_id);
                     data = {
                         status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.FORCE_UPDATE_HAS_BEEN_APPLIED], MsgConstants.FORCE_UPDATE_HAS_BEEN_APPLIED), // "force update has been applied"
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.FORCE_UPDATE_HAS_BEEN_APPLIED], "force update has been applied"), // "force update has been applied"
                     }
                     res.send(data)
                 } else {
@@ -748,7 +748,7 @@ router.put('/force_update', async function (req, res) {
                         };
                         data = {
                             status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.FORCE_UPDATE_WILL_APPLY], MsgConstants.FORCE_UPDATE_WILL_APPLY), // "force update will apply when device will come online"
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.FORCE_UPDATE_WILL_APPLY], "force update will apply when device will come online"), // "force update will apply when device will come online"
                         }
                         res.send(data)
                     });
@@ -756,14 +756,14 @@ router.put('/force_update', async function (req, res) {
             } else {
                 data = {
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FOUND], MsgConstants.DEVICE_NOT_FOUND), // "Device not Found"
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FOUND], "Device not Found"), // "Device not Found"
                 }
                 res.send(data)
             }
         } else {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FOUND], MsgConstants.DEVICE_NOT_FOUND), // "Device not Found"
+                msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FOUND], "Device not Found"), // "Device not Found"
             }
             res.send(data)
         }

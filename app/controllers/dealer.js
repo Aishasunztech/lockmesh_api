@@ -238,7 +238,7 @@ exports.addDealer = async function (req, res) {
             if (dealer.length > 0) {
                 data = {
                     status: false,
-                    msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_ALREADY_REG], MsgConstants.DEALER_ALREADY_REG), // Dealer Already Registered. Please use another email.
+                    msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_ALREADY_REG], "Dealer Already Registered. Please use another email"), // Dealer Already Registered. Please use another email.
                 }
                 res.send(data);
                 return;
@@ -309,7 +309,7 @@ exports.addDealer = async function (req, res) {
                             if (emailError) {
                                 data = {
                                     status: true,
-                                    msg: await general_helpers.convertToLang(req.translation[MsgConstants.EMAIL_NOT_SENT], MsgConstants.EMAIL_NOT_SENT) + emailError, // Email could not sent due to error: " + emailError,
+                                    msg: await general_helpers.convertToLang(req.translation[MsgConstants.EMAIL_NOT_SENT], "Email could not sent due to error: ") + emailError, // Email could not sent due to error: " + emailError,
                                     added_dealer: dealer,
                                 }
                                 res.send(data);
@@ -318,7 +318,7 @@ exports.addDealer = async function (req, res) {
                             // console.log('result add',dealer);
                             data = {
                                 status: true,
-                                msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_REG_SUCC], MsgConstants.DEALER_REG_SUCC), // Dealer has been registered successfully
+                                msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_REG_SUCC], "Dealer has been registered successfully"), // Dealer has been registered successfully
                                 added_dealer: dealer,
 
                             }
@@ -327,7 +327,7 @@ exports.addDealer = async function (req, res) {
                         } else {
                             data = {
                                 status: false,
-                                msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_NOT_ADDED], MsgConstants.DEALER_NOT_ADDED), // Dealer could not be added
+                                msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_NOT_ADDED], "Dealer could not be added"), // Dealer could not be added
                             }
                             res.send(data);
                             return;
@@ -337,7 +337,7 @@ exports.addDealer = async function (req, res) {
                 } else {
                     data = {
                         status: false,
-                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_NOT_ADDED], MsgConstants.DEALER_NOT_ADDED), // Dealer could not be added
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_NOT_ADDED], "Dealer could not be added"), // Dealer could not be added
                     }
                     res.send(data);
                     return;
@@ -349,7 +349,7 @@ exports.addDealer = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: await general_helpers.convertToLang(req.translation[MsgConstants.INVALID_EMAIL_NAME], MsgConstants.INVALID_EMAIL_NAME), // Invalid email or name
+                msg: await general_helpers.convertToLang(req.translation[MsgConstants.INVALID_EMAIL_NAME], "Invalid email or name"), // Invalid email or name
             }
             res.send(data);
             return;
@@ -385,7 +385,7 @@ exports.editDealers = async function (req, res) {
 
                         data = {
                             status: true,
-                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.EMAIL_ALREDY_USED_DEALER], MsgConstants.EMAIL_ALREDY_USED_DEALER), // Email is already in use of other dealer
+                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.EMAIL_ALREDY_USED_DEALER], "Email is already in use of other dealer"), // Email is already in use of other dealer
                             data: row,
                             alreadyAvailable: alreadyAvailable
                         };
@@ -406,7 +406,7 @@ exports.editDealers = async function (req, res) {
             } else {
                 res.send({
                     status: false,
-                    msg: await general_helpers.convertToLang(req.translation[MsgConstants.EMAIL_ALREDY_USED_DEALER], MsgConstants.EMAIL_ALREDY_USED_DEALER), // Dealer not found to Update"
+                    msg: await general_helpers.convertToLang(req.translation[MsgConstants.EMAIL_ALREDY_USED_DEALER], "Email is already in use of other dealer"), // Dealer not found to Update"
                 });
                 return;
             }
@@ -437,14 +437,14 @@ exports.editDealers = async function (req, res) {
                             console.log(error)
                             res.send({
                                 status: true,
-                                msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC_EMAIL_NOT_SEND], MsgConstants.RECORD_UPD_SUCC_EMAIL_NOT_SEND), // Record updated successfully. Email not sent
+                                msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC_EMAIL_NOT_SEND], "Record updated successfully. Email not sent"), // Record updated successfully. Email not sent
                                 alreadyAvailable: alreadyAvailable
                             })
                             return;
                         } else {
                             res.send({
                                 status: true,
-                                msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC_EMAIL_SEND], MsgConstants.RECORD_UPD_SUCC_EMAIL_SEND), // Record updated successfully. Email has been sent.
+                                msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC_EMAIL_SEND], "Record updated successfully. Email has been sent"), // Record updated successfully. Email has been sent.
                                 alreadyAvailable: alreadyAvailable
                             })
                             return;
@@ -454,7 +454,7 @@ exports.editDealers = async function (req, res) {
                 } else {
                     data = {
                         status: true,
-                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_NOT_UPD], MsgConstants.RECORD_NOT_UPD), // Record not updated.
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_NOT_UPD], "Record not updated"), // Record not updated.
                     };
                     res.send(data);
                     return;
@@ -463,7 +463,7 @@ exports.editDealers = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: await general_helpers.convertToLang(req.translation[MsgConstants.ENTER_VALID_DETAIL], MsgConstants.ENTER_VALID_DETAIL), // Please enter valid details
+                msg: await general_helpers.convertToLang(req.translation[MsgConstants.ENTER_VALID_DETAIL], "Please enter valid details"), // Please enter valid details
             }
             res.send(data);
             return;
@@ -501,7 +501,7 @@ exports.deleteDealer = async function (req, res) {
                 if (row && row.affectedRows !== 0) {
                     data = {
                         status: true,
-                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_DEL_SUCC], MsgConstants.DEALER_DEL_SUCC), // Dealer deleted successfully.
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_DEL_SUCC], "Dealer deleted successfully"), // Dealer deleted successfully.
                         data: row
                     };
                     res.send(data);
@@ -509,7 +509,7 @@ exports.deleteDealer = async function (req, res) {
                 } else {
                     data = {
                         "status": false,
-                        "msg": await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_NOT_DEL], MsgConstants.RECORD_NOT_DEL), // Record not deleted.
+                        "msg": await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_NOT_DEL], "Record not deleted"), // Record not deleted.
                     };
                     res.send(data);
                     return;
@@ -520,7 +520,7 @@ exports.deleteDealer = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: await general_helpers.convertToLang(req.translation[MsgConstants.INVALID_DEALER], MsgConstants.INVALID_DEALER), // Invalid Dealer.
+                msg: await general_helpers.convertToLang(req.translation[MsgConstants.INVALID_DEALER], "Invalid Dealer"), // Invalid Dealer.
             };
             res.send(data);
             return;
@@ -555,7 +555,7 @@ exports.undoDealer = async function (req, res) {
                 if (row && row.affectedRows != 0) {
                     data = {
                         status: true,
-                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_ADDED_AGAIN], MsgConstants.DEALER_ADDED_AGAIN), // Dealer added again.
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_ADDED_AGAIN], "Dealer added again"), // Dealer added again.
                         data: row
                     };
                     res.send(data);
@@ -563,7 +563,7 @@ exports.undoDealer = async function (req, res) {
                 } else {
                     data = {
                         status: false,
-                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_NOT_ADDED], MsgConstants.DEALER_NOT_ADDED), // Dealer not added.
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_NOT_ADDED], "Dealer could not be added"), // Dealer not added.
                     };
                     res.send(data);
                     return;
@@ -573,7 +573,7 @@ exports.undoDealer = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: await general_helpers.convertToLang(req.translation[MsgConstants.INVALID_DEALER], MsgConstants.INVALID_DEALER), // Invalid Dealer.
+                msg: await general_helpers.convertToLang(req.translation[MsgConstants.INVALID_DEALER], "Invalid Dealer"), // Invalid Dealer.
             };
             res.send(data);
             return;
@@ -611,7 +611,7 @@ exports.suspendDealer = async function (req, res) {
                 if (row.affectedRows != 0) {
                     data = {
                         status: true,
-                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_SUSP_SUCC], MsgConstants.DEALER_SUSP_SUCC), // Dealer suspended successfully.
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_SUSP_SUCC], "Dealer suspended successfully"), // Dealer suspended successfully.
                         data: row
                     };
                     res.send(data);
@@ -619,7 +619,7 @@ exports.suspendDealer = async function (req, res) {
                 } else {
                     data = {
                         status: false,
-                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_NOT_SUSP], MsgConstants.DEALER_NOT_SUSP), // Dealer not suspended.                    
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_NOT_SUSP], "Dealer not suspended"), // Dealer not suspended.                    
                     };
                     res.send(data);
                     return;
@@ -629,7 +629,7 @@ exports.suspendDealer = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: await general_helpers.convertToLang(req.translation[MsgConstants.INVALID_DEALER], MsgConstants.INVALID_DEALER), // Invalid Dealer.',
+                msg: await general_helpers.convertToLang(req.translation[MsgConstants.INVALID_DEALER], "Invalid Dealer"), // Invalid Dealer.',
             };
             res.send(data);
             return;
@@ -663,7 +663,7 @@ exports.activateDealer = async function (req, res) {
                 if (row && row.affectedRows != 0) {
                     data = {
                         status: true,
-                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_ACTIV_SUCC], MsgConstants.DEALER_ACTIV_SUCC), // Dealer activated successfully.
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_ACTIV_SUCC], "Dealer activated successfully"), // Dealer activated successfully.
                         data: row
                     };
                     res.send(data);
@@ -671,7 +671,7 @@ exports.activateDealer = async function (req, res) {
                 } else {
                     data = {
                         status: true,
-                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DELAER_NOT_ACTIV], MsgConstants.DELAER_NOT_ACTIV), // Dealer not activated.'
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DELAER_NOT_ACTIV], "Dealer not activated"), // Dealer not activated.'
                     };
                     res.send(data);
                     return;
@@ -682,7 +682,7 @@ exports.activateDealer = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: await general_helpers.convertToLang(req.translation[MsgConstants.INVALID_DEALER], MsgConstants.INVALID_DEALER), // Invalid Dealer.',
+                msg: await general_helpers.convertToLang(req.translation[MsgConstants.INVALID_DEALER], "Invalid Dealer"), // Invalid Dealer.',
             };
             res.send(data);
             return;
@@ -767,7 +767,7 @@ exports.resetPwd = async function (req, res) {
                                 data = {
 
                                     "status": true,
-                                    "msg": await general_helpers.convertToLang(req.translation[MsgConstants.PASS_CHANGE_SUCC], MsgConstants.PASS_CHANGE_SUCC), // Password changed successfully.Please check your email.
+                                    "msg": await general_helpers.convertToLang(req.translation[MsgConstants.PASS_CHANGE_SUCC], "Password changed successfully.Please check your email"), // Password changed successfully.Please check your email.
                                 };
                                 res.send(data);
                                 return;
@@ -779,7 +779,7 @@ exports.resetPwd = async function (req, res) {
             } else {
                 data = {
                     "status": false,
-                    "msg": await general_helpers.convertToLang(req.translation[MsgConstants.INVALID_USER_AND_PASS], MsgConstants.INVALID_USER_AND_PASS), // Invalid User and Password'
+                    "msg": await general_helpers.convertToLang(req.translation[MsgConstants.INVALID_USER_AND_PASS], "Invalid User and Password"), // Invalid User and Password'
                 };
                 res.send(data);
                 return;
@@ -790,7 +790,7 @@ exports.resetPwd = async function (req, res) {
 
             res.json({
                 status: false,
-                "msg": await general_helpers.convertToLang(req.translation[MsgConstants.ENTER_VALID_DETAIL], MsgConstants.ENTER_VALID_DETAIL), // Invalid details"
+                "msg": await general_helpers.convertToLang(req.translation[MsgConstants.ENTER_VALID_DETAIL], "Please enter valid details"), // Invalid details"
             });
             return;
         }
@@ -844,7 +844,7 @@ exports.getLoggedDealerApps = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: await general_helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], MsgConstants.NO_DATA_FOUND), // No result found
+                msg: await general_helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // No result found
                 list: []
             }
 
@@ -870,7 +870,7 @@ exports.getDropdownSelectedItems = async function (req, res) {
             if (rslts.length == 0) {
                 data = {
                     "status": false,
-                    "msg": await general_helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], MsgConstants.NO_DATA_FOUND), // No data found",
+                    "msg": await general_helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // No data found",
                     "data": '[]'
                 };
                 res.send(data);
@@ -886,7 +886,7 @@ exports.getDropdownSelectedItems = async function (req, res) {
                 } else {
                     data = {
                         "status": false,
-                        "msg": await general_helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], MsgConstants.NO_DATA_FOUND), // No data found",
+                        "msg": await general_helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // No data found",
                         "data": '[]'
                     };
                     res.send(data);
@@ -914,7 +914,7 @@ exports.dropDown =  async function (req, res) {
             var squery = sql.query("insert into dealer_dropdown_list (dealer_id, selected_items, type) values (" + dealer_id + ", '" + selected_items + "', '" + dropdownType + "')", async function (err, rslts) {
                 data = {
                     "status": true,
-                    "msg": await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_ADDED], MsgConstants.ITEMS_ADDED), // Items Added.
+                    "msg": await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_ADDED], "Items Added"), // Items Added.
                     "data": rslts
                 };
                 res.send(data);
@@ -926,14 +926,14 @@ exports.dropDown =  async function (req, res) {
                 if (row.affectedRows != 0) {
                     data = {
                         "status": true,
-                        "msg": await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_UP], MsgConstants.ITEMS_UP), // Items Updated.',
+                        "msg": await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_UP], "Items Updated"), // Items Updated.',
                         "data": row
                     };
                     res.send(data);
                 } else {
                     data = {
                         "status": false,
-                        "msg": await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_NOT_UP], MsgConstants.ITEMS_NOT_UP), // Items Not Updated.',
+                        "msg": await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_NOT_UP], "Items Not Updated"), // Items Not Updated.',
                         "data": row
                     };
                     res.send(data);
@@ -961,7 +961,7 @@ exports.getPagination =  async function (req, res) {
             if (rslts.length == 0) {
                 data = {
                     "status": false,
-                    "msg": await general_helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], MsgConstants.NO_DATA_FOUND), // No data found",
+                    "msg": await general_helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // No data found",
                     "data": '10'
                 };
                 res.send(data);
@@ -995,7 +995,7 @@ exports.postPagination =  async function (req, res) {
             var squery = sql.query("insert into dealer_pagination (dealer_id, record_per_page, type) values (" + dealer_id + ", '" + selectedValue + "', '" + dropdownType + "')", async function (err, rslts) {
                 data = {
                     status: true,
-                    msg: await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_ADDED], MsgConstants.ITEMS_ADDED), // record Added.',
+                    msg: await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_ADDED], "record Added"), // record Added.',
                     data: rslts
                 };
                 res.send(data);
@@ -1007,7 +1007,7 @@ exports.postPagination =  async function (req, res) {
                 if (row && row.affectedRows !== 0) {
                     data = {
                         status: true,
-                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_UP], MsgConstants.ITEMS_UP), // Items Updated.',
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_UP], "Items Updated"), // Items Updated.',
                         data: row
                     };
 
@@ -1015,7 +1015,7 @@ exports.postPagination =  async function (req, res) {
                 } else {
                     data = {
                         status: false,
-                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_NOT_UP], MsgConstants.ITEMS_NOT_UP), // Items Not Updated.',
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_NOT_UP], "Items Not Updated"), // Items Not Updated.',
                         data: row
                     };
                     res.send(data);

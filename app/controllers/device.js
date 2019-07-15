@@ -196,7 +196,7 @@ exports.devices = async function (req, res) {
 //     } else {
 //         res.send({
 //             status: false,
-//             msg: await helpers.convertToLang(loggedInuid, MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND), // "No data found",
+//             msg: await helpers.convertToLang(loggedInuid, "Pre-activations added succcessfully.Email sends to your account"), // "No data found",
 //             devices: []
 //         })
 //     }
@@ -230,7 +230,7 @@ exports.devices = async function (req, res) {
 //         } else {
 //             res.send({
 //                 status: false,
-//                 msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND), // "No data found"
+//                 msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], "Pre-activations added succcessfully.Email sends to your account"), // "No data found"
 //             })
 //         }
 //         if (updateQ != '') {
@@ -240,7 +240,7 @@ exports.devices = async function (req, res) {
 //                     console.log(err);
 //                     res.send({
 //                         status: false,
-//                         msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND), // "Error occur"
+//                         msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], "Pre-activations added succcessfully.Email sends to your account"), // "Error occur"
 //                     });
 //                 } else {
 //                     let selectQuery = `SELECT devices.*, white_labels.name as whitelabel FROM devices LEFT JOIN white_labels ON (devices.whitelabel_id = white_labels.id) WHERE devices.id = ${id}`;
@@ -251,7 +251,7 @@ exports.devices = async function (req, res) {
 //                             console.log(err);
 //                             res.send({
 //                                 status: false,
-//                                 msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND), // "Error occur"
+//                                 msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], "Pre-activations added succcessfully.Email sends to your account"), // "Error occur"
 //                             });
 //                         } else if (devices.length) {
 //                             devices.forEach((device) => {
@@ -267,13 +267,13 @@ exports.devices = async function (req, res) {
 //                             res.send({
 //                                 status: true,
 //                                 devices: devices,
-//                                 msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND), // "Offline Device Status Successfully Updated!"
+//                                 msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], "Pre-activations added succcessfully.Email sends to your account"), // "Offline Device Status Successfully Updated!"
 //                             })
 //                         } else {
 //                             res.send({
 //                                 status: false,
 //                                 devices: [],
-//                                 msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND), // "Failed to update Offline Device Status!",
+//                                 msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], "Pre-activations added succcessfully.Email sends to your account"), // "Failed to update Offline Device Status!",
 //                             })
 //                         }
 //                     });
@@ -284,14 +284,14 @@ exports.devices = async function (req, res) {
 //         } else {
 //             res.send({
 //                 status: false,
-//                 msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND), // "Query not run"
+//                 msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], "Pre-activations added succcessfully.Email sends to your account"), // "Query not run"
 //             })
 //         }
 //     } catch (error) {
 //         console.log(error);
 //         res.send({
 //             status: false,
-//             msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND), // "exception for deviceStatus",
+//             msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], "Pre-activations added succcessfully.Email sends to your account"), // "exception for deviceStatus",
 //         });
 //         return;
 //     }
@@ -406,7 +406,7 @@ exports.acceptDevice = async function (req, res) {
             } else {
                 res.send({
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.NEW_DEVICE_NOT_ADDED], MsgConstants.NEW_DEVICE_NOT_ADDED), // "New Device Not Added Please try Again"
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.NEW_DEVICE_NOT_ADDED], "New Device Not Added Please try Again"), // "New Device Not Added Please try Again"
                 });
                 return;
             }
@@ -416,7 +416,7 @@ exports.acceptDevice = async function (req, res) {
                     console.log(checkDeviceError)
                     res.send({
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.NEW_DEVICE_NOT_ADDED], MsgConstants.NEW_DEVICE_NOT_ADDED), // "New Device Not Added Please try Again"
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.NEW_DEVICE_NOT_ADDED], "New Device Not Added Please try Again"), // "New Device Not Added Please try Again"
                     });
                     return;
                 }
@@ -432,7 +432,7 @@ exports.acceptDevice = async function (req, res) {
                             console.log(checkUniqueEror)
                             res.send({
                                 status: false,
-                                msg: await helpers.convertToLang(req.translation[MsgConstants.NEW_DEVICE_NOT_ADDED], MsgConstants.NEW_DEVICE_NOT_ADDED), // "New Device Not Added Please try Again"
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.NEW_DEVICE_NOT_ADDED], "New Device Not Added Please try Again"), // "New Device Not Added Please try Again"
                             });
                             return;
                         }
@@ -462,7 +462,7 @@ exports.acceptDevice = async function (req, res) {
                                     console.log(commonQueryError);
                                     res.send({
                                         status: false,
-                                        msg: await helpers.convertToLang(req.translation[MsgConstants.NEW_DEVICE_NOT_ADDED], MsgConstants.NEW_DEVICE_NOT_ADDED), // "New Device Not Added Please try Again"
+                                        msg: await helpers.convertToLang(req.translation[MsgConstants.NEW_DEVICE_NOT_ADDED], "New Device Not Added Please try Again"), // "New Device Not Added Please try Again"
                                     });
                                     return;
                                 }
@@ -508,7 +508,7 @@ exports.acceptDevice = async function (req, res) {
 
                                 data = {
                                     status: true,
-                                    msg: await helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], MsgConstants.RECORD_UPD_SUCC), // 'Record updated successfully.',
+                                    msg: await helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record updated successfully"), // 'Record updated successfully.',
                                     data: rsltq
                                 };
                                 res.send(data);
@@ -518,7 +518,7 @@ exports.acceptDevice = async function (req, res) {
                         } else {
                             res.send({
                                 status: false,
-                                msg: await helpers.convertToLang(req.translation[MsgConstants.NEW_DEVICE_NOT_ADDED], MsgConstants.NEW_DEVICE_NOT_ADDED), // "device is not added"
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.NEW_DEVICE_NOT_ADDED], "New Device Not Added Please try Again"), // "device is not added"
                             });
                             return;
                         }
@@ -527,7 +527,7 @@ exports.acceptDevice = async function (req, res) {
                 } else {
                     res.send({
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.NEW_DEVICE_NOT_ADDED], MsgConstants.NEW_DEVICE_NOT_ADDED), // "New Device Not Added Please try Again"
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.NEW_DEVICE_NOT_ADDED], "New Device Not Added Please try Again"), // "New Device Not Added Please try Again"
                     });
                     return;
                 }
@@ -536,7 +536,7 @@ exports.acceptDevice = async function (req, res) {
         } else {
             res.send({
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.NEW_DEVICE_NOT_ADDED], MsgConstants.NEW_DEVICE_NOT_ADDED), // "Device Not Added Try Again"
+                msg: await helpers.convertToLang(req.translation[MsgConstants.NEW_DEVICE_NOT_ADDED], "New Device Not Added Please try Again"), // "Device Not Added Try Again"
             });
             return;
         }
@@ -600,7 +600,7 @@ exports.transferDeviceProfile =  async function (req, res) {
                         status: true,
                         data: {
                             "status": true,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.RECORD_TRANSF_SUCC], MsgConstants.RECORD_TRANSF_SUCC), // Record Transfered Successfully.
+                            "msg": await helpers.convertToLang(req.translation[MsgConstants.RECORD_TRANSF_SUCC], "Record Transfered Successfully"), // Record Transfered Successfully.
                         }
                     });
                 } else {
@@ -608,7 +608,7 @@ exports.transferDeviceProfile =  async function (req, res) {
                         status: false,
                         data: {
                             "status": false,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.ERR_TRANSF], MsgConstants.ERR_TRANSF), // Error While Transfere.
+                            "msg": await helpers.convertToLang(req.translation[MsgConstants.ERR_TRANSF], "Error While Transfere"), // Error While Transfere.
                         }
                     });
                 }
@@ -715,7 +715,7 @@ exports.editDevices = async function (req, res) {
                         if (success.length) {
                             res.send({
                                 status: false,
-                                "msg": await helpers.convertToLang(req.translation[MsgConstants.PGP_EMAIL_ALRDY_TKN], MsgConstants.PGP_EMAIL_ALRDY_TKN), // PGP email already taken
+                                "msg": await helpers.convertToLang(req.translation[MsgConstants.PGP_EMAIL_ALRDY_TKN], "PGP email already taken"), // PGP email already taken
                             });
                         } else {
                             common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE id = '" + usr_device_id + "'";
@@ -769,7 +769,7 @@ exports.editDevices = async function (req, res) {
 
                                 data = {
                                     "status": true,
-                                    "msg": await helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], MsgConstants.RECORD_UPD_SUCC), // Record updated successfully.
+                                    "msg": await helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record updated successfully"), // Record updated successfully.
                                     "data": rsltq
                                 };
                                 res.send(data);
@@ -782,7 +782,7 @@ exports.editDevices = async function (req, res) {
                 } else {
                     res.send({
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FOUND], MsgConstants.DEVICE_NOT_FOUND), // No Device found
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FOUND], "No Device found"), // No Device found
                     })
                 }
 
@@ -829,12 +829,12 @@ exports.deleteDevice = async function (req, res) {
                         sql.query(sqlDevice);
                         data = {
                             "status": true,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_DEL_SUCC], MsgConstants.DEVICE_DEL_SUCC), // Device deleted successfully.
+                            "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_DEL_SUCC], "Device deleted successfully"), // Device deleted successfully.
                         };
                     } else {
                         data = {
                             "status": false,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_DEL], MsgConstants.DEVICE_NOT_DEL), // Device not deleted.
+                            "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_DEL], "Device not deleted"), // Device not deleted.
                             "fld": fields,
                             "rdlt": results
                         };
@@ -844,7 +844,7 @@ exports.deleteDevice = async function (req, res) {
             } else {
                 data = {
                     "status": false,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_DEL], MsgConstants.DEVICE_NOT_DEL), // Device not deleted.
+                    "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_DEL], "Device not deleted"), // Device not deleted.
                 };
                 res.send(data)
             }
@@ -868,7 +868,7 @@ exports.unlinkDevice =  async function (req, res) {
                 if (error) {
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_UNLNK], MsgConstants.DEVICE_NOT_UNLNK), // Device not unlinked."
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_UNLNK], "Device not unlinked"), // Device not unlinked."
                     }
                 };
 
@@ -895,12 +895,12 @@ exports.unlinkDevice =  async function (req, res) {
                     require("../../bin/www").sendDeviceStatus(dvcId, "unlinked", true);
                     data = {
                         status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_UNLNK_SUCC], MsgConstants.DEVICE_UNLNK_SUCC), // Device unlinked successfully.
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_UNLNK_SUCC], "Device unlinked successfully"), // Device unlinked successfully.
                     }
                 } else {
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_UNLNK], MsgConstants.DEVICE_NOT_UNLNK), // Device not unlinked.
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_UNLNK], "Device not unlinked"), // Device not unlinked.
                     }
                 }
                 res.send(data);
@@ -910,7 +910,7 @@ exports.unlinkDevice =  async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEVICE_ID], MsgConstants.INVALID_DEVICE_ID), // Invalid device id.
+                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEVICE_ID], "Invalid device id"), // Invalid device id.
             }
             res.send(data);
             return;
@@ -1028,7 +1028,7 @@ exports.createDeviceProfile = async function (req, res) {
             }
             data = {
                 "status": true,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND), // Pre-activations added succcessfully.Email sends to your account.
+                "msg": await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], "Pre-activations added succcessfully.Email sends to your account"), // Pre-activations added succcessfully.Email sends to your account.
                 "data": rsltq
             };
             res.send({
@@ -1117,7 +1117,7 @@ exports.createDeviceProfile = async function (req, res) {
                                             device_helpers.saveActionHistory(results[0], constants.DEVICE_PRE_ACTIVATION)
                                             data = {
                                                 "status": true,
-                                                "msg": await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC], MsgConstants.PRE_ACTIV_ADD_SUCC), // Pre-activation added succcessfully.
+                                                "msg": await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC], "Pre-activation added succcessfully."), // Pre-activation added succcessfully.
                                                 "data": results
                                             };
 
@@ -1134,7 +1134,7 @@ exports.createDeviceProfile = async function (req, res) {
                                     } else {
                                         data = {
                                             status: false,
-                                            msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_ADD], MsgConstants.DEVICE_NOT_ADD), // Device couldn't added
+                                            msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_ADD], "Device couldn't added"), // Device couldn't added
                                         }
                                         res.send(data);
                                         return;
@@ -1184,7 +1184,7 @@ exports.suspendAccountDevices = async function (req, res) {
 
                         data = {
                             "status": false,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.ACC_NOT_SUSP], MsgConstants.ACC_NOT_SUSP), // Account not suspended.Please try again.
+                            "msg": await helpers.convertToLang(req.translation[MsgConstants.ACC_NOT_SUSP], "Account not suspended.Please try again"), // Account not suspended.Please try again.
                         }
                     } else {
                         sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
@@ -1202,7 +1202,7 @@ exports.suspendAccountDevices = async function (req, res) {
                                 data = {
                                     "data": resquery[0],
                                     "status": true,
-                                    "msg": await helpers.convertToLang(req.translation[MsgConstants.ACC_SUSP_SUCC], MsgConstants.ACC_SUSP_SUCC), // Account suspended successfully.
+                                    "msg": await helpers.convertToLang(req.translation[MsgConstants.ACC_SUSP_SUCC], "Account suspended successfully"), // Account suspended successfully.
                                 }
                                 device_helpers.saveActionHistory(resquery[0], constants.DEVICE_SUSPENDED)
                                 require("../../bin/www").sendDeviceStatus(resquery[0].device_id, "suspended");
@@ -1232,7 +1232,7 @@ exports.suspendAccountDevices = async function (req, res) {
 
                             data = {
                                 "status": false,
-                                "msg": await helpers.convertToLang(req.translation[MsgConstants.ACC_NOT_SUSP], MsgConstants.ACC_NOT_SUSP), // Account not suspended.Please try again."
+                                "msg": await helpers.convertToLang(req.translation[MsgConstants.ACC_NOT_SUSP], "Account not suspended.Please try again"), // Account not suspended.Please try again."
                             }
                         } else {
 
@@ -1252,7 +1252,7 @@ exports.suspendAccountDevices = async function (req, res) {
                                     data = {
                                         "data": resquery[0],
                                         "status": true,
-                                        "msg": await helpers.convertToLang(req.translation[MsgConstants.ACC_SUSP_SUCC], MsgConstants.ACC_SUSP_SUCC), // Account suspended successfully."
+                                        "msg": await helpers.convertToLang(req.translation[MsgConstants.ACC_SUSP_SUCC], "Account suspended successfully"), // Account suspended successfully."
                                     }
                                     device_helpers.saveActionHistory(resquery[0], constants.DEVICE_SUSPENDED)
                                     require("../../bin/www").sendDeviceStatus(resquery[0].device_id, "suspended");
@@ -1270,7 +1270,7 @@ exports.suspendAccountDevices = async function (req, res) {
 
                     data = {
                         "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.NOT_SUSP_ACC_EXP], MsgConstants.NOT_SUSP_ACC_EXP), // Can't suspend !!! Account Already Expired."
+                        "msg": await helpers.convertToLang(req.translation[MsgConstants.NOT_SUSP_ACC_EXP], "Can't suspend !!! Account Already Expired"), // Can't suspend !!! Account Already Expired."
                     }
                     res.send(data);
                 }
@@ -1279,7 +1279,7 @@ exports.suspendAccountDevices = async function (req, res) {
         } else {
             data = {
                 "status": false,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEVICE], MsgConstants.INVALID_DEVICE), // Invalid Device."
+                "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEVICE], "Invalid Device"), // Invalid Device."
             }
             res.send(data);
         }
@@ -1312,7 +1312,7 @@ exports.activateDevice =  async function (req, res) {
                     if (results.affectedRows == 0) {
                         data = {
                             "status": false,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_ACTIV], MsgConstants.DEVICE_NOT_ACTIV), // Device not activated.Please try again."
+                            "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_ACTIV], "Device not activated.Please try again"), // Device not activated.Please try again."
                         }
                     } else {
                         sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
@@ -1331,7 +1331,7 @@ exports.activateDevice =  async function (req, res) {
                                 data = {
                                     "data": resquery[0],
                                     "status": true,
-                                    "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_ACTIV_SUCC], MsgConstants.DEVICE_ACTIV_SUCC), // Device activated successfully.
+                                    "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_ACTIV_SUCC], "Device activated successfully"), // Device activated successfully.
                                 }
                                 device_helpers.saveActionHistory(resquery[0], constants.DEVICE_ACTIVATED)
                                 res.send(data);
@@ -1356,7 +1356,7 @@ exports.activateDevice =  async function (req, res) {
                         if (results.affectedRows == 0) {
                             data = {
                                 "status": false,
-                                "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_ACTIV], MsgConstants.DEVICE_NOT_ACTIV), // Device not activated.Please try again."
+                                "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_ACTIV], "Device not activated.Please try again"), // Device not activated.Please try again."
                             }
                         } else {
                             sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
@@ -1375,7 +1375,7 @@ exports.activateDevice =  async function (req, res) {
                                     data = {
                                         "data": resquery[0],
                                         "status": true,
-                                        "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_ACTIV_SUCC], MsgConstants.DEVICE_ACTIV_SUCC), // Device activated successfully."
+                                        "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_ACTIV_SUCC], "Device activated successfully"), // Device activated successfully."
                                     }
                                     device_helpers.saveActionHistory(resquery[0], constants.DEVICE_ACTIVATED)
                                     res.send(data);
@@ -1391,7 +1391,7 @@ exports.activateDevice =  async function (req, res) {
 
                     data = {
                         "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_ACTIV_EXP], MsgConstants.DEVICE_NOT_ACTIV_EXP), // Device cannnot be activated.It is expired already.
+                        "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_ACTIV_EXP], "Device cannnot be activated.It is expired already"), // Device cannnot be activated.It is expired already.
                     }
                     res.send(data);
                 }
@@ -1400,7 +1400,7 @@ exports.activateDevice =  async function (req, res) {
         } else {
             data = {
                 "status": false,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEVICE], MsgConstants.INVALID_DEVICE), // Invalid Device."
+                "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEVICE], "Invalid Device"), // Invalid Device."
             }
             res.send(data);
         }
@@ -1426,7 +1426,7 @@ exports.wipeDevice = async function (req, res) {
                 if (results.affectedRows == 0) {
                     data = {
                         "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_WIPE], MsgConstants.DEVICE_NOT_WIPE), // Device not wiped.Please try again.
+                        "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_WIPE], "Device not wiped.Please try again"), // Device not wiped.Please try again.
                     }
                     res.send(data);
                 } else {
@@ -1449,7 +1449,7 @@ exports.wipeDevice = async function (req, res) {
                             data = {
                                 "data": resquery[0],
                                 "status": true,
-                                "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_WIPE_SUCC], MsgConstants.DEVICE_WIPE_SUCC), // Device Wiped successfully.
+                                "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_WIPE_SUCC], "Device Wiped successfully"), // Device Wiped successfully.
                             }
                             res.send(data);
                         }
@@ -1462,7 +1462,7 @@ exports.wipeDevice = async function (req, res) {
         } else {
             data = {
                 "status": false,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEVICE], MsgConstants.INVALID_DEVICE), // Invalid Device."
+                "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEVICE], "Invalid Device"), // Invalid Device."
             }
             res.send(data);
         }
@@ -1485,7 +1485,7 @@ exports.unflagDevice = async function (req, res) {
                 else if (results.affectedRows == 0) {
                     data = {
                         "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_UNFLAG], MsgConstants.DEVICE_NOT_UNFLAG), // Device not Unflagged.Please try again.
+                        "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_UNFLAG], "Device not Unflagged.Please try again"), // Device not Unflagged.Please try again.
                     }
                     res.send(data);
                 } else {
@@ -1504,7 +1504,7 @@ exports.unflagDevice = async function (req, res) {
                             data = {
                                 // "data": resquery[0],
                                 "status": true,
-                                "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_UNFLAG_SUCC], MsgConstants.DEVICE_UNFLAG_SUCC), // Device Unflagged successfully.
+                                "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_UNFLAG_SUCC], "Device Unflagged successfully"), // Device Unflagged successfully.
                             }
                         }
                         device_helpers.saveActionHistory(resquery[0], constants.DEVICE_UNFLAGGED)
@@ -1520,7 +1520,7 @@ exports.unflagDevice = async function (req, res) {
 
         data = {
             "status": false,
-            "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_UNFLAG], MsgConstants.DEVICE_NOT_UNFLAG), // Device Is not unflagged.Please try again"
+            "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_UNFLAG], "Device not Unflagged.Please try again"), // Device Is not unflagged.Please try again"
         }
         res.send(data);
     }
@@ -1549,7 +1549,7 @@ exports.flagDevice = async function (req, res) {
                 if (results.affectedRows == 0) {
                     data = {
                         "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FLAG], MsgConstants.DEVICE_NOT_FLAG), // Device not Flagged.Please try again."
+                        "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FLAG], "Device not Flagged.Please try again"), // Device not Flagged.Please try again."
                     }
                 } else {
                     require("../../bin/www").sendDeviceStatus(gtres[0].device_id, "suspended");
@@ -1568,7 +1568,7 @@ exports.flagDevice = async function (req, res) {
                         data = {
                             "data": resquery[0],
                             "status": true,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_FLAG_SUCC], MsgConstants.DEVICE_FLAG_SUCC), // Device Flagged successfully."
+                            "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_FLAG_SUCC], "Device Flagged successfully"), // Device Flagged successfully."
                         }
 
                         res.send(data);
@@ -1578,7 +1578,7 @@ exports.flagDevice = async function (req, res) {
             } else {
                 data = {
                     "status": false,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_ALRDY_FLAG], MsgConstants.DEVICE_ALRDY_FLAG), // Device Already Flagged
+                    "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_ALRDY_FLAG], "Device Already Flagged"), // Device Already Flagged
                 }
                 res.send(data);
             }
@@ -1586,7 +1586,7 @@ exports.flagDevice = async function (req, res) {
         } else {
             data = {
                 "status": false,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEVICE], MsgConstants.INVALID_DEVICE), // Invalid Device."
+                "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEVICE], "Invalid Device"), // Invalid Device."
             }
             res.send(data);
         }
@@ -1621,7 +1621,7 @@ exports.connectDevice = async function (req, res) {
                 if (results.length == 0) {
                     _data = {
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DETAIL_FOUND], MsgConstants.NO_DETAIL_FOUND), // No details found
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DETAIL_FOUND], "No details found"), // No details found
                     };
                 } else {
                     var query = "select * from dealers where dealer_id =" + results[0].dealer_id;
@@ -1642,7 +1642,7 @@ exports.connectDevice = async function (req, res) {
 
                     _data = {
                         status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // success
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "success"), // success
                         data: device_data
                     };
                 }
@@ -1652,7 +1652,7 @@ exports.connectDevice = async function (req, res) {
         } else {
             _data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FOUND], MsgConstants.DEVICE_NOT_FOUND), // Device not found
+                msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FOUND], "No Device found"), // Device not found
             };
         }
         res.send(_data);
@@ -1677,7 +1677,7 @@ exports.getAppJobQueueOfDevice =  async function (req, res) {
         } else {
             _data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FOUND], MsgConstants.DEVICE_NOT_FOUND), // Device not found"
+                msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FOUND], "No Device found"), // Device not found"
             };
         }
         res.send(_data);
@@ -1699,7 +1699,7 @@ exports.resyncDevice = async function (req, res) {
                 }
                 res.send({
                     status: true,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_SYNC_SUCC], MsgConstants.DEVICE_SYNC_SUCC), // device synced successfully
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_SYNC_SUCC], "device synced successfully"), // device synced successfully
                 })
             });
         }
@@ -1877,7 +1877,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
             if (insertError === 0) {
                 data = {
                     'status': true,
-                    'msg': await helpers.convertToLang(req.translation[MsgConstants.DEVICE_DEL_SUCC], MsgConstants.DEVICE_DEL_SUCC), // Deleted Successfully',
+                    'msg': await helpers.convertToLang(req.translation[MsgConstants.DEVICE_DEL_SUCC], "Device deleted successfully"), // Deleted Successfully',
                     'data': deletedDevices
                 }
                 res.send(data);
@@ -1886,7 +1886,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
 
                 data = {
                     'status': false,
-                    'msg': NotDeleted.toString() + await helpers.convertToLang(req.translation[MsgConstants.NOT_DELETE], MsgConstants.NOT_DELETE),
+                    'msg': NotDeleted.toString() + await helpers.convertToLang(req.translation[MsgConstants.NOT_DELETE], "Not Deleted, Try Again!"),
                 }
                 res.send(data);
             }
@@ -1944,21 +1944,21 @@ exports.applySettings = async function (req, res) {
                     if (type == 'profile') {
                         data = {
                             "status": true,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.PROFILE_APPLIED_SUCCESSFULLY], MsgConstants.PROFILE_APPLIED_SUCCESSFULLY), // Profile Applied Successfully
+                            "msg": await helpers.convertToLang(req.translation[MsgConstants.PROFILE_APPLIED_SUCCESSFULLY], "Profile Applied Successfully"), // Profile Applied Successfully
                         };
                         res.send(data);
                     }
                     else {
                         data = {
                             "status": true,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.SETTINGS_APPLIED_SUCCESSFULLY], MsgConstants.SETTINGS_APPLIED_SUCCESSFULLY), // Settings Applied Successfully',
+                            "msg": await helpers.convertToLang(req.translation[MsgConstants.SETTINGS_APPLIED_SUCCESSFULLY], "Settings Applied Successfully"), // Settings Applied Successfully',
                         };
                         res.send(data);
                     }
                 } else {
                     data = {
                         "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], MsgConstants.ERROR_PROC), // Error while Processing',
+                        "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"), // Error while Processing',
                     };
                     res.send(data);
                 }
@@ -2021,7 +2021,7 @@ exports.applyPushApps =  async function (req, res) {
                 } else {
                     data = {
                         "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], MsgConstants.ERROR_PROC), // Error while Processing',
+                        "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"), // Error while Processing',
                     };
                     res.send(data);
                 }
@@ -2078,7 +2078,7 @@ exports.applyPullApps =  async function (req, res) {
                 } else {
                     data = {
                         "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], MsgConstants.ERROR_PROC), // Error while Processing',
+                        "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"), // Error while Processing',
                     };
                     res.send(data);
                 }
@@ -2109,7 +2109,7 @@ exports.getDeviceHistory = async function (req, res) {
             sql.query(query, async function (error, result) {
                 data = {
                     "status": true,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // successful',
+                    "msg": await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "success"), // successful',
                     "profiles": result
                 };
                 res.send(data);
@@ -2119,7 +2119,7 @@ exports.getDeviceHistory = async function (req, res) {
             where = "";
             data = {
                 "status": false,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_USER], MsgConstants.INVALID_USER), // Invalid User'
+                "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_USER], "Invalid User"), // Invalid User'
             };
             res.send(data);
         }
@@ -2186,7 +2186,7 @@ exports.writeIMEI =  async function (req, res) {
                         } else {
                             data = {
                                 "status": false,
-                                "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], MsgConstants.ERROR_PROC), // Error while Processing',
+                                "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"), // Error while Processing',
                             };
                             res.send(data);
                         }
@@ -2228,7 +2228,7 @@ exports.writeIMEI =  async function (req, res) {
                         } else {
                             data = {
                                 "status": false,
-                                "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], MsgConstants.ERROR_PROC), // Error while Processing',
+                                "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"), // Error while Processing',
                             };
                             res.send(data);
                         }
@@ -2237,7 +2237,7 @@ exports.writeIMEI =  async function (req, res) {
             } else {
                 data = {
                     "status": false,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_IMEI_NUMBER], MsgConstants.INVALID_IMEI_NUMBER), // Invalid IMEI number, please make sure you are using a valid IMEI number and try again",
+                    "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_IMEI_NUMBER], "Invalid IMEI number, please make sure you are using a valid IMEI number and try again"), // Invalid IMEI number, please make sure you are using a valid IMEI number and try again",
                 };
                 res.send(data);
             }
@@ -2303,7 +2303,7 @@ exports.getIMEI_History =   async function (req, res) {
         sql.query(query, async function (error, resp) {
             res.send({
                 status: true,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "success"), // "data success",
                 data: resp
             });
         });
@@ -2311,7 +2311,7 @@ exports.getIMEI_History =   async function (req, res) {
     else {
         res.send({
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
         })
     }
 

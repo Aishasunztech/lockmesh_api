@@ -90,7 +90,7 @@ exports.trasnferApps = async function (req, res) {
                 })
                 data = {
                     status: true,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.APPS_TRANSFERED_SUSSECFULLY], MsgConstants.APPS_TRANSFERED_SUSSECFULLY), // 'Apps Transfered Sussecfully',
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.APPS_TRANSFERED_SUSSECFULLY], "Apps Transfered Sussecfully"), // 'Apps Transfered Sussecfully',
                     data: {
                         marketApplist: results,
                         availableApps: apklist
@@ -100,7 +100,7 @@ exports.trasnferApps = async function (req, res) {
             } else {
                 data = {
                     status: true,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.APPS_TRANSFERED_SUSSECFULLY], MsgConstants.APPS_TRANSFERED_SUSSECFULLY), // 'Apps Transfered Sussecfully',
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.APPS_TRANSFERED_SUSSECFULLY], "Apps Transfered Sussecfully"), // 'Apps Transfered Sussecfully',
                     data: {
                         marketApplist: [],
                         availableApps: apklist
