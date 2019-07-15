@@ -2559,11 +2559,17 @@ router.post('/save_policy', async function (req, res) {
                     }
                     // console.log('query/........... ', applyQuery)
 
-                    if (rslts.affectedRows) {
+                    if (rslts && rslts.affectedRows) {
+                        console.log(rslts);
+                        let newPolicy = await sql.query(`SELECT * FROM policy WHERE id = ${rslts.insertId}`);
+                        let addedPolicy = {}
+                        if (newPolicy.length) {
+                            addedPolicy = newPolicy[0]
+                        }
                         data = {
                             status: true,
                             msg: await helpers.convertToLang(loggedInuid, MsgConstants.PLCY_SAV_SUCC), // Policy Saved Successfully
-
+                            data: addedPolicy
                         };
                     } else {
                         data = {

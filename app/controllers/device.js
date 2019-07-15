@@ -424,7 +424,7 @@ exports.acceptDevice = async function (req, res) {
                             console.log(checkUniqueEror)
                             res.send({
                                 status: false,
-                                msg: await helpers.convertToLang(loggedDealerId, MsgConstants.NEW_DEVICE_NOT_ADDED), // "New Device Not Added Please try Again"
+                                msg: await general_helpers.convertToLang(loggedDealerId, MsgConstants.NEW_DEVICE_NOT_ADDED), // "New Device Not Added Please try Again"
                             });
                             return;
                         }
@@ -454,7 +454,7 @@ exports.acceptDevice = async function (req, res) {
                                     console.log(commonQueryError);
                                     res.send({
                                         status: false,
-                                        msg: await helpers.convertToLang(loggedDealerId, MsgConstants.NEW_DEVICE_NOT_ADDED), // "New Device Not Added Please try Again"
+                                        msg: await general_helpers.convertToLang(loggedDealerId, MsgConstants.NEW_DEVICE_NOT_ADDED), // "New Device Not Added Please try Again"
                                     });
                                     return;
                                 }
@@ -510,7 +510,7 @@ exports.acceptDevice = async function (req, res) {
                         } else {
                             res.send({
                                 status: false,
-                                msg: await helpers.convertToLang(loggedDealerId, MsgConstants.NEW_DEVICE_NOT_ADDED), // "device is not added"
+                                msg: await general_helpers.convertToLang(loggedDealerId, MsgConstants.NEW_DEVICE_NOT_ADDED), // "device is not added"
                             });
                             return;
                         }
