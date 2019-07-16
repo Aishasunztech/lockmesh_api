@@ -18,6 +18,8 @@ const constants = require('../../config/constants');
 const {sendEmail} = require('../../lib/email');
 
 
+var data;
+
 /*****User Login*****/
 exports.login = async function (req, res) {
 	var email = req.body.demail;
@@ -32,7 +34,7 @@ exports.login = async function (req, res) {
 	if (users.length == 0) {
 		data = {
 			status: false,
-			msg: await helpers.convertToLang("", MsgConstants.USER_DOES_NOT_EXIST), // 'User does not exist',
+			msg:  'User does not exist', // await helpers.convertToLang(req.translation[MsgConstants.USER_DOES_NOT_EXIST], MsgConstants.USER_DOES_NOT_EXIST),
 			data: null
 		}
 		res.send(data);
@@ -45,7 +47,7 @@ exports.login = async function (req, res) {
 
 			data = {
 				status: false,
-				msg: await helpers.convertToLang("", MsgConstants.USER_DOES_NOT_EXIST), // 'User does not exist',
+				msg:  'User does not exist', // await helpers.convertToLang(req.translation[MsgConstants.USER_DOES_NOT_EXIST], MsgConstants.USER_DOES_NOT_EXIST),
 				data: null
 			}
 			res.send(data);
@@ -57,7 +59,7 @@ exports.login = async function (req, res) {
 				if (dealerStatus === app_constants.DEALER_SUSPENDED) {
 					data = {
 						status: false,
-						msg: await helpers.convertToLang("", MsgConstants.YOUR_ACCOUNT_IS_SUSPENDED), // 'Your account is suspended',
+						msg:  'Your account is suspended', // await helpers.convertToLang(req.translation[MsgConstants.YOUR_ACCOUNT_IS_SUSPENDED], MsgConstants.YOUR_ACCOUNT_IS_SUSPENDED),
 						data: null
 					}
 					res.send(data);
@@ -65,7 +67,7 @@ exports.login = async function (req, res) {
 				} else if (dealerStatus === app_constants.DEALER_UNLINKED) {
 					data = {
 						status: false,
-						msg: await helpers.convertToLang("", MsgConstants.YOUR_ACCOUNT_IS_DELETED), // 'Your account is deleted',
+						msg:  'Your account is deleted', // await helpers.convertToLang(req.translation[MsgConstants.YOUR_ACCOUNT_IS_DELETED], MsgConstants.YOUR_ACCOUNT_IS_DELETED),
 						data: null
 					}
 					res.send(data);
@@ -84,14 +86,14 @@ exports.login = async function (req, res) {
 								res.send({
 									status: false,
 									two_factor_auth: true,
-									msg: await helpers.convertToLang("", MsgConstants.ERROR), // error
+									msg:  error // await helpers.convertToLang(req.translation[MsgConstants.ERROR], MsgConstants.ERROR),
 								});
 								return;
 							} else {
 								res.send({
 									status: true,
 									two_factor_auth: true,
-									msg: await helpers.convertToLang("", MsgConstants.VERIFICATION_CODE_SENT_TO_YOUR_EMAIL), // "Verification Code sent to Your Email"
+									msg:  "Verification Code sent to Your Email" // await helpers.convertToLang(req.translation[MsgConstants.VERIFICATION_CODE_SENT_TO_YOUR_EMAIL], MsgConstants.VERIFICATION_CODE_SENT_TO_YOUR_EMAIL),
 								});
 								return;
 							}
@@ -146,15 +148,14 @@ exports.login = async function (req, res) {
 									user.token = token;
 
 									helpers.saveLogin(user, userType, app_constants.TOKEN, 1);
-
-									res.send({
+									data = {
 										token: token,
 										status: true,
-										msg: await helpers.convertToLang("", MsgConstants.USER_LOGED_IN_SUCCESSFULLY), // 'User loged in Successfully',
-										expiresIn: constants.EXPIRES_IN,
+										msg:  'User loged in Successfully', // 								expiresIn: constants.EXPIRES_IN, // await helpers.convertToLang(req.translation[MsgConstants.USER_LOGED_IN_SUCCESSFULLY], MsgConstants.USER_LOGED_IN_SUCCESSFULLY),
 										user,
 										two_factor_auth: false,
-									});
+									}
+									res.send(data);
 									return;
 								}
 							}
@@ -167,7 +168,7 @@ exports.login = async function (req, res) {
 
 				data = {
 					status: false,
-					msg: await helpers.convertToLang("", MsgConstants.INVALID_EMAIL_OR_PASSWORD), // 'Invalid email or password',
+					msg:  'Invalid email or password', // await helpers.convertToLang(req.translation[MsgConstants.INVALID_EMAIL_OR_PASSWORD], MsgConstants.INVALID_EMAIL_OR_PASSWORD),
 					data: null
 				}
 				res.send(data);
@@ -192,7 +193,7 @@ exports.verifyCode = async function (req, res) {
             if (error) {
 				res.send({
                     status: false,
-                    msg: await helpers.convertToLang("", MsgConstants.INVALID_VERIFICATION_CODE), // 'invalid verification code',
+                    msg:  'Invalid verification code', // await helpers.convertToLang(req.translation[MsgConstants.INVALID_VERIFICATION_CODE], MsgConstants.INVALID_VERIFICATION_CODE),
                     data: null
 				})
 				return;
@@ -203,7 +204,7 @@ exports.verifyCode = async function (req, res) {
                 if (dealerStatus === app_constants.DEALER_SUSPENDED) {
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang("", MsgConstants.YOUR_ACCOUNT_IS_SUSPENDED), // 'Your account is suspended',
+                        msg:  'Your account is suspended', // await helpers.convertToLang(req.translation[MsgConstants.YOUR_ACCOUNT_IS_SUSPENDED], MsgConstants.YOUR_ACCOUNT_IS_SUSPENDED),
                         data: null
                     }
                     res.send(data);
@@ -211,7 +212,7 @@ exports.verifyCode = async function (req, res) {
                 } else if (dealerStatus === app_constants.DEALER_UNLINKED) {
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang("", MsgConstants.YOUR_ACCOUNT_IS_DELETED), // 'Your account is deleted',
+                        msg:  'Your account is deleted', // await helpers.convertToLang(req.translation[MsgConstants.YOUR_ACCOUNT_IS_DELETED], MsgConstants.YOUR_ACCOUNT_IS_DELETED),
                         data: null
                     }
                     res.status(200).send(data);
@@ -261,8 +262,7 @@ exports.verifyCode = async function (req, res) {
                                 res.send({
                                     token: token,
                                     status: true,
-                                    msg: await helpers.convertToLang("", MsgConstants.USER_LOGED_IN_SUCCESSFULLY), // 'User loged in Successfully',
-                                    expiresIn: constants.EXPIRES_IN,
+                                    msg: 'User loged in Successfully', //                                   expiresIn: constants.EXPIRES_IN, // await helpers.convertToLang(req.translation[MsgConstants.USER_LOGED_IN_SUCCESSFULLY], MsgConstants.USER_LOGED_IN_SUCCESSFULLY),
                                     user
 								});
 								return;
@@ -272,7 +272,7 @@ exports.verifyCode = async function (req, res) {
             } else {
                 res.send({
                     status: false,
-                    msg: await helpers.convertToLang("", MsgConstants.INVALID_VERIFICATION_CODE), // 'invalid verification code',
+                    msg:  'Invalid verification code', // await helpers.convertToLang(req.translation[MsgConstants.INVALID_VERIFICATION_CODE], MsgConstants.INVALID_VERIFICATION_CODE),
                     data: null
 				})
 				return;
@@ -282,7 +282,7 @@ exports.verifyCode = async function (req, res) {
     } else {
         data = {
             status: false,
-            msg: await helpers.convertToLang("", MsgConstants.INVALID_VERIFICATION_CODE), // 'invalid verification code',
+            msg:  'Invalid verification code', // await helpers.convertToLang(req.translation[MsgConstants.INVALID_VERIFICATION_CODE], MsgConstants.INVALID_VERIFICATION_CODE),
             data: null
         }
 		res.send(data);
@@ -317,14 +317,14 @@ exports.superAdminLogin = async function (req, res) {
                         return
                     } else {
                         user.expiresIn = constants.EXPIRES_IN;
-                        user.token = token;
-                        res.send({
+						user.token = token;
+						data = {
                             status: true,
                             token: token,
-                            msg: await helpers.convertToLang("", MsgConstants.USER_LOGED_IN_SUCCESSFULLY), // 'User loged in Successfully',
-                            expiresIn: constants.EXPIRES_IN,
+                            msg: 'User loged in Successfully', //                           expiresIn: constants.EXPIRES_IN, // await helpers.convertToLang(req.translation[MsgConstants.USER_LOGED_IN_SUCCESSFULLY], MsgConstants.USER_LOGED_IN_SUCCESSFULLY),
                             user,
-                        });
+                        }
+                        res.send(data);
                         return
                     }
                 }
