@@ -27,7 +27,7 @@ exports.getLanguage = async function (req, res) {
                     })
                     data = {
                         status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // 'success',
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "success"), // 'success',
                         data: JSON.stringify(obj)
                     }
                     res.send(data)
@@ -35,7 +35,7 @@ exports.getLanguage = async function (req, res) {
                 } else {
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], MsgConstants.NO_DATA_FOUND), // 'No data',
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No data"), // 'No data',
                         data: {}
                     }
                     res.send(data)
@@ -74,7 +74,7 @@ exports.saveLanguage = async function (req, res) {
                     if (rslt.affectedRows) {
                         data = {
                             status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.LANGUAGE_CHANGED_SUCCESSFULLY], MsgConstants.LANGUAGE_CHANGED_SUCCESSFULLY), // 'Language changed Successfully'
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.LANGUAGE_CHANGED_SUCCESSFULLY], "Language changed Successfully"), // 'Language changed Successfully'
                         }
                         res.send(data)
                     } else {
@@ -83,13 +83,13 @@ exports.saveLanguage = async function (req, res) {
                         if (inserted) {
                             data = {
                                 status: true,
-                                msg: await helpers.convertToLang(req.translation[MsgConstants.LANGUAGE_CHANGED_SUCCESSFULLY], MsgConstants.LANGUAGE_CHANGED_SUCCESSFULLY), // 'Language changed Successfully'
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.LANGUAGE_CHANGED_SUCCESSFULLY], "Language changed Successfully"), // 'Language changed Successfully'
                             }
                             res.send(data)
                         } else {
                             data = {
                                 status: false,
-                                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], MsgConstants.ERROR_PROC), // 'Error while Process'
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Process"), // 'Error while Process'
                             }
                             res.send(data)
                         }
@@ -98,7 +98,7 @@ exports.saveLanguage = async function (req, res) {
                 } else {
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], MsgConstants.ERROR_PROC), // 'Error while Process'
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Process"), // 'Error while Process'
                     }
                     res.send(data)
                 }

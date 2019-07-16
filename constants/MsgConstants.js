@@ -6,8 +6,8 @@ module.exports = {
     DEALER_REG_SUCC: "dealer.register.succ.id", // Dealer has been registered successfully
     DEALER_NOT_ADDED: "dealer.not.added.id", // Dealer could not be added
     EMAIL_ALREDY_USED_DEALER: "email.already.use.other.dealer.id", // Email is already in use of other dealer
-    RECORD_UPD_SUCC_EMAIL_NOT_SEND: "record.updated.succ.email.not.send", // Record updated successfully. Email not sent
-    RECORD_UPD_SUCC_EMAIL_SEND: "record.updated.succ.email.send", // Record updated successfully. Email has been sent.
+    RECORD_UPD_SUCC_EMAIL_NOT_SEND: "record.updated.succ.email.not.send.id", // Record updated successfully. Email not sent
+    RECORD_UPD_SUCC_EMAIL_SEND: "record.updated.succ.email.send.id", // Record updated successfully. Email has been sent.
     DEALER_DEL_SUCC: "dealer.delete.succ.id", // Dealer deleted successfully.
     INVALID_DEALER: "invalid.dealer.id", // Invalid Dealer.
     DEALER_ADDED_AGAIN: "dealer.added.again.id", // Dealer added again.

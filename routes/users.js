@@ -59,127 +59,6 @@ const AUTO_UPDATE_ADMIN = "auto_update_admin";
 let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no"
 
 
-/* GET users listing. */
-router.get('/', async function (req, res, next) {
-    res.send("Test")
-
-    // stripe.tokens.create({
-    //     card: {
-    //         number: '4242424242424242',
-    //         exp_month: 12,
-    //         exp_year: 2020,
-    //         cvc: '1234'
-    //     }
-    // }, async function (err, token) {
-    //     console.log(err);
-    //     console.log(token);
-    // });
-
-    // var ip = req.headers['x-forwarded-for']
-    // res.send({
-    //     ip: ip
-    // })
-
-    // var cm = require('csv-mysql');
-
-    // var data = '"1","2","3"\n"4","5","6"';
-    // var options = {
-    //     mysql: {
-    //         host: 'localhost',
-    //         user: 'root',
-    //         database: 'lockmesh_db',
-    //     },
-    //     csv: {
-    //         comment: '#',
-    //         quote: '"'
-    //     },
-    //     headers: ["c1", "c2", "c3"]
-    // }
-
-    // res.send(tablesName)
-
-    // let data1 = await cm.import(options, data, async function (err, rows) {
-    //     if (err === null) err = false;
-    //     // expect(err).to.equal(false);
-    //     // done();
-    // });
-    // res.send(data1)
-
-    // var clientip = req.socket.remoteAddress;
-    // var xffip = req.header('x-real-ip') || req.connection.remoteAddress
-    // var ip = xffip ? xffip : clientip;
-    // res.send({ client: xffip });
-
-    // let filename = "icon_AdSense.png";
-    // let filename = "apk-1541677256487.apk.jpg";
-    // var ip_info = get_ip(req);
-    // console.log(ip_info.clientIp);
-    // res.send({
-    //     ip_info
-    // })
-    // proxy_set_header X-Forwarded-For $remote_addr;
-    // res.send('IP = ' + req.connection.remoteAddress + ':' + req.connection.remotePort)
-    // console.log(req.headers['x-forwarded-for'])
-    // res.send({
-    //     data: req.headers['x-forwarded-for']
-    // })
-    // let file = path.join(__dirname, "../uploads/" + filename);
-
-    // Jimp.read(file)
-    //     .then(lenna => {
-    //         console.log("success", file)
-    //     })
-    //     .catch(err => {
-    //         console.error("error", err);
-    //     });
-
-    // let file = path.join(__dirname, "../uploads/apk-1541677256487.apk");
-    // let packageName = await helpers.getAPKPackageName(file);
-    // let versionName = await helpers.getAPKVersionName(file);
-    // let versionCode = await helpers.getAPKVersionCode(file);
-    // let label = await helpers.getAPKLabel(file);
-    // res.send({
-    //     packageName: packageName,
-    //     versionName: versionName,
-    //     versionCode: versionCode,
-    //     label: label
-    // });
-    // res.send(mime.getExtension(filename));
-
-    // helpers.resetDB();
-    // apk-ScreenLocker v3.31.apk
-
-    // const unzip = zlib.createGunzip();
-    // fileContents.pipe(unzip).pipe(writeStream);
-
-    // const directoryFiles = fs.readdirSync(path.join(__dirname, "../"));
-
-    // res.send(directoryFiles);
-    // directoryFiles.forEach(filename => {
-    // const fileContents = fs.createReadStream(`./data/${filename}`);
-    // const writeStream = fs.createWriteStream(`./data/${filename.slice(0, -3)}`);
-    // const unzip = zlib.createGunzip();
-    // fileContents.pipe(unzip).pipe(writeStream);
-    // });
-
-    // var zip = new AdmZip(path.join(__dirname, "../uploads/apk-ScreenLocker v3.31.apk"));
-    // var zipEntries = await zip.getEntries();
-    // console.log(zipEntries.length)
-    // res.send(zipEntries);
-    // for (var i = 0; i < zipEntries.length; i++) {
-    //   if (zipEntries[i].entryName.match(/readme/))
-    //     console.log(zip.readAsText(zipEntries[i]));
-    // }
-});
-
-// router.post('/super_admin_login', authController.superAdminLogin)
-
-
-// /*****User Login*****/
-// router.post('/login', authController.login);
-
-// router.post('/verify_code', authController.verifyCode);
-
 // enable or disable two factor auth
 router.post('/two_factor_auth', async function (req, res) {
     var verify = req.decoded;
@@ -193,14 +72,14 @@ router.post('/two_factor_auth', async function (req, res) {
             if (isEnable) {
                 data = {
                     status: true,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.DUAL_AUTH_SUCC_ENBL], MsgConstants.DUAL_AUTH_SUCC_ENBL), // Dual Authentication is Successfully enabled
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.DUAL_AUTH_SUCC_ENBL], "Dual Authentication is Successfully enabled"), // Dual Authentication is Successfully enabled
                     isEnable: isEnable
                 }
                 res.send(data)
             } else {
                 data = {
                     status: true,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.DUAL_AUTH_SUCC_DISABL], MsgConstants.DUAL_AUTH_SUCC_DISABL), // Dual Authentication is Successfully disabled
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.DUAL_AUTH_SUCC_DISABL], "Dual Authentication is Successfully disabled"), // Dual Authentication is Successfully disabled
                     isEnable: isEnable
                 }
                 res.send(data)
@@ -208,7 +87,7 @@ router.post('/two_factor_auth', async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.DUAL_AUTH_NOT_ENBL], MsgConstants.DUAL_AUTH_NOT_ENBL), // Dual Authentication could not be enabled
+                msg: await helpers.convertToLang(req.translation[MsgConstants.DUAL_AUTH_NOT_ENBL], "Dual Authentication could not be enabled"), // Dual Authentication could not be enabled
             }
             res.send(data)
         }
@@ -561,7 +440,7 @@ router.post('/addApk', async function (req, res) {
                         };
                         data = {
                             status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.APK_IS_UPLOADED], MsgConstants.APK_IS_UPLOADED), // "Apk is uploaded",
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.APK_IS_UPLOADED], "Apk is uploaded"), // "Apk is uploaded",
                             data: dta
                         };
                         res.send(data);
@@ -572,7 +451,7 @@ router.post('/addApk', async function (req, res) {
                     console.log("file not found");
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error While Uploading"), // "Error While Uploading"
                     }
                     res.send(data)
                     return;
@@ -581,7 +460,7 @@ router.post('/addApk', async function (req, res) {
             } else {
                 data = {
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error While Uploading"), // "Error While Uploading"
                 };
                 res.send(data);
                 return;
@@ -590,7 +469,7 @@ router.post('/addApk', async function (req, res) {
             console.log(error);
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error while Uploading",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error While Uploading"), // "Error while Uploading",
             };
             return;
         }
@@ -662,7 +541,7 @@ router.post('/edit/apk', async function (req, res) {
                         };
                         data = {
                             status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], MsgConstants.RECORD_UPD_SUCC), // "Record Updated"
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record Updated"), // "Record Updated"
 
                         };
                         res.send(data);
@@ -673,7 +552,7 @@ router.post('/edit/apk', async function (req, res) {
                 } else {
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error While Uploading"), // "Error While Uploading"
                     };
                     res.send(data);
                     return;
@@ -682,7 +561,7 @@ router.post('/edit/apk', async function (req, res) {
             } else {
                 data = {
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error While Uploading"), // "Error While Uploading"
                 };
                 res.send(data);
                 return;
@@ -690,7 +569,7 @@ router.post('/edit/apk', async function (req, res) {
         } catch (error) {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], MsgConstants.ERROR_WHILE_UPLOADING), // "Error while Uploading",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error While Uploading"), // "Error while Uploading",
             };
             res.send(data);
             return;
@@ -717,7 +596,7 @@ router.post('/apk/delete', async function (req, res) {
                 if (results.affectedRows == 0) {
                     data = {
                         "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_NOT_DELETED], MsgConstants.APK_NOT_DELETED), // Apk not deleted.",
+                        "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_NOT_DELETED], "Apk not deleted"), // Apk not deleted.",
                         "rdlt": results
                     };
                 } else {
@@ -727,13 +606,13 @@ router.post('/apk/delete', async function (req, res) {
 
                         data = {
                             "status": true,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_DELETED_SUCCESSFULLY], MsgConstants.APK_DELETED_SUCCESSFULLY), // Apk deleted successfully.",
+                            "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_DELETED_SUCCESSFULLY], "Apk deleted successfully"), // Apk deleted successfully.",
                             "apk": result[0]
                         };
                     } else {
                         data = {
                             "status": false,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_NOT_DELETED], MsgConstants.APK_NOT_DELETED), // Apk not deleted.",
+                            "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_NOT_DELETED], "Apk not deleted"), // Apk not deleted.",
                             "rdlt": results
                         };
                     }
@@ -744,7 +623,7 @@ router.post('/apk/delete', async function (req, res) {
         } else {
             data = {
                 "status": false,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR], MsgConstants.ERROR), // Some error occurred."
+                "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Some error occurred"), // Some error occurred."
 
             }
             res.send(data);
@@ -857,7 +736,7 @@ router.put('/force_update', async function (req, res) {
                     require("../bin/www").forceCheckUpdate(device[0].device_id);
                     data = {
                         status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.FORCE_UPDATE_HAS_BEEN_APPLIED], MsgConstants.FORCE_UPDATE_HAS_BEEN_APPLIED), // "force update has been applied"
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.FORCE_UPDATE_HAS_BEEN_APPLIED], "force update has been applied"), // "force update has been applied"
                     }
                     res.send(data)
                 } else {
@@ -869,7 +748,7 @@ router.put('/force_update', async function (req, res) {
                         };
                         data = {
                             status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.FORCE_UPDATE_WILL_APPLY], MsgConstants.FORCE_UPDATE_WILL_APPLY), // "force update will apply when device will come online"
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.FORCE_UPDATE_WILL_APPLY], "force update will apply when device will come online"), // "force update will apply when device will come online"
                         }
                         res.send(data)
                     });
@@ -877,14 +756,14 @@ router.put('/force_update', async function (req, res) {
             } else {
                 data = {
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FOUND], MsgConstants.DEVICE_NOT_FOUND), // "Device not Found"
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FOUND], "Device not Found"), // "Device not Found"
                 }
                 res.send(data)
             }
         } else {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FOUND], MsgConstants.DEVICE_NOT_FOUND), // "Device not Found"
+                msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FOUND], "Device not Found"), // "Device not Found"
             }
             res.send(data)
         }

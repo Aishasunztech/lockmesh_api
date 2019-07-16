@@ -48,7 +48,7 @@ exports.acceptRequest = async function (req, res) {
                                     await sql.query(userCredits)
                                     res.send({
                                         status: true,
-                                        msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_ADDED_SUCCESSFULLY], MsgConstants.CREDITS_ADDED_SUCCESSFULLY), // "Credits added successfully.",
+                                        msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_ADDED_SUCCESSFULLY], "Credits added successfully"), // "Credits added successfully.",
                                         user_credits: deductedCredits
                                     })
                                     return
@@ -66,7 +66,7 @@ exports.acceptRequest = async function (req, res) {
                                             await sql.query(userCredits)
                                             res.send({
                                                 status: true,
-                                                msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_ADDED_SUCCESSFULLY], MsgConstants.CREDITS_ADDED_SUCCESSFULLY), // "Credits added successfully.",
+                                                msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_ADDED_SUCCESSFULLY], "Credits added successfully"), // "Credits added successfully.",
                                                 user_credits: deductedCredits
                                             })
                                             return
@@ -74,7 +74,7 @@ exports.acceptRequest = async function (req, res) {
                                         else {
                                             res.send({
                                                 status: false,
-                                                msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_NOT_UPDATED], MsgConstants.CREDITS_NOT_UPDATED), // "Credits not updated please try again."
+                                                msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_NOT_UPDATED], "Credits not updated please try again"), // "Credits not updated please try again."
                                             })
                                             returns
 
@@ -86,21 +86,21 @@ exports.acceptRequest = async function (req, res) {
                         else {
                             res.send({
                                 status: false,
-                                msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_NOT_ENOUGH_ACCEPT_REQUEST], MsgConstants.CREDITS_NOT_ENOUGH_ACCEPT_REQUEST), // "Your credits are not enough to accept a request."
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_NOT_ENOUGH_ACCEPT_REQUEST], "Your credits are not enough to accept a request"), // "Your credits are not enough to accept a request."
                             })
                             return
                         }
                     } else {
                         res.send({
                             status: false,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_NOT_ENOUGH_ACCEPT_REQUEST], MsgConstants.CREDITS_NOT_ENOUGH_ACCEPT_REQUEST), // "Your credits are not enough to accept a request."
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_NOT_ENOUGH_ACCEPT_REQUEST], "Your credits are not enough to accept a request"), // "Your credits are not enough to accept a request."
                         })
                         return
                     }
                 } else {
                     data = {
                         "status": false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_IS_ALREADY_DELETED], MsgConstants.REQUEST_IS_ALREADY_DELETED), // "Request is already deleted"
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_IS_ALREADY_DELETED], "Request is already deleted"), // "Request is already deleted"
                     };
                     res.send(data);
                     return
@@ -198,26 +198,26 @@ exports.savePrices = async function (req, res) {
                 if (error == 0) {
                     res.send({
                         status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.PRICES_SET_SUCCESSFULLY], MsgConstants.PRICES_SET_SUCCESSFULLY), // 'Prices Set Successfully'
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PRICES_SET_SUCCESSFULLY], "Prices Set Successfully"), // 'Prices Set Successfully'
                     })
                 } else {
                     res.send({
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], MsgConstants.ERROR), // 'Some Error Accured'
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Some Error Occured"), // 'Some Error Occured'
                     })
                 }
 
             } else {
                 res.send({
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEALER], MsgConstants.INVALID_DEALER), // 'Invalid Dealer'
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEALER], "Invalid Dealer"), // 'Invalid Dealer'
                 })
             }
 
         } else {
             res.send({
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DATA], MsgConstants.INVALID_DATA), // 'Invalid Data'
+                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DATA], "Invalid Data"), // 'Invalid Data'
             })
         }
     }
@@ -269,7 +269,7 @@ exports.savePackage =  async function (req, res) {
                             insertedRecord = await sql.query("SELECT * FROM packages WHERE dealer_id='" + dealer_id + "' AND id='" + rslt.insertId + "'")
                             res.send({
                                 status: true,
-                                msg: await helpers.convertToLang(req.translation[MsgConstants.PACKAGE_SAVED_SUCCESSFULLY], MsgConstants.PACKAGE_SAVED_SUCCESSFULLY), // 'Package Saved Successfully',
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.PACKAGE_SAVED_SUCCESSFULLY], "Package Saved Successfully"), // 'Package Saved Successfully',
                                 data: insertedRecord
                             })
                         }
@@ -279,13 +279,13 @@ exports.savePackage =  async function (req, res) {
             } else {
                 res.send({
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEALER], MsgConstants.INVALID_DEALER), // 'Invalid Dealer'
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEALER], "Invalid Dealer"), // 'Invalid Dealer'
                 })
             }
         } else {
             res.send({
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DATA], MsgConstants.INVALID_DATA), // 'Invalid Data'
+                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DATA], "Invalid Data"), // 'Invalid Data'
             })
         }
     }
@@ -334,7 +334,7 @@ exports.getPrices = async function (req, res) {
                         console.log(data, 'reslt data of prices')
                         res.send({
                             status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], MsgConstants.DATA_FOUND), // "Data found",
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
                             data: data
 
                         })
@@ -348,7 +348,7 @@ exports.getPrices = async function (req, res) {
 
                         res.send({
                             status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], MsgConstants.DATA_FOUND), // "Data found",
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
                             data: data
                         })
                     }
@@ -363,7 +363,7 @@ exports.getPrices = async function (req, res) {
 
                     res.send({
                         status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], MsgConstants.DATA_FOUND), // "Data found",
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
                         data: data
                     })
                 }
@@ -379,7 +379,7 @@ exports.getPrices = async function (req, res) {
 
             res.send({
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEALER_ID], MsgConstants.INVALID_DEALER_ID), // 'Invalid dealer_id',
+                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEALER_ID], "Invalid dealer id"), // 'Invalid dealer_id',
                 data: data
 
             })
@@ -407,14 +407,14 @@ exports.getPackages = async function (req, res) {
                         console.log(reslt, 'reslt data of prices')
                         res.send({
                             status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], MsgConstants.DATA_FOUND), // "Data found",
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
                             data: reslt
 
                         })
                     } else {
                         res.send({
                             status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], MsgConstants.DATA_FOUND), // "Data found",
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
                             data: []
 
                         })
@@ -424,7 +424,7 @@ exports.getPackages = async function (req, res) {
 
                     res.send({
                         status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], MsgConstants.DATA_FOUND), // "Data found",
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
                         data: []
                     })
                 }
@@ -433,7 +433,7 @@ exports.getPackages = async function (req, res) {
 
             res.send({
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEALER_ID], MsgConstants.INVALID_DEALER_ID), // 'Invalid dealer_id',
+                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEALER_ID], "Invalid dealer id"), // 'Invalid dealer_id',
                 data: []
 
             })
@@ -498,14 +498,14 @@ exports.updateCredit = async function (req, res) {
                             if (reslt && reslt.affectedRows > 0) {
                                 res.send({
                                     status: true,
-                                    msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_ADDED_SUCCESSFULLY], MsgConstants.CREDITS_ADDED_SUCCESSFULLY), // "Credits added successfully."
+                                    msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_ADDED_SUCCESSFULLY], "Credits added successfully"), // "Credits added successfully."
                                 })
                                 return
                             }
                             else {
                                 res.send({
                                     status: false,
-                                    msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_NOT_UPDATED], MsgConstants.CREDITS_NOT_UPDATED), // "Credits not updated please try again."
+                                    msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_NOT_UPDATED], "Credits not updated please try again"), // "Credits not updated please try again."
                                 })
                                 returns
 
@@ -521,14 +521,14 @@ exports.updateCredit = async function (req, res) {
                             if (reslt && reslt.affectedRows > 0) {
                                 res.send({
                                     status: true,
-                                    msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_ADDED_SUCCESSFULLY], MsgConstants.CREDITS_ADDED_SUCCESSFULLY), // "Credits added successfully."
+                                    msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_ADDED_SUCCESSFULLY], "Credits added successfully"), // "Credits added successfully."
                                 })
                                 return
                             }
                             else {
                                 res.send({
                                     status: false,
-                                    msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_NOT_UPDATED], MsgConstants.CREDITS_NOT_UPDATED), // "Credits not updated please try again."
+                                    msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_NOT_UPDATED], "Credits not updated please try again"), // "Credits not updated please try again."
                                 })
                                 returns
 
@@ -650,14 +650,14 @@ exports.deleteRequest = async function (req, res) {
                         if (result && result.affectedRows > 0) {
                             data = {
                                 "status": true,
-                                "msg": await helpers.convertToLang(req.translation[MsgConstants.REQUEST_DELETED_SUCCESSFULLY], MsgConstants.REQUEST_DELETED_SUCCESSFULLY), // Request deleted successfully."
+                                "msg": await helpers.convertToLang(req.translation[MsgConstants.REQUEST_DELETED_SUCCESSFULLY], "Request deleted successfully"), // Request deleted successfully."
                             };
                             res.send(data);
                             return
                         } else {
                             data = {
                                 "status": false,
-                                "msg": await helpers.convertToLang(req.translation[MsgConstants.REQUEST_NOT_DELETED], MsgConstants.REQUEST_NOT_DELETED), // Request not deleted please try again."
+                                "msg": await helpers.convertToLang(req.translation[MsgConstants.REQUEST_NOT_DELETED], "Request not deleted please try again"), // Request not deleted please try again."
                             };
                             res.send(data);
                             return
@@ -667,7 +667,7 @@ exports.deleteRequest = async function (req, res) {
                 } else {
                     data = {
                         "status": false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_IS_ALREADY_DELETED], MsgConstants.REQUEST_IS_ALREADY_DELETED), // "Request is already deleted"
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_IS_ALREADY_DELETED], "Request is already deleted"), // "Request is already deleted"
                     };
                     res.send(data);
                     return
