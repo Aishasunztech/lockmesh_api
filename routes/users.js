@@ -184,7 +184,7 @@ router.get('/', async function (req, res, next) {
 router.post('/two_factor_auth', async function (req, res) {
     var verify = req.decoded;
     // if (verify['status'] !== undefined && verify.status === true) {
-        if (verify) {
+    if (verify) {
         let loggedDealerId = verify.user.id;
         isEnable = req.body.isEnable;
         let updateDealerQ = "UPDATE dealers SET is_two_factor_auth=" + isEnable + " WHERE dealer_id=" + loggedDealerId;
@@ -198,7 +198,7 @@ router.post('/two_factor_auth', async function (req, res) {
                 }
                 res.send(data)
             } else {
-                data =  {
+                data = {
                     status: true,
                     msg: await helpers.convertToLang(req.translation[MsgConstants.DUAL_AUTH_SUCC_DISABL], MsgConstants.DUAL_AUTH_SUCC_DISABL), // Dual Authentication is Successfully disabled
                     isEnable: isEnable
@@ -347,7 +347,7 @@ router.get('/get_usr_acc_id/:device_id', async function (req, res) {
     var verify = req.decoded;
 
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         //console.log('id is the ', req.params);
         let query = "select usr_acc.id from usr_acc left join devices on devices.id=usr_acc.device_id where devices.device_id='" + req.params.device_id + "'";
 
@@ -444,9 +444,9 @@ router.post('/upload', apkController.upload);
 // add apk. endpoints name should be changed
 router.post('/checkApkName', async function (req, res) {
     var verify = req.decoded;
-    
+
     // if (verify['status'] && verify.status == true) {
-        if (verify) {
+    if (verify) {
         try {
             console.log(req.body);
             let apkName = req.body.name;
@@ -487,9 +487,9 @@ router.post('/checkApkName', async function (req, res) {
 router.post('/addApk', async function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
     var verify = req.decoded;
-    
+
     // if (verify['status'] && verify.status == true) {
-        if (verify) {
+    if (verify) {
         try {
             let logo = req.body.logo;
             let apk = req.body.apk;
@@ -541,7 +541,7 @@ router.post('/addApk', async function (req, res) {
 
                     let formatByte = helpers.formatBytes(apk_stats.size);
 
-                    sql.query("INSERT INTO apk_details (app_name, logo, apk, apk_type, version_code, version_name, package_name, details, apk_bytes, apk_size) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + apk_type + "','" + versionCode + "', '" + versionName + "', '" + packageName + "', '" + details + "', " + apk_stats.size + ", '" + formatByte + "')", async function (err, rslts) {
+                    sql.query("INSERT INTO apk_details (app_name, logo, apk, apk_type, version_code, version_name, label,package_name, details, apk_bytes, apk_size) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + apk_type + "','" + versionCode + "', '" + versionName + "','" + label + "' ,'" + packageName + "', '" + details + "', " + apk_stats.size + ", '" + formatByte + "')", async function (err, rslts) {
                         let newData = await sql.query("SELECT * from apk_details where id = " + rslts.insertId)
                         dta = {
                             apk_id: newData[0].id,
@@ -602,9 +602,9 @@ router.post('/addApk', async function (req, res) {
 router.post('/edit/apk', async function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
     var verify = req.decoded;
-    
+
     // if (verify['status'] && verify.status == true) {
-        if (verify) {
+    if (verify) {
         try {
             let logo = req.body.logo;
             let apk = req.body.apk;
@@ -703,9 +703,9 @@ router.post('/edit/apk', async function (req, res) {
 router.post('/apk/delete', async function (req, res) {
 
     var verify = req.decoded;
-    
+
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         if (!empty(req.body.apk_id)) {
 
             sql.query("update `apk_details` set delete_status='1' WHERE id='" + req.body.apk_id + "'", async function (error, results) {
@@ -775,9 +775,9 @@ router.post('/save_policy_permissions', apkController.savePolicyPermissions);
 router.get('/login_history', async function (req, res) {
     try {
         var verify = req.decoded;
-        
+
         // if (verify.status !== undefined && verify.status == true) {
-            if (verify) {
+        if (verify) {
 
             let id = verify.user.id;
             let data = {}
@@ -843,9 +843,9 @@ router.post('/set_default_policy', policyController.setDefaultPolicy);
 
 router.put('/force_update', async function (req, res) {
     var verify = req.decoded;
-    
+
     // if (verify['status'] !== undefined && verify.status === true) {
-        if (verify) {
+    if (verify) {
         let device_id = req.body.device_id;
         let dealer_id = verify.user.id
         if (!empty(device_id)) {
@@ -901,7 +901,7 @@ router.post('/authenticate_update_user', async function (req, res) {
     var data = '';
     var userType = await helpers.getDealerTypeIdByName(AUTO_UPDATE_ADMIN);
     var verify = req.decoded;
-    
+
     if (verify) {
         // console.log("select * from dealers where type = '" + userType + "' and dealer_email='" + email + "' and password='" + enc_pwd + "'");
         let query_res = await sql.query("select * from dealers where type = '" + userType + "' and dealer_email='" + email + "' and password='" + enc_pwd + "'");

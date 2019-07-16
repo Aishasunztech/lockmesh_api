@@ -53,7 +53,7 @@ exports.apklist = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND] , MsgConstants.NO_DATA_FOUND), // "No result found",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], MsgConstants.NO_DATA_FOUND), // "No result found",
                 list: []
             }
             res.send(data);
@@ -440,9 +440,9 @@ exports.editApk = async function (req, res) {
 exports.apkList = async function (req, res) {
     var verify = req.decoded;
     var data = [];
-    
+
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         if (verify.user.user_type === Constants.ADMIN) {
             sql.query("select * from apk_details where delete_status=0 AND apk_type != 'permanent' order by id ASC", async function (error, results) {
                 if (error) {
@@ -588,9 +588,9 @@ exports.upload = async function (req, res) {
 
     var verify = req.decoded;
     //  console.log('verify', verify.status);
-    
+
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         let fileUploaded = false;
         let filename = "";
         let mimeType = "";
@@ -649,6 +649,7 @@ exports.upload = async function (req, res) {
                 console.log("file uploaded")
                 if (fieldName === Constants.APK) {
                     let file = path.join(__dirname, "../../uploads/" + filename);
+                    console.log(file);
                     let versionCode = await helpers.getAPKVersionCode(file);
                     console.log("version code", versionCode);
                     let apk_stats = fs.statSync(file);
@@ -703,11 +704,11 @@ exports.upload = async function (req, res) {
 }
 
 
-exports.toggle =  async function (req, res) {
+exports.toggle = async function (req, res) {
     var verify = req.decoded;
-    
+
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
 
         if (!empty(req.body.status) && !empty(req.body.apk_id)) {
             sql.query("update apk_details set status = '" + req.body.status + "' where id = '" + req.body.apk_id + "'", async function (err, result) {
@@ -744,10 +745,10 @@ exports.toggle =  async function (req, res) {
 
 exports.saveApkPermission = async function (req, res) {
     var verify = req.decoded;
-    
+
     // console.log(req.body.action);
     // if (verify['status'] !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var action = req.body.action
         let apkId = req.body.apkId;
         let dealers = req.body.dealers;
@@ -930,9 +931,9 @@ exports.saveApkPermission = async function (req, res) {
 
 exports.savePolicyPermissions = async function (req, res) {
     var verify = req.decoded;
-    
+
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var action = req.body.action
         let policyId = req.body.policyId;
         let dealers = req.body.dealers;
@@ -1111,12 +1112,12 @@ exports.savePolicyPermissions = async function (req, res) {
     }
 }
 
-exports.handleUninstallApk =  async function (req, res) {
+exports.handleUninstallApk = async function (req, res) {
     try {
         var verify = req.decoded;
-        
+
         // if (verify.status !== undefined && verify.status == true) {
-            if (verify) {
+        if (verify) {
             let is_restricted = (req.body.value) ? 0 : 1;
             let apk_id = req.params.apk_id;
             // console.log("UPDATE secure_market_apps SET is_restrict_uninstall = " + is_restricted + " WHERE apk_id ='" + apk_id + "'");
