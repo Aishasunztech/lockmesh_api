@@ -18,6 +18,6 @@ deploy_dev:
     - echo "Deploy to dev server"
     - ssh-add <(echo "$PRIVATE_KEY")
     - rm -rf .git
-    - ssh -o StrictHostKeyChecking=no web@104.248.19.72 "cd /var/www/html/git_pipline; git pull -b development http://gitlab+deploy-token-1:SampZkcSvEz2q698Z6rr@51.75.68.188/secure/lockmesh_api; npm install; pm2 reload all; exit"
+    - ssh -o StrictHostKeyChecking=no web@104.248.19.72 "cd /var/www/html/git_pipline; git clone -b development --single-branch http://gitlab+deploy-token-1:SampZkcSvEz2q698Z6rr@51.75.68.188/secure/lockmesh_api.get; npm install; pm2 reload all; exit"
   only:
     - development
