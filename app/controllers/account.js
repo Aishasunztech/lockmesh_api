@@ -266,7 +266,7 @@ exports.getSimIDs = async (req, res) => {
             res.send(data);
         });
     } else {
-        data  = {
+        data = {
             status: false,
             msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
         }
@@ -281,7 +281,7 @@ exports.getAllSimIDs = async (req, res) => {
         var loggedInuid = verify.user.id;
         let query = "select * from sim_ids";
         sql.query(query, async function (error, resp) {
-            data  = {
+            data = {
                 status: false,
                 msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
                 data: resp
@@ -473,88 +473,93 @@ exports.getUsedChatIDs = async (req, res) => {
     }
 }
 
-exports.releaseCSV = async (req, res) => {
+exports.deleteCSV = async (req, res) => {
     var verify = req.decoded; // await verifyToken(req, res);
     var fieldName = req.params.fieldName
     var ids = req.body.ids
     if (verify) {
-        var loggedInuid = verify.user.id;
-        // console.log(fieldName, ids);
-        if (fieldName === 'pgp_email') {
-            let query = "UPDATE pgp_emails set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
-            // console.log(query);
-            sql.query(query, async function (error, resp) {
-                if (error) {
-                    console.log(error);
-                }
-                if (resp.affectedRows) {
-                    let query = "select * from pgp_emails where used=1";
-                    sql.query(query, async function (error, resp) {
-                        res.send({
-                            status: true,
-                            type: 'pgp',
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.CSV_RELEASED_SUCCESSFULLY], MsgConstants.CSV_RELEASED_SUCCESSFULLY), // "CSV Released Successfully.",
-                            data: resp
+        try {
+            if (fieldName === 'pgp_email') {
+                var idsName = ids.map((item) => {
+                    return item.pgp_email
+                })
+                let query = "DELETE FROM pgp_emails where pgp_email IN ('" + idsName.join("','") + "')";
+                console.log(query);
+                sql.query(query, (error, resp) => {
+                    if (error) throw error
+                    if (resp.affectedRows) {
+                        let query = "select * from pgp_emails where used=1";
+                        sql.query(query, (error, resp) => {
+                            res.send({
+                                status: true,
+                                type: 'pgp',
+                                msg: "CSV Released Successfully.",
+                                data: resp
+                            });
                         });
-                    });
-                } else {
-                    res.send({
-                        status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.CSV_NOT_RELEASED], MsgConstants.CSV_NOT_RELEASED), // "CSV Not Released.",
-                    });
-                }
-            });
-        }
-        else if (fieldName === 'sim_id') {
-            let query = "UPDATE sim_ids set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
-            // console.log(query);
-            sql.query(query, async function (error, resp) {
-                if (error) {
-                    console.log(error);
-                }
-                if (resp.affectedRows) {
-                    let query = "select * from sim_ids where used=1";
-                    sql.query(query, async function (error, resp) {
+                    } else {
+                        res.send({
+                            status: false,
+                            msg: "CSV Not Released.",
+                        });
+                    }
+                });
+            }
+            else if (fieldName === 'sim_id') {
+                var idsName = ids.map((item) => {
+                    return item.sim_id
+                })
+                let query = "DELETE FROM sim_ids where sim_id IN (" + idsName.join() + ")";
+                console.log(query);
+                sql.query(query, (error, resp) => {
+                    if (error) throw error
+                    if (resp.affectedRows) {
                         res.send({
                             status: true,
                             type: 'sim',
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.CSV_RELEASED_SUCCESSFULLY], MsgConstants.CSV_RELEASED_SUCCESSFULLY), // "CSV Released Successfully.",
+                            msg: "CSV Released Successfully.",
                             data: resp
                         });
-                    });
-                } else {
-                    res.send({
-                        status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.CSV_NOT_RELEASED], MsgConstants.CSV_NOT_RELEASED), // "CSV Not Released.",
-                    });
-                }
-            });
-        }
-        else if (fieldName === 'chat_id') {
-            let query = "UPDATE chat_ids set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
-            // console.log(query);
-            sql.query(query, async function (error, resp) {
-                if (error) {
-                    console.log(error);
-                }
-                if (resp.affectedRows) {
-
-                    let query = "select * from chat_ids where used=1";
-                    sql.query(query, async function (error, resp) {
+                    } else {
+                        res.send({
+                            status: false,
+                            msg: "CSV Not Released.",
+                        });
+                    }
+                });
+            }
+            else if (fieldName === 'chat_id') {
+                var idsName = ids.map((item) => {
+                    return item.chat_id
+                })
+                let query = "DELETE FROM chat_ids where chat_id IN ('" + idsName.join("','") + "')";
+                console.log(query);
+                sql.query(query, (error, resp) => {
+                    if (error) throw error
+                    if (resp.affectedRows) {
                         res.send({
                             status: true,
                             type: 'chat',
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.CSV_RELEASED_SUCCESSFULLY], MsgConstants.CSV_RELEASED_SUCCESSFULLY), // "CSV Released Successfully.",
+                            msg: "CSV Released Successfully.",
                             data: resp
                         });
-                    });
-                } else {
-                    res.send({
-                        status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.CSV_NOT_RELEASED], MsgConstants.CSV_NOT_RELEASED), // "CSV Not Released.",
-                    });
-                }
+                    } else {
+                        res.send({
+                            status: false,
+                            msg: "CSV Not Released.",
+                        });
+                    }
+                });
+            }
+
+        }
+        catch (err) {
+            console.log(err);
+            res.send({
+                status: false,
+                msg: "CSV Not Released.",
             });
+            return
         }
     }
 }
