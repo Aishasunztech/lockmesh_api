@@ -1,5 +1,8 @@
 module.exports = {
 
+
+    DUMY_ID: "dumy.id",
+
     //****************  Dealer **************/ 
     DEALER_ALREADY_REG: "dealer.already.registered.id", // Dealer Already Registered. Please use another email.
     EMAIL_NOT_SENT: "email.not.sent.id", // Email could not sent due to error:

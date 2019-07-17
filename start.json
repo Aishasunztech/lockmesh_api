@@ -3,7 +3,7 @@
         {
             "name": "myapp",
             "script": "./bin/www.js",
-            "watch": true,
+            "watch": false,
             "env": {
                 "HOST_NAME": "localhost"
             },

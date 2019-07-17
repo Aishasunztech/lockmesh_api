@@ -43,6 +43,42 @@ const verifySession = async (deviceId, sessionId, isWeb = false) => {
     }
 }
 
+const socketMiddleware = async (socket, next) => {
+    let token = socket.handshake.query.token;
+    // console.log("Token", verifyToken(token));
+    if (verifyToken(token)) {
+
+        let session_id = socket.id;
+
+        var device_id = null;
+
+        let isWeb = socket.handshake.query['isWeb'];
+
+        if (isWeb !== undefined && isWeb !== 'undefined' && (isWeb !== false || isWeb !== 'false') && (isWeb === true || isWeb === 'true')) {
+            isWeb = true;
+        } else {
+            isWeb = false;
+            device_id = socket.handshake.query['device_id'];
+        }
+
+
+        let sessionVerify = await verifySession(device_id, session_id, isWeb);
+        console.log("Session", sessionVerify);
+
+        if (device_id != undefined && device_id !== null && sessionVerify) {
+            console.log("mobile side: ", device_id);
+            next();
+        } else if (isWeb === true && sessionVerify) {
+            console.log("web side: ", isWeb);
+            next();
+        } else {
+            return next(new Error('Unauthorized'));
+        }
+
+    } else {
+        return next(new Error('Unauthorized'));
+    }
+}
 module.exports.listen = async function (server) {
 
     // socket configuration options
@@ -72,7 +108,7 @@ module.exports.listen = async function (server) {
     // io.of('/') is for middleware not for path
     // ===============================================================================
     io.listen(server);
-    
+
     // check origins of incoming request 
 
     // io.origins('*:*');
@@ -83,46 +119,10 @@ module.exports.listen = async function (server) {
     //     //     callback()
     //     // }
     // });
-    
-    
+
 
     // middleware for socket incoming and outgoing requests
-    io.use(async function (socket, next) {
-        let token = socket.handshake.query.token;
-        // console.log("Token", verifyToken(token));
-        if (verifyToken(token)) {
-
-            let session_id = socket.id;
-
-            var device_id = null;
-
-            let isWeb = socket.handshake.query['isWeb'];
-
-            if (isWeb !== undefined && isWeb !== 'undefined' && (isWeb !== false || isWeb !== 'false') && (isWeb === true || isWeb === 'true')) {
-                isWeb = true;
-            } else {
-                isWeb = false;
-                device_id = socket.handshake.query['device_id'];
-            }
-
-
-            let sessionVerify = await verifySession(device_id, session_id, isWeb);
-            console.log("Session", sessionVerify);
-
-            if (device_id != undefined && device_id !== null && sessionVerify) {
-                console.log("mobile side: ", device_id);
-                next();
-            } else if (isWeb === true && sessionVerify) {
-                console.log("web side: ", isWeb);
-                next();
-            } else {
-                return next(new Error('Unauthorized'));
-            }
-
-        } else {
-            return next(new Error('Unauthorized'));
-        }
-    });
+    io.use(socketMiddleware);
 
     var allClients = [];
     io.on('connection', async function (socket) {
@@ -207,18 +207,13 @@ module.exports.listen = async function (server) {
                 // let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id;
                 // await sql.query(historyUpdate);
 
-                var setting_query = "SELECT * FROM device_history WHERE user_acc_id='" + user_acc_id + "' AND status=1 ORDER BY created_at DESC LIMIT 1";
+                var setting_query = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=1 ORDER BY created_at DESC LIMIT 1`;
                 let response = await sql.query(setting_query);
 
                 if (response.length > 0 && data.device_id != null) {
                     let app_list = JSON.parse(response[0].app_list);
                     let extensions = JSON.parse(response[0].permissions);
 
-                    // console.log("insertings applications", response);
-                    // console.log(response[0].app_list);
-
-                    // console.log("inserting setiings", device_id);
-                    //  console.log(response[0].permissions);
 
                     await device_helpers.insertApps(app_list, device_id);
 
@@ -289,7 +284,7 @@ module.exports.listen = async function (server) {
             // ===================================================== Pending Device History ==================================================
             // pending settings for device
 
-            var setting_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='profile' order by created_at desc limit 1";
+            var setting_query = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=0 AND type='profile' order by created_at desc limit 1`;
             let setting_res = await sql.query(setting_query);
             if (setting_res.length) {
 
@@ -304,8 +299,7 @@ module.exports.listen = async function (server) {
                     status: true
                 });
 
-            }
-            else {
+            } else {
                 var setting_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='history' order by created_at desc limit 1";
                 let setting_res = await sql.query(setting_query);
                 if (setting_res.length) {
