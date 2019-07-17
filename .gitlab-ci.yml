@@ -6,12 +6,19 @@ stages:
 
 deploy_dev:
   stage: deploy
-  script:
-    - echo "Deploy to dev server"
-    #- ssh web@104.248.19.72 -p Google.com786!@# "cd /var/www/html/git_pipline && git clone http://51.75.68.188/secure/lockmesh_api && pm2 reload all && exit"
   environment:
     name: development
     url: https://dev.lockmesh.com
+  before_script:
+  - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+  - mkdir -p ~/.ssh
+  - eval $(ssh-agent -s)
+  - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  script:
+    - echo "Deploy to dev server"
+    - ssh-add <(echo "$PRIVATE_KEY")
+    - rm -rf .git
+    - ssh -o StrictHostKeyChecking=no web@104.248.19.72 "cd /var/www/html/git_pipline && git catchup http://51.75.68.188/secure/lockmesh_api && pm2 reload all && exit"
   only:
     - development
     
