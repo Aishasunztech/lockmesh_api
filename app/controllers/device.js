@@ -719,10 +719,10 @@ exports.editDevices = async function (req, res) {
                                 var expiry_date = helpers.getExpDateByMonth(rows[0].expiry_date, exp_month);
                                 // console.log(expiry_date);
                                 let currentDate = moment(new Date()).format("YYYY/MM/DD")
-                                console.log(currentDate, expiry_date);
+                                // console.log(currentDate, expiry_date);
                                 if (currentDate < expiry_date) {
-                                    console.log(device);
-                                    require("../bin/www").sendDeviceStatus(device_id, "active", true);
+                                    // console.log(device);
+                                    require("../../bin/www").sendDeviceStatus(device_id, "active", true);
                                     status = 'active'
                                 }
                             }

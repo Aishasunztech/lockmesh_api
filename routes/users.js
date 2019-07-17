@@ -307,7 +307,7 @@ router.get('/get_used_pgp_emails', accountController.getUsedPGPEmails);
 
 router.get('/get_used_sim_ids', accountController.getUsedSimIDs);
 
-router.post('/releaseCSV/:fieldName', accountController.releaseCSV);
+router.post('/delete_CSV_ids/:fieldName', accountController.deleteCSV);
 
 
 /** Get Apk List Admin Panel **/
