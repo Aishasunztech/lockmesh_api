@@ -77,7 +77,6 @@ module.exports = {
         // console.log("djknjkfnjkafak");
         let deviceData = await this.getDeviceByDeviceId(deviceId);
 
-
         if (deviceData != null) {
             if (apps !== null) {
                 sql.query("DELETE from user_apps WHERE device_id = " + deviceData.id);
@@ -146,18 +145,58 @@ module.exports = {
             });
         }
     },
-    insertOrUpdateSettings: async function (permissions, device_id) {
+    insertOrUpdateSettings: async function (controls, device_id) {
         try {
-            // console.log("here device id", device_id);
-            var updateQuery = "REPLACE INTO user_app_permissions (device_id, permissions) VALUE ('" + device_id + "', '" + permissions + "')";
-            // console.log('update query', updateQuery)
-            let rslt = await sql.query(updateQuery);
-            // console.log('dslf dsks dlskj', rslt);
+            console.log("testing", controls);
+            var updateQuery = `REPLACE INTO user_app_permissions (device_id, permissions) VALUE ('${device_id}', '${controls}')`;
+            await sql.query(updateQuery);
         } catch (error) {
             console.log("insert setting error", error);
         }
 
     },
+
+    updateApps: async function (apps, deviceId){
+        try {
+            
+            let deviceData = await this.getDeviceByDeviceId(deviceId);
+    
+            if (deviceData != null) {
+                if (apps !== null) {
+    
+                    apps.forEach(async (app) => {
+                        
+                        if(app.isChanged){
+                            if(app.id && app.guest!==undefined && app.enable!==undefined && app.encrypted!=undefined){
+                                let updateApp = `UPDATE user_apps SET guest=${app.guest}, enable=${app.enable}, encrypted=${app.encrypted} WHERE id=${app.id}`;
+                                await sql.query(updateApp);
+                            }
+                        }
+                   
+                    });
+                }
+            } else {
+                console.log("device may be deleted");
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    },
+
+    updateExtensions: async function (extensions, deviceId){
+        if (extensions) {
+            extensions.forEach(async (app) => {
+                if(app.isChanged){
+                    console.log(app.id);
+                    if(app.id){
+                        let updateApp = `UPDATE user_apps SET guest=${app.guest}, encrypted=${app.encrypted} WHERE id=${app.id}`;
+                        await sql.query(updateApp);
+                    }
+                }
+            });
+        }
+    },
+
     deviceSynced: async function (deviceId) {
         var updateQuery = "UPDATE devices set is_sync=1 WHERE device_id='" + deviceId + "'";
         await sql.query(updateQuery);

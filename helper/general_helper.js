@@ -193,7 +193,6 @@ module.exports = {
 		var query = "SELECT COUNT(*) as dealer_count FROM dealers WHERE type !=" + adminRoleId + " AND type!=4";
 		let res = await sql.query(query);
 		if (res.length) {
-			console.log('helper called', res[0])
 			return res[0].dealer_count;
 		} else {
 			return false;
