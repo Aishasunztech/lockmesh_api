@@ -994,4 +994,23 @@ router.get('/get_csv_ids', async (req, res) => {
 });
 
 
+
+router.post('/sim-register', async (req, res) => {
+    var verify = req.decoded;
+    if (verify) {
+        console.log('sim-register ', req.body)
+
+        res.send({
+            status: true,
+        });
+        return;
+    } else {
+        res.send({
+            status: false,
+        })
+        return;
+    }
+});
+
+
 module.exports = router;
