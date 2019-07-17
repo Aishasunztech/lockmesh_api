@@ -1,0 +1,27 @@
+image: node:10.16
+
+stages:
+  - build
+  - deploy
+
+
+cache:
+  paths:
+    - node_modules/
+
+install_dependencies:
+  stage: build
+  script:
+    - npm install
+  artifacts:
+    paths:
+      - node_modules/
+
+deploy_dev:
+  stage: deploy
+  script:
+    - echo "Deploy to dev server"
+    - ssh web@104.248.19.72 -p Google.com786!@# "cd /var/www/html/git_pipline && git clone http://51.75.68.188/secure/lockmesh_api && pm2 reload all && exit"
+  only:
+    - development
+    
