@@ -172,7 +172,7 @@ router.post('/login', async function (req, resp) {
 
                         } else {
 
-                            let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = device_helpers.getDeviceInfo(req);
+                            let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address, type, version } = device_helpers.getDeviceInfo(req);
                             if (!empty(mac_address) || !empty(serial_number)) {
                                 // console.log("this is info ", { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address });
                                 let chechedDeviceId = await helpers.getDeviceId(serial_number, mac_address)
@@ -186,7 +186,7 @@ router.post('/login', async function (req, resp) {
                                 var updateDevice = "UPDATE devices set device_id = '" + chechedDeviceId + "', ip_address = '" + ip + "', simno = '" + simNo1 + "', online = '" + Constants.DEVICE_OFFLINE + "', imei='" + imei1 + "', imei2='" + imei2 + "', serial_number='" + serial_number + "', mac_address='" + mac_address + "', simno2 = '" + simNo2 + "' where id='" + usrAcc[0].device_id + "'";
                                 await sql.query(updateDevice);
 
-                                var updateAccount = "UPDATE usr_acc set activation_status=1, status='active', expiry_date='" + expiry_date + "', start_date='" + start_date + "', device_status=1, unlink_status = 0 WHERE id = " + usrAcc[0].id;
+                                var updateAccount = "UPDATE usr_acc set activation_status=1, type = '" + type + "', version = '" + version + "', status='active', expiry_date='" + expiry_date + "', start_date='" + start_date + "', device_status=1, unlink_status = 0 WHERE id = " + usrAcc[0].id;
                                 await sql.query(updateAccount);
                                 device_helpers.saveImeiHistory(chechedDeviceId, serial_number, mac_address, imei1, imei2)
                                 let device_id = await device_helpers.getDvcIDByDeviceID(usrAcc[0].device_id)
@@ -310,7 +310,7 @@ router.post('/linkdevice', async function (req, resp) {
     // });
     var reslt = verifyToken(req, resp);
     if (reslt.status == true) {
-        let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = device_helpers.getDeviceInfo(req);
+        let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address, type, version } = device_helpers.getDeviceInfo(req);
         // console.log("serial no", serial_number);
         // console.log("mac address", mac_address);
         if (!empty(serial_number) && !empty(mac_address)) {
@@ -365,11 +365,11 @@ router.post('/linkdevice', async function (req, resp) {
                     // console.log("dealer", dealer[0].dealer_id);
                     if (connected_dealer !== 0) {
 
-                        insertUserAcc = "INSERT INTO usr_acc (device_id, dealer_id, link_code, prnt_dlr_id) values(?,?,?,?)";
-                        values = [dvc_id, dealer[0].dealer_id, dealer[0].link_code, connected_dealer];
+                        insertUserAcc = "INSERT INTO usr_acc (device_id, dealer_id, link_code, prnt_dlr_id,type,version) values(?,?,?,?,?,?)";
+                        values = [dvc_id, dealer[0].dealer_id, dealer[0].link_code, connected_dealer, type, version];
                     } else {
-                        insertUserAcc = "INSERT INTO usr_acc (device_id, dealer_id, link_code) values(?,?,?,?)";
-                        values = [dvc_id, dealer[0].dealer_id, dealer[0].link_code];
+                        insertUserAcc = "INSERT INTO usr_acc (device_id, dealer_id, link_code,type,version) values(?,?,?,?,?,?)";
+                        values = [dvc_id, dealer[0].dealer_id, dealer[0].link_code, type, version];
                     }
 
                     sql.query(insertUserAcc, values, async function (error, rows) {

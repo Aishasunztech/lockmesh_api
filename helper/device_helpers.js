@@ -465,6 +465,10 @@ module.exports = {
         var simNo = req.body.simNo;
         var serial_number = req.body.serialNo;
         var mac_address = req.body.macAddr;
+        var type = (req.body.type) ? req.body.type : null
+        var version = (req.body.version) ? req.body.version : null
+
+        console.log(version, "Version");
 
         var imei1 = null;
         var imei2 = null;
@@ -482,7 +486,7 @@ module.exports = {
         }
 
         return {
-            imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address
+            imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address, type, version
         }
     },
     checkRemainDays: async (createDate, validity) => {
