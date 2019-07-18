@@ -56,7 +56,7 @@ const ADMIN = "admin";
 const DEALER = "dealer";
 const SDEALER = "sdealer";
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
-let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no"
+let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
 
 
 // enable or disable two factor auth
@@ -289,7 +289,7 @@ router.get('/get_sim_ids', accountController.getSimIDs);
 
 router.get('/get_all_sim_ids', accountController.getAllSimIDs);
 
-router.get('/get_used_sim_ids', accountController.getUsedSimIDs);
+// router.get('/get_used_sim_ids', accountController.getUsedSimIDs);
 
 
 router.get('/get_chat_ids', accountController.getChatIDs);
@@ -306,6 +306,8 @@ router.get('/get_all_pgp_emails', accountController.getAllPGPEmails);
 router.get('/get_used_pgp_emails', accountController.getUsedPGPEmails);
 
 router.get('/get_used_sim_ids', accountController.getUsedSimIDs);
+
+// router.get('/get_packages', accountController.getPackages);
 
 router.post('/delete_CSV_ids/:fieldName', accountController.deleteCSV);
 
@@ -826,9 +828,11 @@ router.patch('/save-language', languageController.saveLanguage);
 
 
 
-router.get('/get-prices/:dealer_id', billingController.getPrices)
+router.get('/get-prices', billingController.getPrices)
 
-router.get('/get-packages/:dealer_id', billingController.getPackages);
+router.get('/get-packages', billingController.getPackages);
+
+router.get('/get-parent-packages', billingController.getParentPackages);
 
 router.patch('/check-package-name', billingController.checkPackageName);
 
