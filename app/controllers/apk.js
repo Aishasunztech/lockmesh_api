@@ -194,6 +194,7 @@ exports.uploadApk = async function (req, res) {
         return;
     }
 }
+
 exports.addApk = async function (req, res) {
     try {
         let logo = req.body.logo;
@@ -236,7 +237,7 @@ exports.addApk = async function (req, res) {
                 versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                 versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                 packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                // label = label.toString().replace(/(\r\n|\n|\r)/gm, "");
+                label = label.toString().replace(/(\r\n|\n|\r)/gm, "");
                 details = details.toString().replace(/(\r\n|\n|\r)/gm, "");
 
                 let apk_type = 'permanent'
@@ -298,6 +299,7 @@ exports.addApk = async function (req, res) {
         return;
     }
 }
+
 exports.deleteApk = async function (req, res) {
     if (!empty(req.body.apk_id)) {
         sql.query("update `apk_details` set delete_status='1' WHERE id='" + req.body.apk_id + "'", async function (error, results) {
@@ -381,24 +383,18 @@ exports.editApk = async function (req, res) {
                 versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                 versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                 packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                // label = label.replace(/(\r\n|\n|\r)/gm, "");
+                label = label.replace(/(\r\n|\n|\r)/gm, "");
                 details = details.replace(/(\r\n|\n|\r)/gm, "");
-                // console.log("versionName", versionName);
-                // console.log("pKGName", packageName);
-                // console.log("version Code", versionCode);
-                // console.log("label", label);
-                // console.log('detai')
 
                 // let apk_type = (verify.user.user_type === AUTO_UPDATE_ADMIN) ? 'permanent' : 'basic'
 
                 let apk_stats = fs.statSync(file);
 
                 let formatByte = general_helpers.formatBytes(apk_stats.size);
-                // console.log("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_byte='" + apk_stats.size + "',  apk_size='"+ formatByte +"'  where id = '" + req.body.apk_id + "'");
-
-                sql.query("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk_file = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_bytes='" + apk_stats.size + "',  apk_size='" + formatByte + "'  where id = '" + req.body.apk_id + "'", async function (err, rslts) {
-
-                    if (err) throw err;
+                
+                sql.query("UPDATE apk_details SET label = '"+ label +"', app_name = '" + apk_name + "', logo = '" + logo + "', apk_file = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_bytes='" + apk_stats.size + "',  apk_size='" + formatByte + "'  WHERE id = '" + req.body.apk_id + "'", async function (err, rslts) {
+                    if (err)  {console.log(err)};
+                    
                     data = {
                         status: true,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record Updated"), // "Record Updated"
@@ -407,8 +403,7 @@ exports.editApk = async function (req, res) {
                     res.send(data);
                     return;
                 });
-
-
+                return;
             } else {
                 data = {
                     status: false,
