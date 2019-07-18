@@ -184,7 +184,7 @@ router.get('/', async function (req, res, next) {
 router.post('/two_factor_auth', async function (req, res) {
     var verify = req.decoded;
     // if (verify['status'] !== undefined && verify.status === true) {
-        if (verify) {
+    if (verify) {
         let loggedDealerId = verify.user.id;
         isEnable = req.body.isEnable;
         let updateDealerQ = "UPDATE dealers SET is_two_factor_auth=" + isEnable + " WHERE dealer_id=" + loggedDealerId;
@@ -198,7 +198,7 @@ router.post('/two_factor_auth', async function (req, res) {
                 }
                 res.send(data)
             } else {
-                data =  {
+                data = {
                     status: true,
                     msg: await helpers.convertToLang(req.translation[MsgConstants.DUAL_AUTH_SUCC_DISABL], "Dual Authentication is Successfully disabled"), // Dual Authentication is Successfully disabled
                     isEnable: isEnable
@@ -347,7 +347,7 @@ router.get('/get_usr_acc_id/:device_id', async function (req, res) {
     var verify = req.decoded;
 
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         //console.log('id is the ', req.params);
         let query = "select usr_acc.id from usr_acc left join devices on devices.id=usr_acc.device_id where devices.device_id='" + req.params.device_id + "'";
 
@@ -444,9 +444,9 @@ router.post('/upload', apkController.upload);
 // add apk. endpoints name should be changed
 router.post('/checkApkName', async function (req, res) {
     var verify = req.decoded;
-    
+
     // if (verify['status'] && verify.status == true) {
-        if (verify) {
+    if (verify) {
         try {
             console.log(req.body);
             let apkName = req.body.name;
@@ -487,9 +487,9 @@ router.post('/checkApkName', async function (req, res) {
 router.post('/addApk', async function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
     var verify = req.decoded;
-    
+
     // if (verify['status'] && verify.status == true) {
-        if (verify) {
+    if (verify) {
         try {
             let logo = req.body.logo;
             let apk = req.body.apk;
@@ -602,9 +602,9 @@ router.post('/addApk', async function (req, res) {
 router.post('/edit/apk', async function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
     var verify = req.decoded;
-    
+
     // if (verify['status'] && verify.status == true) {
-        if (verify) {
+    if (verify) {
         try {
             let logo = req.body.logo;
             let apk = req.body.apk;
@@ -703,9 +703,9 @@ router.post('/edit/apk', async function (req, res) {
 router.post('/apk/delete', async function (req, res) {
 
     var verify = req.decoded;
-    
+
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         if (!empty(req.body.apk_id)) {
 
             sql.query("update `apk_details` set delete_status='1' WHERE id='" + req.body.apk_id + "'", async function (error, results) {
@@ -775,9 +775,9 @@ router.post('/save_policy_permissions', apkController.savePolicyPermissions);
 router.get('/login_history', async function (req, res) {
     try {
         var verify = req.decoded;
-        
+
         // if (verify.status !== undefined && verify.status == true) {
-            if (verify) {
+        if (verify) {
 
             let id = verify.user.id;
             let data = {}
@@ -843,9 +843,9 @@ router.post('/set_default_policy', policyController.setDefaultPolicy);
 
 router.put('/force_update', async function (req, res) {
     var verify = req.decoded;
-    
+
     // if (verify['status'] !== undefined && verify.status === true) {
-        if (verify) {
+    if (verify) {
         let device_id = req.body.device_id;
         let dealer_id = verify.user.id
         if (!empty(device_id)) {
@@ -901,7 +901,7 @@ router.post('/authenticate_update_user', async function (req, res) {
     var data = '';
     var userType = await helpers.getDealerTypeIdByName(AUTO_UPDATE_ADMIN);
     var verify = req.decoded;
-    
+
     if (verify) {
         // console.log("select * from dealers where type = '" + userType + "' and dealer_email='" + email + "' and password='" + enc_pwd + "'");
         let query_res = await sql.query("select * from dealers where type = '" + userType + "' and dealer_email='" + email + "' and password='" + enc_pwd + "'");
@@ -998,11 +998,92 @@ router.get('/get_csv_ids', async (req, res) => {
 router.post('/sim-register', async (req, res) => {
     var verify = req.decoded;
     if (verify) {
-        console.log('sim-register ', req.body)
+        console.log('sim-register ', req.body.data)
 
+        if (req.body.status != undefined && req.body.status != 'undefined') {
+            if (req.body.status == 'update') {
+                var UQry = `UPDATE sims SET data_limi = ${data_limit} WHERE id = ${id}`;
+                sql.query(UQry, async function (err, result) {
+                    if (err) {
+                        console.log(err);
+                    }
+                    data = {
+                        status: true,
+                        msg: "Set Data limit Successfully"
+                    }
+                    res.send(data);
+                    return;
+                })
+            }
+            
+        } else {
+            var encrypt = 0;
+            var guest = 0;
+
+            if (req.body.data.encrypt == true) {
+                encrypt = 1;
+            }
+
+            if (req.body.data.guest == true) {
+                guest = 1;
+            }
+
+            let iccid = req.body.data.iccid;
+            let name = req.body.data.name;
+            let note = req.body.data.note;
+            let dataLimit = req.body.data.data_limit;
+
+            var IQry = `INSERT IGNORE INTO sims (iccid, name, note, guest, encrypt, dataLimit) VALUES ('${iccid}', '${name}', '${note}', '${guest}', '${encrypt}', '${dataLimit}')`;
+            console.log(IQry);
+            sql.query(IQry, async function (err, result) {
+                if (err) {
+                    console.log(err);
+                }
+                data = {
+                    status: true,
+                    msg: "Sim Registered Successfully"
+                }
+                res.send(data);
+                return;
+            })
+        }
+
+    } else {
         res.send({
-            status: true,
-        });
+            status: false,
+        })
+        return;
+    }
+});
+
+
+router.post('/get-sims', async (req, res) => {
+    var verify = req.decoded;
+    if (verify) {
+        console.log('sim-register ', req.body.data)
+
+
+        var IQry = `SELECT * FROM sims`;
+        console.log(IQry);
+        sql.query(IQry, async function (err, result) {
+            if (err) {
+                console.log(err);
+            }
+            if (result.length) {
+                data = {
+                    status: true,
+                    data: result
+                }
+            } else {
+                data = {
+                    status: false,
+                    data: []
+                }
+            }
+            res.send(data);
+
+        })
+
         return;
     } else {
         res.send({
