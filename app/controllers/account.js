@@ -60,8 +60,8 @@ exports.getProfiles = async function (req, res) {
                 }
                 //  console.log('profile',result)
                 data = {
-                    "status": true,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // successful',
+                    status: true,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Successful"), // successful',
                     "profiles": profiles
                 };
                 res.send(data);
@@ -69,8 +69,8 @@ exports.getProfiles = async function (req, res) {
 
         } else {
             data = {
-                "status": false,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_USER], MsgConstants.INVALID_USER), // Invalid User'
+                status: false,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_USER], "Invalid User"), // Invalid User'
             };
             res.send(data);
         }
@@ -100,14 +100,14 @@ exports.saveNewData = async function (req, res) {
             }
         }
         data = {
-            "status": true,
-            "msg": await helpers.convertToLang(req.translation[MsgConstants.INSERTED_SUCCESSFULLY], MsgConstants.INSERTED_SUCCESSFULLY), // Inserted Successfully"
+            status: true,
+            msg: await helpers.convertToLang(req.translation[MsgConstants.INSERTED_SUCCESSFULLY], "Inserted Successfully"), // Inserted Successfully"
         }
         res.send(data)
         return
     } else {
         res.send({
-            "status": false,
+            status: false,
         })
         return
     }
@@ -236,7 +236,7 @@ exports.exportIDs = async (req, res) => {
                     } else {
                         data = {
                             status: false,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_TO_IMPORT], MsgConstants.NO_DATA_TO_IMPORT), // "no data to import"
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_TO_IMPORT], "No data to import"), // "no data to import"
                         }
                         res.send(data)
                     }
@@ -246,7 +246,7 @@ exports.exportIDs = async (req, res) => {
         } else {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+                msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "Access forbidden"), // "access forbidden"
             }
             res.send(data)
         }
@@ -260,7 +260,7 @@ exports.getSimIDs = async (req, res) => {
         sql.query(query, async function (error, resp) {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
                 data: resp
             }
             res.send(data);
@@ -268,7 +268,7 @@ exports.getSimIDs = async (req, res) => {
     } else {
         data = {
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
         }
         res.send(data)
     }
@@ -283,7 +283,7 @@ exports.getAllSimIDs = async (req, res) => {
         sql.query(query, async function (error, resp) {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
                 data: resp
             }
             res.send(data);
@@ -291,7 +291,7 @@ exports.getAllSimIDs = async (req, res) => {
     } else {
         data = {
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
         }
         res.send(data)
     }
@@ -306,7 +306,7 @@ exports.getUsedSimIDs = async function (req, res) {
         sql.query(query, async function (error, resp) {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
                 data: resp
             }
             res.send(data);
@@ -315,7 +315,7 @@ exports.getUsedSimIDs = async function (req, res) {
     else {
         data = {
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
         }
         res.send(data)
     }
@@ -330,14 +330,14 @@ exports.getChatIDs = async (req, res) => {
         sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
                 data: resp
             });
         });
     } else {
         res.send({
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
         })
     }
 }
@@ -351,14 +351,14 @@ exports.getAllChatIDs = async (req, res) => {
         sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
                 data: resp
             });
         });
     } else {
         res.send({
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
         })
     }
 }
@@ -374,7 +374,7 @@ exports.getPGPEmails = async (req, res) => {
         sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
                 data: resp
             });
         });
@@ -382,7 +382,7 @@ exports.getPGPEmails = async (req, res) => {
     else {
         res.send({
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
         })
     }
 }
@@ -396,7 +396,7 @@ exports.getAllPGPEmails = async (req, res) => {
         sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
                 data: resp
             });
         });
@@ -404,7 +404,7 @@ exports.getAllPGPEmails = async (req, res) => {
     else {
         res.send({
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
         })
     }
 }
@@ -417,7 +417,7 @@ exports.getUsedPGPEmails = async (req, res) => {
         sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
                 data: resp
             });
         });
@@ -425,7 +425,7 @@ exports.getUsedPGPEmails = async (req, res) => {
     else {
         res.send({
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
         })
     }
 }
@@ -438,7 +438,7 @@ exports.getUsedSimIDs = async (req, res) => {
         sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
                 data: resp
             });
         });
@@ -446,7 +446,7 @@ exports.getUsedSimIDs = async (req, res) => {
     else {
         res.send({
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
         })
     }
 }
@@ -460,7 +460,7 @@ exports.getUsedChatIDs = async (req, res) => {
         sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
                 data: resp
             });
         });
@@ -468,7 +468,7 @@ exports.getUsedChatIDs = async (req, res) => {
     else {
         res.send({
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
         })
     }
 }
@@ -628,7 +628,7 @@ exports.purchaseCredits = async function (req, res) {
                                             // console.log("NOT ALLOWED");
                                             res.send({
                                                 status: false,
-                                                msg: await helpers.convertToLang(req.translation[MsgConstants.NOT_ALLOWED_TO_MAKE_REQUEST], MsgConstants.NOT_ALLOWED_TO_MAKE_REQUEST), // "Not allowed to make request.",
+                                                msg: await helpers.convertToLang(req.translation[MsgConstants.NOT_ALLOWED_TO_MAKE_REQUEST], "Not allowed to make request"), // "Not allowed to make request.",
                                             })
                                             return
                                         }
@@ -646,14 +646,14 @@ exports.purchaseCredits = async function (req, res) {
                                     if (result && result.affectedRows > 0) {
                                         res.send({
                                             status: true,
-                                            msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_SUBMITTED_SUCCESSFULLY], MsgConstants.REQUEST_SUBMITTED_SUCCESSFULLY), // "Request submitted successfully.",
+                                            msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_SUBMITTED_SUCCESSFULLY], "Request submitted successfully"), // "Request submitted successfully.",
                                         })
                                         return
                                     }
                                     else {
                                         res.send({
                                             status: false,
-                                            msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_NOT_SUBMITTED_SUCCESSFULLY], MsgConstants.REQUEST_NOT_SUBMITTED_SUCCESSFULLY), // "Request not submitted please try again.",
+                                            msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_NOT_SUBMITTED_SUCCESSFULLY], "Request not submitted please try again"), // "Request not submitted please try again.",
                                         })
                                     }
                                 })
@@ -761,7 +761,7 @@ exports.purchaseCredits_CC = async function (req, res) {
                                         if (response.status == 'succeeded') {
                                             res.send({
                                                 status: true,
-                                                msg: await helpers.convertToLang(req.translation[MsgConstants.PAYMENT_HAS_BEEN_DONE], MsgConstants.PAYMENT_HAS_BEEN_DONE), // "Payment has been done.",
+                                                msg: await helpers.convertToLang(req.translation[MsgConstants.PAYMENT_HAS_BEEN_DONE], "Payment has been done"), // "Payment has been done.",
                                             })
                                             return
                                         };
@@ -781,14 +781,14 @@ exports.purchaseCredits_CC = async function (req, res) {
                                     if (result && result.affectedRows > 0) {
                                         res.send({
                                             status: true,
-                                            msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_SUBMITTED_SUCCESSFULLY], MsgConstants.REQUEST_SUBMITTED_SUCCESSFULLY), // "Request submitted successfully.",
+                                            msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_SUBMITTED_SUCCESSFULLY], "Request submitted successfully"), // "Request submitted successfully.",
                                         })
                                         return
                                     }
                                     else {
                                         res.send({
                                             status: false,
-                                            msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_NOT_SUBMITTED_SUCCESSFULLY], MsgConstants.REQUEST_NOT_SUBMITTED_SUCCESSFULLY), // "Request not submitted please try again.",
+                                            msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_NOT_SUBMITTED_SUCCESSFULLY], "Request not submitted please try again"), // "Request not submitted please try again.",
                                         })
                                     }
                                 })
@@ -842,15 +842,15 @@ exports.saveProfile = async function (req, res) {
                     // console.log(rslts, 'rslt is query')
                     if (rslts.affectedRows) {
                         data = {
-                            "status": true,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.PROFILE_SAV_SUCC], MsgConstants.PROFILE_SAV_SUCC), // Profile Saved Successfully
-                            "data": rslts
+                            status: true,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.PROFILE_SAV_SUCC], "Profile Saved Successfully"), // Profile Saved Successfully
+                            data: rslts
                         };
                         res.send(data);
                     } else {
                         data = {
-                            "status": false,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.PROFILE_NAME_IS_ALREADY_EXIST], MsgConstants.PROFILE_NAME_IS_ALREADY_EXIST), // Profile Name is already Exist
+                            status: false,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.PROFILE_NAME_IS_ALREADY_EXIST], "Profile Name is already Exist"), // Profile Name is already Exist
                         };
                         res.send(data);
                     }
@@ -860,8 +860,8 @@ exports.saveProfile = async function (req, res) {
 
             } else {
                 data = {
-                    "status": false,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.PROFILE_NAME_IS_ALREADY_EXIST], MsgConstants.PROFILE_NAME_IS_ALREADY_EXIST), // Profile Name is already Exist',
+                    status: false,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.PROFILE_NAME_IS_ALREADY_EXIST], "Profile Name is already Exist"), // Profile Name is already Exist',
                 };
                 res.send(data);
             }
