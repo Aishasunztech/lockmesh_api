@@ -788,7 +788,8 @@ router.post('/authenticate_update_user', async function (req, res) {
 
             data = {
                 status: true,
-                matched: true
+                matched: true,
+                msg: "", // await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FOUND], ""),
             }
             res.send(data);
             return;
@@ -796,7 +797,8 @@ router.post('/authenticate_update_user', async function (req, res) {
         else {
             data = {
                 status: false,
-                matched: false
+                matched: false,
+                msg: "", // await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FOUND], ""),
             }
             res.send(data);
             return
@@ -804,7 +806,8 @@ router.post('/authenticate_update_user', async function (req, res) {
     } else {
         data = {
             status: false,
-            matched: false
+            matched: false,
+            msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_EMAIL_OR_PASSWORD], "Invalid email or password. Please try again"), // Invalid email or password. Please try again
         }
         res.send(data);
         return

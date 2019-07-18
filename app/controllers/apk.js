@@ -718,14 +718,14 @@ exports.toggle = async function (req, res) {
 
                 if (result.affectedRows != 0) {
                     data = {
-                        "status": true,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.STATUS_UPDATED], "Status Updated"), // Status Updated.'
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.STATUS_UPDATED], "Status Changed Successfully"), // Status Updated.'
                     };
                     res.send(data);
                 } else {
                     data = {
-                        "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.STATUS_NOT_UPDATED], "Status Not Updated"), // Status Not Updated.'
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.STATUS_NOT_UPDATED], "Status Not Updated"), // Status Not Updated.'
 
                     };
                     res.send(data);
@@ -734,8 +734,8 @@ exports.toggle = async function (req, res) {
             });
         } else {
             data = {
-                "status": false,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Some error occurred"), // Some error occurred.'
+                status: false,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Some error occurred"), // Some error occurred.'
             };
             res.send(data);
         }
