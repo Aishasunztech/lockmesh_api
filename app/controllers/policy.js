@@ -425,7 +425,8 @@ exports.savePolicyChanges = async function (req, res) {
             let app_list = record.app_list;
             let policy_note = record.policy_note;
             let policy_name = record.policy_name;
-    
+            var command_name = '#' + policy_name.replace(/ /g, "_");
+
             let pushAppFileSize = 0;
     
             if (push_apps !== undefined) {
@@ -447,8 +448,8 @@ exports.savePolicyChanges = async function (req, res) {
     
             let policyObjSize = helpers.formatBytes(pushAppsSize + appListSize + secureAppsSize + sysPermissionSize)
             let policyActualSize = helpers.formatBytes(pushAppFileSize + appListSize + secureAppsSize + sysPermissionSize);
-    
-            let query = `UPDATE policy SET push_apps = '${push_apps}', controls = '${controls}', permissions = '${permissions}', app_list = '${app_list}', policy_note = '${policy_note}', policy_name = '${policy_name}', object_size = '${policyObjSize}', policy_size = '${policyActualSize}' WHERE id=${id}`;
+            
+            let query = `UPDATE policy SET push_apps = '${push_apps}', controls = '${controls}', permissions = '${permissions}', app_list = '${app_list}', policy_note = '${policy_note}', policy_name = '${policy_name}', command_name='${command_name}', object_size = '${policyObjSize}', policy_size = '${policyActualSize}' WHERE id=${id}`;
     
             sql.query(query, async function (error, result) {
     
