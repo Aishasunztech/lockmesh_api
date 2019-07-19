@@ -6,7 +6,7 @@ const MsgConstants = require('../../constants/MsgConstants');
 const app_Constants = require('../../constants/Application');
 const helpers = require('../../helper/general_helper');
 const device_helpers = require('../../helper/device_helpers');
-
+const sockets = require('../../routes/sockets');
 
 var data;
 
@@ -515,7 +515,7 @@ exports.applyPolicy = async function (req, res) {
                             // console.log(loadDeviceQ)
                             await sql.query(loadDeviceQ)
                             if (isOnline) {
-                                require("../../bin/www").getPolicy(device_id, policy[0]);
+                                sockets.getPolicy(device_id, policy[0]);
 
                                 data = {
                                     status: true,
@@ -524,7 +524,7 @@ exports.applyPolicy = async function (req, res) {
                                     msg: await helpers.convertToLang(req.translation[MsgConstants.POLICY_IS_BEING_APPLIED], "Policy is Being applied"), // 'Policy is Being applied,
                                 };
                             } else {
-                                require("../../bin/www").getPolicy(device_id, policy[0]);
+                                sockets.getPolicy(device_id, policy[0]);
                                 data = {
                                     status: true,
                                     content: await helpers.convertToLang(req.translation[MsgConstants.POLICY_APPLIED_TO_DEVICE_ON_BACK_ONLINE], "Policy Applied to device. Action will be performed when device is back online"),
