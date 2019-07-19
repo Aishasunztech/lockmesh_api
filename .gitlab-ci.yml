@@ -7,8 +7,8 @@ stages:
 deploy_dev:
   stage: deploy
   environment:
-    name: development
-    url: https://dev.lockmesh.com
+    name: DevLockmeshAPI
+    url: https://devapi.lockmesh.com
   before_script:
   - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
   - mkdir -p ~/.ssh
@@ -18,7 +18,7 @@ deploy_dev:
     - echo "Deploy to dev server"
     - ssh-add <(echo "$PRIVATE_KEY")
     - rm -rf .git
-    #- ssh -o StrictHostKeyChecking=no web@104.248.19.72 "cd /var/www/html/git_pipline; git clone -b development --single-branch http://gitlab+deploy-token-1:SampZkcSvEz2q698Z6rr@51.75.68.188/secure/lockmesh_api.git . ; npm install; pm2 reload all; exit"
-    - ssh -o StrictHostKeyChecking=no web@104.248.19.72 "cd /var/www/html/git_pipline; git pull origin development; npm install; pm2 reload all; exit"
+    #- ssh -o StrictHostKeyChecking=no web@104.248.19.72 "cd /var/www/htmlclockmesh_api; git clone -b development --single-branch http://gitlab+deploy-token-1:SampZkcSvEz2q698Z6rr@51.75.68.188/secure/lockmesh_api.git . ; npm install; pm2 reload all; exit"
+    - ssh -o StrictHostKeyChecking=no web@104.248.19.72 "cd /var/www/html/lockmesh_api; git pull origin development; npm install; pm2 reload all; exit"
   only:
     - development
