@@ -10,13 +10,13 @@ const ADMIN = "admin";
 const DEALER = "dealer";
 const SDEALER = "sdealer";
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
-let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no"
+let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
 
 
 exports.acceptRequest = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
-    
-        if (verify) {
+
+    if (verify) {
         try {
             let id = req.params.id
             let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
@@ -117,8 +117,8 @@ exports.acceptRequest = async function (req, res) {
 exports.savePrices = async function (req, res) {
     // console.log('save-prices data at server is', req.body)
     var verify = req.decoded; // await verifyToken(req, res);
-    
-        if (verify) {
+
+    if (verify) {
         let data = req.body.data;
         if (data) {
             // console.log(data, 'data')
@@ -223,11 +223,11 @@ exports.savePrices = async function (req, res) {
     }
 }
 
-exports.savePackage =  async function (req, res) {
+exports.savePackage = async function (req, res) {
     console.log('data is', req.body)
     var verify = req.decoded; // await verifyToken(req, res);
-    
-        if (verify) {
+
+    if (verify) {
         // console.log(verify.user, 'user is the ')
         let data = req.body.data;
         let dealer_id = verify.user.dealer_id;
@@ -258,7 +258,7 @@ exports.savePackage =  async function (req, res) {
                     }
                 }
                 let pkg_features = JSON.stringify(data.pkgFeatures)
-                let insertQuery = "INSERT INTO packages (pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, dealer_id) VALUES('" + data.pkgName + "', '" + data.pkgTerm + "', '" + data.pkgPrice + "','" + days + "', '" + pkg_features + "', '" + dealer_id + "')";
+                let insertQuery = "INSERT INTO packages (dealer_id , dealer_type , pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features) VALUES('" + dealer_id + "' ,'" + verify.user.user_type + "' , '" + data.pkgName + "', '" + data.pkgTerm + "', '" + data.pkgPrice + "','" + days + "', '" + pkg_features + "')";
                 sql.query(insertQuery, async (err, rslt) => {
                     if (err) {
                         console.log(err)
@@ -295,8 +295,8 @@ exports.savePackage =  async function (req, res) {
 
 exports.getPrices = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
-    
-        if (verify) {
+
+    if (verify) {
         // let dealer_id = req.params.dealer_id;
         console.log(verify.user)
         let dealer_id = verify.user.dealer_id;
@@ -389,8 +389,8 @@ exports.getPrices = async function (req, res) {
 
 exports.getPackages = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
-    
-        if (verify) {
+
+    if (verify) {
         // let dealer_id = req.params.dealer_id;
         let dealer_id = verify.user.dealer_id;
         if (dealer_id) {
@@ -440,13 +440,115 @@ exports.getPackages = async function (req, res) {
         }
     }
 }
+exports.getParentPackages = async function (req, res) {
+    var verify = req.decoded; // await verifyToken(req, res);
 
-exports.checkPackageName =  async function (req, res) {
+    if (verify) {
+        console.log(verify.user);
+        let dealer_id = verify.user.dealer_id;
+        if (dealer_id) {
+
+            if (verify.user.user_type === ADMIN) {
+
+            }
+            else if (verify.user.user_type === DEALER) {
+
+                let selectQuery = "SELECT * FROM packages WHERE dealer_type='admin'";
+                sql.query(selectQuery, async (err, reslt) => {
+                    if (err) {
+                        console.log(err)
+                    }
+
+                    if (reslt) {
+                        // console.log('result for get packages are is ', reslt);
+
+                        if (reslt.length) {
+                            // console.log(reslt, 'reslt data of prices')
+                            res.send({
+                                status: true,
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
+                                data: reslt
+
+                            })
+                        } else {
+                            res.send({
+                                status: true,
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
+                                data: []
+
+                            })
+                        }
+
+                    } else {
+
+                        res.send({
+                            status: true,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
+                            data: []
+                        })
+                    }
+                })
+
+            }
+            else if (verify.user.user_type === SDEALER) {
+
+                let selectQuery = "SELECT * FROM packages WHERE dealer_type='dealer' AND dealer_id= " + verify.user.connected_dealer;
+                sql.query(selectQuery, async (err, reslt) => {
+                    if (err) {
+                        console.log(err)
+                    }
+
+                    if (reslt) {
+                        // console.log('result for get packages are is ', reslt);
+
+                        if (reslt.length) {
+                            // console.log(reslt, 'reslt data of prices')
+                            res.send({
+                                status: true,
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
+                                data: reslt
+
+                            })
+                        } else {
+                            res.send({
+                                status: true,
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
+                                data: []
+
+                            })
+                        }
+
+                    } else {
+                        res.send({
+                            status: true,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
+                            data: []
+                        })
+                    }
+                })
+
+            }
+
+
+
+        } else {
+
+            res.send({
+                status: false,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEALER_ID], "Invalid dealer id"), // 'Invalid dealer_id',
+                data: []
+
+            })
+        }
+    }
+}
+
+exports.checkPackageName = async function (req, res) {
 
     try {
         var verify = req.decoded; // await verifyToken(req, res);
-        
-            if (verify) {
+
+        if (verify) {
             let name = req.body.name !== undefined ? req.body.name : null;
 
             let checkExistingQ = "SELECT pkg_name FROM packages WHERE pkg_name='" + name + "'";
@@ -476,8 +578,8 @@ exports.checkPackageName =  async function (req, res) {
 
 exports.updateCredit = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
-    
-        if (verify) {
+
+    if (verify) {
         try {
             let credits = req.body.data.credits
             let dealer_id = req.body.data.dealer_id
@@ -543,10 +645,10 @@ exports.updateCredit = async function (req, res) {
     }
 }
 
-exports.newRequests =  async function (req, res) {
+exports.newRequests = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
-    
-        if (verify) {
+
+    if (verify) {
         try {
             let query = ''
             // console.log(verify.user);
@@ -595,8 +697,8 @@ exports.newRequests =  async function (req, res) {
 
 exports.getUserCredits = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
-    
-        if (verify) {
+
+    if (verify) {
         try {
             let query = ''
             query = `SELECT credits from dealer_credits where dealer_id= ${verify.user.id}`
@@ -630,8 +732,8 @@ exports.getUserCredits = async function (req, res) {
 
 exports.deleteRequest = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
-    
-        if (verify) {
+
+    if (verify) {
         try {
             let id = req.params.id
             let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
