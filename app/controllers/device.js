@@ -1,4 +1,4 @@
-const { sql } = require('../../config/database');
+// Libraries
 const multer = require('multer');
 var path = require('path');
 var fs = require("fs");
@@ -10,21 +10,23 @@ var moment = require('moment-strftime');
 var randomize = require('randomatic');
 var datetime = require('node-datetime');
 
-const constants = require('../../constants/Application');
-var MsgConstants = require('../../constants/MsgConstants');
+// custom Libraries
+const { sendEmail } = require('../../lib/email');
 
-
+// helpers
+const { sql } = require('../../config/database');
 const device_helpers = require('../../helper/device_helpers');
 const helpers = require('../../helper/general_helper');
 const verifyToken = require('../../config/auth');
-const { sendEmail } = require('../../lib/email');
+const sockets = require('../../routes/sockets');
 
+// constants
+const constants = require('../../constants/Application');
+var MsgConstants = require('../../constants/MsgConstants');
 const app_constants = require('../../config/constants');
 
 // constants
-const ADMIN = "admin";
-const DEALER = "dealer";
-const SDEALER = "sdealer";
+
 let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
 
 
@@ -38,8 +40,8 @@ exports.devices = async function (req, res) {
     let newArray = [];
 
     if (verify) {
-        if (verify.user.user_type !== 'admin') {
-            if (verify.user.user_type === 'dealer') {
+        if (verify.user.user_type !== constants.ADMIN) {
+            if (verify.user.user_type === constants.DEALER) {
                 where_con = ` AND (usr_acc.dealer_id =${verify.user.id} OR usr_acc.prnt_dlr_id = ${verify.user.id})`;
                 let query = `SELECT * From acc_action_history WHERE action = 'UNLINKED' AND dealer_id = ${verify.user.id} AND del_status IS NULL`;
                 newArray = await sql.query(query)
@@ -65,10 +67,9 @@ exports.devices = async function (req, res) {
                 results[i].sim_id = await device_helpers.getSimids(results[i])
                 results[i].chat_id = await device_helpers.getChatids(results[i])
                 results[i].validity = await device_helpers.checkRemainDays(results[i].created_at, results[i].validity)
-                // dealerData = await device_helpers.getDealerdata(results[i]);
             }
+
             let finalResult = [...results, ...newArray]
-            // console.log('old', finalResult);
 
             let checkValue = helpers.checkValue;
             for (let device of finalResult) {
@@ -551,11 +552,11 @@ exports.editDevices = async function (req, res) {
 
 
             var checkDevice = "SELECT start_date ,expiry_date from usr_acc WHERE device_id = '" + usr_device_id + "'";
-            if (loggedDealerType === SDEALER) {
+            if (loggedDealerType === constants.SDEALER) {
                 checkDevice = checkDevice + " AND dealer_id = " + loggedDealerId;
-            } else if (loggedDealerType === DEALER) {
+            } else if (loggedDealerType === constants.DEALER) {
                 checkDevice = checkDevice + " AND (dealer_id = " + loggedDealerId + " OR prnt_dlr_id = " + loggedDealerId + " )";
-            } else if (loggedDealerType === ADMIN) {
+            } else if (loggedDealerType === constants.ADMIN) {
                 checkDevice = checkDevice;
             } else {
                 res.send({
@@ -595,7 +596,7 @@ exports.editDevices = async function (req, res) {
                                 // console.log(currentDate, expiry_date);
                                 if (currentDate < expiry_date) {
                                     // console.log(device);
-                                    require("../../bin/www").sendDeviceStatus(device_id, "active", true);
+                                    sockets.sendDeviceStatus(device_id, "active", true);
                                     status = 'active'
                                 }
                             }
@@ -694,13 +695,13 @@ exports.deleteDevice = async function (req, res) {
             let userType = verify.user.user_type;
             let loggedUserId = verify.user.id;
             let where = '';
-            if (userType === DEALER) {
+            if (userType === constants.DEALER) {
                 where = ' AND (dealer_id=' + loggedUserId + ' OR prnt_dlr_id = ' + loggedUserId + ')';
-            } else if (userType === SDEALER) {
+            } else if (userType === constants.SDEALER) {
                 where = ' AND (dealer_id=' + loggedUserId;
             }
             // console.log("delete where ", 'DELETE FROM devices WHERE device_id ="' + [req.params.device_id])
-            if (req.body.dealer_id === loggedUserId || req.body.prnt_dlr_id === loggedUserId || userType === ADMIN) {
+            if (req.body.dealer_id === loggedUserId || req.body.prnt_dlr_id === loggedUserId || userType === constants.ADMIN) {
 
                 let usr_device_id = await device_helpers.getOriginalIdByDeviceId(req.params.device_id);
                 sql.query("DELETE from usr_acc  where device_id = " + usr_device_id, async function (error, results, fields) {
@@ -778,7 +779,7 @@ exports.unlinkDevice = async function (req, res) {
                     await sql.query(sqlDevice);
 
                     device_helpers.saveActionHistory(req.body.device, constants.DEVICE_UNLINKED)
-                    require("../../bin/www").sendDeviceStatus(dvcId, "unlinked", true);
+                    sockets.sendDeviceStatus(dvcId, "unlinked", true);
                     data = {
                         status: true,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_UNLNK_SUCC], "Device unlinked successfully"), // Device unlinked successfully.
@@ -841,7 +842,7 @@ exports.createDeviceProfile = async function (req, res) {
         var loggedUserId = verify.user.id;
         var loggedUserType = verify.user.type;
         let policy_id = req.body.policy_id ? req.body.policy_id : '';
-        if (loggedUserType === ADMIN) {
+        if (loggedUserType === constants.ADMIN) {
             //    dealer_id= req.body.dealer_id;
         }
         if (duplicate > 0) {
@@ -1091,7 +1092,7 @@ exports.suspendAccountDevices = async function (req, res) {
                                     msg: await helpers.convertToLang(req.translation[MsgConstants.ACC_SUSP_SUCC], "Account suspended successfully"), // Account suspended successfully.
                                 }
                                 device_helpers.saveActionHistory(resquery[0], constants.DEVICE_SUSPENDED)
-                                require("../../bin/www").sendDeviceStatus(resquery[0].device_id, "suspended");
+                                sockets.sendDeviceStatus(resquery[0].device_id, "suspended");
 
 
                                 res.send(data);
@@ -1141,7 +1142,7 @@ exports.suspendAccountDevices = async function (req, res) {
                                         msg: await helpers.convertToLang(req.translation[MsgConstants.ACC_SUSP_SUCC], "Account suspended successfully"), // Account suspended successfully."
                                     }
                                     device_helpers.saveActionHistory(resquery[0], constants.DEVICE_SUSPENDED)
-                                    require("../../bin/www").sendDeviceStatus(resquery[0].device_id, "suspended");
+                                    sockets.sendDeviceStatus(resquery[0].device_id, "suspended");
                                     res.send(data);
                                 }
                             })
@@ -1213,7 +1214,7 @@ exports.activateDevice = async function (req, res) {
                                 resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
                                 resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                                 // dealerData = await getDealerdata(res[i]);
-                                require("../../bin/www").sendDeviceStatus(resquery[0].device_id, "active", true);
+                                sockets.sendDeviceStatus(resquery[0].device_id, "active", true);
                                 data = {
                                     "data": resquery[0],
                                     status: true,
@@ -1257,7 +1258,7 @@ exports.activateDevice = async function (req, res) {
                                     resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
                                     resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                                     // dealerData = await getDealerdata(res[i]);
-                                    require("../../bin/www").sendDeviceStatus(resquery[0].device_id, "active", true);
+                                    sockets.sendDeviceStatus(resquery[0].device_id, "active", true);
                                     data = {
                                         "data": resquery[0],
                                         status: true,
@@ -1316,7 +1317,7 @@ exports.wipeDevice = async function (req, res) {
                     }
                     res.send(data);
                 } else {
-                    require("../../bin/www").sendDeviceStatus(gtres[0].device_id, constants.DEVICE_WIPE);
+                    sockets.sendDeviceStatus(gtres[0].device_id, constants.DEVICE_WIPE);
 
                     sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
                         if (error) {
@@ -1436,7 +1437,7 @@ exports.flagDevice = async function (req, res) {
                         msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FLAG], "Device not Flagged.Please try again"), // Device not Flagged.Please try again."
                     }
                 } else {
-                    require("../../bin/www").sendDeviceStatus(gtres[0].device_id, "suspended");
+                    sockets.sendDeviceStatus(gtres[0].device_id, "suspended");
 
                     let resquery = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"')
                     // console.log('lolo else', resquery)
@@ -1490,7 +1491,7 @@ exports.connectDevice = async function (req, res) {
             let usertype = await helpers.getUserType(userId);
             let where = "devices.device_id = '" + req.params.device_id + "'";
 
-            if (usertype != ADMIN) {
+            if (usertype != constants.ADMIN) {
                 where = where + " and (usr_acc.dealer_id=" + userId + " OR usr_acc.prnt_dlr_id = " + userId + ")";
             }
             // console.log("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id where " + where);
@@ -1578,7 +1579,7 @@ exports.resyncDevice = async function (req, res) {
                 if (device.length) {
 
                     if (device[0].online === constants.DEVICE_ONLINE) {
-                        require("../../bin/www").syncDevice(deviceId);
+                        sockets.syncDevice(deviceId);
                     } else {
 
                     }
@@ -1855,7 +1856,7 @@ exports.applySettings = async function (req, res) {
                         // await device_helpers.insertOrUpdateSettings(controls, device_id);
                         // }
 
-                        require("../../bin/www").sendEmit(app_list, passwords, controls, permissions, device_id);
+                        sockets.sendEmit(app_list, passwords, controls, permissions, device_id);
 
                         if (type == 'profile') {
                             data = {
@@ -1945,7 +1946,7 @@ exports.applyPushApps = async function (req, res) {
 
                     if (isOnline) {
 
-                        require("../../bin/www").applyPushApps(apps, device_id);
+                        sockets.applyPushApps(apps, device_id);
                         data = {
                             status: true,
                             online: true,
@@ -1955,7 +1956,7 @@ exports.applyPushApps = async function (req, res) {
                         };
                     }
                     else {
-                        require("../../bin/www").applyPushApps(apps, device_id);
+                        sockets.applyPushApps(apps, device_id);
                         data = {
                             status: true,
                             noOfApps: noOfApps,
@@ -2025,7 +2026,7 @@ exports.applyPullApps = async function (req, res) {
                         };
                     }
                     res.send(data);
-                    require("../../bin/www").getPullApps(apps, device_id);
+                    sockets.getPullApps(apps, device_id);
                 } else {
                     data = {
                         status: false,
@@ -2120,7 +2121,7 @@ exports.writeIMEI = async function (req, res) {
                             await sql.query(loadDeviceQ)
                             let isOnline = await device_helpers.isDeviceOnline(device_id);
                             if (isOnline) {
-                                require("../../bin/www").writeImei(newImei, device_id);
+                                sockets.writeImei(newImei, device_id);
                                 data = {
                                     status: true,
                                     online: true,
@@ -2166,7 +2167,7 @@ exports.writeIMEI = async function (req, res) {
                             // await sql.query(applyPushQ)
                             let isOnline = await device_helpers.isDeviceOnline(device_id);
                             if (isOnline) {
-                                require("../../bin/www").writeImei(newImei, device_id);
+                                sockets.writeImei(newImei, device_id);
                                 data = {
                                     status: true,
                                     'online': true,
