@@ -3,7 +3,7 @@ image: node:10.16
 stages:
   - deploy
 
-deploy_DevLM:
+deploy_DevLM_API:
   stage: deploy
   environment:
     name: DevLockmeshAPI
@@ -17,12 +17,12 @@ deploy_DevLM:
     - echo "Deploy to dev server"
     - ssh-add <(echo "$PRIVATE_KEY")
     - rm -rf .git
-    #- ssh -o StrictHostKeyChecking=no web@104.248.19.72 "cd /var/www/htmlclockmesh_api; git clone -b development --single-branch http://gitlab+deploy-token-1:SampZkcSvEz2q698Z6rr@51.75.68.188/secure/lockmesh_api.git . ; npm install; pm2 reload all; exit"
+    #- ssh -o StrictHostKeyChecking=no web@104.248.19.72 "cd /var/www/html/lockmesh_api; git clone -b development --single-branch http://gitlab+deploy-token-1:SampZkcSvEz2q698Z6rr@51.75.68.188/secure/lockmesh_api.git . ; npm install; pm2 reload all; exit"
     - ssh -o StrictHostKeyChecking=no web@104.248.19.72 "cd /var/www/html/lockmesh_api; git pull origin development; npm install; pm2 reload all"
   only:
     - development
 
-deploy_LiveLM:
+deploy_LiveLM_API:
   stage: deploy
   environment:
     name: LiveLockmeshAPI
@@ -41,7 +41,7 @@ deploy_LiveLM:
   only:
     - master
 
-deploy_LiveTitan:
+deploy_LiveTitan_API:
   stage: deploy
   environment:
     name: LiveTitanAPI
