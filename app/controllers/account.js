@@ -845,7 +845,7 @@ exports.saveProfile = async function (req, res) {
 
             let permissions = (req.body.device_setting.extensions == undefined) ? '' : JSON.stringify(req.body.device_setting.extensions);
 
-            var query = "select id from usr_acc_profile where profile_name = '" + name + "'";
+            var query = `SELECT id FROM usr_acc_profile WHERE profile_name = '${name}' AND user_acc_id= ${usr_acc_id}`;
 
             let result = await sql.query(query);
 
