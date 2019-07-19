@@ -197,14 +197,14 @@ exports.changePolicyStatus = async function (req, res) {
             // console.log(result, 'relstsdf')
             if (result.affectedRows) {
                 data = {
-                    "status": true,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "successful"), // successful'
+                    status: true,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "successful"), // successful'
                 };
                 res.send(data);
             } else {
                 data = {
-                    "status": false,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR], "ERROR"), // error'
+                    status: false,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "ERROR"), // error'
                 };
                 res.send(data);
             }
@@ -312,7 +312,7 @@ exports.savePolicy = async function (req, res) {
                 if (checkExisting.length) {
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.PLCY_NAME_ALRDY_TKN], MsgConstants.PLCY_NAME_ALRDY_TKN), // Policy name has already been taken
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PLCY_NAME_ALRDY_TKN], "Policy name has already been taken"), // Policy name has already been taken
 
                     };
                     res.send(data);
@@ -456,7 +456,7 @@ exports.savePolicyChanges = async function (req, res) {
                 if (error) {
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], MsgConstants.ERROR), // error'
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "ERROR"), // error'
                     };
                     res.send(data);
                     return;
@@ -520,12 +520,15 @@ exports.applyPolicy = async function (req, res) {
                                 data = {
                                     status: true,
                                     online: true,
+                                    content: "",
+                                    msg: await helpers.convertToLang(req.translation[MsgConstants.POLICY_IS_BEING_APPLIED], "Policy is Being applied"), // 'Policy is Being applied,
                                 };
                             } else {
                                 require("../../bin/www").getPolicy(device_id, policy[0]);
                                 data = {
                                     status: true,
-
+                                    content: await helpers.convertToLang(req.translation[MsgConstants.POLICY_APPLIED_TO_DEVICE_ON_BACK_ONLINE], "Policy Applied to device. Action will be performed when device is back online"),
+                                    msg: await helpers.convertToLang(req.translation[MsgConstants.WARNING_DEVICE_OFFLINE], "Warning Device Offline"), // 'Warning Device Offline,
                                 };
                             }
                             res.send(data);
@@ -533,6 +536,7 @@ exports.applyPolicy = async function (req, res) {
                         } else {
                             data = {
                                 status: false,
+                                content: "",
                                 msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"), // Error while Processing',
                             };
                             res.send(data);
@@ -570,8 +574,8 @@ exports.setDefaultPolicy = async function (req, res) {
                 sql.query("INSERT INTO default_policies (dealer_id , policy_id) VALUES (" + verify.user.id + " , " + policy_id + " )")
             }
             data = {
-                "status": true,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.DEFAULT_POLICY_CHANGED_SUCCESSFULLY], "Default policy changed successfully"), // Default policy changed successfully'
+                status: true,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.DEFAULT_POLICY_CHANGED_SUCCESSFULLY], "Default policy changed successfully"), // Default policy changed successfully'
             };
             res.send(data);
         }

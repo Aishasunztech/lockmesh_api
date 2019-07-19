@@ -7,11 +7,10 @@ var data;
 exports.getLanguage = async function (req, res) {
     var verify = req.decoded;
 
-    // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
         let dealer_id = verify.user.dealer_id;
         if (dealer_id) {
-            let selectQuery = `SELECT LT.key_id, LT.key_value FROM dealer_language AS dl 
+            let selectQuery = `SELECT LT.lng_id, LT.key_id, LT.key_value FROM dealer_language AS dl 
             JOIN lng_translations AS LT 
             ON (LT.lng_id = dl.dealer_lng_id) 
             WHERE dl.dealer_id=${dealer_id}`;
@@ -21,16 +20,20 @@ exports.getLanguage = async function (req, res) {
 
                 if (rslt && rslt.length) {
                     let obj = {}
+
                     rslt.forEach((elem) => {
                         let key_id = elem.key_id;
                         obj[key_id] = elem.key_value
                     })
-                    data = {
+                    obj["lng_id"] = rslt[0].lng_id;
+                    // console.log("=================================================")
+                    // console.log('lng id  is:', obj.lng_id);
+                    // console.log("=================================================")
+                    res.send({
                         status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "success"), // 'success',
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Success"), // 'success',
                         data: JSON.stringify(obj)
-                    }
-                    res.send(data)
+                    })
                     return;
                 } else {
                     data = {
@@ -111,20 +114,20 @@ exports.saveLanguage = async function (req, res) {
 exports.languages = async function (req, res) {
     // var verify = req.decoded;
     // if (verify) {
-        let languages = [];
-        let selectQuery = "SELECT * FROM languages";
-        languages = await sql.query(selectQuery);
+    let languages = [];
+    let selectQuery = "SELECT * FROM languages";
+    languages = await sql.query(selectQuery);
 
-        if (languages.length) {
-            res.send({
-                status: true,
-                data: languages
-            });
-        } else {
-            res.send({
-                status: false,
-                data: []
-            })
-        }
+    if (languages.length) {
+        res.send({
+            status: true,
+            data: languages
+        });
+    } else {
+        res.send({
+            status: false,
+            data: []
+        })
+    }
     // }
 };
