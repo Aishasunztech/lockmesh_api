@@ -1,5 +1,8 @@
 module.exports = {
 
+
+    DUMY_ID: "dumy.id",
+
     //****************  Dealer **************/ 
     DEALER_ALREADY_REG: "dealer.already.registered.id", // Dealer Already Registered. Please use another email.
     EMAIL_NOT_SENT: "email.not.sent.id", // Email could not sent due to error:
@@ -62,7 +65,7 @@ module.exports = {
     APK_IS_UPLOADED: "Apk.is.uploaded.id", //Apk is uploaded
     APK_NOT_DELETED: "Apk.not.deleted.id", // Apk not deleted
     APK_DELETED_SUCCESSFULLY: "Apk.deleted.successfully.id", // Apk deleted successfully
-    STATUS_UPDATED: "Status.Updated.id", // Status Updated
+    STATUS_UPDATED: "Status.Updated.id", // Status Changed Sccessfully
     STATUS_NOT_UPDATED: "Status.not.Updated.id", // Status Not Updated
 
     PERMISSION_SAVED_SUCCESSFULLY: "Permission.saved.successfully.id", // Permission saved successfully
@@ -158,7 +161,7 @@ module.exports = {
 
     //****************** Common *****************/
     INVALID_EMAIL_NAME: "invalid.email.or.name.id", // Invalid email or name
-    INVALID_EMAIL_OR_PASSWORD: "Invalid.email.or.password.id", // Invalid email or password
+    INVALID_EMAIL_OR_PASSWORD: "Invalid.email.or.password.id", // Invalid email or password. Please try again
     RECORD_NOT_UPD: "record.not.updated.id", // Record not updated.
     ENTER_VALID_DETAIL: "enter.valid.detail.id", // Please enter valid details
     RECORD_NOT_DEL: "record.not.delete.id", // Record not deleted.
@@ -174,4 +177,18 @@ module.exports = {
     DATA_FOUND: "data.found.id", // Data found    
     FILE_NOT_FOUND: "file.not.found.id", // file not found
     INVALID_DATA: "Invalid.Data.id", // Invalid Data
+    PASSWORD_DID_NOT_MATCH: "Password.Did.not.Match.id", // "Password Did not Match. Please Try again"
+    PASSWORD_MATCHED_SUCC: "PASSWORD_MATCHED_SUCC.id", // Password Matched Successfully
+    APPS_ARE_BEING_PUSHED: "Apps.are.Being.pushed.id", // Apps are Being pushed
+    APPS_ARE_BEING_PULLED: "Apps.are.Being.pulled.id", // Apps are Being pulled
+    WARNING_DEVICE_OFFLINE: "Warning.Device.Offline.id", // Warning Device Offline
+    APPS_PUSHED_TO_DEVICE_ON_BACK_ONLINE: "Apps.pushed.to.device.on.back.online.id", // Apps pushed to device. Action will be performed when device is back online
+    APPS_PULLED_TO_DEVICE_ON_BACK_ONLINE: "Apps.PULLED.to.device.on.back.online.id", // Apps PULLED to device. Action will be performed when device is back online
+    POLICY_IS_BEING_APPLIED: "Policy.is.Being.applied.id", // Policy is Being applied
+    POLICY_APPLIED_TO_DEVICE_ON_BACK_ONLINE: "Policy.Applied.to.device.on.back.online.id", // Policy Applied to device. Action will be performed when device is back online
+    WARNING_DEVICE_OFFLINE: "Warning.Device.Offline.id", // Warning Device Offline
+    SUCCESSFULLY_WRITTEN_TO: " successfully.written.to.id", //  successfully written to 
+    RESTART_DEVICE_REQUIRED_TO_APPLY_IMEI: "Restart.device.required.to.apply.IMEI.id",  // on Device.Restart device is required to apply IMEI.
+    WRITE_TO: "write.to.id", // write to
+    ACTION_PERFORMED_ON_BACK_ONLINE: "Action performed ON back online.id", // . Action will be performed when device is back online
 }

@@ -12,7 +12,7 @@ const ADMIN = "admin";
 const DEALER = "dealer";
 const SDEALER = "sdealer";
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
-let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no"
+let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
 
 
 exports.addUser = async function (req, res) {
@@ -22,7 +22,7 @@ exports.addUser = async function (req, res) {
     var verify = req.decoded;
 
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
 
         var loggedInuid = verify.user.id;
         var userName = req.body.name;
@@ -86,14 +86,14 @@ exports.addUser = async function (req, res) {
     }
 }
 
-exports.editUser =  async function (req, res) {
+exports.editUser = async function (req, res) {
 
     res.setHeader('Content-Type', 'application/json');
 
     var verify = req.decoded;
 
-    
-        if (verify) {
+
+    if (verify) {
 
         var userName = req.body.name;
         var userEmail = req.body.email;
@@ -152,7 +152,7 @@ exports.editUser =  async function (req, res) {
 
 exports.deleteUser = async function (req, res) {
     var verify = req.decoded;
-        if (verify) {
+    if (verify) {
         var user_id = req.params.user_id
         if (!empty(user_id) && user_id != undefined) {
             let deleteUserQ = "UPDATE users SET del_status = 1 WHERE user_id ='" + user_id + "'";
@@ -188,10 +188,10 @@ exports.deleteUser = async function (req, res) {
     }
 }
 
-exports.undoDeleteUser =  async function (req, res) {
+exports.undoDeleteUser = async function (req, res) {
     var verify = req.decoded;
-    
-        if (verify) {
+
+    if (verify) {
 
         var user_id = req.params.user_id
         if (!empty(user_id) && user_id != undefined) {
@@ -232,8 +232,8 @@ exports.updateProfile = async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
 
     var verify = req.decoded;
-    
-        if (verify) {
+
+    if (verify) {
 
         sql.query('UPDATE dealers SET `dealer_name` = ? where `dealer_id` = ?', [req.body.name, req.body.dealerId], async function (error, rows, status) {
 
@@ -261,11 +261,11 @@ exports.updateProfile = async function (req, res) {
 }
 
 
-exports.getAllUsers =  async function (req, res) {
+exports.getAllUsers = async function (req, res) {
     let devicesData = [];
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         if (verify.user.user_type == ADMIN) {
             var role = await helpers.getuserTypeIdByName(verify.user.user_type);
             let results = await sql.query("select * from users where del_status =0 order by created_at DESC")
@@ -343,7 +343,7 @@ exports.getAllUsers =  async function (req, res) {
 
 exports.checkProfile = async function (req, res) {
     var verify = req.decoded;
-        if (verify) {
+    if (verify) {
         if (!empty(req.params.profile_id)) {
 
             sql.query("delete from device_history WHERE id=" + req.params.profile_id, async function (error, results) {
@@ -383,18 +383,20 @@ exports.checkProfile = async function (req, res) {
 exports.checkPrevPass = async function (req, res) {
     console.log(req.body);
     var verify = req.decoded;
-        if (verify) {
+    if (verify) {
         let pwd = md5(req.body.user.password);
         let query_res = await sql.query("select * from dealers where dealer_id=" + verify.user.id + " and password='" + pwd + "'");
         if (query_res.length) {
             res.send({
-                "password_matched": true
+                password_matched: true,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.PASSWORD_MATCHED_SUCC], "Password Matched Successfully"), // "Password Matched Successfully"
             });
             return;
         }
     }
     data = {
-        "password_matched": false
+        password_matched: false,
+        msg: await helpers.convertToLang(req.translation[MsgConstants.PASSWORD_DID_NOT_MATCH], "Password Did not Match. Please Try again"), // "Password Did not Match. Please Try again"
     }
     res.send(data);
 }

@@ -13,7 +13,7 @@ const ADMIN = "admin";
 const DEALER = "dealer";
 const SDEALER = "sdealer";
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
-let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no"
+let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
 
 
 exports.getProfiles = async function (req, res) {
@@ -60,8 +60,8 @@ exports.getProfiles = async function (req, res) {
                 }
                 //  console.log('profile',result)
                 data = {
-                    "status": true,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // successful',
+                    status: true,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Successful"), // successful',
                     "profiles": profiles
                 };
                 res.send(data);
@@ -69,8 +69,8 @@ exports.getProfiles = async function (req, res) {
 
         } else {
             data = {
-                "status": false,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_USER], MsgConstants.INVALID_USER), // Invalid User'
+                status: false,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_USER], "Invalid User"), // Invalid User'
             };
             res.send(data);
         }
@@ -100,14 +100,14 @@ exports.saveNewData = async function (req, res) {
             }
         }
         data = {
-            "status": true,
-            "msg": await helpers.convertToLang(req.translation[MsgConstants.INSERTED_SUCCESSFULLY], MsgConstants.INSERTED_SUCCESSFULLY), // Inserted Successfully"
+            status: true,
+            msg: await helpers.convertToLang(req.translation[MsgConstants.INSERTED_SUCCESSFULLY], "Inserted Successfully"), // Inserted Successfully"
         }
         res.send(data)
         return
     } else {
         res.send({
-            "status": false,
+            status: false,
         })
         return
     }
@@ -236,7 +236,7 @@ exports.exportIDs = async (req, res) => {
                     } else {
                         data = {
                             status: false,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_TO_IMPORT], MsgConstants.NO_DATA_TO_IMPORT), // "no data to import"
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_TO_IMPORT], "No data to import"), // "no data to import"
                         }
                         res.send(data)
                     }
@@ -246,7 +246,7 @@ exports.exportIDs = async (req, res) => {
         } else {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+                msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "Access forbidden"), // "access forbidden"
             }
             res.send(data)
         }
@@ -260,15 +260,15 @@ exports.getSimIDs = async (req, res) => {
         sql.query(query, async function (error, resp) {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
                 data: resp
             }
             res.send(data);
         });
     } else {
-        data  = {
+        data = {
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
         }
         res.send(data)
     }
@@ -281,9 +281,9 @@ exports.getAllSimIDs = async (req, res) => {
         var loggedInuid = verify.user.id;
         let query = "select * from sim_ids";
         sql.query(query, async function (error, resp) {
-            data  = {
+            data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
                 data: resp
             }
             res.send(data);
@@ -291,35 +291,35 @@ exports.getAllSimIDs = async (req, res) => {
     } else {
         data = {
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
         }
         res.send(data)
     }
 
 }
 
-exports.getUsedSimIDs = async function (req, res) {
-    var verify = req.decoded; // await verifyToken(req, res);
-    if (verify) {
-        var loggedInuid = verify.user.id;
-        let query = "select * from sim_ids where used=1";
-        sql.query(query, async function (error, resp) {
-            data = {
-                status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
-                data: resp
-            }
-            res.send(data);
-        });
-    }
-    else {
-        data = {
-            status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
-        }
-        res.send(data)
-    }
-}
+// exports.getUsedSimIDs = async function (req, res) {
+//     var verify = req.decoded; // await verifyToken(req, res);
+//     if (verify) {
+//         var loggedInuid = verify.user.id;
+//         let query = "select * from sim_ids where used=1";
+//         sql.query(query, async function (error, resp) {
+//             data = {
+//                 status: false,
+//                 msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+//                 data: resp
+//             }
+//             res.send(data);
+//         });
+//     }
+//     else {
+//         data = {
+//             status: false,
+//             msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+//         }
+//         res.send(data)
+//     }
+// }
 
 
 exports.getChatIDs = async (req, res) => {
@@ -330,14 +330,14 @@ exports.getChatIDs = async (req, res) => {
         sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
                 data: resp
             });
         });
     } else {
         res.send({
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
         })
     }
 }
@@ -351,14 +351,14 @@ exports.getAllChatIDs = async (req, res) => {
         sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
                 data: resp
             });
         });
     } else {
         res.send({
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
         })
     }
 }
@@ -374,7 +374,7 @@ exports.getPGPEmails = async (req, res) => {
         sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
                 data: resp
             });
         });
@@ -382,7 +382,7 @@ exports.getPGPEmails = async (req, res) => {
     else {
         res.send({
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
         })
     }
 }
@@ -396,7 +396,7 @@ exports.getAllPGPEmails = async (req, res) => {
         sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
                 data: resp
             });
         });
@@ -404,7 +404,7 @@ exports.getAllPGPEmails = async (req, res) => {
     else {
         res.send({
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
         })
     }
 }
@@ -417,7 +417,7 @@ exports.getUsedPGPEmails = async (req, res) => {
         sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
                 data: resp
             });
         });
@@ -425,7 +425,7 @@ exports.getUsedPGPEmails = async (req, res) => {
     else {
         res.send({
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
         })
     }
 }
@@ -438,7 +438,7 @@ exports.getUsedSimIDs = async (req, res) => {
         sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
                 data: resp
             });
         });
@@ -446,10 +446,30 @@ exports.getUsedSimIDs = async (req, res) => {
     else {
         res.send({
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
         })
     }
 }
+// exports.getPackages = async (req, res) => {
+//     var verify = req.decoded; // await verifyToken(req, res);
+//     if (verify) {
+//         var loggedInuid = verify.user.id;
+//         let query = "select * from sim_ids where used=1 AND user_acc_id is null";
+//         sql.query(query, async function (error, resp) {
+//             res.send({
+//                 status: false,
+//                 msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+//                 data: resp
+//             });
+//         });
+//     }
+//     else {
+//         res.send({
+//             status: false,
+//             msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+//         })
+//     }
+// }
 
 
 exports.getUsedChatIDs = async (req, res) => {
@@ -460,7 +480,7 @@ exports.getUsedChatIDs = async (req, res) => {
         sql.query(query, async function (error, resp) {
             res.send({
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
                 data: resp
             });
         });
@@ -468,93 +488,98 @@ exports.getUsedChatIDs = async (req, res) => {
     else {
         res.send({
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
         })
     }
 }
 
-exports.releaseCSV = async (req, res) => {
+exports.deleteCSV = async (req, res) => {
     var verify = req.decoded; // await verifyToken(req, res);
     var fieldName = req.params.fieldName
     var ids = req.body.ids
     if (verify) {
-        var loggedInuid = verify.user.id;
-        // console.log(fieldName, ids);
-        if (fieldName === 'pgp_email') {
-            let query = "UPDATE pgp_emails set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
-            // console.log(query);
-            sql.query(query, async function (error, resp) {
-                if (error) {
-                    console.log(error);
-                }
-                if (resp.affectedRows) {
-                    let query = "select * from pgp_emails where used=1";
-                    sql.query(query, async function (error, resp) {
-                        res.send({
-                            status: true,
-                            type: 'pgp',
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.CSV_RELEASED_SUCCESSFULLY], MsgConstants.CSV_RELEASED_SUCCESSFULLY), // "CSV Released Successfully.",
-                            data: resp
+        try {
+            if (fieldName === 'pgp_email') {
+                var idsName = ids.map((item) => {
+                    return item.pgp_email
+                })
+                let query = "DELETE FROM pgp_emails where pgp_email IN ('" + idsName.join("','") + "')";
+                console.log(query);
+                sql.query(query, (error, resp) => {
+                    if (error) throw error
+                    if (resp.affectedRows) {
+                        let query = "select * from pgp_emails where used=1";
+                        sql.query(query, (error, resp) => {
+                            res.send({
+                                status: true,
+                                type: 'pgp',
+                                msg: "CSV Released Successfully.",
+                                data: resp
+                            });
                         });
-                    });
-                } else {
-                    res.send({
-                        status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.CSV_NOT_RELEASED], MsgConstants.CSV_NOT_RELEASED), // "CSV Not Released.",
-                    });
-                }
-            });
-        }
-        else if (fieldName === 'sim_id') {
-            let query = "UPDATE sim_ids set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
-            // console.log(query);
-            sql.query(query, async function (error, resp) {
-                if (error) {
-                    console.log(error);
-                }
-                if (resp.affectedRows) {
-                    let query = "select * from sim_ids where used=1";
-                    sql.query(query, async function (error, resp) {
+                    } else {
+                        res.send({
+                            status: false,
+                            msg: "CSV Not Released.",
+                        });
+                    }
+                });
+            }
+            else if (fieldName === 'sim_id') {
+                var idsName = ids.map((item) => {
+                    return item.sim_id
+                })
+                let query = "DELETE FROM sim_ids where sim_id IN (" + idsName.join() + ")";
+                console.log(query);
+                sql.query(query, (error, resp) => {
+                    if (error) throw error
+                    if (resp.affectedRows) {
                         res.send({
                             status: true,
                             type: 'sim',
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.CSV_RELEASED_SUCCESSFULLY], MsgConstants.CSV_RELEASED_SUCCESSFULLY), // "CSV Released Successfully.",
+                            msg: "CSV Released Successfully.",
                             data: resp
                         });
-                    });
-                } else {
-                    res.send({
-                        status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.CSV_NOT_RELEASED], MsgConstants.CSV_NOT_RELEASED), // "CSV Not Released.",
-                    });
-                }
-            });
-        }
-        else if (fieldName === 'chat_id') {
-            let query = "UPDATE chat_ids set used = 0 ,user_acc_id = null where id IN (" + ids.join() + ")";
-            // console.log(query);
-            sql.query(query, async function (error, resp) {
-                if (error) {
-                    console.log(error);
-                }
-                if (resp.affectedRows) {
-
-                    let query = "select * from chat_ids where used=1";
-                    sql.query(query, async function (error, resp) {
+                    } else {
+                        res.send({
+                            status: false,
+                            msg: "CSV Not Released.",
+                        });
+                    }
+                });
+            }
+            else if (fieldName === 'chat_id') {
+                var idsName = ids.map((item) => {
+                    return item.chat_id
+                })
+                let query = "DELETE FROM chat_ids where chat_id IN ('" + idsName.join("','") + "')";
+                console.log(query);
+                sql.query(query, (error, resp) => {
+                    if (error) throw error
+                    if (resp.affectedRows) {
                         res.send({
                             status: true,
                             type: 'chat',
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.CSV_RELEASED_SUCCESSFULLY], MsgConstants.CSV_RELEASED_SUCCESSFULLY), // "CSV Released Successfully.",
+                            msg: "CSV Released Successfully.",
                             data: resp
                         });
-                    });
-                } else {
-                    res.send({
-                        status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.CSV_NOT_RELEASED], MsgConstants.CSV_NOT_RELEASED), // "CSV Not Released.",
-                    });
-                }
+                    } else {
+                        res.send({
+                            status: false,
+                            msg: "CSV Not Released.",
+                        });
+                    }
+                });
+            }
+
+        }
+        catch (err) {
+            console.log(err);
+            res.send({
+                status: false,
+                msg: "CSV Not Released.",
             });
+            return
         }
     }
 }
@@ -623,7 +648,7 @@ exports.purchaseCredits = async function (req, res) {
                                             // console.log("NOT ALLOWED");
                                             res.send({
                                                 status: false,
-                                                msg: await helpers.convertToLang(req.translation[MsgConstants.NOT_ALLOWED_TO_MAKE_REQUEST], MsgConstants.NOT_ALLOWED_TO_MAKE_REQUEST), // "Not allowed to make request.",
+                                                msg: await helpers.convertToLang(req.translation[MsgConstants.NOT_ALLOWED_TO_MAKE_REQUEST], "Not allowed to make request"), // "Not allowed to make request.",
                                             })
                                             return
                                         }
@@ -641,14 +666,14 @@ exports.purchaseCredits = async function (req, res) {
                                     if (result && result.affectedRows > 0) {
                                         res.send({
                                             status: true,
-                                            msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_SUBMITTED_SUCCESSFULLY], MsgConstants.REQUEST_SUBMITTED_SUCCESSFULLY), // "Request submitted successfully.",
+                                            msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_SUBMITTED_SUCCESSFULLY], "Request submitted successfully"), // "Request submitted successfully.",
                                         })
                                         return
                                     }
                                     else {
                                         res.send({
                                             status: false,
-                                            msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_NOT_SUBMITTED_SUCCESSFULLY], MsgConstants.REQUEST_NOT_SUBMITTED_SUCCESSFULLY), // "Request not submitted please try again.",
+                                            msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_NOT_SUBMITTED_SUCCESSFULLY], "Request not submitted please try again"), // "Request not submitted please try again.",
                                         })
                                     }
                                 })
@@ -756,7 +781,7 @@ exports.purchaseCredits_CC = async function (req, res) {
                                         if (response.status == 'succeeded') {
                                             res.send({
                                                 status: true,
-                                                msg: await helpers.convertToLang(req.translation[MsgConstants.PAYMENT_HAS_BEEN_DONE], MsgConstants.PAYMENT_HAS_BEEN_DONE), // "Payment has been done.",
+                                                msg: await helpers.convertToLang(req.translation[MsgConstants.PAYMENT_HAS_BEEN_DONE], "Payment has been done"), // "Payment has been done.",
                                             })
                                             return
                                         };
@@ -776,14 +801,14 @@ exports.purchaseCredits_CC = async function (req, res) {
                                     if (result && result.affectedRows > 0) {
                                         res.send({
                                             status: true,
-                                            msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_SUBMITTED_SUCCESSFULLY], MsgConstants.REQUEST_SUBMITTED_SUCCESSFULLY), // "Request submitted successfully.",
+                                            msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_SUBMITTED_SUCCESSFULLY], "Request submitted successfully"), // "Request submitted successfully.",
                                         })
                                         return
                                     }
                                     else {
                                         res.send({
                                             status: false,
-                                            msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_NOT_SUBMITTED_SUCCESSFULLY], MsgConstants.REQUEST_NOT_SUBMITTED_SUCCESSFULLY), // "Request not submitted please try again.",
+                                            msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_NOT_SUBMITTED_SUCCESSFULLY], "Request not submitted please try again"), // "Request not submitted please try again.",
                                         })
                                     }
                                 })
@@ -837,15 +862,15 @@ exports.saveProfile = async function (req, res) {
                     // console.log(rslts, 'rslt is query')
                     if (rslts.affectedRows) {
                         data = {
-                            "status": true,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.PROFILE_SAV_SUCC], MsgConstants.PROFILE_SAV_SUCC), // Profile Saved Successfully
-                            "data": rslts
+                            status: true,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.PROFILE_SAV_SUCC], "Profile Saved Successfully"), // Profile Saved Successfully
+                            data: rslts
                         };
                         res.send(data);
                     } else {
                         data = {
-                            "status": false,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.PROFILE_NAME_IS_ALREADY_EXIST], MsgConstants.PROFILE_NAME_IS_ALREADY_EXIST), // Profile Name is already Exist
+                            status: false,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.PROFILE_NAME_IS_ALREADY_EXIST], "Profile Name is already Exist"), // Profile Name is already Exist
                         };
                         res.send(data);
                     }
@@ -855,8 +880,8 @@ exports.saveProfile = async function (req, res) {
 
             } else {
                 data = {
-                    "status": false,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.PROFILE_NAME_IS_ALREADY_EXIST], MsgConstants.PROFILE_NAME_IS_ALREADY_EXIST), // Profile Name is already Exist',
+                    status: false,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.PROFILE_NAME_IS_ALREADY_EXIST], "Profile Name is already Exist"), // Profile Name is already Exist',
                 };
                 res.send(data);
             }

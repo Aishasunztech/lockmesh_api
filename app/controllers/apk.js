@@ -194,6 +194,7 @@ exports.uploadApk = async function (req, res) {
         return;
     }
 }
+
 exports.addApk = async function (req, res) {
     try {
         let logo = req.body.logo;
@@ -236,7 +237,7 @@ exports.addApk = async function (req, res) {
                 versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                 versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                 packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                // label = label.toString().replace(/(\r\n|\n|\r)/gm, "");
+                label = label.toString().replace(/(\r\n|\n|\r)/gm, "");
                 details = details.toString().replace(/(\r\n|\n|\r)/gm, "");
 
                 let apk_type = 'permanent'
@@ -298,6 +299,7 @@ exports.addApk = async function (req, res) {
         return;
     }
 }
+
 exports.deleteApk = async function (req, res) {
     if (!empty(req.body.apk_id)) {
         sql.query("update `apk_details` set delete_status='1' WHERE id='" + req.body.apk_id + "'", async function (error, results) {
@@ -381,24 +383,18 @@ exports.editApk = async function (req, res) {
                 versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                 versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                 packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                // label = label.replace(/(\r\n|\n|\r)/gm, "");
+                label = label.replace(/(\r\n|\n|\r)/gm, "");
                 details = details.replace(/(\r\n|\n|\r)/gm, "");
-                // console.log("versionName", versionName);
-                // console.log("pKGName", packageName);
-                // console.log("version Code", versionCode);
-                // console.log("label", label);
-                // console.log('detai')
 
                 // let apk_type = (verify.user.user_type === AUTO_UPDATE_ADMIN) ? 'permanent' : 'basic'
 
                 let apk_stats = fs.statSync(file);
 
                 let formatByte = general_helpers.formatBytes(apk_stats.size);
-                // console.log("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_byte='" + apk_stats.size + "',  apk_size='"+ formatByte +"'  where id = '" + req.body.apk_id + "'");
-
-                sql.query("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk_file = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_bytes='" + apk_stats.size + "',  apk_size='" + formatByte + "'  where id = '" + req.body.apk_id + "'", async function (err, rslts) {
-
-                    if (err) throw err;
+                
+                sql.query("UPDATE apk_details SET label = '"+ label +"', app_name = '" + apk_name + "', logo = '" + logo + "', apk_file = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_bytes='" + apk_stats.size + "',  apk_size='" + formatByte + "'  WHERE id = '" + req.body.apk_id + "'", async function (err, rslts) {
+                    if (err)  {console.log(err)};
+                    
                     data = {
                         status: true,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record Updated"), // "Record Updated"
@@ -407,8 +403,7 @@ exports.editApk = async function (req, res) {
                     res.send(data);
                     return;
                 });
-
-
+                return;
             } else {
                 data = {
                     status: false,
@@ -440,9 +435,9 @@ exports.editApk = async function (req, res) {
 exports.apkList = async function (req, res) {
     var verify = req.decoded;
     var data = [];
-    
+
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         if (verify.user.user_type === Constants.ADMIN) {
             sql.query("select * from apk_details where delete_status=0 AND apk_type != 'permanent' order by id ASC", async function (error, results) {
                 if (error) {
@@ -588,9 +583,9 @@ exports.upload = async function (req, res) {
 
     var verify = req.decoded;
     //  console.log('verify', verify.status);
-    
+
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         let fileUploaded = false;
         let filename = "";
         let mimeType = "";
@@ -649,6 +644,7 @@ exports.upload = async function (req, res) {
                 console.log("file uploaded")
                 if (fieldName === Constants.APK) {
                     let file = path.join(__dirname, "../../uploads/" + filename);
+                    console.log(file);
                     let versionCode = await helpers.getAPKVersionCode(file);
                     console.log("version code", versionCode);
                     let apk_stats = fs.statSync(file);
@@ -703,11 +699,11 @@ exports.upload = async function (req, res) {
 }
 
 
-exports.toggle =  async function (req, res) {
+exports.toggle = async function (req, res) {
     var verify = req.decoded;
-    
+
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
 
         if (!empty(req.body.status) && !empty(req.body.apk_id)) {
             sql.query("update apk_details set status = '" + req.body.status + "' where id = '" + req.body.apk_id + "'", async function (err, result) {
@@ -717,14 +713,14 @@ exports.toggle =  async function (req, res) {
 
                 if (result.affectedRows != 0) {
                     data = {
-                        "status": true,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.STATUS_UPDATED], "Status Updated"), // Status Updated.'
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.STATUS_UPDATED], "Status Changed Successfully"), // Status Updated.'
                     };
                     res.send(data);
                 } else {
                     data = {
-                        "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.STATUS_NOT_UPDATED], "Status Not Updated"), // Status Not Updated.'
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.STATUS_NOT_UPDATED], "Status Not Updated"), // Status Not Updated.'
 
                     };
                     res.send(data);
@@ -733,8 +729,8 @@ exports.toggle =  async function (req, res) {
             });
         } else {
             data = {
-                "status": false,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Some error occurred"), // Some error occurred.'
+                status: false,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Some error occurred"), // Some error occurred.'
             };
             res.send(data);
         }
@@ -744,10 +740,10 @@ exports.toggle =  async function (req, res) {
 
 exports.saveApkPermission = async function (req, res) {
     var verify = req.decoded;
-    
+
     // console.log(req.body.action);
     // if (verify['status'] !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var action = req.body.action
         let apkId = req.body.apkId;
         let dealers = req.body.dealers;
@@ -930,9 +926,9 @@ exports.saveApkPermission = async function (req, res) {
 
 exports.savePolicyPermissions = async function (req, res) {
     var verify = req.decoded;
-    
+
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var action = req.body.action
         let policyId = req.body.policyId;
         let dealers = req.body.dealers;
@@ -1111,12 +1107,12 @@ exports.savePolicyPermissions = async function (req, res) {
     }
 }
 
-exports.handleUninstallApk =  async function (req, res) {
+exports.handleUninstallApk = async function (req, res) {
     try {
         var verify = req.decoded;
-        
+
         // if (verify.status !== undefined && verify.status == true) {
-            if (verify) {
+        if (verify) {
             let is_restricted = (req.body.value) ? 0 : 1;
             let apk_id = req.params.apk_id;
             // console.log("UPDATE secure_market_apps SET is_restrict_uninstall = " + is_restricted + " WHERE apk_id ='" + apk_id + "'");

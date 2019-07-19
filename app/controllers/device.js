@@ -1,4 +1,4 @@
-const { sql } = require('../../config/database');
+// Libraries
 const multer = require('multer');
 var path = require('path');
 var fs = require("fs");
@@ -10,22 +10,24 @@ var moment = require('moment-strftime');
 var randomize = require('randomatic');
 var datetime = require('node-datetime');
 
-const constants = require('../../constants/Application');
-var MsgConstants = require('../../constants/MsgConstants');
+// custom Libraries
+const { sendEmail } = require('../../lib/email');
 
-
+// helpers
+const { sql } = require('../../config/database');
 const device_helpers = require('../../helper/device_helpers');
 const helpers = require('../../helper/general_helper');
 const verifyToken = require('../../config/auth');
-const { sendEmail } = require('../../lib/email');
+const sockets = require('../../routes/sockets');
 
+// constants
+const constants = require('../../constants/Application');
+var MsgConstants = require('../../constants/MsgConstants');
 const app_constants = require('../../config/constants');
 
 // constants
-const ADMIN = "admin";
-const DEALER = "dealer";
-const SDEALER = "sdealer";
-let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no"
+
+let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
 
 
 var data;
@@ -38,8 +40,8 @@ exports.devices = async function (req, res) {
     let newArray = [];
 
     if (verify) {
-        if (verify.user.user_type !== 'admin') {
-            if (verify.user.user_type === 'dealer') {
+        if (verify.user.user_type !== constants.ADMIN) {
+            if (verify.user.user_type === constants.DEALER) {
                 where_con = ` AND (usr_acc.dealer_id =${verify.user.id} OR usr_acc.prnt_dlr_id = ${verify.user.id})`;
                 let query = `SELECT * From acc_action_history WHERE action = 'UNLINKED' AND dealer_id = ${verify.user.id} AND del_status IS NULL`;
                 newArray = await sql.query(query)
@@ -65,10 +67,9 @@ exports.devices = async function (req, res) {
                 results[i].sim_id = await device_helpers.getSimids(results[i])
                 results[i].chat_id = await device_helpers.getChatids(results[i])
                 results[i].validity = await device_helpers.checkRemainDays(results[i].created_at, results[i].validity)
-                // dealerData = await device_helpers.getDealerdata(results[i]);
             }
+
             let finalResult = [...results, ...newArray]
-            // console.log('old', finalResult);
 
             let checkValue = helpers.checkValue;
             for (let device of finalResult) {
@@ -163,7 +164,7 @@ exports.devices = async function (req, res) {
             // console.log('final list ',newResultArray[0])
 
             data = {
-                "status": true,
+                status: true,
                 // "data": newResultArray
                 "data": finalResult
             };
@@ -174,135 +175,11 @@ exports.devices = async function (req, res) {
     }
 }
 
-// exports.offlineDevices = async function (req, res) {
-//     console.log('offline devices get: ');
-//     let devicesQ = `SELECT devices.*, white_labels.name as whitelabel FROM devices LEFT JOIN white_labels ON (devices.whitelabel_id = white_labels.id)`;
-//     let devices = await sql.query(devicesQ);
-//     devices.forEach((device) => {
-//         device.finalStatus = device_helpers.checkStatus(device)
-
-//         device.whitelabel = helpers.checkValue(device.whitelabel);
-//         device.fl_dvc_id = helpers.checkValue(device.fl_dvc_id)
-//         device.wl_dvc_id = helpers.checkValue(device.wl_dvc_id)
-//         device.status = helpers.checkValue(device.status)
-//         device.mac_address = helpers.checkValue(device.mac_address)
-//         device.serial_number = helpers.checkValue(device.serial_number);
-//     })
-//     if (devices.length) {
-//         res.send({
-//             status: true,
-//             devices
-//         })
-//     } else {
-//         res.send({
-//             status: false,
-//             msg: await helpers.convertToLang(loggedInuid, "Pre-activations added succcessfully.Email sends to your account"), // "No data found",
-//             devices: []
-//         })
-//     }
-
-// }
-
-
-// exports.deviceStatus = async function (req, res) {
-//     // console.log('deviceStatus at server: ', req.body);
-//     let id = req.body.data.id;
-//     let requiredStatus = req.body.requireStatus;
-//     let start_date = req.body.data.start_date;
-//     let expiry_date = req.body.data.expiry_date;
-//     try {
-//         let updateQ = '';
-//         if (start_date && expiry_date && id && requiredStatus == constants.DEVICE_EXTEND) {
-//             let status = 'expired';
-//             var varDate = new Date(expiry_date);
-//             var today = new Date();
-
-//             if (varDate > today) {
-//                 status = 'active';
-//             }
-//             // console.log('status is: ', status);
-
-//             updateQ = `UPDATE devices SET start_date= '${start_date}', status = '${status}', expiry_date = '${expiry_date}', remaining_days = '2' WHERE id = ${id}`;
-//         } else if (id && requiredStatus == constants.DEVICE_ACTIVATED) {
-//             updateQ = `UPDATE devices SET account_status= '', status='active' WHERE id = ${id}`;
-//         } else if (id && requiredStatus == constants.DEVICE_SUSPENDED) {
-//             updateQ = `UPDATE devices SET account_status= 'suspended' WHERE id = ${id}`;
-//         } else {
-//             res.send({
-//                 status: false,
-//                 msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], "Pre-activations added succcessfully.Email sends to your account"), // "No data found"
-//             })
-//         }
-//         if (updateQ != '') {
-//             console.log('deviceStatus update query is: ', updateQ);
-//             await sql.query(updateQ, async function (err, rslts) {
-//                 if (err) {
-//                     console.log(err);
-//                     res.send({
-//                         status: false,
-//                         msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], "Pre-activations added succcessfully.Email sends to your account"), // "Error occur"
-//                     });
-//                 } else {
-//                     let selectQuery = `SELECT devices.*, white_labels.name as whitelabel FROM devices LEFT JOIN white_labels ON (devices.whitelabel_id = white_labels.id) WHERE devices.id = ${id}`;
-//                     console.log('select query: ', selectQuery);
-//                     await sql.query(selectQuery, async function (err, devices) {
-//                         console.log('selectQuery result is: ', devices);
-//                         if (err) {
-//                             console.log(err);
-//                             res.send({
-//                                 status: false,
-//                                 msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], "Pre-activations added succcessfully.Email sends to your account"), // "Error occur"
-//                             });
-//                         } else if (devices.length) {
-//                             devices.forEach((device) => {
-//                                 device.finalStatus = device_helpers.checkStatus(device)
-
-//                                 device.whitelabel = helpers.checkValue(device.whitelabel);
-//                                 device.fl_dvc_id = helpers.checkValue(device.fl_dvc_id)
-//                                 device.wl_dvc_id = helpers.checkValue(device.wl_dvc_id)
-//                                 device.status = helpers.checkValue(device.status)
-//                                 device.mac_address = helpers.checkValue(device.mac_address)
-//                                 device.serial_number = helpers.checkValue(device.serial_number);
-//                             })
-//                             res.send({
-//                                 status: true,
-//                                 devices: devices,
-//                                 msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], "Pre-activations added succcessfully.Email sends to your account"), // "Offline Device Status Successfully Updated!"
-//                             })
-//                         } else {
-//                             res.send({
-//                                 status: false,
-//                                 devices: [],
-//                                 msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], "Pre-activations added succcessfully.Email sends to your account"), // "Failed to update Offline Device Status!",
-//                             })
-//                         }
-//                     });
-
-//                 }
-
-//             });
-//         } else {
-//             res.send({
-//                 status: false,
-//                 msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], "Pre-activations added succcessfully.Email sends to your account"), // "Query not run"
-//             })
-//         }
-//     } catch (error) {
-//         console.log(error);
-//         res.send({
-//             status: false,
-//             msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], "Pre-activations added succcessfully.Email sends to your account"), // "exception for deviceStatus",
-//         });
-//         return;
-//     }
-
-// }
-
 
 // /**GET New the devices**/
 exports.newDevices = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
-        if(verify) {
+    if (verify) {
         // console.log("Dealer_Translations" , req.translation)
         var where_con = '';
         if (verify.user.user_type !== constants.ADMIN) {
@@ -344,7 +221,7 @@ exports.newDevices = async function (req, res) {
 exports.acceptDevice = async function (req, res) {
     // res.setHeader('Content-Type', 'application/json');
     var verify = req.decoded; // await verifyToken(req, res);
-    if (verify){
+    if (verify) {
         let loggedDealerId = verify.user.id;
         let loggedDealerType = verify.user.user_type;
         let user_id = req.body.user_id;
@@ -440,7 +317,7 @@ exports.acceptDevice = async function (req, res) {
                         if (success.length || checkDevicepgp.length) {
                             res.send({
                                 status: false,
-                                "msg": "Account Email OR PGP Email already taken"
+                                msg: "Account Email OR PGP Email already taken"
                             });
                             return;
                         } else if (dealer_id !== 0 && dealer_id !== null) {
@@ -543,13 +420,10 @@ exports.acceptDevice = async function (req, res) {
     }
 }
 
-
-
-
-exports.transferDeviceProfile =  async function (req, res) {
+exports.transferDeviceProfile = async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
     var verify = req.decoded // await verifyToken(req, res);
-    if (verify){
+    if (verify) {
         let loggedDealerId = verify.user.id;
         let loggedDealerType = verify.user.user_type;
         let device_id = req.body.device_id;
@@ -599,16 +473,16 @@ exports.transferDeviceProfile =  async function (req, res) {
                     res.send({
                         status: true,
                         data: {
-                            "status": true,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.RECORD_TRANSF_SUCC], "Record Transfered Successfully"), // Record Transfered Successfully.
+                            status: true,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.RECORD_TRANSF_SUCC], "Record Transfered Successfully"), // Record Transfered Successfully.
                         }
                     });
                 } else {
                     res.send({
                         status: false,
                         data: {
-                            "status": false,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.ERR_TRANSF], "Error While Transfere"), // Error While Transfere.
+                            status: false,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.ERR_TRANSF], "Error While Transfere"), // Error While Transfere.
                         }
                     });
                 }
@@ -628,10 +502,10 @@ exports.editDevices = async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
     var verify = req.decoded // await verifyToken(req, res);
 
-        if(verify) {
+    if (verify) {
 
         if (!empty(req.body.usr_device_id)) {
-
+            console.log(req.body);
             let loggedDealerId = verify.user.id;
             let loggedDealerType = verify.user.user_type;
 
@@ -653,7 +527,8 @@ exports.editDevices = async function (req, res) {
             var validity = req.body.validity;
             // let s_dealer_id = req.body.s_dealer;
             let start_date = req.body.start_date;
-            // let expiray_date = req.body.expiray_date;
+
+            console.log(finalStatus);
 
             let sim_id = (req.body.sim_id == undefined) ? '' : req.body.sim_id;
             let chat_id = (req.body.chat_id == undefined) ? '' : req.body.chat_id;
@@ -669,35 +544,19 @@ exports.editDevices = async function (req, res) {
             else if (finalStatus === constants.DEVICE_PRE_ACTIVATION) {
                 var status = ''
             }
-            else {
+            else if (finalStatus === constants.DEVICE_EXPIRED) {
+                var status = 'expired';
+            } else {
                 var status = 'active';
             }
-            if (req.body.expiry_date == 0) {
-                if (finalStatus === constants.DEVICE_PRE_ACTIVATION || finalStatus === constants.DEVICE_TRIAL) {
-                    var expiry_date = req.body.expiry_date
-                }
-                else {
-                    let exp_month = req.body.expiry_date;
-                    var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
-                    var expiry_date = moment(trailDate).format("YYYY/MM/DD")
-                }
-            } else {
-                let exp_month = req.body.expiry_date;
-                var expiry_date = helpers.getExpDateByMonth(start_date, exp_month);
-            }
-            // console.log('month', g_months, 'year', g_years);
-            // console.log('date now', expiry_date);
 
-            // let checkDealer = "SELECT * from dealers where dealer_id =" + dealer_id;
 
-            // let dealer = await sql.query(checkDealer);
-
-            var checkDevice = "SELECT start_date from usr_acc WHERE device_id = '" + usr_device_id + "' ";
-            if (loggedDealerType === SDEALER) {
+            var checkDevice = "SELECT start_date ,expiry_date from usr_acc WHERE device_id = '" + usr_device_id + "'";
+            if (loggedDealerType === constants.SDEALER) {
                 checkDevice = checkDevice + " AND dealer_id = " + loggedDealerId;
-            } else if (loggedDealerType === DEALER) {
+            } else if (loggedDealerType === constants.DEALER) {
                 checkDevice = checkDevice + " AND (dealer_id = " + loggedDealerId + " OR prnt_dlr_id = " + loggedDealerId + " )";
-            } else if (loggedDealerType === ADMIN) {
+            } else if (loggedDealerType === constants.ADMIN) {
                 checkDevice = checkDevice;
             } else {
                 res.send({
@@ -709,15 +568,43 @@ exports.editDevices = async function (req, res) {
             // console.log(checkDevice);
             sql.query(checkDevice, async function (error, rows) {
                 if (rows.length) {
+
                     let checkUniquePgp = "SELECT * from pgp_emails WHERE pgp_email= '" + pgp_email + "' AND user_acc_id != '' AND user_acc_id != '" + usr_acc_id + "'"
                     // let checkUnique = "SELECT usr_acc.* from usr_acc WHERE account_email= '" + device_email + "' AND device_id != '" + device_id + "'"
                     sql.query(checkUniquePgp, async function (error, success) {
                         if (success.length) {
                             res.send({
                                 status: false,
-                                "msg": await helpers.convertToLang(req.translation[MsgConstants.PGP_EMAIL_ALRDY_TKN], "PGP email already taken"), // PGP email already taken
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.PGP_EMAIL_ALRDY_TKN], "PGP email already taken"), // PGP email already taken
                             });
                         } else {
+
+                            if (req.body.expiry_date == 0) {
+                                if (finalStatus === constants.DEVICE_PRE_ACTIVATION || finalStatus === constants.DEVICE_TRIAL) {
+                                    var expiry_date = req.body.expiry_date
+                                }
+                                else {
+                                    let exp_month = req.body.expiry_date;
+                                    var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
+                                    var expiry_date = moment(trailDate).format("YYYY/MM/DD")
+                                }
+                            } else if (req.body.expiry_date === 1 || req.body.expiry_date === 3 || req.body.expiry_date === 6 || req.body.expiry_date === 12) {
+                                let exp_month = req.body.expiry_date;
+                                var expiry_date = helpers.getExpDateByMonth(rows[0].expiry_date, exp_month);
+                                // console.log(expiry_date);
+                                let currentDate = moment(new Date()).format("YYYY/MM/DD")
+                                // console.log(currentDate, expiry_date);
+                                if (currentDate < expiry_date) {
+                                    // console.log(device);
+                                    sockets.sendDeviceStatus(device_id, "active", true);
+                                    status = 'active'
+                                }
+                            }
+                            else {
+                                var expiry_date = req.body.expiry_date
+                            }
+
+
                             common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE id = '" + usr_device_id + "'";
                             if (finalStatus !== constants.DEVICE_PRE_ACTIVATION) {
                                 if (expiry_date == 0) {
@@ -768,8 +655,8 @@ exports.editDevices = async function (req, res) {
                                 }
 
                                 data = {
-                                    "status": true,
-                                    "msg": await helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record updated successfully"), // Record updated successfully.
+                                    status: true,
+                                    msg: await helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record updated successfully"), // Record updated successfully.
                                     "data": rsltq
                                 };
                                 res.send(data);
@@ -803,18 +690,18 @@ exports.deleteDevice = async function (req, res) {
     var verify = req.decoded // await verifyToken(req, res);
 
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         if (!empty(req.params.device_id)) {
             let userType = verify.user.user_type;
             let loggedUserId = verify.user.id;
             let where = '';
-            if (userType === DEALER) {
+            if (userType === constants.DEALER) {
                 where = ' AND (dealer_id=' + loggedUserId + ' OR prnt_dlr_id = ' + loggedUserId + ')';
-            } else if (userType === SDEALER) {
+            } else if (userType === constants.SDEALER) {
                 where = ' AND (dealer_id=' + loggedUserId;
             }
             // console.log("delete where ", 'DELETE FROM devices WHERE device_id ="' + [req.params.device_id])
-            if (req.body.dealer_id === loggedUserId || req.body.prnt_dlr_id === loggedUserId || userType === ADMIN) {
+            if (req.body.dealer_id === loggedUserId || req.body.prnt_dlr_id === loggedUserId || userType === constants.ADMIN) {
 
                 let usr_device_id = await device_helpers.getOriginalIdByDeviceId(req.params.device_id);
                 sql.query("DELETE from usr_acc  where device_id = " + usr_device_id, async function (error, results, fields) {
@@ -828,13 +715,13 @@ exports.deleteDevice = async function (req, res) {
                         var sqlDevice = "DELETE from devices where device_id = '" + req.params.device_id + "'";
                         sql.query(sqlDevice);
                         data = {
-                            "status": true,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_DEL_SUCC], "Device deleted successfully"), // Device deleted successfully.
+                            status: true,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_DEL_SUCC], "Device deleted successfully"), // Device deleted successfully.
                         };
                     } else {
                         data = {
-                            "status": false,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_DEL], "Device not deleted"), // Device not deleted.
+                            status: false,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_DEL], "Device not deleted"), // Device not deleted.
                             "fld": fields,
                             "rdlt": results
                         };
@@ -843,8 +730,8 @@ exports.deleteDevice = async function (req, res) {
                 });
             } else {
                 data = {
-                    "status": false,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_DEL], "Device not deleted"), // Device not deleted.
+                    status: false,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_DEL], "Device not deleted"), // Device not deleted.
                 };
                 res.send(data)
             }
@@ -853,13 +740,13 @@ exports.deleteDevice = async function (req, res) {
 }
 
 
-exports.unlinkDevice =  async function (req, res) {
+exports.unlinkDevice = async function (req, res) {
     var verify = req.decoded // await verifyToken(req, res);
     var device_id = req.params.id;
 
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
-        
+    if (verify) {
+
 
         if (!empty(device_id)) {
             let dvcId = await device_helpers.getDvcIDByDeviceID(device_id);
@@ -892,7 +779,7 @@ exports.unlinkDevice =  async function (req, res) {
                     await sql.query(sqlDevice);
 
                     device_helpers.saveActionHistory(req.body.device, constants.DEVICE_UNLINKED)
-                    require("../../bin/www").sendDeviceStatus(dvcId, "unlinked", true);
+                    sockets.sendDeviceStatus(dvcId, "unlinked", true);
                     data = {
                         status: true,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_UNLNK_SUCC], "Device unlinked successfully"), // Device unlinked successfully.
@@ -922,7 +809,7 @@ exports.createDeviceProfile = async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
     var verify = req.decoded; // await verifyToken(req, res);
     if (verify) {
-        
+
         // var dataStag = [];
         var code = randomize('0', 7);
         var activation_code = await helpers.checkActivationCode(code);
@@ -955,7 +842,7 @@ exports.createDeviceProfile = async function (req, res) {
         var loggedUserId = verify.user.id;
         var loggedUserType = verify.user.type;
         let policy_id = req.body.policy_id ? req.body.policy_id : '';
-        if (loggedUserType === ADMIN) {
+        if (loggedUserType === constants.ADMIN) {
             //    dealer_id= req.body.dealer_id;
         }
         if (duplicate > 0) {
@@ -1027,8 +914,8 @@ exports.createDeviceProfile = async function (req, res) {
                 await device_helpers.saveActionHistory(rsltq[i], constants.DEVICE_PRE_ACTIVATION);
             }
             data = {
-                "status": true,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], "Pre-activations added succcessfully.Email sends to your account"), // Pre-activations added succcessfully.Email sends to your account.
+                status: true,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], "Pre-activations added succcessfully.Email sends to your account"), // Pre-activations added succcessfully.Email sends to your account.
                 "data": rsltq
             };
             res.send({
@@ -1116,8 +1003,8 @@ exports.createDeviceProfile = async function (req, res) {
                                             // dealerData = await device_helpers.getDealerdata(results[i]);
                                             device_helpers.saveActionHistory(results[0], constants.DEVICE_PRE_ACTIVATION)
                                             data = {
-                                                "status": true,
-                                                "msg": await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC], "Pre-activation added succcessfully."), // Pre-activation added succcessfully.
+                                                status: true,
+                                                msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC], "Pre-activation added succcessfully."), // Pre-activation added succcessfully.
                                                 "data": results
                                             };
 
@@ -1162,8 +1049,8 @@ exports.suspendAccountDevices = async function (req, res) {
     var formatted_dt = tod_dat.format('Y-m-d H:M:S');
 
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
-        
+    if (verify) {
+
         var sql2 = "select * from usr_acc where device_id = '" + device_id + "'";
         var gtres = await sql.query(sql2);
 
@@ -1183,8 +1070,8 @@ exports.suspendAccountDevices = async function (req, res) {
 
 
                         data = {
-                            "status": false,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.ACC_NOT_SUSP], "Account not suspended.Please try again"), // Account not suspended.Please try again.
+                            status: false,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.ACC_NOT_SUSP], "Account not suspended.Please try again"), // Account not suspended.Please try again.
                         }
                     } else {
                         sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
@@ -1201,11 +1088,11 @@ exports.suspendAccountDevices = async function (req, res) {
                                 // dealerData = await getDealerdata(res[i]);
                                 data = {
                                     "data": resquery[0],
-                                    "status": true,
-                                    "msg": await helpers.convertToLang(req.translation[MsgConstants.ACC_SUSP_SUCC], "Account suspended successfully"), // Account suspended successfully.
+                                    status: true,
+                                    msg: await helpers.convertToLang(req.translation[MsgConstants.ACC_SUSP_SUCC], "Account suspended successfully"), // Account suspended successfully.
                                 }
                                 device_helpers.saveActionHistory(resquery[0], constants.DEVICE_SUSPENDED)
-                                require("../../bin/www").sendDeviceStatus(resquery[0].device_id, "suspended");
+                                sockets.sendDeviceStatus(resquery[0].device_id, "suspended");
 
 
                                 res.send(data);
@@ -1231,8 +1118,8 @@ exports.suspendAccountDevices = async function (req, res) {
                         if (results.affectedRows == 0) {
 
                             data = {
-                                "status": false,
-                                "msg": await helpers.convertToLang(req.translation[MsgConstants.ACC_NOT_SUSP], "Account not suspended.Please try again"), // Account not suspended.Please try again."
+                                status: false,
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.ACC_NOT_SUSP], "Account not suspended.Please try again"), // Account not suspended.Please try again."
                             }
                         } else {
 
@@ -1251,11 +1138,11 @@ exports.suspendAccountDevices = async function (req, res) {
                                     // dealerData = await getDealerdata(res[i]);
                                     data = {
                                         "data": resquery[0],
-                                        "status": true,
-                                        "msg": await helpers.convertToLang(req.translation[MsgConstants.ACC_SUSP_SUCC], "Account suspended successfully"), // Account suspended successfully."
+                                        status: true,
+                                        msg: await helpers.convertToLang(req.translation[MsgConstants.ACC_SUSP_SUCC], "Account suspended successfully"), // Account suspended successfully."
                                     }
                                     device_helpers.saveActionHistory(resquery[0], constants.DEVICE_SUSPENDED)
-                                    require("../../bin/www").sendDeviceStatus(resquery[0].device_id, "suspended");
+                                    sockets.sendDeviceStatus(resquery[0].device_id, "suspended");
                                     res.send(data);
                                 }
                             })
@@ -1269,8 +1156,8 @@ exports.suspendAccountDevices = async function (req, res) {
                 } else {
 
                     data = {
-                        "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.NOT_SUSP_ACC_EXP], "Can't suspend !!! Account Already Expired"), // Can't suspend !!! Account Already Expired."
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.NOT_SUSP_ACC_EXP], "Can't suspend !!! Account Already Expired"), // Can't suspend !!! Account Already Expired."
                     }
                     res.send(data);
                 }
@@ -1278,8 +1165,8 @@ exports.suspendAccountDevices = async function (req, res) {
 
         } else {
             data = {
-                "status": false,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEVICE], "Invalid Device"), // Invalid Device."
+                status: false,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEVICE], "Invalid Device"), // Invalid Device."
             }
             res.send(data);
         }
@@ -1287,15 +1174,15 @@ exports.suspendAccountDevices = async function (req, res) {
 
 }
 
-exports.activateDevice =  async function (req, res) {
+exports.activateDevice = async function (req, res) {
     var verify = req.decoded // await verifyToken(req, res);
     var device_id = req.params.id;
     var tod_dat = datetime.create();
     var formatted_dt = tod_dat.format('Y-m-d H:M:S');
 
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
-        
+    if (verify) {
+
         var sql2 = "select * from usr_acc where device_id = '" + device_id + "'";
         var gtres = await sql.query(sql2);
 
@@ -1311,8 +1198,8 @@ exports.activateDevice =  async function (req, res) {
                     }
                     if (results.affectedRows == 0) {
                         data = {
-                            "status": false,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_ACTIV], "Device not activated.Please try again"), // Device not activated.Please try again."
+                            status: false,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_ACTIV], "Device not activated.Please try again"), // Device not activated.Please try again."
                         }
                     } else {
                         sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
@@ -1327,11 +1214,11 @@ exports.activateDevice =  async function (req, res) {
                                 resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
                                 resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                                 // dealerData = await getDealerdata(res[i]);
-                                require("../../bin/www").sendDeviceStatus(resquery[0].device_id, "active", true);
+                                sockets.sendDeviceStatus(resquery[0].device_id, "active", true);
                                 data = {
                                     "data": resquery[0],
-                                    "status": true,
-                                    "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_ACTIV_SUCC], "Device activated successfully"), // Device activated successfully.
+                                    status: true,
+                                    msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_ACTIV_SUCC], "Device activated successfully"), // Device activated successfully.
                                 }
                                 device_helpers.saveActionHistory(resquery[0], constants.DEVICE_ACTIVATED)
                                 res.send(data);
@@ -1355,8 +1242,8 @@ exports.activateDevice =  async function (req, res) {
                         }
                         if (results.affectedRows == 0) {
                             data = {
-                                "status": false,
-                                "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_ACTIV], "Device not activated.Please try again"), // Device not activated.Please try again."
+                                status: false,
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_ACTIV], "Device not activated.Please try again"), // Device not activated.Please try again."
                             }
                         } else {
                             sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
@@ -1371,11 +1258,11 @@ exports.activateDevice =  async function (req, res) {
                                     resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
                                     resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                                     // dealerData = await getDealerdata(res[i]);
-                                    require("../../bin/www").sendDeviceStatus(resquery[0].device_id, "active", true);
+                                    sockets.sendDeviceStatus(resquery[0].device_id, "active", true);
                                     data = {
                                         "data": resquery[0],
-                                        "status": true,
-                                        "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_ACTIV_SUCC], "Device activated successfully"), // Device activated successfully."
+                                        status: true,
+                                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_ACTIV_SUCC], "Device activated successfully"), // Device activated successfully."
                                     }
                                     device_helpers.saveActionHistory(resquery[0], constants.DEVICE_ACTIVATED)
                                     res.send(data);
@@ -1390,8 +1277,8 @@ exports.activateDevice =  async function (req, res) {
                 } else {
 
                     data = {
-                        "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_ACTIV_EXP], "Device cannnot be activated.It is expired already"), // Device cannnot be activated.It is expired already.
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_ACTIV_EXP], "Device cannnot be activated.It is expired already"), // Device cannnot be activated.It is expired already.
                     }
                     res.send(data);
                 }
@@ -1399,8 +1286,8 @@ exports.activateDevice =  async function (req, res) {
 
         } else {
             data = {
-                "status": false,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEVICE], "Invalid Device"), // Invalid Device."
+                status: false,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEVICE], "Invalid Device"), // Invalid Device."
             }
             res.send(data);
         }
@@ -1412,7 +1299,7 @@ exports.wipeDevice = async function (req, res) {
     var verify = req.decoded // await verifyToken(req, res);
     var device_id = req.params.id;
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var sql2 = "select * from devices where id = '" + device_id + "'";
         var gtres = await sql.query(sql2);
         if (!empty(device_id)) {
@@ -1425,12 +1312,12 @@ exports.wipeDevice = async function (req, res) {
                 }
                 if (results.affectedRows == 0) {
                     data = {
-                        "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_WIPE], "Device not wiped.Please try again"), // Device not wiped.Please try again.
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_WIPE], "Device not wiped.Please try again"), // Device not wiped.Please try again.
                     }
                     res.send(data);
                 } else {
-                    require("../../bin/www").sendDeviceStatus(gtres[0].device_id, constants.DEVICE_WIPE);
+                    sockets.sendDeviceStatus(gtres[0].device_id, constants.DEVICE_WIPE);
 
                     sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
                         if (error) {
@@ -1448,8 +1335,8 @@ exports.wipeDevice = async function (req, res) {
                             device_helpers.saveActionHistory(resquery[0], constants.DEVICE_WIPE)
                             data = {
                                 "data": resquery[0],
-                                "status": true,
-                                "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_WIPE_SUCC], "Device Wiped successfully"), // Device Wiped successfully.
+                                status: true,
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_WIPE_SUCC], "Device Wiped successfully"), // Device Wiped successfully.
                             }
                             res.send(data);
                         }
@@ -1461,21 +1348,20 @@ exports.wipeDevice = async function (req, res) {
 
         } else {
             data = {
-                "status": false,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEVICE], "Invalid Device"), // Invalid Device."
+                status: false,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEVICE], "Invalid Device"), // Invalid Device."
             }
             res.send(data);
         }
     }
 }
 
-
 exports.unflagDevice = async function (req, res) {
     var verify = req.decoded // await verifyToken(req, res);
     var device_id = req.params.id;
-    
+
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         if (!empty(device_id)) {
             var sql1 = "update devices set flagged= 'Not flagged' where device_id='" + device_id + "'";
             var rest = sql.query(sql1, async function (error, results) {
@@ -1484,8 +1370,8 @@ exports.unflagDevice = async function (req, res) {
                 }
                 else if (results.affectedRows == 0) {
                     data = {
-                        "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_UNFLAG], "Device not Unflagged.Please try again"), // Device not Unflagged.Please try again.
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_UNFLAG], "Device not Unflagged.Please try again"), // Device not Unflagged.Please try again.
                     }
                     res.send(data);
                 } else {
@@ -1503,8 +1389,8 @@ exports.unflagDevice = async function (req, res) {
                             // dealerData = await getDealerdata(res[i]);
                             data = {
                                 // "data": resquery[0],
-                                "status": true,
-                                "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_UNFLAG_SUCC], "Device Unflagged successfully"), // Device Unflagged successfully.
+                                status: true,
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_UNFLAG_SUCC], "Device Unflagged successfully"), // Device Unflagged successfully.
                             }
                         }
                         device_helpers.saveActionHistory(resquery[0], constants.DEVICE_UNFLAGGED)
@@ -1519,22 +1405,21 @@ exports.unflagDevice = async function (req, res) {
     } else {
 
         data = {
-            "status": false,
-            "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_UNFLAG], "Device not Unflagged.Please try again"), // Device Is not unflagged.Please try again"
+            status: false,
+            msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_UNFLAG], "Device not Unflagged.Please try again"), // Device Is not unflagged.Please try again"
         }
         res.send(data);
     }
 }
-
 
 exports.flagDevice = async function (req, res) {
     var verify = req.decoded // await verifyToken(req, res);
     var device_id = req.params.id;
     var option = req.body.data
     // console.log(option);
-  
+
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var sql2 = "select * from devices where id = '" + device_id + "'";
         var gtres = await sql.query(sql2);
         if (!empty(device_id)) {
@@ -1548,11 +1433,11 @@ exports.flagDevice = async function (req, res) {
                 let results = await sql.query(sql1)
                 if (results.affectedRows == 0) {
                     data = {
-                        "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FLAG], "Device not Flagged.Please try again"), // Device not Flagged.Please try again."
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FLAG], "Device not Flagged.Please try again"), // Device not Flagged.Please try again."
                     }
                 } else {
-                    require("../../bin/www").sendDeviceStatus(gtres[0].device_id, "suspended");
+                    sockets.sendDeviceStatus(gtres[0].device_id, "suspended");
 
                     let resquery = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"')
                     // console.log('lolo else', resquery)
@@ -1567,8 +1452,8 @@ exports.flagDevice = async function (req, res) {
                         // console.log(resquery[0]);
                         data = {
                             "data": resquery[0],
-                            "status": true,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_FLAG_SUCC], "Device Flagged successfully"), // Device Flagged successfully."
+                            status: true,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_FLAG_SUCC], "Device Flagged successfully"), // Device Flagged successfully."
                         }
 
                         res.send(data);
@@ -1577,38 +1462,36 @@ exports.flagDevice = async function (req, res) {
 
             } else {
                 data = {
-                    "status": false,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.DEVICE_ALRDY_FLAG], "Device Already Flagged"), // Device Already Flagged
+                    status: false,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_ALRDY_FLAG], "Device Already Flagged"), // Device Already Flagged
                 }
                 res.send(data);
             }
 
         } else {
             data = {
-                "status": false,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEVICE], "Invalid Device"), // Invalid Device."
+                status: false,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEVICE], "Invalid Device"), // Invalid Device."
             }
             res.send(data);
         }
     }
 }
 
-
-
 /** Get Device Details of Dealers (Connect Page) **/
 exports.connectDevice = async function (req, res) {
     // console.log('api check is caled')
     var verify = req.decoded // await verifyToken(req, res);
-  
+
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         if (!empty(req.params.device_id)) {
             let userId = verify.user.id;
             //  console.log(verify.user);
             let usertype = await helpers.getUserType(userId);
             let where = "devices.device_id = '" + req.params.device_id + "'";
 
-            if (usertype != ADMIN) {
+            if (usertype != constants.ADMIN) {
                 where = where + " and (usr_acc.dealer_id=" + userId + " OR usr_acc.prnt_dlr_id = " + userId + ")";
             }
             // console.log("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id where " + where);
@@ -1659,12 +1542,11 @@ exports.connectDevice = async function (req, res) {
     }
 }
 
-
-exports.getAppJobQueueOfDevice =  async function (req, res) {
+exports.getAppJobQueueOfDevice = async function (req, res) {
     // console.log('api check is caled')
     var verify = req.decoded // await verifyToken(req, res);
-   
-        if (verify) {
+
+    if (verify) {
         let device_id = req.params.device_id;
         if (!empty(device_id)) {
 
@@ -1684,33 +1566,45 @@ exports.getAppJobQueueOfDevice =  async function (req, res) {
     }
 }
 
-
 exports.resyncDevice = async function (req, res) {
-    var verify = req.decoded // await verifyToken(req, res);
-   
-        if (verify) {
+    var verify = req.decoded
+
+    if (verify) {
         let deviceId = req.body.device_id;
         if (!empty(deviceId)) {
-            let query = "SELECT * FROM devices WHERE device_id = '" + deviceId + "' and online = '" + constants.DEVICE_ONLINE + "'";
-            sql.query(query, async function (error, response) {
+            let query = `SELECT * FROM devices WHERE device_id = '${deviceId}' LIMIT 1`;
+
+            sql.query(query, async function (error, device) {
                 if (error) console.log(error);
-                if (response.length) {
-                    require("../../bin/www").syncDevice(deviceId);
+                if (device.length) {
+
+                    if (device[0].online === constants.DEVICE_ONLINE) {
+                        sockets.syncDevice(deviceId);
+                    } else {
+
+                    }
+                    res.send({
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_SYNC_SUCC], "device synced successfully"),
+                    })
+                    return;
+                } else {
+                    res.send({
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_SYNC_SUCC], "device not Synced"), // device synced successfully
+                    });
+                    return;
                 }
-                res.send({
-                    status: true,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_SYNC_SUCC], "device synced successfully"), // device synced successfully
-                })
             });
         }
     }
 }
 
 
-exports.getAppsOfDevice =  async function (req, res) {
+exports.getAppsOfDevice = async function (req, res) {
     var verify = req.decoded // await verifyToken(req, res);
-   
-        if (verify) {
+
+    if (verify) {
         if (!empty(req.params.device_id)) {
             // var query = 'SELECT user_apps.*, apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon from user_apps LEFT JOIN apps_info on user_apps.app_id = apps_info.id LEFT JOIN devices on user_apps.device_id=devices.id where devices.device_id ="' + req.params.device_id + '"';
             // console.log(query);
@@ -1829,8 +1723,8 @@ exports.getAppsOfDevice =  async function (req, res) {
 exports.deleteUnlinkDevice = async function (req, res) {
     try {
         var verify = req.decoded // await verifyToken(req, res);
-        
-            if (verify) {
+
+        if (verify) {
 
             let insertError = 0;
             let NotDeleted = [];
@@ -1903,10 +1797,11 @@ exports.applySettings = async function (req, res) {
     try {
         var verify = req.decoded // await verifyToken(req, res);
         // if (verify.status !== undefined && verify.status == true) {
-            if (verify) {
+        if (verify) {
             let device_id = req.params.device_id;
 
             let usrAccId = req.body.usr_acc_id;
+
             let type = req.body.device_setting.type
 
             let dealer_id = verify.user.id
@@ -1918,53 +1813,101 @@ exports.applySettings = async function (req, res) {
             let passwords = (device_setting.passwords === undefined) ? '' : JSON.stringify(device_setting.passwords);
 
             let controls = (req.body.device_setting.controls == undefined) ? '' : JSON.stringify(req.body.device_setting.controls);
-            // console.log("hello controls", controls);
+
             let subExtensions = (req.body.device_setting.subExtensions == undefined) ? '' : JSON.stringify(req.body.device_setting.subExtensions);
             let applyQuery = '';
-            if (type == 'profile') {
 
-                applyQuery = "insert into device_history (device_id,dealer_id,user_acc_id, profile_name,app_list, passwords, controls, permissions, type) values ('" + device_id + "'," + dealer_id + "," + usrAccId + ",'" + device_setting.name + "' , '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "' , 'profile')";
-            } else {
-                applyQuery = "insert into device_history (device_id,dealer_id,user_acc_id, app_list, passwords, controls, permissions) values ('" + device_id + "'," + dealer_id + "," + usrAccId + ", '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "')";
+            if (!type || type === 'null' || type === 'undefined') {
+                type = 'history'
             }
 
-            await sql.query(applyQuery, async function (err, rslts) {
+            if (type == 'profile') {
+
+                applyQuery = "INSERT INTO device_history (device_id, dealer_id, user_acc_id, profile_name, app_list, passwords, controls, permissions, type) VALUES ('" + device_id + "', " + dealer_id + ", " + usrAccId + ", '" + device_setting.name + "' , '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "' , 'profile')";
+            } else {
+                applyQuery = "INSERT INTO device_history (device_id, dealer_id, user_acc_id, app_list, passwords, controls, permissions) VALUES ('" + device_id + "', " + dealer_id + ", " + usrAccId + ", '" + app_list + "', '" + passwords + "', '" + controls + "', '" + subExtensions + "')";
+            }
+
+            sql.query(applyQuery, async function (err, rslts) {
                 if (err) {
                     console.log(err);
                 }
 
-                let isOnline = await device_helpers.isDeviceOnline(device_id);
-                let permissions = subExtensions;
+                if (rslts && rslts.insertId) {
 
-                if (isOnline) {
-                    require("../../bin/www").sendEmit(app_list, passwords, controls, permissions, device_id);
-                }
+                    let isOnline = await device_helpers.isDeviceOnline(device_id);
+                    let permissions = subExtensions;
 
-                if (rslts) {
-                    if (type == 'profile') {
-                        data = {
-                            "status": true,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.PROFILE_APPLIED_SUCCESSFULLY], "Profile Applied Successfully"), // Profile Applied Successfully
-                        };
+                    if (isOnline) {
+                        let updateAppliedSettings = `UPDATE device_history SET status=1 WHERE device_id='${device_id}' AND type='${type}'`;
+                        await sql.query(updateAppliedSettings);
+
+                        // var setting_query = `SELECT * FROM device_history WHERE device_id='${device_id}' AND status=1 ORDER BY created_at DESC LIMIT 1`;
+                        // let settingHistory = await sql.query(setting_query);
+
+                        // if (settingHistory.length > 0 && data.device_id != null) {
+                        let apps = JSON.parse(app_list);
+                        let extensions = JSON.parse(subExtensions);
+
+                        await device_helpers.updateApps(apps, device_id);
+
+                        await device_helpers.updateExtensions(extensions, device_id);
+
+                        // await device_helpers.insertOrUpdateSettings(controls, device_id);
+                        // }
+
+                        sockets.sendEmit(app_list, passwords, controls, permissions, device_id);
+
+                        if (type == 'profile') {
+                            data = {
+                                status: true,
+                                online: isOnline,
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.PROFILE_APPLIED_SUCCESSFULLY], "Profile Applied Successfully"), // Profile Applied Successfully
+                            };
+
+                        } else {
+                            data = {
+                                status: true,
+                                online: isOnline,
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.SETTINGS_APPLIED_SUCCESSFULLY], "Settings Applied Successfully"), // Settings Applied Successfully',
+                            };
+                        }
                         res.send(data);
-                    }
-                    else {
-                        data = {
-                            "status": true,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.SETTINGS_APPLIED_SUCCESSFULLY], "Settings Applied Successfully"), // Settings Applied Successfully',
-                        };
+                        return;
+
+                    } else {
+
+                        if (type == 'profile') {
+
+                            data = {
+                                status: true,
+                                online: isOnline,
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.DUMY_ID], "Profile Applied to device. Action will be performed when device is back online"), // Profile Applied Successfully
+                            };
+
+                        } else {
+                            data = {
+                                status: true,
+                                online: isOnline,
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.DUMY_ID], "Setting Applied to device. Action will be performed when device is back online"), // Settings Applied Successfully',
+                            };
+                        }
                         res.send(data);
+                        return;
                     }
+
+
                 } else {
                     data = {
-                        "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"), // Error while Processing',
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"), // Error while Processing',
                     };
                     res.send(data);
+                    return;
                 }
 
             });
-
+            return;
         }
     } catch (error) {
         console.log(error)
@@ -1972,11 +1915,11 @@ exports.applySettings = async function (req, res) {
 
 }
 
-exports.applyPushApps =  async function (req, res) {
+exports.applyPushApps = async function (req, res) {
     try {
         var verify = req.decoded // await verifyToken(req, res);
         // if (verify.status !== undefined && verify.status == true) {
-            if (verify) {
+        if (verify) {
             let device_id = req.params.device_id;
 
             let dealer_id = verify.user.id
@@ -2003,25 +1946,30 @@ exports.applyPushApps =  async function (req, res) {
 
                     if (isOnline) {
 
-                        require("../../bin/www").applyPushApps(apps, device_id);
+                        sockets.applyPushApps(apps, device_id);
                         data = {
-                            "status": true,
-                            "online": true,
-                            noOfApps: noOfApps
+                            status: true,
+                            online: true,
+                            noOfApps: noOfApps,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.APPS_ARE_BEING_PUSHED], "Apps are Being pushed"),
+                            content: ""
                         };
                     }
                     else {
-                        require("../../bin/www").applyPushApps(apps, device_id);
+                        sockets.applyPushApps(apps, device_id);
                         data = {
-                            "status": true,
-                            noOfApps: noOfApps
+                            status: true,
+                            noOfApps: noOfApps,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.WARNING_DEVICE_OFFLINE], "Warning Device Offline"),
+                            content: await helpers.convertToLang(req.translation[MsgConstants.APPS_PUSHED_TO_DEVICE_ON_BACK_ONLINE], "Apps pushed to device. Action will be performed when device is back online"),
                         };
                     }
                     res.send(data);
                 } else {
                     data = {
-                        "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"), // Error while Processing',
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"), // Error while Processing',
+                        content: ""
                     };
                     res.send(data);
                 }
@@ -2034,11 +1982,11 @@ exports.applyPushApps =  async function (req, res) {
     }
 }
 
-exports.applyPullApps =  async function (req, res) {
+exports.applyPullApps = async function (req, res) {
     try {
         var verify = req.decoded // await verifyToken(req, res);
         // if (verify.status !== undefined && verify.status == true) {
-            if (verify) {
+        if (verify) {
             let device_id = req.params.device_id;
 
             let usrAccId = req.body.usrAccId;
@@ -2063,22 +2011,27 @@ exports.applyPullApps =  async function (req, res) {
                     await sql.query(loadDeviceQ)
                     if (isOnline) {
                         data = {
-                            "status": true,
-                            "online": true,
-                            noOfApps: noOfApps
+                            status: true,
+                            online: true,
+                            noOfApps: noOfApps,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.APPS_ARE_BEING_PULLED], "Apps are Being pulled"),
+                            content: ""
                         };
                     } else {
                         data = {
-                            "status": true,
-                            noOfApps: noOfApps
+                            status: true,
+                            noOfApps: noOfApps,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.WARNING_DEVICE_OFFLINE], "Warning Device Offline"),
+                            content: await helpers.convertToLang(req.translation[MsgConstants.APPS_PULLED_TO_DEVICE_ON_BACK_ONLINE], "Apps pulled to device. Action will be performed when device is back online"),
                         };
                     }
                     res.send(data);
-                    require("../../bin/www").getPullApps(apps, device_id);
+                    sockets.getPullApps(apps, device_id);
                 } else {
                     data = {
-                        "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"), // Error while Processing',
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"), // Error while Processing',
+                        content: ""
                     };
                     res.send(data);
                 }
@@ -2095,7 +2048,7 @@ exports.applyPullApps =  async function (req, res) {
 
 exports.getDeviceHistory = async function (req, res) {
     var verify = req.decoded // await verifyToken(req, res);
-        if(verify) {
+    if (verify) {
         let userId = verify.user.id;
         let userType = await helpers.getUserType(userId);
         let user_acc_id = await device_helpers.getUserAccountId(req.body.device_id);
@@ -2108,8 +2061,8 @@ exports.getDeviceHistory = async function (req, res) {
             let query = "SELECT * FROM device_history " + where;
             sql.query(query, async function (error, result) {
                 data = {
-                    "status": true,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "success"), // successful',
+                    status: true,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "success"), // successful',
                     "profiles": result
                 };
                 res.send(data);
@@ -2118,8 +2071,8 @@ exports.getDeviceHistory = async function (req, res) {
         } else {
             where = "";
             data = {
-                "status": false,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_USER], "Invalid User"), // Invalid User'
+                status: false,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_USER], "Invalid User"), // Invalid User'
             };
             res.send(data);
         }
@@ -2128,11 +2081,11 @@ exports.getDeviceHistory = async function (req, res) {
 }
 
 
-exports.writeIMEI =  async function (req, res) {
+exports.writeIMEI = async function (req, res) {
     try {
         var verify = req.decoded // await verifyToken(req, res);
-        
-            if (verify) {
+
+        if (verify) {
             let device_id = req.params.device_id;
             let usrAccId = req.body.usrAccId;
             let dealer_id = verify.user.id
@@ -2168,25 +2121,29 @@ exports.writeIMEI =  async function (req, res) {
                             await sql.query(loadDeviceQ)
                             let isOnline = await device_helpers.isDeviceOnline(device_id);
                             if (isOnline) {
-                                require("../../bin/www").writeImei(newImei, device_id);
+                                sockets.writeImei(newImei, device_id);
                                 data = {
-                                    "status": true,
-                                    'online': true,
+                                    status: true,
+                                    online: true,
                                     // 'insertedData': insertedData
+                                    title1: await helpers.convertToLang(req.translation[MsgConstants.SUCCESSFULLY_WRITTEN_TO], " successfully written to "),
+                                    title2: await helpers.convertToLang(req.translation[MsgConstants.RESTART_DEVICE_REQUIRED_TO_APPLY_IMEI], " on Device.Restart device is required to apply IMEI.")
                                 };
                                 res.send(data);
                             } else {
                                 data = {
-                                    "status": true,
+                                    status: true,
                                     // 'insertedData': insertedData
+                                    content1: await helpers.convertToLang(req.translation[MsgConstants.WRITE_TO], " write to "),
+                                    content2: await helpers.convertToLang(req.translation[MsgConstants.ACTION_PERFORMED_ON_BACK_ONLINE], ". Action will be performed when device is back online"),
                                 };
                                 res.send(data);
                             }
 
                         } else {
                             data = {
-                                "status": false,
-                                "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"), // Error while Processing',
+                                status: false,
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"), // Error while Processing',
                             };
                             res.send(data);
                         }
@@ -2210,16 +2167,16 @@ exports.writeIMEI =  async function (req, res) {
                             // await sql.query(applyPushQ)
                             let isOnline = await device_helpers.isDeviceOnline(device_id);
                             if (isOnline) {
-                                require("../../bin/www").writeImei(newImei, device_id);
+                                sockets.writeImei(newImei, device_id);
                                 data = {
-                                    "status": true,
+                                    status: true,
                                     'online': true,
                                     // 'insertedData': insertedData
                                 };
                                 res.send(data);
                             } else {
                                 data = {
-                                    "status": true,
+                                    status: true,
                                     'online': false,
                                     // 'insertedData': insertedData
                                 };
@@ -2227,8 +2184,8 @@ exports.writeIMEI =  async function (req, res) {
                             }
                         } else {
                             data = {
-                                "status": false,
-                                "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"), // Error while Processing',
+                                status: false,
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"), // Error while Processing',
                             };
                             res.send(data);
                         }
@@ -2236,8 +2193,8 @@ exports.writeIMEI =  async function (req, res) {
                 }
             } else {
                 data = {
-                    "status": false,
-                    "msg": await helpers.convertToLang(req.translation[MsgConstants.INVALID_IMEI_NUMBER], "Invalid IMEI number, please make sure you are using a valid IMEI number and try again"), // Invalid IMEI number, please make sure you are using a valid IMEI number and try again",
+                    status: false,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_IMEI_NUMBER], "Invalid IMEI number, please make sure you are using a valid IMEI number and try again"), // Invalid IMEI number, please make sure you are using a valid IMEI number and try again",
                 };
                 res.send(data);
             }
@@ -2250,8 +2207,8 @@ exports.writeIMEI =  async function (req, res) {
 exports.getActivities = async function (req, res) {
     try {
         var verify = req.decoded // await verifyToken(req, res);
-        
-            if (verify) {
+
+        if (verify) {
 
             let device_id = req.params.device_id
             let activities = [];
@@ -2284,7 +2241,7 @@ exports.getActivities = async function (req, res) {
             }
             // console.log(activities);
             data = {
-                "status": true,
+                status: true,
                 "data": activities
             };
             res.send(data);
@@ -2295,10 +2252,10 @@ exports.getActivities = async function (req, res) {
 }
 
 
-exports.getIMEI_History =   async function (req, res) {
+exports.getIMEI_History = async function (req, res) {
     var verify = req.decoded // await verifyToken(req, res);
- 
-    if (verify){
+
+    if (verify) {
         let query = "select * from imei_history where device_id = '" + req.params.device_id + "'";
         sql.query(query, async function (error, resp) {
             res.send({

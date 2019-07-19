@@ -56,129 +56,8 @@ const ADMIN = "admin";
 const DEALER = "dealer";
 const SDEALER = "sdealer";
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
-let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no"
+let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
 
-
-/* GET users listing. */
-router.get('/', async function (req, res, next) {
-    res.send("Test")
-
-    // stripe.tokens.create({
-    //     card: {
-    //         number: '4242424242424242',
-    //         exp_month: 12,
-    //         exp_year: 2020,
-    //         cvc: '1234'
-    //     }
-    // }, async function (err, token) {
-    //     console.log(err);
-    //     console.log(token);
-    // });
-
-    // var ip = req.headers['x-forwarded-for']
-    // res.send({
-    //     ip: ip
-    // })
-
-    // var cm = require('csv-mysql');
-
-    // var data = '"1","2","3"\n"4","5","6"';
-    // var options = {
-    //     mysql: {
-    //         host: 'localhost',
-    //         user: 'root',
-    //         database: 'lockmesh_db',
-    //     },
-    //     csv: {
-    //         comment: '#',
-    //         quote: '"'
-    //     },
-    //     headers: ["c1", "c2", "c3"]
-    // }
-
-    // res.send(tablesName)
-
-    // let data1 = await cm.import(options, data, async function (err, rows) {
-    //     if (err === null) err = false;
-    //     // expect(err).to.equal(false);
-    //     // done();
-    // });
-    // res.send(data1)
-
-    // var clientip = req.socket.remoteAddress;
-    // var xffip = req.header('x-real-ip') || req.connection.remoteAddress
-    // var ip = xffip ? xffip : clientip;
-    // res.send({ client: xffip });
-
-    // let filename = "icon_AdSense.png";
-    // let filename = "apk-1541677256487.apk.jpg";
-    // var ip_info = get_ip(req);
-    // console.log(ip_info.clientIp);
-    // res.send({
-    //     ip_info
-    // })
-    // proxy_set_header X-Forwarded-For $remote_addr;
-    // res.send('IP = ' + req.connection.remoteAddress + ':' + req.connection.remotePort)
-    // console.log(req.headers['x-forwarded-for'])
-    // res.send({
-    //     data: req.headers['x-forwarded-for']
-    // })
-    // let file = path.join(__dirname, "../uploads/" + filename);
-
-    // Jimp.read(file)
-    //     .then(lenna => {
-    //         console.log("success", file)
-    //     })
-    //     .catch(err => {
-    //         console.error("error", err);
-    //     });
-
-    // let file = path.join(__dirname, "../uploads/apk-1541677256487.apk");
-    // let packageName = await helpers.getAPKPackageName(file);
-    // let versionName = await helpers.getAPKVersionName(file);
-    // let versionCode = await helpers.getAPKVersionCode(file);
-    // let label = await helpers.getAPKLabel(file);
-    // res.send({
-    //     packageName: packageName,
-    //     versionName: versionName,
-    //     versionCode: versionCode,
-    //     label: label
-    // });
-    // res.send(mime.getExtension(filename));
-
-    // helpers.resetDB();
-    // apk-ScreenLocker v3.31.apk
-
-    // const unzip = zlib.createGunzip();
-    // fileContents.pipe(unzip).pipe(writeStream);
-
-    // const directoryFiles = fs.readdirSync(path.join(__dirname, "../"));
-
-    // res.send(directoryFiles);
-    // directoryFiles.forEach(filename => {
-    // const fileContents = fs.createReadStream(`./data/${filename}`);
-    // const writeStream = fs.createWriteStream(`./data/${filename.slice(0, -3)}`);
-    // const unzip = zlib.createGunzip();
-    // fileContents.pipe(unzip).pipe(writeStream);
-    // });
-
-    // var zip = new AdmZip(path.join(__dirname, "../uploads/apk-ScreenLocker v3.31.apk"));
-    // var zipEntries = await zip.getEntries();
-    // console.log(zipEntries.length)
-    // res.send(zipEntries);
-    // for (var i = 0; i < zipEntries.length; i++) {
-    //   if (zipEntries[i].entryName.match(/readme/))
-    //     console.log(zip.readAsText(zipEntries[i]));
-    // }
-});
-
-// router.post('/super_admin_login', authController.superAdminLogin)
-
-
-// /*****User Login*****/
-// router.post('/login', authController.login);
-
-// router.post('/verify_code', authController.verifyCode);
 
 // enable or disable two factor auth
 router.post('/two_factor_auth', async function (req, res) {
@@ -410,7 +289,7 @@ router.get('/get_sim_ids', accountController.getSimIDs);
 
 router.get('/get_all_sim_ids', accountController.getAllSimIDs);
 
-router.get('/get_used_sim_ids', accountController.getUsedSimIDs);
+// router.get('/get_used_sim_ids', accountController.getUsedSimIDs);
 
 
 router.get('/get_chat_ids', accountController.getChatIDs);
@@ -428,7 +307,9 @@ router.get('/get_used_pgp_emails', accountController.getUsedPGPEmails);
 
 router.get('/get_used_sim_ids', accountController.getUsedSimIDs);
 
-router.post('/releaseCSV/:fieldName', accountController.releaseCSV);
+// router.get('/get_packages', accountController.getPackages);
+
+router.post('/delete_CSV_ids/:fieldName', accountController.deleteCSV);
 
 
 /** Get Apk List Admin Panel **/
@@ -541,7 +422,7 @@ router.post('/addApk', async function (req, res) {
 
                     let formatByte = helpers.formatBytes(apk_stats.size);
 
-                    sql.query("INSERT INTO apk_details (app_name, logo, apk, apk_type, version_code, version_name, package_name, details, apk_bytes, apk_size) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + apk_type + "','" + versionCode + "', '" + versionName + "', '" + packageName + "', '" + details + "', " + apk_stats.size + ", '" + formatByte + "')", async function (err, rslts) {
+                    sql.query("INSERT INTO apk_details (app_name, logo, apk, apk_type, version_code, version_name, label,package_name, details, apk_bytes, apk_size) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + apk_type + "','" + versionCode + "', '" + versionName + "','" + label + "' ,'" + packageName + "', '" + details + "', " + apk_stats.size + ", '" + formatByte + "')", async function (err, rslts) {
                         let newData = await sql.query("SELECT * from apk_details where id = " + rslts.insertId)
                         dta = {
                             apk_id: newData[0].id,
@@ -909,7 +790,8 @@ router.post('/authenticate_update_user', async function (req, res) {
 
             data = {
                 status: true,
-                matched: true
+                matched: true,
+                msg: "", // await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FOUND], ""),
             }
             res.send(data);
             return;
@@ -917,7 +799,8 @@ router.post('/authenticate_update_user', async function (req, res) {
         else {
             data = {
                 status: false,
-                matched: false
+                matched: false,
+                msg: "", // await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FOUND], ""),
             }
             res.send(data);
             return
@@ -925,7 +808,8 @@ router.post('/authenticate_update_user', async function (req, res) {
     } else {
         data = {
             status: false,
-            matched: false
+            matched: false,
+            msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_EMAIL_OR_PASSWORD], "Invalid email or password. Please try again"), // Invalid email or password. Please try again
         }
         res.send(data);
         return
@@ -947,9 +831,11 @@ router.patch('/save-language', languageController.saveLanguage);
 
 
 
-router.get('/get-prices/:dealer_id', billingController.getPrices)
+router.get('/get-prices', billingController.getPrices)
 
-router.get('/get-packages/:dealer_id', billingController.getPackages);
+router.get('/get-packages', billingController.getPackages);
+
+router.get('/get-parent-packages', billingController.getParentPackages);
 
 router.patch('/check-package-name', billingController.checkPackageName);
 

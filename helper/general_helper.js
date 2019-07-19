@@ -1,30 +1,32 @@
 var express = require('express');
 var router = express.Router();
-const { sql } = require('../config/database');
-
+var fs = require("fs");
 var datetime = require('node-datetime');
-// var moment = require('moment');
-// import ADMIN from "../constants/Application";
 var moment = require('moment-strftime');
-var Constants = require('../constants/Application');
-const device_helpers = require('./device_helpers');
 var util = require('util')
 const exec = util.promisify(require('child_process').exec);
-
 var ApkReader = require('node-apk-parser')
 var md5 = require('md5');
 var randomize = require('randomatic');
 const mysql_import = require('mysql-import');
 var path = require('path');
 
-let usr_acc_query_text = "usr_acc.id,usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.user_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity"
+
+const { sql } = require('../config/database');
+
+// import ADMIN from "../constants/Application";
+var Constants = require('../constants/Application');
+const device_helpers = require('./device_helpers');
+
+
+let usr_acc_query_text = "usr_acc.id,usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.user_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity,usr_acc.batch_no,usr_acc.type,usr_acc.version"
 module.exports = {
 	convertToLang: async function (lngWord, constant) {
 		if (lngWord !== undefined && lngWord !== '' && lngWord !== null) {
 			return lngWord;
-		  } else if (constant !== undefined && constant !== '' && constant !== null) {
+		} else if (constant !== undefined && constant !== '' && constant !== null) {
 			return constant;
-		  } else { return "N/A"; }
+		} else { return "N/A"; }
 	},
 	isAdmin: async function (userId) {
 		var query1 = "SELECT type FROM dealers where dealer_id =" + userId;
@@ -191,7 +193,6 @@ module.exports = {
 		var query = "SELECT COUNT(*) as dealer_count FROM dealers WHERE type !=" + adminRoleId + " AND type!=4";
 		let res = await sql.query(query);
 		if (res.length) {
-			console.log('helper called', res[0])
 			return res[0].dealer_count;
 		} else {
 			return false;
@@ -821,6 +822,16 @@ module.exports = {
 		if (bytes == 0) return '0 Byte';
 		var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
 		return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
+	},
+	getFileSize: function (file) {
+		let fileExist = path.join(__dirname, "../uploads/" + file);
+		if (fs.existsSync(fileExist)) {
+			let file_status = fs.statSync(fileExist);
+			return file_status.size
+
+		} else {
+			return 0;
+		}
 	},
 	getActivityName: async function (value) {
 
