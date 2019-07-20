@@ -44,7 +44,7 @@ if (HOST_NAME) {
 
 			
 			// Email
-			SMTP_FROM_EMAIL = "admin@titansecureserver.com";
+			SMTP_FROM_EMAIL = "admin@lockmesh.com";
 			SMTP_FROM_NAME = "Admin";
 			break;
 		case 'LockMesh Dev':
@@ -57,7 +57,7 @@ if (HOST_NAME) {
 			DB_PASSWORD = 'Alibaba@40C#'
 
 			// Email
-			SMTP_FROM_EMAIL = "admin@devlockmesh.com";
+			SMTP_FROM_EMAIL = "admin@lockmesh.com";
 			SMTP_FROM_NAME = "Admin";
 			break;
 		default:
