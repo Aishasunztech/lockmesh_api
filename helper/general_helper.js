@@ -386,6 +386,14 @@ module.exports = {
 		var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 		return re.test(String(email).toLowerCase());
 	},
+	validateIPAddress: (ip) => {
+		var re = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+		return re.test(ip)
+	},
+	validateMacAddress: (mac) => {
+		var re = /^([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$/;
+		return re.test(mystring);
+	},
 	checkNullStatus: (userAcc) => {
 		if (userAcc.status === '' || userAcc.status === null) {
 			return true;
