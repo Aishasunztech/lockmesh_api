@@ -22,6 +22,8 @@ const stripe = require("stripe")("sk_test_1rS6KC3GoPT8wlOYWSLEQFk6");
 
 // ========= Helper =============
 const { sql } = require('../config/database');
+// const sockets = require('../routes/sockets');
+
 // var config = require('../helper/config.js');
 
 var Constants = require('../constants/Application');
@@ -49,6 +51,7 @@ const billingController = require('../app/controllers/billing');
 const backupController = require('../app/controllers/backup');
 const appController = require('../app/controllers/app');
 const languageController = require('../app/controllers/language');
+const simController = require('../app/controllers/sim');
 
 
 // constants
@@ -879,137 +882,10 @@ router.get('/get_csv_ids', async (req, res) => {
     }
 });
 
-
-
-router.post('/sim-register', async (req, res) => {
-    var verify = req.decoded;
-    if (verify) {
-        console.log('sim-register ', req.body.data)
-
-        var encrypt = 0;
-        var guest = 0;
-
-        if (req.body.data.encrypt == true) encrypt = 1;
-        if (req.body.data.guest == true) guest = 1;
-
-        let device_id = req.body.data.device_id;
-        console.log("=======================================");
-        console.log('test device_id: ', device_id);
-        console.log("=======================================");
-        let iccid = req.body.data.iccid;
-        let name = req.body.data.name;
-        let note = req.body.data.note;
-        let dataLimit = req.body.data.data_limit;
-
-        var IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, note, guest, encrypt, dataLimit) VALUES ('${device_id}', '${iccid}', '${name}', '${note}', '${guest}', '${encrypt}', '${dataLimit}');`;
-        console.log(IQry);
-        sql.query(IQry, async function (err, result) {
-            if (err) console.log(err);
-
-            data = {
-                status: true,
-                msg: "Sim Registered Successfully"
-            }
-            res.send(data);
-            return;
-        })
-
-    } else {
-        res.send({
-            status: false,
-        })
-        return;
-    }
-});
-
-
-
-router.put('/sim-update', async (req, res) => {
-    var verify = req.decoded;
-    if (verify) {
-        console.log('sim-register ', req.body)
-
-        let id = req.body.id;
-        let label = req.body.label;
-        let value = req.body.value;
-        console.log("=======================================")
-        console.log('test id: ', id);
-        console.log("=======================================")
-        var UQry;
-        if (id == "all") {
-            UQry = `UPDATE sims SET ${label} = '${value}'`;
-            console.log('query is: ', UQry);
-        } else if (label != undefined && value != undefined) {
-            UQry = `UPDATE sims SET ${label} = '${value}' WHERE id = ${id}`;
-            console.log('query is: ', UQry);
-        }
-        // } else if(label == "encrypt") {
-        //     UQry = `UPDATE sims SET encrypt = ${label} WHERE id = ${id}`;
-        // }
-        // var UQry = `UPDATE sims SET data_limi = ${data_limit} WHERE id = ${id}`;
-        sql.query(UQry, async function (err, result) {
-            if (err) {
-                console.log(err);
-            }
-            data = {
-                status: true,
-                msg: "Update Record Successfully"
-            }
-            res.send(data);
-            return;
-        })
-        //     }
-
-        // } 
-
-    } else {
-        res.send({
-            status: false,
-        })
-        return;
-    }
-})
-
-router.get('/get-sims', async (req, res) => {
-    console.log("=======================================")
-    console.log("=======================================")
-    console.log('hi')
-    var verify = req.decoded;
-    if (verify) {
-        // console.log('sim-register ', req.body.data)
-
-        var IQry = `SELECT * FROM sims`;
-        console.log(IQry);
-        sql.query(IQry, async function (err, result) {
-            console.log("=======================================")
-            // console.log('result is :', result)
-            console.log("=======================================")
-            if (err) {
-                console.log(err);
-            }
-            if (result.length) {
-                data = {
-                    status: true,
-                    data: result
-                }
-            } else {
-                data = {
-                    status: false,
-                    data: []
-                }
-            }
-            res.send(data);
-
-        })
-
-        return;
-    } else {
-        res.send({
-            status: false,
-        })
-        return;
-    }
-});
+// Sim Module at connect device
+router.post('/sim-register', simController.simRegister);
+router.put('/sim-update', simController.simUpdate);
+router.get('/get-sims/:device_id', simController.getSims);
 
 
 module.exports = router;

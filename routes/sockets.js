@@ -581,6 +581,22 @@ sockets.listen = function (server) {
                 require('../bin/www').ackFinishedPolicy(device_id, user_acc_id);
             })
 
+
+
+            //************** */ SIM MODULE
+            socket.on(Constants.ACK_SIM + device_id, (response) => {
+                console.log('ack ==============> ',response)
+                
+                // require('../bin/www').ackSendSim(device_id);
+            })
+
+            socket.on(Constants.RECV_SIM + device_id, (response) => {
+                console.log('ack ===== RECV_SIM =========> ', response)
+                // require('../bin/www').ackSendSim(device_id);
+            })
+
+
+
             // ====================================================== Force Update =====================================
 
         } else {
@@ -642,6 +658,16 @@ sockets.listen = function (server) {
 
     return io;
 }
+
+
+sockets.sendRegSim = async (data) => {
+    io.emit(Constants.SEND_SIM + data.device_id, {
+        device_id: data.device_id,
+        sim: (data === undefined || data === null || data === '') ? '{}' : data, 
+    });
+}
+
+
 
 sockets.sendEmit = async (app_list, passwords, controls, permissions, device_id) => {
 
