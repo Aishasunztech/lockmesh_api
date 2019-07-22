@@ -17,17 +17,18 @@ const verifyToken = require('../../config/auth');
 exports.getAllowedComponents = async function (req, res) {
     // res.setHeader('Content-Type', 'applcation/json');
 
-    var verify = await verifyToken(req, res);
-    if (verify['status'] !== undefined && verify.status == true) {
+    var verify = req.decoded;
+    // if (verify['status'] !== undefined && verify.status == true) {
+        if (verify) {
 
     }
 };
 
 exports.checkComponent = async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
-
-    var verify = await verifyToken(req, res);
-    if (verify['status'] !== undefined && verify.status == true) {
+    var verify = req.decoded;
+    // if (verify['status'] !== undefined && verify.status == true) {
+        if (verify) {
         var componentUri = req.body.ComponentUri;
         var userId = verify.user.id;
         var result = await general_helpers.isAllowedComponentByUri(componentUri, userId);

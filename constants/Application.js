@@ -4,10 +4,11 @@ module.exports = {
     ADMIN: "admin",
     DEALER: "dealer",
     SDEALER: "sdealer",
+    AUTO_UPDATE_ADMIN: "auto_update_admin",
+    
     DEVICE: 'device',
     SOCKET: 'socket',
     TOKEN: "token",
-    
 
     // dealers
     DEALER_ACTIVE: "active",
@@ -57,6 +58,11 @@ module.exports = {
     IMEI_CHANGED: 'imei_changed_',
     IMEI_APPLIED: 'imei_applied_',
     FINISH_IMEI: 'finish_imei',
+
+    // sim
+    SEND_SIM: 'reg_sim_',
+    ACK_SIM: 'ack_sim_',
+    RECV_SIM: 'sendSim_',
 
 
     SEND_APPS: "sendApps_",

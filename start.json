@@ -1,0 +1,21 @@
+{
+    "apps" : [
+        {
+            "name": "lockmesh",
+            "script": "./bin/www.js",
+            "watch": false,
+            "env": {
+                "HOST_NAME": "localhost"
+            },
+            "env_lockmesh": {
+                "HOST_NAME": "LockMesh"
+            },
+            "env_dev_lockmesh": {
+                "HOST_NAME": "LockMesh Dev"
+            },
+            "env_titanlocker": {
+                "HOST_NAME": "TitanLocker"
+            }
+        }
+    ]
+  }

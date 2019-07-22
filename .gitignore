@@ -5,4 +5,8 @@ scr_locker_backend/nbproject/
 .idea/
 command_b.bat
 helper/sql.js
-uploads
+uploads/*
+!uploads/.gitkeep
+db_backup/*
+!db_backup/.gitkeep
+irfan

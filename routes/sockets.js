@@ -1,20 +1,25 @@
-// sockets.js
+// Libraries
 var socket = require('socket.io');
+var jwt = require('jsonwebtoken');
+
+// Helpers
 const { sql } = require('../config/database');
 const device_helpers = require('../helper/device_helpers.js');
 const general_helpers = require('../helper/general_helper.js');
-var jwt = require('jsonwebtoken');
-// var config = require('../helper/config.js');
-var Constants = require('../constants/Application');
 
-const constants = require('../config/constants');
+// Constants
+const Constants = require('../constants/Application');
+const app_constants = require('../config/constants');
+
+var sockets = {};
+let io;
 
 // verify token
 const verifyToken = function (token) {
     // check header or url parameters or post parameters for token
     if (token !== undefined && token !== null && token !== '' && token !== 'undefined') {
         // verifies secret and checks exp
-        return jwt.verify(token.replace(/['"]+/g, ''), constants.SECRET, function (err, decoded) {
+        return jwt.verify(token.replace(/['"]+/g, ''), app_constants.SECRET, function (err, decoded) {
             if (err) {
                 return false;
             } else {
@@ -42,8 +47,44 @@ const verifySession = async (deviceId, sessionId, isWeb = false) => {
         return false;
     }
 }
+const socketMiddleware = async (socket, next) => {
+    let token = socket.handshake.query.token;
+    // console.log("Token", verifyToken(token));
+    if (verifyToken(token)) {
 
-module.exports.listen = async function (server) {
+        let session_id = socket.id;
+
+        var device_id = null;
+
+        let isWeb = socket.handshake.query['isWeb'];
+
+        if (isWeb !== undefined && isWeb !== 'undefined' && (isWeb !== false || isWeb !== 'false') && (isWeb === true || isWeb === 'true')) {
+            isWeb = true;
+        } else {
+            isWeb = false;
+            device_id = socket.handshake.query['device_id'];
+        }
+
+
+        let sessionVerify = await verifySession(device_id, session_id, isWeb);
+        console.log("Session", sessionVerify);
+
+        if (device_id != undefined && device_id !== null && sessionVerify) {
+            console.log("mobile side: ", device_id);
+            next();
+        } else if (isWeb === true && sessionVerify) {
+            console.log("web side: ", isWeb);
+            next();
+        } else {
+            return next(new Error('Unauthorized'));
+        }
+
+    } else {
+        return next(new Error('Unauthorized'));
+    }
+}
+
+sockets.listen = function (server) {
 
     // socket configuration options
     // {
@@ -72,60 +113,13 @@ module.exports.listen = async function (server) {
     // io.of('/') is for middleware not for path
     // ===============================================================================
     io.listen(server);
-    
-    // check origins of incoming request 
-
-    // io.origins('*:*');
-    // io.origins((origin, callback) => {
-    //     callback();
-    //     // if(origin === "http://localhost:3001"){
-    //     // } else {
-    //     //     callback()
-    //     // }
-    // });
-    
-    
 
     // middleware for socket incoming and outgoing requests
-    io.use(async function (socket, next) {
-        let token = socket.handshake.query.token;
-        // console.log("Token", verifyToken(token));
-        if (verifyToken(token)) {
-
-            let session_id = socket.id;
-
-            var device_id = null;
-
-            let isWeb = socket.handshake.query['isWeb'];
-
-            if (isWeb !== undefined && isWeb !== 'undefined' && (isWeb !== false || isWeb !== 'false') && (isWeb === true || isWeb === 'true')) {
-                isWeb = true;
-            } else {
-                isWeb = false;
-                device_id = socket.handshake.query['device_id'];
-            }
-
-
-            let sessionVerify = await verifySession(device_id, session_id, isWeb);
-            console.log("Session", sessionVerify);
-
-            if (device_id != undefined && device_id !== null && sessionVerify) {
-                console.log("mobile side: ", device_id);
-                next();
-            } else if (isWeb === true && sessionVerify) {
-                console.log("web side: ", isWeb);
-                next();
-            } else {
-                return next(new Error('Unauthorized'));
-            }
-
-        } else {
-            return next(new Error('Unauthorized'));
-        }
-    });
+    io.use(socketMiddleware);
 
     var allClients = [];
-    io.on('connection', async function (socket) {
+
+    io.sockets.on('connection', async function (socket) {
         allClients.push(socket);
 
         //socket.disconnect(true);
@@ -207,18 +201,13 @@ module.exports.listen = async function (server) {
                 // let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id;
                 // await sql.query(historyUpdate);
 
-                var setting_query = "SELECT * FROM device_history WHERE user_acc_id='" + user_acc_id + "' AND status=1 ORDER BY created_at DESC LIMIT 1";
+                var setting_query = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=1 ORDER BY created_at DESC LIMIT 1`;
                 let response = await sql.query(setting_query);
 
                 if (response.length > 0 && data.device_id != null) {
                     let app_list = JSON.parse(response[0].app_list);
                     let extensions = JSON.parse(response[0].permissions);
 
-                    // console.log("insertings applications", response);
-                    // console.log(response[0].app_list);
-
-                    // console.log("inserting setiings", device_id);
-                    //  console.log(response[0].permissions);
 
                     await device_helpers.insertApps(app_list, device_id);
 
@@ -289,7 +278,7 @@ module.exports.listen = async function (server) {
             // ===================================================== Pending Device History ==================================================
             // pending settings for device
 
-            var setting_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='profile' order by created_at desc limit 1";
+            var setting_query = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=0 AND type='profile' order by created_at desc limit 1`;
             let setting_res = await sql.query(setting_query);
             if (setting_res.length) {
 
@@ -304,8 +293,7 @@ module.exports.listen = async function (server) {
                     status: true
                 });
 
-            }
-            else {
+            } else {
                 var setting_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='history' order by created_at desc limit 1";
                 let setting_res = await sql.query(setting_query);
                 if (setting_res.length) {
@@ -335,7 +323,7 @@ module.exports.listen = async function (server) {
             // IMEI SOCKET
             socket.on(Constants.IMEI_APPLIED + device_id, async function (data) {
                 console.log("imei_applied: " + device_id);
-                require('../bin/www').ackImeiChanged(device_id);
+                sockets.ackImeiChanged(device_id);
                 if (data.status) {
                     var imei_query = "UPDATE device_history SET status = 1 WHERE user_acc_id='" + user_acc_id + "' AND type = 'imei'";
                     let response = await sql.query(imei_query);
@@ -397,11 +385,11 @@ module.exports.listen = async function (server) {
                 })
             }
             socket.on(Constants.SEND_PUSHED_APPS_STATUS + device_id, async (pushedApps) => {
-                require('../bin/www').ackSinglePushApp(device_id, pushedApps);
+                sockets.ackSinglePushApp(device_id, pushedApps);
             });
             socket.on(Constants.FINISHED_PUSH_APPS + device_id, async (response) => {
                 // console.log("testing", response);
-                require('../bin/www').ackFinishedPushApps(device_id, user_acc_id);
+                sockets.ackFinishedPushApps(device_id, user_acc_id);
                 // socket.emit(Constants.ACK_FINISHED_PUSH_APPS + device_id, {
                 //     status: true
                 // });
@@ -430,14 +418,14 @@ module.exports.listen = async function (server) {
 
             socket.on(Constants.SEND_PULLED_APPS_STATUS + device_id, async (pushedApps) => {
                 console.log("send_pulled_apps_status_", pushedApps);
-                require('../bin/www').ackSinglePullApp(device_id, pushedApps);
+                sockets.ackSinglePullApp(device_id, pushedApps);
             })
 
 
             socket.on(Constants.FINISHED_PULL_APPS + device_id, async (response) => {
                 console.log("FININSHED PULLED APPS", response);
 
-                require('../bin/www').ackFinishedPullApps(device_id, user_acc_id);
+                sockets.ackFinishedPullApps(device_id, user_acc_id);
                 // socket.emit(Constants.ACK_FINISHED_PUSH_APPS + device_id, {
                 //     status: true
                 // });
@@ -569,29 +557,56 @@ module.exports.listen = async function (server) {
 
             // policy step 1;
             socket.on(Constants.FINISH_POLICY_PUSH_APPS + device_id, (response) => {
-                require('../bin/www').ackFinishedPolicyStep(device_id, user_acc_id);
+                sockets.ackFinishedPolicyStep(device_id, user_acc_id);
 
             });
 
             // policy step 2;
             socket.on(Constants.FINISH_POLICY_APPS + device_id, (response) => {
-                require('../bin/www').ackFinishedPolicyStep(device_id, user_acc_id);
+                sockets.ackFinishedPolicyStep(device_id, user_acc_id);
             });
 
             // policy step 3;
             socket.on(Constants.FINISH_POLICY_SETTINGS + device_id, (response) => {
-                require('../bin/www').ackFinishedPolicyStep(device_id, user_acc_id);
+                sockets.ackFinishedPolicyStep(device_id, user_acc_id);
             });
 
             // policy step 4;
             socket.on(Constants.FINISH_POLICY_EXTENSIONS + device_id, (response) => {
-                require('../bin/www').ackFinishedPolicyStep(device_id, user_acc_id);
+                sockets.ackFinishedPolicyStep(device_id, user_acc_id);
             });
 
             // policy finished;
             socket.on(Constants.FINISH_POLICY + device_id, (response) => {
-                require('../bin/www').ackFinishedPolicy(device_id, user_acc_id);
+                sockets.ackFinishedPolicy(device_id, user_acc_id);
             })
+
+
+
+            //************** */ SIM MODULE
+            socket.on(Constants.ACK_SIM + device_id, (response) => {
+                console.log('ack ==============> ', response)
+                // sockets.updateSimRecord(response);
+            })
+
+            socket.on(Constants.RECV_SIM + device_id, (response) => {
+                console.log('ack ===== RECV_SIM =========> ', response)
+                // sockets.ackSendSim(device_id);
+            })
+
+
+            // let sUnEmitSims = `SELECT * FROM sims WHERE emit = '0'`;
+            // let simResult = await sql.query(sUnEmitSims);
+            // if (simResult.length > 0) {
+            //     simResult.forEach((data, index) => {
+            //         socket.emit(Constants.SEND_SIM + data.device_id, {
+            //             device_id: data.device_id,
+            //             sim: (data === undefined || data === null || data === '') ? '{}' : data,
+            //         });
+            //     })
+            // }
+
+
 
             // ====================================================== Force Update =====================================
 
@@ -654,4 +669,206 @@ module.exports.listen = async function (server) {
 
     return io;
 }
+
+
+sockets.sendRegSim = async (data) => {
+    io.emit(Constants.SEND_SIM + data.device_id, {
+        device_id: data.device_id,
+        sim: (data === undefined || data === null || data === '') ? '{}' : data,
+    });
+}
+
+// sockets.updateSimRecord = async (data) => {
+//     console.log('')
+// }
+
+
+
+sockets.sendEmit = async (app_list, passwords, controls, permissions, device_id) => {
+
+    io.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
+        device_id: device_id,
+        app_list: (app_list === undefined || app_list === null || app_list === '') ? '[]' : app_list,
+        passwords: (passwords === undefined || passwords === null || passwords === '') ? '{}' : passwords,
+        settings: (controls === undefined || controls === null || controls === '') ? '{}' : controls,
+        extension_list: (permissions == undefined || permissions == null || permissions == '') ? '{}' : permissions,
+        status: true
+    });
+}
+
+sockets.applyPushApps = (push_apps, device_id) => {
+    console.log(Constants.GET_PUSHED_APPS + device_id);
+
+    io.emit(Constants.ACTION_IN_PROCESS + device_id, {
+        status: true,
+        type: 'push'
+    })
+
+    io.emit(Constants.GET_PUSHED_APPS + device_id, {
+        status: true,
+        device_id: device_id,
+        push_apps: push_apps
+    });
+}
+
+sockets.getPullApps = (pull_apps, device_id) => {
+    io.emit(Constants.ACTION_IN_PROCESS + device_id, {
+        status: true,
+        type: 'pull'
+    })
+    io.emit(Constants.GET_PULLED_APPS + device_id, {
+        status: true,
+        device_id: device_id,
+        pull_apps: pull_apps
+    });
+}
+
+sockets.writeImei = (imei, device_id) => {
+    console.log("write_imei_" + device_id);
+    io.emit(Constants.ACTION_IN_PROCESS + device_id, {
+        status: true,
+        type: 'imei'
+    })
+    io.emit(Constants.WRITE_IMEI + device_id, {
+        status: true,
+        device_id: device_id,
+        imei: imei
+    });
+}
+
+sockets.syncDevice = async (device_id) => {
+    io.emit(Constants.GET_SYNC_STATUS + device_id, {
+        device_id: device_id,
+        apps_status: false,
+        extensions_status: false,
+        settings_status: false,
+        is_sync: false,
+    });
+}
+
+// live device status activity
+sockets.sendDeviceStatus = async function (device_id, device_status, status = false) {
+    console.log("send device status", device_id);
+    io.emit(Constants.DEVICE_STATUS + device_id, {
+        device_id: device_id,
+        status: status,
+        msg: device_status
+    });
+}
+
+sockets.ackFinishedPushApps = async function (device_id, user_acc_id) {
+
+    await sql.query("DELETE from apps_queue_jobs WHERE device_id = '" + device_id + "' AND type = 'push'")
+    // await sql.query("UPDATE apps_queue_jobs set is_in_process = 0 WHERE device_id = '" + device_id + "'")
+    var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='push_apps' AND user_acc_id=" + user_acc_id + "";
+    await sql.query(pushAppsQ)
+
+    io.emit(Constants.ACK_FINISHED_PUSH_APPS + device_id, {
+        status: true
+    });
+}
+
+sockets.ackFinishedPullApps = async function (device_id, user_acc_id) {
+    var pullAppsQ = "UPDATE device_history SET status=1 WHERE type='pull_apps' AND user_acc_id=" + user_acc_id + "";
+    await sql.query(pullAppsQ)
+    await sql.query("DELETE from apps_queue_jobs WHERE device_id = '" + device_id + "' AND type = 'pull'")
+
+    io.emit(Constants.ACK_FINISHED_PULL_APPS + device_id, {
+        status: true
+    })
+}
+
+sockets.ackFinishedPolicy = async function (device_id, user_acc_id) {
+    console.log("FINISHED POLICY")
+
+    var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='policy' AND user_acc_id=" + user_acc_id + "";
+    await sql.query(pushAppsQ)
+    await sql.query("DELETE from policy_queue_jobs WHERE device_id = '" + device_id + "'")
+
+    io.emit(Constants.FINISH_POLICY + device_id, {
+        status: true
+    });
+}
+
+sockets.ackFinishedPolicyStep = async function (device_id, user_acc_id) {
+    console.log("FINISHED POLICY STEP")
+
+    let completeSteps = 0
+    let queueAppsData = await sql.query("SELECT * from policy_queue_jobs where device_id = '" + device_id + "' order by created_at desc limit 1")
+    if (queueAppsData.length) {
+
+        completeSteps = queueAppsData[0].complete_steps + 1
+        await sql.query("UPDATE policy_queue_jobs set complete_steps = " + completeSteps + " WHERE device_id = '" + device_id + "'")
+
+        io.emit(Constants.FINISH_POLICY_STEP + device_id, {
+            status: true
+        });
+    }
+}
+
+sockets.ackImeiChanged = async function (device_id) {
+    console.log("IMEI Applied")
+    await sql.query("UPDATE devices set is_push_apps = 0 WHERE device_id = '" + device_id + "'")
+
+    io.emit(Constants.FINISH_IMEI + device_id, {
+        status: true
+    });
+}
+
+sockets.ackSinglePushApp = async function (device_id, response) {
+    // console.log("SINGLE APP PUSH");
+    let completePushApps = 0
+    let queueAppsData = await sql.query("SELECT * from apps_queue_jobs where device_id = '" + device_id + "' AND type = 'push' order by created_at desc limit 1")
+    if (queueAppsData.length) {
+
+        completePushApps = queueAppsData[0].complete_apps + 1
+        await sql.query("UPDATE apps_queue_jobs set complete_apps = " + completePushApps + " WHERE device_id = '" + device_id + "' AND type = 'pull'")
+
+        io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
+            status: true,
+        })
+    }
+}
+
+sockets.ackSinglePullApp = async function (device_id, response) {
+
+    // console.log("SINGLE PULL PUSH");
+    let completePushApps = 0
+    let queueAppsData = await sql.query("SELECT * from apps_queue_jobs where device_id = '" + device_id + "' AND type = 'push' order by created_at desc limit 1")
+    if (queueAppsData.length) {
+
+        completePushApps = queueAppsData[0].complete_apps + 1
+        await sql.query("UPDATE apps_queue_jobs set complete_apps = " + completePushApps + " WHERE device_id = '" + device_id + "' AND type = 'pull'")
+
+        io.emit(Constants.ACK_SINGLE_PULL_APP + device_id, {
+            status: true
+        })
+    }
+}
+
+sockets.getPolicy = (device_id, policy) => {
+    io.emit(Constants.ACTION_IN_PROCESS + device_id, {
+        status: true,
+        type: 'policy'
+    })
+    io.emit(Constants.GET_POLICY + device_id, {
+        status: true,
+        app_list: (policy.app_list === undefined || policy.app_list === null || policy.app_list === '') ? '[]' : policy.app_list,
+        settings: (policy.controls === undefined || policy.controls === null || policy.controls === '') ? '{}' : policy.controls,
+        extension_list: (policy.permissions === undefined || policy.permissions === null || policy.permissions === '') ? '[]' : policy.permissions,
+        push_apps: (policy.push_apps === undefined || policy.push_apps === null || policy.push_apps === '') ? '[]' : policy.push_apps,
+        device_id: device_id,
+    });
+}
+
+sockets.forceCheckUpdate = async function (device_id) {
+    console.log("testing forceupdate", device_id);
+    io.emit(Constants.FORCE_UPDATE_CHECK + device_id, {
+        device_id: device_id,
+        status: true
+    });
+}
+
+module.exports = sockets;
+
 

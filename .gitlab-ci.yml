@@ -1,0 +1,63 @@
+image: node:10.16
+
+variables:
+  WORK_DIR: ${CI_PROJECT_NAME}
+  BRANCH: ${CI_COMMIT_REF_NAME}
+
+stages:
+  - deploy
+
+deploy_DevLM_API:
+  stage: deploy
+  environment:
+    name: DevLockmeshAPI
+    url: https://devapi.lockmesh.com
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    - mkdir -p ~/.ssh
+    - eval $(ssh-agent -s)
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  script:
+    - echo "Deploy to dev server"
+    - ssh-add <(echo "$PRIVATE_KEY")
+    - rm -rf .git
+    - ssh -o StrictHostKeyChecking=no web@104.248.19.72 "cd /var/www/html/${WORK_DIR}; git pull origin ${BRANCH}; npm install; pm2 reload all"
+  only:
+    - development
+
+deploy_LiveLM_API:
+  stage: deploy
+  environment:
+    name: LiveLockmeshAPI
+    url: https://api.lockmesh.com
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    - mkdir -p ~/.ssh
+    - eval $(ssh-agent -s)
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  script:
+    - echo "Deploy to live LM server"
+    - ssh-add <(echo "$PRIVATE_KEY")
+    - rm -rf .git
+    - ssh -o StrictHostKeyChecking=no web@165.22.30.197 "cd /var/www/html/${WORK_DIR}; git pull origin ${BRANCH}; npm install; pm2 reload all; exit"
+  only:
+    - master
+
+deploy_LiveTitan_API:
+  stage: deploy
+  environment:
+    name: LiveTitanAPI
+    url: https://api.titansecureserver.com
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    - mkdir -p ~/.ssh
+    - eval $(ssh-agent -s)
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  script:
+    - echo "Deploy to live LM server"
+    - ssh-add <(echo "$PRIVATE_KEY")
+    - rm -rf .git
+    - ssh -o StrictHostKeyChecking=no web@142.93.102.4 "cd /var/www/html/${WORK_DIR}; git pull origin ${BRANCH}; npm install; pm2 reload all; exit"
+  only:
+    - master
+

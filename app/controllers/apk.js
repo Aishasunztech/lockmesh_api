@@ -11,12 +11,13 @@ const axios = require('axios');
 const Constants = require('../../constants/Application');
 var MsgConstants = require('../../constants/MsgConstants');
 
-const device_helpers = require('../../helpers/device_helpers');
-const general_helpers = require('../../helpers/general_helpers');
+const device_helpers = require('../../helper/general_helper');
+const helpers = require('../../helper/general_helper');
 const moment = require('moment')
 
 exports.apklist = async function (req, res) {
-    console.log(req.decoded);
+    // console.log(req.decoded);
+
     let data = []
     sql.query("select * from apk_details where delete_status=0 AND apk_type = 'permanent' order by id ASC", async function (error, results) {
         if (error) throw error;
@@ -52,7 +53,7 @@ exports.apklist = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: await general_helpers.convertToLang("", MsgConstants.NO_DATA_FOUND), // "No result found",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND] , "No result found"), // "No result found",
                 list: []
             }
             res.send(data);
@@ -108,7 +109,7 @@ exports.uploadApk = async function (req, res) {
     } else {
         res.send({
             status: false,
-            msg: await general_helpers.convertToLang("", MsgConstants.ERROR_WHILE_UPLOADING), // "Error while uploading"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while uploading"
         })
         return;
     }
@@ -121,7 +122,7 @@ exports.uploadApk = async function (req, res) {
     console.log(formatByte);
 
     if (fieldName === Constants.APK) {
-        // let file = path.join(__dirname, "../uploads/" + filename);
+        // let file = path.join(__dirname, "../../uploads/" + filename);
         let versionCode = await general_helpers.getAPKVersionCode(filePath);
         // console.log("version code", versionCode);
         // let apk_stats = fs.statSync(file);
@@ -130,20 +131,20 @@ exports.uploadApk = async function (req, res) {
         if (versionCode) {
 
             fileName = fieldName + '-' + Date.now() + '.apk';
-            let target_path = path.join(__dirname, "../../uploads/" + fileName);
+            let target_path = path.join(__dirname, "../../../uploads/" + fileName);
 
-            general_helpers.move(filePath, target_path, function (error) {
+            general_helpers.move(filePath, target_path, async function (error) {
                 console.log(error);
                 if (error) {
                     res.send({
                         status: false,
-                        msg: await general_helpers.convertToLang("", MsgConstants.ERROR_WHILE_UPLOADING), // "Error while uploading"
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while uploading"
                     })
                 }
                 console.log(fileName);
                 data = {
                     status: true,
-                    msg: await general_helpers.convertToLang("", MsgConstants.UPLOADED_SUCCESSFULLY), // 'Uploaded Successfully',
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.UPLOADED_SUCCESSFULLY], "Uploaded Successfully"), // 'Uploaded Successfully',
                     fileName: fileName,
                     size: formatByte
                 };
@@ -153,7 +154,7 @@ exports.uploadApk = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: await general_helpers.convertToLang("", MsgConstants.ERROR_WHILE_UPLOADING), // "Error while Uploading",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while Uploading",
             };
             res.send(data);
             return;
@@ -163,19 +164,19 @@ exports.uploadApk = async function (req, res) {
 
 
         fileName = fieldName + '-' + Date.now() + '.jpg';
-        let target_path = path.join(__dirname, "../../uploads/" + fileName);
+        let target_path = path.join(__dirname, "../../../uploads/" + fileName);
 
-        general_helpers.move(filePath, target_path, function (error) {
+        general_helpers.move(filePath, target_path, async function (error) {
             console.log(error);
             if (error) {
                 res.send({
                     status: false,
-                    msg: await general_helpers.convertToLang("", MsgConstants.ERROR_WHILE_UPLOADING), // "Error while uploading"
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while uploading"
                 })
             }
             data = {
                 status: true,
-                msg: await general_helpers.convertToLang("", MsgConstants.UPLOADED_SUCCESSFULLY), // 'Uploaded Successfully',
+                msg: await helpers.convertToLang(req.translation[MsgConstants.UPLOADED_SUCCESSFULLY], "Uploaded Successfully"), // 'Uploaded Successfully',
                 fileName: fileName,
                 size: formatByte
 
@@ -187,12 +188,13 @@ exports.uploadApk = async function (req, res) {
     else {
         data = {
             status: false,
-            msg: await general_helpers.convertToLang("", MsgConstants.ERROR_WHILE_UPLOADING), // "Error while Uploading"
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while Uploading"
         }
         res.send(data);
         return;
     }
 }
+
 exports.addApk = async function (req, res) {
     try {
         let logo = req.body.logo;
@@ -200,7 +202,7 @@ exports.addApk = async function (req, res) {
         let apk_name = req.body.name;
         if (!empty(logo) && !empty(apk) && !empty(apk_name)) {
 
-            let file = path.join(__dirname, "../../uploads/" + apk);
+            let file = path.join(__dirname, "../../../uploads/" + apk);
             console.log("File", file);
             if (fs.existsSync(file)) {
                 let versionCode = '';
@@ -235,7 +237,7 @@ exports.addApk = async function (req, res) {
                 versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                 versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                 packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                // label = label.toString().replace(/(\r\n|\n|\r)/gm, "");
+                label = label.toString().replace(/(\r\n|\n|\r)/gm, "");
                 details = details.toString().replace(/(\r\n|\n|\r)/gm, "");
 
                 let apk_type = 'permanent'
@@ -264,7 +266,7 @@ exports.addApk = async function (req, res) {
                     if (err) throw err;
                     data = {
                         status: true,
-                        msg: await general_helpers.convertToLang("", MsgConstants.APK_IS_UPLOADED), // "Apk is uploaded",
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.APK_IS_UPLOADED], "Apk is uploaded"), // "Apk is uploaded",
                         data: dta
                     };
                     res.send(data);
@@ -275,7 +277,7 @@ exports.addApk = async function (req, res) {
                 console.log("file not found");
                 res.send({
                     status: false,
-                    msg: await general_helpers.convertToLang("", MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error While Uploading"
                 })
                 return;
             }
@@ -283,7 +285,7 @@ exports.addApk = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: await general_helpers.convertToLang("", MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
+                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error While Uploading"
             };
             res.send(data);
             return;
@@ -292,11 +294,12 @@ exports.addApk = async function (req, res) {
         console.log(error);
         data = {
             status: false,
-            msg: await general_helpers.convertToLang("", MsgConstants.ERROR_WHILE_UPLOADING), // "Error while Uploading",
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while Uploading",
         };
         return;
     }
 }
+
 exports.deleteApk = async function (req, res) {
     if (!empty(req.body.apk_id)) {
         sql.query("update `apk_details` set delete_status='1' WHERE id='" + req.body.apk_id + "'", async function (error, results) {
@@ -306,7 +309,7 @@ exports.deleteApk = async function (req, res) {
             if (results.affectedRows == 0) {
                 data = {
                     "status": false,
-                    "msg": await general_helpers.convertToLang("", MsgConstants.APK_NOT_DELETED), // "Apk not deleted.",
+                    "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_NOT_DELETED], "Apk not deleted."), // "Apk not deleted.",
                     "rdlt": results
                 };
             } else {
@@ -316,13 +319,13 @@ exports.deleteApk = async function (req, res) {
 
                     data = {
                         "status": true,
-                        "msg": await general_helpers.convertToLang("", MsgConstants.APK_DELETED_SUCCESSFULLY), // "Apk deleted successfully.",
+                        "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_DELETED_SUCCESSFULLY], "Apk deleted successfully"), // "Apk deleted successfully.",
                         "apk": result[0]
                     };
                 } else {
                     data = {
                         "status": false,
-                        "msg": await general_helpers.convertToLang("", MsgConstants.APK_NOT_DELETED), // "Apk not deleted.",
+                        "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_NOT_DELETED], "Apk not deleted"), // "Apk not deleted.",
                         "rdlt": results
                     };
                 }
@@ -333,7 +336,7 @@ exports.deleteApk = async function (req, res) {
     } else {
         data = {
             "status": false,
-            "msg": await general_helpers.convertToLang("", MsgConstants.ERROR), // "Some error occurred."
+            "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Some error occurred"), // "Some error occurred."
 
         }
         res.send(data);
@@ -348,7 +351,7 @@ exports.editApk = async function (req, res) {
         let apk_name = req.body.name;
         if (!empty(logo) && !empty(apk) && !empty(apk_name)) {
             // console.log("object");
-            let file = path.join(__dirname, "../../uploads/" + apk);
+            let file = path.join(__dirname, "../../../uploads/" + apk);
             // console.log(file);
             if (fs.existsSync(file)) {
                 let versionCode = '';
@@ -380,38 +383,31 @@ exports.editApk = async function (req, res) {
                 versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                 versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                 packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                // label = label.replace(/(\r\n|\n|\r)/gm, "");
+                label = label.replace(/(\r\n|\n|\r)/gm, "");
                 details = details.replace(/(\r\n|\n|\r)/gm, "");
-                // console.log("versionName", versionName);
-                // console.log("pKGName", packageName);
-                // console.log("version Code", versionCode);
-                // console.log("label", label);
-                // console.log('detai')
 
                 // let apk_type = (verify.user.user_type === AUTO_UPDATE_ADMIN) ? 'permanent' : 'basic'
 
                 let apk_stats = fs.statSync(file);
 
                 let formatByte = general_helpers.formatBytes(apk_stats.size);
-                // console.log("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_byte='" + apk_stats.size + "',  apk_size='"+ formatByte +"'  where id = '" + req.body.apk_id + "'");
-
-                sql.query("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk_file = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_bytes='" + apk_stats.size + "',  apk_size='" + formatByte + "'  where id = '" + req.body.apk_id + "'", function (err, rslts) {
-
-                    if (err) throw err;
+                
+                sql.query("UPDATE apk_details SET label = '"+ label +"', app_name = '" + apk_name + "', logo = '" + logo + "', apk_file = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_bytes='" + apk_stats.size + "',  apk_size='" + formatByte + "'  WHERE id = '" + req.body.apk_id + "'", async function (err, rslts) {
+                    if (err)  {console.log(err)};
+                    
                     data = {
                         status: true,
-                        msg: await general_helpers.convertToLang("", MsgConstants.RECORD_UPD_SUCC), // "Record Updated"
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record Updated"), // "Record Updated"
 
                     };
                     res.send(data);
                     return;
                 });
-
-
+                return;
             } else {
                 data = {
                     status: false,
-                    msg: await general_helpers.convertToLang("", MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error While Uploading"
                 };
                 res.send(data);
                 return;
@@ -420,7 +416,7 @@ exports.editApk = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: await general_helpers.convertToLang("", MsgConstants.ERROR_WHILE_UPLOADING), // "Error While Uploading"
+                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error While Uploading"
             };
             res.send(data);
             return;
@@ -428,9 +424,721 @@ exports.editApk = async function (req, res) {
     } catch (error) {
         data = {
             status: false,
-            msg: await general_helpers.convertToLang("", MsgConstants.ERROR_WHILE_UPLOADING), // "Error while Uploading",
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while Uploading",
         };
         res.send(data);
         return;
+    }
+}
+
+
+exports.apkList = async function (req, res) {
+    var verify = req.decoded;
+    var data = [];
+
+    // if (verify.status !== undefined && verify.status == true) {
+    if (verify) {
+        if (verify.user.user_type === Constants.ADMIN) {
+            sql.query("select * from apk_details where delete_status=0 AND apk_type != 'permanent' order by id ASC", async function (error, results) {
+                if (error) {
+                    console.log(error);
+                }
+
+                if (results.length > 0) {
+                    let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                    let dealerCount = await helpers.dealerCount(adminRoleId);
+                    // console.log("dealer count", dealerCount)
+                    for (var i = 0; i < results.length; i++) {
+                        let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
+                        let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
+                        let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                        dta = {
+                            "apk_id": results[i].id,
+                            "apk_name": results[i].app_name,
+                            "logo": results[i].logo,
+                            "apk": results[i].apk,
+                            "permissions": permissions,
+                            "apk_status": results[i].status,
+                            "size": results[i].apk_size,
+                            "permission_count": permissionC,
+                            "deleteable": (results[i].apk_type == "permanent") ? false : true
+                        }
+                        data.push(dta);
+                    }
+
+                    return res.json({
+                        status: true,
+                        success: true,
+                        list: data
+                    });
+
+                } else {
+                    data = {
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // "No result found",
+                        list: []
+                    }
+                    res.send(data);
+                }
+
+            });
+        }
+        else if (verify.user.user_type === Constants.DEALER) {
+            sql.query("select dealer_apks.* ,apk_details.* from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.apk_type != 'permanent' AND delete_status = 0", async function (error, results) {
+                if (error) {
+                    console.log(error);
+                }
+                if (results.length > 0) {
+                    let dealerRole = await helpers.getuserTypeIdByName(Constants.DEALER);
+                    // console.log("Role", dealerRole);
+
+                    let sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                    // console.log(sdealerList);
+                    let dealerCount = sdealerList ? sdealerList.length : 0;
+                    // console.log("dealer_count ", dealerCount);
+                    for (var i = 0; i < results.length; i++) {
+                        let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
+                        let Sdealerpermissions = permissions.filter(function (item) {
+                            for (let i = 0; i < sdealerList.length; i++) {
+                                if (item === sdealerList[i].dealer_id) {
+                                    return item
+                                }
+                            }
+                        })
+                        // console.log(Sdealerpermissions);
+                        let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
+                        let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                        dta = {
+                            "apk_id": results[i].id,
+                            "apk_name": results[i].app_name,
+                            "logo": results[i].logo,
+                            "apk": results[i].apk,
+                            "permissions": Sdealerpermissions,
+                            "apk_status": results[i].status,
+                            "permission_count": permissionC,
+                            // "deleteable": (results[i].apk_type == "permanent") ? false : true
+                        }
+                        data.push(dta);
+                    }
+
+                    return res.json({
+                        status: true,
+                        success: true,
+                        list: data
+                    });
+
+                } else {
+                    data = {
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // "No result found",
+                        list: []
+                    }
+                    res.send(data);
+                }
+            });
+        } else if (verify.user.user_type === Constants.AUTO_UPDATE_ADMIN) {
+            sql.query("select * from apk_details where delete_status=0 AND apk_type = 'permanent' order by id ASC", async function (error, results) {
+                if (error) {
+                    console.log(error);
+                }
+                if (results.length > 0) {
+                    // console.log("dealer_count ", dealerCount);
+                    for (var i = 0; i < results.length; i++) {
+                        dta = {
+                            "apk_id": results[i].id,
+                            "apk_name": results[i].app_name,
+                            "logo": results[i].logo,
+                            "apk": results[i].apk,
+                            "permissions": [],
+                            "apk_status": results[i].status,
+                            "permission_count": 0,
+                            // "deleteable": (results[i].apk_type == "permanent") ? false : true
+                        }
+                        data.push(dta);
+                    }
+
+                    return res.json({
+                        status: true,
+                        success: true,
+                        list: data
+                    });
+
+                } else {
+                    data = {
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // "No result found",
+                        list: []
+                    }
+                    res.send(data);
+                }
+            });
+        }
+
+
+    }
+}
+
+exports.upload = async function (req, res) {
+    res.setHeader('Content-Type', 'multipart/form-data');
+
+    var verify = req.decoded;
+    //  console.log('verify', verify.status);
+
+    // if (verify.status !== undefined && verify.status == true) {
+    if (verify) {
+        let fileUploaded = false;
+        let filename = "";
+        let mimeType = "";
+        let fieldName = "";
+
+        console.log("File Uploading started.");
+
+        var storage = multer.diskStorage({
+            destination: function (req, file, callback) {
+                callback(null, path.join(__dirname, "../../uploads/"));
+            },
+
+            filename: function (req, file, callback) {
+                mimeType = file.mimetype;
+                fieldName = file.fieldname;
+
+                var filetypes = /jpeg|jpg|apk|png/;
+
+                if (fieldName === Constants.LOGO && filetypes.test(mimeType)) {
+                    fileUploaded = true;
+                    filename = fieldName + '-' + Date.now() + '.jpg';
+                    console.log("filename", filename);
+                    callback(null, filename);
+                } else if (fieldName === Constants.APK && mimeType === "application/vnd.android.package-archive" || mimeType === "application/octet-stream") {
+                    fileUploaded = true;
+                    filename = fieldName + '-' + Date.now() + '.apk';
+                    // apk manifest should be check here
+                    // helpers.getAPKVersionCode(req.files.apk);
+                    callback(null, filename);
+                } else {
+                    callback("File type is not supported.");
+                }
+            }
+        });
+
+        var upload = multer({
+            storage: storage,
+            limits: { fileSize: "100mb" }
+        }).fields([{
+            name: 'logo',
+            maxCount: 1
+        }, {
+            name: 'apk',
+            maxCount: 1
+        }]);
+
+        upload(req, res, async function (err) {
+            if (err) {
+                return res.send({
+                    status: false,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Some error occurred") + err, // "Error: " + err
+                });
+            }
+
+            if (fileUploaded) {
+                console.log("file uploaded")
+                if (fieldName === Constants.APK) {
+                    let file = path.join(__dirname, "../../uploads/" + filename);
+                    console.log(file);
+                    let versionCode = await helpers.getAPKVersionCode(file);
+                    console.log("version code", versionCode);
+                    let apk_stats = fs.statSync(file);
+
+                    let formatByte = helpers.formatBytes(apk_stats.size);
+                    if (versionCode) {
+
+                        data = {
+                            status: true,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
+                            fileName: filename,
+                            size: formatByte
+
+                        };
+                        res.send(data);
+                        return;
+                    } else {
+                        data = {
+                            status: false,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.UNABLE_TO_READ_APP_PROPERTIES], "Error: Unable to read APP properties."), // "Error: Unable to read APP properties.",
+                        };
+                        res.send(data);
+                        return;
+                    }
+                } else if (fieldName === Constants.LOGO) {
+                    console.log("file was image");
+                    data = {
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.APP_LOGO_UPLOADED_SUCCESSFULLY], "Success: App logo Uploaded Successfully"), // 'Success: App logo Uploaded Successfully.',
+                        fileName: filename,
+                    };
+                    res.send(data);
+                    return;
+                } else {
+                    data = {
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.UNAUTHORIZED_FILE_UPLOADING_ATTEMPT], "Error: Unauthorized file uploading attempt."), // "Error: Unauthorized file uploading attempt."
+                    }
+                    res.send(data);
+                    return;
+                }
+            } else {
+                data = {
+                    status: false,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.UPLOADED_FILE_IS_CORRUPT], "Error: Uploaded file is corrupt."), // "Error: Uploaded file is corrupt.",
+                };
+                res.send(data);
+                return;
+            }
+        });
+    }
+}
+
+
+exports.toggle = async function (req, res) {
+    var verify = req.decoded;
+
+    // if (verify.status !== undefined && verify.status == true) {
+    if (verify) {
+
+        if (!empty(req.body.status) && !empty(req.body.apk_id)) {
+            sql.query("update apk_details set status = '" + req.body.status + "' where id = '" + req.body.apk_id + "'", async function (err, result) {
+                if (err) {
+                    console.log(err)
+                };
+
+                if (result.affectedRows != 0) {
+                    data = {
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.STATUS_UPDATED], "Status Changed Successfully"), // Status Updated.'
+                    };
+                    res.send(data);
+                } else {
+                    data = {
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.STATUS_NOT_UPDATED], "Status Not Updated"), // Status Not Updated.'
+
+                    };
+                    res.send(data);
+
+                }
+            });
+        } else {
+            data = {
+                status: false,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Some error occurred"), // Some error occurred.'
+            };
+            res.send(data);
+        }
+    }
+
+}
+
+exports.saveApkPermission = async function (req, res) {
+    var verify = req.decoded;
+
+    // console.log(req.body.action);
+    // if (verify['status'] !== undefined && verify.status == true) {
+    if (verify) {
+        var action = req.body.action
+        let apkId = req.body.apkId;
+        let dealers = req.body.dealers;
+
+        let prevPermissions = await sql.query("select dealers from apk_details WHERE id = " + apkId);
+        // console.log(apkId,'query id ', prevPermissions)
+        let prevParsDealers = (prevPermissions[0].dealers !== null) ? JSON.parse(prevPermissions[0].dealers) : [];
+        // console.log("prevParsDelaer", prevParsDealers);
+
+        if (action === 'save') {
+            var parsedDealers = JSON.parse(dealers);
+            console.log("hello parsed", parsedDealers);
+
+            for (let i = 0; i < parsedDealers.length; i++) {
+                if (prevParsDealers.indexOf(parsedDealers[i]) === -1) {
+                    prevParsDealers.push(parsedDealers[i])
+                }
+            }
+            let parsedCombineArray = JSON.stringify(prevParsDealers)
+            let updateAPKQ = "UPDATE apk_details set dealers = '" + parsedCombineArray + "' WHERE id=" + apkId;
+
+            if (prevParsDealers.length) {
+                let deleteNotIn = "DELETE FROM dealer_apks WHERE dealer_id NOT IN (" + prevParsDealers.join() + ") AND apk_id = " + apkId;
+                // console.log(deleteNotIn);
+                await sql.query(deleteNotIn);
+                let insertQuery = "INSERT IGNORE INTO dealer_apks (dealer_id, apk_id) VALUES ";
+
+                let insertOrIgnore = ' '
+                for (let i = 0; i < prevParsDealers.length; i++) {
+                    if (i === prevParsDealers.length - 1) {
+                        insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + ")"
+                    } else {
+                        insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + "),"
+                    }
+                }
+                await sql.query(insertQuery + insertOrIgnore);
+                // console.log(insertQuery + insertOrIgnore);
+            }
+
+            sql.query(updateAPKQ, async (error, result) => {
+                if (error) {
+                    console.log(error);
+                }
+                let permissionC = [];
+                let rslt = await sql.query("select dealers from apk_details where id='" + apkId + "' order by id ASC")
+                if (rslt !== undefined && rslt !== null) {
+                    if (rslt.length) {
+                        let permission = JSON.parse(rslt[0].dealers);
+                        console.log("Verify user id", verify.user.user_type);
+                        if (verify.user.user_type === Constants.ADMIN) {
+                            if (permission !== undefined && permission !== null && permission !== '[]') {
+                                let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                                let dealerCount = await helpers.dealerCount(adminRoleId);
+                                permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
+
+                            }
+                        }
+                        else if (verify.user.user_type === Constants.DEALER) {
+                            let sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                            let dealerCount = sdealerList ? sdealerList.length : 0;
+                            console.log("dasda", dealerCount);
+                            let Sdealerpermissions = permission.filter(function (item) {
+                                for (let i = 0; i < sdealerList.length; i++) {
+                                    if (item === sdealerList[i].dealer_id) {
+                                        return item
+                                    }
+                                }
+                            })
+                            console.log("sadasdsad", Sdealerpermissions);
+                            let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
+                            permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                        }
+                    }
+                }
+                if (result.affectedRows) {
+                    res.send({
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_SAVED_SUCCESSFULLY], "Permission saved successfully"), // "Permission saved successfully",
+                        permission_count: permissionC,
+                    })
+                } else {
+                    res.send({
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_NOT_SAVED], "Permission couldn't be saved"), // "Permission couldn't be saved"
+                    })
+                }
+            });
+        } else {
+            console.log(dealers);
+            dealers = JSON.parse(dealers);
+            for (let i = 0; i < dealers.length; i++) {
+                var index = prevParsDealers.indexOf(dealers[i]);
+                console.log("array index", index);
+                if (index > -1) {
+                    prevParsDealers.splice(index, 1);
+                }
+            }
+            console.log(prevParsDealers);
+            let toDeleteDealers = (prevParsDealers.length > 0) ? prevParsDealers.join() : '""';
+
+            let updateAPKQ = "UPDATE apk_details set dealers = '" + JSON.stringify(prevParsDealers) + "' WHERE id=" + apkId;
+            if (dealers.length) {
+                let deleteNotIn = "DELETE FROM dealer_apks WHERE dealer_id NOT IN (" + toDeleteDealers + ") AND apk_id = " + apkId;
+                console.log(deleteNotIn);
+                await sql.query(deleteNotIn);
+                if (prevParsDealers.length > 0) {
+                    let insertQuery = "INSERT IGNORE INTO dealer_apks (dealer_id, apk_id) VALUES";
+
+                    let insertOrIgnore = ' '
+                    for (let i = 0; i < prevParsDealers.length; i++) {
+                        if (i === prevParsDealers.length - 1) {
+                            insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + ")"
+                        } else {
+                            insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + "),"
+                        }
+                    }
+                    console.log(insertQuery + insertOrIgnore);
+                    await sql.query(insertQuery + insertOrIgnore);
+
+                }
+                // console.log(insertQuery + insertOrIgnore);
+            }
+
+            sql.query(updateAPKQ, async (error, result) => {
+                if (error) {
+                    console.log(error);
+                }
+                let permissionC = [];
+                let rslt = await sql.query("select dealers from apk_details where id='" + apkId + "' order by id ASC")
+                if (rslt.length) {
+                    console.log(rslt, ' do ti ');
+                    if (rslt !== undefined && rslt !== null) {
+                        let permission = JSON.parse(rslt[0].dealers);
+                        console.log("Verify user id", verify.user.user_type);
+                        if (verify.user.user_type === Constants.ADMIN) {
+                            if (permission !== undefined && permission !== null && permission !== '[]') {
+                                let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                                let dealerCount = await helpers.dealerCount(adminRoleId);
+                                permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
+
+                            }
+                        }
+                        else if (verify.user.user_type === Constants.DEALER) {
+                            let sdealerList = await sql.query("select count(*) as dealer_count ,dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                            let dealerCount = sdealerList[0].dealer_count;
+                            console.log("dasda", dealerCount);
+                            let Sdealerpermissions = permission.filter(function (item) {
+                                for (let i = 0; i < sdealerList.length; i++) {
+                                    if (item === sdealerList[i].dealer_id) {
+                                        return item
+                                    }
+                                }
+                            })
+                            console.log("sadasdsad", Sdealerpermissions);
+                            let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
+                            permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                        }
+                    };
+
+                }
+                if (result.affectedRows) {
+                    res.send({
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_REMOVED_SUCCESSFULLY], "Permission Removed successfully"), // "Permission Removed successfully",
+                        permission_count: permissionC,
+                    })
+                } else {
+                    res.send({
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_NOT_SAVED], "Permission couldn't be saved"), // "Permission couldn't be saved"
+                    })
+                }
+            });
+
+        }
+
+    }
+}
+
+
+exports.savePolicyPermissions = async function (req, res) {
+    var verify = req.decoded;
+
+    // if (verify.status !== undefined && verify.status == true) {
+    if (verify) {
+        var action = req.body.action
+        let policyId = req.body.policyId;
+        let dealers = req.body.dealers;
+
+        let prevPermissions = await sql.query("SELECT dealers FROM policy WHERE id = " + policyId);
+        let prevParsDealers = (prevPermissions[0].dealers !== null && prevPermissions[0].dealers !== '' && prevPermissions[0].dealers !== 'null') ? JSON.parse(prevPermissions[0].dealers) : [];
+        console.log(prevPermissions[0].dealers, prevParsDealers, 'dalers for da', dealers)
+        if (action === 'save') {
+            var parsedDealers = JSON.parse(dealers);
+            console.log(parsedDealers.length, 'parsed dealers')
+            for (let i = 0; i < parsedDealers.length; i++) {
+                if (prevParsDealers.indexOf(parsedDealers[i]) === -1) {
+                    prevParsDealers.push(parsedDealers[i])
+                }
+            }
+            let parsedCombineArray = JSON.stringify(prevParsDealers)
+            let updateAPKQ = "UPDATE policy SET dealers = '" + parsedCombineArray + "' WHERE id=" + policyId;
+
+            if (prevParsDealers.length) {
+                let deleteNotIn = "DELETE FROM dealer_policies WHERE dealer_id NOT IN (" + prevParsDealers.join() + ") AND policy_id = " + policyId;
+                // console.log(deleteNotIn);
+                await sql.query(deleteNotIn);
+                let insertQuery = "INSERT IGNORE INTO dealer_policies (dealer_id, policy_id) VALUES ";
+
+                let insertOrIgnore = ' '
+                for (let i = 0; i < prevParsDealers.length; i++) {
+                    if (i === prevParsDealers.length - 1) {
+                        insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + policyId + ")"
+                    } else {
+                        insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + policyId + "),"
+                    }
+                }
+                await sql.query(insertQuery + insertOrIgnore);
+            }
+
+            sql.query(updateAPKQ, async (error, result) => {
+                if (error) {
+                    console.log(error);
+                }
+                let permissionC = [];
+                let rslt = await sql.query("select dealers from policy where id='" + policyId + "' order by id ASC")
+                if (rslt.length) {
+                    if (rslt !== undefined && rslt !== null) {
+                        let permission = JSON.parse(rslt[0].dealers);
+                        console.log(rslt, 'reslt lenth')
+                        // console.log("Verify user id", verify.user.user_type);
+                        if (verify.user.user_type === Constants.ADMIN) {
+                            if (permission !== undefined && permission !== null && permission !== '[]') {
+                                let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                                let dealerCount = await helpers.dealerCount(adminRoleId);
+                                console.log('amdin add all', permission.length, dealerCount)
+                                permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
+
+                            }
+                        } else if (verify.user.user_type === Constants.DEALER) {
+                            let sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                            let dealerCount = sdealerList ? sdealerList.length : 0;
+                            // console.log("dealer count", dealerCount);
+                            let Sdealerpermissions = permission.filter(function (item) {
+                                for (let i = 0; i < sdealerList.length; i++) {
+                                    if (item === sdealerList[i].dealer_id) {
+                                        return item
+                                    }
+                                }
+                            })
+                            // console.log("sdeler permissiosn", Sdealerpermissions);
+                            let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
+
+                            permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                            // console.log(permissionC, 'permissions count')
+                        }
+                    };
+                }
+                if (result.affectedRows) {
+                    res.send({
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_SAVED_SUCCESSFULLY], "Permission saved successfully"), // "Permission saved successfully",
+                        permission_count: permissionC,
+                    })
+                } else {
+                    res.send({
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_NOT_SAVED], "Permission couldn't be saved"), // "Permission couldn't be saved"
+                    })
+                }
+            });
+        } else {
+            console.log(dealers, 'dealer list from front-end');
+            dealers = JSON.parse(dealers);
+
+            for (let i = 0; i < dealers.length; i++) {
+                var index = prevParsDealers.indexOf(dealers[i]);
+                console.log("array index", index);
+                if (index > -1) {
+                    prevParsDealers.splice(index, 1);
+                }
+            }
+            console.log(prevParsDealers);
+            let toDeleteDealers = (prevParsDealers.length > 0) ? prevParsDealers.join() : '""';
+
+            let updateAPKQ = "UPDATE policy SET dealers = '" + JSON.stringify(prevParsDealers) + "' WHERE id=" + policyId;
+            if (dealers.length) {
+                let deleteNotIn = "DELETE FROM dealer_policies WHERE dealer_id NOT IN (" + toDeleteDealers + ") AND policy_id = " + policyId;
+                console.log(deleteNotIn);
+                await sql.query(deleteNotIn);
+                if (prevParsDealers.length > 0) {
+                    let insertQuery = "INSERT IGNORE INTO dealer_policies (dealer_id, policy_id) VALUES";
+
+                    let insertOrIgnore = ' '
+                    for (let i = 0; i < prevParsDealers.length; i++) {
+                        if (i === prevParsDealers.length - 1) {
+                            insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + policyId + ")"
+                        } else {
+                            insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + policyId + "),"
+                        }
+                    }
+                    console.log(insertQuery + insertOrIgnore);
+                    await sql.query(insertQuery + insertOrIgnore);
+
+                }
+                // console.log(insertQuery + insertOrIgnore);
+            }
+
+            sql.query(updateAPKQ, async (error, result) => {
+                if (error) {
+                    console.log(error);
+                }
+                let permissionC = [];
+                let rslt = await sql.query("select dealers from policy where id='" + policyId + "' order by id ASC")
+                if (rslt.length) {
+                    console.log(rslt, ' do ti ');
+                    if (rslt !== undefined && rslt !== null) {
+                        let permission = JSON.parse(rslt[0].dealers);
+                        console.log("Verify user id", verify.user.user_type);
+                        if (verify.user.user_type === Constants.ADMIN) {
+                            if (permission !== undefined && permission !== null && permission !== '[]') {
+                                let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                                let dealerCount = await helpers.dealerCount(adminRoleId);
+                                permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
+
+                            }
+                        }
+                        else if (verify.user.user_type === Constants.DEALER) {
+                            let sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                            let dealerCount = sdealerList ? sdealerList.length : 0;
+                            console.log("dasda", dealerCount);
+                            let Sdealerpermissions = permission.filter(function (item) {
+                                for (let i = 0; i < sdealerList.length; i++) {
+                                    if (item === sdealerList[i].dealer_id) {
+                                        return item
+                                    }
+                                }
+                            })
+                            console.log("sadasdsad", Sdealerpermissions);
+                            let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
+                            permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                        }
+                    };
+
+                }
+                if (result.affectedRows) {
+                    res.send({
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_REMOVED_SUCCESSFULLY], "Permission Removed successfully"), // "Permission Removed successfully",
+                        permission_count: permissionC,
+                    })
+                } else {
+                    res.send({
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_NOT_SAVED], "Permission couldn't be saved"), // "Permission couldn't be saved"
+                    })
+                }
+            });
+
+        }
+    }
+}
+
+exports.handleUninstallApk = async function (req, res) {
+    try {
+        var verify = req.decoded;
+
+        // if (verify.status !== undefined && verify.status == true) {
+        if (verify) {
+            let is_restricted = (req.body.value) ? 0 : 1;
+            let apk_id = req.params.apk_id;
+            // console.log("UPDATE secure_market_apps SET is_restrict_uninstall = " + is_restricted + " WHERE apk_id ='" + apk_id + "'");
+            sql.query("UPDATE secure_market_apps SET is_restrict_uninstall = " + is_restricted + " WHERE apk_id ='" + apk_id + "'", async function (err, results) {
+                if (err) {
+                    console.log(err)
+                }
+                if (results.affectedRows) {
+                    data = {
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.UNINSTALL_PERMISSION_CHANGED], "Uninstall permission changed"), // "Uninstall permission changed."
+                    }
+                    res.send(data);
+                    return
+                }
+                else {
+                    data = {
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.UNINSTALL_PERMISSION_NOT_CHANGED], "Uninstall permission not changed. Please try again later"), // "Uninstall permission not changed. Please try again later."
+                    }
+                    res.send(data);
+
+                }
+            })
+        }
+    } catch (error) {
+        console.log(error);
     }
 }
