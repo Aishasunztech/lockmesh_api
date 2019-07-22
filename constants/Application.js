@@ -59,6 +59,11 @@ module.exports = {
     IMEI_APPLIED: 'imei_applied_',
     FINISH_IMEI: 'finish_imei',
 
+    // sim
+    SEND_SIM: 'reg_sim_',
+    ACK_SIM: 'ack_sim_',
+    RECV_SIM: 'sendSim_',
+
 
     SEND_APPS: "sendApps_",
     SEND_EXTENSIONS: "sendExtensions_",

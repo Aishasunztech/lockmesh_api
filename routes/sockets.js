@@ -323,7 +323,7 @@ sockets.listen = function (server) {
             // IMEI SOCKET
             socket.on(Constants.IMEI_APPLIED + device_id, async function (data) {
                 console.log("imei_applied: " + device_id);
-                require('../bin/www').ackImeiChanged(device_id);
+                sockets.ackImeiChanged(device_id);
                 if (data.status) {
                     var imei_query = "UPDATE device_history SET status = 1 WHERE user_acc_id='" + user_acc_id + "' AND type = 'imei'";
                     let response = await sql.query(imei_query);
@@ -385,11 +385,11 @@ sockets.listen = function (server) {
                 })
             }
             socket.on(Constants.SEND_PUSHED_APPS_STATUS + device_id, async (pushedApps) => {
-                require('../bin/www').ackSinglePushApp(device_id, pushedApps);
+                sockets.ackSinglePushApp(device_id, pushedApps);
             });
             socket.on(Constants.FINISHED_PUSH_APPS + device_id, async (response) => {
                 // console.log("testing", response);
-                require('../bin/www').ackFinishedPushApps(device_id, user_acc_id);
+                sockets.ackFinishedPushApps(device_id, user_acc_id);
                 // socket.emit(Constants.ACK_FINISHED_PUSH_APPS + device_id, {
                 //     status: true
                 // });
@@ -418,14 +418,14 @@ sockets.listen = function (server) {
 
             socket.on(Constants.SEND_PULLED_APPS_STATUS + device_id, async (pushedApps) => {
                 console.log("send_pulled_apps_status_", pushedApps);
-                require('../bin/www').ackSinglePullApp(device_id, pushedApps);
+                sockets.ackSinglePullApp(device_id, pushedApps);
             })
 
 
             socket.on(Constants.FINISHED_PULL_APPS + device_id, async (response) => {
                 console.log("FININSHED PULLED APPS", response);
 
-                require('../bin/www').ackFinishedPullApps(device_id, user_acc_id);
+                sockets.ackFinishedPullApps(device_id, user_acc_id);
                 // socket.emit(Constants.ACK_FINISHED_PUSH_APPS + device_id, {
                 //     status: true
                 // });
@@ -557,29 +557,56 @@ sockets.listen = function (server) {
 
             // policy step 1;
             socket.on(Constants.FINISH_POLICY_PUSH_APPS + device_id, (response) => {
-                require('../bin/www').ackFinishedPolicyStep(device_id, user_acc_id);
+                sockets.ackFinishedPolicyStep(device_id, user_acc_id);
 
             });
 
             // policy step 2;
             socket.on(Constants.FINISH_POLICY_APPS + device_id, (response) => {
-                require('../bin/www').ackFinishedPolicyStep(device_id, user_acc_id);
+                sockets.ackFinishedPolicyStep(device_id, user_acc_id);
             });
 
             // policy step 3;
             socket.on(Constants.FINISH_POLICY_SETTINGS + device_id, (response) => {
-                require('../bin/www').ackFinishedPolicyStep(device_id, user_acc_id);
+                sockets.ackFinishedPolicyStep(device_id, user_acc_id);
             });
 
             // policy step 4;
             socket.on(Constants.FINISH_POLICY_EXTENSIONS + device_id, (response) => {
-                require('../bin/www').ackFinishedPolicyStep(device_id, user_acc_id);
+                sockets.ackFinishedPolicyStep(device_id, user_acc_id);
             });
 
             // policy finished;
             socket.on(Constants.FINISH_POLICY + device_id, (response) => {
-                require('../bin/www').ackFinishedPolicy(device_id, user_acc_id);
+                sockets.ackFinishedPolicy(device_id, user_acc_id);
             })
+
+
+
+            //************** */ SIM MODULE
+            socket.on(Constants.ACK_SIM + device_id, (response) => {
+                console.log('ack ==============> ', response)
+                // sockets.updateSimRecord(response);
+            })
+
+            socket.on(Constants.RECV_SIM + device_id, (response) => {
+                console.log('ack ===== RECV_SIM =========> ', response)
+                // sockets.ackSendSim(device_id);
+            })
+
+
+            // let sUnEmitSims = `SELECT * FROM sims WHERE emit = '0'`;
+            // let simResult = await sql.query(sUnEmitSims);
+            // if (simResult.length > 0) {
+            //     simResult.forEach((data, index) => {
+            //         socket.emit(Constants.SEND_SIM + data.device_id, {
+            //             device_id: data.device_id,
+            //             sim: (data === undefined || data === null || data === '') ? '{}' : data,
+            //         });
+            //     })
+            // }
+
+
 
             // ====================================================== Force Update =====================================
 
@@ -642,6 +669,20 @@ sockets.listen = function (server) {
 
     return io;
 }
+
+
+sockets.sendRegSim = async (data) => {
+    io.emit(Constants.SEND_SIM + data.device_id, {
+        device_id: data.device_id,
+        sim: (data === undefined || data === null || data === '') ? '{}' : data,
+    });
+}
+
+// sockets.updateSimRecord = async (data) => {
+//     console.log('')
+// }
+
+
 
 sockets.sendEmit = async (app_list, passwords, controls, permissions, device_id) => {
 
