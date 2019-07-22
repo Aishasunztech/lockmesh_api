@@ -796,15 +796,17 @@ router.get('/getUpdate/:version/:packageName/:label', async (req, res) => {
 
 /** Get Apk **/
 router.get("/getApk/:apk", async (req, res) => {
-    let file = path.join(__dirname, "../uploads/" + req.params.apk + '.apk');
-    if (fs.existsSync(file)) {
-        res.sendFile(file);
-    } else {
-        res.send({
-            status: false,
-            msg: "file not found"
-        })
-    }
+    // let verify = await verifyToken(req, res);
+    // if (verify.status) {
+        let file = path.join(__dirname, "../uploads/" + req.params.apk + '.apk');
+        if (fs.existsSync(file)) {
+            res.sendFile(file);
+        } else {
+            res.send({
+                status: false,
+                msg: "file not found"
+            })
+        }
     // }
 });
 
