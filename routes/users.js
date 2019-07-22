@@ -22,6 +22,8 @@ const stripe = require("stripe")("sk_test_1rS6KC3GoPT8wlOYWSLEQFk6");
 
 // ========= Helper =============
 const { sql } = require('../config/database');
+// const sockets = require('../routes/sockets');
+
 // var config = require('../helper/config.js');
 
 var Constants = require('../constants/Application');
@@ -49,6 +51,7 @@ const billingController = require('../app/controllers/billing');
 const backupController = require('../app/controllers/backup');
 const appController = require('../app/controllers/app');
 const languageController = require('../app/controllers/language');
+const simController = require('../app/controllers/sim');
 
 
 // constants
@@ -878,6 +881,11 @@ router.get('/get_csv_ids', async (req, res) => {
         return;
     }
 });
+
+// Sim Module at connect device
+router.post('/sim-register', simController.simRegister);
+router.put('/sim-update', simController.simUpdate);
+router.get('/get-sims/:device_id', simController.getSims);
 
 
 module.exports = router;
