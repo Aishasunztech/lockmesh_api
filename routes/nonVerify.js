@@ -12,7 +12,7 @@ var objectsize = require('object-sizeof')
 
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
-    console.log(helpers.formatBytes(objectsize({abc: 'def'})))
+    console.log(helpers.formatBytes(objectsize({ abc: 'def' })))
     res.send("Test")
 
     // stripe.tokens.create({
@@ -129,15 +129,15 @@ router.get("/getBackupFile/:file", backupController.getBackupFiles);
 
 /** Get image logo **/
 router.get("/getFile/:file", async function (req, res) {
-    // var loggedInuid = req.decoded.user.id;
-    console.log(path.join(__dirname, "../uploads/" + req.params.file))
+    // let verify = await verifyToken(req, res);
+    // if (verify.status) {
     if (fs.existsSync(path.join(__dirname, "../uploads/" + req.params.file))) {
         let file = path.join(__dirname, "../uploads/" + req.params.file);
         let fileMimeType = mime.getType(file);
         let filetypes = /jpeg|jpg|apk|png/;
         // Do something
         // if (filetypes.test(fileMimeType)) {
-        res.set('Content-Type', fileMimeType); // mimeType eg. 'image/bmp'
+        // res.set('Content-Type', fileMimeType); // mimeType eg. 'image/bmp'
         res.sendFile(path.join(__dirname, "../uploads/" + req.params.file));
         // } else {
         //     res.send({
@@ -152,6 +152,7 @@ router.get("/getFile/:file", async function (req, res) {
         }
         res.send(data)
     }
+    // }
 
 });
 
