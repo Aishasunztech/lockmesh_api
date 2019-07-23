@@ -166,7 +166,7 @@ exports.savePrices = async function (req, res) {
                                 }
                                 // console.log(days, 'days are')
                                 let unit_price = innerKey;
-                                let updateQuery = "UPDATE prices SET unit_price='" + innerObject[innerKey] + "', price_expiry='" + days + "', dealer_id='" + dealer_id + "' WHERE price_term='" + innerKey + "' AND price_for='" + key + "'";
+                                let updateQuery = "UPDATE prices SET unit_price='" + innerObject[innerKey] + "', price_expiry='" + days + "', dealer_id='" + dealer_id + "' WHERE price_term='" + innerKey + "' AND price_for='" + key + "' AND dealer_id = '" + dealer_id + "'";
                                 // console.log(updateQuery, 'query')
                                 sql.query(updateQuery, async function (err, result) {
                                     if (err) {
@@ -176,8 +176,8 @@ exports.savePrices = async function (req, res) {
                                     if (result) {
                                         // console.log('outerKey', outerKey)
                                         if (!result.affectedRows) {
-                                            let insertQuery = "INSERT INTO prices (price_for, unit_price, price_term, price_expiry, dealer_id) VALUES('" + outerKey + "', '" + innerObject[innerKey] + "', '" + unit_price + "', '" + days + "', '" + dealer_id + "')";
-                                            console.log('Billing query', insertQuery)
+                                            let insertQuery = "INSERT INTO prices (dealer_id,dealer_type,price_for, unit_price, price_term, price_expiry) VALUES('" + dealer_id + "' ,'" + verify.user.user_type + "' , '" + outerKey + "', '" + innerObject[innerKey] + "', '" + unit_price + "', '" + days + "')";
+                                            // console.log('Billing query', insertQuery)
                                             let rslt = await sql.query(insertQuery);
                                             if (rslt) {
                                                 if (rslt.affectedRows == 0) {
@@ -444,14 +444,10 @@ exports.getParentPackages = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
 
     if (verify) {
-        console.log(verify.user);
+        // console.log(verify.user);
         let dealer_id = verify.user.dealer_id;
         if (dealer_id) {
-
-            if (verify.user.user_type === ADMIN) {
-
-            }
-            else if (verify.user.user_type === DEALER) {
+            if (verify.user.user_type === DEALER) {
 
                 let selectQuery = "SELECT * FROM packages WHERE dealer_type='admin'";
                 sql.query(selectQuery, async (err, reslt) => {
@@ -459,26 +455,13 @@ exports.getParentPackages = async function (req, res) {
                         console.log(err)
                     }
 
-                    if (reslt) {
-                        // console.log('result for get packages are is ', reslt);
+                    if (reslt.length) {
+                        res.send({
+                            status: true,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
+                            data: reslt
 
-                        if (reslt.length) {
-                            // console.log(reslt, 'reslt data of prices')
-                            res.send({
-                                status: true,
-                                msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
-                                data: reslt
-
-                            })
-                        } else {
-                            res.send({
-                                status: true,
-                                msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
-                                data: []
-
-                            })
-                        }
-
+                        })
                     } else {
 
                         res.send({
@@ -497,28 +480,16 @@ exports.getParentPackages = async function (req, res) {
                     if (err) {
                         console.log(err)
                     }
+                    if (reslt.length) {
+                        // console.log(reslt, 'reslt data of prices')
+                        res.send({
+                            status: true,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
+                            data: reslt
 
-                    if (reslt) {
-                        // console.log('result for get packages are is ', reslt);
-
-                        if (reslt.length) {
-                            // console.log(reslt, 'reslt data of prices')
-                            res.send({
-                                status: true,
-                                msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
-                                data: reslt
-
-                            })
-                        } else {
-                            res.send({
-                                status: true,
-                                msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
-                                data: []
-
-                            })
-                        }
-
-                    } else {
+                        })
+                    }
+                    else {
                         res.send({
                             status: true,
                             msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
@@ -531,6 +502,79 @@ exports.getParentPackages = async function (req, res) {
 
 
 
+        } else {
+
+            res.send({
+                status: false,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEALER_ID], "Invalid dealer id"), // 'Invalid dealer_id',
+                data: []
+
+            })
+        }
+    }
+}
+exports.getProductPrices = async function (req, res) {
+    var verify = req.decoded; // await verifyToken(req, res);
+
+    if (verify) {
+        // console.log(verify.user);
+        let dealer_id = verify.user.dealer_id;
+        if (dealer_id) {
+            if (verify.user.user_type === DEALER) {
+
+                let selectQuery = "SELECT * FROM prices WHERE dealer_type='admin'";
+                sql.query(selectQuery, async (err, reslt) => {
+                    // console.log(reslt.length);
+                    if (err) {
+                        console.log(err)
+                    }
+
+                    if (reslt.length) {
+                        // console.log(reslt);
+                        res.send({
+                            status: true,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
+                            data: reslt
+
+                        })
+                    } else {
+
+                        res.send({
+                            status: false,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DETAIL_FOUND], "No detail found"), // "Data found",
+                            data: []
+                        })
+                    }
+                })
+
+            }
+            else if (verify.user.user_type === SDEALER) {
+
+                let selectQuery = "SELECT * FROM packages WHERE dealer_type='dealer' AND dealer_id= " + verify.user.connected_dealer;
+                sql.query(selectQuery, async (err, reslt) => {
+                    if (err) {
+                        console.log(err)
+                    }
+
+                    if (reslt.length) {
+                        res.send({
+                            status: true,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
+                            data: reslt
+
+                        })
+
+
+                    } else {
+                        res.send({
+                            status: false,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
+                            data: []
+                        })
+                    }
+                })
+
+            }
         } else {
 
             res.send({

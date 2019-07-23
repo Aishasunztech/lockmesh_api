@@ -840,6 +840,8 @@ router.get('/get-packages', billingController.getPackages);
 
 router.get('/get-parent-packages', billingController.getParentPackages);
 
+router.get('/get-parent-product-prices', billingController.getProductPrices);
+
 router.patch('/check-package-name', billingController.checkPackageName);
 
 router.post('/update_credit', billingController.updateCredit);
