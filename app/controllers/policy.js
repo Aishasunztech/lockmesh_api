@@ -487,7 +487,7 @@ exports.savePolicyChanges = async function (req, res) {
 exports.applyPolicy = async function (req, res) {
     try {
         var verify = req.decoded;
-        // if (verify.status !== undefined && verify.status == true) {
+        
         if (verify) {
             let device_id = req.params.device_id;
             let dealer_id = verify.user.id
@@ -495,11 +495,11 @@ exports.applyPolicy = async function (req, res) {
             let policy_id = req.body.policyId;
             if (device_id !== null || device_id !== '' || device_id !== undefined || device_id !== 'undefined' || policy_id !== null || policy_id !== '' || policy_id !== undefined || policy_id !== 'undefined') {
 
-                let getPolicyQ = "SELECT * FROM policy WHERE id =" + policy_id;
+                let getPolicyQ = `SELECT * FROM policy WHERE id=${policy_id}`;
                 let policy = await sql.query(getPolicyQ)
 
                 if (policy.length) {
-                    policy = helpers.refactorPolicy(policy);
+                    policy = await helpers.refactorPolicy(policy);
 
                     var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES ('" + device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
                     sql.query(applyQuery, async function (err, policyApplied) {

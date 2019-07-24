@@ -893,9 +893,28 @@ module.exports = {
 			console.log('DB1 has finished importing')
 		});
 	},
-	refactorPolicy: function (policy) {
-		let applist = JSON.parse(policy[0].app_list);
-		applist.forEach((app) => {
+	refactorPolicy: async function (policy) {
+		
+		// check if push application is updated
+		let pushApps = JSON.parse(policy[0].push_apps);
+		let apksQ = 'SELECT * FROM apk_details WHERE delete_status != 1';
+		let apks = await sql.query(apksQ);
+		apks.forEach(apk=>{
+			let index = pushApps.findIndex(app => app.apk_id === apk.id)
+			if(index && index !== -1){
+				
+				pushApps[index].apk = apk.apk;
+				pushApps[index].apk_name = apk.app_name;
+				pushApps[index].logo = apk.logo;
+				pushApps[index].package_name = apk.package_name;
+				pushApps[index].version_name = apk.version_name;
+			}
+		})
+		
+		
+		// refactor applist
+		let appList = JSON.parse(policy[0].app_list);
+		appList.forEach((app) => {
 			// app.uniqueName = app.unique_name;
 			// app.packageName = app.package_name;
 			app.defaultApp = app.default_app;
@@ -904,6 +923,7 @@ module.exports = {
 			// delete app.default_app;
 		})
 
+		// refactor system secure settings
 		let permissions = JSON.parse(policy[0].permissions);
 		permissions.forEach((app) => {
 			app.uniqueName = app.uniqueExtesion;
@@ -915,8 +935,9 @@ module.exports = {
 			delete app.default_app;
 		})
 
-		policy[0].app_list = JSON.stringify(applist);
 
+		// copy refactored
+		policy[0].app_list = JSON.stringify(appList);
 		policy[0].permissions = JSON.stringify(permissions);
 		return policy;
 	}
