@@ -9,10 +9,21 @@ var languageController = require('../app/controllers/language')
 const helpers = require('../helper/general_helper');
 var MsgConstants = require('../constants/MsgConstants');
 var objectsize = require('object-sizeof')
+var CryptoJS = require("crypto-js");
 
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
-    console.log(helpers.formatBytes(objectsize({ abc: 'def' })))
+    let data = {
+        key: 'value'
+    }
+    var ciphertext = CryptoJS.AES.encrypt(JSON.stringify(data), 'secret key 123');
+    console.log(ciphertext.toString());
+    
+    // Decrypt
+    var bytes  = CryptoJS.AES.decrypt(ciphertext.toString(), 'secret key 13');
+    var plaintext = bytes.toString(CryptoJS.enc.Utf8);
+     
+    console.log(plaintext);
     res.send("Test")
 
     // stripe.tokens.create({

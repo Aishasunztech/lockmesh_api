@@ -1,10 +1,6 @@
 
 // middlewares
 var authMiddleware = require('../config/auth');
-var moment = require('moment-strftime');
-
-var crypto = require("crypto");
-var md5 = require('md5');
 
 // routes
 // var authRoutes = require('./auth');

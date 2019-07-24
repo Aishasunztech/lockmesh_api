@@ -327,8 +327,8 @@ exports.addApk = async function (req, res) {
         let apk_name = req.body.name;
         if (!empty(logo) && !empty(apk) && !empty(apk_name)) {
 
-            let file = path.join(__dirname, "../../../uploads/" + apk);
-            console.log("File", file);
+            let file = path.join(__dirname, "../../uploads/" + apk);
+
             if (fs.existsSync(file)) {
                 let versionCode = '';
                 let versionName = '';
@@ -372,8 +372,11 @@ exports.addApk = async function (req, res) {
                 let formatByte = general_helpers.formatBytes(apk_stats.size);
 
                 sql.query(`INSERT INTO apk_details (app_name, logo, apk_file, apk_type, version_code, version_name, package_name, details, apk_bytes, apk_size, label) VALUES ('${apk_name}' , '${logo}' , '${apk}', '${apk_type}', '${versionCode}', '${versionName}', '${packageName}', '${details}', ${apk_stats.size}, '${formatByte}', '${label}')`, async function (err, rslts) {
+                    if (err) {
+                        console.log(err);
+                    };
+                    
                     let newData = await sql.query("SELECT * from apk_details where id = " + rslts.insertId)
-                    // console.log(newData[0]);
                     dta = {
                         apk_id: newData[0].id,
                         apk_name: newData[0].app_name,
@@ -387,24 +390,19 @@ exports.addApk = async function (req, res) {
                         size: newData[0].apk_size,
                     }
 
-
-                    if (err) throw err;
                     data = {
                         status: true,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.APK_IS_UPLOADED], "Apk is uploaded"), // "Apk is uploaded",
                         data: dta
                     };
-                    res.send(data);
-                    return;
+                    return res.send(data);
                 });
 
             } else {
-                console.log("file not found");
-                res.send({
+                return res.send({
+                    msg: await helpers.convertToLang(req.translation['file.not.found'], "File Not Found"), // "Error While Uploading"
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error While Uploading"
                 })
-                return;
             }
 
         } else {
@@ -412,16 +410,14 @@ exports.addApk = async function (req, res) {
                 status: false,
                 msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error While Uploading"
             };
-            res.send(data);
-            return;
+            return res.send(data);
         }
     } catch (error) {
-        console.log(error);
         data = {
             status: false,
             msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while Uploading",
         };
-        return;
+        return res.send(data);
     }
 }
 
@@ -474,9 +470,11 @@ exports.editApk = async function (req, res) {
         let logo = req.body.logo;
         let apk = req.body.apk;
         let apk_name = req.body.name;
+        
         if (!empty(logo) && !empty(apk) && !empty(apk_name)) {
-            // console.log("object");
-            let file = path.join(__dirname, "../../../uploads/" + apk);
+            
+
+            let file = path.join(__dirname, "../../uploads/" + apk);
             // console.log(file);
             if (fs.existsSync(file)) {
                 let versionCode = '';
@@ -496,7 +494,7 @@ exports.editApk = async function (req, res) {
                         packageName = '';
                     }
                     label = await general_helpers.getAPKLabel(file);
-                    console.log("Label", label);
+                    
 
                     if (!label) {
                         label = ''

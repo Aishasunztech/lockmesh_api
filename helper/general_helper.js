@@ -610,8 +610,8 @@ module.exports = {
 			let label = "aapt dump badging " + filePath + " | grep \"application\" | sed -e \"s/.*label='//\" -e \"s/' .*//\""
 				;
 			const { stdout, stderr, error } = await exec(label);
-			console.log('stdout:', stdout);
-			console.log('stderr:', stderr);
+			// console.log('stdout:', stdout);
+			// console.log('stderr:', stderr);
 			if (error) {
 				return false;
 			}
