@@ -219,11 +219,11 @@ module.exports = {
         try {
 
             var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
-            console.log("update query: ", updateQuery);
+           
             sql.query(updateQuery, async function (error, row) {
                 console.log("this is", row);
                 if (row && row.affectedRows === 0) {
-                    var insertQuery = "INSERT INTO user_apps ( device_id, app_id, guest, encrypted, enable) VALUES (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + ")";
+                    var insertQuery = "INSERT IGNORE INTO user_apps ( device_id, app_id, guest, encrypted, enable) VALUES (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + ")";
                     await sql.query(insertQuery);
                 }
             });
