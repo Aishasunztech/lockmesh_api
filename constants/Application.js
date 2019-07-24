@@ -63,6 +63,7 @@ module.exports = {
     SEND_SIM: 'reg_sim_',
     ACK_SIM: 'ack_sim_',
     RECV_SIM: 'sendSim_',
+    RECV_SIM_DATA :'receiveSimData_',
 
 
     SEND_APPS: "sendApps_",

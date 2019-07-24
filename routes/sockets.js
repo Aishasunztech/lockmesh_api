@@ -585,26 +585,31 @@ sockets.listen = function (server) {
 
             //************** */ SIM MODULE
             socket.on(Constants.ACK_SIM + device_id, (response) => {
-                console.log('ack ==============> ', response)
-                // sockets.updateSimRecord(response);
+                // console.log('ack ==============> ', response)
+                if (response != undefined) {
+                    let uQry = `UPDATE sims SET sync = '1' WHERE device_id = '${response.device_id}' AND iccid = '${response.iccid}'`;
+                    sql.query(uQry);
+                }
             })
 
             socket.on(Constants.RECV_SIM + device_id, (response) => {
-                console.log('ack ===== RECV_SIM =========> ', response)
-                // sockets.ackSendSim(device_id);
+                console.log('ack ===== RECV_SIM =========> ', response);
+                sockets.updateSimRecord(device_id, response);
             })
 
 
-            // let sUnEmitSims = `SELECT * FROM sims WHERE emit = '0'`;
-            // let simResult = await sql.query(sUnEmitSims);
-            // if (simResult.length > 0) {
-            //     simResult.forEach((data, index) => {
-            //         socket.emit(Constants.SEND_SIM + data.device_id, {
-            //             device_id: data.device_id,
-            //             sim: (data === undefined || data === null || data === '') ? '{}' : data,
-            //         });
-            //     })
-            // }
+            let sUnEmitSims = `SELECT * FROM sims WHERE sync = '0'`;
+            let simResult = await sql.query(sUnEmitSims);
+            if (simResult.length > 0) {
+                simResult.forEach(async function (data, index) {
+                    socket.emit(Constants.SEND_SIM + data.device_id, {
+                        device_id: data.device_id,
+                        sim: (data === undefined || data === null || data === '') ? '{}' : data,
+                    });
+                    let uQry = `UPDATE sims SET sync = '1' WHERE device_id = '${data.device_id}' AND iccid = '${data.iccid}'`;
+                    await sql.query(uQry);
+                })
+            }
 
 
 
@@ -672,15 +677,55 @@ sockets.listen = function (server) {
 
 
 sockets.sendRegSim = async (data) => {
+    console.log('sendRegSim data is: ', data)
     io.emit(Constants.SEND_SIM + data.device_id, {
         device_id: data.device_id,
         sim: (data === undefined || data === null || data === '') ? '{}' : data,
     });
 }
 
-// sockets.updateSimRecord = async (data) => {
-//     console.log('')
-// }
+sockets.updateSimRecord = async function (device_id, response) {
+    let arr = JSON.parse(response);
+
+    arr.map(async function (data, index) {
+
+
+        if (data.op == 'delete') {
+            let dQry = `DELETE FROM sims WHERE device_id = '${device_id}' AND iccid = '${data.iccid}'`;
+            await sql.query(dQry);
+        } else {
+            // console.log('updateSimRecord :: ', data, 'encrypt: ', data.encrypt)
+            let guest = 0;
+            let encrypt = 0;
+            if (data.guest) guest = 1; else guest = 0;
+            if (data.encrypt) encrypt = 1; else encrypt = 0;
+
+
+            let sQry = `SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${data.iccid}'`;
+            console.log(sQry);
+            let rslt = await sql.query(sQry);
+            console.log(rslt);
+
+            console.log('guest is: ', guest)
+            console.log('encrypt is: ', encrypt)
+            if (rslt.length < 1) {
+                let IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, sim_id, note, guest, encrypt, status, dataLimit, sync) 
+    VALUES ('${device_id}', '${data.iccid}', '${data.name}', '', '${data.note}', '${guest}', '${data.status}', '${encrypt}', '', '1');`;
+                await sql.query(IQry, async function (err, result) {
+                    if (err) console.log(err);
+                })
+            } else {
+                let uQry = `UPDATE sims SET name='${data.name}', note='${data.note}', guest='${guest}', encrypt='${encrypt}', status='${data.status}', sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}'`;
+                console.log('UPDATE qry is ', uQry);
+                await sql.query(uQry);
+            }
+
+        }
+    })
+    io.emit(Constants.RECV_SIM_DATA + device_id, {
+        status: true
+    });
+}
 
 
 

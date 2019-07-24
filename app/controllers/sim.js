@@ -24,26 +24,39 @@ exports.simRegister = async function (req, res) {
             let encrypt = rSim.encrypt;
             let guest = rSim.guest;
             let dataLimit = rSim.data_limit;
-            let total_devices = req.body.total_dvc;
+            // let total_devices = req.body.total_dvc;
 
-            if (total_devices < 2) {
-                var IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, sim_id, note, guest, encrypt, dataLimit) 
-                VALUES ('${device_id}', '${iccid}', '${name}', '${sim_id}', '${note}', '${guest}', '${encrypt}', '${dataLimit}');`;
-                sql.query(IQry, async function (err, result) {
-                    if (err) console.log(err);
-                    // console.log('rSim at users is: ', rSim)
-                    // sockets.sendRegSim(rSim);
-                    data = {
-                        status: true,
-                        msg: "Sim Registered Successfully"
-                    }
-                    res.send(data);
+            let sQry = `SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
+            console.log(sQry);
+            let rslt = await sql.query(sQry);
+            console.log(rslt);
+
+            if (rslt.length < 1) {
+                if (rslt.length < 2) {
+                    var IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, sim_id, note, guest, encrypt, dataLimit, sync) 
+                VALUES ('${device_id}', '${iccid}', '${name}', '${sim_id}', '${note}', '${guest}', '${encrypt}', '${dataLimit}', '0');`;
+                    sql.query(IQry, async function (err, result) {
+                        if (err) console.log(err);
+                        // console.log('rSim at users is: ', rSim)
+                        sockets.sendRegSim(rSim);
+                        data = {
+                            status: true,
+                            msg: "Sim Registered Successfully"
+                        }
+                        res.send(data);
+                        return;
+                    })
+                } else {
+                    res.send({
+                        status: false,
+                        msg: "Sorry! Maximun 2 registrations are allowed for this device."
+                    })
                     return;
-                })
+                }
             } else {
                 res.send({
                     status: false,
-                    msg: "Sorry! Maximun 2 registrations are allowed for this device."
+                    msg: "You have already registered against this device ID and ICC-ID."
                 })
                 return;
             }
@@ -51,14 +64,14 @@ exports.simRegister = async function (req, res) {
             console.log(error);
             res.send({
                 status: false,
-                msg: "Error1"
+                msg: "Error"
             })
             return;
         }
     } else {
         res.send({
             status: false,
-            msg: "Error2"
+            msg: "Error"
         })
         return;
     }
@@ -70,28 +83,37 @@ exports.simUpdate = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
         try {
-            let id = req.body.id;
+            let simData = req.body.obj;
+            console.log('simData is: ', simData)
+            // return;
+            let id = req.body.obj.id;
             let label = req.body.label;
-            let value = req.body.value;
-            // console.log("=======================================")
-            // console.log('test id: ', id);
-            // console.log("=======================================")
+            let value = (req.body.value == true) ? '1' : '0';
+
             let UQry;
-            if (id == "all") {
-                UQry = `UPDATE sims SET ${label} = '${value}'`;
-                // console.log('query is: ', UQry);
-            } else if (label != undefined && value != undefined) {
-                UQry = `UPDATE sims SET ${label} = '${value}' WHERE id = ${id}`;
-                // console.log('query is: ', UQry);
+            let Query = '';
+            if (label != undefined && req.body.value != undefined) {
+                if (id == "all") {
+                    UQry = `UPDATE sims SET ${label} = '${value}'`;
+                    Query = `SELECT * FROM sims WHERE device_id = '${simData.device_id}' AND iccid='${simData.iccid}'`;
+                } else if (label != undefined && value != undefined) {
+                    UQry = `UPDATE sims SET ${label} = '${value}' WHERE id = ${id}`;
+                }
+            } else {
+                UQry = `UPDATE sims SET name='${simData.name}', note='${simData.note}', guest='${simData.guest}', encrypt='${simData.encrypt}', status='${simData.status}', sync = '0' WHERE device_id = '${simData.device_id}' AND iccid = '${simData.iccid}'`;
             }
-            // console.log('at update q', UQry)
 
             if (UQry != undefined) {
-
                 sql.query(UQry, async function (err, result) {
-                    if (err) {
-                        console.log(err);
-                    }
+                    if (err) console.log(err);
+
+                    let guest = 0;
+                    let encrypt = 0;
+                    if (simData.guest == 1) guest = true; else guest = false;
+                    if (simData.encrypt == 1) encrypt = true; else encrypt = false;
+
+                    if (Query != undefined && Query != '') simData = sql.query(Query);
+                    // sockets.sendRegSim(simData);
                     data = {
                         status: true,
                         msg: "Update Successfully"
@@ -107,6 +129,8 @@ exports.simUpdate = async function (req, res) {
                 return;
             }
 
+
+
         } catch (error) {
             console.log(error);
             res.send({
@@ -120,6 +144,56 @@ exports.simUpdate = async function (req, res) {
         res.send({
             status: false,
             msg: "Error"
+        })
+        return;
+    }
+}
+
+exports.simDelete = async function (req, res) {
+    var verify = req.decoded;
+    if (verify) {
+        try {
+
+            console.log('body is: ', req.body);
+            // return;
+            let device_id = req.body.device_id;
+            let iccid = req.body.iccid;
+
+            if (device_id != undefined && iccid != undefined) {
+                let dQry = `DELETE FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
+
+                sql.query(dQry, async function (err, result) {
+                    if (err) console.log(err);
+
+                    // sockets.sendRegSim(req.body.obj);
+                    data = {
+                        status: true,
+                        msg: "Sim Delete Successfully"
+                    }
+                    res.send(data);
+                    return;
+                })
+            } else {
+                res.send({
+                    status: false,
+                    msg: "Error1"
+                })
+                return;
+            }
+
+        } catch (error) {
+            console.log(error);
+            res.send({
+                status: false,
+                msg: "Error: something wrong for delete sim record"
+            })
+            return;
+        }
+
+    } else {
+        res.send({
+            status: false,
+            msg: "Error2"
         })
         return;
     }
