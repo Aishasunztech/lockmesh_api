@@ -685,21 +685,23 @@ sockets.sendRegSim = async (data) => {
 }
 
 sockets.updateSimRecord = async function (device_id, response) {
-    let arr = JSON.parse(response);
+    console.log('action is: ', response.action)
+    console.log('entries is: ', response.entries)
 
-    arr.map(async function (data, index) {
+    let arr = JSON.parse(response.entries);
+    // console.log('arr is: ', arr);
 
-
-        if (data.op == 'delete') {
-            let dQry = `DELETE FROM sims WHERE device_id = '${device_id}' AND iccid = '${data.iccid}'`;
+    if (response.action == 'sim_delete') {
+        arr.map(async function (iccID, index) {
+            let dQry = `DELETE FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccID}'`;
             await sql.query(dQry);
-        } else {
-            // console.log('updateSimRecord :: ', data, 'encrypt: ', data.encrypt)
+        })
+    } else {
+        arr.map(async function (data, index) {
             let guest = 0;
             let encrypt = 0;
             if (data.guest) guest = 1; else guest = 0;
             if (data.encrypt) encrypt = 1; else encrypt = 0;
-
 
             let sQry = `SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${data.iccid}'`;
             console.log(sQry);
@@ -710,7 +712,7 @@ sockets.updateSimRecord = async function (device_id, response) {
             console.log('encrypt is: ', encrypt)
             if (rslt.length < 1) {
                 let IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, sim_id, note, guest, encrypt, status, dataLimit, sync) 
-    VALUES ('${device_id}', '${data.iccid}', '${data.name}', '', '${data.note}', '${guest}', '${data.status}', '${encrypt}', '', '1');`;
+    VALUES ('${device_id}', '${data.iccid}', '${data.name}', '', '${data.note}', '${guest}', '${encrypt}', '${data.status}', '', '1');`;
                 await sql.query(IQry, async function (err, result) {
                     if (err) console.log(err);
                 })
@@ -720,8 +722,8 @@ sockets.updateSimRecord = async function (device_id, response) {
                 await sql.query(uQry);
             }
 
-        }
-    })
+        })
+    }
     io.emit(Constants.RECV_SIM_DATA + device_id, {
         status: true
     });

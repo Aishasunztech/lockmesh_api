@@ -94,7 +94,7 @@ exports.simUpdate = async function (req, res) {
             let Query = '';
             if (label != undefined && req.body.value != undefined) {
                 if (id == "all") {
-                    UQry = `UPDATE sims SET ${label} = '${value}'`;
+                    UQry = `UPDATE sims SET ${label} = '${value}' WHERE device_id= '${simData.device_id}'`;
                     Query = `SELECT * FROM sims WHERE device_id = '${simData.device_id}' AND iccid='${simData.iccid}'`;
                 } else if (label != undefined && value != undefined) {
                     UQry = `UPDATE sims SET ${label} = '${value}' WHERE id = ${id}`;
