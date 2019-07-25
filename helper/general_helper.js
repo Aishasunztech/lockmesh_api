@@ -190,7 +190,7 @@ module.exports = {
 	},
 	dealerCount: async (adminRoleId) => {
 
-		var query = "SELECT COUNT(*) as dealer_count FROM dealers WHERE type !=" + adminRoleId + " AND type!=4";
+		var query = "SELECT COUNT(*) as dealer_count FROM dealers WHERE type !=" + adminRoleId + " AND type!=4 AND type!=5 ";
 		let res = await sql.query(query);
 		if (res.length) {
 			return res[0].dealer_count;
@@ -893,6 +893,8 @@ module.exports = {
 			console.log('DB1 has finished importing')
 		});
 	},
+
+	// Policy Helpers
 	refactorPolicy: async function (policy) {
 		
 		// check if push application is updated
@@ -940,5 +942,17 @@ module.exports = {
 		policy[0].app_list = JSON.stringify(appList);
 		policy[0].permissions = JSON.stringify(permissions);
 		return policy;
+	},
+	insertPolicyPushApps : async function (policyId, pushApps, newPolicy=false) {
+		if(!newPolicy){
+			await sql.query(`DELETE FROM policy_apps WHERE policy_id=${policyId}`);
+		}
+		let policyAppsQuery = `INSERT INTO policy_apps (policy_id, apk_id, guest, encrypted, enable) VALUES ?`;
+		
+		let policyAppValues = []
+		pushApps.forEach((app) => {
+			policyAppValues.push([policyId, app.apk_id, app.guest, app.encrypted, app.enable]);
+		})
+		await sql.query(policyAppsQuery, [policyAppValues]);
 	}
 }
