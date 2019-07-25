@@ -4,7 +4,6 @@ var router = express.Router();
 var randomize = require('randomatic');
 var mime = require('mime');
 var moment = require('moment-strftime');
-const bcrypt = require('bcrypt');
 var datetime = require('node-datetime');
 const axios = require('axios')
 var empty = require('is-empty');
