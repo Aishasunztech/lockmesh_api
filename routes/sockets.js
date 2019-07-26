@@ -337,7 +337,7 @@ sockets.listen = function (server) {
                 var mac_address = data.mac;
                 var imei1 = data.imei1
                 var imei2 = data.imei2
-                console.log(data);
+                // console.log(data);
                 console.log("IMEI CHANGED");
 
 
@@ -584,21 +584,22 @@ sockets.listen = function (server) {
 
 
             //************** */ SIM MODULE
-            socket.on(Constants.ACK_SIM + device_id, (response) => {
+            socket.on(Constants.ACK_SIM + device_id, async function (response) {
                 console.log('ack ==============> ', response)
                 if (response != undefined) {
                     let uQry = `UPDATE sims SET sync = '1' WHERE device_id = '${response.device_id}' AND iccid = '${response.iccid}'`;
-                    sql.query(uQry);
+                    await sql.query(uQry);
                 }
             })
 
-            socket.on(Constants.RECV_SIM + device_id, (response) => {
+            socket.on(Constants.RECV_SIM + device_id, async function (response) {
                 console.log('===== RECV_SIM =========> ', response);
+                // return;
                 sockets.updateSimRecord(device_id, response);
             })
 
 
-            let sUnEmitSims = `SELECT * FROM sims WHERE sync = '0'`;
+            let sUnEmitSims = `SELECT * FROM sims WHERE sync = '0' AND del ='0'`;
             // console.log('========= check data when socket => re-connect ================= ', sUnEmitSims);
             let simResult = await sql.query(sUnEmitSims);
             // console.log('results are: ', simResult);
@@ -611,7 +612,7 @@ sockets.listen = function (server) {
                         device_id: data.device_id,
                         sim: (data === undefined || data === null || data === '') ? '{}' : JSON.stringify(data),
                     });
-                    let uQry = `UPDATE sims SET sync = '1' WHERE device_id = '${data.device_id}' AND iccid = '${data.iccid}'`;
+                    let uQry = `UPDATE sims SET sync = '1' WHERE device_id = '${data.device_id}' AND iccid = '${data.iccid}' AND del='0'`;
                     await sql.query(uQry);
                 })
             }
@@ -696,14 +697,14 @@ sockets.sendRegSim = async (device_id, action, data) => {
 }
 
 sockets.updateSimRecord = async function (device_id, response) {
-    console.log('action is: ', response.action)
-    console.log('entries is: ', response.entries)
+    // console.log('action is: ', response.action)
+    // console.log('entries is: ', response.entries)
 
     let arr = JSON.parse(response.entries);
-    console.log('parsed data is: ', arr);
+    // console.log('parsed data is: ', arr);
     if (response.action == "sim_unregister") {
-        console.log('you are at unReg Section');
-        await sql.query(`UPDATE sims SET unrGuest=${arr.guest}, unrEncrypt=${arr.encrypt} WHERE device_id='${device_id}'`, async function (err, reslt) {
+        // console.log('you are at unReg Section');
+        await sql.query(`UPDATE sims SET unrGuest=${arr.unrGuest}, unrEncrypt=${arr.unrEncrypt} WHERE device_id='${device_id}' AND del='0'`, async function (err, reslt) {
             if (err) console.log(err)
         });
     } else {
@@ -711,32 +712,23 @@ sockets.updateSimRecord = async function (device_id, response) {
         if (arr.length > 0) {
             if (response.action == 'sim_delete') {
                 arr.map(async function (iccID, index) {
-                    let dQry = `DELETE FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccID}'`;
+                    // let dQry = `DELETE FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccID}'`;
+                    let dQry = `UPDATE sims SET del='1' WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
+
                     await sql.query(dQry);
                 })
             } else {
                 arr.map(async function (data, index) {
-                    // let guest = 0;
-                    // let encrypt = 0;
-                    // if (data.guest) guest = 1; else guest = 0;
-                    // if (data.encrypt) encrypt = 1; else encrypt = 0;
-
-                    let sQry = `SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${data.iccid}'`;
-                    // console.log(sQry);
+                    let sQry = `SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
                     let rslt = await sql.query(sQry);
-                    // console.log(rslt);
 
-                    // console.log('guest is: ', guest)
-                    // console.log('encrypt is: ', encrypt)
                     if (rslt.length < 1) {
-                        let IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, sim_id, note, guest, encrypt, status, dataLimit, sync) 
-    VALUES ('${device_id}', '${data.iccid}', '${data.name}', '', '${data.note}', ${data.guest}, ${data.encrypt}, '${data.status}', '', '1');`;
+                        let IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, sim_id, slotNo, note, guest, encrypt, status, dataLimit, sync) VALUES ('${device_id}', '${data.iccid}', '${data.name}', '', '${data.slotNo}', '${data.note}', ${data.guest}, ${data.encrypt}, '${data.status}', '', '1');`;
                         await sql.query(IQry, async function (err, result) {
                             if (err) console.log(err);
                         })
                     } else {
-                        let uQry = `UPDATE sims SET name='${data.name}', note='${data.note}', guest=${data.guest}, encrypt=${data.encrypt}, status='${data.status}', sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}'`;
-                        // console.log('UPDATE qry is ', uQry);
+                        let uQry = `UPDATE sims SET name='${data.name}', note='${data.note}', guest=${data.guest}, encrypt=${data.encrypt}, status='${data.status}', slotNo='${data.slotNo}', sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
                         await sql.query(uQry);
                     }
 

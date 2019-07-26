@@ -30,8 +30,10 @@ exports.simRegister = async function (req, res) {
             let rslt = await sql.query(sQry);
             console.log(rslt);
 
+            // let activeSims = await sql.query(`SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}' AND del='0' AND (slotNo = '0' OR slotNo = '1')`);
+
             if (rslt.length < 1) {
-                // if (rslt.length < 2) {
+                // if (activeSims.length < 2) {
                 var IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, sim_id, note, guest, encrypt, dataLimit, sync) 
                 VALUES ('${device_id}', '${iccid}', '${name}', '${sim_id}', '${note}', ${guest}, ${encrypt}, '${dataLimit}', '0');`;
                 sql.query(IQry, async function (err, result) {
