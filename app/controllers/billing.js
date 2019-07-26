@@ -112,7 +112,6 @@ exports.acceptRequest = async function (req, res) {
     }
 }
 
-
 // *****************************  SET AND GET => PRICES & PAKAGES   **************************
 exports.savePrices = async function (req, res) {
     // console.log('save-prices data at server is', req.body)
@@ -291,8 +290,6 @@ exports.savePackage = async function (req, res) {
     }
 }
 
-
-
 exports.getPrices = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
 
@@ -440,6 +437,7 @@ exports.getPackages = async function (req, res) {
         }
     }
 }
+
 exports.getParentPackages = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
 
@@ -513,6 +511,7 @@ exports.getParentPackages = async function (req, res) {
         }
     }
 }
+
 exports.getProductPrices = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
 
