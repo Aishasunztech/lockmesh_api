@@ -701,10 +701,10 @@ sockets.updateSimRecord = async function (device_id, response) {
     // console.log('entries is: ', response.entries)
 
     let arr = JSON.parse(response.entries);
-    // console.log('parsed data is: ', arr);
+    console.log('parsed data is: ', arr);
     if (response.action == "sim_unregister") {
-        // console.log('you are at unReg Section');
-        await sql.query(`UPDATE sims SET unrGuest=${arr.unrGuest}, unrEncrypt=${arr.unrEncrypt} WHERE device_id='${device_id}' AND del='0'`, async function (err, reslt) {
+        console.log('you are at unReg Section');
+        sql.query(`UPDATE sims SET unrGuest=${arr.unrGuest}, unrEncrypt=${arr.unrEncrypt} WHERE device_id='${device_id}' AND del='0'`, async function (err, reslt) {
             if (err) console.log(err)
         });
     } else {
