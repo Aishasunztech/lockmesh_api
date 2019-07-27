@@ -61,7 +61,7 @@ exports.simRegister = async function (req, res) {
             } else {
                 res.send({
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.ALREADY_SIM_REGISTER], "You have already registered against this device ID and ICC-ID"), // "You have already registered against this device ID and ICC-ID."
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.ALREADY_SIM_REGISTER], "You have already registered this device ID and ICC-ID"), // "You have already registered this device ID and ICC-ID."
                 })
                 return;
             }
@@ -110,7 +110,7 @@ exports.simUpdate = async function (req, res) {
                 sockets.sendRegSim(simData.device_id, "sim_unregister", simData);
                 data = {
                     status: true,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.UPDATE_SUCCESSFULLY], "Update Successfully"), // "Update Successfully"
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.UPDATE_SUCCESSFULLY], "Updated Successfully"), // "Updated Successfully"
                 }
                 res.send(data);
                 return;
@@ -147,7 +147,7 @@ exports.simUpdate = async function (req, res) {
                         sockets.sendRegSim(simData.device_id, "sim_update", sims);
                         data = {
                             status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.UPDATE_SUCCESSFULLY], "Update Successfully"), // "Update Successfully"
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.UPDATE_SUCCESSFULLY], "Updated Successfully"), // "Updated Successfully"
                         }
                         res.send(data);
                         return;
@@ -206,7 +206,7 @@ exports.simDelete = async function (req, res) {
                     sockets.sendRegSim(device_id, "sim_delete", [simData.iccid]);
                     data = {
                         status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.SIM_DELETE_SUCCESSFULLY], "Sim Delete Successfully"), // "Sim Delete Successfully"
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.SIM_DELETE_SUCCESSFULLY], "Sim Deleted Successfully"), // "Sim Deleted Successfully"
                     }
                     res.send(data);
                     return;
@@ -223,7 +223,7 @@ exports.simDelete = async function (req, res) {
             console.log(error);
             res.send({
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SOMETHING_WRONG_DELETE_SIM], "Error: something wrong for delete sim record"), // "Error: something wrong for delete sim record"
+                msg: await helpers.convertToLang(req.translation[MsgConstants.SOMETHING_WRONG_DELETE_SIM], "Error: could not delete sim record"), // "Error: could not delete sim record"
             })
             return;
         }

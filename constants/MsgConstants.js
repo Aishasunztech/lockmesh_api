@@ -68,8 +68,8 @@ module.exports = {
     STATUS_UPDATED: "Status.Updated.id", // Status Changed Sccessfully
     STATUS_NOT_UPDATED: "Status.not.Updated.id", // Status Not Updated
 
-    UPDATE_SUCCESSFULLY: "Update.Successfully.id", // Update Successfully
-    SIM_DELETE_SUCCESSFULLY: "sim.delete.Successfully.id", // Sim Delete Successfully
+    UPDATE_SUCCESSFULLY: "Update.Successfully.id", // Updated Successfully
+    SIM_DELETE_SUCCESSFULLY: "sim.delete.Successfully.id", // Sim Deleted Successfully
     QUERY_ERROR: "Query.Error.id", // Query Error
     SOMETHING_WRONG_DELETE_SIM: "something_wrong_delete_sim.id", // Error: something wrong for delete sim record
     SIM_REGISTERED_SUCCESSFULLY: "Sim.Registered.Successfully.id", // Sim Registered Successfully
