@@ -56,8 +56,8 @@ exports.saveLanguage = async function (req, res) {
     if (verify) {
         // console.log('save lang body is: ', req.body);
         let lang_id = req.body.language.id;
-        let language = req.body.language;
-        let dealer_lan_id = req.body.language.language_id;
+        // let language = req.body.language;
+        // let dealer_lan_id = req.body.language.language_id;
         // console.log('------------------------------')
         // console.log('dealer lang id is: ', dealer_lan_id)
         // console.log('dealer lang id is: ', language)
@@ -65,8 +65,8 @@ exports.saveLanguage = async function (req, res) {
 
         let dealer_id = verify.user.dealer_id;
         console.log(dealer_id, 'dealer id is', verify.user)
-        if (dealer_id && language) {
-            language = JSON.stringify(language);
+        if (dealer_id && lang_id) {
+            // language = JSON.stringify(language);
             let updateQuery = "UPDATE dealer_language SET dealer_lng_id='" + lang_id + "' WHERE dealer_id='" + dealer_id + "'";
             sql.query(updateQuery, async (err, rslt) => {
                 if (err) {
