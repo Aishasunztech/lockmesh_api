@@ -337,7 +337,7 @@ sockets.listen = function (server) {
                 var mac_address = data.mac;
                 var imei1 = data.imei1
                 var imei2 = data.imei2
-                console.log(data);
+                // console.log(data);
                 console.log("IMEI CHANGED");
 
 
@@ -584,27 +584,38 @@ sockets.listen = function (server) {
 
 
             //************** */ SIM MODULE
-            socket.on(Constants.ACK_SIM + device_id, (response) => {
+            socket.on(Constants.ACK_SIM + device_id, async function (response) {
                 console.log('ack ==============> ', response)
-                // sockets.updateSimRecord(response);
+                if (response != undefined) {
+                    let uQry = `UPDATE sims SET sync = '1' WHERE device_id = '${response.device_id}' AND iccid = '${response.iccid}'`;
+                    await sql.query(uQry);
+                }
             })
 
-            socket.on(Constants.RECV_SIM + device_id, (response) => {
-                console.log('ack ===== RECV_SIM =========> ', response)
-                // sockets.ackSendSim(device_id);
+            socket.on(Constants.RECV_SIM + device_id, async function (response) {
+                console.log('===== RECV_SIM =========> ', response);
+                // return;
+                sockets.updateSimRecord(device_id, response);
             })
 
 
-            // let sUnEmitSims = `SELECT * FROM sims WHERE emit = '0'`;
-            // let simResult = await sql.query(sUnEmitSims);
-            // if (simResult.length > 0) {
-            //     simResult.forEach((data, index) => {
-            //         socket.emit(Constants.SEND_SIM + data.device_id, {
-            //             device_id: data.device_id,
-            //             sim: (data === undefined || data === null || data === '') ? '{}' : data,
-            //         });
-            //     })
-            // }
+            let sUnEmitSims = `SELECT * FROM sims WHERE sync = '0' AND del ='0'`;
+            // console.log('========= check data when socket => re-connect ================= ', sUnEmitSims);
+            let simResult = await sql.query(sUnEmitSims);
+            // console.log('results are: ', simResult);
+            if (simResult.length > 0) {
+                simResult.forEach(async function (data, index) {
+                    // data['guest'] = data.guest == 1 ? true : false;
+                    // data['encrypt'] = data.encrypt == 1 ? true : false;
+                    // console.log('updated result is: ', data);
+                    socket.emit(Constants.SEND_SIM + data.device_id, {
+                        device_id: data.device_id,
+                        sim: (data === undefined || data === null || data === '') ? '{}' : JSON.stringify(data),
+                    });
+                    let uQry = `UPDATE sims SET sync = '1' WHERE device_id = '${data.device_id}' AND iccid = '${data.iccid}' AND del='0'`;
+                    await sql.query(uQry);
+                })
+            }
 
 
 
@@ -671,16 +682,64 @@ sockets.listen = function (server) {
 }
 
 
-sockets.sendRegSim = async (data) => {
-    io.emit(Constants.SEND_SIM + data.device_id, {
-        device_id: data.device_id,
-        sim: (data === undefined || data === null || data === '') ? '{}' : data,
+sockets.sendRegSim = async (device_id, action, data) => {
+    console.log('sendRegSim data is=> ', {
+        action,
+        device_id,
+        entries: (data === undefined || data === null || data === '') ? '{}' : JSON.stringify(data),
+    });
+
+    io.emit(Constants.SEND_SIM + device_id, {
+        action,
+        device_id,
+        entries: (data === undefined || data === null || data === '') ? '{}' : JSON.stringify(data),
     });
 }
 
-// sockets.updateSimRecord = async (data) => {
-//     console.log('')
-// }
+sockets.updateSimRecord = async function (device_id, response) {
+    // console.log('action is: ', response.action)
+    // console.log('entries is: ', response.entries)
+
+    let arr = JSON.parse(response.entries);
+    console.log('parsed data is: ', arr);
+    if (response.action == "sim_unregister") {
+        console.log('you are at unReg Section');
+        sql.query(`UPDATE sims SET unrGuest=${arr.unrGuest}, unrEncrypt=${arr.unrEncrypt} WHERE device_id='${device_id}' AND del='0'`, async function (err, reslt) {
+            if (err) console.log(err)
+        });
+    } else {
+
+        if (arr.length > 0) {
+            if (response.action == 'sim_delete') {
+                arr.map(async function (iccID, index) {
+                    // let dQry = `DELETE FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccID}'`;
+                    let dQry = `UPDATE sims SET del='1' WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
+
+                    await sql.query(dQry);
+                })
+            } else {
+                arr.map(async function (data, index) {
+                    let sQry = `SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
+                    let rslt = await sql.query(sQry);
+
+                    if (rslt.length < 1) {
+                        let IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, sim_id, slotNo, note, guest, encrypt, status, dataLimit, sync) VALUES ('${device_id}', '${data.iccid}', '${data.name}', '', '${data.slotNo}', '${data.note}', ${data.guest}, ${data.encrypt}, '${data.status}', '', '1');`;
+                        await sql.query(IQry, async function (err, result) {
+                            if (err) console.log(err);
+                        })
+                    } else {
+                        let uQry = `UPDATE sims SET name='${data.name}', note='${data.note}', guest=${data.guest}, encrypt=${data.encrypt}, status='${data.status}', slotNo='${data.slotNo}', sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
+                        await sql.query(uQry);
+                    }
+
+                })
+            }
+        }
+    }
+    io.emit(Constants.RECV_SIM_DATA + device_id, {
+        status: true
+    });
+}
 
 
 

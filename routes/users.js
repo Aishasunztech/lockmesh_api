@@ -581,7 +581,9 @@ router.get('/get_csv_ids', async (req, res) => {
 // Sim Module at connect device
 router.post('/sim-register', simController.simRegister);
 router.put('/sim-update', simController.simUpdate);
+router.post('/sim-delete', simController.simDelete);
 router.get('/get-sims/:device_id', simController.getSims);
+router.get('/sim-history/:device_id', simController.simHistory);
 
 
 module.exports = router;

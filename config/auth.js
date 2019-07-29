@@ -32,7 +32,7 @@ module.exports = (req, res, next) => {
                     var d_lng_id = 1;
 
                     if (user_id != undefined && user_id != '' && user_id != null) {
-                        var sQry = `SELECT dealer_lng_id FROM dealer_language WHERE dealer_id = ${user_id} LIMIT 1`;
+                        var sQry = `SELECT dealer_lng_id FROM dealer_language WHERE dealer_id = '${user_id}' LIMIT 1`;
                         var dLang = await sql.query(sQry);
                         if (dLang.length) {
                             d_lng_id = dLang[0].dealer_lng_id;
@@ -43,7 +43,7 @@ module.exports = (req, res, next) => {
                         d_lng_id = 1;
                     }
 
-                    var sTranslation = `SELECT * FROM lng_translations WHERE lng_id = ${d_lng_id}`;
+                    var sTranslation = `SELECT * FROM lng_translations WHERE lng_id = '${d_lng_id}'`;
                     let resp = await sql.query(sTranslation);
                     if (resp.length) {
                         let obj = {}

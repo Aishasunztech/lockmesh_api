@@ -1341,6 +1341,7 @@ router.get('/admin/marketApplist', async function (req, res) {
                     package_name: results[i].package_name,
                     is_restrict_uninstall: results[i].is_restrict_uninstall,
                     apk_size: results[i].apk_size,
+                    version_code: results[i].version_code
                 }
                 data.push(dta);
             }
@@ -1379,6 +1380,7 @@ router.get('/marketApplist/:linkCode', async function (req, res) {
                         package_name: results[i].package_name,
                         is_restrict_uninstall: results[i].is_restrict_uninstall,
                         apk_size: results[i].apk_size,
+                        version_code: results[i].version_code
                     }
                     data.push(dta);
                 }
