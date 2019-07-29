@@ -190,7 +190,7 @@ module.exports = {
 	},
 	dealerCount: async (adminRoleId) => {
 
-		var query = "SELECT COUNT(*) as dealer_count FROM dealers WHERE type !=" + adminRoleId + " AND type!=4";
+		var query = "SELECT COUNT(*) as dealer_count FROM dealers WHERE type !=" + adminRoleId + " AND type!=4 AND type!=5 ";
 		let res = await sql.query(query);
 		if (res.length) {
 			return res[0].dealer_count;
@@ -610,8 +610,8 @@ module.exports = {
 			let label = "aapt dump badging " + filePath + " | grep \"application\" | sed -e \"s/.*label='//\" -e \"s/' .*//\""
 				;
 			const { stdout, stderr, error } = await exec(label);
-			console.log('stdout:', stdout);
-			console.log('stderr:', stderr);
+			// console.log('stdout:', stdout);
+			// console.log('stderr:', stderr);
 			if (error) {
 				return false;
 			}
@@ -893,9 +893,30 @@ module.exports = {
 			console.log('DB1 has finished importing')
 		});
 	},
-	refactorPolicy: function (policy) {
-		let applist = JSON.parse(policy[0].app_list);
-		applist.forEach((app) => {
+
+	// Policy Helpers
+	refactorPolicy: async function (policy) {
+		
+		// check if push application is updated
+		let pushApps = JSON.parse(policy[0].push_apps);
+		let apksQ = 'SELECT * FROM apk_details WHERE delete_status != 1';
+		let apks = await sql.query(apksQ);
+		apks.forEach(apk=>{
+			let index = pushApps.findIndex(app => app.apk_id === apk.id)
+			if(index && index !== -1){
+				
+				pushApps[index].apk = apk.apk;
+				pushApps[index].apk_name = apk.app_name;
+				pushApps[index].logo = apk.logo;
+				pushApps[index].package_name = apk.package_name;
+				pushApps[index].version_name = apk.version_name;
+			}
+		})
+		
+		
+		// refactor applist
+		let appList = JSON.parse(policy[0].app_list);
+		appList.forEach((app) => {
 			// app.uniqueName = app.unique_name;
 			// app.packageName = app.package_name;
 			app.defaultApp = app.default_app;
@@ -904,6 +925,7 @@ module.exports = {
 			// delete app.default_app;
 		})
 
+		// refactor system secure settings
 		let permissions = JSON.parse(policy[0].permissions);
 		permissions.forEach((app) => {
 			app.uniqueName = app.uniqueExtesion;
@@ -915,9 +937,22 @@ module.exports = {
 			delete app.default_app;
 		})
 
-		policy[0].app_list = JSON.stringify(applist);
 
+		// copy refactored
+		policy[0].app_list = JSON.stringify(appList);
 		policy[0].permissions = JSON.stringify(permissions);
 		return policy;
+	},
+	insertPolicyPushApps : async function (policyId, pushApps, newPolicy=false) {
+		if(!newPolicy){
+			await sql.query(`DELETE FROM policy_apps WHERE policy_id=${policyId}`);
+		}
+		let policyAppsQuery = `INSERT INTO policy_apps (policy_id, apk_id, guest, encrypted, enable) VALUES ?`;
+		
+		let policyAppValues = []
+		pushApps.forEach((app) => {
+			policyAppValues.push([policyId, app.apk_id, app.guest, app.encrypted, app.enable]);
+		})
+		await sql.query(policyAppsQuery, [policyAppValues]);
 	}
 }

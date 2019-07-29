@@ -27,7 +27,7 @@ let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_
 exports.getAllDealers = async function (req, res) {
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
 
         var role = await general_helpers.getuserTypeIdByName(verify.user.user_type);
         if (verify.user.user_type == constants.ADMIN) {
@@ -122,7 +122,7 @@ exports.getAllDealers = async function (req, res) {
 exports.getDealers = async function (req, res) {
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         let where = "";
         var role = null;
         if (verify.user.user_type === constants.ADMIN) {
@@ -194,7 +194,7 @@ exports.addDealer = async function (req, res) {
     var verify = req.decoded;
 
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var dealerName = req.body.name;
         var dealerEmail = req.body.email;
 
@@ -361,7 +361,7 @@ exports.addDealer = async function (req, res) {
 exports.editDealers = async function (req, res) {
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var loggedInuid = verify.user.id;
 
         var name = req.body.name;
@@ -478,7 +478,7 @@ exports.deleteDealer = async function (req, res) {
     var dealer_id = req.body.dealer_id;
 
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var loggedInuid = verify.user.id;
 
         if (!empty(dealer_id)) {
@@ -533,7 +533,7 @@ exports.undoDealer = async function (req, res) {
     var verify = req.decoded;
 
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var loggedInuid = verify.user.id;
         var dealer_id = req.body.dealer_id;
         if (!empty(dealer_id)) {
@@ -585,7 +585,7 @@ exports.undoDealer = async function (req, res) {
 exports.suspendDealer = async function (req, res) {
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var loggedInuid = verify.user.id;
         let dealer_id = req.body.dealer_id;
 
@@ -642,7 +642,7 @@ exports.activateDealer = async function (req, res) {
     var verify = req.decoded;
 
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var loggedInuid = verify.user.id;
         var dealer_id = req.body.dealer_id;
 
@@ -698,7 +698,7 @@ exports.resetPwd = async function (req, res) {
     var verify = req.decoded;
     var isReset = false;
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
 
         var user = verify.user;
         if (req.body.pageName != undefined && req.body.pageName != "") {
@@ -803,7 +803,7 @@ exports.getLoggedDealerApps = async function (req, res) {
     // console.log('apoi recivedx')
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         let loggedUserId = verify.user.id;
         let loggedUserType = verify.user.user_type;
 
@@ -857,7 +857,7 @@ exports.getDropdownSelectedItems = async function (req, res) {
     var verify = req.decoded;
     // console.log('done or not');
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var loggedInuid = verify.user.id;
         // console.log('data from req', req.params.dropdownType);
         let dealer_id = verify.user.id;
@@ -896,11 +896,11 @@ exports.getDropdownSelectedItems = async function (req, res) {
     }
 }
 
-exports.dropDown =  async function (req, res) {
+exports.dropDown = async function (req, res) {
     var verify = req.decoded;
     var loggedInuid = verify.user.id;
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
 
         var selected_items = req.body.selected_items;
         var dropdownType = req.body.pageName;
@@ -944,11 +944,11 @@ exports.dropDown =  async function (req, res) {
     }
 }
 
-exports.getPagination =  async function (req, res) {
+exports.getPagination = async function (req, res) {
     var verify = req.decoded;
     // console.log('done or not');
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
 
         // console.log('data from req', req.params.dropdownType);
         let dealer_id = verify.user.id;
@@ -980,11 +980,11 @@ exports.getPagination =  async function (req, res) {
 }
 
 
-exports.postPagination =  async function (req, res) {
+exports.postPagination = async function (req, res) {
     // console.log("Working")
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var selectedValue = req.body.selectedValue;
         var dropdownType = req.body.pageName;
         var dealer_id = verify.user.id;
@@ -1026,10 +1026,10 @@ exports.postPagination =  async function (req, res) {
     }
 }
 
-exports.getInfo =  async function (req, res) {
+exports.getInfo = async function (req, res) {
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var getinfo = "select * from dealers where dealer_id='" + verify.user.id + "'";
 
         sql.query(getinfo, async function (err, rows) {
