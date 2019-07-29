@@ -1,30 +1,60 @@
-
+// Libraries
 var express = require('express');
 var router = express.Router();
 var path = require('path');
 var fs = require("fs");
 var mime = require('mime');
+var CryptoJS = require("crypto-js");
+
+// Custom Libraries
+const { sql } = require('../config/database');
+
+// Controllers
 var backupController = require('../app/controllers/backup')
 var languageController = require('../app/controllers/language')
+
+// Model
+var Policy = require('../app/models/Policy');
+
+// Helpers and Constants
 const helpers = require('../helper/general_helper');
-var MsgConstants = require('../constants/MsgConstants');
-var objectsize = require('object-sizeof')
-var CryptoJS = require("crypto-js");
+const MsgConstants = require('../constants/MsgConstants');
+
 
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
-    let data = {
-        key: 'value'
-    }
-    var ciphertext = CryptoJS.AES.encrypt(JSON.stringify(data), 'secret key 123');
-    console.log(ciphertext.toString());
+
+    // let policies = await Policy.findAll();
+    // // console.log(policies)
+    // let policyApps = await policies.getPolicyApps();
+    // res.send(policyApps);
+
+    let policies = await sql.query('SELECT * FROM policy');
+    policies.forEach(async (policy) => {
+        let pushApps = JSON.parse(policy.push_apps);
+        console.log("pushApps: ", pushApps)
+        if(pushApps.length){
+            pushApps.forEach(async (app) => {
+                let insertRelQ = `INSERT IGNORE INTO policy_apps (policy_id, apk_id, guest, encrypted, enable) VALUES (${policy.id}, ${app.apk_id}, ${app.guest}, ${app.encrypted}, ${app.enable})`; 
+                await sql.query(insertRelQ);
+            })
+        }
+    });
+
+    res.send('test')
     
-    // Decrypt
-    var bytes  = CryptoJS.AES.decrypt(ciphertext.toString(), 'secret key 13');
-    var plaintext = bytes.toString(CryptoJS.enc.Utf8);
+    
+    // let data = {
+    //     key: 'value'
+    // }
+    // var ciphertext = CryptoJS.AES.encrypt(JSON.stringify(data), 'secret key 123');
+    // console.log(ciphertext.toString());
+    
+    // // Decrypt
+    // var bytes  = CryptoJS.AES.decrypt(ciphertext.toString(), 'secret key 13');
+    // var plaintext = bytes.toString(CryptoJS.enc.Utf8);
      
-    console.log(plaintext);
-    res.send("Test")
+    // console.log(plaintext);
 
     // stripe.tokens.create({
     //     card: {
@@ -75,17 +105,6 @@ router.get('/', async function (req, res, next) {
 
     // let filename = "icon_AdSense.png";
     // let filename = "apk-1541677256487.apk.jpg";
-    // var ip_info = get_ip(req);
-    // console.log(ip_info.clientIp);
-    // res.send({
-    //     ip_info
-    // })
-    // proxy_set_header X-Forwarded-For $remote_addr;
-    // res.send('IP = ' + req.connection.remoteAddress + ':' + req.connection.remotePort)
-    // console.log(req.headers['x-forwarded-for'])
-    // res.send({
-    //     data: req.headers['x-forwarded-for']
-    // })
     // let file = path.join(__dirname, "../uploads/" + filename);
 
     // Jimp.read(file)

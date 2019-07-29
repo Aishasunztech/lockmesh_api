@@ -1,4 +1,4 @@
-const sequelize_conn = require('../helper/sequelize_conn');
+const { sequelize_conn } = require('../../config/database');
 const Sequelize = require('sequelize');
 const UserApps = require('./UserApps');
 
