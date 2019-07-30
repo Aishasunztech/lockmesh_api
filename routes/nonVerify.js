@@ -21,6 +21,14 @@ const helpers = require('../helper/general_helper');
 const MsgConstants = require('../constants/MsgConstants');
 
 
+/**
+ * This function comment is parsed by doctrine
+ * @route GET /users/
+ * @group nonVerify - Operations about user
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ */
+
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
 
