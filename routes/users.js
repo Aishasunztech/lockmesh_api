@@ -39,7 +39,7 @@ const { sendEmail } = require('../lib/email');
 
 
 // ========== Controllers ========
-var userController = require('../app/controllers/user');
+const userController = require('../app/controllers/user');
 const authController = require('../app/controllers/auth');
 const aclController = require('../app/controllers/acl');
 const deviceController = require('../app/controllers/device');
@@ -55,11 +55,7 @@ const simController = require('../app/controllers/sim');
 
 
 // constants
-const ADMIN = "admin";
-const DEALER = "dealer";
-const SDEALER = "sdealer";
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
-let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
 
 
 // enable or disable two factor auth
@@ -326,316 +322,17 @@ router.post('/upload', apkController.upload);
 
 
 // add apk. endpoints name should be changed
-router.post('/checkApkName', async function (req, res) {
-    var verify = req.decoded;
-
-    // if (verify['status'] && verify.status == true) {
-    if (verify) {
-        try {
-            console.log(req.body);
-            let apkName = req.body.name;
-            let apk_id = req.body.apk_id
-            let query = '';
-            // console.log(apk_id);
-            if (apkName != '' && apkName != null) {
-                if (apk_id == '') {
-                    query = "SELECT * from apk_details where app_name = '" + apkName + "' AND delete_status != 1"
-                }
-                else {
-                    query = "SELECT * from apk_details where app_name = '" + apkName + "' AND delete_status != 1 AND id != " + apk_id
-                }
-                // console.log(query);
-                let isUniqueName = await sql.query(query)
-                if (isUniqueName.length) {
-                    res.send({
-                        status: false,
-                    })
-                } else {
-                    res.send({
-                        status: true
-                    })
-                }
-            } else {
-                res.send({
-                    status: true
-                })
-            }
-        } catch (error) {
-            console.log(error);
-        }
-
-    }
-});
+router.post('/checkApkName', apkController.checkApkName);
 
 // add apk. endpoints name should be changed
-router.post('/addApk', async function (req, res) {
-    res.setHeader('Content-Type', 'multipart/form-data');
-    var verify = req.decoded;
-
-    // if (verify['status'] && verify.status == true) {
-    if (verify) {
-        try {
-            let logo = req.body.logo;
-            let apk = req.body.apk;
-            let apk_name = req.body.name;
-            if (!empty(logo) && !empty(apk) && !empty(apk_name)) {
-
-                let file = path.join(__dirname, "../uploads/" + apk);
-                if (fs.existsSync(file)) {
-                    let versionCode = '';
-                    let versionName = '';
-                    let packageName = '';
-                    let label = '';
-                    let details = '';
-
-                    versionCode = await helpers.getAPKVersionCode(file);
-                    if (versionCode) {
-                        versionName = await helpers.getAPKVersionName(file);
-                        if (!versionName) {
-                            versionName = ''
-                        }
-
-                        packageName = await helpers.getAPKPackageName(file);
-                        if (!packageName) {
-                            packageName = '';
-                        }
-
-                        label = await helpers.getAPKLabel(file);
-                        if (!label) {
-                            label = ''
-                        }
-                    } else {
-                        versionCode = '';
-                    }
-
-                    versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                    versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                    packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                    // label = label.toString().replace(/(\r\n|\n|\r)/gm, "");
-                    details = details.toString().replace(/(\r\n|\n|\r)/gm, "");
-                    // console.log("versionName", versionName);
-                    // console.log("pKGName", packageName);
-                    // console.log("version Code", versionCode);
-                    console.log("label", label);
-                    // console.log('detai')
-
-                    let apk_type = (verify.user.user_type === AUTO_UPDATE_ADMIN) ? 'permanent' : 'basic'
-
-                    let apk_stats = fs.statSync(file);
-
-                    let formatByte = helpers.formatBytes(apk_stats.size);
-
-                    sql.query("INSERT INTO apk_details (app_name, logo, apk, apk_type, version_code, version_name, label,package_name, details, apk_bytes, apk_size) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + apk_type + "','" + versionCode + "', '" + versionName + "','" + label + "' ,'" + packageName + "', '" + details + "', " + apk_stats.size + ", '" + formatByte + "')", async function (err, rslts) {
-                        let newData = await sql.query("SELECT * from apk_details where id = " + rslts.insertId)
-                        dta = {
-                            apk_id: newData[0].id,
-                            apk_name: newData[0].app_name,
-                            logo: newData[0].logo,
-                            apk: newData[0].apk,
-                            permissions: [],
-                            apk_status: newData[0].status,
-                            permission_count: 0,
-                            deleteable: (newData[0].apk_type == "permanent") ? false : true,
-                            apk_type: newData[0].apk_type
-                        }
-
-
-                        if (err) {
-                            console.log(err)
-                        };
-                        data = {
-                            status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.APK_IS_UPLOADED], "Apk is uploaded"), // "Apk is uploaded",
-                            data: dta
-                        };
-                        res.send(data);
-                        return;
-                    });
-
-                } else {
-                    console.log("file not found");
-                    data = {
-                        status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error While Uploading"), // "Error While Uploading"
-                    }
-                    res.send(data)
-                    return;
-                }
-
-            } else {
-                data = {
-                    status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error While Uploading"), // "Error While Uploading"
-                };
-                res.send(data);
-                return;
-            }
-        } catch (error) {
-            console.log(error);
-            data = {
-                status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error While Uploading"), // "Error while Uploading",
-            };
-            return;
-        }
-
-    }
-});
+router.post('/addApk', apkController.addApk);
 
 /** Edit Apk (Admin panel) **/
-router.post('/edit/apk', async function (req, res) {
-    res.setHeader('Content-Type', 'multipart/form-data');
-    var verify = req.decoded;
-
-    // if (verify['status'] && verify.status == true) {
-    if (verify) {
-        try {
-            let logo = req.body.logo;
-            let apk = req.body.apk;
-            let apk_name = req.body.name;
-            if (!empty(logo) && !empty(apk) && !empty(apk_name)) {
-
-                let file = path.join(__dirname, "../uploads/" + apk);
-                if (fs.existsSync(file)) {
-                    let versionCode = '';
-                    let versionName = '';
-                    let packageName = '';
-                    let label = '';
-                    let details = '';
-
-                    versionCode = await helpers.getAPKVersionCode(file);
-                    if (versionCode) {
-                        versionName = await helpers.getAPKVersionName(file);
-                        if (!versionName) {
-                            versionName = ''
-                        }
-                        packageName = await helpers.getAPKPackageName(file);
-                        if (!packageName) {
-                            packageName = '';
-                        }
-                        label = await helpers.getAPKLabel(file);
-                        if (!label) {
-                            label = ''
-                        }
-                    } else {
-                        versionCode = '';
-                    }
-
-                    versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                    versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                    packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                    // label = label.replace(/(\r\n|\n|\r)/gm, "");
-                    details = details.replace(/(\r\n|\n|\r)/gm, "");
-                    // console.log("versionName", versionName);
-                    // console.log("pKGName", packageName);
-                    // console.log("version Code", versionCode);
-                    console.log("label", label);
-                    // console.log('detai')
-
-                    // let apk_type = (verify.user.user_type === AUTO_UPDATE_ADMIN) ? 'permanent' : 'basic'
-
-                    let apk_stats = fs.statSync(file);
-
-                    let formatByte = helpers.formatBytes(apk_stats.size);
-                    // console.log("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_byte='" + apk_stats.size + "',  apk_size='"+ formatByte +"'  where id = '" + req.body.apk_id + "'");
-
-                    sql.query("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', label = '" + label + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_bytes='" + apk_stats.size + "',  apk_size='" + formatByte + "'  where id = '" + req.body.apk_id + "'", async function (err, rslts) {
-
-                        if (err) {
-                            console.log(err)
-                        };
-                        data = {
-                            status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record Updated"), // "Record Updated"
-
-                        };
-                        res.send(data);
-                        return;
-                    });
-
-
-                } else {
-                    data = {
-                        status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error While Uploading"), // "Error While Uploading"
-                    };
-                    res.send(data);
-                    return;
-                }
-
-            } else {
-                data = {
-                    status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error While Uploading"), // "Error While Uploading"
-                };
-                res.send(data);
-                return;
-            }
-        } catch (error) {
-            data = {
-                status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error While Uploading"), // "Error while Uploading",
-            };
-            res.send(data);
-            return;
-        }
-    }
-
-});
+router.post('/edit/apk', apkController.editApk);
 
 /**Delete Apk**/
-router.post('/apk/delete', async function (req, res) {
+router.post('/apk/delete', apkController.deleteApk);
 
-    var verify = req.decoded;
-
-    // if (verify.status !== undefined && verify.status == true) {
-    if (verify) {
-        if (!empty(req.body.apk_id)) {
-
-            sql.query("update `apk_details` set delete_status='1' WHERE id='" + req.body.apk_id + "'", async function (error, results) {
-                console.log(results);
-
-                if (error) {
-                    console.log(error);
-                }
-                if (results.affectedRows == 0) {
-                    data = {
-                        "status": false,
-                        "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_NOT_DELETED], "Apk not deleted"), // Apk not deleted.",
-                        "rdlt": results
-                    };
-                } else {
-                    let deletedRecord = "SELECT * FROM apk_details where id=" + req.body.apk_id + " and delete_status='1'";
-                    let result = await sql.query(deletedRecord);
-                    if (result.length) {
-
-                        data = {
-                            "status": true,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_DELETED_SUCCESSFULLY], "Apk deleted successfully"), // Apk deleted successfully.",
-                            "apk": result[0]
-                        };
-                    } else {
-                        data = {
-                            "status": false,
-                            "msg": await helpers.convertToLang(req.translation[MsgConstants.APK_NOT_DELETED], "Apk not deleted"), // Apk not deleted.",
-                            "rdlt": results
-                        };
-                    }
-
-                }
-                res.send(data);
-            });
-        } else {
-            data = {
-                "status": false,
-                "msg": await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Some error occurred"), // Some error occurred."
-
-            }
-            res.send(data);
-        }
-
-    }
-});
 
 /** Toggle Apk Admin Panel (On / Off) **/
 router.post('/toggle', apkController.toggle);
@@ -691,7 +388,6 @@ router.get('/login_history', async function (req, res) {
         console.log(error)
     }
 });
-
 
 
 router.delete('/delete_profile/:profile_id', userController.checkProfile);

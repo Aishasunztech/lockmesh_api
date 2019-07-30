@@ -1,4 +1,4 @@
-const sequelize_conn = require('../helper/sequelize_conn');
+const { sequelize_conn } = require('../../config/database');
 const Sequelize = require('sequelize');
 
 const DealerPagination = sequelize_conn.define('dealer_pagination', {

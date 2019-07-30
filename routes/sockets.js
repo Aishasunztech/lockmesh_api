@@ -458,7 +458,7 @@ sockets.listen = function (server) {
                                     let policyQ = "SELECT * FROM policy WHERE id=" + defaultP[0].policy_id;
                                     let policy = await sql.query(policyQ);
                                     if (policy.length) {
-                                        policy = general_helpers.refactorPolicy(policy);
+                                        policy = await general_helpers.refactorPolicy(policy);
 
                                         socket.emit(Constants.GET_POLICY + device_id, {
                                             status: true,
@@ -501,7 +501,7 @@ sockets.listen = function (server) {
                             let policyQ = "SELECT policy.* FROM policy LEFT JOIN dealer_policies ON policy.id = dealer_policies.policy_id WHERE (dealer_policies.dealer_id=" + dealer[0].dealer_id + " OR policy.dealer_id=" + dealer[0].dealer_id + " )  AND  policy.command_name = '" + policy_name + "' AND policy.status=1  AND policy.delete_status=0";
                             let policy = await sql.query(policyQ);
                             if (policy.length) {
-                                policy = general_helpers.refactorPolicy(policy);
+                                policy = await general_helpers.refactorPolicy(policy);
 
                                 socket.emit(Constants.GET_POLICY + device_id, {
                                     status: true,
@@ -703,7 +703,7 @@ sockets.updateSimRecord = async function (device_id, response) {
     let arr = JSON.parse(response.entries);
     console.log('parsed data is: ', arr);
     if (response.action == "sim_unregister") {
-        console.log('you are at unReg Section');
+        // console.log('you are at unReg Section');
         sql.query(`UPDATE sims SET unrGuest=${arr.unrGuest}, unrEncrypt=${arr.unrEncrypt} WHERE device_id='${device_id}' AND del='0'`, async function (err, reslt) {
             if (err) console.log(err)
         });
@@ -711,8 +711,8 @@ sockets.updateSimRecord = async function (device_id, response) {
 
         if (arr.length > 0) {
             if (response.action == 'sim_delete') {
-                arr.map(async function (iccID, index) {
-                    // let dQry = `DELETE FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccID}'`;
+                arr.map(async function (iccid, index) {
+                    // let dQry = `DELETE FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
                     let dQry = `UPDATE sims SET del='1' WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
 
                     await sql.query(dQry);
