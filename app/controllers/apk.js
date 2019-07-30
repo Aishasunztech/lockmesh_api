@@ -519,6 +519,9 @@ exports.apkList = async function (req, res) {
                             "permissions": Sdealerpermissions,
                             "apk_status": results[i].status,
                             "permission_count": permissionC,
+                            "package_name": results[i].package_name,
+                            "version": results[i].version_name,
+                            "updated_at": results[i].modified,
                             // "deleteable": (results[i].apk_type == "permanent") ? false : true
                         }
                         data.push(dta);
@@ -595,7 +598,8 @@ exports.upload = async function (req, res) {
         let mimeType = "";
         let fieldName = "";
         let apk_id = req.headers["id"] ? Number(req.headers["id"]) : null;
-
+        let featureApk = req.headers["featured"] ? req.headers["featured"] : null;
+        console.log(featureApk);
         console.log("File Uploading started.");
 
         var storage = multer.diskStorage({
@@ -661,7 +665,7 @@ exports.upload = async function (req, res) {
 
                     let formatByte = helpers.formatBytes(apk_stats.size);
                     if (versionCode) {
-                        if (packageName === 'com.armorSec.android' || packageName === 'ca.unlimitedwireless.mailpgp' || packageName === 'com.rim.mobilefusion.client') {
+                        if ((packageName === 'com.armorSec.android' || packageName === 'ca.unlimitedwireless.mailpgp' || packageName === 'com.rim.mobilefusion.client') && featureApk == null) {
                             data = {
                                 status: false,
                                 msg: await helpers.convertToLang(req.translation["not allowed"], "Error: Uploaded Apk is not Allowed."), // "Error: Unable to read APP properties.",
@@ -669,32 +673,73 @@ exports.upload = async function (req, res) {
                             res.send(data);
                             return;
                         } else {
-                            let checkPackage = "SELECT * FROM apk_details where package_name = '" + packageName + "'  AND delete_status=0";
-                            if (apk_id) {
-                                checkPackage = checkPackage + " AND id != " + apk_id
-                            }
-                            console.log(checkPackage);
-                            let checkPackageResult = await sql.query(checkPackage);
-                            if (checkPackageResult.length) {
-                                data = {
-                                    status: false,
-                                    msg: await helpers.convertToLang(req.translation[""], "Error: Apk package name already uploaded. Please choose another apk and try again"), // "Error: Unable to read APP properties.",
-                                };
-                                res.send(data);
-                                return;
+
+                            if (featureApk !== null) {
+
+                                if (featureApk === "CHAT" && packageName === 'com.armorSec.android') {
+                                    data = {
+                                        status: true,
+                                        msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
+                                        fileName: filename,
+                                        size: formatByte
+
+                                    };
+                                    res.send(data);
+                                    return;
+                                } else if (featureApk === "PGP" && packageName === 'ca.unlimitedwireless.mailpgp') {
+                                    data = {
+                                        status: true,
+                                        msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
+                                        fileName: filename,
+                                        size: formatByte
+
+                                    };
+                                    res.send(data);
+                                    return;
+                                } else if (featureApk === "UEM" && packageName === 'com.rim.mobilefusion.client') {
+                                    data = {
+                                        status: true,
+                                        msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
+                                        fileName: filename,
+                                        size: formatByte
+
+                                    };
+                                    res.send(data);
+                                    return;
+                                } else {
+                                    data = {
+                                        status: false,
+                                        msg: await helpers.convertToLang(req.translation[""], "Error: Wrong apk uploaded. Please choose another apk and try again"), // "Error: Unable to read APP properties.",
+                                    };
+                                    res.send(data);
+                                    return;
+                                }
                             } else {
-                                data = {
-                                    status: true,
-                                    msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
-                                    fileName: filename,
-                                    size: formatByte
+                                let checkPackage = "SELECT * FROM apk_details where package_name = '" + packageName + "'  AND delete_status=0";
+                                if (apk_id) {
+                                    checkPackage = checkPackage + " AND id != " + apk_id
+                                }
+                                console.log(checkPackage);
+                                let checkPackageResult = await sql.query(checkPackage);
+                                if (checkPackageResult.length) {
+                                    data = {
+                                        status: false,
+                                        msg: await helpers.convertToLang(req.translation[""], "Error: Apk with same package name already uploaded. Please choose another apk and try again"), // "Error: Unable to read APP properties.",
+                                    };
+                                    res.send(data);
+                                    return;
+                                } else {
+                                    data = {
+                                        status: true,
+                                        msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
+                                        fileName: filename,
+                                        size: formatByte
 
-                                };
-                                res.send(data);
-                                return;
-
+                                    };
+                                    res.send(data);
+                                    return;
+                                }
                             }
-
                         }
                     } else {
                         data = {
