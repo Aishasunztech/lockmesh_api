@@ -53,7 +53,7 @@ exports.apklist = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND] , "No result found"), // "No result found",
+                msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // "No result found",
                 list: []
             }
             res.send(data);
@@ -124,7 +124,7 @@ exports.uploadApk = async function (req, res) {
     if (fieldName === Constants.APK) {
         // let file = path.join(__dirname, "../../uploads/" + filename);
         let versionCode = await general_helpers.getAPKVersionCode(filePath);
-        // console.log("version code", versionCode);
+
         // let apk_stats = fs.statSync(file);
 
         // let formatByte = helpers.formatBytes(apk_stats.size);
@@ -391,10 +391,10 @@ exports.editApk = async function (req, res) {
                 let apk_stats = fs.statSync(file);
 
                 let formatByte = general_helpers.formatBytes(apk_stats.size);
-                
-                sql.query("UPDATE apk_details SET label = '"+ label +"', app_name = '" + apk_name + "', logo = '" + logo + "', apk_file = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_bytes='" + apk_stats.size + "',  apk_size='" + formatByte + "'  WHERE id = '" + req.body.apk_id + "'", async function (err, rslts) {
-                    if (err)  {console.log(err)};
-                    
+
+                sql.query("UPDATE apk_details SET label = '" + label + "', app_name = '" + apk_name + "', logo = '" + logo + "', apk_file = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_bytes='" + apk_stats.size + "',  apk_size='" + formatByte + "'  WHERE id = '" + req.body.apk_id + "'", async function (err, rslts) {
+                    if (err) { console.log(err) };
+
                     data = {
                         status: true,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record Updated"), // "Record Updated"
@@ -461,7 +461,10 @@ exports.apkList = async function (req, res) {
                             "apk_status": results[i].status,
                             "size": results[i].apk_size,
                             "permission_count": permissionC,
-                            "deleteable": (results[i].apk_type == "permanent") ? false : true
+                            "deleteable": (results[i].apk_type == "permanent") ? false : true,
+                            "package_name": results[i].package_name,
+                            "version": results[i].version_name,
+                            "updated_at": results[i].modified,
                         }
                         data.push(dta);
                     }
@@ -581,6 +584,7 @@ exports.apkList = async function (req, res) {
 exports.upload = async function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
 
+    console.log();
     var verify = req.decoded;
     //  console.log('verify', verify.status);
 
@@ -590,6 +594,7 @@ exports.upload = async function (req, res) {
         let filename = "";
         let mimeType = "";
         let fieldName = "";
+        let apk_id = req.headers["id"] ? Number(req.headers["id"]) : null;
 
         console.log("File Uploading started.");
 
@@ -647,20 +652,50 @@ exports.upload = async function (req, res) {
                     console.log(file);
                     let versionCode = await helpers.getAPKVersionCode(file);
                     console.log("version code", versionCode);
+                    let packageName = await helpers.getAPKPackageName(file);
+                    packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+
+                    console.log("Package Name", packageName);
+
                     let apk_stats = fs.statSync(file);
 
                     let formatByte = helpers.formatBytes(apk_stats.size);
                     if (versionCode) {
+                        if (packageName === 'com.armorSec.android' || packageName === 'ca.unlimitedwireless.mailpgp' || packageName === 'com.rim.mobilefusion.client') {
+                            data = {
+                                status: false,
+                                msg: await helpers.convertToLang(req.translation["not allowed"], "Error: Uploaded Apk is not Allowed."), // "Error: Unable to read APP properties.",
+                            };
+                            res.send(data);
+                            return;
+                        } else {
+                            let checkPackage = "SELECT * FROM apk_details where package_name = '" + packageName + "'  AND delete_status=0";
+                            if (apk_id) {
+                                checkPackage = checkPackage + " AND id != " + apk_id
+                            }
+                            console.log(checkPackage);
+                            let checkPackageResult = await sql.query(checkPackage);
+                            if (checkPackageResult.length) {
+                                data = {
+                                    status: false,
+                                    msg: await helpers.convertToLang(req.translation[""], "Error: Apk package name already uploaded. Please choose another apk and try again"), // "Error: Unable to read APP properties.",
+                                };
+                                res.send(data);
+                                return;
+                            } else {
+                                data = {
+                                    status: true,
+                                    msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
+                                    fileName: filename,
+                                    size: formatByte
 
-                        data = {
-                            status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
-                            fileName: filename,
-                            size: formatByte
+                                };
+                                res.send(data);
+                                return;
 
-                        };
-                        res.send(data);
-                        return;
+                            }
+
+                        }
                     } else {
                         data = {
                             status: false,
