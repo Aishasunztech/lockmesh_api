@@ -44,6 +44,9 @@ exports.getPolicies = async function (req, res) {
                             let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : JSON.parse('[]');
                             let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
                             let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                            let dealer = await helpers.getDealerByDealerId(results[i].dealer_id)
+                            let created_by = results[i].dealer_type === app_Constants.ADMIN ? "ADMIN" : dealer[0].dealer_name + " (" + dealer[0].link_code + ")";
+                            // console.log(created_by);
                             dta = {
                                 id: results[i].id,
                                 policy_name: results[i].policy_name,
@@ -57,8 +60,11 @@ exports.getPolicies = async function (req, res) {
                                 push_apps: push_apps,
                                 app_list: app_list2,
                                 dealer_id: results[i].dealer_id,
-                                object_size: results[i].object_size,
-                                policy_size: results[i].policy_size
+                                object_size: results[i].object_size ? results[i].object_size : 'N/A',
+                                policy_size: results[i].policy_size ? results[i].policy_size : 'N/A',
+                                created_by: created_by,
+                                created_date: results[i].created_at,
+                                last_edited: results[i].updated_at,
                             }
                             policies.push(dta);
                         }
@@ -126,6 +132,9 @@ exports.getPolicies = async function (req, res) {
                             let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== 'undefined' && results[i].app_list !== null) ? JSON.parse(results[i].app_list) : JSON.parse('[]');
                             let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== 'undefined' && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : JSON.parse('[]');
                             let is_default = (results[i].id === default_policy_id) ? true : false
+                            let dealer = await helpers.getDealerByDealerId(results[i].dealer_id)
+                            let created_by = results[i].dealer_type === app_Constants.ADMIN ? "ADMIN" : dealer[0].dealer_name;
+                            // console.log(created_by);
                             dta = {
                                 id: results[i].id,
                                 policy_name: results[i].policy_name,
@@ -140,8 +149,11 @@ exports.getPolicies = async function (req, res) {
                                 app_list: app_list2,
                                 is_default: is_default,
                                 dealer_id: results[i].dealer_id,
-                                object_size: results[i].object_size,
-                                policy_size: results[i].policy_size
+                                object_size: results[i].object_size ? results[i].object_size : 'N/A',
+                                policy_size: results[i].policy_size ? results[i].policy_size : 'N/A',
+                                created_by: created_by,
+                                created_date: results[i].created_at,
+                                last_edited: results[i].updated_at,
                             }
                             policies.push(dta);
                         }
@@ -418,7 +430,7 @@ exports.savePolicyChanges = async function (req, res) {
     try {
         var verify = req.decoded;
         if (verify) {
-            
+
             let record = req.body;
             let id = record.id;
             let push_apps = record.push_apps;
@@ -511,9 +523,9 @@ exports.applyPolicy = async function (req, res) {
                         if (policyApplied && policyApplied.affectedRows) {
 
                             let isOnline = await device_helpers.isDeviceOnline(device_id, policy[0]);
-                            
+
                             var loadDeviceQ = "INSERT INTO policy_queue_jobs (policy_id,device_id,is_in_process) " + " VALUES ('" + policy_id + "','" + device_id + "',1)"
-                            
+
                             await sql.query(loadDeviceQ)
                             if (isOnline) {
                                 sockets.getPolicy(device_id, policy[0]);
