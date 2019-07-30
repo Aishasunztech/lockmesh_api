@@ -1379,7 +1379,7 @@ exports.unflagDevice = async function (req, res) {
                         if (error) {
                             console.log(error);
                         }
-                        console.log('lolo else', resquery[0])
+                        console.log('resquery ==> ', resquery[0])
 
                         if (resquery.length) {
                             resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
@@ -1449,13 +1449,13 @@ exports.flagDevice = async function (req, res) {
                         resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                         // dealerData = await getDealerdata(res[i]);
                         device_helpers.saveActionHistory(resquery[0], constants.DEVICE_FLAGGED)
-                        // console.log(resquery[0]);
+                        console.log(resquery[0]);
                         data = {
-                            "data": resquery[0],
+                            data: resquery[0],
                             status: true,
                             msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_FLAG_SUCC], "Device Flagged successfully"), // Device Flagged successfully."
                         }
-
+                        sockets.deviceFlagged(device_id, "This Device Flagged Successfully");
                         res.send(data);
                     }
                 }

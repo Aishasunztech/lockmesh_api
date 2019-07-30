@@ -681,6 +681,14 @@ sockets.listen = function (server) {
     return io;
 }
 
+sockets.deviceFlagged = async (device_id, msg) => {
+    console.log('deviceFlagged data is=> ', { device_id, msg });
+
+    io.emit(Constants.FLAGGED + device_id, {
+        device_id,
+        msg
+    });
+}
 
 sockets.sendRegSim = async (device_id, action, data) => {
     console.log('sendRegSim data is=> ', {

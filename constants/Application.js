@@ -65,6 +65,8 @@ module.exports = {
   RECV_SIM: 'sendSim_',
   RECV_SIM_DATA: 'receiveSimData_',
 
+  // Transfer
+  FLAGGED: 'flagged_',
 
   SEND_APPS: "sendApps_",
   SEND_EXTENSIONS: "sendExtensions_",
