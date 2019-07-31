@@ -19,6 +19,7 @@ module.exports = {
   DEVICE_ACTIVATED: "Active",
   DEVICE_TRIAL: "Trial",
   DEVICE_SUSPENDED: "Suspended",
+  DEVICE_TRANSFER: "Transfer",
   DEVICE_EXPIRED: "Expired",
   DEVICE_UNLINKED: "Unlinked",
   DEVICE_PENDING_ACTIVATION: "Pending activation",

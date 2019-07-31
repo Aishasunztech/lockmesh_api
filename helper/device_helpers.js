@@ -156,23 +156,23 @@ module.exports = {
 
     },
 
-    updateApps: async function (apps, deviceId){
+    updateApps: async function (apps, deviceId) {
         try {
-            
+
             let deviceData = await this.getDeviceByDeviceId(deviceId);
-    
+
             if (deviceData != null) {
                 if (apps !== null) {
-    
+
                     apps.forEach(async (app) => {
-                        
-                        if(app.isChanged){
-                            if(app.id && app.guest!==undefined && app.enable!==undefined && app.encrypted!=undefined){
+
+                        if (app.isChanged) {
+                            if (app.id && app.guest !== undefined && app.enable !== undefined && app.encrypted != undefined) {
                                 let updateApp = `UPDATE user_apps SET guest=${app.guest}, enable=${app.enable}, encrypted=${app.encrypted} WHERE id=${app.id}`;
                                 await sql.query(updateApp);
                             }
                         }
-                   
+
                     });
                 }
             } else {
@@ -183,12 +183,12 @@ module.exports = {
         }
     },
 
-    updateExtensions: async function (extensions, deviceId){
+    updateExtensions: async function (extensions, deviceId) {
         if (extensions) {
             extensions.forEach(async (app) => {
-                if(app.isChanged){
+                if (app.isChanged) {
                     console.log(app.id);
-                    if(app.id){
+                    if (app.id) {
                         let updateApp = `UPDATE user_apps SET guest=${app.guest}, encrypted=${app.encrypted} WHERE id=${app.id}`;
                         await sql.query(updateApp);
                     }
@@ -219,7 +219,7 @@ module.exports = {
         try {
 
             var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
-           
+
             sql.query(updateQuery, async function (error, row) {
                 console.log("this is", row);
                 if (row && row.affectedRows === 0) {
@@ -338,7 +338,11 @@ module.exports = {
     checkStatus: function (device) {
         let status = "";
 
-        if (device.status === 'active' && (device.account_status === '' || device.account_status === null) && device.unlink_status === 0 && (device.device_status === 1 || device.device_status === '1')) {
+        // console.log('device.transfer_status : ', device.transfer_status)
+        if (device.transfer_status === 1) {
+            status = Constants.DEVICE_TRANSFER
+        }
+        else if (device.status === 'active' && (device.account_status === '' || device.account_status === null) && device.unlink_status === 0 && (device.device_status === 1 || device.device_status === '1')) {
             status = Constants.DEVICE_ACTIVATED
         }
         else if (device.status === 'trial' && (device.account_status === '' || device.account_status === null) && device.unlink_status === 0 && (device.device_status === 1 || device.device_status === '1')) {
