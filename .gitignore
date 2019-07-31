@@ -10,4 +10,4 @@ uploads/*
 db_backup/*
 !db_backup/.gitkeep
 irfan
-./package-lock.json
+package-lock.json
