@@ -822,6 +822,10 @@ exports.addApk = async function (req, res) {
                             deleteable: (newData[0].apk_type == "permanent") ? false : true,
                             apk_type: newData[0].apk_type,
                             size: newData[0].apk_size,
+                            package_name: newData[0].package_name,
+                            version: newData[0].version_name,
+                            updated_at: newData[0].modified,
+                            created_at: newData[0].created
                         }
 
 
@@ -915,14 +919,31 @@ exports.editApk = async function (req, res) {
                         if (err) {
                             console.log(err)
                         };
+                        let newData = await sql.query("SELECT * from apk_details where id = " + req.body.apk_id)
+                        dta = {
+                            apk_id: newData[0].id,
+                            apk_name: newData[0].app_name,
+                            logo: newData[0].logo,
+                            apk: newData[0].apk,
+                            permissions: [],
+                            apk_status: newData[0].status,
+                            permission_count: 0,
+                            deleteable: (newData[0].apk_type == "permanent") ? false : true,
+                            apk_type: newData[0].apk_type,
+                            size: newData[0].apk_size,
+                            package_name: newData[0].package_name,
+                            version: newData[0].version_name,
+                            updated_at: newData[0].modified,
+                            created_at: newData[0].created
+                        }
+
                         data = {
                             status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record Updated"), // "Record Updated"
-
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.APK_IS_UPLOADED], "Apk is uploaded"), // "Apk is uploaded",
+                            data: dta
                         };
                         return res.send(data);
                     });
-
 
                 } else {
                     data = {
