@@ -1,5 +1,5 @@
 var empty = require('is-empty');
-var md5 = require('md5');
+const bcrypt = require('bcrypt');
 var randomize = require('randomatic');
 var generator = require('generate-password');
 
@@ -97,8 +97,10 @@ exports.addAgent = async function (req, res) {
             length: 10,
             numbers: true
         });
-        var enc_pwd = md5(user_pwd); //encryted pwd
         
+        var enc_pwd = await bcrypt.hash(user_pwd, 10); //encryted pwd
+        console.log("enc_password", enc_pwd);
+
         if (!empty(name) && !empty(email)) {
             var agent = await sql.query(`SELECT * FROM dealer_agents WHERE email = '${email}' AND delete_status = 0`);
 
@@ -119,12 +121,13 @@ exports.addAgent = async function (req, res) {
                     console.log(error);
                 }
 
-                var html = 'Agent details are : <br> ' +
-                    'Staff ID : ' + staffID + '.<br> ' +
-                    'Username : ' + name + '<br> ' +
-                    'Email : ' + email + '<br> '
-                sendEmail("User Registration", html, verify.user.email)
-                sendEmail("User Registration", html, email)
+                var html = 'Agent details are : <br/> ' +
+                    'Staff ID : ' + staffID + '.<br/> ' +
+                    'Username : ' + name + '<br/> ' +
+                    'Password : ' + user_pwd + '<br/>' +
+                    'Email : ' + email + '<br/> '
+                sendEmail("Agent Registration", html, verify.user.email)
+                sendEmail("Agent Registration", html, email)
 
                 // res.send(rows.insertId);
                 var agent = await sql.query("SELECT * FROM dealer_agents WHERE id = " + rows.insertId + "");
