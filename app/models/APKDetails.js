@@ -1,27 +1,40 @@
-const sequelize_conn = require('../helper/sequelize_conn');
+const { sequelize_conn } = require('../../config/database');
 const Sequelize = require('sequelize');
-const UserApps = require('./UserApps');
+// const UserApps = require('./UserApps');
 
-const AppsInfo = sequelize_conn.define('apps_info', {
+const APKDetails = sequelize_conn.define('apk_details', {
     id: {
         type: Sequelize.INTEGER,
         primaryKey: true
     },
-    unique_name: {
+    app_name: {
+        type: Sequelize.STRING
+    },
+    logo: {
         type: Sequelize.TEXT
     },
-    label: {
+    apk: {
         type: Sequelize.TEXT
+    },
+    apk_type: {
+        type: Sequelize.ENUM,
+        values: ['permanent','basic','other','']
     },
     package_name: {
         type: Sequelize.TEXT
     },
-    icon: {
-        type: Sequelize.TEXT
-    }
+    status: {
+        type: Sequelize.ENUM,
+        values: ['Off','On']
+    },
+    delete_status: {
+        type: Sequelize.BOOLEAN
+    },
+    createdAt: { type: Sequelize.DATE, field: 'created' },
+    updatedAt: { type: Sequelize.DATE, field: 'modified' },
 }, {
     timestamps: true,
-    underscored: true,
+    // underscored: true,
     // hooks: {
     //     beforeValidate: (user, options) => {
     //       user.mood = 'happy';
@@ -39,4 +52,4 @@ const AppsInfo = sequelize_conn.define('apps_info', {
 // AppsInfo.hasMany(UserApps, { onDelete: 'cascade', hooks: true });
 // UserApps.belongsTo(AppsInfo);
 
-module.exports = AppsInfo;
+module.exports = APKDetails;

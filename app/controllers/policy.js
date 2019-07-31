@@ -37,13 +37,16 @@ exports.getPolicies = async function (req, res) {
 
                         for (var i = 0; i < results.length; i++) {
                             // console.log('push apps', results[i].push_apps)
-                            let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
-                            let controls = (results[i].controls !== undefined && results[i].controls !== null) ? JSON.parse(results[i].controls) : JSON.parse('[]');
-                            let push_apps = (results[i].push_apps !== undefined && results[i].push_apps !== null) ? JSON.parse(results[i].push_apps) : JSON.parse('[]');
-                            let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== null) ? JSON.parse(results[i].app_list) : JSON.parse('[]');
-                            let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : JSON.parse('[]');
+                            let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : [];
+                            let controls = (results[i].controls !== undefined && results[i].controls !== null) ? JSON.parse(results[i].controls) : [];
+                            let push_apps = (results[i].push_apps !== undefined && results[i].push_apps !== null) ? JSON.parse(results[i].push_apps) : [];
+                            let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== null) ? JSON.parse(results[i].app_list) : [];
+                            let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : [];
                             let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
                             let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                            let dealer = await helpers.getDealerByDealerId(results[i].dealer_id)
+                            let created_by = results[i].dealer_type === app_Constants.ADMIN ? "ADMIN" : dealer[0].dealer_name + " (" + dealer[0].link_code + ")";
+                            // console.log(created_by);
                             dta = {
                                 id: results[i].id,
                                 policy_name: results[i].policy_name,
@@ -57,8 +60,11 @@ exports.getPolicies = async function (req, res) {
                                 push_apps: push_apps,
                                 app_list: app_list2,
                                 dealer_id: results[i].dealer_id,
-                                object_size: results[i].object_size,
-                                policy_size: results[i].policy_size
+                                object_size: results[i].object_size ? results[i].object_size : 'N/A',
+                                policy_size: results[i].policy_size ? results[i].policy_size : 'N/A',
+                                created_by: created_by,
+                                created_date: results[i].created_at,
+                                last_edited: results[i].updated_at,
                             }
                             policies.push(dta);
                         }
@@ -105,7 +111,7 @@ exports.getPolicies = async function (req, res) {
                         let sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
                         let dealerCount = sdealerList.length;
                         for (var i = 0; i < results.length; i++) {
-                            let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
+                            let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : [];
                             let Sdealerpermissions = permissions.filter(function (item) {
 
                                 for (let i = 0; i < sdealerList.length; i++) {
@@ -121,11 +127,14 @@ exports.getPolicies = async function (req, res) {
                             let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
                             // console.log(permissions, 'permissions',Sdealerpermissions, 'sealerpermissions', permissionCount, 'permision count', )
                             let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
-                            let controls = (results[i].controls !== undefined && results[i].controls !== 'undefined' && results[i].controls !== null) ? JSON.parse(results[i].controls) : JSON.parse('[]');
-                            let push_apps = (results[i].push_apps !== undefined && results[i].push_apps !== 'undefined' && results[i].push_apps !== null) ? JSON.parse(results[i].push_apps) : JSON.parse('[]');
-                            let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== 'undefined' && results[i].app_list !== null) ? JSON.parse(results[i].app_list) : JSON.parse('[]');
-                            let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== 'undefined' && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : JSON.parse('[]');
+                            let controls = (results[i].controls !== undefined && results[i].controls !== 'undefined' && results[i].controls !== null) ? JSON.parse(results[i].controls) : [];
+                            let push_apps = (results[i].push_apps !== undefined && results[i].push_apps !== 'undefined' && results[i].push_apps !== null) ? JSON.parse(results[i].push_apps) : [];
+                            let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== 'undefined' && results[i].app_list !== null) ? JSON.parse(results[i].app_list) : [];
+                            let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== 'undefined' && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : [];
                             let is_default = (results[i].id === default_policy_id) ? true : false
+                            let dealer = await helpers.getDealerByDealerId(results[i].dealer_id)
+                            let created_by = results[i].dealer_type === app_Constants.ADMIN ? "ADMIN" : dealer[0].dealer_name;
+                            // console.log(created_by);
                             dta = {
                                 id: results[i].id,
                                 policy_name: results[i].policy_name,
@@ -140,13 +149,16 @@ exports.getPolicies = async function (req, res) {
                                 app_list: app_list2,
                                 is_default: is_default,
                                 dealer_id: results[i].dealer_id,
-                                object_size: results[i].object_size,
-                                policy_size: results[i].policy_size
+                                object_size: results[i].object_size ? results[i].object_size : 'N/A',
+                                policy_size: results[i].policy_size ? results[i].policy_size : 'N/A',
+                                created_by: created_by,
+                                created_date: results[i].created_at,
+                                last_edited: results[i].updated_at,
                             }
                             policies.push(dta);
                         }
-                        
-                        data ={
+
+                        data = {
                             status: true,
                             msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "successful"), // successful',
                             policies: policies
@@ -175,42 +187,6 @@ exports.getPolicies = async function (req, res) {
         }
     }
 
-}
-
-
-exports.changePolicyStatus = async function (req, res) {
-    var verify = req.decoded;
-
-    if (verify) {
-        let id = req.body.id;
-        let value = req.body.value == true ? 1 : 0;
-        let key = req.body.key;
-
-        let query = "UPDATE policy SET " + key + " = '" + value + "' WHERE id='" + id + "'";
-
-
-        sql.query(query, async function (error, result) {
-
-            if (error) {
-                console.log(error);
-            }
-            // console.log(result, 'relstsdf')
-            if (result.affectedRows) {
-                data = {
-                    status: true,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "successful"), // successful'
-                };
-                res.send(data);
-            } else {
-                data = {
-                    status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "ERROR"), // error'
-                };
-                res.send(data);
-            }
-
-        });
-    }
 }
 
 
@@ -275,37 +251,75 @@ exports.checkPolicyName = async function (req, res) {
     }
 }
 
+exports.changePolicyStatus = async function (req, res) {
+    var verify = req.decoded;
+
+    if (verify) {
+        let id = req.body.id;
+        let value = req.body.value == true ? 1 : 0;
+        let key = req.body.key;
+
+        let query = "UPDATE policy SET " + key + " = '" + value + "' WHERE id='" + id + "'";
+
+
+        sql.query(query, async function (error, result) {
+
+            if (error) {
+                console.log(error);
+            }
+            // console.log(result, 'relstsdf')
+            if (result.affectedRows) {
+                data = {
+                    status: true,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "successful"), // successful'
+                };
+                res.send(data);
+            } else {
+                data = {
+                    status: false,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "ERROR"), // error'
+                };
+                res.send(data);
+            }
+
+        });
+    }
+}
 
 exports.savePolicy = async function (req, res) {
     try {
         var verify = req.decoded;
 
         if (verify) {
-            let policy_name = req.body.data.policy_name !== undefined ? req.body.data.policy_name : null;
-            if (policy_name !== null) {
+            let policy = req.body.data;
+            let policy_name = policy.policy_name;
+
+            if (policy_name) {
+
                 let loggedDealerType = verify.user.user_type;
                 let loggedDealerId = verify.user.id;
                 let connectedDealer = verify.user.connected_dealer;
 
                 let checkExistingQ = `SELECT policy_name FROM policy WHERE policy_name='${policy_name}' AND delete_status = 0 `;
-                // let checkExisting = await sql.query(checkExistingQ);
 
                 if (loggedDealerType === app_Constants.ADMIN) {
 
                 } else if (loggedDealerType === app_Constants.DEALER) {
-                    let subDealerQ = "SELECT dealer_id FROM dealers WHERE connected_dealer=" + loggedDealerId;
+                    let subDealerQ = `SELECT dealer_id FROM dealers WHERE connected_dealer=${loggedDealerId}`;
                     let subDealers = await sql.query(subDealerQ);
+
                     let subDealerArray = [];
                     subDealers.map((dealer) => {
                         subDealerArray.push(dealer.dealer_id)
                     });
+
                     if (subDealerArray.length) {
-                        checkExistingQ = checkExistingQ + " AND (dealer_type='" + app_Constants.ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id in (" + subDealerArray.join() + "))"
+                        checkExistingQ = checkExistingQ + ` AND (dealer_type='${app_Constants.ADMIN}' OR dealer_id=${loggedDealerId} OR dealer_id in (${subDealerArray.join()}))`
                     } else {
-                        checkExistingQ = checkExistingQ + " AND (dealer_type='" + app_Constants.ADMIN + "' OR dealer_id=" + loggedDealerId + " )"
+                        checkExistingQ = checkExistingQ + ` AND (dealer_type='${app_Constants.ADMIN}' OR dealer_id=${loggedDealerId} )`;
                     }
                 } else if (loggedDealerType === app_Constants.SDEALER) {
-                    checkExistingQ = checkExistingQ + " AND (dealer_type='" + app_Constants.ADMIN + "' OR dealer_id=" + loggedDealerId + " OR dealer_id = " + connectedDealer + ")";
+                    checkExistingQ = checkExistingQ + ` AND (dealer_type='${app_Constants.ADMIN}' OR dealer_id=${loggedDealerId} OR dealer_id = ${connectedDealer})`;
                 }
 
                 let checkExisting = await sql.query(checkExistingQ);
@@ -319,44 +333,44 @@ exports.savePolicy = async function (req, res) {
                     return;
                 }
 
-                let policy_note = req.body.data.policy_note !== undefined ? req.body.data.policy_note : null;
+                let policy_note = policy.policy_note !== undefined ? policy.policy_note : null;
+
                 let push_apps = null;
                 let app_list = null;
                 let secure_apps = null;
                 let pushAppFileSize = 0;
-
-                if (req.body.data.push_apps !== undefined) {
-                    req.body.data.push_apps.forEach((app) => {
+                if (policy.push_apps && policy.push_apps !== 'null' && policy.push_apps !== 'undefined') {
+                    policy.push_apps.forEach((app) => {
                         app.guest = (app.guest !== undefined) ? app.guest : false;
                         app.enable = (app.enable !== undefined) ? app.enable : false;
                         app.encrypted = (app.encrypted !== undefined) ? app.encrypted : false;
                         let file_size = helpers.getFileSize(app.apk);
                         pushAppFileSize = pushAppFileSize + file_size;
                     });
-                    push_apps = JSON.stringify(req.body.data.push_apps);
+                    push_apps = JSON.stringify(policy.push_apps);
                 }
 
-                if (req.body.data.app_list !== undefined) {
-                    req.body.data.app_list.forEach((app) => {
+                if (policy.app_list && policy.app_list !== 'null' && policy.app_list !== 'undefined') {
+                    policy.app_list.forEach((app) => {
                         app.guest = (app.guest !== undefined) ? app.guest : false;
                         app.enable = (app.enable !== undefined) ? app.enable : false;
                         app.encrypted = (app.encrypted !== undefined) ? app.encrypted : false;
 
                     });
-                    app_list = JSON.stringify(req.body.data.app_list);
+                    app_list = JSON.stringify(policy.app_list);
                 }
 
-                if (req.body.data.secure_apps !== undefined) {
-                    req.body.data.secure_apps.forEach((app) => {
+                if (policy.secure_apps && policy.secure_apps !== 'null' && policy.secure_apps !== 'undefined') {
+                    policy.secure_apps.forEach((app) => {
                         app.guest = (app.guest !== undefined) ? app.guest : false;
                         // app.enable = (app.enable!==undefined)? app.enable: false;
                         app.encrypted = (app.encrypted !== undefined) ? app.encrypted : false;
 
                     });
-                    secure_apps = JSON.stringify(req.body.data.secure_apps);
+                    secure_apps = JSON.stringify(policy.secure_apps);
                 }
 
-                let system_permissions = req.body.data.system_permissions !== undefined ? JSON.stringify(req.body.data.system_permissions) : null;
+                let system_permissions = policy.system_permissions !== undefined ? JSON.stringify(policy.system_permissions) : null;
 
                 let pushAppsSize = objectsize(push_apps);
                 let appListSize = objectsize(app_list);
@@ -372,10 +386,12 @@ exports.savePolicy = async function (req, res) {
 
                 sql.query(applyQuery, async function (err, rslts) {
                     if (err) {
-                        console.log(err)
+                        console.log("policy query error: ", err);
                     }
 
                     if (rslts && rslts.affectedRows) {
+                        await helpers.insertPolicyPushApps(rslts.insertId, policy.push_apps, true);
+
                         let newPolicy = await sql.query(`SELECT * FROM policy WHERE id = ${rslts.insertId}`);
                         let addedPolicy = {}
                         if (newPolicy.length) {
@@ -392,17 +408,15 @@ exports.savePolicy = async function (req, res) {
                             msg: await helpers.convertToLang(req.translation[MsgConstants.PLCY_NOT_SAV], "Policy Couldn\'t be saved"), // Policy Couldn\'t be saved'
                         }
                     }
-                    res.send(data);
-                    return;
-
-                })
+                    return res.send(data);
+                });
             } else {
                 data = {
                     status: false,
                     msg: await helpers.convertToLang(req.translation[MsgConstants.PLCY_NOT_SAV], "Policy Couldn\'t be saved"), // Policy Couldn\'t be saved'
                 }
-                res.send(data);
-                return;
+                return res.send(data);
+
             }
 
         }
@@ -416,7 +430,7 @@ exports.savePolicyChanges = async function (req, res) {
     try {
         var verify = req.decoded;
         if (verify) {
-            // console.log('body of kth e', req.body);
+
             let record = req.body;
             let id = record.id;
             let push_apps = record.push_apps;
@@ -428,7 +442,7 @@ exports.savePolicyChanges = async function (req, res) {
             var command_name = '#' + policy_name.replace(/ /g, "_");
 
             let pushAppFileSize = 0;
-    
+
             if (push_apps !== undefined) {
                 let parsedPushApps = JSON.parse(push_apps);
                 parsedPushApps.forEach((app) => {
@@ -440,43 +454,42 @@ exports.savePolicyChanges = async function (req, res) {
                 });
                 push_apps = JSON.stringify(parsedPushApps);
             }
-    
+
             let pushAppsSize = objectsize(push_apps);
             let appListSize = objectsize(app_list);
             let secureAppsSize = objectsize(permissions);
             let sysPermissionSize = objectsize(controls);
-    
+
             let policyObjSize = helpers.formatBytes(pushAppsSize + appListSize + secureAppsSize + sysPermissionSize)
             let policyActualSize = helpers.formatBytes(pushAppFileSize + appListSize + secureAppsSize + sysPermissionSize);
-            
+
             let query = `UPDATE policy SET push_apps = '${push_apps}', controls = '${controls}', permissions = '${permissions}', app_list = '${app_list}', policy_note = '${policy_note}', policy_name = '${policy_name}', command_name='${command_name}', object_size = '${policyObjSize}', policy_size = '${policyActualSize}' WHERE id=${id}`;
-    
+
             sql.query(query, async function (error, result) {
-    
+
                 if (error) {
                     data = {
                         status: false,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "ERROR"), // error'
                     };
-                    res.send(data);
-                    return;
+                    return res.send(data);
                 }
-    
+
 
                 if (result && result.affectedRows) {
+                    await helpers.insertPolicyPushApps(id, JSON.parse(push_apps), false);
                     data = {
                         status: true,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.PLCY_UP_SUCC], "Policy Updated Successfully"), // Policy Updated Successfully
                     };
-                    res.send(data);
                 } else {
                     data = {
                         status: false,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "ERROR"), // error'
                     };
-                    res.send(data);
                 }
-    
+                return res.send(data);
+
             });
         }
     } catch (error) {
@@ -487,7 +500,7 @@ exports.savePolicyChanges = async function (req, res) {
 exports.applyPolicy = async function (req, res) {
     try {
         var verify = req.decoded;
-        // if (verify.status !== undefined && verify.status == true) {
+
         if (verify) {
             let device_id = req.params.device_id;
             let dealer_id = verify.user.id
@@ -495,24 +508,24 @@ exports.applyPolicy = async function (req, res) {
             let policy_id = req.body.policyId;
             if (device_id !== null || device_id !== '' || device_id !== undefined || device_id !== 'undefined' || policy_id !== null || policy_id !== '' || policy_id !== undefined || policy_id !== 'undefined') {
 
-                let getPolicyQ = "SELECT * FROM policy WHERE id =" + policy_id;
+                let getPolicyQ = `SELECT * FROM policy WHERE id=${policy_id}`;
                 let policy = await sql.query(getPolicyQ)
 
                 if (policy.length) {
-                    policy = helpers.refactorPolicy(policy);
+                    policy = await helpers.refactorPolicy(policy);
 
                     var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES ('" + device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
                     sql.query(applyQuery, async function (err, policyApplied) {
                         if (err) {
-                            console.log(err)
+                            console.log("apply policy error: ", err)
                         }
 
                         if (policyApplied && policyApplied.affectedRows) {
 
                             let isOnline = await device_helpers.isDeviceOnline(device_id, policy[0]);
-                            // var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
+
                             var loadDeviceQ = "INSERT INTO policy_queue_jobs (policy_id,device_id,is_in_process) " + " VALUES ('" + policy_id + "','" + device_id + "',1)"
-                            // console.log(loadDeviceQ)
+
                             await sql.query(loadDeviceQ)
                             if (isOnline) {
                                 sockets.getPolicy(device_id, policy[0]);
@@ -531,20 +544,24 @@ exports.applyPolicy = async function (req, res) {
                                     msg: await helpers.convertToLang(req.translation[MsgConstants.WARNING_DEVICE_OFFLINE], "Warning Device Offline"), // 'Warning Device Offline,
                                 };
                             }
-                            res.send(data);
-                            return;
+                            return res.send(data);
                         } else {
                             data = {
                                 status: false,
                                 content: "",
                                 msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"), // Error while Processing',
                             };
-                            res.send(data);
+                            return res.send(data);
                         }
 
                     });
                 } else {
-
+                    data = {
+                        status: false,
+                        content: "",
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"), // Error while Processing',
+                    };
+                    return res.send(data);
                 }
             }
         }
