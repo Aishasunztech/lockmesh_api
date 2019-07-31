@@ -387,6 +387,7 @@ exports.apkList = async function (req, res) {
                             "package_name": results[i].package_name,
                             "version": results[i].version_name,
                             "updated_at": results[i].modified,
+                            "created_at": results[i].created,
                         }
                         data.push(dta);
                     }
@@ -441,6 +442,7 @@ exports.apkList = async function (req, res) {
                             "package_name": results[i].package_name,
                             "version": results[i].version_name,
                             "updated_at": results[i].modified,
+                            "created_at": results[i].created,
                             // "deleteable": (results[i].apk_type == "permanent") ? false : true
                         }
                         data.push(dta);
@@ -624,7 +626,8 @@ exports.upload = async function (req, res) {
                     console.log("version code", versionCode);
                     let packageName = await helpers.getAPKPackageName(file);
                     packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-
+                    let versionName = await helpers.getAPKVersionName(file);
+                    versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                     console.log("Package Name", packageName);
 
                     let apk_stats = fs.statSync(file);
@@ -647,7 +650,9 @@ exports.upload = async function (req, res) {
                                         status: true,
                                         msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
                                         fileName: filename,
-                                        size: formatByte
+                                        size: formatByte,
+                                        version: versionName
+
 
                                     };
                                     res.send(data);
@@ -657,7 +662,8 @@ exports.upload = async function (req, res) {
                                         status: true,
                                         msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
                                         fileName: filename,
-                                        size: formatByte
+                                        size: formatByte,
+                                        version: versionName
 
                                     };
                                     res.send(data);
@@ -667,7 +673,8 @@ exports.upload = async function (req, res) {
                                         status: true,
                                         msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
                                         fileName: filename,
-                                        size: formatByte
+                                        size: formatByte,
+                                        version: versionName
 
                                     };
                                     res.send(data);
@@ -695,11 +702,13 @@ exports.upload = async function (req, res) {
                                     res.send(data);
                                     return;
                                 } else {
+                                    console.log(versionName);
                                     data = {
                                         status: true,
                                         msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
                                         fileName: filename,
-                                        size: formatByte
+                                        size: formatByte,
+                                        version: versionName
 
                                     };
                                     res.send(data);
@@ -755,7 +764,7 @@ exports.addApk = async function (req, res) {
             if (!empty(logo) && !empty(apk) && !empty(apk_name)) {
 
                 let file = path.join(__dirname, "../../uploads/" + apk);
-                
+
 
                 if (fs.existsSync(file)) {
                     let versionCode = '';
@@ -789,7 +798,7 @@ exports.addApk = async function (req, res) {
                     packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                     label = label.toString().replace(/(\r\n|\n|\r)/gm, "");
                     details = details.toString().replace(/(\r\n|\n|\r)/gm, "");
-                    
+
                     let apk_type = (verify.user.user_type === Constants.AUTO_UPDATE_ADMIN) ? 'permanent' : 'basic'
 
                     let apk_stats = fs.statSync(file);
@@ -815,7 +824,7 @@ exports.addApk = async function (req, res) {
                             size: newData[0].apk_size,
                         }
 
-                        
+
 
                         data = {
                             status: true,
@@ -852,7 +861,7 @@ exports.addApk = async function (req, res) {
 }
 
 exports.editApk = async function (req, res) {
-    
+
     res.setHeader('Content-Type', 'multipart/form-data');
     var verify = req.decoded;
 
@@ -894,13 +903,13 @@ exports.editApk = async function (req, res) {
                     packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                     label = label.replace(/(\r\n|\n|\r)/gm, "");
                     details = details.replace(/(\r\n|\n|\r)/gm, "");
-                    
+
                     // let apk_type = (verify.user.user_type === AUTO_UPDATE_ADMIN) ? 'permanent' : 'basic'
 
                     let apk_stats = fs.statSync(file);
 
                     let formatByte = helpers.formatBytes(apk_stats.size);
-                    
+
                     sql.query(`UPDATE apk_details SET app_name = '${apk_name}', logo = '${logo}', apk = '${apk}', version_code = '${versionCode}', version_name = '${versionName}', package_name='${packageName}', details='${details}', apk_bytes='${apk_stats.size}',  apk_size='${formatByte}'  WHERE id = ${req.body.apk_id}`, async function (err, rslts) {
 
                         if (err) {
@@ -950,12 +959,12 @@ exports.deleteApk = async function (req, res) {
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
         if (!empty(req.body.apk_id)) {
-            
+
             // check if apk is used in any policy
             // sql.query(`SELECT id FROM policy_apss WHERE apk_id = ${req.body.apk_id}`)
 
             sql.query(`UPDATE apk_details SET delete_status=1 WHERE id=${req.body.apk_id}`, async function (error, results) {
-                
+
                 if (error) {
                     console.log(error);
                 }
@@ -997,7 +1006,7 @@ exports.deleteApk = async function (req, res) {
         }
 
     }
-    
+
 }
 
 exports.toggle = async function (req, res) {
