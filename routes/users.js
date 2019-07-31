@@ -52,7 +52,7 @@ const backupController = require('../app/controllers/backup');
 const appController = require('../app/controllers/app');
 const languageController = require('../app/controllers/language');
 const simController = require('../app/controllers/sim');
-
+const agentController = require('../app/controllers/agent');
 
 // constants
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
@@ -585,5 +585,25 @@ router.post('/sim-delete', simController.simDelete);
 router.get('/get-sims/:device_id', simController.getSims);
 router.get('/sim-history/:device_id', simController.simHistory);
 
+
+// Agents
+
+/**
+ * This function comment is parsed by doctrine
+ * @route GET /users/agents
+ * @group agents - Operations about Dealer Agents
+ * @returns {object} 200 - An array of agents info
+ * @returns {Error}  default - Unexpected error
+ */
+router.get('/agents', agentController.getAgentList);
+
+/**
+ * This function comment is parsed by doctrine
+ * @route POST /users/agents
+ * @group agents - Operations about Dealer Agents
+ * @returns {object} 200 - An array of agents info
+ * @returns {Error}  default - Unexpected error
+ */
+router.post('/agents', agentController.addAgent);
 
 module.exports = router;

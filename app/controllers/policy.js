@@ -14,20 +14,22 @@ exports.getPolicies = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
         let userId = verify.user.id;
-        let userType = await helpers.getUserType(userId);
-        let user_acc_id = await device_helpers.getUserAccountId(req.body.device_id);
-        //   console.log('user id si', user_acc_id);
-        let where = "";
-        let isValid = true;
+        // let userType = await helpers.getUserType(userId);
+        
+        // let user_acc_id = await device_helpers.getUserAccountId(req.body.device_id);
+        // console.log('user id si', user_acc_id);
+        
+        // let where = "";
+        // let isValid = true;
         let policies = [];
 
-        if (user_acc_id != undefined || user_acc_id != '' || user_acc_id != null) {
-            where = where + " user_acc_id='" + user_acc_id + "'";
+        // if (user_acc_id != undefined || user_acc_id != '' || user_acc_id != null) {
+        //     where = where + " user_acc_id='" + user_acc_id + "'";
 
-        } else {
-            isValid = false;
-        }
-        if (isValid) {
+        // } else {
+        //     isValid = false;
+        // }
+        // if (isValid) {
             if (verify.user.user_type === app_Constants.ADMIN) {
                 let query = "SELECT * FROM policy where delete_status=0";
                 sql.query(query, async (error, results) => {
@@ -164,15 +166,15 @@ exports.getPolicies = async function (req, res) {
                     }
                 });
             }
-        } else {
-            data = {
-                status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_USER], "Invalid User"), // Invalid User',
-                policies: []
-            };
-            res.send(data);
-            return;
-        }
+        // } else {
+        //     data = {
+        //         status: false,
+        //         msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_USER], "Invalid User"), // Invalid User',
+        //         policies: []
+        //     };
+        //     res.send(data);
+        //     return;
+        // }
     }
 
 }

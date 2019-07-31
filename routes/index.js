@@ -14,6 +14,7 @@ var nonVerifyRoutes = require('./nonVerify');
 module.exports = function (app) {
 
   app.use('/mobile', mobileRoutes);
+  
   app.use('/users', authRoutes);
   app.use('/users', nonVerifyRoutes);
 
