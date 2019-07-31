@@ -287,8 +287,10 @@ exports.simHistory = async function (req, res) {
                 sql.query(IQry, async function (err, result) {
                     // console.log("=======================================")
                     // console.log('result is :', result)
-                    if (err) console.log(err);
-
+                    if (err) {
+                        console.log(err);
+                        throw err;
+                    }
                     if (result.length > 0) {
                         data = {
                             status: true,

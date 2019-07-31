@@ -180,10 +180,14 @@ module.exports = {
     { "key": "parent_dealer_id", "value": "parent.dealer.id.id" },
   ],
   apkColumns: [
-    // { "key": "permission", "value": APK_PERMISSION},
-    // { "key": "apk_status", "value": APK_SHOW_ON_DEVICE},
+    { "key": "permission", "value": 'permission.id' },
+    { "key": "apk_status", "value": 'show.on.device.id' },
     { "key": "apk", "value": "apk.id" },
     { "key": "apk_name", "value": "app.name.id" },
     { "key": "apk_logo", "value": "app.logo.id" },
+
+    { "key": "version", "value": "VERSION" },
+    { "key": "created_at", "value": "UPLOAD DATE" },
+    { "key": "updated_at", "value": "EDIT DATE" },
   ]
 }
