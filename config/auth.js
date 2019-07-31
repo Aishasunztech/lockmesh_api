@@ -11,6 +11,7 @@ module.exports = (req, res, next) => {
     if (token) {
         jwt.verify(token, config.SECRET, async function (err, decoded) {
             if (err) {
+                console.log(err);
                 ath = {
                     status: false,
                     success: false
@@ -65,32 +66,6 @@ module.exports = (req, res, next) => {
                         msg: 'No User Found'
                     });
                 }
-                // console.log(req.translation, "Translation")
-
-                // if everything is good, save to request for use in other routes
-                // let result = await helpers.getLoginByToken(token);
-                // console.log("decoding", result);
-                // if(result){
-                // if(result.status === true || result.status === 1){
-                // console.log(nextFunc)
-                // console.log(ath);
-
-
-                // } else {
-                //     ath.status = false;
-                //     return res.json({
-                //         success: false,
-                //         msg: 'Failed to authenticate token.'
-                //     });
-                // }
-                // } else {
-                //     ath.status = false;
-                //     return res.json({
-                //         success: false,
-                //         msg: 'Failed to authenticate token.'
-                //     });
-                // } 
-
             }
         });
 
