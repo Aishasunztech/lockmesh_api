@@ -160,6 +160,10 @@ router.get('/get_apps/:device_id', deviceController.getAppsOfDevice);
 
 router.put('/deleteUnlinkDevice', deviceController.deleteUnlinkDevice);
 
+
+// change device IDs // mi3afzal
+router.get('/devices/changeids', deviceController.changeids);
+
 // ====================== Users ==================== //
 
 /*** Add User ***/
