@@ -44,8 +44,6 @@ module.exports = {
 	},
 
 	down: (queryInterface, Sequelize) => {
-
 		return queryInterface.dropTable('policy_apps');
-
 	}
 };
