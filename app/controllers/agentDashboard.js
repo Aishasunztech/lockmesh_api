@@ -653,10 +653,8 @@ exports.editDevices = async function (req, res) {
 
 exports.deleteDevice = async function (req, res) {
 
-    // console.log(req.body);
     var verify = req.decoded // await verifyToken(req, res);
 
-    // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
         if (!empty(req.params.device_id)) {
             let userType = verify.user.user_type;

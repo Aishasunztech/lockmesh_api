@@ -192,6 +192,7 @@ router.post('/flagDevice/:id', deviceController.flagDevice);
  * @group Device - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 
 /** Get Device Details of Dealers (Connect Page) **/
@@ -215,6 +216,7 @@ router.put('/deleteUnlinkDevice', deviceController.deleteUnlinkDevice);
  * @group Dealer User - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 
 /*** Add User ***/
@@ -226,6 +228,7 @@ router.post('/add/user', userController.addUser);
  * @group Dealer User - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 /*** Edit User ***/
 router.post('/edit/user', userController.editUser);
@@ -236,6 +239,7 @@ router.post('/edit/user', userController.editUser);
  * @group Dealer User - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 /*** DELETE User ***/
 router.put('/delete_user/:user_id', userController.deleteUser);
@@ -246,6 +250,7 @@ router.put('/delete_user/:user_id', userController.deleteUser);
  * @group Dealer User - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 /***UNDO DELETE User ***/
 router.put('/undo_delete_user/:user_id', userController.undoDeleteUser);
@@ -256,6 +261,7 @@ router.put('/undo_delete_user/:user_id', userController.undoDeleteUser);
  * @group Dealer User - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 
 /**UPDATE Profile details  **/
@@ -267,6 +273,7 @@ router.put('/updateProfile/:id', userController.updateProfile);
  * @group Dealer User - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 /** Reset password dealers (Admin Panel) **/
 router.post('/resetpwd', dealerController.resetPwd);
@@ -280,6 +287,7 @@ router.post('/resetpwd', dealerController.resetPwd);
  * @group Dealer - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 /*Get All Dealers */
 router.get('/dealers', dealerController.getAllDealers);
@@ -290,6 +298,7 @@ router.get('/dealers', dealerController.getAllDealers);
  * @group Dealer - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 /*Get dealers*/
 router.get('/dealers/:pageName', dealerController.getDealers);
@@ -300,6 +309,7 @@ router.get('/dealers/:pageName', dealerController.getDealers);
  * @group Dealer - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 /*** Add Dealer ***/
 router.post('/add/dealer', dealerController.addDealer);
@@ -310,6 +320,7 @@ router.post('/add/dealer', dealerController.addDealer);
  * @group Dealer - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 /** Edit Dealer (Admin panel) **/
 router.put('/edit/dealers', dealerController.editDealers);
@@ -320,6 +331,7 @@ router.put('/edit/dealers', dealerController.editDealers);
  * @group Dealer - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 /** Delete Dealer from admin Panel**/
 router.post('/dealer/delete/', dealerController.deleteDealer);
@@ -333,6 +345,7 @@ router.post('/dealer/undo', dealerController.undoDealer);
  * @group Dealer - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 /** Suspend Dealer **/
 router.post('/dealer/suspend', dealerController.suspendDealer);
@@ -343,6 +356,7 @@ router.post('/dealer/suspend', dealerController.suspendDealer);
  * @group Dealer - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 /** Activate Dealer **/
 router.post('/dealer/activate', dealerController.activateDealer);
@@ -391,6 +405,7 @@ router.get('/get_app_permissions', appController.getAppPermissions);
  * @group Policy - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 router.get('/get_policies', policyController.getPolicies);
 
@@ -399,6 +414,7 @@ router.get('/get_policies', policyController.getPolicies);
  * @group Policy - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 router.post('/change_policy_status', policyController.changePolicyStatus);
 
@@ -407,6 +423,7 @@ router.post('/change_policy_status', policyController.changePolicyStatus);
  * @group Policy - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 router.post('/save_policy_changes', policyController.savePolicyChanges);
 
@@ -415,6 +432,7 @@ router.post('/save_policy_changes', policyController.savePolicyChanges);
  * @group Policy - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 router.post('/check_policy_name', policyController.checkPolicyName);
 
@@ -423,6 +441,7 @@ router.post('/check_policy_name', policyController.checkPolicyName);
  * @group Policy - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 router.post('/save_policy', policyController.savePolicy);
 
@@ -431,6 +450,7 @@ router.post('/save_policy', policyController.savePolicy);
  * @group Policy - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 router.post('/apply_policy/:device_id', policyController.applyPolicy);
 
@@ -489,6 +509,7 @@ router.post('/delete_CSV_ids/:fieldName', accountController.deleteCSV);
  * @group APK - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 router.get('/apklist', apkController.apkList);
 
@@ -498,6 +519,7 @@ router.get('/apklist', apkController.apkList);
  * @group APK - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 // upload test apk
 router.post('/upload', apkController.upload);
@@ -508,6 +530,7 @@ router.post('/upload', apkController.upload);
  * @group APK - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 // add apk. endpoints name should be changed
 router.post('/checkApkName', apkController.checkApkName);
@@ -517,6 +540,7 @@ router.post('/checkApkName', apkController.checkApkName);
  * @group APK - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 // add apk. endpoints name should be changed
 router.post('/addApk', apkController.addApk);
@@ -526,6 +550,7 @@ router.post('/addApk', apkController.addApk);
  * @group APK - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 /** Edit Apk (Admin panel) **/
 router.post('/edit/apk', apkController.editApk);
@@ -535,6 +560,7 @@ router.post('/edit/apk', apkController.editApk);
  * @group APK - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 /**Delete Apk**/
 router.post('/apk/delete', apkController.deleteApk);
@@ -545,6 +571,7 @@ router.post('/apk/delete', apkController.deleteApk);
  * @group APK - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 /** Toggle Apk Admin Panel (On / Off) **/
 router.post('/toggle', apkController.toggle);
@@ -554,6 +581,7 @@ router.post('/toggle', apkController.toggle);
  * @group APK - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 /** Save apk Permissions**/
 router.post('/save_apk_permissions', apkController.saveApkPermission);
@@ -574,6 +602,7 @@ router.post('/save_policy_permissions', apkController.savePolicyPermissions);
  * @group Dealer Profile - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 //GET logion history
 router.get('/login_history', async function (req, res) {
@@ -620,6 +649,7 @@ router.delete('/delete_profile/:profile_id', userController.checkProfile);
  * @group Dealer Profile - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 
 // check prviouse password
@@ -823,6 +853,7 @@ router.get('/sim-history/:device_id', simController.simHistory);
  * @group Agents - Operations about Dealer Agents
  * @returns {object} 200 - An array of agents info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 router.get('/agents', agentController.getAgentList);
 
@@ -831,6 +862,7 @@ router.get('/agents', agentController.getAgentList);
  * @group Agents - Operations about Dealer Agents
  * @returns {object} 200 - An array of agents info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 router.post('/agents', agentController.addAgent);
 
@@ -839,6 +871,7 @@ router.post('/agents', agentController.addAgent);
  * @group Agents - Operations about Dealer Agents
  * @returns {object} 200 - An array of agents info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 router.put('/agents/{agentID}', agentController.updateAgent);
 
@@ -847,6 +880,7 @@ router.put('/agents/{agentID}', agentController.updateAgent);
  * @group Agents - Operations about Dealer Agents
  * @returns {object} 200 - An array of agents info
  * @returns {Error}  default - Unexpected error
+ * @security JWT
  */
 router.delete('/ageents/{agentID}', agentController.deleteAgent);
 
