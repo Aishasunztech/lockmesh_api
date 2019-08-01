@@ -873,7 +873,7 @@ router.post('/agents', agentController.addAgent);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.put('/agents/{agentID}', agentController.updateAgent);
+router.put('/agents/:agentID', agentController.updateAgent);
 
 /**
  * @route DELETE /users/agents
@@ -882,6 +882,6 @@ router.put('/agents/{agentID}', agentController.updateAgent);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.delete('/ageents/{agentID}', agentController.deleteAgent);
+router.delete('/agents/:agentID', agentController.deleteAgent);
 
 module.exports = router;

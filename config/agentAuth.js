@@ -27,32 +27,35 @@ module.exports = (req, res, next) => {
                 req.decoded.success = true;
                 ath = decoded;
                 if (ath.user) {
-                    // var user_id = ath.user.id
+                    var user_id = ath.user.id
 
-                    // var d_lng_id = 1;
+                    var d_lng_id = 1;
 
-                    // if (user_id != undefined && user_id != '' && user_id != null) {
-                    //     var sQry = `SELECT dealer_lng_id FROM dealer_language WHERE dealer_id = '${user_id}' LIMIT 1`;
-                    //     var dLang = await sql.query(sQry);
-                    //     if (dLang.length) {
-                    //         d_lng_id = dLang[0].dealer_lng_id;
-                    //     }
-                    // }
+                    if (user_id && user_id!=='undefined' && user_id !== 'null') {
 
-                    // if (d_lng_id == undefined || d_lng_id === "undefined" || d_lng_id == '' || d_lng_id == null || d_lng_id === 'null' || d_lng_id == '0') {
-                    //     d_lng_id = 1;
-                    // }
+                        var sQry = `SELECT dealer_lng_id FROM dealer_language WHERE dealer_id = '${user_id}' LIMIT 1`;
+                        var dLang = await sql.query(sQry);
+                        if (dLang.length) {
+                            d_lng_id = dLang[0].dealer_lng_id;
+                        }
+                    }
 
-                    // var sTranslation = `SELECT * FROM lng_translations WHERE lng_id = '${d_lng_id}'`;
-                    // let resp = await sql.query(sTranslation);
-                    // if (resp.length) {
-                    //     let obj = {}
-                    //     resp.forEach((elem) => {
-                    //         let key_id = elem.key_id;
-                    //         obj[key_id] = elem.key_value
-                    //     })
-                    //     req.translation = obj;
-                    // }
+                    if (d_lng_id == undefined || d_lng_id === "undefined" || d_lng_id == '' || d_lng_id == null || d_lng_id === 'null' || d_lng_id == '0') {
+                        d_lng_id = 1;
+                    }
+
+                    var sTranslation = `SELECT * FROM lng_translations WHERE lng_id = '${d_lng_id}'`;
+                    let resp = await sql.query(sTranslation);
+
+                    if (resp.length) {
+                        
+                        let obj = {}
+                        resp.forEach((elem) => {
+                            let key_id = elem.key_id;
+                            obj[key_id] = elem.key_value
+                        })
+                        req.translation = obj;
+                    }
 
                     next();
                 } else {

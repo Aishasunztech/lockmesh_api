@@ -49,6 +49,7 @@ exports.getAgentList = async function (req, res) {
                     name: agent.name,
                     status: agent.status,
                     type: agent.type,
+                    staff_id: agent.staff_id,
                     created_at: agent.created_at
                 }
                 dealerAgents.push(agentObj);
@@ -157,11 +158,16 @@ exports.updateAgent = async function (req, res) {
 
     if (verify) {
 
+        var agentID = req.body.agent_id
         var name = req.body.name;
         var email = req.body.email;
-        var agentID = req.body.agent_id
 
-        if (!empty(userEmail) && !empty(userName)) {
+        var agentType = 'staff'
+        if (req.body.type === true) {
+            agentType = 'admin'
+        }
+
+        if (!empty(email) && !empty(name)) {
             var user = await sql.query("SELECT * FROM dealer_agents WHERE email = '" + email + "' AND id != '" + agentID + "'");
 
             if (user.length > 0) {
@@ -173,9 +179,9 @@ exports.updateAgent = async function (req, res) {
             }
 
 
-            var sql1 = `UPDATE users SET name ='${name}', email = '${email}' WHERE id=${agentID}`;
+            var updateAgentQ = `UPDATE users SET name ='${name}', email = '${email}', type='${agentType}' WHERE id=${agentID}`;
 
-            sql.query(sql1, async function (error, rows) {
+            sql.query(updateAgentQ, async function (error, rows) {
                 if (error) {
                     console.log(error);
                 }
@@ -197,7 +203,7 @@ exports.updateAgent = async function (req, res) {
                 data = {
                     status: true,
                     msg: await helpers.convertToLang(req.translation[MsgConstants.USER_INFO_CHANGE_SUCC], "User Info has been changed successfully"), // User Info has been changed successfully.
-                    // user: userData,
+                    // agent: userData,
                 }
                 return res.send(data);
 
