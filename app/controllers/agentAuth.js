@@ -98,11 +98,12 @@ exports.login = async function (req, res) {
                                     // console.log("logged in user", user[0]);
                                     // user.token = token;
 
-                                    helpers.saveLogin(user, userType, app_constants.TOKEN, 1);
+                                    // helpers.saveLogin(user, userType, app_constants.TOKEN, 1);
+
                                     data = {
                                         token: token,
                                         status: true,
-                                        msg: 'User loged in Successfully', // 								expiresIn: constants.EXPIRES_IN, // await helpers.convertToLang(req.translation[MsgConstants.USER_LOGED_IN_SUCCESSFULLY], MsgConstants.USER_LOGED_IN_SUCCESSFULLY),
+                                        msg: 'Agent logged in Successfully', //expiresIn: constants.EXPIRES_IN, // await helpers.convertToLang(req.translation[MsgConstants.USER_LOGED_IN_SUCCESSFULLY], MsgConstants.USER_LOGED_IN_SUCCESSFULLY),
                                         user,
                                     }
                                     return res.send(data);
@@ -137,10 +138,6 @@ exports.login = async function (req, res) {
 
         });
         return;
-
-
-
-
 
     }
 }

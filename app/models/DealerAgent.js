@@ -27,8 +27,8 @@ var DealerAgent = sequelize_conn.define('dealer_agents', {
     },
     type: {
         type: Sequelize.ENUM,
-        values: ['agent', 'admin'],
-        defaultValue: 'agent',
+        values: ['staff', 'admin'],
+        defaultValue: 'staff',
     },
     status: {
         type: Sequelize.BOOLEAN,

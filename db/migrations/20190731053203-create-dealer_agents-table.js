@@ -34,8 +34,8 @@ module.exports = {
 			},
 			type: {
 				type: Sequelize.ENUM,
-				values: ['agent', 'admin'],
-				defaultValue: 'agent',
+				values: ['staff', 'admin'],
+				defaultValue: 'staff',
 				allowNull: false,
 			},
 			status: {

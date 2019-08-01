@@ -708,7 +708,7 @@ module.exports = {
 				values = values + " '" + user.dealer_id + "', " + commonValues + " ) ";
 			}
 		}
-		console.log(insertQ + values);
+		
 		await sql.query(insertQ + values)
 	},
 	getLoginByToken: async function (token) {

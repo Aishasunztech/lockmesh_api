@@ -24,7 +24,7 @@ const MsgConstants = require('../constants/MsgConstants');
 /**
  * This function comment is parsed by doctrine
  * @route GET /users/
- * @group nonVerify - Operations about user
+ * @group No Auth - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
  */

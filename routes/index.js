@@ -1,6 +1,7 @@
 
 // middlewares
 var authMiddleware = require('../config/auth');
+var agentAuthMiddleware = require('../config/agentAuth');
 
 // routes
 // var authRoutes = require('./auth');
@@ -24,7 +25,7 @@ module.exports = function (app) {
 	userRoutes);
 
 	app.group('/api/v1', function (router) {
-		router.use('/agents', agentAuth);
-		router.use('/agents', agentRoutes);
+		router.use('/agent', agentAuth);
+		router.use('/agent', agentAuthMiddleware, agentRoutes);
 	});
 }
