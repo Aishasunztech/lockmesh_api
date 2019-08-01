@@ -428,8 +428,10 @@ exports.transferDeviceProfile = async function (req, res) {
     if (verify) {
         let loggedDealerId = verify.user.id;
         let loggedDealerType = verify.user.user_type;
-        let device_id = req.body.device_id;
-        console.log('device id', device_id);
+        let flagged_device_id = req.body.flagged_device_id;
+        let device_id = req.body.device.device_id;
+        console.log(flagged_device_id, ' ubaid device id ', device_id);
+        return;
         var code = randomize('0', 7);
         var activation_code = await helpers.checkActivationCode(code);
         // let device_id_new = helpers.getDeviceId();
@@ -1377,7 +1379,7 @@ exports.unflagDevice = async function (req, res) {
                     }
                     res.send(data);
                 } else {
-                    await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.device_id= "' + device_id + '"', async function (error, resquery, fields) {
+                    await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE devices.reject_status = 0 AND devices.device_id= "' + device_id + '"', async function (error, resquery, fields) {
                         if (error) {
                             console.log(error);
                         }
@@ -1389,13 +1391,19 @@ exports.unflagDevice = async function (req, res) {
                             resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
                             resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                             // dealerData = await getDealerdata(res[i]);
+                            device_helpers.saveActionHistory(resquery[0], constants.DEVICE_UNFLAGGED)
                             data = {
                                 // "data": resquery[0],
                                 status: true,
                                 msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_UNFLAG_SUCC], "Device Unflagged successfully"), // Device Unflagged successfully.
                             }
+                        } else {
+                            data = {
+                                status: false,
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Error")
+                            }
                         }
-                        device_helpers.saveActionHistory(resquery[0], constants.DEVICE_UNFLAGGED)
+                        
                         res.send(data);
                     })
 
@@ -1443,7 +1451,7 @@ exports.flagDevice = async function (req, res) {
                 } else {
                     sockets.sendDeviceStatus(gtres[0].device_id, "suspended");
 
-                    let resquery = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"')
+                    let resquery = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE devices.reject_status = 0 AND devices.id= "' + device_id + '"')
                     // console.log('lolo else', resquery)
                     // console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"');
                     if (resquery.length) {

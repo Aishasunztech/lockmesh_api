@@ -339,8 +339,11 @@ module.exports = {
         let status = "";
 
         // console.log('device.transfer_status : ', device.transfer_status)
-        if (device.transfer_status === 1) {
-            status = Constants.DEVICE_TRANSFER
+        if (device.transfer_status === 0 && device.account_status === 'suspended' && device.flagged !== 'Not flagged') {
+            status = Constants.DEVICE_FLAGGED
+        }
+        else if (device.transfer_status === 1 && device.account_status === 'suspended' && device.flagged !== 'Not flagged') {
+            status = Constants.DEVICE_TRANSFERED
         }
         else if (device.status === 'active' && (device.account_status === '' || device.account_status === null) && device.unlink_status === 0 && (device.device_status === 1 || device.device_status === '1')) {
             status = Constants.DEVICE_ACTIVATED
@@ -431,7 +434,7 @@ module.exports = {
         }
     },
     saveActionHistory: async (device, action) => {
-        // console.log('SAVE HISTORY', action, device);
+        console.log('SAVE HISTORY', action, device);
         let query = "INSERT INTO acc_action_history (action, device_id, device_name, session_id, model, ip_address, simno, imei, simno2, imei2, serial_number, mac_address, fcm_token, online, is_sync, flagged, screen_start_date, reject_status, account_email, dealer_id, prnt_dlr_id, link_code, client_id, start_date, expiry_months, expiry_date, activation_code, status, device_status, activation_status, wipe_status, account_status, unlink_status, transfer_status, dealer_name, prnt_dlr_name, user_acc_id, pgp_email, chat_id, sim_id, finalStatus) VALUES "
         let finalQuery = ''
         if (action === Constants.DEVICE_UNLINKED || action === Constants.UNLINK_DEVICE_DELETE) {
