@@ -867,13 +867,22 @@ router.get('/agents', agentController.getAgentList);
 router.post('/agents', agentController.addAgent);
 
 /**
- * @route PUT /users/agents
+ * @route PUT /users/agents/{agentID}
  * @group Agents - Operations about Dealer Agents
  * @returns {object} 200 - An array of agents info
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
 router.put('/agents/:agentID', agentController.updateAgent);
+
+/**
+ * @route PUT /users/agents/{agentID}/status
+ * @group Agents - Operations about Dealer Agents
+ * @returns {object} 200 - An array of agents info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+router.put('/agents/:agentID/status', agentController.changeStatus);
 
 /**
  * @route DELETE /users/agents
