@@ -729,7 +729,7 @@ router.get('/apklist', async function (req, res) {
                     "apk_status": rows[i].status,
                     "package_name": rows[i].package_name,
                     "apk_size": rows[i].apk_size,
-                    "version_code": rows[i].varsion_code,
+                    "version_code": rows[i].version_code,
                 }
                 data.push(dta);
             }
