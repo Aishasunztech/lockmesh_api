@@ -173,6 +173,7 @@ exports.updateAgent = async function (req, res) {
                 data = {
                     status: false,
                     msg: await helpers.convertToLang(req.translation['agent already registered'], "Agent Already Registered. Please use another email"), // User Already Registered. Please use another email.',
+                    agent: null
                 }
                 return res.send(data);
             }
@@ -211,12 +212,12 @@ exports.updateAgent = async function (req, res) {
                     sendEmail("Agent info Changed Successfully", html, verify.user.email)
                     sendEmail("Agent Info Changed Successfully", html, email)
                 }
-
+                agentData = await sql.query(agentDataQ);
 
                 data = {
                     status: true,
                     msg: await helpers.convertToLang(req.translation[MsgConstants.USER_INFO_CHANGE_SUCC], "Agent Info has been changed successfully"), // User Info has been changed successfully.
-                    // agent: userData,
+                    agent: agentData[0],
                 }
                 return res.send(data);
 
@@ -226,6 +227,7 @@ exports.updateAgent = async function (req, res) {
             data = {
                 status: false,
                 msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_EMAIL_NAME], "Invalid email or name"), // Invalid email or name'
+                agent: null
             }
             return res.send(data);
         }
