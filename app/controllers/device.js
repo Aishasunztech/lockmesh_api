@@ -64,7 +64,9 @@ exports.devices = async function (req, res) {
             for (var i = 0; i < results.length; i++) {
                 results[i].finalStatus = device_helpers.checkStatus(results[i])
                 results[i].pgp_email = await device_helpers.getPgpEmails(results[i])
-                results[i].sim_id = await device_helpers.getSimids(results[i])
+                let simIds = await device_helpers.getSimids(results[i])
+                results[i].sim_id = simIds.sim_id
+                results[i].sim_id = simIds.sim_id2
                 results[i].chat_id = await device_helpers.getChatids(results[i])
                 results[i].validity = await device_helpers.checkRemainDays(results[i].created_at, results[i].validity)
             }
@@ -114,6 +116,7 @@ exports.devices = async function (req, res) {
                 device.serial_number = checkValue(device.serial_number)
                 device.session_id = checkValue(device.session_id)
                 device.sim_id = checkValue(device.sim_id)
+                device.sim_id2 = checkValue(device.sim_id2)
                 device.simno = checkValue(device.simno)
                 device.simno2 = checkValue(device.simno2)
                 device.start_date = checkValue(device.start_date)
@@ -408,9 +411,19 @@ exports.acceptDevice = async function (req, res) {
                                                     let updatePgpEmails = 'update pgp_emails set user_acc_id = ' + usr_acc_id + ', used=1 where pgp_email ="' + pgp_email + '"';
                                                     await sql.query(updatePgpEmails);
 
-                                                    var slctquery = "select devices.*, " + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.user_acc_id = usr_acc.device_id where devices.device_id = '" + device_id + "'";
+                                                    var slctquery = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) WHERE devices.device_id = '${device_id}'`;
                                                     // console.log(slctquery);
                                                     rsltq = await sql.query(slctquery);
+                                                    for (var i = 0; i < rsltq.length; i++) {
+                                                        rsltq[i].finalStatus = device_helpers.checkStatus(rsltq[i])
+                                                        rsltq[i].pgp_email = await device_helpers.getPgpEmails(rsltq[i])
+                                                        let simIds = await device_helpers.getSimids(rsltq[i])
+                                                        rsltq[i].sim_id = simIds.sim_id
+                                                        rsltq[i].sim_id = simIds.sim_id2
+                                                        rsltq[i].chat_id = await device_helpers.getChatids(rsltq[i])
+                                                        rsltq[i].validity = await device_helpers.checkRemainDays(rsltq[i].created_at, results[i].validity)
+                                                    }
+
                                                     // console.log(rsltq);
 
                                                     if (policy_id !== '') {
@@ -729,7 +742,9 @@ exports.editDevices = async function (req, res) {
                                 for (var i = 0; i < rsltq.length; i++) {
                                     rsltq[i].finalStatus = device_helpers.checkStatus(rsltq[i])
                                     rsltq[i].pgp_email = await device_helpers.getPgpEmails(rsltq[i])
-                                    rsltq[i].sim_id = await device_helpers.getSimids(rsltq[i])
+                                    let simIds = await device_helpers.getSimids(rsltq[i])
+                                    rsltq[i].sim_id = simIds.sim_id
+                                    rsltq[i].sim_id = simIds.sim_id2
                                     rsltq[i].chat_id = await device_helpers.getChatids(rsltq[i])
                                     // dealerData = await device_helpers.getDealerdata(results[i]);
                                 }
@@ -830,7 +845,7 @@ exports.unlinkDevice = async function (req, res) {
 
         if (!empty(device_id)) {
             let dvcId = await device_helpers.getDvcIDByDeviceID(device_id);
-            var sql1 = `DELETE from usr_acc  where device_id=${device_id}`;
+            var sql1 = `DELETE from usr_acc  where device_id = ${device_id}`;
             sql.query(sql1, async function (error, results) {
                 if (error) {
                     data = {
@@ -1022,7 +1037,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                         })
                                                     }
                                                     if (exp_month !== '0') {
-                                                        let service_billing = `INSERT INTO services_billing (user_acc_id , dealer_id , products, packages , total_credits) VALUES (${user_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${total_price})`
+                                                        let service_billing = `INSERT INTO services_billing(user_acc_id, dealer_id, products, packages, total_credits) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', ${total_price})`
                                                         await sql.query(service_billing);
                                                     }
 
@@ -1064,7 +1079,9 @@ exports.createDeviceProfile = async function (req, res) {
                                     for (var i = 0; i < rsltq.length; i++) {
                                         rsltq[i].finalStatus = device_helpers.checkStatus(rsltq[i])
                                         rsltq[i].pgp_email = await device_helpers.getPgpEmails(rsltq[i])
-                                        rsltq[i].sim_id = await device_helpers.getSimids(rsltq[i])
+                                        let sim_ids = await device_helpers.getSimids(rsltq[i])
+                                        rsltq[i].sim_id = sim_ids.sim_id
+                                        rsltq[i].sim_id2 = sim_ids.sim_id2
                                         rsltq[i].chat_id = await device_helpers.getChatids(rsltq[i])
                                         await device_helpers.saveActionHistory(rsltq[i], constants.DEVICE_PRE_ACTIVATION);
                                     }
@@ -1166,7 +1183,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                             let remaining_credits = dealer_credits
                                                             if (req.body.term !== '0') {
 
-                                                                let service_billing = `INSERT INTO services_billing (user_acc_id , dealer_id , products, packages , total_credits) VALUES (${user_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${total_price})`
+                                                                let service_billing = `INSERT INTO services_billing(user_acc_id, dealer_id, products, packages, total_credits) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', ${total_price})`
                                                                 await sql.query(service_billing);
                                                                 remaining_credits = dealer_credits - total_price
                                                                 let deduct_credits = 'update dealer_credits set credits =' + remaining_credits + ' where dealer_id ="' + dealer_id + '"';
@@ -1204,7 +1221,9 @@ exports.createDeviceProfile = async function (req, res) {
 
                                                                 results[0].finalStatus = device_helpers.checkStatus(results[0])
                                                                 results[0].pgp_email = await device_helpers.getPgpEmails(results[0])
-                                                                results[0].sim_id = await device_helpers.getSimids(results[0])
+                                                                let sim_ids = await device_helpers.getSimids(results[0])
+                                                                results[0].sim_id = sim_ids.sim_id
+                                                                results[0].sim_id2 = sim_ids.sim_id2
                                                                 results[0].chat_id = await device_helpers.getChatids(results[0])
 
                                                                 // dealerData = await device_helpers.getDealerdata(results[i]);
@@ -1319,7 +1338,9 @@ exports.suspendAccountDevices = async function (req, res) {
                             if (resquery.length) {
                                 resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
                                 resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
-                                resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
+                                let sim_ids = await device_helpers.getSimids(resquery[0])
+                                resquery[0].sim_id = sim_ids.sim_id
+                                resquery[0].sim_id2 = sim_ids.sim_id2
                                 resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                                 // dealerData = await getDealerdata(res[i]);
                                 data = {
@@ -1369,7 +1390,9 @@ exports.suspendAccountDevices = async function (req, res) {
                                 if (resquery.length) {
                                     resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
                                     resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
-                                    resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
+                                    let sim_ids = await device_helpers.getSimids(resquery[0])
+                                    resquery[0].sim_id = sim_ids.sim_id
+                                    resquery[0].sim_id2 = sim_ids.sim_id2
                                     resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                                     // dealerData = await getDealerdata(res[i]);
                                     data = {
@@ -1447,7 +1470,9 @@ exports.activateDevice = async function (req, res) {
                             if (resquery.length) {
                                 resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
                                 resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
-                                resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
+                                let sim_ids = await device_helpers.getSimids(resquery[0])
+                                resquery[0].sim_id = sim_ids.sim_id
+                                resquery[0].sim_id2 = sim_ids.sim_id2
                                 resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                                 // dealerData = await getDealerdata(res[i]);
                                 sockets.sendDeviceStatus(resquery[0].device_id, "active", true);
@@ -1491,7 +1516,9 @@ exports.activateDevice = async function (req, res) {
                                 if (resquery.length) {
                                     resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
                                     resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
-                                    resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
+                                    let sim_ids = await device_helpers.getSimids(resquery[0])
+                                    resquery[0].sim_id = sim_ids.sim_id
+                                    resquery[0].sim_id2 = sim_ids.sim_id2
                                     resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                                     // dealerData = await getDealerdata(res[i]);
                                     sockets.sendDeviceStatus(resquery[0].device_id, "active", true);
@@ -1564,7 +1591,9 @@ exports.wipeDevice = async function (req, res) {
                         if (resquery.length) {
                             resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
                             resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
-                            resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
+                            let sim_ids = await device_helpers.getSimids(resquery[0])
+                            resquery[0].sim_id = sim_ids.sim_id
+                            resquery[0].sim_id2 = sim_ids.sim_id2
                             resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                             // dealerData = await getDealerdata(res[i]);
 
@@ -1620,7 +1649,9 @@ exports.unflagDevice = async function (req, res) {
                         if (resquery.length) {
                             resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
                             resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
-                            resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
+                            let simIds = await device_helpers.getSimids(resquery[0])
+                            resquery[0].sim_id = simIds.sim_id
+                            resquery[0].sim_id2 = simIds.sim_id2
                             resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                             // dealerData = await getDealerdata(res[i]);
                             data = {
@@ -1681,7 +1712,9 @@ exports.flagDevice = async function (req, res) {
                     if (resquery.length) {
                         resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
                         resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
-                        resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
+                        let sim_ids = await device_helpers.getSimids(resquery[0])
+                        resquery[0].sim_id = sim_ids.sim_id
+                        resquery[0].sim_id2 = sim_ids.sim_id2
                         resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                         // dealerData = await getDealerdata(res[i]);
                         device_helpers.saveActionHistory(resquery[0], constants.DEVICE_FLAGGED)
@@ -1748,7 +1781,9 @@ exports.connectDevice = async function (req, res) {
                     device_data = results[0]
                     device_data.finalStatus = device_helpers.checkStatus(results[0]);
                     device_data.pgp_email = await device_helpers.getPgpEmails(results[0]);
-                    device_data.sim_id = await device_helpers.getSimids(results[0]);
+                    let sim_ids = await device_helpers.getSimids(results[0]);
+                    device_data.sim_id = sim_ids.sim_id;
+                    device_data.sim_id2 = sim_ids.sim_id2
                     device_data.chat_id = await device_helpers.getChatids(results[0]);
 
                     if (dealer_details.length) {
@@ -2100,10 +2135,10 @@ exports.applySettings = async function (req, res) {
                     let permissions = subExtensions;
 
                     if (isOnline) {
-                        let updateAppliedSettings = `UPDATE device_history SET status=1 WHERE device_id='${device_id}' AND type='${type}'`;
+                        let updateAppliedSettings = `UPDATE device_history SET status = 1 WHERE device_id = '${device_id}' AND type = '${type}'`;
                         await sql.query(updateAppliedSettings);
 
-                        // var setting_query = `SELECT * FROM device_history WHERE device_id='${device_id}' AND status=1 ORDER BY created_at DESC LIMIT 1`;
+                        // var setting_query = `SELECT * FROM device_history WHERE device_id = '${device_id}' AND status = 1 ORDER BY created_at DESC LIMIT 1`;
                         // let settingHistory = await sql.query(setting_query);
 
                         // if (settingHistory.length > 0 && data.device_id != null) {
