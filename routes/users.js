@@ -885,6 +885,15 @@ router.put('/agents/:agentID', agentController.updateAgent);
 router.put('/agents/:agentID/status', agentController.changeStatus);
 
 /**
+ * @route PUT /users/agents/{agentID}/reset-pwd
+ * @group Agents - Operations about Dealer Agents
+ * @returns {object} 200 - An array of agents info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+router.put('/agents/:agentID/reset-pwd', agentController.resetPwd);
+
+/**
  * @route DELETE /users/agents
  * @group Agents - Operations about Dealer Agents
  * @returns {object} 200 - An array of agents info

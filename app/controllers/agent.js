@@ -100,7 +100,7 @@ exports.addAgent = async function (req, res) {
         });
 
         var enc_pwd = await bcrypt.hash(user_pwd, 10); //encryted pwd
-        
+
         if (!empty(name) && !empty(email)) {
             var agent = await sql.query(`SELECT * FROM dealer_agents WHERE email = '${email}' AND delete_status = 0`);
 
@@ -180,8 +180,8 @@ exports.updateAgent = async function (req, res) {
 
             let agentDataQ = `SELECT * from dealer_agents WHERE id=${agentID}`;
             let agentData = await sql.query(agentDataQ);
-            var agentPwd=null;
-            var enc_pwd=null;
+            var agentPwd = null;
+            var enc_pwd = null;
             updateAgentQ = '';
 
             if (agentData[0].email != email) {
@@ -189,7 +189,7 @@ exports.updateAgent = async function (req, res) {
                     length: 10,
                     numbers: true
                 });
-        
+
                 enc_pwd = await bcrypt.hash(agentPwd, 10); //encryted pwd
                 updateAgentQ = `UPDATE dealer_agents SET name ='${name}', email = '${email}', type='${agentType}', password='${enc_pwd}' WHERE id=${agentID}`;
 
@@ -279,7 +279,7 @@ exports.changeStatus = async function (req, res) {
 
 
             let changeAgentStatusQ = `UPDATE dealer_agents SET status = ${status} WHERE id =${agentID}`;
-            
+
             sql.query(changeAgentStatusQ, async function (err, result) {
                 if (err) {
                     console.log(err);
@@ -287,7 +287,7 @@ exports.changeStatus = async function (req, res) {
                 }
 
                 if (result && result.affectedRows !== 0) {
-                    
+
                     data = {
                         status: true,
                         msg: await helpers.convertToLang(req.translation['Agent status changed successfully'], "Agent status changed successfully"), // User deleted successfully.
@@ -310,6 +310,61 @@ exports.changeStatus = async function (req, res) {
     }
 }
 
+exports.resetPwd = async function (req, res) {
+    var verify = req.decoded;
+    if (verify) {
+        var agentID = req.params.agentID
+        if (!empty(agentID) && agentID !== undefined) {
+            
+            var agentPwd = generator.generate({
+                length: 10,
+                numbers: true
+            });
+            var enc_pwd = await bcrypt.hash(agentPwd, 10);
+        
+            var dealerAgentQ = `SELECT * FROM dealer_agents WHERE id= ${agentID} limit 1`;
+            var dealerAgent = await sql.query(dealerAgentQ);
+
+            if (dealerAgent.length) {
+                let updateDealerAgentQ = `UPDATE dealer_agents SET password='${enc_pwd}' WHERE id= ${agentID}`;
+                let updateDealer = await sql.query(updateDealerAgentQ);
+                if(updateDealer.affectedRows===0){
+                    data = {
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation["Password is not changed"], "Password is not changed"), // Password changed successfully.Please check your email.
+                    };
+                    return res.send(data);
+                } else {
+                    var html = 'Agent details are : <br> ' +
+                    'Staff ID : ' + dealerAgent[0].staff_id + '.<br> ' +
+                    'Name : ' + dealerAgent[0].name + '<br> ' +
+                    'Email : ' + dealerAgent[0].email + '<br> ' +
+                    'Password : ' + agentPwd + '<br> '
+                    sendEmail("Agent password changed Successfully", html, verify.user.email)
+                    sendEmail("Agent password changed Successfully", html, dealerAgent[0].email)
+                    data = {
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation["Password changed successfully"], "Password changed successfully"), // Password changed successfully.Please check your email.
+                    };
+                    return res.send(data);
+                }
+                
+            } else {
+                data = {
+                    status: false,
+                    msg: await helpers.convertToLang(req.translation["Invalid Agent"], "Invalid Agent"), // Invalid User and Password'
+                };
+                return res.send(data);
+            }
+        } else {
+            data = {
+                status: false,
+                msg: await helpers.convertToLang(req.translation["Invalid Agent"], "Invalid Agent"), // Invalid User.
+            }
+            return res.send(data);
+        }
+    }
+}
 // exports.updateProfile = async function (req, res) {
 //     res.setHeader('Content-Type', 'application/json');
 
