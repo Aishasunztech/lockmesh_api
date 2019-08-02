@@ -55,6 +55,7 @@
     "stackify-logger": "^3.0.0",
     "stackify-node-apm": "^1.6.1",
     "stripe": "^7.4.0",
+    "swagger-ui-express": "^4.0.7",
     "uniqid": "^5.0.3",
     "xlsx": "^0.14.2",
     "zlib": "^1.0.5"

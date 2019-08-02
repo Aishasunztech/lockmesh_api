@@ -198,6 +198,16 @@ module.exports = {
 			return false;
 		}
 	},
+	userDealerCount: async (type) => {
+
+		var query = "SELECT COUNT(*) as dealer_count FROM dealers WHERE type =" + type;
+		let res = await sql.query(query);
+		if (res.length) {
+			return res[0].dealer_count;
+		} else {
+			return false;
+		}
+	},
 	getSdealersByDealerId: async (dealer_id) => {
 
 		var query = "SELECT * FROM dealers WHERE connected_dealer = " + dealer_id;
@@ -896,15 +906,15 @@ module.exports = {
 
 	// Policy Helpers
 	refactorPolicy: async function (policy) {
-		
+
 		// check if push application is updated
 		let pushApps = JSON.parse(policy[0].push_apps);
 		let apksQ = 'SELECT * FROM apk_details WHERE delete_status != 1';
 		let apks = await sql.query(apksQ);
-		apks.forEach(apk=>{
+		apks.forEach(apk => {
 			let index = pushApps.findIndex(app => app.apk_id === apk.id)
-			if(index && index !== -1){
-				
+			if (index && index !== -1) {
+
 				pushApps[index].apk = apk.apk;
 				pushApps[index].apk_name = apk.app_name;
 				pushApps[index].logo = apk.logo;
@@ -912,8 +922,8 @@ module.exports = {
 				pushApps[index].version_name = apk.version_name;
 			}
 		})
-		
-		
+
+
 		// refactor applist
 		let appList = JSON.parse(policy[0].app_list);
 		appList.forEach((app) => {
@@ -943,12 +953,12 @@ module.exports = {
 		policy[0].permissions = JSON.stringify(permissions);
 		return policy;
 	},
-	insertPolicyPushApps : async function (policyId, pushApps, newPolicy=false) {
-		if(!newPolicy){
+	insertPolicyPushApps: async function (policyId, pushApps, newPolicy = false) {
+		if (!newPolicy) {
 			await sql.query(`DELETE FROM policy_apps WHERE policy_id=${policyId}`);
 		}
 		let policyAppsQuery = `INSERT INTO policy_apps (policy_id, apk_id, guest, encrypted, enable) VALUES ?`;
-		
+
 		let policyAppValues = []
 		pushApps.forEach((app) => {
 			policyAppValues.push([policyId, app.apk_id, app.guest, app.encrypted, app.enable]);

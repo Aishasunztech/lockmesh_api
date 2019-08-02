@@ -257,7 +257,7 @@ exports.savePackage = async function (req, res) {
                     }
                 }
                 let pkg_features = JSON.stringify(data.pkgFeatures)
-                let insertQuery = "INSERT INTO packages (dealer_id , dealer_type , pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features) VALUES('" + dealer_id + "' ,'" + verify.user.user_type + "' , '" + data.pkgName + "', '" + data.pkgTerm + "', '" + data.pkgPrice + "','" + days + "', '" + pkg_features + "')";
+                let insertQuery = "INSERT INTO packages (dealer_id , dealer_type , pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features , dealers) VALUES('" + dealer_id + "' ,'" + verify.user.user_type + "' , '" + data.pkgName + "', '" + data.pkgTerm + "', '" + data.pkgPrice + "','" + days + "', '" + pkg_features + "' , '[]')";
                 sql.query(insertQuery, async (err, rslt) => {
                     if (err) {
                         console.log(err)
@@ -398,31 +398,47 @@ exports.getPackages = async function (req, res) {
                 }
 
                 if (reslt) {
-                    console.log('result for get prices are is ', reslt);
+                    // console.log('result for get prices are is ', reslt);
 
                     if (reslt.length) {
-                        console.log(reslt, 'reslt data of prices')
+                        let packages = [];
+                        let dealerCount = 0;
+                        if (verify.user.user_type !== SDEALER) {
+                            if (verify.user.user_type === ADMIN) {
+                                let dealerRoleId = await helpers.getuserTypeIdByName(DEALER);
+                                dealerCount = await helpers.userDealerCount(dealerRoleId);
+                            }
+                            else if (verify.user.user_type === DEALER) {
+                                let sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                                dealerCount = sdealerList.length;
+                            }
+
+                            for (var i = 0; i < reslt.length; i++) {
+                                // console.log('push apps', reslt[i].push_apps)
+                                let permissions = (reslt[i].dealers !== undefined && reslt[i].dealers !== null) ? JSON.parse(reslt[i].dealers) : [];
+                                let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
+                                let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                                console.log(permissionC);
+
+                                reslt[i].dealer_permission = permissions;
+                                reslt[i].permission_count = permissionC;
+                                // packages.push(dta);
+                            }
+                        }
+                        // console.log(reslt, 'reslt data of prices')
                         res.send({
                             status: true,
                             msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
                             data: reslt
 
                         })
-                    } else {
-                        res.send({
-                            status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
-                            data: []
-
-                        })
                     }
-
                 } else {
-
                     res.send({
                         status: true,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
                         data: []
+
                     })
                 }
             })
@@ -438,68 +454,38 @@ exports.getPackages = async function (req, res) {
     }
 }
 
+
 exports.getParentPackages = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
 
     if (verify) {
+        let selectQuery = ""
         // console.log(verify.user);
         let dealer_id = verify.user.dealer_id;
         if (dealer_id) {
-            if (verify.user.user_type === DEALER) {
+            selectQuery = "select dealer_packages.* , packages.* from dealer_packages join packages on packages.id = dealer_packages.package_id where dealer_packages.dealer_id = ' " + dealer_id + "'";
 
-                let selectQuery = "SELECT * FROM packages WHERE dealer_type='admin'";
-                sql.query(selectQuery, async (err, reslt) => {
-                    if (err) {
-                        console.log(err)
-                    }
+            sql.query(selectQuery, async (err, reslt) => {
+                if (err) {
+                    console.log(err)
+                }
+                if (reslt.length) {
+                    // console.log(reslt, 'reslt data of prices')
+                    res.send({
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
+                        data: reslt
 
-                    if (reslt.length) {
-                        res.send({
-                            status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
-                            data: reslt
-
-                        })
-                    } else {
-
-                        res.send({
-                            status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
-                            data: []
-                        })
-                    }
-                })
-
-            }
-            else if (verify.user.user_type === SDEALER) {
-
-                let selectQuery = "SELECT * FROM packages WHERE dealer_type='dealer' AND dealer_id= " + verify.user.connected_dealer;
-                sql.query(selectQuery, async (err, reslt) => {
-                    if (err) {
-                        console.log(err)
-                    }
-                    if (reslt.length) {
-                        // console.log(reslt, 'reslt data of prices')
-                        res.send({
-                            status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
-                            data: reslt
-
-                        })
-                    }
-                    else {
-                        res.send({
-                            status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
-                            data: []
-                        })
-                    }
-                })
-
-            }
-
-
-
+                    })
+                }
+                else {
+                    res.send({
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "Data not found"), // "Data found",
+                        data: []
+                    })
+                }
+            })
         } else {
 
             res.send({

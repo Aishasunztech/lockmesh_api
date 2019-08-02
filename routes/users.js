@@ -185,6 +185,8 @@ router.post('/resetpwd', dealerController.resetPwd);
 /*Get All Dealers */
 router.get('/dealers', dealerController.getAllDealers);
 
+router.get('/user_dealers', dealerController.getUserDealers);
+
 /*Get dealers*/
 router.get('/dealers/:pageName', dealerController.getDealers);
 
@@ -350,6 +352,9 @@ router.post('/purchase_credits_CC', accountController.purchaseCredits_CC);
 
 /** Save Policy Permission **/
 router.post('/save_policy_permissions', apkController.savePolicyPermissions);
+
+
+router.post('/save_package_permissions', accountController.savePackagePermissions);
 
 
 //GET logion history
