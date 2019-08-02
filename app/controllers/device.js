@@ -3432,8 +3432,15 @@ exports.getIMEI_History = async function(req, res) {
 
 /**
  * Update device IDs
+ * Update device IDs of all existing devices
+ * http://localhost:3000/users/devices/update_device_ids
+ * one time useage - menual end point
+ *
+ *
+ * By Muhammad Irfan Afzal - mi3afzal
+ * 01-08-2019
  * **/
-exports.changeids = async function(req, res) {
+exports.updateDeviceIDs = async function(req, res) {
 	var verify = req.decoded; // await verifyToken(req, res);
 	if (!verify) {
 		data = {
@@ -3447,7 +3454,7 @@ exports.changeids = async function(req, res) {
 	sql.query(
 		`SELECT * FROM devices WHERE device_id IS NOT NULL ORDER BY id ASC`,
 		async function(error, results, fields) {
-			if (error) throw new error();
+			if (error) throw error;
 
 			await sql.query(`TRUNCATE apps_queue_jobs`);
 			await sql.query(`TRUNCATE policy_queue_jobs`);

@@ -366,7 +366,7 @@ module.exports = {
 			app_constants.DEALER_PIN_SYSTEM_LETTER_INDEX,
 			app_constants.DEALER_PIN_SYSTEM_LETTER
 		);
-		let query = `SELECT dealer_id FROM dealers WHERE link_code = '${link_code}' `;
+		let query = `SELECT link_code FROM dealers WHERE link_code = '${link_code}' `;
 		let result = await sql.query(query);
 		if (result.length > 1) {
 			link_code = this.genrateLinkCode();
@@ -1028,6 +1028,7 @@ module.exports = {
 		});
 	},
 	replaceAt: function(string, index, replace) {
+		index--;
 		return (
 			string.substring(0, index) + replace + string.substring(index + 1)
 		);
