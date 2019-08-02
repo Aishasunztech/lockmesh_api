@@ -221,9 +221,9 @@ exports.addDealer = async function (req, res) {
                 sdealerDealerId = loggedInuid;
             }
 
-
-            var link_code = randomize('0', 6);
-            link_code = await general_helpers.checkLinkCode(link_code)
+            /* var link_code = randomize('0', 6);
+            link_code = await general_helpers.checkLinkCode(link_code); */
+            var link_code = await general_helpers.genrateLinkCode();
 
             var type = await general_helpers.getDealerTypeIdByName(pageType);
 

@@ -359,18 +359,19 @@ module.exports = {
 		}
 	},
 
-	checkLinkCode: async function(link_code) {
-		let query =
-			"select dealer_id from dealers where link_code = '" +
-			link_code +
-			"';";
+	genrateLinkCode: async function() {
+		let link_code = randomize("0", 6);
+		link_code = this.replaceAt(
+			link_code,
+			app_constants.DEALER_PIN_SYSTEM_LETTER_INDEX,
+			app_constants.DEALER_PIN_SYSTEM_LETTER
+		);
+		let query = `SELECT dealer_id FROM dealers WHERE link_code = '${link_code}' `;
 		let result = await sql.query(query);
 		if (result.length > 1) {
-			link_code = randomize("0", 6);
-			this.checkLinkCode(link_code);
-		} else {
-			return link_code;
+			link_code = this.genrateLinkCode();
 		}
+		return link_code;
 	},
 	checkVerificationCode: async function(code) {
 		let query =
