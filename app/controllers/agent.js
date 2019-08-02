@@ -241,30 +241,29 @@ exports.deleteAgent = async function (req, res) {
 
         if (!empty(agentID) && agentID != undefined) {
 
-            let deleteUserQ = `UPDATE dealer_agents SET delete_status = 1 WHERE id =${agentID}'`;
-
-            sql.query(deleteUserQ, async function (err, result) {
+            let deleteAgentQ = `UPDATE dealer_agents SET delete_status = 1 WHERE id =${agentID}`;
+            console.log(deleteAgentQ);
+            sql.query(deleteAgentQ, async function (err, result) {
                 if (err) {
                     console.log(err)
                 }
                 if (result && result.affectedRows !== 0) {
                     data = {
-                        'status': true,
-                        'msg': await helpers.convertToLang(req.translation[MsgConstants.USER_DEL_SUCC], "User deleted successfully"), // User deleted successfully.
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation['Agent deleted successfully'], "Agent deleted successfully"), // User deleted successfully.
                     }
-                    return res.send(data);
                 } else {
                     data = {
-                        'status': true,
-                        'msg': await helpers.convertToLang(req.translation[MsgConstants.USER_NOT_DEL_SUCC], "User not deleted try again later"), // User not deleted try again later.'
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation['User not deleted try again later'], "User not deleted try again later"), // User not deleted try again later.'
                     }
-                    return res.send(data);
                 }
+                return res.send(data);
             })
         } else {
             data = {
-                'status': false,
-                'msg': await helpers.convertToLang(req.translation[MsgConstants.INVALID_USER], "Invalid User"), // Invalid User.
+                status: false,
+                msg: await helpers.convertToLang(req.translation['Invalid Agent'], "Invalid Agent"), // Invalid User.
             }
             return res.send(data);
         }
@@ -272,7 +271,43 @@ exports.deleteAgent = async function (req, res) {
 }
 
 exports.changeStatus = async function (req, res) {
+    var verify = req.decoded;
+    if (verify) {
+        var agentID = req.params.agentID
+        if (!empty(agentID) && agentID !== undefined) {
+            let status = req.body.status
 
+
+            let changeAgentStatusQ = `UPDATE dealer_agents SET status = ${status} WHERE id =${agentID}`;
+            
+            sql.query(changeAgentStatusQ, async function (err, result) {
+                if (err) {
+                    console.log(err);
+
+                }
+
+                if (result && result.affectedRows !== 0) {
+                    
+                    data = {
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation['Agent status changed successfully'], "Agent status changed successfully"), // User deleted successfully.
+                    }
+                } else {
+                    data = {
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation["Agent status not changed"], "Agent status not changed"), // User not deleted try again later.'
+                    }
+                }
+                return res.send(data);
+            })
+        } else {
+            data = {
+                status: false,
+                msg: await helpers.convertToLang(req.translation["Invalid Agent"], "Invalid Agent"), // Invalid User.
+            }
+            return res.send(data);
+        }
+    }
 }
 
 // exports.updateProfile = async function (req, res) {
