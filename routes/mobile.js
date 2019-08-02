@@ -726,7 +726,10 @@ router.get('/apklist', async function (req, res) {
                     "apk_name": rows[i].app_name,
                     "logo": rows[i].logo,
                     "apk": rows[i].apk,
-                    "apk_status": rows[i].status
+                    "apk_status": rows[i].status,
+                    "package_name": rows[i].package_name,
+                    "apk_size": rows[i].apk_size,
+                    "version_code": rows[i].varsion_code,
                 }
                 data.push(dta);
             }

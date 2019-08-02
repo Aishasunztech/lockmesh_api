@@ -379,6 +379,7 @@ module.exports = {
 			return userId;
 		}
 	},
+
 	getExpDateByMonth: function (currentDate, expiryMonth) {
 		return moment(currentDate, "YYYY-MM-DD").add(expiryMonth, 'M').strftime("%Y/%m/%d");
 	},
@@ -717,7 +718,7 @@ module.exports = {
 				values = values + " '" + user.dealer_id + "', " + commonValues + " ) ";
 			}
 		}
-		console.log(insertQ + values);
+		
 		await sql.query(insertQ + values)
 	},
 	getLoginByToken: async function (token) {
@@ -964,5 +965,16 @@ module.exports = {
 			policyAppValues.push([policyId, app.apk_id, app.guest, app.encrypted, app.enable]);
 		})
 		await sql.query(policyAppsQuery, [policyAppValues]);
-	}
+	},
+	checkStaffID: async function (userId) {
+
+		let query = `SELECT staff_id FROM dealer_agents WHERE staff_id = '${userId}'`;
+		let result = await sql.query(query);
+		if (result.length > 1) {
+			userId = randomize('0', 6);
+			this.checkStaffID(userId);
+		} else {
+			return userId;
+		}
+	},
 }
