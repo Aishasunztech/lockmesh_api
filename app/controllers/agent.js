@@ -190,10 +190,10 @@ exports.updateAgent = async function (req, res) {
                 });
         
                 enc_pwd = await bcrypt.hash(agentPwd, 10); //encryted pwd
-                updateAgentQ = `UPDATE users SET name ='${name}', email = '${email}', type='${agentType}', password='${enc_pwd}' WHERE id=${agentID}`;
+                updateAgentQ = `UPDATE dealer_agents SET name ='${name}', email = '${email}', type='${agentType}', password='${enc_pwd}' WHERE id=${agentID}`;
 
             } else {
-                updateAgentQ = `UPDATE users SET name ='${name}', email = '${email}', type='${agentType}' WHERE id=${agentID}`;
+                updateAgentQ = `UPDATE dealer_agents SET name ='${name}', email = '${email}', type='${agentType}' WHERE id=${agentID}`;
             }
 
             sql.query(updateAgentQ, async function (error, rows) {
