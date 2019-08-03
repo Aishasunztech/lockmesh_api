@@ -858,6 +858,7 @@ router.post('/device_status', async function (req, res) {
             if (user_acc.length > 0) {
 
                 // get user account device status
+                user_acc[0]["flagged"] = device[0].flagged;
                 let deviceStatus = device_helpers.checkStatus(user_acc[0]);
                 console.log("device_status", deviceStatus);
 
@@ -999,7 +1000,9 @@ router.post('/device_status', async function (req, res) {
             var user_acc = await sql.query("SELECT * FROM usr_acc where device_id = " + device[0].id);
             if (user_acc.length > 0) {
 
+                // console.log('user_acc[0] ', user_acc[0].transfer_status, user_acc[0].status)
                 // get user account device status
+                user_acc[0]["flagged"] = device[0].flagged;
                 let deviceStatus = device_helpers.checkStatus(user_acc[0]);
                 console.log("device_status", deviceStatus);
 
@@ -1143,8 +1146,11 @@ router.post('/device_status', async function (req, res) {
         if (device.length > 0) {
             var user_acc = await sql.query("SELECT * FROM usr_acc where device_id = " + device[0].id);
             if (user_acc.length > 0) {
-
+                console.log('user_acc[0] ', user_acc[0].transfer_status, user_acc[0].status)
                 // get user account device status
+                console.log('status is: ', device[0].device_id)
+
+                user_acc[0]["flagged"] = device[0].flagged;
                 let deviceStatus = device_helpers.checkStatus(user_acc[0]);
                 console.log("device_status", deviceStatus);
 

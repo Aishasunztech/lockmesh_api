@@ -338,12 +338,12 @@ module.exports = {
     checkStatus: function (device) {
         let status = "";
 
-        // console.log('device.transfer_status : ', device.transfer_status)
-        if (device.transfer_status === 0 && device.account_status === 'suspended' && device.flagged !== 'Not flagged') {
-            status = Constants.DEVICE_FLAGGED
-        }
-        else if (device.transfer_status === 1 && device.account_status === 'suspended' && device.flagged !== 'Not flagged') {
+        console.log('device.flagged : ', device)
+        if (device.transfer_status == 1 && device.account_status === 'suspended' && device.flagged !== 'Not flagged') {
             status = Constants.DEVICE_TRANSFERED
+        }
+        else if (device.transfer_status == 0 && device.account_status === 'suspended' && device.flagged != 'Not flagged') {
+            status = Constants.DEVICE_FLAGGED
         }
         else if (device.status === 'active' && (device.account_status === '' || device.account_status === null) && device.unlink_status === 0 && (device.device_status === 1 || device.device_status === '1')) {
             status = Constants.DEVICE_ACTIVATED
