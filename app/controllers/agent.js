@@ -32,8 +32,7 @@ exports.getAgentList = async function (req, res) {
             where += ` AND delete_status = 0`;
         }
         
-        
-
+    
         let agents = await sql.query(agentsQ + where);
         if (agents.length) {
 
