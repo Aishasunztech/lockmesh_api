@@ -27,7 +27,7 @@ const app_constants = require('../../config/constants');
 
 // constants
 
-let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
+let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
 
 
 var data;
@@ -426,79 +426,100 @@ exports.transferDeviceProfile = async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
     var verify = req.decoded // await verifyToken(req, res);
     if (verify) {
-        let loggedDealerId = verify.user.id;
-        let loggedDealerType = verify.user.user_type;
-        let flagged_device_id = req.body.flagged_device_id;
-        let device_id = req.body.device.device_id;
-        console.log(flagged_device_id, ' ubaid device id ', device_id);
-        return;
-        var code = randomize('0', 7);
-        var activation_code = await helpers.checkActivationCode(code);
-        // let device_id_new = helpers.getDeviceId();
-        // device_id_new = await helpers.checkDeviceId(device_id_new);
+        try {
+            let loggedDealerId = verify.user.id;
+            let loggedDealerType = verify.user.user_type;
 
-        let device = Devices.findAll({
-            where: {
-                device_id: device_id
-            }
-        }).then(async function (response, err) {
-            console.log(err, 'oject res', response[0]['dataValues']);
-            let new_object = response[0]['dataValues'];
-            // new_object['device_id'] = device_id_new;
-            console.log('sdfa', new_object.activation_code);
-            // new_object['device_status'] = 0;
+            let flagged_device = req.body.flagged_device;
+            let reqDevice = req.body.reqDevice;
+            
+            // console.log("=============== transferDeviceProfile ============================");
+            // console.log('reqDevice is: ', reqDevice)
+            // console.log('flagged_device is: ', flagged_device)
 
-            var insertDevice = "INSERT INTO transferred_profiles (device_id, activation_code, name, client_id, chat_id, model, email, pgp_email, expiry_months, dealer_id, device_status, activation_status, ip_address,sim_id, simno, imei,sim_id2,simno2, imei2, serial_number, mac_address, s_dealer, s_dealer_name, account, fcm_token,account_status,start_date, expiry_date, link_code  ";
 
-            var value = ") VALUES ('" + device_id_new + "', '" + activation_code + "', '" + new_object.name + "', '" + new_object.client_id + "', '" + new_object.chat_id + "', '" + new_object.model + "', '" + new_object.email + "', '" + new_object.pgp_email + "', '" + new_object.expiry_months + "', '" + new_object.dealer_id + "', 0, 0 , '" + new_object.ip_address + "', '" + new_object.sim_id + "', '" + new_object.simno + "', '" + new_object.imei + "', '" + new_object.sim_id2 + "', '" + new_object.simno2 + "', '" + new_object.imei2 + "', '" + new_object.serial_number + "', '" + new_object.mac_address + "', '" + new_object.s_dealer + "', '" + new_object.s_dealer_name + "', '" + new_object.account + "', '" + new_object.fcm_token + "', '" + new_object.account_status + "', '" + new_object.start_date + "', '" + new_object.expiry_date + "', '" + new_object.link_code + "' )";
-            let query = insertDevice + value;
-            // console.log('qerury', query);
-            sql.query(query, async function (err, resp) {
-                // console.log('query reslut response', resp)
+            // Update flagged device
+            let UpdateQueryTransfer = `UPDATE usr_acc SET transfer_status = '1', transfer_device_id='${reqDevice.device_id}' WHERE id=${flagged_device.id};`;
+            await sql.query(UpdateQueryTransfer, async function (err, resp) {
                 if (err) {
-                    console.log(err)
+                    throw Error("Query Expection");
                 }
-                if (resp.affectedRows) {
+                if (resp.affectedRows > 0) {
 
-                    var code = randomize('0', 7);
-                    var activation_code = await helpers.checkActivationCode(code);
-                    // let device_id_new = helpers.getDeviceId();
-                    // device_id_new = await helpers.checkDeviceId(device_id_new);
+                    // Get data of Flagged Device
+                    var SelectFlaggedDeviceDetail = `SELECT ${usr_acc_query_text} FROM usr_acc WHERE device_id = ${flagged_device.usr_device_id} AND id = ${flagged_device.id}`;
+                    await sql.query(SelectFlaggedDeviceDetail, async function (err, rsltq) {
+                        if (err) throw Error("Query Expection");
 
-                    let updateprevDevice = 'update devices set transfer_status=1, email=null, pgp_email=null, chat_id=null, sim_id=null where device_id ="' + device_id + '"';
-                    await sql.query(updateprevDevice);
+                        // console.log("rsltq =============> ", rsltq);
 
-                    console.log('id', device_id);
-                    let insertpreActiveD = "insert into devices (device_id, activation_code, name, client_id, chat_id, model, email, pgp_email, expiry_months, dealer_id, device_status, activation_status)";
-                    let values = "values('" + device_id_new + "', '" + activation_code + "', '" + new_object.name + "', '" + new_object.client_id + "', '" + new_object.chat_id + "', '" + new_object.model + "', '" + new_object.email + "', '" + new_object.pgp_email + "', '" + new_object.expiry_months + "', '" + new_object.dealer_id + "', 0, 0 )";
-                    let query1 = insertpreActiveD + values;
-                    await sql.query(query1);
+                        if (rsltq.length > 0) {
+                            let Update_UsrAcc_Query = `UPDATE usr_acc SET user_id='${rsltq[0].user_id}', account_email='${rsltq[0].account_email}',account_name='${rsltq[0].account_name}',dealer_id='${rsltq[0].dealer_id}',prnt_dlr_id='${rsltq[0].prnt_dlr_id}',link_code='${rsltq[0].link_code}',client_id='${rsltq[0].client_id}',start_date='${rsltq[0].start_date}',expiry_months='${rsltq[0].expiry_months}',expiry_date='${rsltq[0].expiry_date}',activation_code='${rsltq[0].activation_code}',status='${rsltq[0].status}',device_status='${rsltq[0].device_status}',activation_status='${rsltq[0].activation_status}',account_status='',unlink_status='0',transfer_status='0',dealer_name='${rsltq[0].dealer_name}',prnt_dlr_name='${rsltq[0].prnt_dlr_name}',del_status='0',note='${rsltq[0].note}',validity='${rsltq[0].validity}', batch_no='${rsltq[0].batch_no}',type='${rsltq[0].type}',version='${rsltq[0].version}'  WHERE device_id=${reqDevice.usr_device_id};`;
+                            await sql.query(Update_UsrAcc_Query, async function (err, resp) {
+                                if (err) throw Error("Query Expection");
 
-                    res.send({
-                        status: true,
-                        data: {
-                            status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.RECORD_TRANSF_SUCC], "Record Transfered Successfully"), // Record Transfered Successfully.
+                                if (resp.affectedRows > 0) {
+                                    let ChatIds_pgp_emails = `SELECT chat_ids.chat_id, pgp_emails.pgp_email FROM chat_ids JOIN pgp_emails ON (chat_ids.user_acc_id = pgp_emails.user_acc_id) WHERE chat_ids.user_acc_id = '${flagged_device.id}'`; // "flagged_device.id" is user id(primary key) at usr_acc table
+                                    let ChatIds_pgp_emails_Result = await sql.query(ChatIds_pgp_emails)
+
+                                    if (ChatIds_pgp_emails_Result.length > 0) {
+                                        let InsertChatIds = `INSERT INTO chat_ids (chat_id, user_acc_id) VALUES('${ChatIds_pgp_emails_Result[0].chat_id}', '${flagged_device.id}')`;
+                                        await sql.query(InsertChatIds);
+                                        let SimIds = `SELECT * FROM sim_ids WHERE user_acc_id = '${flagged_device.id}'`;
+                                        let SimIds_Result = await sql.query(SimIds)
+
+                                        if (SimIds_Result.length > 0) {
+                                            for (var i = 0; i < SimIds_Result.length; i++) {
+                                                let InsertSimIds = `INSERT INTO sim_ids (sim_id, user_acc_id) VALUES('${SimIds_Result[0].sim_id}', '${flagged_device.id}')`;
+                                                await sql.query(InsertSimIds);
+                                            }
+                                        }
+                                    }
+
+                                    data = {
+                                        status: true,
+                                        msg: "Record Transfered Successfully" // await helpers.convertToLang(req.translation[MsgConstants.RECORD_TRANSF_SUCC], "Record Transfered Successfully"), // Record Transfered Successfully.
+                                    }
+                                    // res.send(data);
+                                } else {
+                                    data = {
+                                        status: false,
+                                        msg: "Error"
+                                    }
+                                    // res.send(data);
+                                }
+                                data = {
+                                    status: true,
+                                    msg: "Record Transfered Successfully" // await helpers.convertToLang(req.translation[MsgConstants.RECORD_TRANSF_SUCC], "Record Transfered Successfully"), // Record Transfered Successfully.
+                                }
+                                // res.send(data);
+                            });
+
+                        } else {
+                            data = {
+                                status: false,
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.ERR_TRANSF], "Error While Transfer"), // Error While Transfer.
+                            }
+                            // res.send(data);
                         }
                     });
                 } else {
-                    res.send({
+                    data = {
                         status: false,
-                        data: {
-                            status: false,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.ERR_TRANSF], "Error While Transfere"), // Error While Transfere.
-                        }
-                    });
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERR_TRANSF], "Error While Transfer"), // Error While Transfer.
+                    }
+                    // res.send(data);
                 }
-            })
-        })
-        // console.log("hello device", device);
-        // if(loggedDealerType === DEALER){
+            });
 
-        // } else if (loggedDealerType === SDEALER){
-
-        // }
-
+        } catch (err) {
+            console.log(err);
+            data = {
+                status: false,
+                msg: 'Error'
+            }
+            // res.send(data);
+        }
     }
 }
 
@@ -1403,7 +1424,7 @@ exports.unflagDevice = async function (req, res) {
                                 msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Error")
                             }
                         }
-                        
+
                         res.send(data);
                     })
 
@@ -1426,7 +1447,7 @@ exports.flagDevice = async function (req, res) {
     var verify = req.decoded // await verifyToken(req, res);
     var device_id = req.params.id;
     var option = req.body.data
-    console.log('================')
+    console.log('======= device_id =========', device_id)
     console.log(option);
     // return;
 
