@@ -91,8 +91,7 @@ exports.addAgent = async function (req, res) {
             agentType = 'admin'
         }
 
-        var staffID = randomize('0', 6);
-        staffID = await helpers.checkStaffID(staffID);
+        var staffID = await helpers.generateStaffID();
 
         var user_pwd = generator.generate({
             length: 10,
