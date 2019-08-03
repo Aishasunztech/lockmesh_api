@@ -21,22 +21,20 @@ exports.getAgentList = async function (req, res) {
         let dealerAgents = [];
 
         let userType = verify.user.user_type;
-        // let agents = await DealerAgent.findAll();
-        let agentsQ = `SELECT * FROM dealer_agents WHERE delete_status = 0`;
+        
+        let where = '';
+        let agentsQ = `SELECT * FROM dealer_agents `;
 
         if (userType == constants.ADMIN) {
-
-        } else if (userType === constants.DEALER) {
-
-        } else if (userType === constants.SDEALER) {
-
+            where += ` WHERE delete_status = 0`;
+        } else if (userType === constants.DEALER || userType === constants.SDEALER) {
+            where = ` WHERE dealer_id = ${verify.user.id}`
+            where += ` AND delete_status = 0`;
         }
+        
+        
 
-        // else {
-        //     // return res.s
-        // }
-
-        let agents = await sql.query(agentsQ);
+        let agents = await sql.query(agentsQ + where);
         if (agents.length) {
 
             agents.forEach((agent) => {
@@ -91,8 +89,7 @@ exports.addAgent = async function (req, res) {
             agentType = 'admin'
         }
 
-        var staffID = randomize('0', 6);
-        staffID = await helpers.checkStaffID(staffID);
+        var staffID = await helpers.generateStaffID();
 
         var user_pwd = generator.generate({
             length: 10,
@@ -120,22 +117,24 @@ exports.addAgent = async function (req, res) {
                 if (error) {
                     console.log(error);
                 }
+                console.log(verify.user);
+                var html = `Your new agent deatails are: <br/>
+                    Staff ID : ${staffID} <br/>
+                    Username : ${name} <br/>
+                    Email : ${email} <br/> 
+                    Password : ${user_pwd} <br/>
+                    Dealer Pin : ${verify.user.link_code}`;
 
-                var html = 'Agent details are : <br/> ' +
-                    'Staff ID : ' + staffID + '.<br/> ' +
-                    'Username : ' + name + '<br/> ' +
-                    'Password : ' + user_pwd + '<br/>' +
-                    'Email : ' + email + '<br/> '
-                sendEmail("Agent Registration", html, verify.user.email)
-                sendEmail("Agent Registration", html, email)
+                sendEmail("New Customer Support Agent has been created", html, verify.user.email)
+                sendEmail("New Customer Support Agent has been created", html, email)
 
                 // res.send(rows.insertId);
                 var agent = await sql.query("SELECT * FROM dealer_agents WHERE id = " + rows.insertId + "");
 
                 data = {
-                    'status': true,
-                    'msg': await helpers.convertToLang(req.translation['agent.successfully.registered'], "Agent has been registered successfully"), // User has been registered successfully.
-                    'agent': agent,
+                    status: true,
+                    msg: await helpers.convertToLang(req.translation['agent.successfully.registered'], "Agent has been registered successfully"), // User has been registered successfully.
+                    agent: agent,
                 }
                 return res.send(data);
 
