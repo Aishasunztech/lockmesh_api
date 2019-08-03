@@ -1095,7 +1095,8 @@ exports.updateDealerPins = async function(req, res) {
 					app_constants.DEALER_PIN_SYSTEM_LETTER_INDEX,
 					app_constants.DEALER_PIN_SYSTEM_LETTER
 				);
-
+                
+                var email = '';
 				if (oldDealerPin != newDealerPin) {
 					await sql.query(
 						`UPDATE dealers SET link_code = '${newDealerPin}' WHERE dealer_id = ${
@@ -1113,7 +1114,7 @@ exports.updateDealerPins = async function(req, res) {
                     );
                     
 
-                    var email = 'email send';
+                    email = 'email send';
                     var html = `We have updated your Dealer PIN for better system integrity. <br>
                     Your new Dealer Pin is : ${newDealerPin}<br>
                     Below is the link to login : <br> ${app_constants.HOST} <br>`;
