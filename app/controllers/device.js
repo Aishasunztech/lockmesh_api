@@ -432,33 +432,43 @@ exports.transferDeviceProfile = async function (req, res) {
 
             let flagged_device = req.body.flagged_device;
             let reqDevice = req.body.reqDevice;
-            
+
             // console.log("=============== transferDeviceProfile ============================");
             // console.log('reqDevice is: ', reqDevice)
             // console.log('flagged_device is: ', flagged_device)
 
 
             // Update flagged device
-            let UpdateQueryTransfer = `UPDATE usr_acc SET transfer_status = '1', transfer_device_id='${reqDevice.device_id}' WHERE id=${flagged_device.id};`;
-            await sql.query(UpdateQueryTransfer, async function (err, resp) {
-                if (err) {
-                    throw Error("Query Expection");
-                }
-                if (resp.affectedRows > 0) {
+            // let UpdateQueryTransfer = `UPDATE usr_acc SET transfer_status = '1', transfer_device_id='${reqDevice.device_id}' WHERE id=${flagged_device.id};`;
+            // await sql.query(UpdateQueryTransfer, async function (err, resp) {
+            //     if (err) {
+            //         throw Error("Query Expection");
+            //     }
+            //     if (resp.affectedRows > 0) {
 
-                    // Get data of Flagged Device
-                    var SelectFlaggedDeviceDetail = `SELECT ${usr_acc_query_text} FROM usr_acc WHERE device_id = ${flagged_device.usr_device_id} AND id = ${flagged_device.id}`;
-                    await sql.query(SelectFlaggedDeviceDetail, async function (err, rsltq) {
+            // Get data of Flagged Device
+            var SelectFlaggedDeviceDetail = `SELECT ${usr_acc_query_text} FROM usr_acc WHERE device_id = ${flagged_device.usr_device_id} AND id = ${flagged_device.id}`;
+            await sql.query(SelectFlaggedDeviceDetail, async function (err, rsltq) {
+                if (err) throw Error("Query Expection");
+
+                // console.log("rsltq =============> ", rsltq);
+
+                if (rsltq.length > 0) {
+                    let Update_UsrAcc_Query = `UPDATE usr_acc SET user_id='${rsltq[0].user_id}', account_email='${rsltq[0].account_email}',account_name='${rsltq[0].account_name}',dealer_id='${rsltq[0].dealer_id}',prnt_dlr_id='${rsltq[0].prnt_dlr_id}',link_code='${rsltq[0].link_code}',client_id='${rsltq[0].client_id}',start_date='${rsltq[0].start_date}',expiry_months='${rsltq[0].expiry_months}',expiry_date='${rsltq[0].expiry_date}',activation_code='${rsltq[0].activation_code}',status='${rsltq[0].status}',device_status='${rsltq[0].device_status}',activation_status='${rsltq[0].activation_status}',account_status='',unlink_status='0',transfer_status='0',dealer_name='${rsltq[0].dealer_name}',prnt_dlr_name='${rsltq[0].prnt_dlr_name}',del_status='0',note='${rsltq[0].note}',validity='${rsltq[0].validity}', batch_no='${rsltq[0].batch_no}',type='${rsltq[0].type}',version='${rsltq[0].version}'  WHERE device_id=${reqDevice.usr_device_id};`;
+                    await sql.query(Update_UsrAcc_Query, async function (err, resp) {
                         if (err) throw Error("Query Expection");
 
-                        // console.log("rsltq =============> ", rsltq);
+                        if (resp.affectedRows > 0) {
 
-                        if (rsltq.length > 0) {
-                            let Update_UsrAcc_Query = `UPDATE usr_acc SET user_id='${rsltq[0].user_id}', account_email='${rsltq[0].account_email}',account_name='${rsltq[0].account_name}',dealer_id='${rsltq[0].dealer_id}',prnt_dlr_id='${rsltq[0].prnt_dlr_id}',link_code='${rsltq[0].link_code}',client_id='${rsltq[0].client_id}',start_date='${rsltq[0].start_date}',expiry_months='${rsltq[0].expiry_months}',expiry_date='${rsltq[0].expiry_date}',activation_code='${rsltq[0].activation_code}',status='${rsltq[0].status}',device_status='${rsltq[0].device_status}',activation_status='${rsltq[0].activation_status}',account_status='',unlink_status='0',transfer_status='0',dealer_name='${rsltq[0].dealer_name}',prnt_dlr_name='${rsltq[0].prnt_dlr_name}',del_status='0',note='${rsltq[0].note}',validity='${rsltq[0].validity}', batch_no='${rsltq[0].batch_no}',type='${rsltq[0].type}',version='${rsltq[0].version}'  WHERE device_id=${reqDevice.usr_device_id};`;
-                            await sql.query(Update_UsrAcc_Query, async function (err, resp) {
-                                if (err) throw Error("Query Expection");
-
+                            // Update flagged device
+                            let UpdateQueryTransfer = `UPDATE usr_acc SET transfer_status = '1', transfer_device_id='${reqDevice.device_id}' WHERE id=${flagged_device.id};`;
+                            await sql.query(UpdateQueryTransfer, async function (err, resp) {
+                                if (err) {
+                                    throw Error("Query Expection");
+                                }
                                 if (resp.affectedRows > 0) {
+
+                                    // Copy chat_ids, sim_ids and pgp_emails
                                     let ChatIds_pgp_emails = `SELECT chat_ids.chat_id, pgp_emails.pgp_email FROM chat_ids JOIN pgp_emails ON (chat_ids.user_acc_id = pgp_emails.user_acc_id) WHERE chat_ids.user_acc_id = '${flagged_device.id}'`; // "flagged_device.id" is user id(primary key) at usr_acc table
                                     let ChatIds_pgp_emails_Result = await sql.query(ChatIds_pgp_emails)
 
@@ -481,28 +491,27 @@ exports.transferDeviceProfile = async function (req, res) {
                                         msg: "Record Transfered Successfully" // await helpers.convertToLang(req.translation[MsgConstants.RECORD_TRANSF_SUCC], "Record Transfered Successfully"), // Record Transfered Successfully.
                                     }
                                     // res.send(data);
+
                                 } else {
                                     data = {
                                         status: false,
-                                        msg: "Error"
+                                        msg: "Error" // await helpers.convertToLang(req.translation[MsgConstants.ERR_TRANSF], "Error While Transfer"), // Error While Transfer.
                                     }
                                     // res.send(data);
                                 }
-                                data = {
-                                    status: true,
-                                    msg: "Record Transfered Successfully" // await helpers.convertToLang(req.translation[MsgConstants.RECORD_TRANSF_SUCC], "Record Transfered Successfully"), // Record Transfered Successfully.
-                                }
-                                // res.send(data);
+
                             });
+
 
                         } else {
                             data = {
                                 status: false,
-                                msg: await helpers.convertToLang(req.translation[MsgConstants.ERR_TRANSF], "Error While Transfer"), // Error While Transfer.
+                                msg: "Error"
                             }
                             // res.send(data);
                         }
                     });
+
                 } else {
                     data = {
                         status: false,
@@ -510,17 +519,25 @@ exports.transferDeviceProfile = async function (req, res) {
                     }
                     // res.send(data);
                 }
-            });
+            // });
+            // } else {
+            //     data = {
+            //         status: false,
+            //         msg: await helpers.convertToLang(req.translation[MsgConstants.ERR_TRANSF], "Error While Transfer"), // Error While Transfer.
+            //     }
+            //     // res.send(data);
+            // }
+        });
 
-        } catch (err) {
-            console.log(err);
-            data = {
-                status: false,
-                msg: 'Error'
-            }
-            // res.send(data);
+    } catch (err) {
+        console.log(err);
+        data = {
+            status: false,
+            msg: 'Error'
         }
+        // res.send(data);
     }
+}
 }
 
 exports.editDevices = async function (req, res) {
