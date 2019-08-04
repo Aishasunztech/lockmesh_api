@@ -2273,3 +2273,75 @@ exports.getIMEI_History = async function (req, res) {
     }
 
 }
+
+
+/**
+ * Update device IDs
+ * Update device IDs of all existing devices
+ * http://localhost:3000/users/devices/update_device_ids
+ * one time useage - menual end point
+ *
+ *
+ * By Muhammad Irfan Afzal - mi3afzal
+ * 01-08-2019
+ * **/
+exports.updateDeviceIDs = async function(req, res) {
+	var verify = req.decoded; // await verifyToken(req, res);
+	if (!verify) {
+		data = {
+			status: false,
+			data: ["Bad Request"]
+		};
+		res.status(400).send(data);
+		return;
+	}
+
+	sql.query(
+		`SELECT * FROM devices WHERE device_id IS NOT NULL ORDER BY id ASC`,
+		async function(error, results, fields) {
+			if (error) throw error;
+
+			await sql.query(`TRUNCATE apps_queue_jobs`);
+			await sql.query(`TRUNCATE policy_queue_jobs`);
+
+			output = [];
+			for (var i = 0; i < results.length; i++) {
+				const oldDeviceID = results[i].device_id;
+				const newDeviceID = helpers.replaceAt(
+					oldDeviceID,
+					app_constants.DEVICE_ID_SYSTEM_LETTER_INDEX,
+					app_constants.DEVICE_ID_SYSTEM_LETTER
+				);
+
+				if (oldDeviceID != newDeviceID) {
+					await sql.query(
+						`UPDATE devices SET device_id = '${newDeviceID}' WHERE id = ${
+							results[i].id
+						} `
+					);
+					await sql.query(
+						`UPDATE acc_action_history SET device_id = '${newDeviceID}' WHERE device_id = '${oldDeviceID}' `
+					);
+					await sql.query(
+						`UPDATE device_history SET device_id = '${newDeviceID}' WHERE device_id = '${oldDeviceID}' `
+					);
+					await sql.query(
+						`UPDATE imei_history SET device_id = '${newDeviceID}' WHERE device_id = '${oldDeviceID}' `
+					);
+					await sql.query(
+						`UPDATE login_history SET device_id = '${newDeviceID}' WHERE device_id = '${oldDeviceID}' `
+					);
+				}
+
+				output[i] = [oldDeviceID, newDeviceID];
+			}
+
+			data = {
+				status: true,
+				data: ["Data Updated", output]
+			};
+			res.status(200).send(data);
+			return;
+		}
+	);
+};
