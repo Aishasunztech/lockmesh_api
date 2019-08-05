@@ -116,8 +116,7 @@ exports.addAgent = async function (req, res) {
                 if (error) {
                     console.log(error);
                 }
-                console.log(verify.user);
-                var html = `Your new agent deatails are: <br/>
+                var html = `Your new agent details are: <br/>
                     Staff ID : ${staffID} <br/>
                     Username : ${name} <br/>
                     Email : ${email} <br/> 
@@ -202,13 +201,15 @@ exports.updateAgent = async function (req, res) {
 
                 if (agentData[0].email != email) {
 
-                    var html = 'Agent details are : <br> ' +
-                        'Staff ID : ' + agentData[0].staff_id + '.<br> ' +
-                        'Name : ' + name + '<br> ' +
-                        'Email : ' + email + '<br> ' +
-                        'Password : ' + agentPwd + '<br> '
-                    sendEmail("Agent info Changed Successfully", html, verify.user.email)
-                    sendEmail("Agent Info Changed Successfully", html, email)
+                    var html = `Your Agent details are: <br/>
+                        Staff ID : ${agentData[0].staff_id} <br/>
+                        Username : ${name} <br/>
+                        Email : ${email} <br/> 
+                        Password : ${agentPwd} <br/>
+                        Dealer Pin : ${verify.user.link_code}`;
+
+                    sendEmail("Customer Support Agent info Changed Successfully", html, verify.user.email)
+                    sendEmail("Customer Support Agent Info Changed Successfully", html, email)
                 }
                 agentData = await sql.query(agentDataQ);
 
@@ -333,11 +334,14 @@ exports.resetPwd = async function (req, res) {
                     };
                     return res.send(data);
                 } else {
-                    var html = 'Agent details are : <br> ' +
-                    'Staff ID : ' + dealerAgent[0].staff_id + '.<br> ' +
-                    'Name : ' + dealerAgent[0].name + '<br> ' +
-                    'Email : ' + dealerAgent[0].email + '<br> ' +
-                    'Password : ' + agentPwd + '<br> '
+
+                    var html = `Your Agent details are: <br/>
+                        Staff ID : ${dealerAgent[0].staff_id} <br/>
+                        Username : ${dealerAgent[0].name} <br/>
+                        Email : ${dealerAgent[0].email} <br/> 
+                        Password : ${agentPwd} <br/>
+                        Dealer Pin : ${verify.user.link_code}`;
+
                     sendEmail("Agent password changed Successfully", html, verify.user.email)
                     sendEmail("Agent password changed Successfully", html, dealerAgent[0].email)
                     data = {
