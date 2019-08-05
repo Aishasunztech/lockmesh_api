@@ -43,14 +43,6 @@ router.put('/activate-device/:id', AgentDashboardController.activateDevice);
 /** Suspend Account Devices / client **/
 router.put('/suspend-device/:id', AgentDashboardController.suspendDevice);
 
-/**
- * @route DELETE api/v1/agent/devices/reject
- * @group Agent Dashboard - test route
- * @returns {object} 200 - An array of user info
- * @returns {Error}  default - Unexpected error
- * @security JWT
- */
-router.delete('/reject-device', AgentDashboardController.deleteDevice)
 
 /**
  * SecurePanel dashboard login
