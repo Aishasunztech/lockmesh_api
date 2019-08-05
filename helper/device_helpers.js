@@ -397,6 +397,17 @@ module.exports = {
             return 'N/A'
         }
     },
+
+    getVpn: async (result) => {
+        let query = "SELECT vpn_id FROM acc_vpn WHERE user_acc_id = '" + result.id + "'"
+        let results = await sql.query(query);
+        if (results.length) {
+            return results[0].vpn_id
+        } else {
+            return 'NO'
+        }
+    },
+
     getAppJobQueue: async (device_id) => {
 
         let policyQueue = "SELECT * FROM policy_queue_jobs WHERE device_id = '" + device_id + "' order by created_at desc limit 1"

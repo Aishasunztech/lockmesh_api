@@ -28,7 +28,7 @@ const app_constants = require("../../config/constants");
 // constants
 
 let usr_acc_query_text =
-	"usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version";
+    "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version";
 
 var data;
 
@@ -68,6 +68,7 @@ exports.devices = async function (req, res) {
                 results[i].sim_id = simIds.sim_id
                 results[i].sim_id = simIds.sim_id2
                 results[i].chat_id = await device_helpers.getChatids(results[i])
+                results[i].vpn = await device_helpers.getVpn(results[i])
                 results[i].validity = await device_helpers.checkRemainDays(results[i].created_at, results[i].validity)
             }
 
@@ -421,6 +422,7 @@ exports.acceptDevice = async function (req, res) {
                                                         rsltq[i].sim_id = simIds.sim_id
                                                         rsltq[i].sim_id = simIds.sim_id2
                                                         rsltq[i].chat_id = await device_helpers.getChatids(rsltq[i])
+                                                        rsltq[i].vpn = await device_helpers.getVpn(rsltq[i])
                                                         rsltq[i].validity = await device_helpers.checkRemainDays(rsltq[i].created_at, results[i].validity)
                                                     }
 
@@ -746,6 +748,7 @@ exports.editDevices = async function (req, res) {
                                     rsltq[i].sim_id = simIds.sim_id
                                     rsltq[i].sim_id = simIds.sim_id2
                                     rsltq[i].chat_id = await device_helpers.getChatids(rsltq[i])
+                                    rsltq[i].vpn = await device_helpers.getVpn(rsltq[i])
                                     // dealerData = await device_helpers.getDealerdata(results[i]);
                                 }
 
@@ -1083,6 +1086,7 @@ exports.createDeviceProfile = async function (req, res) {
                                         rsltq[i].sim_id = sim_ids.sim_id
                                         rsltq[i].sim_id2 = sim_ids.sim_id2
                                         rsltq[i].chat_id = await device_helpers.getChatids(rsltq[i])
+                                        rsltq[i].vpn = await device_helpers.getVpn(rsltq[i])
                                         await device_helpers.saveActionHistory(rsltq[i], constants.DEVICE_PRE_ACTIVATION);
                                     }
                                     data = {
@@ -1225,6 +1229,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 results[0].sim_id = sim_ids.sim_id
                                                                 results[0].sim_id2 = sim_ids.sim_id2
                                                                 results[0].chat_id = await device_helpers.getChatids(results[0])
+                                                                results[0].vpn = await device_helpers.getVpn(results[0])
 
                                                                 // dealerData = await device_helpers.getDealerdata(results[i]);
                                                                 device_helpers.saveActionHistory(results[0], constants.DEVICE_PRE_ACTIVATION)
@@ -1342,6 +1347,7 @@ exports.suspendAccountDevices = async function (req, res) {
                                 resquery[0].sim_id = sim_ids.sim_id
                                 resquery[0].sim_id2 = sim_ids.sim_id2
                                 resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
+                                resquery[0].vpn = await device_helpers.getVpn(resquery[0])
                                 // dealerData = await getDealerdata(res[i]);
                                 data = {
                                     "data": resquery[0],
@@ -1394,6 +1400,7 @@ exports.suspendAccountDevices = async function (req, res) {
                                     resquery[0].sim_id = sim_ids.sim_id
                                     resquery[0].sim_id2 = sim_ids.sim_id2
                                     resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
+                                    resquery[0].vpn = await device_helpers.getVpn(resquery[0])
                                     // dealerData = await getDealerdata(res[i]);
                                     data = {
                                         "data": resquery[0],
@@ -1474,6 +1481,7 @@ exports.activateDevice = async function (req, res) {
                                 resquery[0].sim_id = sim_ids.sim_id
                                 resquery[0].sim_id2 = sim_ids.sim_id2
                                 resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
+                                resquery[0].vpn = await device_helpers.getVpn(resquery[0])
                                 // dealerData = await getDealerdata(res[i]);
                                 sockets.sendDeviceStatus(resquery[0].device_id, "active", true);
                                 data = {
@@ -1520,6 +1528,7 @@ exports.activateDevice = async function (req, res) {
                                     resquery[0].sim_id = sim_ids.sim_id
                                     resquery[0].sim_id2 = sim_ids.sim_id2
                                     resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
+                                    resquery[0].vpn = await device_helpers.getVpn(resquery[0])
                                     // dealerData = await getDealerdata(res[i]);
                                     sockets.sendDeviceStatus(resquery[0].device_id, "active", true);
                                     data = {
@@ -1595,6 +1604,7 @@ exports.wipeDevice = async function (req, res) {
                             resquery[0].sim_id = sim_ids.sim_id
                             resquery[0].sim_id2 = sim_ids.sim_id2
                             resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
+                            resquery[0].vpn = await device_helpers.getVpn(resquery[0])
                             // dealerData = await getDealerdata(res[i]);
 
                             device_helpers.saveActionHistory(resquery[0], constants.DEVICE_WIPE)
@@ -1653,6 +1663,7 @@ exports.unflagDevice = async function (req, res) {
                             resquery[0].sim_id = simIds.sim_id
                             resquery[0].sim_id2 = simIds.sim_id2
                             resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
+                            resquery[0].vpn = await device_helpers.getVpn(resquery[0])
                             // dealerData = await getDealerdata(res[i]);
                             data = {
                                 // "data": resquery[0],
@@ -1716,6 +1727,7 @@ exports.flagDevice = async function (req, res) {
                         resquery[0].sim_id = sim_ids.sim_id
                         resquery[0].sim_id2 = sim_ids.sim_id2
                         resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
+                        resquery[0].vpn = await device_helpers.getVpn(resquery[0])
                         // dealerData = await getDealerdata(res[i]);
                         device_helpers.saveActionHistory(resquery[0], constants.DEVICE_FLAGGED)
                         // console.log(resquery[0]);
@@ -1785,6 +1797,7 @@ exports.connectDevice = async function (req, res) {
                     device_data.sim_id = sim_ids.sim_id;
                     device_data.sim_id2 = sim_ids.sim_id2
                     device_data.chat_id = await device_helpers.getChatids(results[0]);
+                    device_data.vpn = await device_helpers.getVpn(results[0]);
 
                     if (dealer_details.length) {
                         device_data.link_code = dealer_details[0].link_code;
@@ -2580,63 +2593,63 @@ exports.getIMEI_History = async function (req, res) {
  * By Muhammad Irfan Afzal - mi3afzal
  * 01-08-2019
  * **/
-exports.updateDeviceIDs = async function(req, res) {
-	var verify = req.decoded; // await verifyToken(req, res);
-	if (!verify) {
-		data = {
-			status: false,
-			data: ["Bad Request"]
-		};
-		res.status(400).send(data);
-		return;
-	}
+exports.updateDeviceIDs = async function (req, res) {
+    var verify = req.decoded; // await verifyToken(req, res);
+    if (!verify) {
+        data = {
+            status: false,
+            data: ["Bad Request"]
+        };
+        res.status(400).send(data);
+        return;
+    }
 
-	sql.query(
-		`SELECT * FROM devices WHERE device_id IS NOT NULL ORDER BY id ASC`,
-		async function(error, results, fields) {
-			if (error) throw error;
+    sql.query(
+        `SELECT * FROM devices WHERE device_id IS NOT NULL ORDER BY id ASC`,
+        async function (error, results, fields) {
+            if (error) throw error;
 
-			await sql.query(`TRUNCATE apps_queue_jobs`);
-			await sql.query(`TRUNCATE policy_queue_jobs`);
+            await sql.query(`TRUNCATE apps_queue_jobs`);
+            await sql.query(`TRUNCATE policy_queue_jobs`);
 
-			output = [];
-			for (var i = 0; i < results.length; i++) {
-				const oldDeviceID = results[i].device_id;
-				const newDeviceID = helpers.replaceAt(
-					oldDeviceID,
-					app_constants.DEVICE_ID_SYSTEM_LETTER_INDEX,
-					app_constants.DEVICE_ID_SYSTEM_LETTER
-				);
+            output = [];
+            for (var i = 0; i < results.length; i++) {
+                const oldDeviceID = results[i].device_id;
+                const newDeviceID = helpers.replaceAt(
+                    oldDeviceID,
+                    app_constants.DEVICE_ID_SYSTEM_LETTER_INDEX,
+                    app_constants.DEVICE_ID_SYSTEM_LETTER
+                );
 
-				if (oldDeviceID != newDeviceID) {
-					await sql.query(
-						`UPDATE devices SET device_id = '${newDeviceID}' WHERE id = ${
-							results[i].id
-						} `
-					);
-					await sql.query(
-						`UPDATE acc_action_history SET device_id = '${newDeviceID}' WHERE device_id = '${oldDeviceID}' `
-					);
-					await sql.query(
-						`UPDATE device_history SET device_id = '${newDeviceID}' WHERE device_id = '${oldDeviceID}' `
-					);
-					await sql.query(
-						`UPDATE imei_history SET device_id = '${newDeviceID}' WHERE device_id = '${oldDeviceID}' `
-					);
-					await sql.query(
-						`UPDATE login_history SET device_id = '${newDeviceID}' WHERE device_id = '${oldDeviceID}' `
-					);
-				}
+                if (oldDeviceID != newDeviceID) {
+                    await sql.query(
+                        `UPDATE devices SET device_id = '${newDeviceID}' WHERE id = ${
+                        results[i].id
+                        } `
+                    );
+                    await sql.query(
+                        `UPDATE acc_action_history SET device_id = '${newDeviceID}' WHERE device_id = '${oldDeviceID}' `
+                    );
+                    await sql.query(
+                        `UPDATE device_history SET device_id = '${newDeviceID}' WHERE device_id = '${oldDeviceID}' `
+                    );
+                    await sql.query(
+                        `UPDATE imei_history SET device_id = '${newDeviceID}' WHERE device_id = '${oldDeviceID}' `
+                    );
+                    await sql.query(
+                        `UPDATE login_history SET device_id = '${newDeviceID}' WHERE device_id = '${oldDeviceID}' `
+                    );
+                }
 
-				output[i] = [oldDeviceID, newDeviceID];
-			}
+                output[i] = [oldDeviceID, newDeviceID];
+            }
 
-			data = {
-				status: true,
-				data: ["Data Updated", output]
-			};
-			res.status(200).send(data);
-			return;
-		}
-	);
+            data = {
+                status: true,
+                data: ["Data Updated", output]
+            };
+            res.status(200).send(data);
+            return;
+        }
+    );
 };

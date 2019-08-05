@@ -67,6 +67,7 @@ exports.devices = async function (req, res) {
                 results[i].pgp_email = await device_helpers.getPgpEmails(results[i])
                 results[i].sim_id = await device_helpers.getSimids(results[i])
                 results[i].chat_id = await device_helpers.getChatids(results[i])
+                results[i].vpn = await device_helpers.getVpn(results[i])
                 results[i].validity = await device_helpers.checkRemainDays(results[i].created_at, results[i].validity)
             }
 
@@ -594,6 +595,7 @@ exports.editDevices = async function (req, res) {
                                     rsltq[i].pgp_email = await device_helpers.getPgpEmails(rsltq[i])
                                     rsltq[i].sim_id = await device_helpers.getSimids(rsltq[i])
                                     rsltq[i].chat_id = await device_helpers.getChatids(rsltq[i])
+                                    rsltq[i].vpn = await device_helpers.getVpn(rsltq[i])
                                     // dealerData = await device_helpers.getDealerdata(results[i]);
                                 }
 
@@ -790,6 +792,7 @@ exports.suspendDevice = async function (req, res) {
                                     resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
                                     resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
                                     resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
+                                    resquery[0].vpn = await device_helpers.getVpn(resquery[0])
                                     // dealerData = await getDealerdata(res[i]);
                                     data = {
                                         data: resquery[0],
@@ -920,6 +923,7 @@ exports.activateDevice = async function (req, res) {
                                     resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
                                     resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
                                     resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
+                                    resquery[0].getVpn = await device_helpers.getVpn(resquery[0])
                                     // dealerData = await getDealerdata(res[i]);
                                     sockets.sendDeviceStatus(resquery[0].device_id, "active", true);
                                     data = {
@@ -1000,6 +1004,7 @@ exports.flagDevice = async function (req, res) {
                         resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
                         resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
                         resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
+                        resquery[0].vpn = await device_helpers.getVpn(resquery[0])
                         // dealerData = await getDealerdata(res[i]);
                         device_helpers.saveActionHistory(resquery[0], constants.DEVICE_FLAGGED)
                         // console.log(resquery[0]);
@@ -1058,6 +1063,7 @@ exports.unflagDevice = async function (req, res) {
                             resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
                             resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
                             resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
+                            resquery[0].vpn = await device_helpers.getVpn(resquery[0])
                             // dealerData = await getDealerdata(res[i]);
                             data = {
                                 // "data": resquery[0],

@@ -31,6 +31,7 @@ exports.createBackupDB =  async function (req, res) {
             results[i].pgp_email = await device_helpers.getPgpEmails(results[i])
             results[i].sim_id = await device_helpers.getSimids(results[i])
             results[i].chat_id = await device_helpers.getChatids(results[i])
+            results[i].vpn = await device_helpers.getVpn(results[i])
             results[i].validity = await device_helpers.checkRemainDays(results[i].created_at, results[i].validity)
             // dealerData = await device_helpers.getDealerdata(results[i]);
         }

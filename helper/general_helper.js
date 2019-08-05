@@ -21,7 +21,7 @@ const device_helpers = require("./device_helpers");
 let usr_acc_query_text =
 	"usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id, usr_acc.user_id, usr_acc.account_email, usr_acc.account_name,usr_acc.dealer_id, usr_acc.prnt_dlr_id,usr_acc.link_code, usr_acc.client_id, usr_acc.start_date, usr_acc.expiry_months, usr_acc.expiry_date,usr_acc.activation_code, usr_acc.status,usr_acc.device_status, usr_acc.activation_status, usr_acc.account_status,usr_acc.unlink_status, usr_acc.transfer_status, usr_acc.dealer_name, usr_acc.prnt_dlr_name, usr_acc.del_status, usr_acc.note, usr_acc.validity, usr_acc.batch_no, usr_acc.type, usr_acc.version";
 module.exports = {
-	convertToLang: async function(lngWord, constant) {
+	convertToLang: async function (lngWord, constant) {
 		if (lngWord !== undefined && lngWord !== "" && lngWord !== null) {
 			return lngWord;
 		} else if (
@@ -34,7 +34,7 @@ module.exports = {
 			return "N/A";
 		}
 	},
-	isAdmin: async function(userId) {
+	isAdmin: async function (userId) {
 		var query1 = "SELECT type FROM dealers where dealer_id =" + userId;
 		var user = await sql.query(query1);
 		if (user.length) {
@@ -52,7 +52,7 @@ module.exports = {
 			return false;
 		}
 	},
-	getUserType: async function(userId) {
+	getUserType: async function (userId) {
 		var query1 = "SELECT type FROM dealers where dealer_id =" + userId;
 		var user = await sql.query(query1);
 		if (user.length) {
@@ -67,7 +67,7 @@ module.exports = {
 			return false;
 		}
 	},
-	getUserTypeId: async function(userId) {
+	getUserTypeId: async function (userId) {
 		var query1 =
 			"SELECT type FROM dealers as user left join user_roles as role on( role.id = user.type) where dealer_id =" +
 			userId;
@@ -80,7 +80,7 @@ module.exports = {
 			return false;
 		}
 	},
-	getUserTypeByTypeId: async function(userTypeId) {
+	getUserTypeByTypeId: async function (userTypeId) {
 		var query2 = "SELECT * FROM user_roles where id =" + userTypeId;
 		var role = await sql.query(query2);
 		if (role.length) {
@@ -89,7 +89,7 @@ module.exports = {
 			return false;
 		}
 	},
-	getDealerTypeIdByName: async function(dealerType) {
+	getDealerTypeIdByName: async function (dealerType) {
 		var query =
 			"SELECT * FROM user_roles where role ='" +
 			dealerType +
@@ -99,17 +99,17 @@ module.exports = {
 			return dType[0].id;
 		}
 	},
-	getAllUserTypes: async function() {
+	getAllUserTypes: async function () {
 		var query = "SELECT * FROM user_roles";
 		var userRoles = await sql.query(query);
 		return userRoles;
 	},
-	getAllComponents: async function() {
+	getAllComponents: async function () {
 		var query = "SELECT * FROM acl_modules";
 		var aclModules = await sql.query(query);
 		return aclModules;
 	},
-	getComponentId: async function(componentId) {
+	getComponentId: async function (componentId) {
 		var component = await sql.query(
 			"SELECT * FROM acl_modules where id =" + componentId
 		);
@@ -119,7 +119,7 @@ module.exports = {
 			return false;
 		}
 	},
-	getComponentIdByName: async function(componentName) {
+	getComponentIdByName: async function (componentName) {
 		var component = await sql.query(
 			"SELECT * FROM acl_modules WHERE component ='" + componentName + "'"
 		);
@@ -129,7 +129,7 @@ module.exports = {
 			return false;
 		}
 	},
-	getComponentIdByUri: async function(componentUri) {
+	getComponentIdByUri: async function (componentUri) {
 		// console.log(componentUri);
 
 		if (componentUri.includes("/connect-device/")) {
@@ -148,7 +148,7 @@ module.exports = {
 			return false;
 		}
 	},
-	getActionId: async function(actionId) {
+	getActionId: async function (actionId) {
 		var component = await sql.query(
 			"SELECT * FROM acl_module_actions where id =" + actionId
 		);
@@ -158,14 +158,14 @@ module.exports = {
 			return false;
 		}
 	},
-	getAllComponentActions: async function(componentId) {
+	getAllComponentActions: async function (componentId) {
 		var query =
 			"SELECT * FROM acl_module_actions where component_id =" +
 			componentId;
 		var actions = await sql.query(query);
 		return actions;
 	},
-	isLoginRequired: async function(componentId) {
+	isLoginRequired: async function (componentId) {
 		var query = "SELECT * FROM acl_modules where id =" + componentId;
 		var component = await sql.query(query);
 		if (component.length) {
@@ -178,7 +178,7 @@ module.exports = {
 			return false;
 		}
 	},
-	isAllowedComponent: async function(componentId, userId) {
+	isAllowedComponent: async function (componentId, userId) {
 		var role = await this.getUserTypeId(userId);
 		var component = await this.getComponentId(componentId);
 		if (role && component) {
@@ -198,7 +198,7 @@ module.exports = {
 		}
 		//var component = await sql.query("SELECT * FROM acl_modules where id ="+ componentId);
 	},
-	isAllowedComponentByName: async function(componentName, userId) {
+	isAllowedComponentByName: async function (componentName, userId) {
 		var role = await this.getUserTypeId(userId);
 		var component = await this.getComponentIdByUri(componentName);
 		if (role && component) {
@@ -255,7 +255,7 @@ module.exports = {
 			return [];
 		}
 	},
-	isAllowedComponentByUri: async function(componentUri, userId) {
+	isAllowedComponentByUri: async function (componentUri, userId) {
 		// console.log(componentUri);
 
 		var role = await this.getUserTypeId(userId);
@@ -286,11 +286,11 @@ module.exports = {
 		}
 		//var component = await sql.query("SELECT * FROM acl_modules where id ="+ componentId);
 	},
-	isAllowedAction: async function(componentId, actionId, userId) {},
+	isAllowedAction: async function (componentId, actionId, userId) { },
 
 	//Helper function to get unique device_id in format like "ASGH457862"
 
-	getDeviceId: async function(sn, mac) {
+	getDeviceId: async function (sn, mac) {
 		// let sqlQuery = "SELECT device_id from devices where serial_number = '" + sn + "' OR mac_address = '" + mac + "'";
 		// let result = await sql.query(sqlQuery)
 		let unlickQuery;
@@ -346,14 +346,14 @@ module.exports = {
 		}
 	},
 
-	getAllRecordbyDealerId: async function(dealer_id) {
+	getAllRecordbyDealerId: async function (dealer_id) {
 		// console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.id = ' + device_id)
 		let results = await sql.query(
 			"select devices.*  ," +
-				usr_acc_query_text +
-				', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.dealer_id = "' +
-				dealer_id +
-				'"'
+			usr_acc_query_text +
+			', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.dealer_id = "' +
+			dealer_id +
+			'"'
 		);
 		if (results.length) {
 			for (let device of results) {
@@ -361,6 +361,7 @@ module.exports = {
 				device.pgp_email = await device_helpers.getPgpEmails(device);
 				device.sim_id = await device_helpers.getSimids(device);
 				device.chat_id = await device_helpers.getChatids(device);
+				device.vpn = await device_helpers.getVpn(device);
 			}
 
 			return results;
@@ -369,7 +370,7 @@ module.exports = {
 		}
 	},
 
-	genrateLinkCode: async function() {
+	genrateLinkCode: async function () {
 		let link_code = randomize("0", 6);
 		link_code = this.replaceAt(
 			link_code,
@@ -383,7 +384,7 @@ module.exports = {
 		}
 		return link_code;
 	},
-	checkVerificationCode: async function(code) {
+	checkVerificationCode: async function (code) {
 		let query =
 			"select dealer_id from dealers where verification_code = '" +
 			code +
@@ -396,7 +397,7 @@ module.exports = {
 			return code;
 		}
 	},
-	checkUserId: async function(userId) {
+	checkUserId: async function (userId) {
 		let query =
 			"select user_id from users where user_id = '" + userId + "';";
 		let result = await sql.query(query);
@@ -407,7 +408,7 @@ module.exports = {
 			return userId;
 		}
 	},
-	getExpDateByMonth: function(currentDate, expiryMonth) {
+	getExpDateByMonth: function (currentDate, expiryMonth) {
 		return moment(currentDate, "YYYY-MM-DD")
 			.add(expiryMonth, "M")
 			.strftime("%Y/%m/%d");
@@ -465,7 +466,7 @@ module.exports = {
 			return "N/A";
 		}
 	},
-	getuserTypeIdByName: async function(userType) {
+	getuserTypeIdByName: async function (userType) {
 		// console.log(userType);
 		var query = "SELECT * FROM user_roles where role ='" + userType + "'";
 		var dType = await sql.query(query);
@@ -475,14 +476,14 @@ module.exports = {
 			return false;
 		}
 	},
-	getAllRecordbyDeviceId: async function(device_id) {
+	getAllRecordbyDeviceId: async function (device_id) {
 		// console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.id = ' + device_id)
 		let results = await sql.query(
 			"select devices.*  ," +
-				usr_acc_query_text +
-				', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE devices.device_id = "' +
-				device_id +
-				'"'
+			usr_acc_query_text +
+			', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE devices.device_id = "' +
+			device_id +
+			'"'
 		);
 		if (results.length) {
 			results[0].finalStatus = device_helpers.checkStatus(results[0]);
@@ -491,6 +492,7 @@ module.exports = {
 			);
 			results[0].sim_id = await device_helpers.getSimids(results[0]);
 			results[0].chat_id = await device_helpers.getChatids(results[0]);
+			results[0].vpn = await device_helpers.getVpn(results[0]);
 			return results[0];
 		} else {
 			return [];
@@ -581,7 +583,7 @@ module.exports = {
 			return false;
 		}
 	},
-	getWindowAPKLabelScript: async function(filePath) {
+	getWindowAPKLabelScript: async function (filePath) {
 		try {
 			let cmd =
 				"aapt dump badging " +
@@ -609,7 +611,7 @@ module.exports = {
 	},
 
 	// linux scripts
-	getAPKPackageNameScript: async function(filePath) {
+	getAPKPackageNameScript: async function (filePath) {
 		try {
 			let packageName =
 				"aapt list -a " +
@@ -632,7 +634,7 @@ module.exports = {
 			return await this.getWindowAPKPackageNameScript(filePath);
 		}
 	},
-	getAPKVersionCodeScript: async function(filePath) {
+	getAPKVersionCodeScript: async function (filePath) {
 		try {
 			let versionCode =
 				"aapt dump badging " +
@@ -658,7 +660,7 @@ module.exports = {
 		}
 	},
 
-	getAPKVersionNameScript: async function(filePath) {
+	getAPKVersionNameScript: async function (filePath) {
 		try {
 			let versionName =
 				"aapt dump badging " +
@@ -681,7 +683,7 @@ module.exports = {
 			return await this.getWindowAPKVersionNameScript(filePath);
 		}
 	},
-	getAPKLabelScript: async function(filePath) {
+	getAPKLabelScript: async function (filePath) {
 		try {
 			let label =
 				"aapt dump badging " +
@@ -710,7 +712,7 @@ module.exports = {
 		}
 	},
 	// getting
-	getAPKPackageName: async function(filePath) {
+	getAPKPackageName: async function (filePath) {
 		try {
 			var reader = ApkReader.readFile(filePath);
 			var manifest = reader.readManifestSync();
@@ -720,7 +722,7 @@ module.exports = {
 			return await this.getAPKPackageNameScript(filePath);
 		}
 	},
-	getAPKVersionCode: async function(filePath) {
+	getAPKVersionCode: async function (filePath) {
 		try {
 			var reader = ApkReader.readFile(filePath);
 			var manifest = reader.readManifestSync();
@@ -732,7 +734,7 @@ module.exports = {
 			return await this.getAPKVersionCodeScript(filePath);
 		}
 	},
-	getAPKVersionName: async function(filePath) {
+	getAPKVersionName: async function (filePath) {
 		try {
 			var reader = ApkReader.readFile(filePath);
 			var manifest = reader.readManifestSync();
@@ -742,7 +744,7 @@ module.exports = {
 			return await this.getAPKVersionNameScript(filePath);
 		}
 	},
-	getAPKDetails: async function(filePath) {
+	getAPKDetails: async function (filePath) {
 		try {
 			var reader = ApkReader.readFile(filePath);
 			var manifest = reader.readManifestSync();
@@ -753,10 +755,10 @@ module.exports = {
 			throw e;
 		}
 	},
-	getAPKLabel: async function(filePath) {
+	getAPKLabel: async function (filePath) {
 		return await this.getAPKLabelScript(filePath);
 	},
-	saveLogin: async function(user, loginClient, type, status) {
+	saveLogin: async function (user, loginClient, type, status) {
 		let insertQ = "INSERT INTO login_history ";
 		let commonFields =
 			" token, expiresin, ip_address, logged_in_client, type, status ";
@@ -823,10 +825,10 @@ module.exports = {
 					" ) ";
 			}
 		}
-		
+
 		await sql.query(insertQ + values)
 	},
-	getLoginByToken: async function(token) {
+	getLoginByToken: async function (token) {
 		let loginQ = "SELECT * from login_history WHERE token ='" + token + "'";
 		let res = await sql.query(loginQ);
 		if (res.length) {
@@ -835,7 +837,7 @@ module.exports = {
 			return false;
 		}
 	},
-	getLoginByDealerID: async function(dealerId) {
+	getLoginByDealerID: async function (dealerId) {
 		let loginQ =
 			"SELECT * from login_history WHERE dealer_id ='" + dealerId + "'";
 		let res = await sql.query(loginQ);
@@ -846,7 +848,7 @@ module.exports = {
 			return false;
 		}
 	},
-	getLoginByDeviceID: async function(deviceId) {
+	getLoginByDeviceID: async function (deviceId) {
 		let loginQ =
 			"SELECT * from login_history WHERE device_id ='" + deviceId + "'";
 		let res = await sql.query(loginQ);
@@ -856,23 +858,23 @@ module.exports = {
 			return false;
 		}
 	},
-	expireLoginByToken: async function(token) {
+	expireLoginByToken: async function (token) {
 		let loginQ =
 			"UPDATE login_history SET status=0 WHERE token='" + token + "'";
 		sql.query(loginQ);
 	},
-	expireAllLogin: async function() {
+	expireAllLogin: async function () {
 		let loginQ = "UPDATE login_history SET status=0";
 		sql.query(loginQ);
 	},
-	getAllRecordbyUserID: async function(userID) {
+	getAllRecordbyUserID: async function (userID) {
 		// console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.id = ' + device_id)
 		let results = await sql.query(
 			"select devices.*  ," +
-				usr_acc_query_text +
-				', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.user_id = "' +
-				userID +
-				'"'
+			usr_acc_query_text +
+			', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.user_id = "' +
+			userID +
+			'"'
 		);
 		if (results.length) {
 			for (var i = 0; i < results.length; i++) {
@@ -880,7 +882,11 @@ module.exports = {
 				results[i].pgp_email = await device_helpers.getPgpEmails(
 					results[i]
 				);
-				results[i].sim_id = await device_helpers.getSimids(results[i]);
+				let simIds = await device_helpers.getSimids(results[i])
+                results[i].sim_id = simIds.sim_id
+                results[i].sim_id = simIds.sim_id2
+
+				results[i].vpn = await device_helpers.getVpn(results[i]);
 				results[i].chat_id = await device_helpers.getChatids(
 					results[i]
 				);
@@ -891,7 +897,7 @@ module.exports = {
 		}
 	},
 	//to get User record by user ID
-	getUserDataByUserId: async function(user_id) {
+	getUserDataByUserId: async function (user_id) {
 		let result = await sql.query(
 			"SELECT * FROM users WHERE user_id = '" + user_id + "'"
 		);
@@ -902,7 +908,7 @@ module.exports = {
 		}
 	},
 	// Check for unique Activation code
-	checkActivationCode: async function(device_id) {
+	checkActivationCode: async function (device_id) {
 		let query =
 			"SELECT device_id FROM devices WHERE device_id = '" +
 			device_id +
@@ -916,7 +922,7 @@ module.exports = {
 		}
 	},
 	// Get Dealer Id by link code or activation code
-	getDealerIdByLinkOrActivation: async function(code) {
+	getDealerIdByLinkOrActivation: async function (code) {
 		let query =
 			"SELECT dealer_id FROM dealers WHERE link_code ='" + code + "' ";
 		let result = await sql.query(query);
@@ -936,7 +942,7 @@ module.exports = {
 		}
 	},
 
-	getDealerByDealerId: async function(id) {
+	getDealerByDealerId: async function (id) {
 		let query =
 			"SELECT * FROM dealers WHERE dealer_id='" + id + "' limit 1";
 		let result = await sql.query(query);
@@ -948,7 +954,7 @@ module.exports = {
 		}
 	},
 
-	formatBytes: function(bytes, decimals = 2) {
+	formatBytes: function (bytes, decimals = 2) {
 		if (bytes === 0) return "0 Bytes";
 
 		const k = 1024;
@@ -961,13 +967,13 @@ module.exports = {
 			parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i]
 		);
 	},
-	bytesToSize: function(bytes) {
+	bytesToSize: function (bytes) {
 		var sizes = ["Bytes", "KB", "MB", "GB", "TB"];
 		if (bytes == 0) return "0 Byte";
 		var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
 		return Math.round(bytes / Math.pow(1024, i), 2) + " " + sizes[i];
 	},
-	getFileSize: function(file) {
+	getFileSize: function (file) {
 		let fileExist = path.join(__dirname, "../uploads/" + file);
 		if (fs.existsSync(fileExist)) {
 			let file_status = fs.statSync(fileExist);
@@ -976,7 +982,7 @@ module.exports = {
 			return 0;
 		}
 	},
-	getActivityName: async function(value) {
+	getActivityName: async function (value) {
 		let name = value;
 
 		switch (value) {
@@ -1024,7 +1030,7 @@ module.exports = {
 			return "N/A";
 		}
 	},
-	resetDB: function() {
+	resetDB: function () {
 		var importer1 = mysql_import.config({
 			host: "localhost",
 			user: "root",
@@ -1037,7 +1043,7 @@ module.exports = {
 			console.log("DB1 has finished importing");
 		});
 	},
-	replaceAt: function(string, index, replace) {
+	replaceAt: function (string, index, replace) {
 		index--;
 		return (
 			string.substring(0, index) + replace + string.substring(index + 1)
@@ -1090,7 +1096,7 @@ module.exports = {
 		policy[0].permissions = JSON.stringify(permissions);
 		return policy;
 	},
-	insertPolicyPushApps: async function(
+	insertPolicyPushApps: async function (
 		policyId,
 		pushApps,
 		newPolicy = false
