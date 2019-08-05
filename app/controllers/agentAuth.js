@@ -13,7 +13,7 @@ var app_constants = require('../../constants/Application');
 var MsgConstants = require('../../constants/MsgConstants');
 
 const constants = require('../../config/constants');
-const { sendEmail } = require('../../lib/email');
+// const { sendEmail } = require('../../lib/email');
 
 
 var data;

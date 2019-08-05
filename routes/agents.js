@@ -52,4 +52,16 @@ router.put('/suspend-device/:id', AgentDashboardController.suspendDevice);
  */
 router.delete('/reject-device', AgentDashboardController.deleteDevice)
 
+/**
+ * SecurePanel dashboard login
+ * @route PUT /api/v1/agent/reset-pwd
+ * @group Agent Dashboard - Operations about Dealer Agents
+ * @param {string} email.formData.required - agent email
+ * @param {string} dealer_pin.formData.required - agent email
+ * @returns {object} 200 - An array of agents info
+ * #returns {Response.model} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ */
+router.put('/reset-pwd', AgentDashboardController.resetPwd);
+
 module.exports = router;

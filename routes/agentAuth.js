@@ -22,6 +22,7 @@ var agentAuthController = require('../app/controllers/agentAuth')
  * @returns {Error}  default - Unexpected error
  */
 
-router.post("/login", agentAuthController.login)
+router.post("/login", agentAuthController.login);
+
 
 module.exports = router;
