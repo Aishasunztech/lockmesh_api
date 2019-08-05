@@ -9,6 +9,8 @@ const axios = require('axios');
 var moment = require('moment-strftime');
 var randomize = require('randomatic');
 var datetime = require('node-datetime');
+var generator = require('generate-password');
+const bcrypt = require('bcrypt');
 
 // custom Libraries
 const { sendEmail } = require('../../lib/email');
@@ -28,6 +30,7 @@ const app_constants = require('../../config/constants');
 let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id, usr_acc.account_email, usr_acc.account_name, usr_acc.dealer_id, usr_acc.dealer_id, usr_acc.prnt_dlr_id, usr_acc.link_code, usr_acc.client_id, usr_acc.start_date, usr_acc.expiry_months, usr_acc.expiry_date, usr_acc.activation_code, usr_acc.status, usr_acc.device_status, usr_acc.activation_status, usr_acc.account_status, usr_acc.unlink_status, usr_acc.transfer_status, usr_acc.dealer_name, usr_acc.prnt_dlr_name, usr_acc.del_status, usr_acc.note, usr_acc.validity, usr_acc.batch_no, usr_acc.type, usr_acc.version"
 
 var data;
+
 
 /**GET all the devices**/
 exports.devices = async function (req, res) {
@@ -1081,5 +1084,83 @@ exports.unflagDevice = async function (req, res) {
             msg: "Device not Unflagged. Please try again", // Device Is not unflagged.Please try again"
         }
         return res.send(data);
+    }
+}
+
+exports.resetPwd = async function (req, res) {
+    var verify = req.decoded;
+    if (verify) {
+        console.log(verify);
+        // var agentID = req.params.agentID;
+
+        var dealer_pin = req.body.dealer_pin;
+        var email = req.body.email;
+        console.log(dealer_pin, email)
+
+        if (!empty(dealer_pin) && dealer_pin !== undefined && !empty(email) && email !== undefined) {
+            console.log("again", dealer_pin, email)
+
+            var dealerAgentQ = `SELECT * FROM dealer_agents WHERE email= '${email}' AND delete_status=0 LIMIT 1`;
+            var dealerAgent = await sql.query(dealerAgentQ);
+
+            if (dealerAgent.length) {
+                var dealerQ = `SELECT * FROM dealers WHERE link_code='${dealer_pin}' LIMIT 1`;
+                let dealer = await sql.query(dealerQ);
+                if (dealer.length) {
+                    
+                    var agentPwd = generator.generate({
+                        length: 10,
+                        numbers: true
+                    });
+                    var enc_pwd = await bcrypt.hash(agentPwd, 10);
+
+                    let updateDealerAgentQ = `UPDATE dealer_agents SET password='${enc_pwd}' WHERE email='${email}'`;
+                    let updateDealer = await sql.query(updateDealerAgentQ);
+                    if (updateDealer.affectedRows === 0) {
+                        data = {
+                            status: false,
+                            msg: "Agent password is not changed.", // Password changed successfully.Please check your email.
+                        };
+                        return res.send(data);
+                    } else {
+
+                        var html = `Your Agent details are: <br/>
+                                Staff ID : ${dealerAgent[0].staff_id} <br/>
+                                Username : ${dealerAgent[0].name} <br/>
+                                Email : ${dealerAgent[0].email} <br/> 
+                                Password : ${agentPwd} <br/>
+                                Dealer Pin : ${dealer[0].link_code}`;
+
+                        sendEmail("Agent password changed successfully", html, verify.user.dealer_email)
+                        sendEmail("Agent password changed successfully", html, dealerAgent[0].email)
+                        
+                        data = {
+                            status: true,
+                            msg: "Password changed successfully", // Password changed successfully.Please check your email.
+                        };
+                        return res.send(data);
+                    }
+                } else {
+                    data = {
+                        status: false,
+                        msg: "Invalid Agent", // Invalid User.
+                    }
+                    return res.send(data);
+                }
+
+            } else {
+                data = {
+                    status: false,
+                    msg: "Invalid Agent", // Invalid User.
+                }
+                return res.send(data);
+            }
+        } else {
+            data = {
+                status: false,
+                msg: "Invalid Agent", // Invalid User.
+            }
+            return res.send(data);
+        }
     }
 }
