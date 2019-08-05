@@ -1,34 +1,34 @@
 // Libraries
-const multer = require('multer');
-var path = require('path');
+const multer = require("multer");
+var path = require("path");
 var fs = require("fs");
-var mime = require('mime');
-var XLSX = require('xlsx');
-var empty = require('is-empty');
-const axios = require('axios');
-var moment = require('moment-strftime');
-var randomize = require('randomatic');
-var datetime = require('node-datetime');
+var mime = require("mime");
+var XLSX = require("xlsx");
+var empty = require("is-empty");
+const axios = require("axios");
+var moment = require("moment-strftime");
+var randomize = require("randomatic");
+var datetime = require("node-datetime");
 
 // custom Libraries
-const { sendEmail } = require('../../lib/email');
+const { sendEmail } = require("../../lib/email");
 
 // helpers
-const { sql } = require('../../config/database');
-const device_helpers = require('../../helper/device_helpers');
-const helpers = require('../../helper/general_helper');
-const verifyToken = require('../../config/auth');
-const sockets = require('../../routes/sockets');
+const { sql } = require("../../config/database");
+const device_helpers = require("../../helper/device_helpers");
+const helpers = require("../../helper/general_helper");
+const verifyToken = require("../../config/auth");
+const sockets = require("../../routes/sockets");
 
 // constants
-const constants = require('../../constants/Application');
-var MsgConstants = require('../../constants/MsgConstants');
-const app_constants = require('../../config/constants');
+const constants = require("../../constants/Application");
+var MsgConstants = require("../../constants/MsgConstants");
+const app_constants = require("../../config/constants");
 
 // constants
 
-let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
-
+let usr_acc_query_text =
+	"usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version";
 
 var data;
 
@@ -2569,3 +2569,74 @@ exports.getIMEI_History = async function (req, res) {
     }
 
 }
+
+/**
+ * Update device IDs
+ * Update device IDs of all existing devices
+ * http://localhost:3000/users/devices/update_device_ids
+ * one time useage - menual end point
+ *
+ *
+ * By Muhammad Irfan Afzal - mi3afzal
+ * 01-08-2019
+ * **/
+exports.updateDeviceIDs = async function(req, res) {
+	var verify = req.decoded; // await verifyToken(req, res);
+	if (!verify) {
+		data = {
+			status: false,
+			data: ["Bad Request"]
+		};
+		res.status(400).send(data);
+		return;
+	}
+
+	sql.query(
+		`SELECT * FROM devices WHERE device_id IS NOT NULL ORDER BY id ASC`,
+		async function(error, results, fields) {
+			if (error) throw error;
+
+			await sql.query(`TRUNCATE apps_queue_jobs`);
+			await sql.query(`TRUNCATE policy_queue_jobs`);
+
+			output = [];
+			for (var i = 0; i < results.length; i++) {
+				const oldDeviceID = results[i].device_id;
+				const newDeviceID = helpers.replaceAt(
+					oldDeviceID,
+					app_constants.DEVICE_ID_SYSTEM_LETTER_INDEX,
+					app_constants.DEVICE_ID_SYSTEM_LETTER
+				);
+
+				if (oldDeviceID != newDeviceID) {
+					await sql.query(
+						`UPDATE devices SET device_id = '${newDeviceID}' WHERE id = ${
+							results[i].id
+						} `
+					);
+					await sql.query(
+						`UPDATE acc_action_history SET device_id = '${newDeviceID}' WHERE device_id = '${oldDeviceID}' `
+					);
+					await sql.query(
+						`UPDATE device_history SET device_id = '${newDeviceID}' WHERE device_id = '${oldDeviceID}' `
+					);
+					await sql.query(
+						`UPDATE imei_history SET device_id = '${newDeviceID}' WHERE device_id = '${oldDeviceID}' `
+					);
+					await sql.query(
+						`UPDATE login_history SET device_id = '${newDeviceID}' WHERE device_id = '${oldDeviceID}' `
+					);
+				}
+
+				output[i] = [oldDeviceID, newDeviceID];
+			}
+
+			data = {
+				status: true,
+				data: ["Data Updated", output]
+			};
+			res.status(200).send(data);
+			return;
+		}
+	);
+};
