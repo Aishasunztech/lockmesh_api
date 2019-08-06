@@ -223,18 +223,19 @@ exports.savePrices = async function (req, res) {
 }
 
 exports.savePackage = async function (req, res) {
-    console.log('data is', req.body)
+    // console.log('data is', req.body)
     var verify = req.decoded; // await verifyToken(req, res);
 
     if (verify) {
         // console.log(verify.user, 'user is the ')
         let data = req.body.data;
         let dealer_id = verify.user.dealer_id;
+        // console.log(data);
         if (data) {
             // console.log(data, 'data')
             // let dealer_id = req.body.data.dealer_id;
             if (dealer_id) {
-                // console.log(dealer_id, 'whitelableid');
+                console.log(dealer_id, 'whitelableid');
                 let days = 0;
                 if (data.pkgTerm) {
                     stringarray = data.pkgTerm.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
@@ -258,6 +259,8 @@ exports.savePackage = async function (req, res) {
                 }
                 let pkg_features = JSON.stringify(data.pkgFeatures)
                 let insertQuery = "INSERT INTO packages (dealer_id , dealer_type , pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features , dealers) VALUES('" + dealer_id + "' ,'" + verify.user.user_type + "' , '" + data.pkgName + "', '" + data.pkgTerm + "', '" + data.pkgPrice + "','" + days + "', '" + pkg_features + "' , '[]')";
+                console.log(insertQuery);
+
                 sql.query(insertQuery, async (err, rslt) => {
                     if (err) {
                         console.log(err)
@@ -286,6 +289,70 @@ exports.savePackage = async function (req, res) {
                 status: false,
                 msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DATA], "Invalid Data"), // 'Invalid Data'
             })
+        }
+    }
+}
+exports.saveSaPackage = async function (req, res) {
+
+    var verify = req.decoded; // await verifyToken(req, res);
+
+    if (verify) {
+
+        let data = req.body.data;
+        if (data) {
+            console.log(verify.user);
+            // console.log(dealer_id, 'whitelableid');
+            let days = 0;
+            if (data.pkgTerm) {
+                stringarray = data.pkgTerm.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
+                if (stringarray) {
+                    // console.log(stringarray,'is string lenth', stringarray.length)
+                    if (stringarray.length) {
+                        month = stringarray[0];
+                        // console.log('is month', month, stringarray[1])
+                        if (month && stringarray[1]) {
+                            // console.log('sring[1]', stringarray[1])
+                            if (stringarray[1] == 'month') {
+                                days = parseInt(month) * 30
+                            } else if (string[1] == 'year') {
+                                days = parseInt(month) * 365
+                            } else {
+                                days = 30
+                            }
+                        }
+                    }
+                }
+            }
+            let pkg_features = JSON.stringify(data.pkgFeatures)
+            let insertQuery = "INSERT INTO packages (dealer_id , dealer_type , pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features , dealers) VALUES('" + verify.user.dealer_id + "' ,'super_admin' , '" + data.pkgName + "', '" + data.pkgTerm + "', '" + data.pkgPrice + "','" + days + "', '" + pkg_features + "' , '[]')";
+            // console.log(insertQuery);
+
+            sql.query(insertQuery, async (err, rslt) => {
+                if (err) {
+                    console.log(err)
+                    res.send({
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PACKAGE_SAVED_SUCCESSFULLY], "Package Saved Successfully"), // 'Package Saved Successfully',
+                    })
+                    return
+                }
+                if (rslt) {
+                    if (rslt.affectedRows) {
+                        res.send({
+                            status: true,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.PACKAGE_SAVED_SUCCESSFULLY], "Package Saved Successfully"), // 'Package Saved Successfully',
+                        })
+                        return
+                    }
+                }
+            })
+
+        } else {
+            res.send({
+                status: false,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DATA], "Invalid Data"), // 'Invalid Data'
+            })
+            return
         }
     }
 }

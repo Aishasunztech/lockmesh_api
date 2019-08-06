@@ -477,6 +477,7 @@ sockets.listen = function (server) {
                                     }
 
                                 } else {
+                                    console.log("response false send");
                                     socket.emit(Constants.GET_POLICY + device_id, {
                                         status: false,
                                         device_id: device_id

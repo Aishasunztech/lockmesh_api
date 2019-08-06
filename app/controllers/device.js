@@ -270,11 +270,11 @@ exports.acceptDevice = async function (req, res) {
             expiry_date = helpers.getExpDateByMonth(start_date, term)
         }
         let total_price = req.body.total_price;
-        if (sim_id2) {
-            if (loggedDealerType === constants.DEALER) {
+        // if (sim_id2) {
+        //     if (loggedDealerType === constants.DEALER) {
 
-            }
-        }
+        //     }
+        // }
 
         let user_credits = "SELECT * FROM dealer_credits WHERE dealer_id=" + dealer_id
         sql.query(user_credits, async function (err, result) {
@@ -288,7 +288,12 @@ exports.acceptDevice = async function (req, res) {
             else {
                 if (result.length || term === '0') {
                     let dealer_credits = (result.length) ? result[0].credits : 0
+                    let admin_credits = 0
                     if (dealer_credits > total_price || term === '0') {
+                        if (loggedDealerType === constants.DEALER) {
+                        } else if (loggedDealerType === constants.SDEALER) {
+
+                        }
 
                         // console.log(dealer_credits, total_price);
 
