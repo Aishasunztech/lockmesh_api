@@ -282,7 +282,7 @@ exports.simHistory = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
         try {
-            if (!empty(req.params.device_id)) {
+            if (req.params.device_id) {
                 var IQry = `SELECT * FROM sims WHERE device_id= '${req.params.device_id}' AND del = '1'`;
                 sql.query(IQry, async function (err, result) {
                     // console.log("=======================================")
@@ -306,19 +306,19 @@ exports.simHistory = async function (req, res) {
 
                 })
 
-                return;
+                // return;
             } else {
                 res.send({
                     status: false,
                 })
-                return;
+                // return;
             }
         } catch (error) {
             console.log(error);
             res.send({
                 status: false,
             })
-            return;
+            // return;
         }
     }
 }
