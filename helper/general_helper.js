@@ -10,16 +10,16 @@ var md5 = require("md5");
 var randomize = require("randomatic");
 const mysql_import = require("mysql-import");
 var path = require("path");
+const app_constants = require("../config/constants");
 
 const { sql } = require("../config/database");
 
 // import ADMIN from "../constants/Application";
 var Constants = require("../constants/Application");
-const app_constants = require('../config/constants');
 const device_helpers = require("./device_helpers");
 
 let usr_acc_query_text =
-	"usr_acc.id,usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.user_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity,usr_acc.batch_no,usr_acc.type,usr_acc.version";
+	"usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id, usr_acc.user_id, usr_acc.account_email, usr_acc.account_name,usr_acc.dealer_id, usr_acc.prnt_dlr_id,usr_acc.link_code, usr_acc.client_id, usr_acc.start_date, usr_acc.expiry_months, usr_acc.expiry_date,usr_acc.activation_code, usr_acc.status,usr_acc.device_status, usr_acc.activation_status, usr_acc.account_status,usr_acc.unlink_status, usr_acc.transfer_status, usr_acc.dealer_name, usr_acc.prnt_dlr_name, usr_acc.del_status, usr_acc.note, usr_acc.validity, usr_acc.batch_no, usr_acc.type, usr_acc.version";
 module.exports = {
 	convertToLang: async function (lngWord, constant) {
 		if (lngWord !== undefined && lngWord !== "" && lngWord !== null) {
@@ -222,7 +222,7 @@ module.exports = {
 		var query =
 			"SELECT COUNT(*) as dealer_count FROM dealers WHERE type !=" +
 			adminRoleId +
-			" AND type!=4";
+			" AND type!=4 AND type!=5 ";
 		let res = await sql.query(query);
 		if (res.length) {
 			return res[0].dealer_count;
@@ -678,8 +678,8 @@ module.exports = {
 				filePath +
 				' | grep "application" | sed -e "s/.*label=\'//" -e "s/\' .*//"';
 			const { stdout, stderr, error } = await exec(label);
-			console.log("stdout:", stdout);
-			console.log("stderr:", stderr);
+			// console.log('stdout:', stdout);
+			// console.log('stderr:', stderr);
 			if (error) {
 				return false;
 			}
@@ -813,8 +813,8 @@ module.exports = {
 					" ) ";
 			}
 		}
-		console.log(insertQ + values);
-		await sql.query(insertQ + values);
+
+		await sql.query(insertQ + values)
 	},
 	getLoginByToken: async function (token) {
 		let loginQ = "SELECT * from login_history WHERE token ='" + token + "'";
@@ -1033,9 +1033,27 @@ module.exports = {
 			string.substring(0, index) + replace + string.substring(index + 1)
 		);
 	},
-	refactorPolicy: function (policy) {
-		let applist = JSON.parse(policy[0].app_list);
-		applist.forEach(app => {
+
+	// Policy Helpers
+	refactorPolicy: async function (policy) {
+		// check if push application is updated
+		let pushApps = JSON.parse(policy[0].push_apps);
+		let apksQ = "SELECT * FROM apk_details WHERE delete_status != 1";
+		let apks = await sql.query(apksQ);
+		apks.forEach(apk => {
+			let index = pushApps.findIndex(app => app.apk_id === apk.id);
+			if (index && index !== -1) {
+				pushApps[index].apk = apk.apk;
+				pushApps[index].apk_name = apk.app_name;
+				pushApps[index].logo = apk.logo;
+				pushApps[index].package_name = apk.package_name;
+				pushApps[index].version_name = apk.version_name;
+			}
+		});
+
+		// refactor applist
+		let appList = JSON.parse(policy[0].app_list);
+		appList.forEach(app => {
 			// app.uniqueName = app.unique_name;
 			// app.packageName = app.package_name;
 			app.defaultApp = app.default_app;
@@ -1044,6 +1062,7 @@ module.exports = {
 			// delete app.default_app;
 		});
 
+		// refactor system secure settings
 		let permissions = JSON.parse(policy[0].permissions);
 		permissions.forEach(app => {
 			app.uniqueName = app.uniqueExtesion;
@@ -1055,9 +1074,76 @@ module.exports = {
 			delete app.default_app;
 		});
 
-		policy[0].app_list = JSON.stringify(applist);
-
+		// copy refactored
+		policy[0].app_list = JSON.stringify(appList);
 		policy[0].permissions = JSON.stringify(permissions);
 		return policy;
-	}
-};
+	},
+	insertPolicyPushApps: async function (
+		policyId,
+		pushApps,
+		newPolicy = false
+	) {
+		if (!newPolicy) {
+			await sql.query(
+				`DELETE FROM policy_apps WHERE policy_id=${policyId}`
+			);
+		}
+		let policyAppsQuery = `INSERT INTO policy_apps (policy_id, apk_id, guest, encrypted, enable) VALUES ?`;
+
+		let policyAppValues = [];
+		pushApps.forEach(app => {
+			policyAppValues.push([
+				policyId,
+				app.apk_id,
+				app.guest,
+				app.encrypted,
+				app.enable
+			]);
+		});
+		await sql.query(policyAppsQuery, [policyAppValues]);
+	},
+	generateStaffID: async function () {
+
+		let staff_id = randomize("0", 6);
+		staff_id = this.replaceAt(
+			staff_id,
+			app_constants.STAFF_ID_SYSTEM_LETTER_INDEX,
+			app_constants.STAFF_ID_SYSTEM_LETTER
+		);
+		let query = `SELECT staff_id FROM dealer_agents WHERE staff_id = '${staff_id}'`;
+		let result = await sql.query(query);
+		if (result.length > 1) {
+			staff_id = this.genrateLinkCode();
+		}
+		return staff_id;
+	},
+	move: (oldPath, newPath, callback) => {
+
+		fs.rename(oldPath, newPath, function (err) {
+			if (err) {
+				if (err.code === 'EXDEV') {
+					copy();
+				} else {
+					callback(err);
+				}
+				return;
+			}
+			callback();
+		});
+
+		function copy() {
+			var readStream = fs.createReadStream(oldPath);
+			var writeStream = fs.createWriteStream(newPath);
+
+			readStream.on('error', callback);
+			writeStream.on('error', callback);
+
+			readStream.on('close', function () {
+				fs.unlink(oldPath, callback);
+			});
+
+			readStream.pipe(writeStream);
+		}
+	},
+}

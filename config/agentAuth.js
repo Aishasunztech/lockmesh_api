@@ -26,13 +26,13 @@ module.exports = (req, res, next) => {
                 req.decoded.status = true;
                 req.decoded.success = true;
                 ath = decoded;
-
                 if (ath.user) {
                     var user_id = ath.user.id
 
                     var d_lng_id = 1;
 
-                    if (user_id != undefined && user_id != '' && user_id != null) {
+                    if (user_id && user_id!=='undefined' && user_id !== 'null') {
+
                         var sQry = `SELECT dealer_lng_id FROM dealer_language WHERE dealer_id = '${user_id}' LIMIT 1`;
                         var dLang = await sql.query(sQry);
                         if (dLang.length) {
@@ -46,7 +46,9 @@ module.exports = (req, res, next) => {
 
                     var sTranslation = `SELECT * FROM lng_translations WHERE lng_id = '${d_lng_id}'`;
                     let resp = await sql.query(sTranslation);
+
                     if (resp.length) {
+                        
                         let obj = {}
                         resp.forEach((elem) => {
                             let key_id = elem.key_id;
