@@ -360,7 +360,7 @@ module.exports = {
 	},
 
 	genrateLinkCode: async function () {
-		let link_code = randomize("0", 6);
+		let link_code = randomize("0", 1, { exclude: "0" }) + randomize("0", 5);
 		link_code = this.replaceAt(
 			link_code,
 			app_constants.DEALER_PIN_SYSTEM_LETTER_INDEX,
