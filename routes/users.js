@@ -194,6 +194,16 @@ router.post("/create/device_profile", deviceController.createDeviceProfile);
 router.post("/transfer/device_profile", deviceController.transferDeviceProfile);
 
 
+
+/**
+ * @route POST /users/transfer/user
+ * @group Device - test route
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ */
+router.post("/transfer/user", deviceController.transferUser);
+
+
 /**UPDATE Device details**/
 router.put("/edit/devices", deviceController.editDevices);
 

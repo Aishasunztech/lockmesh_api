@@ -2124,6 +2124,60 @@ exports.flagDevice = async function (req, res) {
 }
 
 
+exports.transferUser = async function (req, res) {
+    var verify = req.decoded;
+
+    if (verify) {
+        try {
+
+            let NewUser = req.body.NewUser;
+            let OldUser = req.body.OldUser;
+            let usr_device_id = req.body.OldUsr_device_id;
+
+            console.log('NewUser is: ', NewUser)
+            console.log('OldUser is: ', OldUser)
+            console.log('usr_device_id is: ', usr_device_id)
+
+            var selectUser = `SELECT * from users WHERE user_id='${NewUser}'`;
+            // console.log('selectUser detail is:: ', selectUser)
+            var userResult = await sql.query(selectUser);
+            // console.log('userResult is: ', userResult)
+
+            let updateUsrAcc = `UPDATE usr_acc SET user_id='${userResult[0].user_id}',account_email='${userResult[0].email}', transfer_user_status='1', transfered_from='${OldUser}'  WHERE user_id = '${OldUser}' AND device_id=${usr_device_id};`;
+            console.log('updateUsrAcc detail is:: ', updateUsrAcc)
+            var UsrAccResult = await sql.query(updateUsrAcc, async function (err, resp) {
+                if (err) throw Error('Query Error');
+
+                console.log('resp: ', resp)
+                if (resp.affectedRows > 0) {
+                    data = {
+                        status: true,
+                        msg: "User Transfered Successfully"
+                    }
+                    res.send(data);
+                } else {
+                    data = {
+                        status: false,
+                        msg: "User Not Found"
+                    }
+                    res.send(data);
+                }
+
+            });
+
+        } catch (err) {
+            console.log(err);
+            data = {
+                status: false,
+                msg: "Query Error"
+            }
+            res.send(data);
+        }
+
+    }
+}
+
+
 exports.transferDeviceProfile = async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
     var verify = req.decoded;
