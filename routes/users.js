@@ -893,7 +893,11 @@ router.post("/authenticate_update_user", async function (req, res) {
 // *****************************  SET AND GET => PRICES & PAKAGES   **************************
 router.patch("/save-prices", billingController.savePrices);
 
+router.patch("/save-sa-prices", billingController.saveSaPrices);
+
 router.post("/save-package", billingController.savePackage);
+
+router.delete("/delete_package/:id", billingController.deletePackage);
 
 router.post("/save-sa-package", billingController.saveSaPackage);
 
