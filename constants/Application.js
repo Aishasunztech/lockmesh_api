@@ -25,6 +25,8 @@ module.exports = {
   DEVICE_PENDING_ACTIVATION: "Pending activation",
   DEVICE_PRE_ACTIVATION: "Pre-activated",
   UNLINK_DEVICE_DELETE: "Delete",
+  // DEVICE_TRANSFERED: "Device Transfered",
+  USER_TRANSFERED: "User Transfered",
   DEVICE_FLAGGED: "Flagged",
   DEVICE_UNFLAGGED: "Unflagged",
   DEVICE_ACCEPT: "Accept Device",
