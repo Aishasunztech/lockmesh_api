@@ -15,9 +15,9 @@ var sockets = {};
 let io;
 
 // verify token
-const verifyToken = function (token) {
-    // check header or url parameters or post parameters for token
-    if (token !== undefined && token !== null && token !== '' && token !== 'undefined') {
+const verifyToken = function (socket, token) {
+
+    if (device_helpers.checkNotNull(token)) {
         // verifies secret and checks exp
         return jwt.verify(token.replace(/['"]+/g, ''), app_constants.SECRET, function (err, decoded) {
             if (err) {
@@ -32,55 +32,59 @@ const verifyToken = function (token) {
         return false;
     }
 }
-const verifySession = async (deviceId, sessionId, isWeb = false) => {
-    if (isWeb !== undefined && isWeb === true) {
+
+const verifySession = async (deviceId, sessionId, isWeb = false, dealerId = null) => {
+    if (device_helpers.checkNotNull(isWeb)) {
+        console.log("web side: ", isWeb);
         return true;
-    }
-    console.log(deviceId);
-    // device is offline or session_id is matched
-    // var query = "SELECT id FROM devices WHERE device_id='" + deviceId + "' AND (online='off' OR session_id='" + sessionId + "')";
-    var query = "SELECT id FROM devices WHERE device_id='" + deviceId + "'";
-    let res = await sql.query(query);
-    if (res.length) {
-        return true;
+
+    } else if(device_helpers.checkNotNull(deviceId)) {
+        console.log("mobile side: ", deviceId);
+        // var query = "SELECT id FROM devices WHERE device_id='" + deviceId + "' AND (online='off' OR session_id='" + sessionId + "')";
+        var query = "SELECT id FROM devices WHERE device_id='" + deviceId + "'";
+        let res = await sql.query(query);
+        if (res.length) {
+            return true;
+        } else {
+            return false;
+        }
     } else {
         return false;
     }
 }
+
 const socketMiddleware = async (socket, next) => {
     let token = socket.handshake.query.token;
     // console.log("Token", verifyToken(token));
-    if (verifyToken(token)) {
+    if (verifyToken(socket, token)) {
 
         let session_id = socket.id;
 
         var device_id = null;
+        var dealer_id = null;
 
         let isWeb = socket.handshake.query['isWeb'];
 
-        if (isWeb !== undefined && isWeb !== 'undefined' && (isWeb !== false || isWeb !== 'false') && (isWeb === true || isWeb === 'true')) {
+        if (device_helpers.checkNotNull(isWeb)) {
             isWeb = true;
+            // dealer_id = socket.handshake.query['dealer_id'];
+
         } else {
             isWeb = false;
             device_id = socket.handshake.query['device_id'];
         }
 
-
-        let sessionVerify = await verifySession(device_id, session_id, isWeb);
+        let sessionVerify = await verifySession(device_id, session_id, isWeb, dealer_id);
         console.log("Session", sessionVerify);
 
-        if (device_id != undefined && device_id !== null && sessionVerify) {
-            console.log("mobile side: ", device_id);
-            next();
-        } else if (isWeb === true && sessionVerify) {
-            console.log("web side: ", isWeb);
+        if (sessionVerify) {
             next();
         } else {
-            return next(new Error('Unauthorized'));
+            return next(new Error('Unauthorized: token not provided'));
         }
 
     } else {
-        return next(new Error('Unauthorized'));
+        return next(new Error('Unauthorized: token not provided'));
     }
 }
 
@@ -117,13 +121,9 @@ sockets.listen = function (server) {
     // middleware for socket incoming and outgoing requests
     io.use(socketMiddleware);
 
-    var allClients = [];
 
     io.sockets.on('connection', async function (socket) {
-        allClients.push(socket);
 
-        //socket.disconnect(true);
-        //socket.join('device_id');
 
         // get device id on connection
         let device_id = null;
@@ -618,12 +618,19 @@ sockets.listen = function (server) {
             }
 
 
-
             // ====================================================== Force Update =====================================
 
         } else {
-            console.log("web socket");
+            // socket.join('testRoom');
+            // console.log("on web side");
+            setInterval(function(){
+                // socket.to('testRoom').emit('hello_web', "hello web");
+                socket.emit('hello_web', "hello web");
+            }, 1000);
+            // socket.emit('hello_web', "hello web");
         }
+
+
         // ====================================================== Common Channels =====================================
         // common channels for panel and device
         socket.on(Constants.DISCONNECT, async () => {
@@ -631,8 +638,6 @@ sockets.listen = function (server) {
             await device_helpers.onlineOflineDevice(null, socket.id, Constants.DEVICE_OFFLINE);
             console.log("connected_users: " + io.engine.clientsCount);
 
-            var i = allClients.indexOf(socket);
-            allClients.splice(i, 1);
         });
 
         socket.on(Constants.CONNECT_ERROR, (error) => {

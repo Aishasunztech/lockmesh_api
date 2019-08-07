@@ -9,25 +9,32 @@ var path = require('path');
 var Constants = require('../constants/Application');
 
 module.exports = {
-    onlineOflineDevice: async function (deviceId = null, sessionId, status) {
-        console.log("Online ofline device", deviceId, sessionId, status);
-        try {
-            let query = "";
-            if (deviceId !== null) {
-                query = "UPDATE devices SET session_id='" + sessionId + "', online='" + status + "' WHERE device_id='" + deviceId + "';";
-            } else {
-                query = "UPDATE devices SET online = '" + status + "', session_id=null WHERE session_id='" + sessionId.replace(/['"]+/g, '') + "'";
-            }
-
-            let res = await sql.query(query);
-            if (res) {
-                return true;
-            }
+    checkNotNull: function (value) {
+        if (value === undefined || value === 'undefined' || value === false || value === 'false' || value === 0 || value === '' || value === null || value === 'null') {
             return false;
+        } else {
+            return true;
         }
-        catch (error) {
-            console.log("UPDATE devices SET session_id='" + sessionId + "', online='" + status + "' WHERE device_id='" + deviceId + "'")
+    },
+    onlineOflineDevice: async function (deviceId = null, sessionId, status) {
+        // try {
+        let query = "";
+        if (deviceId) {
+            console.log("device online")
+            query = `UPDATE devices SET session_id='${sessionId}', online='${status}' WHERE device_id='${deviceId}'`;
+        } else {
+            console.log("device offline")
+            query = `UPDATE devices SET online = '${status}', session_id=null WHERE session_id='${sessionId.replace(/['"]+/g, '')}'`;
         }
+
+        let res = await sql.query(query);
+        if (res) {
+            return true;
+        }
+        return false;
+        // } catch (error) {
+        //     console.log("UPDATE devices SET session_id='" + sessionId + "', online='" + status + "' WHERE device_id='" + deviceId + "'")
+        // }
 
     },
     getSessionIdByDeviceId: async function (deviceId) {
@@ -82,19 +89,25 @@ module.exports = {
                 sql.query("DELETE from user_apps WHERE device_id = " + deviceData.id);
                 apps.forEach(async (app) => {
 
-                    // console.log(app, "Apps");
-                    let default_app = (app.defaultApp !== undefined) ? app.defaultApp : app.default_app;
 
+                    let default_app = (app.defaultApp !== undefined && app.defaultApp !== null) ? app.defaultApp : (app.default_app !== undefined && app.default_app !== null) ? app.default_app : false;
+                    let system_app = (app.systemApp !== undefined && app.systemApp !== null) ? app.systemApp : (app.system_app !== undefined && app.system_app !== null) ? app.system_app : false;
+
+                    console.log(system_app);
                     let iconName = this.uploadIconFile(app, app.label);
 
-                    let query = "INSERT INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app) " +
-                        " VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , " + app.visible + ", " + default_app + ") " +
-                        " ON DUPLICATE KEY UPDATE " +
-                        // " label= '" + app.label +"',"+
-                        // " icon= '" + app.icon +"'," +
-                        " extension= " + app.extension + ", " +
-                        " visible= " + app.visible + ", " +
-                        " default_app= " + default_app + " "
+                    let query = `INSERT INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app, system_app)
+                        VALUES ('${app.uniqueName}', '${app.label}', '${app.packageName}', '${iconName}', ${app.extension} , ${app.visible}, ${default_app}, ${system_app})
+                        ON DUPLICATE KEY UPDATE
+                        extension= ${app.extension},
+                        visible= ${app.visible},
+                        default_app= ${default_app},
+                        system_app= ${system_app} 
+                        `;
+
+                    // " label= '" + app.label +"',"+
+                    // " icon= '" + app.icon +"'," +
+
                     //  console.log("update query error : ", query);
 
                     // var query = "INSERT IGNORE INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app) VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , " + app.visible + ", " + default_app + ")";
@@ -156,23 +169,23 @@ module.exports = {
 
     },
 
-    updateApps: async function (apps, deviceId){
+    updateApps: async function (apps, deviceId) {
         try {
-            
+
             let deviceData = await this.getDeviceByDeviceId(deviceId);
-    
+
             if (deviceData != null) {
                 if (apps !== null) {
-    
+
                     apps.forEach(async (app) => {
-                        
-                        if(app.isChanged){
-                            if(app.id && app.guest!==undefined && app.enable!==undefined && app.encrypted!=undefined){
+
+                        if (app.isChanged) {
+                            if (app.id && app.guest !== undefined && app.enable !== undefined && app.encrypted != undefined) {
                                 let updateApp = `UPDATE user_apps SET guest=${app.guest}, enable=${app.enable}, encrypted=${app.encrypted} WHERE id=${app.id}`;
                                 await sql.query(updateApp);
                             }
                         }
-                   
+
                     });
                 }
             } else {
@@ -183,12 +196,12 @@ module.exports = {
         }
     },
 
-    updateExtensions: async function (extensions, deviceId){
+    updateExtensions: async function (extensions, deviceId) {
         if (extensions) {
             extensions.forEach(async (app) => {
-                if(app.isChanged){
+                if (app.isChanged) {
                     console.log(app.id);
-                    if(app.id){
+                    if (app.id) {
                         let updateApp = `UPDATE user_apps SET guest=${app.guest}, encrypted=${app.encrypted} WHERE id=${app.id}`;
                         await sql.query(updateApp);
                     }
@@ -218,12 +231,16 @@ module.exports = {
     insertOrUpdateApps: async function (appId, deviceId, guest, encrypted, enable) {
         try {
 
-            var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
-           
+            var updateQuery = `UPDATE user_apps SET guest=${guest}, encrypted=${encrypted}, enable=${enable} WHERE device_id=${deviceId} AND app_id=${appId}`;
+
             sql.query(updateQuery, async function (error, row) {
-                console.log("this is", row);
+                if (error) {
+                    console.log(error)
+                }
+
+                console.log("insert or update device apps", row);
                 if (row && row.affectedRows === 0) {
-                    var insertQuery = "INSERT IGNORE INTO user_apps ( device_id, app_id, guest, encrypted, enable) VALUES (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + ")";
+                    var insertQuery = `INSERT IGNORE INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (${deviceId}, ${appId}, ${guest}, ${encrypted}, ${enable})`;
                     await sql.query(insertQuery);
                 }
             });
@@ -237,9 +254,7 @@ module.exports = {
             // sql.query(updateQuery);
 
         } catch (error) {
-            console.log("error", error);
-
-
+            console.log("insert or update apps error:", error);
         }
 
     },
@@ -527,25 +542,6 @@ module.exports = {
         return {
             imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address, type, version
         }
-    },
-    checkRemainDays: async (createDate, validity) => {
-        var createdDateTime, today, days;
-        if (validity != null) {
-
-            createdDateTime = new Date(createDate);
-            createdDateTime.setDate(createdDateTime.getDate() + validity);
-            today = new Date();
-            var difference_ms = createdDateTime.getTime() - today.getTime();
-
-            //Get 1 day in milliseconds
-            var one_day = 1000 * 60 * 60 * 24;
-
-            // Convert back to days and return
-            days = Math.round(difference_ms / one_day);
-        } else {
-            days = validity
-        }
-        if (days > 0) return days; else if (days <= 0 && days !== null) return "Expired"; else return "Not Announced";
     },
     checkvalidImei: async (s) => {
         var etal = /^[0-9]{15}$/;
