@@ -174,19 +174,21 @@ router.post('/login', async function (req, resp) {
 
                             let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address, type, version } = device_helpers.getDeviceInfo(req);
                             if (!empty(mac_address) || !empty(serial_number)) {
+                                let status = 'active'
                                 // console.log("this is info ", { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address });
                                 let chechedDeviceId = await helpers.getDeviceId(serial_number, mac_address)
                                 // let chechedDeviceId = checkDeviceId(NewDeviceId, serial_number, mac_address)
                                 if (usrAcc[0].expiry_months == 0) {
                                     var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
                                     var expiry_date = moment(trailDate).format("YYYY/MM/DD")
+                                    status = 'trial'
                                 } else {
                                     var expiry_date = helpers.getExpDateByMonth(new Date(), usrAcc[0].expiry_months);
                                 }
                                 var updateDevice = "UPDATE devices set device_id = '" + chechedDeviceId + "', ip_address = '" + ip + "', simno = '" + simNo1 + "', online = '" + Constants.DEVICE_OFFLINE + "', imei='" + imei1 + "', imei2='" + imei2 + "', serial_number='" + serial_number + "', mac_address='" + mac_address + "', simno2 = '" + simNo2 + "' where id='" + usrAcc[0].device_id + "'";
                                 await sql.query(updateDevice);
 
-                                var updateAccount = "UPDATE usr_acc set activation_status=1, type = '" + type + "', version = '" + version + "', status='active', expiry_date='" + expiry_date + "', start_date='" + start_date + "', device_status=1, unlink_status = 0 WHERE id = " + usrAcc[0].id;
+                                var updateAccount = "UPDATE usr_acc set activation_status=1, type = '" + type + "', version = '" + version + "', status='" + status + "', expiry_date='" + expiry_date + "', start_date='" + start_date + "', device_status=1, unlink_status = 0 WHERE id = " + usrAcc[0].id;
                                 await sql.query(updateAccount);
                                 device_helpers.saveImeiHistory(chechedDeviceId, serial_number, mac_address, imei1, imei2)
                                 let device_id = await device_helpers.getDvcIDByDeviceID(usrAcc[0].device_id)
@@ -755,7 +757,8 @@ router.get('/getUpdate/:version/:packageName/:label', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
 
     let verify = await verifyToken(req, res);
-    if (verify.status) {
+    if (verify.status === true) {
+        // console.log(verify.status);
         let version = req.params.version;
         let packageName = req.params.packageName;
         let label = req.params.label;
@@ -784,7 +787,6 @@ router.get('/getUpdate/:version/:packageName/:label', async (req, res) => {
                 });
             }
             return;
-
         } else {
             res.send({
                 apk_status: false,
