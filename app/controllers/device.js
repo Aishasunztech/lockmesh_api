@@ -27,7 +27,7 @@ const app_constants = require("../../config/constants");
 
 // constants
 
-let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status, usr_acc.transfer_user_status,usr_acc.transfered_from,usr_acc.transfered_to,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
+let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status, usr_acc.transfer_user_status, usr_acc.transfered_from,usr_acc.transfered_to, usr_acc.user_transfered_from, usr_acc.user_transfered_to,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
 
 
 var data;
@@ -1058,8 +1058,12 @@ exports.unlinkDevice = async function (req, res) {
                                                 response.data.user.token
                                         }
                                     }
-                                );
+                                ).catch((err) => {
+                                    console.log(err);
+                                });
                             }
+                        }).catch((err) => {
+                            console.log(err);
                         });
                     var userAccId = await device_helpers.getUsrAccIDbyDvcId(
                         device_id
@@ -2082,7 +2086,7 @@ exports.flagDevice = async function (req, res) {
                         msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FLAG], "Device not Flagged.Please try again"), // Device not Flagged.Please try again."
                     }
                 } else {
-                    sockets.sendDeviceStatus(gtres[0].device_id, "suspended");
+                    sockets.sendDeviceStatus(gtres[0].device_id, "flagged");
 
                     let resquery = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE devices.reject_status = 0 AND devices.id= "' + device_id + '"')
                     // console.log('lolo else', resquery)
@@ -2134,21 +2138,21 @@ exports.transferUser = async function (req, res) {
             let OldUser = req.body.OldUser;
             let usr_device_id = req.body.OldUsr_device_id;
 
-            console.log('NewUser is: ', NewUser)
-            console.log('OldUser is: ', OldUser)
-            console.log('usr_device_id is: ', usr_device_id)
+            // console.log('NewUser is: ', NewUser)
+            // console.log('OldUser is: ', OldUser)
+            // console.log('usr_device_id is: ', usr_device_id)
 
             var selectUser = `SELECT * from users WHERE user_id='${NewUser}'`;
             // console.log('selectUser detail is:: ', selectUser)
             var userResult = await sql.query(selectUser);
             // console.log('userResult is: ', userResult)
 
-            let updateUsrAcc = `UPDATE usr_acc SET user_id='${userResult[0].user_id}',account_email='${userResult[0].email}', transfer_user_status='1', transfered_from='${OldUser}'  WHERE user_id = '${OldUser}' AND device_id=${usr_device_id};`;
-            console.log('updateUsrAcc detail is:: ', updateUsrAcc)
-            var UsrAccResult = await sql.query(updateUsrAcc, async function (err, resp) {
+            let updateUsrAcc = `UPDATE usr_acc SET user_id='${userResult[0].user_id}',account_email='${userResult[0].email}', transfer_user_status='1', user_transfered_from='${OldUser}', user_transfered_to='${NewUser}'  WHERE user_id = '${OldUser}' AND device_id=${usr_device_id};`;
+            // console.log('updateUsrAcc detail is:: ', updateUsrAcc)
+            await sql.query(updateUsrAcc, async function (err, resp) {
                 if (err) throw Error('Query Error');
 
-                console.log('resp: ', resp)
+                // console.log('resp: ', resp)
                 if (resp.affectedRows > 0) {
 
                     // Save History into "acc_action_history"
@@ -2158,10 +2162,12 @@ exports.transferUser = async function (req, res) {
                     resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
                     resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
                     resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
+                    // resquery[0]["user_transfered_from"] = OldUser;
+                    // resquery[0]["user_transfered_to"] = NewUser;
                     // resquery[0].
                     // dealerData = await getDealerdata(res[i]);
                     device_helpers.saveActionHistory(resquery[0], constants.USER_TRANSFERED)
-                    console.log(resquery[0]);
+                    // console.log(resquery[0]);
 
                     data = {
                         status: true,
@@ -2196,7 +2202,7 @@ exports.transferDeviceProfile = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
         try {
-            console.log('==============> :: 01')
+            console.log('==============> :: 01');
             let flagged_device = req.body.flagged_device;
             let reqDevice = req.body.reqDevice;
 
@@ -2214,10 +2220,12 @@ exports.transferDeviceProfile = async function (req, res) {
                 // return;
                 if (rsltq.length > 0) {
 
-                    console.log('==============> :: 03')
-                    console.log('==============> :: 04')
+                    console.log('==============> :: 03', reqDevice.usr_device_id)
+
                     // Update New usr_acc
-                    let Update_UsrAcc_Query = `UPDATE usr_acc SET user_id='${rsltq[0].user_id}', account_email='${rsltq[0].account_email}',account_name='${rsltq[0].account_name}',dealer_id='${rsltq[0].dealer_id}',prnt_dlr_id='${rsltq[0].prnt_dlr_id}',link_code='${rsltq[0].link_code}',client_id='${rsltq[0].client_id}',start_date='${rsltq[0].start_date}',expiry_months='${rsltq[0].expiry_months}',expiry_date='${rsltq[0].expiry_date}',activation_code='${rsltq[0].activation_code}',status='${rsltq[0].status}',device_status='${rsltq[0].device_status}',activation_status='${rsltq[0].activation_status}',account_status='',unlink_status='0',transfer_status='0',dealer_name='${rsltq[0].dealer_name}',prnt_dlr_name='${rsltq[0].prnt_dlr_name}',del_status='0',note='${rsltq[0].note}',validity='${rsltq[0].validity}', batch_no='${rsltq[0].batch_no}',type='${rsltq[0].type}',version='${rsltq[0].version}'  WHERE device_id=${reqDevice.usr_device_id};`;
+                    let Update_UsrAcc_Query = `UPDATE usr_acc SET user_id='${rsltq[0].user_id}', account_email='${rsltq[0].account_email}',account_name='${rsltq[0].account_name}',dealer_id='${rsltq[0].dealer_id}',prnt_dlr_id='${rsltq[0].prnt_dlr_id}',link_code='${rsltq[0].link_code}',client_id='${rsltq[0].client_id}',start_date='${rsltq[0].start_date}',expiry_months='${rsltq[0].expiry_months}',expiry_date='${rsltq[0].expiry_date}',activation_code='${rsltq[0].activation_code}',status='${rsltq[0].status}',device_status='${rsltq[0].device_status}',activation_status='${rsltq[0].activation_status}',account_status='',unlink_status='0',transfer_status='0', transfered_from='${flagged_device.device_id}', transfered_to='${reqDevice.device_id}',dealer_name='${rsltq[0].dealer_name}',prnt_dlr_name='${rsltq[0].prnt_dlr_name}',del_status='0',note='${rsltq[0].note}',validity='${rsltq[0].validity}', batch_no='${rsltq[0].batch_no}',type='${rsltq[0].type}',version='${rsltq[0].version}'  WHERE device_id=${reqDevice.usr_device_id};`;
+
+                    console.log('==============> :: 04 ', Update_UsrAcc_Query)
                     await sql.query(Update_UsrAcc_Query, async function (err, resp) {
                         if (err) throw Error("Query Expection");
 
@@ -2228,7 +2236,7 @@ exports.transferDeviceProfile = async function (req, res) {
 
                             console.log('==============> :: 06')
                             // Update flagged device acc
-                            let UpdateQueryTransfer = `UPDATE usr_acc SET transfer_status = '1', transfered_to='${reqDevice.device_id}' WHERE id=${flagged_device.id};`;
+                            let UpdateQueryTransfer = `UPDATE usr_acc SET transfer_status = '1',transfered_from='${flagged_device.device_id}', transfered_to='${reqDevice.device_id}' WHERE id=${flagged_device.id};`;
                             await sql.query(UpdateQueryTransfer, async function (err, resp) {
                                 if (err) throw Error("Query Expection");
 
@@ -2393,29 +2401,35 @@ exports.transferHistory = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
         try {
+            if (req.params.device_id) {
+                let getHistory = `SELECT action,device_id, user_acc_id, transfered_from, transfered_to, user_transfered_from, user_transfered_to, created_at FROM acc_action_history WHERE (action = 'User Transfered' OR action = 'Device Transfered') AND device_id='${req.params.device_id}';`;
 
-            let getHistory = `SELECT action,device_id, user_acc_id, transfered_from, transfered_to, created_at FROM acc_action_history WHERE (action = 'User Transfered' OR action = 'Device Transfered');`;
+                // console.log('getHistory ', getHistory)
+                await sql.query(getHistory, async function (err, resp) {
+                    if (err) throw Error('Query Error');
 
-            await sql.query(getHistory, async function (err, resp) {
-                if (err) throw Error('Query Error');
+                    // console.log('resp: ', resp)
+                    if (resp.length > 0) {
 
-                console.log('resp: ', resp)
-                if (resp.length > 0) {
-
-                    data = {
-                        status: true,
-                        data: resp
+                        data = {
+                            status: true,
+                            data: resp
+                        }
+                        res.send(data);
+                    } else {
+                        data = {
+                            status: false,
+                            data: []
+                        }
+                        res.send(data);
                     }
-                    res.send(data);
-                } else {
-                    data = {
-                        status: false,
-                        data: []
-                    }
-                    res.send(data);
-                }
-            });
-
+                });
+            } else {
+                res.send({
+                    status: false,
+                    data: []
+                })
+            }
         } catch (err) {
             console.log(err);
             data = {
