@@ -10,7 +10,7 @@ var Constants = require('../constants/Application');
 
 module.exports = {
     checkNotNull: function (value) {
-        if (value === undefined || value === 'undefined' || value === false || value === 'false' || value === 0 || value === '' || value === null || value === 'null') {
+        if (value === undefined || value === 'undefined' || value === false || value === 'false' || value === 0 || value === '0' || value === '' || value === null || value === 'null') {
             return false;
         } else {
             return true;
@@ -81,25 +81,29 @@ module.exports = {
         }
     },
     insertApps: async function (apps, deviceId) {
-        // console.log("djknjkfnjkafak");
+        console.log('insertApps');
+
         let deviceData = await this.getDeviceByDeviceId(deviceId);
 
         if (deviceData != null) {
             if (apps !== null) {
-                sql.query("DELETE from user_apps WHERE device_id = " + deviceData.id);
+                await sql.query(`DELETE FROM user_apps WHERE device_id = ${deviceData.id}`);
+                
                 apps.forEach(async (app) => {
-
-
+                    console.log("insertApp: ", app.uniqueName);
+                    
                     let default_app = (app.defaultApp !== undefined && app.defaultApp !== null) ? app.defaultApp : (app.default_app !== undefined && app.default_app !== null) ? app.default_app : false;
                     let system_app = (app.systemApp !== undefined && app.systemApp !== null) ? app.systemApp : (app.system_app !== undefined && app.system_app !== null) ? app.system_app : false;
 
-                    console.log(system_app);
-                    let iconName = this.uploadIconFile(app, app.label);
+                    // icon uniqueness
+                    // let iconName = this.uploadIconFile(app, app.label);
+                    let iconName = this.uploadIconFile(app, app.label, app.packageName);
 
                     let query = `INSERT INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app, system_app)
                         VALUES ('${app.uniqueName}', '${app.label}', '${app.packageName}', '${iconName}', ${app.extension} , ${app.visible}, ${default_app}, ${system_app})
                         ON DUPLICATE KEY UPDATE
                         extension= ${app.extension},
+                        icon= '${iconName}',
                         visible= ${app.visible},
                         default_app= ${default_app},
                         system_app= ${system_app} 
@@ -116,6 +120,8 @@ module.exports = {
                     await this.getApp(app.uniqueName, deviceData.id, app.guest, app.encrypted, app.enable);
 
                 });
+            } else {
+                console.log("apps are empty")
             }
         } else {
             console.log("device not connected may be deleted");
@@ -238,7 +244,7 @@ module.exports = {
                     console.log(error)
                 }
 
-                console.log("insert or update device apps", row);
+                console.log("insert or update device apps");
                 if (row && row.affectedRows === 0) {
                     var insertQuery = `INSERT IGNORE INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (${deviceId}, ${appId}, ${guest}, ${encrypted}, ${enable})`;
                     await sql.query(insertQuery);
@@ -261,9 +267,9 @@ module.exports = {
     getDeviceByDeviceId: async function (deviceId) {
         // console.log("getDevice: " + deviceId);
 
-        var getQuery = "SELECT * FROM devices WHERE device_id='" + deviceId + "'";
-        // console.log(getQuery);
+        var getQuery = `SELECT * FROM devices WHERE device_id='${deviceId}'`;
         let response = await sql.query(getQuery);
+        
         if (response.length) {
             return response[0];
         } else {
@@ -314,27 +320,46 @@ module.exports = {
             return false;
         }
     },
-    uploadIconFile: function (app, iconName) {
+    uploadIconFile: function (app, iconName, packageName) {
         // let base64Data = "data:image/png;base64,"+ btoa(icon);
-        if (app.icon != undefined && typeof app.icon != 'string') {
+        if(app.icon !== undefined){
+            
+            if (typeof app.icon !== 'string' && typeof app.icon !== 'String' && typeof app.icon !== String) {
+                console.log("logo uploading", app.icon);
+                var base64Data = Buffer.from(app.icon).toString("base64");
+                
+                let icon = `../uploads/icon_${packageName}_${iconName}.png`;
+                
+                let file = path.join(__dirname, icon)
+    
+                // previous method not valid dir but was working
+                // fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
+                //     if (err) console.log(err);
+                // });
+                
+                fs.writeFile(file, base64Data, 'base64', function (err) {
+                    if (err) console.log("icon writing error: ", err);
+                });
+    
+            } else if (typeof app.icon === 'string' || typeof app.icon === String) {
+                // var bytes = app.icon.split(",");
+                // var base64Data = Buffer.from(bytes).toString("base64");
+    
+                // fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
+                //     console.log("file error", err);
+                // });
+    
+            } else {
+                console.log("icon type is: ", typeof app.icon)
+            }
 
-            var base64Data = Buffer.from(app.icon).toString("base64");
-
-            fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
-                if (err) console.log(err);
-            });
-
-        } else if (app.icon != undefined && typeof app.icon === 'string') {
-            // var bytes = app.icon.split(",");
-            // var base64Data = Buffer.from(bytes).toString("base64");
-
-            // fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
-            //     console.log("file error", err);
-            // });
-
+        } else {
+            console.log("icon was undefined");
         }
 
-        return "icon_" + iconName + ".png"
+        // changed because label was same and application was difficult to differenciate
+        // return "icon_" + iconName + ".png"
+        return `icon_${packageName}_${iconName}.png`;
 
     },
     isDeviceOnline: async function (device_id) {

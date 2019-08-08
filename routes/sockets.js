@@ -184,15 +184,9 @@ sockets.listen = function (server) {
                 apps_status: false,
                 extensions_status: false,
                 settings_status: false,
-                is_sync: (is_sync === 1 || is_sync === true || is_sync === 'true' || is_sync === '1') ? true : false,
+                // is_sync: (is_sync === 1 || is_sync === true || is_sync === 'true' || is_sync === '1') ? true : false,
+                is_sync: device_helpers.checkNotNull(is_sync) ? true : false,
             });
-            // socket.emit(Constants.GET_SYNC_STATUS + device_id, {
-            //     device_id: device_id,
-            //     apps_status: false,
-            //     extensions_status: false,
-            //     settings_status: false,
-            //     is_sync: (is_sync === 1 || is_sync === true || is_sync === 'true' || is_sync === '1') ? true : false,
-            // });
 
             // ===================================================== Syncing Device ===================================================
             // request application from portal to specific device
@@ -625,7 +619,7 @@ sockets.listen = function (server) {
             // console.log("on web side");
             setInterval(function(){
                 // socket.to('testRoom').emit('hello_web', "hello web");
-                socket.emit('hello_web', "hello web");
+                // socket.emit('hello_web', "hello web");
             }, 1000);
             // socket.emit('hello_web', "hello web");
         }
