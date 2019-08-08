@@ -757,7 +757,8 @@ router.get('/getUpdate/:version/:packageName/:label', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
 
     let verify = await verifyToken(req, res);
-    if (verify.status) {
+    if (verify.status === true) {
+        // console.log(verify.status);
         let version = req.params.version;
         let packageName = req.params.packageName;
         let label = req.params.label;
@@ -786,7 +787,6 @@ router.get('/getUpdate/:version/:packageName/:label', async (req, res) => {
                 });
             }
             return;
-
         } else {
             res.send({
                 apk_status: false,
