@@ -899,6 +899,8 @@ router.post("/save-package", billingController.savePackage);
 
 router.delete("/delete_package/:id", billingController.deletePackage);
 
+router.put("/edit_package/:id", billingController.editPackage);
+
 router.post("/save-sa-package", billingController.saveSaPackage);
 
 router.get("/get-language", languageController.getLanguage);

@@ -506,6 +506,112 @@ exports.deletePackage = async function (req, res) {
 
     }
 }
+exports.editPackage = async function (req, res) {
+    // console.log('data is', req.body)
+    var verify = req.decoded; // await verifyToken(req, res);
+
+    if (verify) {
+        let id = req.params.id
+        let price = req.body.price
+        let isModify = req.body.isModify
+        let user_type = verify.user.user_type
+        if (id) {
+            let packageQ = "SELECT * FROM packages WHERE id=" + id + " AND delete_status != 1"
+            sql.query(packageQ, function (err, result) {
+                if (err) {
+                    console.log(err);
+                    res.send({
+                        status: true,
+                        msg: "Error: Package did not modify."
+                    })
+                    return
+                }
+                if (result && result.length) {
+                    if (isModify) {
+                        let updatePrice = "UPDATE dealer_packages_prices set price = " + price + " where package_id=" + id + " AND created_by = '" + user_type + "'"
+                        // console.log(updatePrice);
+                        sql.query(updatePrice, function (err, result) {
+                            if (err) {
+                                console.log(err);
+                                res.send({
+                                    status: true,
+                                    msg: "Error: Package did not modify."
+                                })
+                                return
+                            }
+                            if (result.affectedRows > 0) {
+                                res.send({
+                                    status: true,
+                                    msg: "Package modified successfully."
+                                })
+                                return
+                            } else {
+                                let insertQ = "INSERT INTO dealer_packages_prices (package_id,dealer_id,created_by,price) VALUES (" + id + ", " + verify.user.dealer_id + " , '" + user_type + "' , " + price + ") "
+                                sql.query(insertQ, function (err, result) {
+                                    if (err) {
+                                        console.log(err);
+                                        res.send({
+                                            status: false,
+                                            msg: "Package did not modify."
+                                        })
+                                        return
+                                    }
+                                    if (result.affectedRows) {
+                                        res.send({
+                                            status: true,
+                                            msg: "Package modified successfully."
+                                        })
+                                        return
+                                    }
+
+                                })
+                            }
+                        })
+                    } else {
+                        let updatePackage = "UPDATE packages set pkg_price = " + price + " where id=" + id
+                        sql.query(updatePackage, function (err, result) {
+                            if (err) {
+                                console.log(err);
+                                res.send({
+                                    status: true,
+                                    msg: "Error: Package did not modify."
+                                })
+                                return
+                            }
+                            if (result && result.affectedRows > 0) {
+
+                                let updatePrice = "UPDATE dealer_packages_prices set price = " + price + " where id=" + id
+                                sql.query(updatePrice)
+                                res.send({
+                                    status: true,
+                                    msg: "Package modified successfully."
+                                })
+                                return
+                            }
+
+                        })
+                    }
+                }
+                else {
+                    res.send({
+                        status: false,
+                        msg: "Error: Package not found. Please try again"
+                    })
+                    return
+                }
+
+            })
+        }
+        else {
+            res.send({
+                status: false,
+                msg: "Error: Package not found. Please try again"
+            })
+            return
+        }
+
+    }
+}
 
 
 exports.getPrices = async function (req, res) {
@@ -640,6 +746,33 @@ exports.getPackages = async function (req, res) {
                                 }
 
                                 for (var i = 0; i < reslt.length; i++) {
+                                    if (verify.user.user_type === ADMIN) {
+                                        if (reslt[i].dealer_type === 'super_admin') {
+                                            let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'admin' AND package_id = " + reslt[i].id);
+                                            if (result && result.length) {
+                                                reslt[i].pkg_price = result[0].price
+                                            }
+                                        }
+                                    }
+                                    else if (verify.user.user_type === DEALER) {
+                                        if (reslt[i].dealer_type === 'super_admin') {
+                                            let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'dealer' AND package_id = " + reslt[i].id);
+                                            if (result && result.length) {
+                                                reslt[i].pkg_price = result[0].price
+                                            } else {
+                                                let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'admin' AND package_id = " + reslt[i].id);
+                                                if (result && result.length) {
+                                                    reslt[i].pkg_price = result[0].price
+                                                }
+                                            }
+                                        } else if (reslt[i].dealer_type === 'admin') {
+
+                                            let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'dealer' AND package_id = " + reslt[i].id);
+                                            if (result && result.length) {
+                                                reslt[i].pkg_price = result[0].price
+                                            }
+                                        }
+                                    }
                                     // console.log('push apps', reslt[i].push_apps)
                                     let permissions = (reslt[i].dealers !== undefined && reslt[i].dealers !== null) ? JSON.parse(reslt[i].dealers) : [];
                                     let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
@@ -701,18 +834,36 @@ exports.getParentPackages = async function (req, res) {
         // console.log(verify.user);
         let dealer_id = verify.user.dealer_id;
         if (dealer_id) {
-            if (verify.user.user_type === DEALER) {
-                selectQuery = "select dealer_packages.* , packages.* from dealer_packages join packages on packages.id = dealer_packages.package_id where dealer_packages.dealer_id = ' " + dealer_id + "' AND packages.delete_status != 1";
-            } else if (verify.user.user_type === SDEALER) {
-
-            }
-
+            selectQuery = "select packages.* from dealer_packages join packages on packages.id = dealer_packages.package_id where dealer_packages.dealer_id = ' " + dealer_id + "' AND packages.delete_status != 1";
             sql.query(selectQuery, async (err, reslt) => {
                 if (err) {
                     console.log(err)
                 }
                 if (reslt.length) {
-                    // console.log(reslt, 'reslt data of prices')
+
+                    for (let i = 0; i < reslt.length; i++) {
+                        if (verify.user.user_type === DEALER) {
+                            if (reslt[i].dealer_type === 'super_admin') {
+                                let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'admin' AND package_id = " + reslt[i].id);
+                                if (result && result.length) {
+                                    reslt[i].pkg_price = result[0].price
+                                }
+                            }
+                        }
+                        else if (verify.user.user_type === SDEALER) {
+                            if (reslt[i].dealer_type === 'super_admin' || reslt[i].dealer_type === 'admin') {
+                                let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'dealer' AND package_id = " + reslt[i].id);
+                                if (result && result.length) {
+                                    reslt[i].pkg_price = result[0].price
+                                } else {
+                                    let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'admin' AND package_id = " + reslt[i].id);
+                                    if (result && result.length) {
+                                        reslt[i].pkg_price = result[0].price
+                                    }
+                                }
+                            }
+                        }
+                    }
                     res.send({
                         status: true,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",

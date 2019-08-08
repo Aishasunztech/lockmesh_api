@@ -129,44 +129,6 @@ exports.devices = async function (req, res) {
                 device.usr_device_id = checkValue(device.usr_device_id)
                 device.validity = checkValue(device.validity)
             }
-
-            // let dumyData = finalResult;
-            // let newResultArray = [];
-            // for (let device of finalResult) {
-            //     // console.log('device ', device.device_id)
-            //     if (device.batch_no !== undefined && device.batch_no !== null && device.batch_no !== 'null' && device.batch_no !== 'undefined') {
-            //         let batch_array = [];
-            //         // console.log('batch no is exist')
-            //         let chcek = newResultArray.findIndex(dvc => {
-            //             return dvc.batch_no == device.batch_no
-            //         });
-            //         if (chcek == -1) {
-            //             for (let batch_device of dumyData) {
-            //                 if (device.batch_no == batch_device.batch_no) {
-            //                     // console.log('batch no is matched', batch_device.batch_no)
-            //                     batch_array.push(JSON.parse(JSON.stringify(batch_device)));
-            //                 }
-            //             }
-            //             // console.log(batch_array, 'batch array length')
-            //             if (batch_array.length) {
-            //                 device.batchData = batch_array;
-            //             }
-
-            //             newResultArray.push(JSON.parse(JSON.stringify(device)))
-            //         }
-
-            //     } else {
-            //         device.batchData = [];
-            //         // if (!newResultArray.find(dvc => {
-            //             // dvc.device_id == null && dvc.device_id == 'null'
-            //         // })) {
-            //              newResultArray.push(JSON.parse(JSON.stringify(device)) )
-            //             // }
-            //     }
-            // }
-
-            // console.log('final list ',newResultArray[0])
-
             data = {
                 status: true,
                 // "data": newResultArray
@@ -428,7 +390,7 @@ exports.acceptDevice = async function (req, res) {
                                                         rsltq[i].sim_id = simIds.sim_id2
                                                         rsltq[i].chat_id = await device_helpers.getChatids(rsltq[i])
                                                         rsltq[i].vpn = await device_helpers.getVpn(rsltq[i])
-                                                        rsltq[i].validity = await device_helpers.checkRemainDays(rsltq[i].created_at, results[i].validity)
+                                                        // rsltq[i].validity = await device_helpers.checkRemainDays(rsltq[i].created_at, rslts[i].validity)
                                                     }
 
                                                     // console.log(rsltq);

@@ -757,7 +757,7 @@ router.get('/getUpdate/:version/:packageName/:label', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
 
     let verify = await verifyToken(req, res);
-    if (verify.status) {
+    if (verify.status === true) {
         let version = req.params.version;
         let packageName = req.params.packageName;
         let label = req.params.label;
