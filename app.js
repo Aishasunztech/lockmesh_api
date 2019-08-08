@@ -1,18 +1,22 @@
 require("express-group-routes");
 var express = require("express");
+var app = express();
+
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 var cors = require("cors");
-
-var bodyParser = require("body-parser");
-
-var swaggerUi = require("swagger-ui-express"),
-	swaggerDocument = require("./swagger.json");
-
 var stackify = require("stackify-logger");
+// var bodyParser = require("body-parser");
 
-var app = express();
+const swaggerOptions = require('./config/swaggerOptions');
+
+// var swaggerUi = require("swagger-ui-express"),
+// swaggerDocument = require("./swagger.json");
+const expressSwagger = require('express-swagger-generator')(app);
+
+expressSwagger(swaggerOptions.options);
+
 app.disable("etag");
 app.options("*", cors());
 
@@ -74,11 +78,11 @@ app.get("/", function(req, res) {
 app.get("/itest", function(req, res) {
 	console.log("iTest failed successfully!!");
 	stackify.log("info", "hey! - iTest failed successfully!!");
-	throw new Error("throw new Error - iTest failed successfully!!");
-	res.send("iTest failed successfully!!");
+	
 });
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
 require("./routes/index.js")(app);
 
 module.exports = app;

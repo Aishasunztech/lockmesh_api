@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize')
 const mysql = require('mysql');
 var util = require('util');
-var constants = require('./constants');
+const constants = require('./constants');
 
 // sequelize_connection
 const sequelize_conn = new Sequelize(constants.DB_NAME, constants.DB_USERNAME, constants.DB_PASSWORD, {
@@ -24,8 +24,6 @@ sequelize_conn
   .catch(err => {
     console.error('Unable to connect to the database:', err);
   });
-
-
 
 
 

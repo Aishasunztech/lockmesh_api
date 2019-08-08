@@ -2,26 +2,27 @@ var express = require('express');
 var router = express.Router();
 //var uniqid = require('uniqid'); 
 var randomize = require('randomatic');
-const { sql } = require('../config/database');
-
-var helpers = require('../helper/general_helper.js');
-const bcrypt = require('bcrypt');
+var mime = require('mime');
+var moment = require('moment-strftime');
 var datetime = require('node-datetime');
+const axios = require('axios')
 var empty = require('is-empty');
 var jwt = require('jsonwebtoken');
 // var config = require('../helper/config.js');
 var path = require('path');
 var md5 = require('md5');
 var fs = require("fs");
-const nodemailer = require('nodemailer');
-var moment = require('moment-strftime');
+
+
+const { sql } = require('../config/database');
+var helpers = require('../helper/general_helper.js');
+
 const device_helpers = require('../helper/device_helpers.js');
 var Constants = require('../constants/Application');
 var app_constants = require('../config/constants');
 
 const constants = require('../config/constants');
 const { sendEmail } = require('../lib/email');
-const axios = require('axios')
 
 
 /*Check For Token in the header */
@@ -801,11 +802,23 @@ router.get('/getUpdate/:version/:packageName/:label', async (req, res) => {
 
 /** Get Apk **/
 router.get("/getApk/:apk", async (req, res) => {
-    let file = path.join(__dirname, "../uploads/" + req.params.apk + '.apk');
-    if (fs.existsSync(file)) {
-        res.sendFile(file);
+    // let verify = await verifyToken(req, res);
+    // if (verify.status) {
+    if (fs.existsSync(path.join(__dirname, "../uploads/" + req.params.apk + '.apk'))) {
+        let file = path.join(__dirname, "../uploads/" + req.params.apk + '.apk');
+        let fileMimeType = mime.getType(file);
+        let filetypes = /jpeg|jpg|apk|png/;
+        // Do something
+        // if (filetypes.test(fileMimeType)) {
+        return res.sendFile(file);
+        // } else {
+        //     return res.send({
+        //         status: false,
+        //         msg: "file not found", // file not found"
+        //     })
+        // }
     } else {
-        res.send({
+        return res.send({
             status: false,
             msg: "file not found"
         })
@@ -1352,6 +1365,7 @@ router.get('/admin/marketApplist', async function (req, res) {
         }
     })
 });
+
 router.get('/marketApplist/:linkCode', async function (req, res) {
     let data = [];
 

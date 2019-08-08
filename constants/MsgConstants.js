@@ -68,6 +68,15 @@ module.exports = {
     STATUS_UPDATED: "Status.Updated.id", // Status Changed Sccessfully
     STATUS_NOT_UPDATED: "Status.not.Updated.id", // Status Not Updated
 
+    UPDATE_SUCCESSFULLY: "Update.Successfully.id", // Updated Successfully
+    SIM_DELETE_SUCCESSFULLY: "sim.delete.Successfully.id", // Sim Deleted Successfully
+    QUERY_ERROR: "Query.Error.id", // Query Error
+    SOMETHING_WRONG_DELETE_SIM: "something_wrong_delete_sim.id", // Error: something wrong for delete sim record
+    SIM_REGISTERED_SUCCESSFULLY: "Sim.Registered.Successfully.id", // Sim Registered Successfully
+    MAXIMUN_2_SIMS_ALLOWED: "Maximun_2_sims_allowed.id", // Sorry! Maximun 2 registrations are allowed for this device
+    ALREADY_SIM_REGISTER: "Already_SIM_REGISTER.id", // You have already registered against this device ID and ICC-ID
+
+
     PERMISSION_SAVED_SUCCESSFULLY: "Permission.saved.successfully.id", // Permission saved successfully
     PERMISSION_NOT_SAVED: "Permission.couldnt.be.saved.id", // Permission couldn't be saved
     PERMISSION_REMOVED_SUCCESSFULLY: "Permission.Removed.successfully.id", // Permission Removed successfully
