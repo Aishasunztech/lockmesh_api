@@ -337,7 +337,7 @@ router.post('/linkdevice', async function (req, resp) {
                 var deviceCheckQuery = "SELECT * FROM devices WHERE device_id = '" + deviceId + "'";
                 let deviceCheckResponse = await sql.query(deviceCheckQuery);
                 if (deviceCheckResponse.length) {
-                    console.log('Some thing bad happend. user should not be here. Devices already exist.', deviceId);
+                    console.log('Some thing bad happend. user should not be here. Device already exist.', deviceId);
                     resp.send({
                         status: false,
                         msg: "Devices already exist."
@@ -345,9 +345,24 @@ router.post('/linkdevice', async function (req, resp) {
                     return
                 }
 
-                sendEmail("New Device Request", "You have a new device request", dealer[0].dealer_email, function (error, response) {
-                    if (error) console.log(error);
-                });
+                var lastLinkAttemptQ = `SELECT * FROM acc_action_history 
+                WHERE action = '${Constants.DEVICE_PENDING_ACTIVATION}' AND device_id = '${deviceId}' 
+                ORDER BY id DESC LIMIT 1`;
+                let lastLinkAttempt = await sql.query(lastLinkAttemptQ);
+                if (lastLinkAttempt.length) {
+                    let createdDateTime = new Date(lastLinkAttempt[0].created_at);
+                    let dateNow = new Date();
+                    let difference_ms = dateNow.getTime() - createdDateTime.getTime();
+
+                    //Get 1 hour in milliseconds
+                    let one_hour = 1000 * 60 * 60;
+                    let elapsed_hours = difference_ms / one_hour;
+                    if (elapsed_hours >= 1) {
+                        sendEmail("New Device Request", "You have a new device request", dealer[0].dealer_email, function (error, response) {
+                            if (error) console.log(error);
+                        });
+                    }
+                }
 
 
                 let insertDevice = "INSERT INTO devices (device_id, imei, imei2, ip_address, simno, simno2, serial_number, mac_address, online) values(?,?,?,?,?,?,?,?,?)";
