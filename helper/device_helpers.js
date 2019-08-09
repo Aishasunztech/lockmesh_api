@@ -16,7 +16,7 @@ module.exports = {
             return true;
         }
     },
-    onlineOflineDevice: async function (deviceId = null, sessionId, status) {
+    onlineOfflineDevice: async function (deviceId = null, sessionId, status) {
         // try {
         let query = "";
         if (deviceId) {
@@ -80,6 +80,15 @@ module.exports = {
             return false;
         }
     },
+
+    // socket helpers
+    deviceSynced: async function (deviceId) {
+        var updateQuery = "UPDATE devices set is_sync=1 WHERE device_id='" + deviceId + "'";
+        await sql.query(updateQuery);
+        console.log("device synced");
+    },
+
+    // applications
     insertApps: async function (apps, deviceId) {
         console.log('insertApps');
 
@@ -88,10 +97,10 @@ module.exports = {
         if (deviceData != null) {
             if (apps !== null) {
                 await sql.query(`DELETE FROM user_apps WHERE device_id = ${deviceData.id}`);
-                
+
                 apps.forEach(async (app) => {
                     console.log("insertApp: ", app.uniqueName);
-                    
+
                     let default_app = (app.defaultApp !== undefined && app.defaultApp !== null) ? app.defaultApp : (app.default_app !== undefined && app.default_app !== null) ? app.default_app : false;
                     let system_app = (app.systemApp !== undefined && app.systemApp !== null) ? app.systemApp : (app.system_app !== undefined && app.system_app !== null) ? app.system_app : false;
 
@@ -128,42 +137,55 @@ module.exports = {
         }
 
     },
-    insertExtensions: async function (extensions, deviceId) {
-        let deviceData = await this.getDeviceByDeviceId(deviceId);
-        // console.log("my extensions", extensions.toString());
-        if (extensions !== undefined && extensions !== null) {
-            extensions.forEach(async (app) => {
-                // console.log("ext object", app.uniqueName);
 
-                let getPrntExt = "SELECT id FROM apps_info WHERE (unique_name='" + app.uniqueName + "' AND (extension=1 OR extension=true) AND extension_id=0) ";
-                // console.log("extension query", getPrntExt);
+    // extensions
+    insertExtensions: async function (extensions, deviceId) {
+        console.log("insertExtensions")
+        let deviceData = await this.getDeviceByDeviceId(deviceId);
+        if (extensions) {
+
+            // delete extension settings before insert
+
+            extensions.forEach(async (app) => {
+                console.log("extension: ", app.uniqueName);
+
+                let getPrntExt = `SELECT id FROM apps_info WHERE (unique_name='${app.uniqueName}' AND (extension=1 OR extension=true) AND extension_id=0) `;
+
+                // console.log("extension query: ", getPrntExt);
                 let extension = await sql.query(getPrntExt);
                 if (extension.length) {
-                    // console.log("parent uniqueName: ", app.uniqueName);
-                    // console.log("child uniqueName: ", app.uniqueExtension);
-                    // console.log("label:", app.label);
-                    // console.log("icon:", app.icon);
-                    // console.log("guest: ", app.guest);
-                    // console.log("encrytped: ", app.encrypted);
 
-                    let iconName = this.uploadIconFile(app, app.label);
-                    var query = "INSERT INTO apps_info (unique_name, label, icon, extension, extension_id) VALUES ('" + app.uniqueExtension + "', '" + app.label + "', '" + iconName + "', 1, " + extension[0].id + ") " +
-                        " ON DUPLICATE KEY UPDATE " +
-                        // " label= '" + app.label +"',"+
-                        // " icon= '" + app.icon +"'," +
-                        " extension= 1, " +
-                        // " visible= " + app.visible + ", " +
-                        " default_app= 0  "
+                    let iconName = this.uploadIconFile(app, app.label, app.uniqueExtension);
+                    console.log("extension Icon Name: ", iconName);
 
-                    // var query = "INSERT IGNORE INTO apps_info (unique_name, label, icon, extension, extension_id) VALUES ('" + app.uniqueExtension + "', '" + app.label + "', '" + iconName + "', 1, " + extension[0].id + ")";
-                    // console.log("helloo:",query);
+                    // var query = "INSERT INTO apps_info (unique_name, label, icon, extension, extension_id) VALUES ('" + app.uniqueExtension + "', '" + app.label + "', '" + iconName + "', 1, " + extension[0].id + ") " +
+                    //     " ON DUPLICATE KEY UPDATE " +
+                    //     // " label= '" + app.label +"',"+
+                    //     // " icon= '" + app.icon +"'," +
+                    //     " extension= 1, " +
+                    //     // " visible= " + app.visible + ", " +
+                    //     " default_app= 0  "
+
+                    var query = `INSERT INTO apps_info (unique_name, label, icon, extension, extension_id) VALUES ('${app.uniqueExtension}', '${app.label}', '${iconName}', 1, ${extension[0].id})
+                        ON DUPLICATE KEY UPDATE
+                        icon= '${iconName}',
+                        extension= 1,
+                        default_app= 0  `;
+                    // console.log("extension Query: ", query);
+                    // " label= '${app.label}',
+                    // " visible= " + app.visible + ", " +
+
                     await sql.query(query);
-                    // console.log("inserting extension")
-                    await this.getApp(app.uniqueExtension, deviceData.id, app.guest, app.encrypted, true);
+                    console.log("inserting extension")
+                    await this.getExtension(app.uniqueExtension, deviceData.id, app.guest, app.encrypted, true);
                 }
             });
+        } else {
+            console.log("Extensions not found");
         }
     },
+
+    // settings
     insertOrUpdateSettings: async function (controls, device_id) {
         try {
             console.log("testing", controls);
@@ -175,6 +197,7 @@ module.exports = {
 
     },
 
+    // ============ update when come from history may be
     updateApps: async function (apps, deviceId) {
         try {
 
@@ -216,11 +239,7 @@ module.exports = {
         }
     },
 
-    deviceSynced: async function (deviceId) {
-        var updateQuery = "UPDATE devices set is_sync=1 WHERE device_id='" + deviceId + "'";
-        await sql.query(updateQuery);
-        console.log("device synced");
-    },
+
     getApp: async function (uniqueName, device_id, guest, encrypted, enable) {
 
         var query = "SELECT id FROM apps_info WHERE unique_name='" + uniqueName + "'limit 1";
@@ -264,12 +283,58 @@ module.exports = {
         }
 
     },
+
+    getExtension: async function (uniqueName, device_id, guest, encrypted, enable) {
+        console.log("getExtension() ");
+        var query = "SELECT id FROM apps_info WHERE unique_name='" + uniqueName + "'limit 1";
+        // console.log(query);
+        let response = await sql.query(query);
+        // console.log('res', response, 'for getApp')
+        if (response.length) {
+            await this.insertOrUpdateExtensions(response[0].id, device_id, guest, encrypted, enable);
+        } else {
+            // console.log("app not found");
+            return false;
+        }
+    },
+
+    insertOrUpdateExtensions: async function (appId, deviceId, guest, encrypted, enable) {
+        try {
+
+            var updateQuery = `UPDATE user_apps SET guest=${guest}, encrypted=${encrypted}, enable=${enable} WHERE device_id=${deviceId} AND app_id=${appId}`;
+
+            sql.query(updateQuery, async function (error, row) {
+                if (error) {
+                    console.log(error)
+                }
+
+                console.log("insert or update device apps");
+                if (row && row.affectedRows === 0) {
+                    var insertQuery = `INSERT IGNORE INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (${deviceId}, ${appId}, ${guest}, ${encrypted}, ${enable})`;
+                    await sql.query(insertQuery);
+                }
+            });
+
+            // let updateQuery = "INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + " ) " +
+            //     " ON DUPLICATE KEY UPDATE " +
+            //     " guest = " + guest + ", " +
+            //     " encrypted = " + encrypted + ", " +
+            //     " enable = " + enable + " ";
+            // // var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
+            // sql.query(updateQuery);
+
+        } catch (error) {
+            console.log("insert or update apps error:", error);
+        }
+
+    },
+
     getDeviceByDeviceId: async function (deviceId) {
         // console.log("getDevice: " + deviceId);
 
         var getQuery = `SELECT * FROM devices WHERE device_id='${deviceId}'`;
         let response = await sql.query(getQuery);
-        
+
         if (response.length) {
             return response[0];
         } else {
@@ -322,33 +387,33 @@ module.exports = {
     },
     uploadIconFile: function (app, iconName, packageName) {
         // let base64Data = "data:image/png;base64,"+ btoa(icon);
-        if(app.icon !== undefined){
-            
+        if (app.icon !== undefined) {
+
             if (typeof app.icon !== 'string' && typeof app.icon !== 'String' && typeof app.icon !== String) {
-                console.log("logo uploading", app.icon);
+                console.log("logo uploading: ", packageName);
                 var base64Data = Buffer.from(app.icon).toString("base64");
-                
+
                 let icon = `../uploads/icon_${packageName}_${iconName}.png`;
-                
+
                 let file = path.join(__dirname, icon)
-    
+
                 // previous method not valid dir but was working
                 // fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
                 //     if (err) console.log(err);
                 // });
-                
+
                 fs.writeFile(file, base64Data, 'base64', function (err) {
                     if (err) console.log("icon writing error: ", err);
                 });
-    
+
             } else if (typeof app.icon === 'string' || typeof app.icon === String) {
                 // var bytes = app.icon.split(",");
                 // var base64Data = Buffer.from(bytes).toString("base64");
-    
+
                 // fs.writeFile("./uploads/icon_" + iconName + ".png", base64Data, 'base64', function (err) {
                 //     console.log("file error", err);
                 // });
-    
+
             } else {
                 console.log("icon type is: ", typeof app.icon)
             }
@@ -363,9 +428,9 @@ module.exports = {
 
     },
     isDeviceOnline: async function (device_id) {
-        let query = "SELECT online FROM devices WHERE device_id='" + device_id + "'";
+        let query = `SELECT online FROM devices WHERE device_id='${device_id}'`;
         let res = await sql.query(query);
-        console.log(res, 'response for is Device id', device_id);
+
         if (res.length) {
             if (res[0].online === Constants.DEVICE_ONLINE) {
                 return true;
@@ -517,7 +582,6 @@ module.exports = {
         return response
 
     },
-
     checkRemainDays: async (createDate, validity) => {
         var createdDateTime, today, days;
         if (validity != null) {
@@ -598,6 +662,46 @@ module.exports = {
         } else {
             return ''
         }
-    }
+    },
+    pullAppProcess: async (deviceId, dvcId, packageName) => {
+        console.log("pullAppProcess");
 
+        let appInfoQ = `SELECT * FROM apps_info WHERE package_name = ${packageName} LIMIT 1`;
+        let appInfo = await sql.query(appInfoQ);
+        if (appInfo.length) {
+            let deletePullApp = `DELETE FROM user_apps WHERE device_id=${dvcId} AND app_id=${appInfo[0].id}`;
+            await sql.query(deletePullApp);
+            // let completePushApps = 0
+            // let queueAppsData = await sql.query(`SELECT * FROM apps_queue_jobs WHERE device_id = '${device_id}' AND type = 'push' ORDER BY created_at DESC LIMIT 1`)
+            // if (queueAppsData.length) {
+
+            //     completePushApps = queueAppsData[0].complete_apps + 1
+            //     await sql.query(`UPDATE apps_queue_jobs SET complete_apps = ${completePushApps} WHERE device_id = '${device_id}' AND type = 'pull'`)
+
+            //     io.emit(Constants.ACK_SINGLE_PULL_APP + device_id, {
+            //         status: true
+            //     })
+            // }
+            return packageName;
+        } else {
+            console.log("the app that you are trying to pull is not found in db, but on mobile side it pulled");
+            return null;
+        }
+    },
+    pushAppProcess: async (deviceId, dvcId, packageName) => {
+        console.log("pullAppProcess");
+        // let completePushApps = 0
+        // let queueAppsData = await sql.query("SELECT * from apps_queue_jobs where device_id = '" + device_id + "' AND type = 'push' order by created_at desc limit 1")
+        // if (queueAppsData.length) {
+
+        //     completePushApps = queueAppsData[0].complete_apps + 1
+        //     await sql.query("UPDATE apps_queue_jobs set complete_apps = " + completePushApps + " WHERE device_id = '" + device_id + "' AND type = 'pull'")
+
+        //     io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
+        //         status: true,
+        //     })
+        // }
+        return packageName
+
+    }
 }

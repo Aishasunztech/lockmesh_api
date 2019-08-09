@@ -33,7 +33,7 @@ let usr_acc_query_text =
 var data;
 
 /**GET all the devices**/
-exports.devices = async function(req, res) {
+exports.devices = async function (req, res) {
 	var verify = req.decoded; // await verifyToken(req, res);
 	var where_con = "";
 	let newArray = [];
@@ -43,16 +43,16 @@ exports.devices = async function(req, res) {
 			if (verify.user.user_type === constants.DEALER) {
 				where_con = ` AND (usr_acc.dealer_id =${
 					verify.user.id
-				} OR usr_acc.prnt_dlr_id = ${verify.user.id})`;
+					} OR usr_acc.prnt_dlr_id = ${verify.user.id})`;
 				let query = `SELECT * From acc_action_history WHERE action = 'UNLINKED' AND dealer_id = ${
 					verify.user.id
-				} AND del_status IS NULL`;
+					} AND del_status IS NULL`;
 				newArray = await sql.query(query);
 			} else {
 				where_con = ` AND usr_acc.dealer_id = ${verify.user.id} `;
 				let query = `SELECT * From acc_action_history WHERE action = 'UNLINKED' AND dealer_id = ${
 					verify.user.id
-				} AND del_status IS NULL`;
+					} AND del_status IS NULL`;
 				newArray = await sql.query(query);
 			}
 		} else {
@@ -65,7 +65,7 @@ exports.devices = async function(req, res) {
 		// console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 ' + where_con + ' order by devices.id DESC');
 		sql.query(
 			`SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0  ${where_con} ORDER BY devices.id DESC`,
-			async function(error, results, fields) {
+			async function (error, results, fields) {
 				// console.log('query ', 'select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 ' + where_con + ' order by devices.id DESC')
 				if (error) throw error;
 				for (var i = 0; i < results.length; i++) {
@@ -198,7 +198,7 @@ exports.devices = async function(req, res) {
 	}
 };
 // /**GET New the devices**/
-exports.newDevices = async function(req, res) {
+exports.newDevices = async function (req, res) {
 	var verify = req.decoded; // await verifyToken(req, res);
 	if (verify) {
 		// console.log("Dealer_Translations" , req.translation)
@@ -208,14 +208,14 @@ exports.newDevices = async function(req, res) {
 				// console.log('done of dealer', verify.user.id)
 				where_con = ` AND (usr_acc.dealer_id =${
 					verify.user.id
-				} OR usr_acc.prnt_dlr_id = ${verify.user.id}) `;
+					} OR usr_acc.prnt_dlr_id = ${verify.user.id}) `;
 			} else {
 				where_con = ` AND usr_acc.dealer_id = ${verify.user.id} `;
 			}
 
 			sql.query(
 				`select devices.*, ${usr_acc_query_text} FROM devices LEFT JOIN usr_acc ON  (devices.id = usr_acc.device_id) WHERE ((usr_acc.device_status=0 OR usr_acc.device_status="0") AND (usr_acc.unlink_status=0 OR usr_acc.unlink_status="0") AND (usr_acc.activation_status IS NULL)) AND devices.reject_status = 0 ${where_con} ORDER BY devices.id DESC`,
-				function(error, results, fields) {
+				function (error, results, fields) {
 					if (error) {
 						console.log(error);
 						data = {
@@ -243,7 +243,7 @@ exports.newDevices = async function(req, res) {
 	}
 };
 
-exports.acceptDevice = async function(req, res) {
+exports.acceptDevice = async function (req, res) {
 	// res.setHeader('Content-Type', 'application/json');
 	var verify = req.decoded; // await verifyToken(req, res);
 	if (verify) {
@@ -323,7 +323,7 @@ exports.acceptDevice = async function(req, res) {
 				return;
 			}
 
-			sql.query(checkDevice, async function(checkDeviceError, rows) {
+			sql.query(checkDevice, async function (checkDeviceError, rows) {
 				if (checkDeviceError) {
 					console.log(checkDeviceError);
 					res.send({
@@ -348,7 +348,7 @@ exports.acceptDevice = async function(req, res) {
 								status: false,
 								msg: await helpers.convertToLang(
 									req.translation[
-										MsgConstants.NEW_DEVICE_NOT_ADDED
+									MsgConstants.NEW_DEVICE_NOT_ADDED
 									],
 									"New Device Not Added Please try Again"
 								) // "New Device Not Added Please try Again"
@@ -424,7 +424,7 @@ exports.acceptDevice = async function(req, res) {
 									"'";
 							}
 
-							sql.query(common_Query, async function(
+							sql.query(common_Query, async function (
 								commonQueryError,
 								result
 							) {
@@ -434,8 +434,8 @@ exports.acceptDevice = async function(req, res) {
 										status: false,
 										msg: await helpers.convertToLang(
 											req.translation[
-												MsgConstants
-													.NEW_DEVICE_NOT_ADDED
+											MsgConstants
+												.NEW_DEVICE_NOT_ADDED
 											],
 											"New Device Not Added Please try Again"
 										) // "New Device Not Added Please try Again"
@@ -543,7 +543,7 @@ exports.acceptDevice = async function(req, res) {
 									status: true,
 									msg: await helpers.convertToLang(
 										req.translation[
-											MsgConstants.RECORD_UPD_SUCC
+										MsgConstants.RECORD_UPD_SUCC
 										],
 										"Record updated successfully"
 									), // 'Record updated successfully.',
@@ -558,7 +558,7 @@ exports.acceptDevice = async function(req, res) {
 								status: false,
 								msg: await helpers.convertToLang(
 									req.translation[
-										MsgConstants.NEW_DEVICE_NOT_ADDED
+									MsgConstants.NEW_DEVICE_NOT_ADDED
 									],
 									"New Device Not Added Please try Again"
 								) // "device is not added"
@@ -592,7 +592,7 @@ exports.acceptDevice = async function(req, res) {
 	}
 };
 
-exports.transferDeviceProfile = async function(req, res) {
+exports.transferDeviceProfile = async function (req, res) {
 	res.setHeader("Content-Type", "application/json");
 	var verify = req.decoded; // await verifyToken(req, res);
 	if (verify) {
@@ -609,7 +609,7 @@ exports.transferDeviceProfile = async function(req, res) {
 			where: {
 				device_id: device_id
 			}
-		}).then(async function(response, err) {
+		}).then(async function (response, err) {
 			console.log(err, "oject res", response[0]["dataValues"]);
 			let new_object = response[0]["dataValues"];
 			// new_object['device_id'] = device_id_new;
@@ -677,7 +677,7 @@ exports.transferDeviceProfile = async function(req, res) {
 				"' )";
 			let query = insertDevice + value;
 			// console.log('qerury', query);
-			sql.query(query, async function(err, resp) {
+			sql.query(query, async function (err, resp) {
 				// console.log('query reslut response', resp)
 				if (err) {
 					console.log(err);
@@ -730,7 +730,7 @@ exports.transferDeviceProfile = async function(req, res) {
 							status: true,
 							msg: await helpers.convertToLang(
 								req.translation[
-									MsgConstants.RECORD_TRANSF_SUCC
+								MsgConstants.RECORD_TRANSF_SUCC
 								],
 								"Record Transfered Successfully"
 							) // Record Transfered Successfully.
@@ -759,7 +759,7 @@ exports.transferDeviceProfile = async function(req, res) {
 	}
 };
 
-exports.editDevices = async function(req, res) {
+exports.editDevices = async function (req, res) {
 	res.setHeader("Content-Type", "application/json");
 	var verify = req.decoded; // await verifyToken(req, res);
 
@@ -834,7 +834,7 @@ exports.editDevices = async function(req, res) {
 				return;
 			}
 			// console.log(checkDevice);
-			sql.query(checkDevice, async function(error, rows) {
+			sql.query(checkDevice, async function (error, rows) {
 				if (rows.length) {
 					let checkUniquePgp =
 						"SELECT * from pgp_emails WHERE pgp_email= '" +
@@ -843,13 +843,13 @@ exports.editDevices = async function(req, res) {
 						usr_acc_id +
 						"'";
 					// let checkUnique = "SELECT usr_acc.* from usr_acc WHERE account_email= '" + device_email + "' AND device_id != '" + device_id + "'"
-					sql.query(checkUniquePgp, async function(error, success) {
+					sql.query(checkUniquePgp, async function (error, success) {
 						if (success.length) {
 							res.send({
 								status: false,
 								msg: await helpers.convertToLang(
 									req.translation[
-										MsgConstants.PGP_EMAIL_ALRDY_TKN
+									MsgConstants.PGP_EMAIL_ALRDY_TKN
 									],
 									"PGP email already taken"
 								) // PGP email already taken
@@ -858,7 +858,7 @@ exports.editDevices = async function(req, res) {
 							if (req.body.expiry_date == 0) {
 								if (
 									finalStatus ===
-										constants.DEVICE_PRE_ACTIVATION ||
+									constants.DEVICE_PRE_ACTIVATION ||
 									finalStatus === constants.DEVICE_TRIAL
 								) {
 									var expiry_date = req.body.expiry_date;
@@ -993,7 +993,7 @@ exports.editDevices = async function(req, res) {
 							// let sql1 = common_Query + common_Query2;
 							//console.log('empty');
 							// console.log(sql1);
-							sql.query(common_Query, async function(error, row) {
+							sql.query(common_Query, async function (error, row) {
 								await sql.query(usr_acc_Query);
 								let updateChatIds =
 									'update chat_ids set user_acc_id = "' +
@@ -1067,7 +1067,7 @@ exports.editDevices = async function(req, res) {
 									status: true,
 									msg: await helpers.convertToLang(
 										req.translation[
-											MsgConstants.RECORD_UPD_SUCC
+										MsgConstants.RECORD_UPD_SUCC
 										],
 										"Record updated successfully"
 									), // Record updated successfully.
@@ -1097,7 +1097,7 @@ exports.editDevices = async function(req, res) {
 	}
 };
 
-exports.deleteDevice = async function(req, res) {
+exports.deleteDevice = async function (req, res) {
 	// console.log(req.body);
 	var verify = req.decoded; // await verifyToken(req, res);
 
@@ -1128,7 +1128,7 @@ exports.deleteDevice = async function(req, res) {
 				);
 				sql.query(
 					"DELETE from usr_acc  where device_id = " + usr_device_id,
-					async function(error, results, fields) {
+					async function (error, results, fields) {
 						// sql.query("UPDATE usr_acc set unlink_status = 1 WHERE device_id = '" + usr_device_id + "'")
 						//response.end(JSON.stringify(rows));
 						// console.log(results);
@@ -1145,7 +1145,7 @@ exports.deleteDevice = async function(req, res) {
 								status: true,
 								msg: await helpers.convertToLang(
 									req.translation[
-										MsgConstants.DEVICE_DEL_SUCC
+									MsgConstants.DEVICE_DEL_SUCC
 									],
 									"Device deleted successfully"
 								) // Device deleted successfully.
@@ -1155,7 +1155,7 @@ exports.deleteDevice = async function(req, res) {
 								status: false,
 								msg: await helpers.convertToLang(
 									req.translation[
-										MsgConstants.DEVICE_NOT_DEL
+									MsgConstants.DEVICE_NOT_DEL
 									],
 									"Device not deleted"
 								), // Device not deleted.
@@ -1180,7 +1180,7 @@ exports.deleteDevice = async function(req, res) {
 	}
 };
 
-exports.unlinkDevice = async function(req, res) {
+exports.unlinkDevice = async function (req, res) {
 	var verify = req.decoded; // await verifyToken(req, res);
 	var device_id = req.params.id;
 
@@ -1189,7 +1189,7 @@ exports.unlinkDevice = async function(req, res) {
 		if (!empty(device_id)) {
 			let dvcId = await device_helpers.getDvcIDByDeviceID(device_id);
 			var sql1 = `DELETE from usr_acc  where device_id=${device_id}`;
-			sql.query(sql1, async function(error, results) {
+			sql.query(sql1, async function (error, results) {
 				if (error) {
 					data = {
 						status: false,
@@ -1208,7 +1208,7 @@ exports.unlinkDevice = async function(req, res) {
 							app_constants.SUPERADMIN_USER_CREDENTIALS,
 							{ headers: {} }
 						)
-						.then(async function(response) {
+						.then(async function (response) {
 							// console.log("SUPER ADMIN LOGIN API RESPONSE", response);
 							if (response.data.status) {
 								let data = {
@@ -1232,18 +1232,18 @@ exports.unlinkDevice = async function(req, res) {
 					);
 					await sql.query(
 						"update pgp_emails set user_acc_id = null WHERE user_acc_id = '" +
-							userAccId +
-							"'"
+						userAccId +
+						"'"
 					);
 					await sql.query(
 						"update chat_ids set user_acc_id = null WHERE user_acc_id = '" +
-							userAccId +
-							"'"
+						userAccId +
+						"'"
 					);
 					await sql.query(
 						"update sim_ids set user_acc_id = null WHERE user_acc_id = '" +
-							userAccId +
-							"'"
+						userAccId +
+						"'"
 					);
 					var sqlDevice =
 						"DELETE from devices where id = '" + device_id + "'";
@@ -1287,7 +1287,7 @@ exports.unlinkDevice = async function(req, res) {
 	}
 };
 
-exports.createDeviceProfile = async function(req, res) {
+exports.createDeviceProfile = async function (req, res) {
 	res.setHeader("Content-Type", "application/json");
 	var verify = req.decoded; // await verifyToken(req, res);
 	if (verify) {
@@ -1630,11 +1630,11 @@ exports.createDeviceProfile = async function(req, res) {
 
 										sql.query(
 											"select devices.*  ," +
-												usr_acc_query_text +
-												", dealers.dealer_name, dealers.connected_dealer from devices left join usr_acc on devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 and devices.id='" +
-												dvc_id +
-												"'",
-											async function(
+											usr_acc_query_text +
+											", dealers.dealer_name, dealers.connected_dealer from devices left join usr_acc on devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 and devices.id='" +
+											dvc_id +
+											"'",
+											async function (
 												error,
 												results,
 												fields
@@ -1666,8 +1666,8 @@ exports.createDeviceProfile = async function(req, res) {
 													status: true,
 													msg: await helpers.convertToLang(
 														req.translation[
-															MsgConstants
-																.PRE_ACTIV_ADD_SUCC
+														MsgConstants
+															.PRE_ACTIV_ADD_SUCC
 														],
 														"Pre-activation added succcessfully."
 													), // Pre-activation added succcessfully.
@@ -1688,7 +1688,7 @@ exports.createDeviceProfile = async function(req, res) {
 											status: false,
 											msg: await helpers.convertToLang(
 												req.translation[
-													MsgConstants.DEVICE_NOT_ADD
+												MsgConstants.DEVICE_NOT_ADD
 												],
 												"Device couldn't added"
 											) // Device couldn't added
@@ -1707,7 +1707,7 @@ exports.createDeviceProfile = async function(req, res) {
 	}
 };
 
-exports.suspendAccountDevices = async function(req, res) {
+exports.suspendAccountDevices = async function (req, res) {
 	var verify = req.decoded; // await verifyToken(req, res);
 	var device_id = req.params.id;
 	var tod_dat = datetime.create();
@@ -1728,7 +1728,7 @@ exports.suspendAccountDevices = async function(req, res) {
 					device_id +
 					"'";
 
-				var rest = sql.query(sql1, async function(error, results) {
+				var rest = sql.query(sql1, async function (error, results) {
 					if (error) {
 						console.log(error);
 					}
@@ -1743,11 +1743,11 @@ exports.suspendAccountDevices = async function(req, res) {
 					} else {
 						sql.query(
 							"select devices.*  ," +
-								usr_acc_query_text +
-								', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
-								device_id +
-								'"',
-							async function(error, resquery, fields) {
+							usr_acc_query_text +
+							', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
+							device_id +
+							'"',
+							async function (error, resquery, fields) {
 								if (error) {
 									console.log(error);
 								}
@@ -1772,7 +1772,7 @@ exports.suspendAccountDevices = async function(req, res) {
 										status: true,
 										msg: await helpers.convertToLang(
 											req.translation[
-												MsgConstants.ACC_SUSP_SUCC
+											MsgConstants.ACC_SUSP_SUCC
 											],
 											"Account suspended successfully"
 										) // Account suspended successfully.
@@ -1799,7 +1799,7 @@ exports.suspendAccountDevices = async function(req, res) {
 						device_id +
 						"'";
 
-					var rest = sql.query(sql1, async function(error, results) {
+					var rest = sql.query(sql1, async function (error, results) {
 						if (error) {
 							console.log(error);
 						}
@@ -1814,11 +1814,11 @@ exports.suspendAccountDevices = async function(req, res) {
 						} else {
 							sql.query(
 								"select devices.*  ," +
-									usr_acc_query_text +
-									', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
-									device_id +
-									'"',
-								async function(error, resquery, fields) {
+								usr_acc_query_text +
+								', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
+								device_id +
+								'"',
+								async function (error, resquery, fields) {
 									if (error) {
 										console.log(error);
 									}
@@ -1843,7 +1843,7 @@ exports.suspendAccountDevices = async function(req, res) {
 											status: true,
 											msg: await helpers.convertToLang(
 												req.translation[
-													MsgConstants.ACC_SUSP_SUCC
+												MsgConstants.ACC_SUSP_SUCC
 												],
 												"Account suspended successfully"
 											) // Account suspended successfully."
@@ -1886,7 +1886,7 @@ exports.suspendAccountDevices = async function(req, res) {
 	}
 };
 
-exports.activateDevice = async function(req, res) {
+exports.activateDevice = async function (req, res) {
 	var verify = req.decoded; // await verifyToken(req, res);
 	var device_id = req.params.id;
 	var tod_dat = datetime.create();
@@ -1905,7 +1905,7 @@ exports.activateDevice = async function(req, res) {
 					device_id +
 					"'";
 
-				var rest = sql.query(sql1, async function(error, results) {
+				var rest = sql.query(sql1, async function (error, results) {
 					if (error) {
 						console.log(error);
 					}
@@ -1920,11 +1920,11 @@ exports.activateDevice = async function(req, res) {
 					} else {
 						sql.query(
 							"select devices.*  ," +
-								usr_acc_query_text +
-								', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
-								device_id +
-								'"',
-							async function(error, resquery, fields) {
+							usr_acc_query_text +
+							', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
+							device_id +
+							'"',
+							async function (error, resquery, fields) {
 								if (error) {
 									console.log(error);
 								}
@@ -1954,7 +1954,7 @@ exports.activateDevice = async function(req, res) {
 										status: true,
 										msg: await helpers.convertToLang(
 											req.translation[
-												MsgConstants.DEVICE_ACTIV_SUCC
+											MsgConstants.DEVICE_ACTIV_SUCC
 											],
 											"Device activated successfully"
 										) // Device activated successfully.
@@ -1976,7 +1976,7 @@ exports.activateDevice = async function(req, res) {
 						device_id +
 						"'";
 
-					var rest = sql.query(sql1, async function(error, results) {
+					var rest = sql.query(sql1, async function (error, results) {
 						if (error) {
 							console.log(error);
 						}
@@ -1985,7 +1985,7 @@ exports.activateDevice = async function(req, res) {
 								status: false,
 								msg: await helpers.convertToLang(
 									req.translation[
-										MsgConstants.DEVICE_NOT_ACTIV
+									MsgConstants.DEVICE_NOT_ACTIV
 									],
 									"Device not activated.Please try again"
 								) // Device not activated.Please try again."
@@ -1993,11 +1993,11 @@ exports.activateDevice = async function(req, res) {
 						} else {
 							sql.query(
 								"select devices.*  ," +
-									usr_acc_query_text +
-									', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
-									device_id +
-									'"',
-								async function(error, resquery, fields) {
+								usr_acc_query_text +
+								', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
+								device_id +
+								'"',
+								async function (error, resquery, fields) {
 									if (error) {
 										console.log(error);
 									}
@@ -2027,8 +2027,8 @@ exports.activateDevice = async function(req, res) {
 											status: true,
 											msg: await helpers.convertToLang(
 												req.translation[
-													MsgConstants
-														.DEVICE_ACTIV_SUCC
+												MsgConstants
+													.DEVICE_ACTIV_SUCC
 												],
 												"Device activated successfully"
 											) // Device activated successfully."
@@ -2067,7 +2067,7 @@ exports.activateDevice = async function(req, res) {
 	}
 };
 
-exports.wipeDevice = async function(req, res) {
+exports.wipeDevice = async function (req, res) {
 	var verify = req.decoded; // await verifyToken(req, res);
 	var device_id = req.params.id;
 	// if (verify.status !== undefined && verify.status == true) {
@@ -2080,7 +2080,7 @@ exports.wipeDevice = async function(req, res) {
 				device_id +
 				"'";
 
-			var rest = sql.query(sql1, async function(error, results) {
+			var rest = sql.query(sql1, async function (error, results) {
 				if (error) {
 					console.log(error);
 				}
@@ -2101,11 +2101,11 @@ exports.wipeDevice = async function(req, res) {
 
 					sql.query(
 						"select devices.*  ," +
-							usr_acc_query_text +
-							', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
-							device_id +
-							'"',
-						async function(error, resquery, fields) {
+						usr_acc_query_text +
+						', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
+						device_id +
+						'"',
+						async function (error, resquery, fields) {
 							if (error) {
 								console.log(error);
 							}
@@ -2135,7 +2135,7 @@ exports.wipeDevice = async function(req, res) {
 									status: true,
 									msg: await helpers.convertToLang(
 										req.translation[
-											MsgConstants.DEVICE_WIPE_SUCC
+										MsgConstants.DEVICE_WIPE_SUCC
 										],
 										"Device Wiped successfully"
 									) // Device Wiped successfully.
@@ -2159,7 +2159,7 @@ exports.wipeDevice = async function(req, res) {
 	}
 };
 
-exports.unflagDevice = async function(req, res) {
+exports.unflagDevice = async function (req, res) {
 	var verify = req.decoded; // await verifyToken(req, res);
 	var device_id = req.params.id;
 
@@ -2170,7 +2170,7 @@ exports.unflagDevice = async function(req, res) {
 				"update devices set flagged= 'Not flagged' where device_id='" +
 				device_id +
 				"'";
-			var rest = sql.query(sql1, async function(error, results) {
+			var rest = sql.query(sql1, async function (error, results) {
 				if (error) {
 					console.log(error);
 				} else if (results.affectedRows == 0) {
@@ -2185,11 +2185,11 @@ exports.unflagDevice = async function(req, res) {
 				} else {
 					await sql.query(
 						"select devices.*  ," +
-							usr_acc_query_text +
-							', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.device_id= "' +
-							device_id +
-							'"',
-						async function(error, resquery, fields) {
+						usr_acc_query_text +
+						', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.device_id= "' +
+						device_id +
+						'"',
+						async function (error, resquery, fields) {
 							if (error) {
 								console.log(error);
 							}
@@ -2214,7 +2214,7 @@ exports.unflagDevice = async function(req, res) {
 									status: true,
 									msg: await helpers.convertToLang(
 										req.translation[
-											MsgConstants.DEVICE_UNFLAG_SUCC
+										MsgConstants.DEVICE_UNFLAG_SUCC
 										],
 										"Device Unflagged successfully"
 									) // Device Unflagged successfully.
@@ -2242,7 +2242,7 @@ exports.unflagDevice = async function(req, res) {
 	}
 };
 
-exports.flagDevice = async function(req, res) {
+exports.flagDevice = async function (req, res) {
 	var verify = req.decoded; // await verifyToken(req, res);
 	var device_id = req.params.id;
 	var option = req.body.data;
@@ -2286,10 +2286,10 @@ exports.flagDevice = async function(req, res) {
 
 					let resquery = await sql.query(
 						"select devices.*  ," +
-							usr_acc_query_text +
-							', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
-							device_id +
-							'"'
+						usr_acc_query_text +
+						', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
+						device_id +
+						'"'
 					);
 					// console.log('lolo else', resquery)
 					// console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"');
@@ -2348,7 +2348,7 @@ exports.flagDevice = async function(req, res) {
 };
 
 /** Get Device Details of Dealers (Connect Page) **/
-exports.connectDevice = async function(req, res) {
+exports.connectDevice = async function (req, res) {
 	// console.log('api check is caled')
 	var verify = req.decoded; // await verifyToken(req, res);
 
@@ -2372,10 +2372,10 @@ exports.connectDevice = async function(req, res) {
 			// console.log("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id where " + where);
 			await sql.query(
 				"select devices.*  ," +
-					usr_acc_query_text +
-					", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id where " +
-					where,
-				async function(error, results) {
+				usr_acc_query_text +
+				", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id where " +
+				where,
+				async function (error, results) {
 					if (error) {
 						console.log(error);
 					}
@@ -2442,7 +2442,7 @@ exports.connectDevice = async function(req, res) {
 	}
 };
 
-exports.getAppJobQueueOfDevice = async function(req, res) {
+exports.getAppJobQueueOfDevice = async function (req, res) {
 	// console.log('api check is caled')
 	var verify = req.decoded; // await verifyToken(req, res);
 
@@ -2468,7 +2468,7 @@ exports.getAppJobQueueOfDevice = async function(req, res) {
 	}
 };
 
-exports.resyncDevice = async function(req, res) {
+exports.resyncDevice = async function (req, res) {
 	var verify = req.decoded;
 
 	if (verify) {
@@ -2476,7 +2476,7 @@ exports.resyncDevice = async function(req, res) {
 		if (!empty(deviceId)) {
 			let query = `SELECT * FROM devices WHERE device_id = '${deviceId}' LIMIT 1`;
 
-			sql.query(query, async function(error, device) {
+			sql.query(query, async function (error, device) {
 				if (error) console.log(error);
 				if (device.length) {
 					if (device[0].online === constants.DEVICE_ONLINE) {
@@ -2506,7 +2506,7 @@ exports.resyncDevice = async function(req, res) {
 	}
 };
 
-exports.getAppsOfDevice = async function(req, res) {
+exports.getAppsOfDevice = async function (req, res) {
 	var verify = req.decoded; // await verifyToken(req, res);
 
 	if (verify) {
@@ -2630,7 +2630,7 @@ exports.getAppsOfDevice = async function(req, res) {
 	}
 };
 
-exports.deleteUnlinkDevice = async function(req, res) {
+exports.deleteUnlinkDevice = async function (req, res) {
 	try {
 		var verify = req.decoded; // await verifyToken(req, res);
 
@@ -2668,18 +2668,18 @@ exports.deleteUnlinkDevice = async function(req, res) {
 						if (action == "pre-active") {
 							await sql.query(
 								"UPDATE pgp_emails set user_acc_id = null , used = 0 where pgp_email ='" +
-									device.pgp_email +
-									"'"
+								device.pgp_email +
+								"'"
 							);
 							await sql.query(
 								"UPDATE chat_ids set user_acc_id = null , used = 0 where chat_id ='" +
-									device.chat_id +
-									"'"
+								device.chat_id +
+								"'"
 							);
 							await sql.query(
 								"UPDATE sim_ids set user_acc_id = null , used = 0 where sim_id ='" +
-									device.sim_id +
-									"'"
+								device.sim_id +
+								"'"
 							);
 						}
 						deletedDevices.push(device.id);
@@ -2728,7 +2728,7 @@ exports.deleteUnlinkDevice = async function(req, res) {
 	}
 };
 
-exports.applySettings = async function(req, res) {
+exports.applySettings = async function (req, res) {
 	try {
 		var verify = req.decoded; // await verifyToken(req, res);
 		// if (verify.status !== undefined && verify.status == true) {
@@ -2769,52 +2769,19 @@ exports.applySettings = async function(req, res) {
 			}
 
 			if (type == "profile") {
-				applyQuery =
-					"INSERT INTO device_history (device_id, dealer_id, user_acc_id, profile_name, app_list, passwords, controls, permissions, type) VALUES ('" +
-					device_id +
-					"', " +
-					dealer_id +
-					", " +
-					usrAccId +
-					", '" +
-					device_setting.name +
-					"' , '" +
-					app_list +
-					"', '" +
-					passwords +
-					"', '" +
-					controls +
-					"', '" +
-					subExtensions +
-					"' , 'profile')";
+				applyQuery = `INSERT INTO device_history (device_id, dealer_id, user_acc_id, profile_name, app_list, passwords, controls, permissions, type) VALUES ('${device_id}', ${dealer_id}, ${usrAccId}, '${device_setting.name}' , '${app_list}', '${passwords}', '${controls}', '${subExtensions}', 'profile')`;
 			} else {
-				applyQuery =
-					"INSERT INTO device_history (device_id, dealer_id, user_acc_id, app_list, passwords, controls, permissions) VALUES ('" +
-					device_id +
-					"', " +
-					dealer_id +
-					", " +
-					usrAccId +
-					", '" +
-					app_list +
-					"', '" +
-					passwords +
-					"', '" +
-					controls +
-					"', '" +
-					subExtensions +
-					"')";
+				applyQuery = `INSERT INTO device_history (device_id, dealer_id, user_acc_id, app_list, passwords, controls, permissions) VALUES ('${device_id}', ${dealer_id}, ${usrAccId}, '${app_list}', '${passwords}', '${controls}', '${subExtensions}')`;
 			}
 
-			sql.query(applyQuery, async function(err, rslts) {
+			sql.query(applyQuery, async function (err, rslts) {
 				if (err) {
-					console.log(err);
+					console.log("apply setting and profile query error: ", err);
 				}
 
 				if (rslts && rslts.insertId) {
-					let isOnline = await device_helpers.isDeviceOnline(
-						device_id
-					);
+					let isOnline = await device_helpers.isDeviceOnline(device_id);
+
 					let permissions = subExtensions;
 
 					if (isOnline) {
@@ -2825,35 +2792,28 @@ exports.applySettings = async function(req, res) {
 						// let settingHistory = await sql.query(setting_query);
 
 						// if (settingHistory.length > 0 && data.device_id != null) {
-						let apps = JSON.parse(app_list);
-						let extensions = JSON.parse(subExtensions);
+							
+						// these method was called so if device is online from here his apps will be updated, but its not correct
+						// let apps = JSON.parse(app_list);
+						// let extensions = JSON.parse(subExtensions);
+						
+						// await device_helpers.updateApps(apps, device_id);
 
-						await device_helpers.updateApps(apps, device_id);
-
-						await device_helpers.updateExtensions(
-							extensions,
-							device_id
-						);
+						// await device_helpers.updateExtensions(extensions, device_id);
 
 						// await device_helpers.insertOrUpdateSettings(controls, device_id);
 						// }
 
-						sockets.sendEmit(
-							app_list,
-							passwords,
-							controls,
-							permissions,
-							device_id
-						);
+						sockets.sendEmit(app_list, passwords, controls, permissions, device_id);
 
-						if (type == "profile") {
+						if (type === "profile") {
 							data = {
 								status: true,
 								online: isOnline,
 								msg: await helpers.convertToLang(
 									req.translation[
-										MsgConstants
-											.PROFILE_APPLIED_SUCCESSFULLY
+									MsgConstants
+										.PROFILE_APPLIED_SUCCESSFULLY
 									],
 									"Profile Applied Successfully"
 								) // Profile Applied Successfully
@@ -2864,8 +2824,8 @@ exports.applySettings = async function(req, res) {
 								online: isOnline,
 								msg: await helpers.convertToLang(
 									req.translation[
-										MsgConstants
-											.SETTINGS_APPLIED_SUCCESSFULLY
+									MsgConstants
+										.SETTINGS_APPLIED_SUCCESSFULLY
 									],
 									"Settings Applied Successfully"
 								) // Settings Applied Successfully',
@@ -2915,7 +2875,7 @@ exports.applySettings = async function(req, res) {
 	}
 };
 
-exports.applyPushApps = async function(req, res) {
+exports.applyPushApps = async function (req, res) {
 	try {
 		var verify = req.decoded; // await verifyToken(req, res);
 		// if (verify.status !== undefined && verify.status == true) {
@@ -2942,7 +2902,7 @@ exports.applyPushApps = async function(req, res) {
 				apps +
 				"', 'push_apps')";
 
-			sql.query(applyQuery, async function(err, rslts) {
+			sql.query(applyQuery, async function (err, rslts) {
 				if (err) {
 					console.log(err);
 				}
@@ -2969,7 +2929,7 @@ exports.applyPushApps = async function(req, res) {
 							noOfApps: noOfApps,
 							msg: await helpers.convertToLang(
 								req.translation[
-									MsgConstants.APPS_ARE_BEING_PUSHED
+								MsgConstants.APPS_ARE_BEING_PUSHED
 								],
 								"Apps are Being pushed"
 							),
@@ -2982,14 +2942,14 @@ exports.applyPushApps = async function(req, res) {
 							noOfApps: noOfApps,
 							msg: await helpers.convertToLang(
 								req.translation[
-									MsgConstants.WARNING_DEVICE_OFFLINE
+								MsgConstants.WARNING_DEVICE_OFFLINE
 								],
 								"Warning Device Offline"
 							),
 							content: await helpers.convertToLang(
 								req.translation[
-									MsgConstants
-										.APPS_PUSHED_TO_DEVICE_ON_BACK_ONLINE
+								MsgConstants
+									.APPS_PUSHED_TO_DEVICE_ON_BACK_ONLINE
 								],
 								"Apps pushed to device. Action will be performed when device is back online"
 							)
@@ -3014,10 +2974,10 @@ exports.applyPushApps = async function(req, res) {
 	}
 };
 
-exports.applyPullApps = async function(req, res) {
+exports.applyPullApps = async function (req, res) {
 	try {
-		var verify = req.decoded; // await verifyToken(req, res);
-		// if (verify.status !== undefined && verify.status == true) {
+		var verify = req.decoded;
+
 		if (verify) {
 			let device_id = req.params.device_id;
 
@@ -3029,68 +2989,51 @@ exports.applyPullApps = async function(req, res) {
 
 			let apps = pull_apps === undefined ? "" : JSON.stringify(pull_apps);
 
-			var applyQuery =
-				"INSERT INTO device_history (device_id,dealer_id,user_acc_id, pull_apps, type) VALUES ('" +
-				device_id +
-				"'," +
-				dealer_id +
-				"," +
-				usrAccId +
-				", '" +
-				apps +
-				"', 'pull_apps')";
+			var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, pull_apps, type) VALUES ('${device_id}', ${dealer_id}, ${usrAccId}, '${apps}', 'pull_apps')`;
 
-			sql.query(applyQuery, async function(err, rslts) {
+			sql.query(applyQuery, async function (err, rslts) {
 				if (err) {
 					console.log(err);
 				}
+
 				if (rslts) {
-					let isOnline = await device_helpers.isDeviceOnline(
-						device_id
-					);
-					var loadDeviceQ =
-						"INSERT INTO apps_queue_jobs (device_id,action,type,total_apps,is_in_process) " +
-						" VALUES ('" +
-						device_id +
-						"', 'pull', 'pull', " +
-						noOfApps +
-						" ,1)";
-					// var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
+					let isOnline = await device_helpers.isDeviceOnline(device_id);
+
+					var loadDeviceQ = `INSERT INTO apps_queue_jobs (device_id, action, type, total_apps, is_in_process)
+						VALUES ('${device_id}', 'pull', 'pull', ${noOfApps}, 1)`;
+
 					await sql.query(loadDeviceQ);
+
 					if (isOnline) {
 						data = {
 							status: true,
 							online: true,
 							noOfApps: noOfApps,
-							msg: await helpers.convertToLang(
-								req.translation[
-									MsgConstants.APPS_ARE_BEING_PULLED
-								],
-								"Apps are Being pulled"
-							),
+							msg: await helpers.convertToLang(req.translation[MsgConstants.APPS_ARE_BEING_PULLED], "Apps are Being pulled"),
 							content: ""
 						};
+						sockets.getPullApps(apps, device_id);
 					} else {
 						data = {
 							status: true,
 							noOfApps: noOfApps,
 							msg: await helpers.convertToLang(
 								req.translation[
-									MsgConstants.WARNING_DEVICE_OFFLINE
+								MsgConstants.WARNING_DEVICE_OFFLINE
 								],
 								"Warning Device Offline"
 							),
 							content: await helpers.convertToLang(
 								req.translation[
-									MsgConstants
-										.APPS_PULLED_TO_DEVICE_ON_BACK_ONLINE
+								MsgConstants
+									.APPS_PULLED_TO_DEVICE_ON_BACK_ONLINE
 								],
 								"Apps pulled to device. Action will be performed when device is back online"
 							)
 						};
 					}
-					res.send(data);
-					sockets.getPullApps(apps, device_id);
+
+					return res.send(data);
 				} else {
 					data = {
 						status: false,
@@ -3109,7 +3052,7 @@ exports.applyPullApps = async function(req, res) {
 	}
 };
 
-exports.getDeviceHistory = async function(req, res) {
+exports.getDeviceHistory = async function (req, res) {
 	var verify = req.decoded; // await verifyToken(req, res);
 	if (verify) {
 		let userId = verify.user.id;
@@ -3128,7 +3071,7 @@ exports.getDeviceHistory = async function(req, res) {
 			where = where + " user_acc_id='" + user_acc_id + "'";
 
 			let query = "SELECT * FROM device_history " + where;
-			sql.query(query, async function(error, result) {
+			sql.query(query, async function (error, result) {
 				data = {
 					status: true,
 					msg: await helpers.convertToLang(
@@ -3153,7 +3096,7 @@ exports.getDeviceHistory = async function(req, res) {
 	}
 };
 
-exports.writeIMEI = async function(req, res) {
+exports.writeIMEI = async function (req, res) {
 	try {
 		var verify = req.decoded; // await verifyToken(req, res);
 
@@ -3187,15 +3130,15 @@ exports.writeIMEI = async function(req, res) {
 					let newImei = JSON.stringify(prevImei);
 					sql.query(
 						"INSERT INTO device_history (device_id,dealer_id,user_acc_id, imei, type) VALUES ('" +
-							device_id +
-							"'," +
-							dealer_id +
-							"," +
-							usrAccId +
-							", '" +
-							newImei +
-							"', 'imei')",
-						async function(err, results) {
+						device_id +
+						"'," +
+						dealer_id +
+						"," +
+						usrAccId +
+						", '" +
+						newImei +
+						"', 'imei')",
+						async function (err, results) {
 							if (err) {
 								console.log(err);
 							}
@@ -3217,15 +3160,15 @@ exports.writeIMEI = async function(req, res) {
 										// 'insertedData': insertedData
 										title1: await helpers.convertToLang(
 											req.translation[
-												MsgConstants
-													.SUCCESSFULLY_WRITTEN_TO
+											MsgConstants
+												.SUCCESSFULLY_WRITTEN_TO
 											],
 											" successfully written to "
 										),
 										title2: await helpers.convertToLang(
 											req.translation[
-												MsgConstants
-													.RESTART_DEVICE_REQUIRED_TO_APPLY_IMEI
+											MsgConstants
+												.RESTART_DEVICE_REQUIRED_TO_APPLY_IMEI
 											],
 											" on Device.Restart device is required to apply IMEI."
 										)
@@ -3237,14 +3180,14 @@ exports.writeIMEI = async function(req, res) {
 										// 'insertedData': insertedData
 										content1: await helpers.convertToLang(
 											req.translation[
-												MsgConstants.WRITE_TO
+											MsgConstants.WRITE_TO
 											],
 											" write to "
 										),
 										content2: await helpers.convertToLang(
 											req.translation[
-												MsgConstants
-													.ACTION_PERFORMED_ON_BACK_ONLINE
+											MsgConstants
+												.ACTION_PERFORMED_ON_BACK_ONLINE
 											],
 											". Action will be performed when device is back online"
 										)
@@ -3256,7 +3199,7 @@ exports.writeIMEI = async function(req, res) {
 									status: false,
 									msg: await helpers.convertToLang(
 										req.translation[
-											MsgConstants.ERROR_PROC
+										MsgConstants.ERROR_PROC
 										],
 										"Error while Processing"
 									) // Error while Processing',
@@ -3282,7 +3225,7 @@ exports.writeIMEI = async function(req, res) {
 						newImei +
 						"', 'imei')";
 
-					sql.query(applyQuery, async function(err, rslts) {
+					sql.query(applyQuery, async function (err, rslts) {
 						if (err) {
 							console.log(err);
 						}
@@ -3337,7 +3280,7 @@ exports.writeIMEI = async function(req, res) {
 	}
 };
 
-exports.getActivities = async function(req, res) {
+exports.getActivities = async function (req, res) {
 	try {
 		var verify = req.decoded; // await verifyToken(req, res);
 
@@ -3361,7 +3304,7 @@ exports.getActivities = async function(req, res) {
 			for (let i = 0; i < accResults.length; i++) {
 				if (
 					accResults[i].action ==
-						constants.DEVICE_PENDING_ACTIVATION ||
+					constants.DEVICE_PENDING_ACTIVATION ||
 					accResults[i].action == constants.DEVICE_PRE_ACTIVATION ||
 					accResults[i].action === constants.DEVICE_EXPIRED ||
 					accResults[i].action == "DELETE"
@@ -3399,7 +3342,7 @@ exports.getActivities = async function(req, res) {
 	}
 };
 
-exports.getIMEI_History = async function(req, res) {
+exports.getIMEI_History = async function (req, res) {
 	var verify = req.decoded; // await verifyToken(req, res);
 
 	if (verify) {
@@ -3407,7 +3350,7 @@ exports.getIMEI_History = async function(req, res) {
 			"select * from imei_history where device_id = '" +
 			req.params.device_id +
 			"'";
-		sql.query(query, async function(error, resp) {
+		sql.query(query, async function (error, resp) {
 			res.send({
 				status: true,
 				msg: await helpers.convertToLang(
@@ -3438,7 +3381,7 @@ exports.getIMEI_History = async function(req, res) {
  * By Muhammad Irfan Afzal - mi3afzal
  * 01-08-2019
  * **/
-exports.updateDeviceIDs = async function(req, res) {
+exports.updateDeviceIDs = async function (req, res) {
 	var verify = req.decoded; // await verifyToken(req, res);
 	if (!verify) {
 		data = {
@@ -3451,7 +3394,7 @@ exports.updateDeviceIDs = async function(req, res) {
 
 	sql.query(
 		`SELECT * FROM devices WHERE device_id IS NOT NULL ORDER BY id ASC`,
-		async function(error, results, fields) {
+		async function (error, results, fields) {
 			if (error) throw error;
 
 			await sql.query(`TRUNCATE apps_queue_jobs`);
@@ -3469,7 +3412,7 @@ exports.updateDeviceIDs = async function(req, res) {
 				if (oldDeviceID != newDeviceID) {
 					await sql.query(
 						`UPDATE devices SET device_id = '${newDeviceID}' WHERE id = ${
-							results[i].id
+						results[i].id
 						} `
 					);
 					await sql.query(
