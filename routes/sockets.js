@@ -15,9 +15,9 @@ var sockets = {};
 let io;
 
 // verify token
-const verifyToken = function (token) {
-    // check header or url parameters or post parameters for token
-    if (token !== undefined && token !== null && token !== '' && token !== 'undefined') {
+const verifyToken = function (socket, token) {
+
+    if (device_helpers.checkNotNull(token)) {
         // verifies secret and checks exp
         return jwt.verify(token.replace(/['"]+/g, ''), app_constants.SECRET, function (err, decoded) {
             if (err) {
@@ -32,55 +32,59 @@ const verifyToken = function (token) {
         return false;
     }
 }
-const verifySession = async (deviceId, sessionId, isWeb = false) => {
-    if (isWeb !== undefined && isWeb === true) {
+
+const verifySession = async (deviceId, sessionId, isWeb = false, dealerId = null) => {
+    if (device_helpers.checkNotNull(isWeb)) {
+        console.log("web side: ", isWeb);
         return true;
-    }
-    console.log(deviceId);
-    // device is offline or session_id is matched
-    // var query = "SELECT id FROM devices WHERE device_id='" + deviceId + "' AND (online='off' OR session_id='" + sessionId + "')";
-    var query = "SELECT id FROM devices WHERE device_id='" + deviceId + "'";
-    let res = await sql.query(query);
-    if (res.length) {
-        return true;
+
+    } else if (device_helpers.checkNotNull(deviceId)) {
+        console.log("mobile side: ", deviceId);
+        // var query = "SELECT id FROM devices WHERE device_id='" + deviceId + "' AND (online='off' OR session_id='" + sessionId + "')";
+        var query = "SELECT id FROM devices WHERE device_id='" + deviceId + "'";
+        let res = await sql.query(query);
+        if (res.length) {
+            return true;
+        } else {
+            return false;
+        }
     } else {
         return false;
     }
 }
+
 const socketMiddleware = async (socket, next) => {
     let token = socket.handshake.query.token;
     // console.log("Token", verifyToken(token));
-    if (verifyToken(token)) {
+    if (verifyToken(socket, token)) {
 
         let session_id = socket.id;
 
         var device_id = null;
+        var dealer_id = null;
 
         let isWeb = socket.handshake.query['isWeb'];
 
-        if (isWeb !== undefined && isWeb !== 'undefined' && (isWeb !== false || isWeb !== 'false') && (isWeb === true || isWeb === 'true')) {
+        if (device_helpers.checkNotNull(isWeb)) {
             isWeb = true;
+            // dealer_id = socket.handshake.query['dealer_id'];
+
         } else {
             isWeb = false;
             device_id = socket.handshake.query['device_id'];
         }
 
-
-        let sessionVerify = await verifySession(device_id, session_id, isWeb);
+        let sessionVerify = await verifySession(device_id, session_id, isWeb, dealer_id);
         console.log("Session", sessionVerify);
 
-        if (device_id != undefined && device_id !== null && sessionVerify) {
-            console.log("mobile side: ", device_id);
-            next();
-        } else if (isWeb === true && sessionVerify) {
-            console.log("web side: ", isWeb);
+        if (sessionVerify) {
             next();
         } else {
-            return next(new Error('Unauthorized'));
+            return next(new Error('Unauthorized: token not provided'));
         }
 
     } else {
-        return next(new Error('Unauthorized'));
+        return next(new Error('Unauthorized: token not provided'));
     }
 }
 
@@ -117,13 +121,9 @@ sockets.listen = function (server) {
     // middleware for socket incoming and outgoing requests
     io.use(socketMiddleware);
 
-    var allClients = [];
 
     io.sockets.on('connection', async function (socket) {
-        allClients.push(socket);
 
-        //socket.disconnect(true);
-        //socket.join('device_id');
 
         // get device id on connection
         let device_id = null;
@@ -168,7 +168,7 @@ sockets.listen = function (server) {
 
             console.log("device_id: ", device_id);
 
-            await device_helpers.onlineOflineDevice(device_id, socket.id, Constants.DEVICE_ONLINE);
+            await device_helpers.onlineOfflineDevice(device_id, socket.id, Constants.DEVICE_ONLINE);
 
             dvc_id = await device_helpers.getOriginalIdByDeviceId(device_id);
             console.log("dvc_id: ", dvc_id);
@@ -179,47 +179,55 @@ sockets.listen = function (server) {
             user_acc_id = await device_helpers.getUsrAccIDbyDvcId(dvc_id);
             console.log("user_acc_id: ", user_acc_id);
 
+            // on connection send current status to device
             socket.emit(Constants.GET_SYNC_STATUS + device_id, {
                 device_id: device_id,
                 apps_status: false,
                 extensions_status: false,
                 settings_status: false,
-                is_sync: (is_sync === 1 || is_sync === true || is_sync === 'true' || is_sync === '1') ? true : false,
+                // is_sync: (is_sync === 1 || is_sync === true || is_sync === 'true' || is_sync === '1') ? true : false,
+                is_sync: device_helpers.checkNotNull(is_sync) ? true : false,
             });
-            // socket.emit(Constants.GET_SYNC_STATUS + device_id, {
-            //     device_id: device_id,
-            //     apps_status: false,
-            //     extensions_status: false,
-            //     settings_status: false,
-            //     is_sync: (is_sync === 1 || is_sync === true || is_sync === 'true' || is_sync === '1') ? true : false,
-            // });
 
             // ===================================================== Syncing Device ===================================================
             // request application from portal to specific device
+
+            // from mobile side status of (history, profile)
             socket.on(Constants.SETTING_APPLIED_STATUS + device_id, async function (data) {
-                // console.log("settings_applied: " + device_id);
+                console.log("settings applied successfully: " + device_id);
                 // let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id;
                 // await sql.query(historyUpdate);
 
                 var setting_query = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=1 ORDER BY created_at DESC LIMIT 1`;
                 let response = await sql.query(setting_query);
 
-                if (response.length > 0 && data.device_id != null) {
+                // if (response.length > 0 && data.device_id != null) {
+                if (response.length > 0) {
                     let app_list = JSON.parse(response[0].app_list);
                     let extensions = JSON.parse(response[0].permissions);
+                    let controls = response[0].controls;
 
+                    // new method that will only update not will check double query. here will be these methods
+                    await device_helpers.updateApps(app_list, device_id);
 
-                    await device_helpers.insertApps(app_list, device_id);
+                    await device_helpers.updateExtensions(extensions, device_id);
 
-                    await device_helpers.insertExtensions(extensions, device_id);
+                    await device_helpers.insertOrUpdateSettings(controls, device_id);
+                    
+                    // these methods are old and wrong
 
-                    await device_helpers.insertOrUpdateSettings(response[0].controls, device_id);
+                    // await device_helpers.insertApps(app_list, device_id);
+
+                    // await device_helpers.insertExtensions(extensions, device_id);
+
+                    // await device_helpers.insertOrUpdateSettings(response[0].controls, device_id);
+                    sockets.ackSettingApplied(device_id, app_list, extensions, controls)
                 }
 
             });
 
 
-            // send apps from mobile side
+            // get apps from mobile side
             socket.on(Constants.SEND_APPS + device_id, async (apps) => {
                 try {
                     console.log("get applications event: ", device_id);
@@ -241,7 +249,7 @@ sockets.listen = function (server) {
 
             });
 
-            // send extensions from mobile side
+            // get extensions from mobile side
             socket.on(Constants.SEND_EXTENSIONS + device_id, async (extensions) => {
                 console.log("get extension event: " + device_id);
                 // console.log("extensions: ", extensions);
@@ -256,7 +264,7 @@ sockets.listen = function (server) {
                 });
             });
 
-            // send system settings from mobile side
+            // get system settings from mobile side
             socket.on(Constants.SEND_SETTINGS + device_id, async (controls) => {
                 console.log('getting device settings from ' + device_id);
                 console.log("device controls", controls)
@@ -275,21 +283,22 @@ sockets.listen = function (server) {
                 });
             });
 
-            // ===================================================== Pending Device History ==================================================
+            // ===================================================== Pending Device Processes ===============================================
             // pending settings for device
 
-            var setting_query = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=0 AND type='profile' order by created_at desc limit 1`;
-            let setting_res = await sql.query(setting_query);
-            if (setting_res.length) {
+            var profile_query = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=0 AND type='profile' order by created_at desc limit 1`;
+            let profile_res = await sql.query(profile_query);
+            if (profile_res.length) {
 
                 let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND (type='history' OR type = 'profile') ";
                 await sql.query(historyUpdate);
+
                 socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
                     device_id: device_id,
-                    app_list: (setting_res[0].app_list === undefined || setting_res[0].app_list === null || setting_res[0].app_list === '') ? '[]' : setting_res[0].app_list,
-                    passwords: (setting_res[0].passwords === undefined || setting_res[0].passwords === null || setting_res[0].passwords === '') ? '{}' : setting_res[0].passwords,
-                    settings: (setting_res[0].controls === undefined || setting_res[0].controls === null || setting_res[0].controls === '') ? '{}' : setting_res[0].controls,
-                    extension_list: (setting_res[0].permissions === undefined || setting_res[0].permissions === null || setting_res[0].permissions === '') ? '[]' : setting_res[0].permissions,
+                    app_list: (profile_res[0].app_list === undefined || profile_res[0].app_list === null || profile_res[0].app_list === '') ? '[]' : profile_res[0].app_list,
+                    passwords: (profile_res[0].passwords === undefined || profile_res[0].passwords === null || profile_res[0].passwords === '') ? '{}' : profile_res[0].passwords,
+                    settings: (profile_res[0].controls === undefined || profile_res[0].controls === null || profile_res[0].controls === '') ? '{}' : profile_res[0].controls,
+                    extension_list: (profile_res[0].permissions === undefined || profile_res[0].permissions === null || profile_res[0].permissions === '') ? '[]' : profile_res[0].permissions,
                     status: true
                 });
 
@@ -338,7 +347,6 @@ sockets.listen = function (server) {
                 var imei1 = data.imei1
                 var imei2 = data.imei2
                 // console.log(data);
-                console.log("IMEI CHANGED");
 
 
                 if (serial_number !== undefined && serial_number !== null && mac_address !== undefined && mac_address !== null) {
@@ -384,9 +392,11 @@ sockets.listen = function (server) {
                     type: 'push'
                 })
             }
+
             socket.on(Constants.SEND_PUSHED_APPS_STATUS + device_id, async (pushedApps) => {
-                sockets.ackSinglePushApp(device_id, pushedApps);
+                sockets.ackSinglePushApp(device_id, dvc_id, pushedApps);
             });
+
             socket.on(Constants.FINISHED_PUSH_APPS + device_id, async (response) => {
                 // console.log("testing", response);
                 sockets.ackFinishedPushApps(device_id, user_acc_id);
@@ -397,7 +407,7 @@ sockets.listen = function (server) {
 
             // =====================================================PULL APPS=================================================
             // pending pull apps
-            var pendingPullAppsQ = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='pull_apps' order by created_at desc limit 1";
+            var pendingPullAppsQ = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=0 AND type='pull_apps' order by created_at desc limit 1`;
             let pendingPulledApps = await sql.query(pendingPullAppsQ);
 
             if (pendingPulledApps.length) {
@@ -418,12 +428,12 @@ sockets.listen = function (server) {
 
             socket.on(Constants.SEND_PULLED_APPS_STATUS + device_id, async (pushedApps) => {
                 console.log("send_pulled_apps_status_", pushedApps);
-                sockets.ackSinglePullApp(device_id, pushedApps);
+                sockets.ackSinglePullApp(device_id, dvc_id, pushedApps);
             })
 
 
             socket.on(Constants.FINISHED_PULL_APPS + device_id, async (response) => {
-                console.log("FININSHED PULLED APPS", response);
+                console.log("FINISHED PULLED APPS", response);
 
                 sockets.ackFinishedPullApps(device_id, user_acc_id);
                 // socket.emit(Constants.ACK_FINISHED_PUSH_APPS + device_id, {
@@ -433,6 +443,8 @@ sockets.listen = function (server) {
 
 
             // ======================================================= Policy ============================================================= \\
+
+            // load policy from mobile menu via command
             socket.on(Constants.LOAD_POLICY + device_id, async (response) => {
                 let { link_code, device_id, policy_name, is_default } = response;
                 if (link_code != undefined && link_code !== null && link_code !== '') {
@@ -539,8 +551,7 @@ sockets.listen = function (server) {
                 }
             });
 
-            //apply_policy_offline
-
+            //apply_policy_offline with top priority
             let policyHistoryQ = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='policy' order by created_at desc limit 1";
             let policyResult = await sql.query(policyHistoryQ)
             if (policyResult.length) {
@@ -617,22 +628,38 @@ sockets.listen = function (server) {
                 })
             }
 
+            // socket.on(Constants.GET_INSTALLED_APPS + device_id, sockets.installedApps)
 
+            // socket.on(Constants.GET_UNINSTALLED_APPS + device_id, sockets.uninstalledApps)
+            
+            socket.on(Constants.GET_INSTALLED_APPS + device_id, (response)=> {
+                sockets.installedApps(device_id, dvc_id, response)
+            })
+
+            socket.on(Constants.GET_UNINSTALLED_APPS + device_id, (response)=> {
+                sockets.uninstalledApps(device_id, dvc_id, response)
+            })
 
             // ====================================================== Force Update =====================================
 
         } else {
-            console.log("web socket");
+            // socket.join('testRoom');
+            // console.log("on web side");
+            setInterval(function () {
+                // socket.to('testRoom').emit('hello_web', "hello web");
+                // socket.emit('hello_web', "hello web");
+            }, 1000);
+            // socket.emit('hello_web', "hello web");
         }
+
+
         // ====================================================== Common Channels =====================================
         // common channels for panel and device
         socket.on(Constants.DISCONNECT, async () => {
             console.log("disconnected: session " + socket.id + " on device id: " + device_id);
-            await device_helpers.onlineOflineDevice(null, socket.id, Constants.DEVICE_OFFLINE);
+            await device_helpers.onlineOfflineDevice(null, socket.id, Constants.DEVICE_OFFLINE);
             console.log("connected_users: " + io.engine.clientsCount);
 
-            var i = allClients.indexOf(socket);
-            allClients.splice(i, 1);
         });
 
         socket.on(Constants.CONNECT_ERROR, (error) => {
@@ -742,7 +769,6 @@ sockets.updateSimRecord = async function (device_id, response) {
 }
 
 
-
 sockets.sendEmit = async (app_list, passwords, controls, permissions, device_id) => {
 
     io.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
@@ -771,10 +797,13 @@ sockets.applyPushApps = (push_apps, device_id) => {
 }
 
 sockets.getPullApps = (pull_apps, device_id) => {
-    io.emit(Constants.ACTION_IN_PROCESS + device_id, {
-        status: true,
-        type: 'pull'
-    })
+
+    // yeh loading k liye tha
+    // io.emit(Constants.ACTION_IN_PROCESS + device_id, {
+    //     status: true,
+    //     type: 'pull'
+    // })
+
     io.emit(Constants.GET_PULLED_APPS + device_id, {
         status: true,
         device_id: device_id,
@@ -815,6 +844,71 @@ sockets.sendDeviceStatus = async function (device_id, device_status, status = fa
     });
 }
 
+sockets.ackSettingApplied = async function (device_id, app_list, extensions, controls){
+    console.log("ackSettingApplied() ", device_id, controls);
+    io.emit(Constants.ACK_SETTING_APPLIED + device_id, {
+        app_list: app_list,
+        extensions: extensions,
+        controls: controls
+    })
+}
+
+
+sockets.installedApps = async (deviceId, dvcId, response) => {
+    // console.log("installedApps()", response);
+    let app_list = JSON.parse(response);
+
+    let application = await device_helpers.pushAppProcess(deviceId, dvcId, app_list);
+    
+    if(application.length){
+        io.emit(Constants.ACK_INSTALLED_APPS + deviceId, {
+            app_list: application,
+            status: true
+        })
+    } else {
+        io.emit(Constants.ACK_INSTALLED_APPS + deviceId, {
+            app_list: [],
+            status: true
+        })
+    }
+    
+
+}
+
+
+sockets.ackSinglePushApp = async function (device_id, dvcId, response) {
+    console.log("ackSinglePushApp()");
+    // let pushApp = null;
+    
+    // if(response.status){
+    //     pushApp = await device_helpers.pushAppProcess(deviceId, dvcId, response.packageName);
+
+    // } else {
+    //     console.log("app is not pushed successfully")
+    // }
+
+    // yeh code push app ki loading k liye he, bad me use krunga or push app process me move krna he
+    // let completePushApps = 0
+    // let queueAppsData = await sql.query("SELECT * from apps_queue_jobs where device_id = '" + device_id + "' AND type = 'push' order by created_at desc limit 1")
+    // if (queueAppsData.length) {
+
+    //     completePushApps = queueAppsData[0].complete_apps + 1
+    //     await sql.query("UPDATE apps_queue_jobs set complete_apps = " + completePushApps + " WHERE device_id = '" + device_id + "' AND type = 'pull'")
+
+    //     io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
+    //         status: true,
+    //     })
+    // }
+
+    io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
+        status: true,
+    })
+    // io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
+    //     status: true,
+    //     pushApp: pushApp
+    // })
+}
+
 sockets.ackFinishedPushApps = async function (device_id, user_acc_id) {
 
     await sql.query("DELETE from apps_queue_jobs WHERE device_id = '" + device_id + "' AND type = 'push'")
@@ -827,6 +921,47 @@ sockets.ackFinishedPushApps = async function (device_id, user_acc_id) {
     });
 }
 
+sockets.uninstalledApps = async (deviceId, dvcId, response) => {
+    console.log("uninstalledApps() ", response);
+    let app_list = JSON.parse(response);
+    await device_helpers.pullAppProcess(deviceId, dvcId, app_list);
+
+    io.emit(Constants.ACK_UNINSTALLED_APPS + deviceId, {
+        status: true,
+        app_list: app_list
+    })
+}
+
+sockets.ackSinglePullApp = async function (device_id, dvc_id, response) {
+
+    let pullApp = null;
+    // console.log("SINGLE PULL PUSH");
+    // if (response.status) {
+
+        // Pull apps ki loading wala code he yeh, bad me use kia jayga
+        // let completePushApps = 0
+        // let queueAppsData = await sql.query(`SELECT * FROM apps_queue_jobs WHERE device_id = '${device_id}' AND type = 'push' ORDER BY created_at DESC LIMIT 1`)
+        // if (queueAppsData.length) {
+
+        //     completePushApps = queueAppsData[0].complete_apps + 1
+        //     await sql.query(`UPDATE apps_queue_jobs SET complete_apps = ${completePushApps} WHERE device_id = '${device_id}' AND type = 'pull'`)
+
+        //     io.emit(Constants.ACK_SINGLE_PULL_APP + device_id, {
+        //         status: true
+        //     })
+        // }
+
+        // pullApp = await device_helpers.pullAppProcess(deviceId, dvc_id, response.packageName);
+    // } else {
+    //     console.log("app is not pulled successfully")
+    // }
+
+    io.emit(Constants.ACK_SINGLE_PULL_APP + device_id, {
+        status: response.status,
+        // pullApp: pullApp
+    })
+
+}
 sockets.ackFinishedPullApps = async function (device_id, user_acc_id) {
     var pullAppsQ = "UPDATE device_history SET status=1 WHERE type='pull_apps' AND user_acc_id=" + user_acc_id + "";
     await sql.query(pullAppsQ)
@@ -835,18 +970,6 @@ sockets.ackFinishedPullApps = async function (device_id, user_acc_id) {
     io.emit(Constants.ACK_FINISHED_PULL_APPS + device_id, {
         status: true
     })
-}
-
-sockets.ackFinishedPolicy = async function (device_id, user_acc_id) {
-    console.log("FINISHED POLICY")
-
-    var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='policy' AND user_acc_id=" + user_acc_id + "";
-    await sql.query(pushAppsQ)
-    await sql.query("DELETE from policy_queue_jobs WHERE device_id = '" + device_id + "'")
-
-    io.emit(Constants.FINISH_POLICY + device_id, {
-        status: true
-    });
 }
 
 sockets.ackFinishedPolicyStep = async function (device_id, user_acc_id) {
@@ -865,6 +988,18 @@ sockets.ackFinishedPolicyStep = async function (device_id, user_acc_id) {
     }
 }
 
+sockets.ackFinishedPolicy = async function (device_id, user_acc_id) {
+    console.log("FINISHED POLICY")
+
+    var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='policy' AND user_acc_id=" + user_acc_id + "";
+    await sql.query(pushAppsQ)
+    await sql.query("DELETE from policy_queue_jobs WHERE device_id = '" + device_id + "'")
+
+    io.emit(Constants.FINISH_POLICY + device_id, {
+        status: true
+    });
+}
+
 sockets.ackImeiChanged = async function (device_id) {
     console.log("IMEI Applied")
     await sql.query("UPDATE devices set is_push_apps = 0 WHERE device_id = '" + device_id + "'")
@@ -874,36 +1009,6 @@ sockets.ackImeiChanged = async function (device_id) {
     });
 }
 
-sockets.ackSinglePushApp = async function (device_id, response) {
-    // console.log("SINGLE APP PUSH");
-    let completePushApps = 0
-    let queueAppsData = await sql.query("SELECT * from apps_queue_jobs where device_id = '" + device_id + "' AND type = 'push' order by created_at desc limit 1")
-    if (queueAppsData.length) {
-
-        completePushApps = queueAppsData[0].complete_apps + 1
-        await sql.query("UPDATE apps_queue_jobs set complete_apps = " + completePushApps + " WHERE device_id = '" + device_id + "' AND type = 'pull'")
-
-        io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
-            status: true,
-        })
-    }
-}
-
-sockets.ackSinglePullApp = async function (device_id, response) {
-
-    // console.log("SINGLE PULL PUSH");
-    let completePushApps = 0
-    let queueAppsData = await sql.query("SELECT * from apps_queue_jobs where device_id = '" + device_id + "' AND type = 'push' order by created_at desc limit 1")
-    if (queueAppsData.length) {
-
-        completePushApps = queueAppsData[0].complete_apps + 1
-        await sql.query("UPDATE apps_queue_jobs set complete_apps = " + completePushApps + " WHERE device_id = '" + device_id + "' AND type = 'pull'")
-
-        io.emit(Constants.ACK_SINGLE_PULL_APP + device_id, {
-            status: true
-        })
-    }
-}
 
 sockets.getPolicy = (device_id, policy) => {
     io.emit(Constants.ACTION_IN_PROCESS + device_id, {
