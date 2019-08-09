@@ -732,6 +732,9 @@ exports.editDevices = async function (req, res) {
                                     status = "active";
                                 }
                             } else {
+                                if (finalStatus === constants.DEVICE_TRIAL) {
+                                    status = 'trial'
+                                }
                                 var expiry_date = req.body.expiry_date;
                             }
 
@@ -1998,7 +2001,7 @@ exports.wipeDevice = async function (req, res) {
 };
 
 exports.unflagDevice = async function (req, res) {
-    var verify = req.decoded // await verifyToken(req, res);
+    var verify = req.decoded; // await verifyToken(req, res);
     var device_id = req.params.id;
 
     // if (verify.status !== undefined && verify.status == true) {

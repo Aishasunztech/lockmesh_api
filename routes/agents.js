@@ -43,13 +43,17 @@ router.put('/activate-device/:id', AgentDashboardController.activateDevice);
 /** Suspend Account Devices / client **/
 router.put('/suspend-device/:id', AgentDashboardController.suspendDevice);
 
+
 /**
- * @route DELETE api/v1/agent/devices/reject
- * @group Agent Dashboard - test route
- * @returns {object} 200 - An array of user info
+ * SecurePanel dashboard login
+ * @route PUT /api/v1/agent/reset-pwd
+ * @group Agent Dashboard - Operations about Dealer Agents
+ * @param {string} email.formData.required - agent email
+ * @param {string} dealer_pin.formData.required - agent email
+ * @returns {object} 200 - An array of agents info
+ * #returns {Response.model} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
- * @security JWT
  */
-router.delete('/reject-device', AgentDashboardController.deleteDevice)
+router.put('/reset-pwd', AgentDashboardController.resetPwd);
 
 module.exports = router;

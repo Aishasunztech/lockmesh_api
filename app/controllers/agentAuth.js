@@ -13,7 +13,7 @@ var app_constants = require('../../constants/Application');
 var MsgConstants = require('../../constants/MsgConstants');
 
 const constants = require('../../config/constants');
-const { sendEmail } = require('../../lib/email');
+// const { sendEmail } = require('../../lib/email');
 
 
 var data;
@@ -23,9 +23,6 @@ exports.login = async function (req, res) {
     var email = req.body.email;
     var pwd = req.body.password;
     var dealer_pin = req.body.dealer_pin;
-
-    console.log("email", email);
-    console.log('pwd', pwd);
 
     var data = '';
     // let compare = await bcrypt.compare(pwd);
@@ -68,7 +65,7 @@ exports.login = async function (req, res) {
                             agent_email: agent[0].email,
                             agent_username: agent[0].name,
                             agent_type: agent[0].type,
-
+                            staff_id: agent[0].staff_id,
                             dealer_name: dealer[0].dealer_name,
                             dealer_email: dealer[0].dealer_email,
                             link_code: dealer[0].link_code,

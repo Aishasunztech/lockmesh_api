@@ -1071,49 +1071,50 @@ exports.getInfo = async function (req, res) {
  * By Muhammad Irfan Afzal - mi3afzal
  * 02-08-2019
  * **/
-exports.updateDealerPins = async function(req, res) {
-	var verify = req.decoded; // await verifyToken(req, res);
-	if (!verify) {
-		data = {
-			status: false,
-			data: ["Bad Request"]
-		};
-		res.status(400).send(data);
-		return;
-	}
+exports.updateDealerPins = async function (req, res) {
+    var verify = req.decoded; // await verifyToken(req, res);
+    if (!verify) {
+        data = {
+            status: false,
+            data: ["Bad Request"]
+        };
+        res.status(400).send(data);
+        return;
+    }
 
-	sql.query(
-		`SELECT * FROM dealers WHERE link_code IS NOT NULL ORDER BY dealer_id ASC`,
-		async function(error, results, fields) {
-			if (error) throw error;
+    sql.query(
+        `SELECT * FROM dealers WHERE link_code IS NOT NULL ORDER BY dealer_id ASC`,
+        async function (error, results, fields) {
+            if (error) throw error;
 
-			output = [];
-			for (var i = 0; i < results.length; i++) {
-				const oldDealerPin = results[i].link_code;
-				const newDealerPin = general_helpers.replaceAt(
-					oldDealerPin,
-					app_constants.DEALER_PIN_SYSTEM_LETTER_INDEX,
-					app_constants.DEALER_PIN_SYSTEM_LETTER
-				);
+            output = [];
+            for (var i = 0; i < results.length; i++) {
+                const oldDealerPin = results[i].link_code;
+                const newDealerPin = general_helpers.replaceAt(
+                    oldDealerPin,
+                    app_constants.DEALER_PIN_SYSTEM_LETTER_INDEX,
+                    app_constants.DEALER_PIN_SYSTEM_LETTER
+                );
 
-				if (oldDealerPin != newDealerPin) {
-					await sql.query(
-						`UPDATE dealers SET link_code = '${newDealerPin}' WHERE dealer_id = ${
-							results[i].dealer_id
-						} `
-					);
-					await sql.query(
-						`UPDATE acc_action_history SET link_code = '${newDealerPin}' WHERE link_code = '${oldDealerPin}' `
-					);
-					await sql.query(
-						`UPDATE transferred_profiles SET link_code = '${newDealerPin}' WHERE link_code = '${oldDealerPin}' `
-					);
-					await sql.query(
-						`UPDATE usr_acc SET link_code = '${newDealerPin}' WHERE link_code = '${oldDealerPin}' `
+                var email = '';
+                if (oldDealerPin != newDealerPin) {
+                    await sql.query(
+                        `UPDATE dealers SET link_code = '${newDealerPin}' WHERE dealer_id = ${
+                        results[i].dealer_id
+                        } `
                     );
-                    
+                    await sql.query(
+                        `UPDATE acc_action_history SET link_code = '${newDealerPin}' WHERE link_code = '${oldDealerPin}' `
+                    );
+                    await sql.query(
+                        `UPDATE transferred_profiles SET link_code = '${newDealerPin}' WHERE link_code = '${oldDealerPin}' `
+                    );
+                    await sql.query(
+                        `UPDATE usr_acc SET link_code = '${newDealerPin}' WHERE link_code = '${oldDealerPin}' `
+                    );
 
-                    var email = 'email send';
+
+                    email = 'email send';
                     var html = `We have updated your Dealer PIN for better system integrity. <br>
                     Your new Dealer Pin is : ${newDealerPin}<br>
                     Below is the link to login : <br> ${app_constants.HOST} <br>`;
@@ -1121,16 +1122,16 @@ exports.updateDealerPins = async function(req, res) {
                     sendEmail("Account Update", html, results[i].dealer_email, async function (emailError, response) {
                         if (emailError) email = 'email not send';
                     });
-				}
-				output[i] = [oldDealerPin, newDealerPin, email];
-			}
+                }
+                output[i] = [oldDealerPin, newDealerPin, email];
+            }
 
-			data = {
-				status: true,
-				data: ["Data Updated", output]
-			};
-			res.status(200).send(data);
-			return;
-		}
-	);
+            data = {
+                status: true,
+                data: ["Data Updated", output]
+            };
+            res.status(200).send(data);
+            return;
+        }
+    );
 };
