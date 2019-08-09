@@ -1021,6 +1021,9 @@ exports.unlinkDevice = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
     var device_id = req.params.id;
 
+    // console.log(req.body , ' check lenght: ===============> ', req.body.device);
+    // return;
+
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
         if (!empty(device_id)) {
@@ -2141,22 +2144,20 @@ exports.transferUser = async function (req, res) {
             let OldUser = req.body.OldUser;
             let usr_device_id = req.body.OldUsr_device_id;
 
-            // console.log('NewUser is: ', NewUser)
+            console.log('NewUser is: ', NewUser)
             // console.log('OldUser is: ', OldUser)
             // console.log('usr_device_id is: ', usr_device_id)
 
-            var selectUser = `SELECT * from users WHERE user_id='${NewUser}'`;
-            // console.log('selectUser detail is:: ', selectUser)
-            var userResult = await sql.query(selectUser);
-            // console.log('userResult is: ', userResult)
-
+            var userResult = await sql.query(`SELECT * from users WHERE user_id='${NewUser}'`);
             let updateUsrAcc = `UPDATE usr_acc SET user_id='${userResult[0].user_id}',account_email='${userResult[0].email}', transfer_user_status='1', user_transfered_from='${OldUser}', user_transfered_to='${NewUser}'  WHERE user_id = '${OldUser}' AND device_id=${usr_device_id};`;
-            // console.log('updateUsrAcc detail is:: ', updateUsrAcc)
             await sql.query(updateUsrAcc, async function (err, resp) {
                 if (err) throw Error('Query Error');
 
-                // console.log('resp: ', resp)
                 if (resp.affectedRows > 0) {
+
+                    // Updae dealer id of Old user
+                    var OldUserResult = await sql.query(`SELECT * from users WHERE user_id='${OldUser}'`);
+                    await sql.query(`UPDATE users SET dealer_id= ${OldUserResult[0].dealer_id} WHERE user_id='${NewUser}'`);
 
                     // Save History into "acc_action_history"
                     let resquery = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE devices.reject_status = 0 AND devices.id= "' + usr_device_id + '"')
@@ -2165,13 +2166,7 @@ exports.transferUser = async function (req, res) {
                     resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
                     resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
                     resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
-                    // resquery[0]["user_transfered_from"] = OldUser;
-                    // resquery[0]["user_transfered_to"] = NewUser;
-                    // resquery[0].
-                    // dealerData = await getDealerdata(res[i]);
                     device_helpers.saveActionHistory(resquery[0], constants.USER_TRANSFERED)
-                    // console.log(resquery[0]);
-
                     data = {
                         status: true,
                         msg: "User Transfered Successfully"
@@ -2211,7 +2206,6 @@ exports.transferDeviceProfile = async function (req, res) {
 
             // console.log('reqDevice is: ', reqDevice)
             // console.log('flagged_device is: ', flagged_device)
-            // return
 
             // Get data of Flagged Device
             var SelectFlaggedDeviceDetail = `SELECT ${usr_acc_query_text} FROM usr_acc WHERE device_id = ${flagged_device.usr_device_id} AND id = ${flagged_device.id}`;
