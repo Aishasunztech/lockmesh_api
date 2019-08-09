@@ -413,7 +413,7 @@ exports.upload = async function (req, res) {
 
                     let formatByte = helpers.formatBytes(apk_stats.size);
                     if (versionCode) {
-                        if ((packageName === 'com.armorSec.android' || packageName === 'ca.unlimitedwireless.mailpgp' || packageName === 'com.rim.mobilefusion.client') && featureApk == null) {
+                        if ((packageName === 'com.armorSec.android' || packageName === 'ca.unlimitedwireless.mailpgp' || packageName === 'com.rim.mobilefusion.client' || packageName === 'com.secure.vpn') && featureApk == null ) {
                             data = {
                                 status: false,
                                 msg: await helpers.convertToLang(req.translation["not allowed"], "Error: Uploaded Apk is not Allowed."), // "Error: Unable to read APP properties.",
@@ -458,7 +458,19 @@ exports.upload = async function (req, res) {
                                     };
                                     res.send(data);
                                     return;
-                                } else {
+                                } else if (featureApk === "VPN" && packageName === 'com.secure.vpn') {
+                                    data = {
+                                        status: true,
+                                        msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
+                                        fileName: filename,
+                                        size: formatByte,
+                                        version: versionName
+
+                                    };
+                                    res.send(data);
+                                    return;
+                                }
+                                else {
                                     data = {
                                         status: false,
                                         msg: await helpers.convertToLang(req.translation[""], "Error: Wrong apk uploaded. Please choose another apk and try again"), // "Error: Unable to read APP properties.",

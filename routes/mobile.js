@@ -175,19 +175,21 @@ router.post('/login', async function (req, resp) {
 
                             let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address, type, version } = device_helpers.getDeviceInfo(req);
                             if (!empty(mac_address) || !empty(serial_number)) {
+                                let status = 'active'
                                 // console.log("this is info ", { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address });
                                 let chechedDeviceId = await helpers.getDeviceId(serial_number, mac_address)
                                 // let chechedDeviceId = checkDeviceId(NewDeviceId, serial_number, mac_address)
                                 if (usrAcc[0].expiry_months == 0) {
                                     var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
                                     var expiry_date = moment(trailDate).format("YYYY/MM/DD")
+                                    status = 'trial'
                                 } else {
                                     var expiry_date = helpers.getExpDateByMonth(new Date(), usrAcc[0].expiry_months);
                                 }
                                 var updateDevice = "UPDATE devices set device_id = '" + chechedDeviceId + "', ip_address = '" + ip + "', simno = '" + simNo1 + "', online = '" + Constants.DEVICE_OFFLINE + "', imei='" + imei1 + "', imei2='" + imei2 + "', serial_number='" + serial_number + "', mac_address='" + mac_address + "', simno2 = '" + simNo2 + "' where id='" + usrAcc[0].device_id + "'";
                                 await sql.query(updateDevice);
 
-                                var updateAccount = "UPDATE usr_acc set activation_status=1, type = '" + type + "', version = '" + version + "', status='active', expiry_date='" + expiry_date + "', start_date='" + start_date + "', device_status=1, unlink_status = 0 WHERE id = " + usrAcc[0].id;
+                                var updateAccount = "UPDATE usr_acc set activation_status=1, type = '" + type + "', version = '" + version + "', status='" + status + "', expiry_date='" + expiry_date + "', start_date='" + start_date + "', device_status=1, unlink_status = 0 WHERE id = " + usrAcc[0].id;
                                 await sql.query(updateAccount);
                                 device_helpers.saveImeiHistory(chechedDeviceId, serial_number, mac_address, imei1, imei2)
                                 let device_id = await device_helpers.getDvcIDByDeviceID(usrAcc[0].device_id)
@@ -335,7 +337,7 @@ router.post('/linkdevice', async function (req, resp) {
                 var deviceCheckQuery = "SELECT * FROM devices WHERE device_id = '" + deviceId + "'";
                 let deviceCheckResponse = await sql.query(deviceCheckQuery);
                 if (deviceCheckResponse.length) {
-                    console.log('Some thing bad happend. user should not be here. Devices already exist.', deviceId);
+                    console.log('Some thing bad happend. user should not be here. Device already exist.', deviceId);
                     resp.send({
                         status: false,
                         msg: "Devices already exist."
@@ -343,9 +345,24 @@ router.post('/linkdevice', async function (req, resp) {
                     return
                 }
 
-                sendEmail("New Device Request", "You have a new device request", dealer[0].dealer_email, function (error, response) {
-                    if (error) console.log(error);
-                });
+                var lastLinkAttemptQ = `SELECT * FROM acc_action_history 
+                WHERE action = '${Constants.DEVICE_PENDING_ACTIVATION}' AND device_id = '${deviceId}' 
+                ORDER BY id DESC LIMIT 1`;
+                let lastLinkAttempt = await sql.query(lastLinkAttemptQ);
+                if (lastLinkAttempt.length) {
+                    let createdDateTime = new Date(lastLinkAttempt[0].created_at);
+                    let dateNow = new Date();
+                    let difference_ms = dateNow.getTime() - createdDateTime.getTime();
+
+                    //Get 1 hour in milliseconds
+                    let one_hour = 1000 * 60 * 60;
+                    let elapsed_hours = difference_ms / one_hour;
+                    if (elapsed_hours >= 1) {
+                        sendEmail("New Device Request", "You have a new device request", dealer[0].dealer_email, function (error, response) {
+                            if (error) console.log(error);
+                        });
+                    }
+                }
 
 
                 let insertDevice = "INSERT INTO devices (device_id, imei, imei2, ip_address, simno, simno2, serial_number, mac_address, online) values(?,?,?,?,?,?,?,?,?)";
@@ -756,7 +773,8 @@ router.get('/getUpdate/:version/:packageName/:label', async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
 
     let verify = await verifyToken(req, res);
-    if (verify.status) {
+    if (verify.status === true) {
+        // console.log(verify.status);
         let version = req.params.version;
         let packageName = req.params.packageName;
         let label = req.params.label;
@@ -785,7 +803,6 @@ router.get('/getUpdate/:version/:packageName/:label', async (req, res) => {
                 });
             }
             return;
-
         } else {
             res.send({
                 apk_status: false,

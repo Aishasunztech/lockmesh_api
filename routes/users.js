@@ -251,6 +251,21 @@ router.get("/devices/update_device_ids", deviceController.updateDeviceIDs);
 // http://localhost:3000/users/dealer/update_dealer_pins
 router.get("/dealer/update_dealer_pins", dealerController.updateDealerPins);
 
+
+// ====================== Dangerous API ==================== //
+// one time useage - menual end point // mi3afzal
+
+// Update all existing Device IDs
+// http://localhost:3000/users/devices/update_device_ids
+router.get("/devices/update_device_ids", deviceController.updateDeviceIDs);
+
+// Update all existing Dealer PINs
+// http://localhost:3000/users/dealer/update_dealer_pins
+router.get("/dealer/update_dealer_pins", dealerController.updateDealerPins);
+
+
+
+
 // ====================== Users ==================== //
 
 /**

@@ -108,13 +108,13 @@ if (HOST_NAME) {
 
 		DEVICE_ID_SYSTEM_LETTER,
 		DEVICE_ID_SYSTEM_LETTER_INDEX,
-		
+
 		DEALER_PIN_SYSTEM_LETTER,
 		DEALER_PIN_SYSTEM_LETTER_INDEX,
 
 		STAFF_ID_SYSTEM_LETTER,
 		STAFF_ID_SYSTEM_LETTER_INDEX,
-		
+
 		// Fixer API key
 		FIXER_API_KEY: "96035c5c5b46baea5a96b84930eaed79",
 		BASE_CURRENCY: "USD",
@@ -122,13 +122,13 @@ if (HOST_NAME) {
 		// SUPERADMIN URLs
 		SUPERADMIN_LOGIN_URL: `${
 			this.SUPERADMIN_URL
-		}/api/v1/auth/white_label_login`,
+			}/api/v1/auth/white_label_login`,
 		UPDATE_DEVICE_SUPERADMIN_URL: `${
 			this.SUPERADMIN_URL
-		}/api/v1/users/update_device_details`,
+			}/api/v1/users/update_device_details`,
 		REQUEST_FOR_CREDITS: `${
 			this.SUPERADMIN_URL
-		}/api/v1/users/request_for_credits`,
+			}/api/v1/users/request_for_credits`,
 
 		SUPERADMIN_USER_CREDENTIALS: {
 			email: "whiteLabelAdmin!786@gmial.com",
