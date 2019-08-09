@@ -94,6 +94,7 @@ module.exports = {
   ACK_pull_APPS: 'ack_pull_apps_',
   ACK_FINISHED_PULL_APPS: 'ack_finished_pull_apps_',
   ACK_SINGLE_PULL_APP: 'ack_single_pull_app_',
+  ACK_SETTING_APPLIED:'ack_setting_applied_',
   ACTION_IN_PROCESS: 'action_in_process',
 
   // Policy
@@ -105,6 +106,13 @@ module.exports = {
   FINISH_POLICY_EXTENSIONS: "finish_policy_extensions_",
   FINISH_POLICY: 'finish_policy_',
   FINISH_POLICY_STEP: 'finish_policy_step_',
+
+  // INSTALL OR UNINSTALL APPS
+  GET_INSTALLED_APPS: 'send_installed_apps_',
+  ACK_INSTALLED_APPS: 'ack_installed_apps_',
+
+  GET_UNINSTALLED_APPS: 'send_uninstalled_apps_',
+  ACK_UNINSTALLED_APPS: 'ack_uninstalled_apps_',
 
   PRE_DEFINED_SERIAL_NUMBER: "0123456789ABCDEF",
   PRE_DEFINED_MAC_ADDRESS: "02:00:00:00:00:00",
