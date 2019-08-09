@@ -60,9 +60,7 @@ exports.devices = async function (req, res) {
             newArray = await sql.query(query);
         }
 
-        // console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 ' + where_con + ' order by devices.id DESC');
-        // sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id where usr_acc.transfer_status = 0 ' + where_con + ' order by devices.id DESC', function (error, results, fields) {
-        // console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 ' + where_con + ' order by devices.id DESC');
+        console.log(`SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0  ${where_con} ORDER BY devices.id DESC`);
         sql.query(
             `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0  ${where_con} ORDER BY devices.id DESC`,
             async function (error, results, fields) {
@@ -148,44 +146,6 @@ exports.devices = async function (req, res) {
                     device.usr_device_id = checkValue(device.usr_device_id);
                     device.validity = checkValue(device.validity);
                 }
-
-                // let dumyData = finalResult;
-                // let newResultArray = [];
-                // for (let device of finalResult) {
-                //     // console.log('device ', device.device_id)
-                //     if (device.batch_no !== undefined && device.batch_no !== null && device.batch_no !== 'null' && device.batch_no !== 'undefined') {
-                //         let batch_array = [];
-                //         // console.log('batch no is exist')
-                //         let chcek = newResultArray.findIndex(dvc => {
-                //             return dvc.batch_no == device.batch_no
-                //         });
-                //         if (chcek == -1) {
-                //             for (let batch_device of dumyData) {
-                //                 if (device.batch_no == batch_device.batch_no) {
-                //                     // console.log('batch no is matched', batch_device.batch_no)
-                //                     batch_array.push(JSON.parse(JSON.stringify(batch_device)));
-                //                 }
-                //             }
-                //             // console.log(batch_array, 'batch array length')
-                //             if (batch_array.length) {
-                //                 device.batchData = batch_array;
-                //             }
-
-                //             newResultArray.push(JSON.parse(JSON.stringify(device)))
-                //         }
-
-                //     } else {
-                //         device.batchData = [];
-                //         // if (!newResultArray.find(dvc => {
-                //             // dvc.device_id == null && dvc.device_id == 'null'
-                //         // })) {
-                //              newResultArray.push(JSON.parse(JSON.stringify(device)) )
-                //             // }
-                //     }
-                // }
-
-                // console.log('final list ',newResultArray[0])
-
                 data = {
                     status: true,
                     // "data": newResultArray
@@ -537,6 +497,8 @@ exports.acceptDevice = async function (req, res) {
                                                 }
                                             );
                                         }
+                                    }).catch((err) => {
+                                        console.log(err);
                                     });
 
                                 data = {
@@ -1130,11 +1092,9 @@ exports.deleteDevice = async function (req, res) {
                     req.params.device_id
                 );
                 sql.query(
-                    "DELETE from usr_acc  where device_id = " + usr_device_id,
+                    "DELETE from usr_acc  where device_id = " + usr_device_id + " AND unlink_status = 0",
                     async function (error, results, fields) {
-                        // sql.query("UPDATE usr_acc set unlink_status = 1 WHERE device_id = '" + usr_device_id + "'")
-                        //response.end(JSON.stringify(rows));
-                        // console.log(results);
+
                         if (error) {
                             console.log(error);
                         }
@@ -1142,7 +1102,7 @@ exports.deleteDevice = async function (req, res) {
                             var sqlDevice =
                                 "DELETE from devices where device_id = '" +
                                 req.params.device_id +
-                                "'";
+                                "' ";
                             sql.query(sqlDevice);
                             data = {
                                 status: true,
@@ -1175,7 +1135,7 @@ exports.deleteDevice = async function (req, res) {
                     msg: await helpers.convertToLang(
                         req.translation[MsgConstants.DEVICE_NOT_DEL],
                         "Device not deleted"
-                    ) // Device not deleted.
+                    )
                 };
                 res.send(data);
             }
@@ -1191,7 +1151,7 @@ exports.unlinkDevice = async function (req, res) {
     if (verify) {
         if (!empty(device_id)) {
             let dvcId = await device_helpers.getDvcIDByDeviceID(device_id);
-            var sql1 = `DELETE from usr_acc  where device_id=${device_id}`;
+            var sql1 = `UPDATE  usr_acc SET unlink_status = 1, device_status = 0 where device_id=${device_id}`;
             sql.query(sql1, async function (error, results) {
                 if (error) {
                     data = {
@@ -1199,12 +1159,44 @@ exports.unlinkDevice = async function (req, res) {
                         msg: await helpers.convertToLang(
                             req.translation[MsgConstants.DEVICE_NOT_UNLNK],
                             "Device not unlinked"
-                        ) // Device not unlinked."
+                        )
                     };
                 }
 
                 if (results && results.affectedRows) {
                     // Update device details on Super admin
+
+
+                    // var sqlDevice =
+                    //     "DELETE from devices where id = '" + device_id + "'";
+                    // await sql.query(sqlDevice);
+
+                    var userAccId = await device_helpers.getUsrAccIDbyDvcId(
+                        device_id
+                    );
+
+                    // await sql.query(
+                    //     "update pgp_emails set user_acc_id = null WHERE user_acc_id = '" +
+                    //     userAccId +
+                    //     "'"
+                    // );
+                    // await sql.query(
+                    //     "update chat_ids set user_acc_id = null WHERE user_acc_id = '" +
+                    //     userAccId +
+                    //     "'"
+                    // );
+
+                    // await sql.query(
+                    //     "update sim_ids set user_acc_id = null WHERE user_acc_id = '" +
+                    //     userAccId +
+                    //     "'"
+                    // );
+
+                    device_helpers.saveActionHistory(
+                        req.body.device,
+                        constants.DEVICE_UNLINKED
+                    );
+                    sockets.sendDeviceStatus(dvcId, "unlinked", true);
                     axios
                         .post(
                             app_constants.SUPERADMIN_LOGIN_URL,
@@ -1230,33 +1222,9 @@ exports.unlinkDevice = async function (req, res) {
                                 );
                             }
                         });
-                    var userAccId = await device_helpers.getUsrAccIDbyDvcId(
-                        device_id
-                    );
-                    await sql.query(
-                        "update pgp_emails set user_acc_id = null WHERE user_acc_id = '" +
-                        userAccId +
-                        "'"
-                    );
-                    await sql.query(
-                        "update chat_ids set user_acc_id = null WHERE user_acc_id = '" +
-                        userAccId +
-                        "'"
-                    );
-                    await sql.query(
-                        "update sim_ids set user_acc_id = null WHERE user_acc_id = '" +
-                        userAccId +
-                        "'"
-                    );
-                    var sqlDevice =
-                        "DELETE from devices where id = '" + device_id + "'";
-                    await sql.query(sqlDevice);
 
-                    device_helpers.saveActionHistory(
-                        req.body.device,
-                        constants.DEVICE_UNLINKED
-                    );
-                    sockets.sendDeviceStatus(dvcId, "unlinked", true);
+
+
                     data = {
                         status: true,
                         msg: await helpers.convertToLang(
@@ -1532,10 +1500,11 @@ exports.createDeviceProfile = async function (req, res) {
 
                     if (response.length) {
                         if (response[0].connected_dealer != 0) {
-                            // insertDevice = insertDevice + ", connected_dealer " + values + ",  " + response[0].connected_dealer + ")"
+                            insertDevice = insertDevice + values + ")"
                         } else {
                             insertDevice = insertDevice + values + ")";
                         }
+                        console.log(insertDevice);
                         sql.query(insertDevice, async (err, resp) => {
                             if (err) {
                                 console.log(err);

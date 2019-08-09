@@ -402,15 +402,24 @@ module.exports = {
 			.add(expiryMonth, "M")
 			.strftime("%Y/%m/%d");
 	},
-	checkDeviceId: async (device_id, sn, mac) => {
+	checkDeviceId: async function (device_id, sn, mac) {
 		let query =
 			"SELECT device_id FROM devices WHERE device_id = '" +
 			device_id +
 			"';";
 		let result = await sql.query(query);
 		if (result.length > 1) {
-			device_id = helpers.getDeviceId(sn, mac);
-			checkDeviceId(device_id, sn, mac);
+			let query =
+				"SELECT device_id FROM devices WHERE device_id = '" +
+				device_id +
+				"' AND serial_number = '" + sn + "' AND mac_address = '" + mac + "'";
+			let result = await sql.query(query)
+			if (result.length > 1) {
+				return device_id
+			} else {
+				device_id = this.getDeviceId(sn, mac);
+				checkDeviceId(device_id, sn, mac);
+			}
 		} else {
 			return device_id;
 		}
