@@ -932,193 +932,199 @@ exports.editDevices = async function (req, res) {
 };
 
 exports.deleteDevice = async function (req, res) {
-	// console.log(req.body);
-	var verify = req.decoded; // await verifyToken(req, res);
+    // console.log(req.body);
+    var verify = req.decoded; // await verifyToken(req, res);
 
-	// if (verify.status !== undefined && verify.status == true) {
-	if (verify) {
-		if (!empty(req.params.device_id)) {
-			let userType = verify.user.user_type;
-			let loggedUserId = verify.user.id;
-			let where = "";
-			if (userType === constants.DEALER) {
-				where =
-					" AND (dealer_id=" +
-					loggedUserId +
-					" OR prnt_dlr_id = " +
-					loggedUserId +
-					")";
-			} else if (userType === constants.SDEALER) {
-				where = " AND (dealer_id=" + loggedUserId;
-			}
-			// console.log("delete where ", 'DELETE FROM devices WHERE device_id ="' + [req.params.device_id])
-			if (
-				req.body.dealer_id === loggedUserId ||
-				req.body.prnt_dlr_id === loggedUserId ||
-				userType === constants.ADMIN
-			) {
-				let usr_device_id = await device_helpers.getOriginalIdByDeviceId(
-					req.params.device_id
-				);
-				sql.query(
-					"DELETE from usr_acc  where device_id = " + usr_device_id,
-					async function (error, results, fields) {
-						// sql.query("UPDATE usr_acc set unlink_status = 1 WHERE device_id = '" + usr_device_id + "'")
-						//response.end(JSON.stringify(rows));
-						// console.log(results);
-						if (error) {
-							console.log(error);
-						}
-						if (results.affectedRows !== 0) {
-							var sqlDevice =
-								"DELETE from devices where device_id = '" +
-								req.params.device_id +
-								"'";
-							sql.query(sqlDevice);
-							data = {
-								status: true,
-								msg: await helpers.convertToLang(
-									req.translation[
-									MsgConstants.DEVICE_DEL_SUCC
-									],
-									"Device deleted successfully"
-								) // Device deleted successfully.
-							};
-						} else {
-							data = {
-								status: false,
-								msg: await helpers.convertToLang(
-									req.translation[
-									MsgConstants.DEVICE_NOT_DEL
-									],
-									"Device not deleted"
-								), // Device not deleted.
-								fld: fields,
-								rdlt: results
-							};
-						}
-						res.send(data);
-					}
-				);
-			} else {
-				data = {
-					status: false,
-					msg: await helpers.convertToLang(
-						req.translation[MsgConstants.DEVICE_NOT_DEL],
-						"Device not deleted"
-					) // Device not deleted.
-				};
-				res.send(data);
-			}
-		}
-	}
+    // if (verify.status !== undefined && verify.status == true) {
+    if (verify) {
+        if (!empty(req.params.device_id)) {
+            let userType = verify.user.user_type;
+            let loggedUserId = verify.user.id;
+            let where = "";
+            if (userType === constants.DEALER) {
+                where =
+                    " AND (dealer_id=" +
+                    loggedUserId +
+                    " OR prnt_dlr_id = " +
+                    loggedUserId +
+                    ")";
+            } else if (userType === constants.SDEALER) {
+                where = " AND (dealer_id=" + loggedUserId;
+            }
+            // console.log("delete where ", 'DELETE FROM devices WHERE device_id ="' + [req.params.device_id])
+            if (
+                req.body.dealer_id === loggedUserId ||
+                req.body.prnt_dlr_id === loggedUserId ||
+                userType === constants.ADMIN
+            ) {
+                let usr_device_id = await device_helpers.getOriginalIdByDeviceId(
+                    req.params.device_id
+                );
+                sql.query(
+                    "DELETE from usr_acc  where device_id = " + usr_device_id + " AND unlink_status = 0",
+                    async function (error, results, fields) {
+
+                        if (error) {
+                            console.log(error);
+                        }
+                        if (results.affectedRows !== 0) {
+                            var sqlDevice =
+                                "DELETE from devices where device_id = '" +
+                                req.params.device_id +
+                                "' ";
+                            sql.query(sqlDevice);
+                            data = {
+                                status: true,
+                                msg: await helpers.convertToLang(
+                                    req.translation[
+                                    MsgConstants.DEVICE_DEL_SUCC
+                                    ],
+                                    "Device deleted successfully"
+                                ) // Device deleted successfully.
+                            };
+                        } else {
+                            data = {
+                                status: false,
+                                msg: await helpers.convertToLang(
+                                    req.translation[
+                                    MsgConstants.DEVICE_NOT_DEL
+                                    ],
+                                    "Device not deleted"
+                                ), // Device not deleted.
+                                fld: fields,
+                                rdlt: results
+                            };
+                        }
+                        res.send(data);
+                    }
+                );
+            } else {
+                data = {
+                    status: false,
+                    msg: await helpers.convertToLang(
+                        req.translation[MsgConstants.DEVICE_NOT_DEL],
+                        "Device not deleted"
+                    )
+                };
+                res.send(data);
+            }
+        }
+    }
 };
 
 exports.unlinkDevice = async function (req, res) {
-	var verify = req.decoded; // await verifyToken(req, res);
-	var device_id = req.params.id;
+    var verify = req.decoded; // await verifyToken(req, res);
+    var device_id = req.params.id;
 
-	// if (verify.status !== undefined && verify.status == true) {
-	if (verify) {
-		if (!empty(device_id)) {
-			let dvcId = await device_helpers.getDvcIDByDeviceID(device_id);
-			var sql1 = `DELETE from usr_acc  where device_id=${device_id}`;
-			sql.query(sql1, async function (error, results) {
-				if (error) {
-					data = {
-						status: false,
-						msg: await helpers.convertToLang(
-							req.translation[MsgConstants.DEVICE_NOT_UNLNK],
-							"Device not unlinked"
-						) // Device not unlinked."
-					};
-				}
+    // if (verify.status !== undefined && verify.status == true) {
+    if (verify) {
+        if (!empty(device_id)) {
+            let dvcId = await device_helpers.getDvcIDByDeviceID(device_id);
+            var sql1 = `UPDATE  usr_acc SET unlink_status = 1, device_status = 0 where device_id=${device_id}`;
+            sql.query(sql1, async function (error, results) {
+                if (error) {
+                    data = {
+                        status: false,
+                        msg: await helpers.convertToLang(
+                            req.translation[MsgConstants.DEVICE_NOT_UNLNK],
+                            "Device not unlinked"
+                        )
+                    };
+                }
 
-				if (results && results.affectedRows) {
-					// Update device details on Super admin
-					axios
-						.post(
-							app_constants.SUPERADMIN_LOGIN_URL,
-							app_constants.SUPERADMIN_USER_CREDENTIALS,
-							{ headers: {} }
-						)
-						.then(async function (response) {
-							// console.log("SUPER ADMIN LOGIN API RESPONSE", response);
-							if (response.data.status) {
-								let data = {
-									linkToWL: false,
-									device_id: dvcId
-								};
-								axios.put(
-									app_constants.UPDATE_DEVICE_SUPERADMIN_URL,
-									data,
-									{
-										headers: {
-											authorization:
-												response.data.user.token
-										}
-									}
-								);
-							}
-						});
-					var userAccId = await device_helpers.getUsrAccIDbyDvcId(
-						device_id
-					);
-					await sql.query(
-						"update pgp_emails set user_acc_id = null WHERE user_acc_id = '" +
-						userAccId +
-						"'"
-					);
-					await sql.query(
-						"update chat_ids set user_acc_id = null WHERE user_acc_id = '" +
-						userAccId +
-						"'"
-					);
-					await sql.query(
-						"update sim_ids set user_acc_id = null WHERE user_acc_id = '" +
-						userAccId +
-						"'"
-					);
-					var sqlDevice =
-						"DELETE from devices where id = '" + device_id + "'";
-					await sql.query(sqlDevice);
+                if (results && results.affectedRows) {
+                    // Update device details on Super admin
 
-					device_helpers.saveActionHistory(
-						req.body.device,
-						constants.DEVICE_UNLINKED
-					);
-					sockets.sendDeviceStatus(dvcId, "unlinked", true);
-					data = {
-						status: true,
-						msg: await helpers.convertToLang(
-							req.translation[MsgConstants.DEVICE_UNLNK_SUCC],
-							"Device unlinked successfully"
-						) // Device unlinked successfully.
-					};
-				} else {
-					data = {
-						status: false,
-						msg: await helpers.convertToLang(
-							req.translation[MsgConstants.DEVICE_NOT_UNLNK],
-							"Device not unlinked"
-						) // Device not unlinked.
-					};
-				}
-				res.send(data);
-				return;
-			});
-		} else {
-			data = {
-				status: false,
-				msg: await helpers.convertToLang(
-					req.translation[MsgConstants.INVALID_DEVICE_ID],
-					"Invalid device id"
-				) // Invalid device id.
-			};
-			res.send(data);
-			return;
-		}
-	}
+
+                    // var sqlDevice =
+                    //     "DELETE from devices where id = '" + device_id + "'";
+                    // await sql.query(sqlDevice);
+
+                    var userAccId = await device_helpers.getUsrAccIDbyDvcId(
+                        device_id
+                    );
+
+                    // await sql.query(
+                    //     "update pgp_emails set user_acc_id = null WHERE user_acc_id = '" +
+                    //     userAccId +
+                    //     "'"
+                    // );
+                    // await sql.query(
+                    //     "update chat_ids set user_acc_id = null WHERE user_acc_id = '" +
+                    //     userAccId +
+                    //     "'"
+                    // );
+
+                    // await sql.query(
+                    //     "update sim_ids set user_acc_id = null WHERE user_acc_id = '" +
+                    //     userAccId +
+                    //     "'"
+                    // );
+
+                    device_helpers.saveActionHistory(
+                        req.body.device,
+                        constants.DEVICE_UNLINKED
+                    );
+                    sockets.sendDeviceStatus(dvcId, "unlinked", true);
+                    axios
+                        .post(
+                            app_constants.SUPERADMIN_LOGIN_URL,
+                            app_constants.SUPERADMIN_USER_CREDENTIALS,
+                            { headers: {} }
+                        )
+                        .then(async function (response) {
+                            // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
+                            if (response.data.status) {
+                                let data = {
+                                    linkToWL: false,
+                                    device_id: dvcId
+                                };
+                                axios.put(
+                                    app_constants.UPDATE_DEVICE_SUPERADMIN_URL,
+                                    data,
+                                    {
+                                        headers: {
+                                            authorization:
+                                                response.data.user.token
+                                        }
+                                    }
+                                );
+                            }
+                        });
+
+
+
+                    data = {
+                        status: true,
+                        msg: await helpers.convertToLang(
+                            req.translation[MsgConstants.DEVICE_UNLNK_SUCC],
+                            "Device unlinked successfully"
+                        ) // Device unlinked successfully.
+                    };
+                } else {
+                    data = {
+                        status: false,
+                        msg: await helpers.convertToLang(
+                            req.translation[MsgConstants.DEVICE_NOT_UNLNK],
+                            "Device not unlinked"
+                        ) // Device not unlinked.
+                    };
+                }
+                res.send(data);
+                return;
+            });
+        } else {
+            data = {
+                status: false,
+                msg: await helpers.convertToLang(
+                    req.translation[MsgConstants.INVALID_DEVICE_ID],
+                    "Invalid device id"
+                ) // Invalid device id.
+            };
+            res.send(data);
+            return;
+        }
+    }
 };
 
 exports.createDeviceProfile = async function (req, res) {
