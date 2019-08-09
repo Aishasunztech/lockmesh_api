@@ -258,18 +258,12 @@ module.exports = {
 
             var updateQuery = `UPDATE user_apps SET guest=${guest}, encrypted=${encrypted}, enable=${enable} WHERE device_id=${deviceId} AND app_id=${appId}`;
 
-            sql.query(updateQuery, async function (error, row) {
-                if (error) {
-                    console.log(error)
-                }
-
-                console.log("insert or update device apps");
-                if (row && row.affectedRows === 0) {
-                    var insertQuery = `INSERT IGNORE INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (${deviceId}, ${appId}, ${guest}, ${encrypted}, ${enable})`;
-                    await sql.query(insertQuery);
-                }
-            });
-
+            let row = await sql.query(updateQuery);
+            
+            if (row.affectedRows === 0) {
+                var insertQuery = `INSERT IGNORE INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (${deviceId}, ${appId}, ${guest}, ${encrypted}, ${enable})`;
+                await sql.query(insertQuery);
+            }
             // let updateQuery = "INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + " ) " +
             //     " ON DUPLICATE KEY UPDATE " +
             //     " guest = " + guest + ", " +
@@ -663,45 +657,89 @@ module.exports = {
             return ''
         }
     },
-    pullAppProcess: async (deviceId, dvcId, packageName) => {
+    pullAppProcess: async (deviceId, dvcId, apps) => {
         console.log("pullAppProcess");
+        for(let i=0; i<apps.length; i++){
+            if (apps[i].packageName) {
 
-        let appInfoQ = `SELECT * FROM apps_info WHERE package_name = ${packageName} LIMIT 1`;
-        let appInfo = await sql.query(appInfoQ);
-        if (appInfo.length) {
-            let deletePullApp = `DELETE FROM user_apps WHERE device_id=${dvcId} AND app_id=${appInfo[0].id}`;
-            await sql.query(deletePullApp);
-            // let completePushApps = 0
-            // let queueAppsData = await sql.query(`SELECT * FROM apps_queue_jobs WHERE device_id = '${device_id}' AND type = 'push' ORDER BY created_at DESC LIMIT 1`)
-            // if (queueAppsData.length) {
+                let appInfoQ = `SELECT * FROM apps_info WHERE package_name = '${apps[i].packageName}'`;
+                let appInfo = await sql.query(appInfoQ);
+                if (appInfo.length) {
+                    appInfo.forEach(async (app)=>{
+                        let deletePullApp = `DELETE FROM user_apps WHERE (device_id=${dvcId} AND app_id=${app.id})`;
+                        await sql.query(deletePullApp);
+                    })
+                    // let completePushApps = 0
+                    // let queueAppsData = await sql.query(`SELECT * FROM apps_queue_jobs WHERE device_id = '${device_id}' AND type = 'push' ORDER BY created_at DESC LIMIT 1`)
+                    // if (queueAppsData.length) {
 
-            //     completePushApps = queueAppsData[0].complete_apps + 1
-            //     await sql.query(`UPDATE apps_queue_jobs SET complete_apps = ${completePushApps} WHERE device_id = '${device_id}' AND type = 'pull'`)
+                    //     completePushApps = queueAppsData[0].complete_apps + 1
+                    //     await sql.query(`UPDATE apps_queue_jobs SET complete_apps = ${completePushApps} WHERE device_id = '${device_id}' AND type = 'pull'`)
 
-            //     io.emit(Constants.ACK_SINGLE_PULL_APP + device_id, {
-            //         status: true
-            //     })
-            // }
-            return packageName;
-        } else {
-            console.log("the app that you are trying to pull is not found in db, but on mobile side it pulled");
-            return null;
+                    //     io.emit(Constants.ACK_SINGLE_PULL_APP + device_id, {
+                    //         status: true
+                    //     })
+                    // }
+                } else {
+                    console.log("the app that you are trying to pull is not found in db, but on mobile side it pulled");
+                    // return null;
+                }
+            } else {
+                console.log("package name is null in uninstall apps");
+            }
         }
+
     },
-    pushAppProcess: async (deviceId, dvcId, packageName) => {
-        console.log("pullAppProcess");
-        // let completePushApps = 0
-        // let queueAppsData = await sql.query("SELECT * from apps_queue_jobs where device_id = '" + device_id + "' AND type = 'push' order by created_at desc limit 1")
-        // if (queueAppsData.length) {
+    pushAppProcess: async function (deviceId, dvcId, apps) {
+        console.log("pushAppProcess() ");
+        let app_list = [];
+        let deviceData = await this.getDeviceByDeviceId(deviceId);
 
-        //     completePushApps = queueAppsData[0].complete_apps + 1
-        //     await sql.query("UPDATE apps_queue_jobs set complete_apps = " + completePushApps + " WHERE device_id = '" + device_id + "' AND type = 'pull'")
+        if (deviceData) {
+            if (apps) {
 
-        //     io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
-        //         status: true,
-        //     })
-        // }
-        return packageName
+                for (let i = 0; i < apps.length; i++) {
+                    let iconName = this.uploadIconFile(apps[i], apps[i].label, apps[i].packageName);
+                    await installApps(apps, i, deviceData, iconName, this.getApp);
+                    await this.getApp(apps[i].uniqueName, deviceData.id, apps[i].guest, apps[i].encrypted, apps[i].enable);
+
+                    var getAppsQ = `SELECT user_apps.id, user_apps.device_id, user_apps.app_id, user_apps.guest, user_apps.encrypted, user_apps.enable,
+				    apps_info.label, apps_info.default_app, apps_info.system_app, apps_info.package_name, apps_info.visible, apps_info.unique_name as uniqueName, apps_info.icon as icon , apps_info.extension, apps_info.extension_id
+				    FROM user_apps
+				    LEFT JOIN apps_info on (user_apps.app_id = apps_info.id)
+				    LEFT JOIN devices on (user_apps.device_id=devices.id)
+                    WHERE devices.device_id = '${deviceId}' AND apps_info.package_name='${apps[i].packageName}'`;
+                    console.log("getAppsQ: ", getAppsQ);
+                    let app = await sql.query(getAppsQ);
+                    console.log("getapplication: ",app);
+                    if(app.length){
+                        app_list.push(app[0]);
+                    }
+                }
+
+            } else {
+                console.log("apps not found")
+            }
+        } else {
+            console.log("device not found")
+        }
+        return app_list
 
     }
+}
+
+async function installApps(apps, i, deviceData, iconName, getApp) {
+    let default_app = (apps[i].defaultApp !== undefined && apps[i].defaultApp !== null) ? apps[i].defaultApp : (apps[i].default_app !== undefined && apps[i].default_app !== null) ? apps[i].default_app : false;
+    let system_app = (apps[i].systemApp !== undefined && apps[i].systemApp !== null) ? apps[i].systemApp : (apps[i].system_app !== undefined && apps[i].system_app !== null) ? apps[i].system_app : false;
+    let query = `INSERT INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app, system_app)
+                        VALUES ('${apps[i].uniqueName}', '${apps[i].label}', '${apps[i].packageName}', '${iconName}', ${apps[i].extension} , ${apps[i].visible}, ${default_app}, ${system_app})
+                        ON DUPLICATE KEY UPDATE
+                        extension= ${apps[i].extension},
+                        icon= '${iconName}',
+                        visible= ${apps[i].visible},
+                        default_app= ${default_app},
+                        system_app= ${system_app} 
+                        `;
+    await sql.query(query);
+    
 }

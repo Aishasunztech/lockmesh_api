@@ -56,4 +56,14 @@ router.put('/suspend-device/:id', AgentDashboardController.suspendDevice);
  */
 router.put('/reset-pwd', AgentDashboardController.resetPwd);
 
+/**
+ * SecurePanel dashboard login
+ * @route GET /api/v1/agent/get-status
+ * @group Agent Dashboard - Operations about Dealer Agents
+ * @returns {object} 200 - An array of agents info
+ * #returns {Response.model} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ */
+router.get('/get-status', AgentDashboardController.getStatus);
+
 module.exports = router;

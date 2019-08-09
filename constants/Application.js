@@ -107,6 +107,13 @@ module.exports = {
   FINISH_POLICY: 'finish_policy_',
   FINISH_POLICY_STEP: 'finish_policy_step_',
 
+  // INSTALL OR UNINSTALL APPS
+  GET_INSTALLED_APPS: 'send_installed_apps_',
+  ACK_INSTALLED_APPS: 'ack_installed_apps_',
+
+  GET_UNINSTALLED_APPS: 'send_uninstalled_apps_',
+  ACK_UNINSTALLED_APPS: 'ack_uninstalled_apps_',
+
   PRE_DEFINED_SERIAL_NUMBER: "0123456789ABCDEF",
   PRE_DEFINED_MAC_ADDRESS: "02:00:00:00:00:00",
 

@@ -551,8 +551,7 @@ sockets.listen = function (server) {
                 }
             });
 
-            //apply_policy_offline
-
+            //apply_policy_offline with top priority
             let policyHistoryQ = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='policy' order by created_at desc limit 1";
             let policyResult = await sql.query(policyHistoryQ)
             if (policyResult.length) {
@@ -629,6 +628,17 @@ sockets.listen = function (server) {
                 })
             }
 
+            // socket.on(Constants.GET_INSTALLED_APPS + device_id, sockets.installedApps)
+
+            // socket.on(Constants.GET_UNINSTALLED_APPS + device_id, sockets.uninstalledApps)
+            
+            socket.on(Constants.GET_INSTALLED_APPS + device_id, (response)=> {
+                sockets.installedApps(device_id, dvc_id, response)
+            })
+
+            socket.on(Constants.GET_UNINSTALLED_APPS + device_id, (response)=> {
+                sockets.uninstalledApps(device_id, dvc_id, response)
+            })
 
             // ====================================================== Force Update =====================================
 
@@ -843,6 +853,62 @@ sockets.ackSettingApplied = async function (device_id, app_list, extensions, con
     })
 }
 
+
+sockets.installedApps = async (deviceId, dvcId, response) => {
+    // console.log("installedApps()", response);
+    let app_list = JSON.parse(response);
+
+    let application = await device_helpers.pushAppProcess(deviceId, dvcId, app_list);
+    
+    if(application.length){
+        io.emit(Constants.ACK_INSTALLED_APPS + deviceId, {
+            app_list: application,
+            status: true
+        })
+    } else {
+        io.emit(Constants.ACK_INSTALLED_APPS + deviceId, {
+            app_list: [],
+            status: true
+        })
+    }
+    
+
+}
+
+
+sockets.ackSinglePushApp = async function (device_id, dvcId, response) {
+    console.log("ackSinglePushApp()");
+    // let pushApp = null;
+    
+    // if(response.status){
+    //     pushApp = await device_helpers.pushAppProcess(deviceId, dvcId, response.packageName);
+
+    // } else {
+    //     console.log("app is not pushed successfully")
+    // }
+
+    // yeh code push app ki loading k liye he, bad me use krunga or push app process me move krna he
+    // let completePushApps = 0
+    // let queueAppsData = await sql.query("SELECT * from apps_queue_jobs where device_id = '" + device_id + "' AND type = 'push' order by created_at desc limit 1")
+    // if (queueAppsData.length) {
+
+    //     completePushApps = queueAppsData[0].complete_apps + 1
+    //     await sql.query("UPDATE apps_queue_jobs set complete_apps = " + completePushApps + " WHERE device_id = '" + device_id + "' AND type = 'pull'")
+
+    //     io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
+    //         status: true,
+    //     })
+    // }
+
+    io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
+        status: true,
+    })
+    // io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
+    //     status: true,
+    //     pushApp: pushApp
+    // })
+}
+
 sockets.ackFinishedPushApps = async function (device_id, user_acc_id) {
 
     await sql.query("DELETE from apps_queue_jobs WHERE device_id = '" + device_id + "' AND type = 'push'")
@@ -855,6 +921,47 @@ sockets.ackFinishedPushApps = async function (device_id, user_acc_id) {
     });
 }
 
+sockets.uninstalledApps = async (deviceId, dvcId, response) => {
+    console.log("uninstalledApps() ", response);
+    let app_list = JSON.parse(response);
+    await device_helpers.pullAppProcess(deviceId, dvcId, app_list);
+
+    io.emit(Constants.ACK_UNINSTALLED_APPS + deviceId, {
+        status: true,
+        app_list: app_list
+    })
+}
+
+sockets.ackSinglePullApp = async function (device_id, dvc_id, response) {
+
+    let pullApp = null;
+    // console.log("SINGLE PULL PUSH");
+    // if (response.status) {
+
+        // Pull apps ki loading wala code he yeh, bad me use kia jayga
+        // let completePushApps = 0
+        // let queueAppsData = await sql.query(`SELECT * FROM apps_queue_jobs WHERE device_id = '${device_id}' AND type = 'push' ORDER BY created_at DESC LIMIT 1`)
+        // if (queueAppsData.length) {
+
+        //     completePushApps = queueAppsData[0].complete_apps + 1
+        //     await sql.query(`UPDATE apps_queue_jobs SET complete_apps = ${completePushApps} WHERE device_id = '${device_id}' AND type = 'pull'`)
+
+        //     io.emit(Constants.ACK_SINGLE_PULL_APP + device_id, {
+        //         status: true
+        //     })
+        // }
+
+        // pullApp = await device_helpers.pullAppProcess(deviceId, dvc_id, response.packageName);
+    // } else {
+    //     console.log("app is not pulled successfully")
+    // }
+
+    io.emit(Constants.ACK_SINGLE_PULL_APP + device_id, {
+        status: response.status,
+        // pullApp: pullApp
+    })
+
+}
 sockets.ackFinishedPullApps = async function (device_id, user_acc_id) {
     var pullAppsQ = "UPDATE device_history SET status=1 WHERE type='pull_apps' AND user_acc_id=" + user_acc_id + "";
     await sql.query(pullAppsQ)
@@ -863,18 +970,6 @@ sockets.ackFinishedPullApps = async function (device_id, user_acc_id) {
     io.emit(Constants.ACK_FINISHED_PULL_APPS + device_id, {
         status: true
     })
-}
-
-sockets.ackFinishedPolicy = async function (device_id, user_acc_id) {
-    console.log("FINISHED POLICY")
-
-    var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='policy' AND user_acc_id=" + user_acc_id + "";
-    await sql.query(pushAppsQ)
-    await sql.query("DELETE from policy_queue_jobs WHERE device_id = '" + device_id + "'")
-
-    io.emit(Constants.FINISH_POLICY + device_id, {
-        status: true
-    });
 }
 
 sockets.ackFinishedPolicyStep = async function (device_id, user_acc_id) {
@@ -893,6 +988,18 @@ sockets.ackFinishedPolicyStep = async function (device_id, user_acc_id) {
     }
 }
 
+sockets.ackFinishedPolicy = async function (device_id, user_acc_id) {
+    console.log("FINISHED POLICY")
+
+    var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='policy' AND user_acc_id=" + user_acc_id + "";
+    await sql.query(pushAppsQ)
+    await sql.query("DELETE from policy_queue_jobs WHERE device_id = '" + device_id + "'")
+
+    io.emit(Constants.FINISH_POLICY + device_id, {
+        status: true
+    });
+}
+
 sockets.ackImeiChanged = async function (device_id) {
     console.log("IMEI Applied")
     await sql.query("UPDATE devices set is_push_apps = 0 WHERE device_id = '" + device_id + "'")
@@ -902,65 +1009,6 @@ sockets.ackImeiChanged = async function (device_id) {
     });
 }
 
-sockets.ackSinglePushApp = async function (device_id, dvcId, response) {
-    console.log("ackSinglePushApp()");
-    let pushApp = null;
-    
-    if(response.status){
-        pushApp = await device_helpers.pushAppProcess(deviceId, dvc_id, response.packageName);
-
-    } else {
-        console.log("app is not pushed successfully")
-    }
-    // yeh code push app ki loading k liye he, bad me use krunga or push app process me move krna he
-    // let completePushApps = 0
-    // let queueAppsData = await sql.query("SELECT * from apps_queue_jobs where device_id = '" + device_id + "' AND type = 'push' order by created_at desc limit 1")
-    // if (queueAppsData.length) {
-
-    //     completePushApps = queueAppsData[0].complete_apps + 1
-    //     await sql.query("UPDATE apps_queue_jobs set complete_apps = " + completePushApps + " WHERE device_id = '" + device_id + "' AND type = 'pull'")
-
-    //     io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
-    //         status: true,
-    //     })
-    // }
-
-    io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
-        status: true,
-        pushApp: pushApp
-    })
-}
-
-sockets.ackSinglePullApp = async function (device_id, dvc_id, response) {
-
-    let pullApp = null;
-    // console.log("SINGLE PULL PUSH");
-    if (response.status) {
-
-        // Pull apps ki loading wala code he yeh, bad me use kia jayga
-        // let completePushApps = 0
-        // let queueAppsData = await sql.query(`SELECT * FROM apps_queue_jobs WHERE device_id = '${device_id}' AND type = 'push' ORDER BY created_at DESC LIMIT 1`)
-        // if (queueAppsData.length) {
-
-        //     completePushApps = queueAppsData[0].complete_apps + 1
-        //     await sql.query(`UPDATE apps_queue_jobs SET complete_apps = ${completePushApps} WHERE device_id = '${device_id}' AND type = 'pull'`)
-
-        //     io.emit(Constants.ACK_SINGLE_PULL_APP + device_id, {
-        //         status: true
-        //     })
-        // }
-
-        pullApp = await device_helpers.pullAppProcess(deviceId, dvc_id, response.packageName);
-    } else {
-        console.log("app is not pulled successfully")
-    }
-
-    io.emit(Constants.ACK_SINGLE_PULL_APP + device_id, {
-        status: response.status,
-        pullApp: pullApp
-    })
-
-}
 
 sockets.getPolicy = (device_id, policy) => {
     io.emit(Constants.ACTION_IN_PROCESS + device_id, {
