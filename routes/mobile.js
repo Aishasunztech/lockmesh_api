@@ -27,7 +27,7 @@ const { sendEmail } = require('../lib/email');
 // let usr_acc_query_text =
 //     "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version";
 
-let usr_acc_query_text =  Constants.usr_acc_query_text;
+let usr_acc_query_text = Constants.usr_acc_query_text;
 
 
 /*Check For Token in the header */
@@ -343,7 +343,9 @@ router.post('/linkdevice', async function (req, resp) {
             // res2 = dealer
             if (dealer.length) {
                 var deviceId = await helpers.getDeviceId(serial_number, mac_address);
-                deviceId = await helpers.checkDeviceId(deviceId, serial_number, mac_address);
+                //deviceId = await helpers.checkDeviceId(deviceId, serial_number, mac_address);
+
+
                 var deviceCheckQuery = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND devices.device_id = '${deviceId}' ORDER BY devices.id DESC`;
                 let deviceCheckResponse = await sql.query(deviceCheckQuery);
                 if (deviceCheckResponse.length) {
@@ -382,6 +384,8 @@ router.post('/linkdevice', async function (req, resp) {
                         return
                     }
                 }
+
+
                 var lastLinkAttemptQ = `SELECT * FROM acc_action_history 
                     WHERE action = '${Constants.DEVICE_PENDING_ACTIVATION}' AND device_id = '${deviceId}' 
                     ORDER BY id DESC LIMIT 1`;
@@ -399,6 +403,8 @@ router.post('/linkdevice', async function (req, resp) {
                         });
                     }
                 }
+
+
                 let insertDevice = "INSERT INTO devices (device_id, imei, imei2, ip_address, simno, simno2, serial_number, mac_address, online) values(?,?,?,?,?,?,?,?,?)";
                 sql.query(insertDevice, [deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, Constants.DEVICE_OFFLINE], function (error, deviceRes) {
                     // console.log("Insert Query" , insertDevice, [deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, 'On']);
