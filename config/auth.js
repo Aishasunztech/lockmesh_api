@@ -11,6 +11,7 @@ module.exports = (req, res, next) => {
     if (token) {
         jwt.verify(token, config.SECRET, async function (err, decoded) {
             if (err) {
+                console.log(err);
                 ath = {
                     status: false,
                     success: false
@@ -32,7 +33,7 @@ module.exports = (req, res, next) => {
                     var d_lng_id = 1;
 
                     if (user_id != undefined && user_id != '' && user_id != null) {
-                        var sQry = `SELECT dealer_lng_id FROM dealer_language WHERE dealer_id = ${user_id} LIMIT 1`;
+                        var sQry = `SELECT dealer_lng_id FROM dealer_language WHERE dealer_id = '${user_id}' LIMIT 1`;
                         var dLang = await sql.query(sQry);
                         if (dLang.length) {
                             d_lng_id = dLang[0].dealer_lng_id;
@@ -43,7 +44,7 @@ module.exports = (req, res, next) => {
                         d_lng_id = 1;
                     }
 
-                    var sTranslation = `SELECT * FROM lng_translations WHERE lng_id = ${d_lng_id}`;
+                    var sTranslation = `SELECT * FROM lng_translations WHERE lng_id = '${d_lng_id}'`;
                     let resp = await sql.query(sTranslation);
                     if (resp.length) {
                         let obj = {}
@@ -65,32 +66,6 @@ module.exports = (req, res, next) => {
                         msg: 'No User Found'
                     });
                 }
-                // console.log(req.translation, "Translation")
-
-                // if everything is good, save to request for use in other routes
-                // let result = await helpers.getLoginByToken(token);
-                // console.log("decoding", result);
-                // if(result){
-                // if(result.status === true || result.status === 1){
-                // console.log(nextFunc)
-                // console.log(ath);
-
-
-                // } else {
-                //     ath.status = false;
-                //     return res.json({
-                //         success: false,
-                //         msg: 'Failed to authenticate token.'
-                //     });
-                // }
-                // } else {
-                //     ath.status = false;
-                //     return res.json({
-                //         success: false,
-                //         msg: 'Failed to authenticate token.'
-                //     });
-                // } 
-
             }
         });
 
@@ -111,11 +86,4 @@ module.exports = (req, res, next) => {
     //     console.log(error);
     // }
 }
-
-
-
-
-
-
-
 

@@ -4,6 +4,7 @@ var randomize = require('randomatic');
 var generator = require('generate-password');
 const { sql } = require('../../config/database');
 const MsgConstants = require('../../constants/MsgConstants');
+const constants = require("../../constants/Application");
 const helpers = require('../../helper/general_helper');
 const { sendEmail } = require('../../lib/email');
 
@@ -12,8 +13,88 @@ const ADMIN = "admin";
 const DEALER = "dealer";
 const SDEALER = "sdealer";
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
-let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
+// let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
+let usr_acc_query_text =  constants.usr_acc_query_text;
 
+exports.getAllUsers = async function (req, res) {
+    let devicesData = [];
+    var verify = req.decoded;
+    // if (verify.status !== undefined && verify.status == true) {
+    if (verify) {
+        if (verify.user.user_type == ADMIN) {
+            var role = await helpers.getuserTypeIdByName(verify.user.user_type);
+            let results = await sql.query("select * from users where del_status =0 order by created_at DESC")
+            if (results.length) {
+                for (let i = 0; i < results.length; i++) {
+                    let data = await helpers.getAllRecordbyUserID(results[i].user_id)
+                    results[i].devicesList = data
+                }
+                // console.log("Devices For user", devicesData);
+                data = {
+                    "status": true,
+                    data: {
+                        users_list: results,
+                    }
+                }
+                res.send(data);
+            }
+        } else if (verify.user.user_type === DEALER) {
+            sql.query("select dealer_id from dealers where connected_dealer = '" + verify.user.id + "' AND  type = 3 order by created DESC", async function (error, result) {
+                if (error) {
+                    console.log(error);
+                }
+                dealer = [verify.user.id]
+                console.log(result);
+                if (result.length) {
+                    for (var i = 0; i < result.length; i++) {
+                        var sDealers_id = result[i].dealer_id;
+                        dealer.push(sDealers_id)
+                    }
+                }
+                console.log("select * from users WHERE dealer_id IN (" + dealer.join() + ") order by created_at DESC");
+                let results = await sql.query("select * from users WHERE dealer_id IN (" + dealer.join() + ") AND del_status = 0 order by created_at DESC")
+                if (results.length) {
+                    for (let i = 0; i < results.length; i++) {
+                        let data = await helpers.getAllRecordbyUserID(results[i].user_id)
+                        results[i].devicesList = data
+                    }
+                    // console.log("Devices For user", devicesData);
+                    data = {
+                        "status": true,
+                        data: {
+                            users_list: results,
+                        }
+                    }
+                    res.send(data);
+                }
+            });
+        }
+        else {
+            let results = await sql.query("select * from users WHERE dealer_id = '" + verify.user.id + "' AND del_status = 0 order by created_at DESC")
+            if (results.length) {
+                for (let i = 0; i < results.length; i++) {
+                    let data = await helpers.getAllRecordbyUserID(results[i].user_id)
+                    results[i].devicesList = data
+                }
+                // console.log("Devices For user", devicesData);
+                data = {
+                    "status": true,
+                    data: {
+                        users_list: results,
+                    }
+                }
+                res.send(data);
+            }
+
+        }
+    }
+    else {
+        data = {
+            "status": false,
+        }
+        res.send(data)
+    }
+}
 
 exports.addUser = async function (req, res) {
 
@@ -261,85 +342,7 @@ exports.updateProfile = async function (req, res) {
 }
 
 
-exports.getAllUsers = async function (req, res) {
-    let devicesData = [];
-    var verify = req.decoded;
-    // if (verify.status !== undefined && verify.status == true) {
-    if (verify) {
-        if (verify.user.user_type == ADMIN) {
-            var role = await helpers.getuserTypeIdByName(verify.user.user_type);
-            let results = await sql.query("select * from users where del_status =0 order by created_at DESC")
-            if (results.length) {
-                for (let i = 0; i < results.length; i++) {
-                    let data = await helpers.getAllRecordbyUserID(results[i].user_id)
-                    results[i].devicesList = data
-                }
-                // console.log("Devices For user", devicesData);
-                data = {
-                    "status": true,
-                    data: {
-                        users_list: results,
-                    }
-                }
-                res.send(data);
-            }
-        } else if (verify.user.user_type === DEALER) {
-            sql.query("select dealer_id from dealers where connected_dealer = '" + verify.user.id + "' AND  type = 3 order by created DESC", async function (error, result) {
-                if (error) {
-                    console.log(error);
-                }
-                dealer = [verify.user.id]
-                console.log(result);
-                if (result.length) {
-                    for (var i = 0; i < result.length; i++) {
-                        var sDealers_id = result[i].dealer_id;
-                        dealer.push(sDealers_id)
-                    }
-                }
-                console.log("select * from users WHERE dealer_id IN (" + dealer.join() + ") order by created_at DESC");
-                let results = await sql.query("select * from users WHERE dealer_id IN (" + dealer.join() + ") AND del_status = 0 order by created_at DESC")
-                if (results.length) {
-                    for (let i = 0; i < results.length; i++) {
-                        let data = await helpers.getAllRecordbyUserID(results[i].user_id)
-                        results[i].devicesList = data
-                    }
-                    // console.log("Devices For user", devicesData);
-                    data = {
-                        "status": true,
-                        data: {
-                            users_list: results,
-                        }
-                    }
-                    res.send(data);
-                }
-            });
-        }
-        else {
-            let results = await sql.query("select * from users WHERE dealer_id = '" + verify.user.id + "' AND del_status = 0 order by created_at DESC")
-            if (results.length) {
-                for (let i = 0; i < results.length; i++) {
-                    let data = await helpers.getAllRecordbyUserID(results[i].user_id)
-                    results[i].devicesList = data
-                }
-                // console.log("Devices For user", devicesData);
-                data = {
-                    "status": true,
-                    data: {
-                        users_list: results,
-                    }
-                }
-                res.send(data);
-            }
 
-        }
-    }
-    else {
-        data = {
-            "status": false,
-        }
-        res.send(data)
-    }
-}
 
 exports.checkProfile = async function (req, res) {
     var verify = req.decoded;

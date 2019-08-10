@@ -16,8 +16,12 @@ let SMTP_FROM_NAME = "Admin";
 // Device ID and Dealer Pin
 let DEVICE_ID_SYSTEM_LETTER = "L";
 let DEVICE_ID_SYSTEM_LETTER_INDEX = 2;
+
 let DEALER_PIN_SYSTEM_LETTER = "6";
 let DEALER_PIN_SYSTEM_LETTER_INDEX = 4;
+
+let STAFF_ID_SYSTEM_LETTER = '1';
+let STAFF_ID_SYSTEM_LETTER_INDEX = 1;
 
 if (HOST_NAME) {
 	APP_TITLE = HOST_NAME;
@@ -54,6 +58,8 @@ if (HOST_NAME) {
 
 			DEVICE_ID_SYSTEM_LETTER = "T";
 			DEALER_PIN_SYSTEM_LETTER = "5";
+			STAFF_ID_SYSTEM_LETTER = '2';
+
 			break;
 		case "LockMesh Dev":
 			URL = "https://dev.lockmesh.com";
@@ -102,8 +108,12 @@ if (HOST_NAME) {
 
 		DEVICE_ID_SYSTEM_LETTER,
 		DEVICE_ID_SYSTEM_LETTER_INDEX,
+
 		DEALER_PIN_SYSTEM_LETTER,
 		DEALER_PIN_SYSTEM_LETTER_INDEX,
+
+		STAFF_ID_SYSTEM_LETTER,
+		STAFF_ID_SYSTEM_LETTER_INDEX,
 
 		// Fixer API key
 		FIXER_API_KEY: "96035c5c5b46baea5a96b84930eaed79",
@@ -112,13 +122,13 @@ if (HOST_NAME) {
 		// SUPERADMIN URLs
 		SUPERADMIN_LOGIN_URL: `${
 			this.SUPERADMIN_URL
-		}/api/v1/auth/white_label_login`,
+			}/api/v1/auth/white_label_login`,
 		UPDATE_DEVICE_SUPERADMIN_URL: `${
 			this.SUPERADMIN_URL
-		}/api/v1/users/update_device_details`,
+			}/api/v1/users/update_device_details`,
 		REQUEST_FOR_CREDITS: `${
 			this.SUPERADMIN_URL
-		}/api/v1/users/request_for_credits`,
+			}/api/v1/users/request_for_credits`,
 
 		SUPERADMIN_USER_CREDENTIALS: {
 			email: "whiteLabelAdmin!786@gmial.com",

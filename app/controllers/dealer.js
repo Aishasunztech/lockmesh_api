@@ -22,12 +22,13 @@ const ADMIN = "admin";
 const DEALER = "dealer";
 const SDEALER = "sdealer";
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
-let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
+// let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
+let usr_acc_query_text =  constants.usr_acc_query_text;
 
 exports.getAllDealers = async function (req, res) {
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
 
         var role = await general_helpers.getuserTypeIdByName(verify.user.user_type);
         if (verify.user.user_type == constants.ADMIN) {
@@ -122,7 +123,7 @@ exports.getAllDealers = async function (req, res) {
 exports.getDealers = async function (req, res) {
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         let where = "";
         var role = null;
         if (verify.user.user_type === constants.ADMIN) {
@@ -194,7 +195,7 @@ exports.addDealer = async function (req, res) {
     var verify = req.decoded;
 
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var dealerName = req.body.name;
         var dealerEmail = req.body.email;
 
@@ -220,7 +221,6 @@ exports.addDealer = async function (req, res) {
             } else if (userType == constants.DEALER && pageType == constants.SDEALER) {
                 sdealerDealerId = loggedInuid;
             }
-
 
             /* var link_code = randomize('0', 6);
             link_code = await general_helpers.checkLinkCode(link_code); */
@@ -362,7 +362,7 @@ exports.addDealer = async function (req, res) {
 exports.editDealers = async function (req, res) {
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var loggedInuid = verify.user.id;
 
         var name = req.body.name;
@@ -479,7 +479,7 @@ exports.deleteDealer = async function (req, res) {
     var dealer_id = req.body.dealer_id;
 
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var loggedInuid = verify.user.id;
 
         if (!empty(dealer_id)) {
@@ -534,7 +534,7 @@ exports.undoDealer = async function (req, res) {
     var verify = req.decoded;
 
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var loggedInuid = verify.user.id;
         var dealer_id = req.body.dealer_id;
         if (!empty(dealer_id)) {
@@ -586,7 +586,7 @@ exports.undoDealer = async function (req, res) {
 exports.suspendDealer = async function (req, res) {
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var loggedInuid = verify.user.id;
         let dealer_id = req.body.dealer_id;
 
@@ -643,7 +643,7 @@ exports.activateDealer = async function (req, res) {
     var verify = req.decoded;
 
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var loggedInuid = verify.user.id;
         var dealer_id = req.body.dealer_id;
 
@@ -699,7 +699,7 @@ exports.resetPwd = async function (req, res) {
     var verify = req.decoded;
     var isReset = false;
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
 
         var user = verify.user;
         if (req.body.pageName != undefined && req.body.pageName != "") {
@@ -804,7 +804,7 @@ exports.getLoggedDealerApps = async function (req, res) {
     // console.log('apoi recivedx')
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         let loggedUserId = verify.user.id;
         let loggedUserType = verify.user.user_type;
 
@@ -858,7 +858,7 @@ exports.getDropdownSelectedItems = async function (req, res) {
     var verify = req.decoded;
     // console.log('done or not');
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var loggedInuid = verify.user.id;
         // console.log('data from req', req.params.dropdownType);
         let dealer_id = verify.user.id;
@@ -897,11 +897,11 @@ exports.getDropdownSelectedItems = async function (req, res) {
     }
 }
 
-exports.dropDown =  async function (req, res) {
+exports.dropDown = async function (req, res) {
     var verify = req.decoded;
     var loggedInuid = verify.user.id;
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
 
         var selected_items = req.body.selected_items;
         var dropdownType = req.body.pageName;
@@ -945,11 +945,11 @@ exports.dropDown =  async function (req, res) {
     }
 }
 
-exports.getPagination =  async function (req, res) {
+exports.getPagination = async function (req, res) {
     var verify = req.decoded;
     // console.log('done or not');
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
 
         // console.log('data from req', req.params.dropdownType);
         let dealer_id = verify.user.id;
@@ -981,11 +981,11 @@ exports.getPagination =  async function (req, res) {
 }
 
 
-exports.postPagination =  async function (req, res) {
+exports.postPagination = async function (req, res) {
     // console.log("Working")
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var selectedValue = req.body.selectedValue;
         var dropdownType = req.body.pageName;
         var dealer_id = verify.user.id;
@@ -1027,10 +1027,10 @@ exports.postPagination =  async function (req, res) {
     }
 }
 
-exports.getInfo =  async function (req, res) {
+exports.getInfo = async function (req, res) {
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var getinfo = "select * from dealers where dealer_id='" + verify.user.id + "'";
 
         sql.query(getinfo, async function (err, rows) {
@@ -1072,48 +1072,48 @@ exports.getInfo =  async function (req, res) {
  * By Muhammad Irfan Afzal - mi3afzal
  * 02-08-2019
  * **/
-exports.updateDealerPins = async function(req, res) {
-	var verify = req.decoded; // await verifyToken(req, res);
-	if (!verify) {
-		data = {
-			status: false,
-			data: ["Bad Request"]
-		};
-		res.status(400).send(data);
-		return;
-	}
+exports.updateDealerPins = async function (req, res) {
+    var verify = req.decoded; // await verifyToken(req, res);
+    if (!verify) {
+        data = {
+            status: false,
+            data: ["Bad Request"]
+        };
+        res.status(400).send(data);
+        return;
+    }
 
-	sql.query(
-		`SELECT * FROM dealers WHERE link_code IS NOT NULL ORDER BY dealer_id ASC`,
-		async function(error, results, fields) {
-			if (error) throw error;
+    sql.query(
+        `SELECT * FROM dealers WHERE link_code IS NOT NULL ORDER BY dealer_id ASC`,
+        async function (error, results, fields) {
+            if (error) throw error;
 
-			output = [];
-			for (var i = 0; i < results.length; i++) {
-				const oldDealerPin = results[i].link_code;
-				const newDealerPin = general_helpers.replaceAt(
-					oldDealerPin,
-					app_constants.DEALER_PIN_SYSTEM_LETTER_INDEX,
-					app_constants.DEALER_PIN_SYSTEM_LETTER
-				);
-                
+            output = [];
+            for (var i = 0; i < results.length; i++) {
+                const oldDealerPin = results[i].link_code;
+                const newDealerPin = general_helpers.replaceAt(
+                    oldDealerPin,
+                    app_constants.DEALER_PIN_SYSTEM_LETTER_INDEX,
+                    app_constants.DEALER_PIN_SYSTEM_LETTER
+                );
+
                 var email = '';
-				if (oldDealerPin != newDealerPin) {
-					await sql.query(
-						`UPDATE dealers SET link_code = '${newDealerPin}' WHERE dealer_id = ${
-							results[i].dealer_id
-						} `
-					);
-					await sql.query(
-						`UPDATE acc_action_history SET link_code = '${newDealerPin}' WHERE link_code = '${oldDealerPin}' `
-					);
-					await sql.query(
-						`UPDATE transferred_profiles SET link_code = '${newDealerPin}' WHERE link_code = '${oldDealerPin}' `
-					);
-					await sql.query(
-						`UPDATE usr_acc SET link_code = '${newDealerPin}' WHERE link_code = '${oldDealerPin}' `
+                if (oldDealerPin != newDealerPin) {
+                    await sql.query(
+                        `UPDATE dealers SET link_code = '${newDealerPin}' WHERE dealer_id = ${
+                        results[i].dealer_id
+                        } `
                     );
-                    
+                    await sql.query(
+                        `UPDATE acc_action_history SET link_code = '${newDealerPin}' WHERE link_code = '${oldDealerPin}' `
+                    );
+                    await sql.query(
+                        `UPDATE transferred_profiles SET link_code = '${newDealerPin}' WHERE link_code = '${oldDealerPin}' `
+                    );
+                    await sql.query(
+                        `UPDATE usr_acc SET link_code = '${newDealerPin}' WHERE link_code = '${oldDealerPin}' `
+                    );
+
 
                     email = 'email send';
                     var html = `We have updated your Dealer PIN for better system integrity. <br>
@@ -1123,16 +1123,16 @@ exports.updateDealerPins = async function(req, res) {
                     sendEmail("Account Update", html, results[i].dealer_email, async function (emailError, response) {
                         if (emailError) email = 'email not send';
                     });
-				}
-				output[i] = [oldDealerPin, newDealerPin, email];
-			}
+                }
+                output[i] = [oldDealerPin, newDealerPin, email];
+            }
 
-			data = {
-				status: true,
-				data: ["Data Updated", output]
-			};
-			res.status(200).send(data);
-			return;
-		}
-	);
+            data = {
+                status: true,
+                data: ["Data Updated", output]
+            };
+            res.status(200).send(data);
+            return;
+        }
+    );
 };
