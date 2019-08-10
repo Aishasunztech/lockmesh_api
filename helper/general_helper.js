@@ -408,13 +408,13 @@ module.exports = {
 			device_id +
 			"';";
 		let result = await sql.query(query);
-		if (result.length > 1) {
+		if (result.length > 0) {
 			let query =
 				"SELECT device_id FROM devices WHERE device_id = '" +
 				device_id +
 				"' AND serial_number = '" + sn + "' AND mac_address = '" + mac + "'";
 			let result = await sql.query(query)
-			if (result.length > 1) {
+			if (result.length > 0) {
 				return device_id
 			} else {
 				device_id = this.getDeviceId(sn, mac);
