@@ -47,7 +47,12 @@ exports.getPolicies = async function (req, res) {
                             let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
                             let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
                             let dealer = await helpers.getDealerByDealerId(results[i].dealer_id)
-                            let created_by = results[i].dealer_type === app_Constants.ADMIN ? "ADMIN" : dealer[0].dealer_name + " (" + dealer[0].link_code + ")";
+                            let created_by = '';
+                            if(dealer.length){
+                                created_by = results[i].dealer_type === app_Constants.ADMIN ? "ADMIN" : dealer[0].dealer_name + " (" + dealer[0].link_code + ")";
+                            } else {
+                                created_by = 'N/A';
+                            }
                             // console.log(created_by);
                             dta = {
                                 id: results[i].id,
@@ -135,7 +140,12 @@ exports.getPolicies = async function (req, res) {
                             let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== 'undefined' && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : [];
                             let is_default = (results[i].id === default_policy_id) ? true : false
                             let dealer = await helpers.getDealerByDealerId(results[i].dealer_id)
-                            let created_by = results[i].dealer_type === app_Constants.ADMIN ? "ADMIN" : dealer[0].dealer_name;
+                            let created_by = '';
+                            if(dealer.length){
+                                created_by = results[i].dealer_type === app_Constants.ADMIN ? "ADMIN" : dealer[0].dealer_name;
+                            } else {
+                                created_by = 'N/A';
+                            }
                             // console.log(created_by);
                             dta = {
                                 id: results[i].id,
