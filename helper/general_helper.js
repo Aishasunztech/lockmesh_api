@@ -1112,7 +1112,10 @@ const device_helpers = require("./device_helpers");
 				app.enable
 			]);
 		});
-		await sql.query(policyAppsQuery, [policyAppValues]);
+
+		if(policyAppValues.length){
+			await sql.query(policyAppsQuery, [policyAppValues]);
+		}
 	},
 	generateStaffID: async function () {
 
