@@ -437,6 +437,10 @@ module.exports = {
     checkStatus: function (device) {
         let status = "";
 
+        if(!device.flagged) {
+            device.flagged = null;
+        }
+
         // console.log('checkStatus : ', device)
         if (device.transfer_status == 1 && device.account_status === 'suspended' && device.flagged !== 'Not flagged') {
             status = Constants.DEVICE_TRANSFERED

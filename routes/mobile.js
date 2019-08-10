@@ -503,7 +503,9 @@ router.post('/getstatus', async function (req, resp) {
                         // console.log("get usr account by device id", userAcc);
                         if (userAcc) {
                             // console.log(userAcc);
-                            let deviceStatus = device_helpers.checkStatus(userAcc);
+
+                            // deviceStatus varible not use at that function so i (abaid) comment it
+                            // let deviceStatus = device_helpers.checkStatus(userAcc); 
                             let dealerQ = "SELECT dealer_id, link_code FROM dealers WHERE dealer_id =" + userAcc.dealer_id;
                             let dealer = await sql.query(dealerQ);
                             if (dealer.length) {
@@ -583,7 +585,9 @@ router.post('/getstatus', async function (req, resp) {
                         // console.log("get usr account by device id", userAcc);
                         if (userAcc) {
                             // console.log(userAcc);
-                            let deviceStatus = device_helpers.checkStatus(userAcc);
+
+                            // deviceStatus varible not use at that function so i (abaid) comment it
+                            // let deviceStatus = device_helpers.checkStatus(userAcc);
                             let dealerQ = "SELECT dealer_id, link_code FROM dealers WHERE dealer_id =" + userAcc.dealer_id;
                             let dealer = await sql.query(dealerQ);
                             if (dealer.length) {
@@ -649,7 +653,9 @@ router.post('/getstatus', async function (req, resp) {
                     // console.log("get usr account by device id", userAcc);
                     if (userAcc) {
                         // console.log(userAcc);
-                        let deviceStatus = device_helpers.checkStatus(userAcc);
+
+                        // deviceStatus varible not use at that function so i (abaid) comment it
+                        // let deviceStatus = device_helpers.checkStatus(userAcc);
                         let dealerQ = "SELECT dealer_id, link_code FROM dealers WHERE dealer_id =" + userAcc.dealer_id;
                         let dealer = await sql.query(dealerQ);
                         if (dealer.length) {
