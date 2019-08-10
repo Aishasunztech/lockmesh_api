@@ -21,7 +21,7 @@ deploy_DevLM_API:
     - echo "Deploy to dev server"
     - ssh-add <(echo "$PRIVATE_KEY")
     - rm -rf .git
-    - ssh -o StrictHostKeyChecking=no web@104.248.19.72 "cd /var/www/html/${WORK_DIR}; git pull origin ${BRANCH}; npm install; pm2 reload all"
+    - ssh -o StrictHostKeyChecking=no web@104.248.19.72 "cd /var/www/html/${WORK_DIR}; git reset --hard; git pull origin ${BRANCH}; npm install; pm2 reload all"
   only:
     - development
 
@@ -39,7 +39,7 @@ deploy_LiveLM_API:
     - echo "Deploy to live LM server"
     - ssh-add <(echo "$PRIVATE_KEY")
     - rm -rf .git
-    - ssh -o StrictHostKeyChecking=no web@165.22.30.197 "cd /var/www/html/${WORK_DIR}; git pull origin ${BRANCH}; npm install; pm2 reload all; exit"
+    - ssh -o StrictHostKeyChecking=no web@165.22.30.197 "cd /var/www/html/${WORK_DIR}; git reset --hard; git pull origin ${BRANCH}; npm install; pm2 reload all; exit"
   only:
     - master
 
@@ -57,7 +57,7 @@ deploy_LiveTitan_API:
     - echo "Deploy to live LM server"
     - ssh-add <(echo "$PRIVATE_KEY")
     - rm -rf .git
-    - ssh -o StrictHostKeyChecking=no web@142.93.102.4 "cd /var/www/html/${WORK_DIR}; git pull origin ${BRANCH}; npm install; pm2 reload all; exit"
+    - ssh -o StrictHostKeyChecking=no web@142.93.102.4 "cd /var/www/html/${WORK_DIR}; git reset --hard; git pull origin ${BRANCH}; npm install; pm2 reload all; exit"
   only:
     - master
 
