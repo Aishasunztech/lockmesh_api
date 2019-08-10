@@ -1,5 +1,8 @@
 module.exports = {
 
+  // Usr_acc Query
+  usr_acc_query_text: "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status, usr_acc.transfer_user_status, usr_acc.transfered_from,usr_acc.transfered_to, usr_acc.user_transfered_from, usr_acc.user_transfered_to,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version",
+
   // ACL
   ADMIN: "admin",
   DEALER: "dealer",
@@ -19,11 +22,14 @@ module.exports = {
   DEVICE_ACTIVATED: "Active",
   DEVICE_TRIAL: "Trial",
   DEVICE_SUSPENDED: "Suspended",
+  DEVICE_TRANSFERED: "Transfered",
   DEVICE_EXPIRED: "Expired",
   DEVICE_UNLINKED: "Unlinked",
   DEVICE_PENDING_ACTIVATION: "Pending activation",
   DEVICE_PRE_ACTIVATION: "Pre-activated",
   UNLINK_DEVICE_DELETE: "Delete",
+  // DEVICE_TRANSFERED: "Device Transfered",
+  USER_TRANSFERED: "User Transfered",
   DEVICE_FLAGGED: "Flagged",
   DEVICE_UNFLAGGED: "Unflagged",
   DEVICE_ACCEPT: "Accept Device",
@@ -65,6 +71,8 @@ module.exports = {
   RECV_SIM: 'sendSim_',
   RECV_SIM_DATA: 'receiveSimData_',
 
+  // Transfer
+  FLAGGED: 'flagged_',
 
   SEND_APPS: "sendApps_",
   SEND_EXTENSIONS: "sendExtensions_",
@@ -142,6 +150,7 @@ module.exports = {
     { "key": "device_id", "value": "tableHeadings.DEVICEID" },
     { "key": "user_id", "value": "tableHeadings.USERID" },
     { "key": "validity", "value": "tableHeadings.REMAININGDAYS" },
+    { "key": "transfered_to", "value": "tableHeadings.TRANSFERED" },
     { "key": "status", "value": "tableHeadings.STATUS" },
     { "key": "online", "value": "tableHeadings.MODE" },
     { "key": "type", "value": "tableHeadings.TYPE" },

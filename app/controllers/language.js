@@ -12,23 +12,22 @@ exports.getLanguage = async function (req, res) {
         if (dealer_id) {
             let selectQuery = `SELECT LT.lng_id, LT.key_id, LT.key_value FROM dealer_language AS dl 
             JOIN lng_translations AS LT 
-            ON (LT.lng_id = dl.dealer_lng_id) 
+            ON (LT.lng_id = dl.dealer_lng_id AND dl.dealer_lng_id != '0') 
             WHERE dl.dealer_id=${dealer_id}`;
 
             sql.query(selectQuery, async function (err, rslt) {
                 if (err) console.log(err);
 
-                if (rslt && rslt.length) {
-                    let obj = {}
+                // console.log('rslt is: ', rslt)
 
+                if (rslt && rslt.length > 0) {
+                    let obj = {}
+                    // console.log('-------------- 01')
                     rslt.forEach((elem) => {
                         let key_id = elem.key_id;
                         obj[key_id] = elem.key_value
                     })
                     obj["lng_id"] = rslt[0].lng_id;
-                    // console.log("=================================================")
-                    // console.log('lng id  is:', obj.lng_id);
-                    // console.log("=================================================")
                     res.send({
                         status: true,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Success"), // 'success',
@@ -36,13 +35,42 @@ exports.getLanguage = async function (req, res) {
                     })
                     return;
                 } else {
-                    data = {
-                        status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No data"), // 'No data',
-                        data: {}
-                    }
-                    res.send(data)
-                    return;
+
+                    // console.log('-------------- 02')
+
+                    // Now get English language
+                    let selectQuery = `SELECT key_id, key_value FROM lng_translations WHERE lng_id='1'`;
+                    sql.query(selectQuery, async function (err, rslt) {
+                        if (err) console.log(err);
+
+                        // console.log('-------------- 03', rslt)
+                        if (rslt.length > 0) {
+                            let obj = {}
+                            rslt.forEach((elem) => {
+                                let key_id = elem.key_id;
+                                obj[key_id] = elem.key_value
+                            })
+                            obj["lng_id"] = '1';
+                            res.send({
+                                status: true,
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Success"), // 'success',
+                                data: JSON.stringify(obj)
+                            })
+                            return;
+                        } else {
+                            console.log('-------------- 04')
+                            data = {
+                                status: false,
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No data"), // 'No data',
+                                data: {}
+                            }
+                            res.send(data)
+                            return;
+                        }
+
+
+                    });
+
                 }
             })
         }

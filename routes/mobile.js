@@ -24,9 +24,10 @@ var app_constants = require('../config/constants');
 const constants = require('../config/constants');
 const { sendEmail } = require('../lib/email');
 
-let usr_acc_query_text =
-    "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version";
+// let usr_acc_query_text =
+//     "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version";
 
+let usr_acc_query_text =  Constants.usr_acc_query_text;
 
 
 /*Check For Token in the header */
@@ -502,7 +503,9 @@ router.post('/getstatus', async function (req, resp) {
                         // console.log("get usr account by device id", userAcc);
                         if (userAcc) {
                             // console.log(userAcc);
-                            let deviceStatus = device_helpers.checkStatus(userAcc);
+
+                            // deviceStatus varible not use at that function so i (abaid) comment it
+                            // let deviceStatus = device_helpers.checkStatus(userAcc); 
                             let dealerQ = "SELECT dealer_id, link_code FROM dealers WHERE dealer_id =" + userAcc.dealer_id;
                             let dealer = await sql.query(dealerQ);
                             if (dealer.length) {
@@ -582,7 +585,9 @@ router.post('/getstatus', async function (req, resp) {
                         // console.log("get usr account by device id", userAcc);
                         if (userAcc) {
                             // console.log(userAcc);
-                            let deviceStatus = device_helpers.checkStatus(userAcc);
+
+                            // deviceStatus varible not use at that function so i (abaid) comment it
+                            // let deviceStatus = device_helpers.checkStatus(userAcc);
                             let dealerQ = "SELECT dealer_id, link_code FROM dealers WHERE dealer_id =" + userAcc.dealer_id;
                             let dealer = await sql.query(dealerQ);
                             if (dealer.length) {
@@ -648,7 +653,9 @@ router.post('/getstatus', async function (req, resp) {
                     // console.log("get usr account by device id", userAcc);
                     if (userAcc) {
                         // console.log(userAcc);
-                        let deviceStatus = device_helpers.checkStatus(userAcc);
+
+                        // deviceStatus varible not use at that function so i (abaid) comment it
+                        // let deviceStatus = device_helpers.checkStatus(userAcc);
                         let dealerQ = "SELECT dealer_id, link_code FROM dealers WHERE dealer_id =" + userAcc.dealer_id;
                         let dealer = await sql.query(dealerQ);
                         if (dealer.length) {
@@ -910,6 +917,7 @@ router.post('/device_status', async function (req, res) {
             if (user_acc.length > 0) {
 
                 // get user account device status
+                user_acc[0]["flagged"] = device[0].flagged;
                 let deviceStatus = device_helpers.checkStatus(user_acc[0]);
                 console.log("device_status", deviceStatus);
 
@@ -1065,7 +1073,9 @@ router.post('/device_status', async function (req, res) {
             var user_acc = await sql.query("SELECT * FROM usr_acc where device_id = " + device[0].id);
             if (user_acc.length > 0) {
 
+                // console.log('user_acc[0] ', user_acc[0].transfer_status, user_acc[0].status)
                 // get user account device status
+                user_acc[0]["flagged"] = device[0].flagged;
                 let deviceStatus = device_helpers.checkStatus(user_acc[0]);
                 console.log("device_status", deviceStatus);
 
@@ -1223,8 +1233,11 @@ router.post('/device_status', async function (req, res) {
         if (device.length > 0) {
             var user_acc = await sql.query("SELECT * FROM usr_acc where device_id = " + device[0].id);
             if (user_acc.length > 0) {
-
+                console.log('user_acc[0] ', user_acc[0].transfer_status, user_acc[0].status)
                 // get user account device status
+                console.log('status is: ', device[0].device_id)
+
+                user_acc[0]["flagged"] = device[0].flagged;
                 let deviceStatus = device_helpers.checkStatus(user_acc[0]);
                 console.log("device_status", deviceStatus);
 
