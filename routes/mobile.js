@@ -24,6 +24,11 @@ var app_constants = require('../config/constants');
 const constants = require('../config/constants');
 const { sendEmail } = require('../lib/email');
 
+// let usr_acc_query_text =
+//     "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version";
+
+let usr_acc_query_text =  Constants.usr_acc_query_text;
+
 
 /*Check For Token in the header */
 var verifyToken = function (req, res) {
@@ -144,17 +149,34 @@ router.post('/login', async function (req, resp) {
                 }
             }
         } else if (linkCode.length >= 7) {
+            console.log(linkCode);
             var usrAccQ = "SELECT * FROM usr_acc WHERE activation_code='" + linkCode + "' and activation_status=0";
+            console.log(usrAccQ);
             var usrAcc = await sql.query(usrAccQ);
             if (usrAcc.length === 0) {
+                console.log("Activation Not found");
                 data = {
                     'status': false,
                     'msg': 'Invalid activation code'
                 }
                 resp.send(data);
             } else {
+                let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address, type, version } = device_helpers.getDeviceInfo(req);
+                var deviceCheckQuery = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND devices.mac_address = '${mac_address}' AND devices.serial_number = '${serial_number}' AND usr_acc.unlink_status = 1 ORDER BY devices.id DESC`;
+                console.log(deviceCheckQuery);
+                let result = await sql.query(deviceCheckQuery)
+                console.log(result);
+                if (result && result.length > 0) {
+                    var deleteSql1 = `DELETE FROM usr_acc where device_id=${result[0].usr_device_id}`;
+                    await sql.query(deleteSql1)
+                    console.log("DELETE from devices where device_id = '" + result[0].device_id + "'", `DELETE FROM usr_acc where device_id = ${result[0].usr_device_id}`);
+                    var sqlDevice = "DELETE from devices where device_id = '" + result[0].device_id + "'";
+                    await sql.query(sqlDevice);
+
+                }
                 let validity = await device_helpers.checkRemainDays(usrAcc[0].created_at, usrAcc[0].validity)
                 if (validity < 0 || validity === 'Expired') {
+                    console.log("Dealer Not found");
                     data = {
                         'status': false,
                         'msg': 'Invalid activation code'
@@ -249,6 +271,7 @@ router.post('/login', async function (req, resp) {
 
                         }
                     } else {
+                        console.log("Dealer Not found");
                         data = {
                             'status': false,
                             'msg': 'Invalid activation code'
@@ -256,6 +279,7 @@ router.post('/login', async function (req, resp) {
                         resp.send(data);
                     }
                 }
+
             }
         }
 
@@ -304,13 +328,7 @@ router.post('/systemlogin', async function (req, res) {
 
 /** Link Device MDM **/
 router.post('/linkdevice', async function (req, resp) {
-    //res.setHeader('Content-Type', 'application/json');
-    // console.log("/linkdevice");
-    // console.log(resp);
-    // return resp.send({
-    //     success: false,
-    //     msg: 'TOKEN_NOT_PROVIDED'
-    // });
+
     var reslt = verifyToken(req, resp);
     if (reslt.status == true) {
         let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address, type, version } = device_helpers.getDeviceInfo(req);
@@ -319,41 +337,59 @@ router.post('/linkdevice', async function (req, resp) {
         if (!empty(serial_number) && !empty(mac_address)) {
             var dId = req.body.dId;
             var connected_dealer = (req.body.connected_dealer === undefined || req.body.connected_dealer === null) ? 0 : req.body.connected_dealer;
-
-            // var deviceQ = "SELECT * FROM devices WHERE  mac_address='" + mac_address + "' OR serial_number='" + serial_number + "'";
-            // var device = await sql.query(deviceQ);
-
-            // console.log("device query", device);
-            // console.log("link device dealer id", dealer_pin);
             var dealerQ = "select * from dealers where dealer_id = '" + dId + "'";
             let dealer = await sql.query(dealerQ);
             // console.log("dealer query", dealer)
             // res2 = dealer
             if (dealer.length) {
-
                 var deviceId = await helpers.getDeviceId(serial_number, mac_address);
-                // var deviceId = await checkDeviceId(device_id, serial_number, mac_address);
-
-                var deviceCheckQuery = "SELECT * FROM devices WHERE device_id = '" + deviceId + "'";
+                deviceId = await helpers.checkDeviceId(deviceId, serial_number, mac_address);
+                var deviceCheckQuery = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND devices.device_id = '${deviceId}' ORDER BY devices.id DESC`;
                 let deviceCheckResponse = await sql.query(deviceCheckQuery);
                 if (deviceCheckResponse.length) {
-                    console.log('Some thing bad happend. user should not be here. Device already exist.', deviceId);
-                    resp.send({
-                        status: false,
-                        msg: "Devices already exist."
-                    });
-                    return
-                }
+                    if (deviceCheckResponse[0].unlink_status == 1) {
+                        if (deviceCheckResponse[0].dealer_id == dId) {
+                            let currentDate = moment(new Date()).format("YYYY/MM/DD")
+                            if (deviceCheckResponse[0].expiry_date > currentDate) {
+                                var sql1 = `UPDATE  usr_acc SET unlink_status = 0, device_status = 1 where device_id=${deviceCheckResponse[0].usr_device_id}`;
+                                await sql.query(sql1)
+                                resp.send({
+                                    status: true,
+                                    device_id: deviceId,
+                                    msg: "Device Linked.",
+                                    dealer_pin: dealer[0].link_code
+                                });
+                                return
+                            } else {
+                                var deleteSql1 = `DELETE FROM usr_acc where device_id=${deviceCheckResponse[0].usr_device_id}`;
+                                await sql.query(deleteSql1)
+                                var sqlDevice = "DELETE from devices where device_id = '" + deviceId + "'";
+                                await sql.query(sqlDevice);
+                            }
+                        } else {
+                            var deleteSql1 = `DELETE FROM usr_acc where device_id=${deviceCheckResponse[0].usr_device_id}`;
+                            await sql.query(deleteSql1)
+                            var sqlDevice = "DELETE from devices where device_id = '" + deviceId + "'";
+                            await sql.query(sqlDevice);
 
+                        }
+                    } else {
+                        console.log('Some thing bad happend. user should not be here. Device already exist.', deviceId);
+                        resp.send({
+                            status: false,
+                            msg: "Devices already exist."
+                        });
+                        return
+                    }
+                }
                 var lastLinkAttemptQ = `SELECT * FROM acc_action_history 
-                WHERE action = '${Constants.DEVICE_PENDING_ACTIVATION}' AND device_id = '${deviceId}' 
-                ORDER BY id DESC LIMIT 1`;
+                    WHERE action = '${Constants.DEVICE_PENDING_ACTIVATION}' AND device_id = '${deviceId}' 
+                    ORDER BY id DESC LIMIT 1`;
                 let lastLinkAttempt = await sql.query(lastLinkAttemptQ);
                 if (lastLinkAttempt.length) {
                     let createdDateTime = new Date(lastLinkAttempt[0].created_at);
                     let dateNow = new Date();
                     let difference_ms = dateNow.getTime() - createdDateTime.getTime();
-
                     //Get 1 hour in milliseconds
                     let one_hour = 1000 * 60 * 60;
                     let elapsed_hours = difference_ms / one_hour;
@@ -363,8 +399,6 @@ router.post('/linkdevice', async function (req, resp) {
                         });
                     }
                 }
-
-
                 let insertDevice = "INSERT INTO devices (device_id, imei, imei2, ip_address, simno, simno2, serial_number, mac_address, online) values(?,?,?,?,?,?,?,?,?)";
                 sql.query(insertDevice, [deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, Constants.DEVICE_OFFLINE], function (error, deviceRes) {
                     // console.log("Insert Query" , insertDevice, [deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, 'On']);
@@ -408,6 +442,7 @@ router.post('/linkdevice', async function (req, resp) {
                     });
 
                 });
+
             } else {
                 resp.send({
                     status: false,
@@ -847,6 +882,7 @@ router.get("/getApk/:apk", async (req, res) => {
 router.post('/device_status', async function (req, res) {
     var serial_number = req.body.serial_no;
     var mac = req.body.mac_address;
+    var dealer_pin = req.body.dealer_pin
     var data;
     console.log(serial_number);
     console.log(mac);
@@ -914,6 +950,20 @@ router.post('/device_status', async function (req, res) {
                                         msg: deviceStatus,
                                         device_id: device[0].device_id,
                                         expiry_date: n,
+                                        token: token,
+                                        dealer_pin: user_acc[0].link_code
+                                    }
+                                    res.send(data);
+                                    return;
+                                }
+                                else if (deviceStatus === Constants.DEVICE_UNLINKED) {
+                                    var d = new Date(user_acc[0].expiry_date);
+                                    var n = d.valueOf()
+                                    data = {
+                                        status: false,
+                                        msg: deviceStatus,
+                                        expiry_date: n,
+                                        device_id: device[0].device_id,
                                         token: token,
                                         dealer_pin: user_acc[0].link_code
                                     }
@@ -1064,6 +1114,20 @@ router.post('/device_status', async function (req, res) {
                                     res.send(data);
                                     return;
                                 }
+                                else if (deviceStatus === Constants.DEVICE_UNLINKED) {
+                                    var d = new Date(user_acc[0].expiry_date);
+                                    var n = d.valueOf()
+                                    data = {
+                                        status: false,
+                                        msg: deviceStatus,
+                                        expiry_date: n,
+                                        device_id: device[0].device_id,
+                                        token: token,
+                                        dealer_pin: user_acc[0].link_code
+                                    }
+                                    res.send(data);
+                                    return;
+                                }
                                 else {
 
                                     data = {
@@ -1157,7 +1221,7 @@ router.post('/device_status', async function (req, res) {
     }
     else {
         var deviceQuery = "select * from devices where mac_address = '" + mac + "' AND serial_number = '" + serial_number + "'";
-        // 
+
         var device = await sql.query(deviceQuery);
 
         if (device.length > 0) {
@@ -1206,6 +1270,20 @@ router.post('/device_status', async function (req, res) {
                                         msg: deviceStatus,
                                         device_id: device[0].device_id,
                                         expiry_date: n,
+                                        token: token,
+                                        dealer_pin: user_acc[0].link_code
+                                    }
+                                    res.send(data);
+                                    return;
+                                }
+                                else if (deviceStatus === Constants.DEVICE_UNLINKED) {
+                                    var d = new Date(user_acc[0].expiry_date);
+                                    var n = d.valueOf()
+                                    data = {
+                                        status: false,
+                                        msg: deviceStatus,
+                                        expiry_date: n,
+                                        device_id: device[0].device_id,
                                         token: token,
                                         dealer_pin: user_acc[0].link_code
                                     }
@@ -1270,7 +1348,24 @@ router.post('/device_status', async function (req, res) {
                                 }
                                 res.send(data);
                                 return;
-                            } else {
+                            }
+                            else if (deviceStatus === Constants.DEVICE_UNLINKED) {
+                                var d = new Date(user_acc[0].expiry_date);
+                                var n = d.valueOf()
+                                data = {
+                                    status: false,
+                                    msg: deviceStatus,
+                                    expiry_date: n,
+                                    device_id: device[0].device_id,
+                                    token: token,
+                                    dealer_pin: user_acc[0].link_code
+                                }
+                                res.send(data);
+                                return;
+                            }
+
+
+                            else {
                                 data = {
                                     status: true,
                                     msg: deviceStatus,
@@ -1286,7 +1381,7 @@ router.post('/device_status', async function (req, res) {
 
                 }
             } else {
-
+                console.log(Constants.NEW_DEVICE);
                 data = {
                     status: false,
                     msg: Constants.NEW_DEVICE,
@@ -1319,12 +1414,15 @@ router.post('/device_status', async function (req, res) {
                     return
                 }
             } else {
-                console.log(Constants.NEW_DEVICE)
                 data = {
                     status: false,
                     msg: Constants.NEW_DEVICE,
                 }
                 res.send(data);
+                return
+
+                // }
+
             }
         }
     }
