@@ -1123,7 +1123,7 @@ module.exports = {
 		let query = `SELECT staff_id FROM dealer_agents WHERE staff_id = '${staff_id}'`;
 		let result = await sql.query(query);
 		if (result.length > 1) {
-			staff_id = this.genrateLinkCode();
+			staff_id = this.this.generateStaffID();
 		}
 		return staff_id;
 	},
