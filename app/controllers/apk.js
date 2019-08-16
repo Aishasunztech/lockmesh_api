@@ -413,7 +413,7 @@ exports.upload = async function (req, res) {
 
                     let formatByte = helpers.formatBytes(apk_stats.size);
                     if (versionCode) {
-                        if ((packageName === 'com.armorSec.android' || packageName === 'ca.unlimitedwireless.mailpgp' || packageName === 'com.rim.mobilefusion.client' || packageName === 'com.secure.vpn') && featureApk == null ) {
+                        if ((packageName === 'com.armorSec.android' || packageName === 'ca.unlimitedwireless.mailpgp' || packageName === 'com.rim.mobilefusion.client' || packageName === 'com.secure.vpn') && featureApk == null) {
                             data = {
                                 status: false,
                                 msg: await helpers.convertToLang(req.translation["not allowed"], "Error: Uploaded Apk is not Allowed."), // "Error: Unable to read APP properties.",
@@ -555,8 +555,6 @@ exports.addApk = async function (req, res) {
             if (!empty(logo) && !empty(apk) && !empty(apk_name)) {
 
                 let file = path.join(__dirname, "../../uploads/" + apk);
-
-
                 if (fs.existsSync(file)) {
                     let versionCode = '';
                     let versionName = '';

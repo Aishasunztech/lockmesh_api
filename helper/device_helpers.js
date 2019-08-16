@@ -259,7 +259,7 @@ module.exports = {
             var updateQuery = `UPDATE user_apps SET guest=${guest}, encrypted=${encrypted}, enable=${enable} WHERE device_id=${deviceId} AND app_id=${appId}`;
 
             let row = await sql.query(updateQuery);
-            
+
             if (row.affectedRows === 0) {
                 var insertQuery = `INSERT IGNORE INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (${deviceId}, ${appId}, ${guest}, ${encrypted}, ${enable})`;
                 await sql.query(insertQuery);
@@ -437,7 +437,7 @@ module.exports = {
     checkStatus: function (device) {
         let status = "";
 
-        if(!device.flagged) {
+        if (!device.flagged) {
             device.flagged = null;
         }
 
@@ -453,21 +453,27 @@ module.exports = {
         }
         else if (device.status === 'trial' && (device.account_status === '' || device.account_status === null) && device.unlink_status === 0 && (device.device_status === 1 || device.device_status === '1')) {
             status = Constants.DEVICE_TRIAL
-        } else if (device.status === 'expired') {
-            // status = 'Expired';
-            status = Constants.DEVICE_EXPIRED;
-        } else if ((device.device_status === '0' || device.device_status === 0) && (device.unlink_status === '0' || device.unlink_status === 0) && (device.activation_status === null || device.activation_status === '')) {
-            // status = 'Pending activation';
-            status = Constants.DEVICE_PENDING_ACTIVATION;
-        } else if ((device.device_status === '0' || device.device_status === 0) && (device.unlink_status === '0' || device.unlink_status === 0) && (device.activation_status === 0)) {
-            status = Constants.DEVICE_PRE_ACTIVATION;
-        } else if ((device.unlink_status === '1' || device.unlink_status === 1) && (device.device_status === 0 || device.device_status === '0')) {
+        }
+        else if ((device.unlink_status === '1' || device.unlink_status === 1) && (device.device_status === 0 || device.device_status === '0')) {
             // status = 'Unlinked';
             status = Constants.DEVICE_UNLINKED;
-        } else if (device.account_status === 'suspended') {
+        }
+        else if (device.status === 'expired') {
+            // status = 'Expired';
+            status = Constants.DEVICE_EXPIRED;
+        }
+        else if ((device.device_status === '0' || device.device_status === 0) && (device.unlink_status === '0' || device.unlink_status === 0) && (device.activation_status === null || device.activation_status === '')) {
+            // status = 'Pending activation';
+            status = Constants.DEVICE_PENDING_ACTIVATION;
+        }
+        else if ((device.device_status === '0' || device.device_status === 0) && (device.unlink_status === '0' || device.unlink_status === 0) && (device.activation_status === 0)) {
+            status = Constants.DEVICE_PRE_ACTIVATION;
+        }
+        else if (device.account_status === 'suspended') {
             // status = 'Suspended';
             status = Constants.DEVICE_SUSPENDED;
-        } else {
+        }
+        else {
             status = 'N/A';
         }
         return status;
@@ -670,13 +676,13 @@ module.exports = {
     },
     pullAppProcess: async (deviceId, dvcId, apps) => {
         console.log("pullAppProcess");
-        for(let i=0; i<apps.length; i++){
+        for (let i = 0; i < apps.length; i++) {
             if (apps[i].packageName) {
 
                 let appInfoQ = `SELECT * FROM apps_info WHERE package_name = '${apps[i].packageName}'`;
                 let appInfo = await sql.query(appInfoQ);
                 if (appInfo.length) {
-                    appInfo.forEach(async (app)=>{
+                    appInfo.forEach(async (app) => {
                         let deletePullApp = `DELETE FROM user_apps WHERE (device_id=${dvcId} AND app_id=${app.id})`;
                         await sql.query(deletePullApp);
                     })
@@ -722,8 +728,8 @@ module.exports = {
                     WHERE devices.device_id = '${deviceId}' AND apps_info.package_name='${apps[i].packageName}'`;
                     console.log("getAppsQ: ", getAppsQ);
                     let app = await sql.query(getAppsQ);
-                    console.log("getapplication: ",app);
-                    if(app.length){
+                    console.log("getapplication: ", app);
+                    if (app.length) {
                         app_list.push(app[0]);
                     }
                 }
@@ -752,5 +758,5 @@ async function installApps(apps, i, deviceData, iconName, getApp) {
                         system_app= ${system_app} 
                         `;
     await sql.query(query);
-    
+
 }
