@@ -91,10 +91,10 @@ const socketMiddleware = async (socket, next) => {
 sockets.listen = function (server) {
 
     // socket configuration options
+    
     // {
     //    path: '/socket.io',
     //    serveClient: false,
-    //    below are engine.IO options
     //    pingInterval: 10000,
     //    pingTimeout: 5000,
     //    cookie: false
@@ -108,15 +108,29 @@ sockets.listen = function (server) {
 
 
     // io.attach(server, {
-    //     // pingInterval: 1,
-    //     pingTimeout: 1,
-    //     cookie: false
+    //     // pingInterval: 60000,
+    //     // pingTimeout: 120000,
+    //     // cookie: false
     // });
 
+    // io.set('transports', ['websocket']);
+
     // ===============================================================================
-    // io.of('/') is for middleware not for path
+    // io.of('/') is for middleware not for path/namespace/endpoint 
     // ===============================================================================
+    
+    // ===============================================================================
+    // io.of('dynamic of for device_id') for dynamic/namespace/endpoint
+    // ===============================================================================
+    // const dynamicNsp = io.of(/^\/\d+$/).on('connect', (socket) => {
+    //     const newNamespace = socket.nsp; // newNamespace.name === '/dynamic-101'
+      
+    //     // broadcast to all clients in the given sub-namespace
+    //     newNamespace.emit('hello');
+    // });
+    
     io.listen(server);
+
 
     // middleware for socket incoming and outgoing requests
     io.use(socketMiddleware);
@@ -663,7 +677,7 @@ sockets.listen = function (server) {
         });
 
         socket.on(Constants.CONNECT_ERROR, (error) => {
-            console.log("connection_error_occured: " + error);
+            console.log("connection_error_occurred: " + error);
         });
 
         socket.on(Constants.CONNECT_TIMEOUT, (timeout) => {
@@ -671,7 +685,7 @@ sockets.listen = function (server) {
         });
 
         socket.on('error', (error) => {
-            console.log("error_occured: " + error);
+            console.log("error_occurred: " + error);
         });
 
         socket.on(Constants.RECONNECT, (attemptNumber) => {

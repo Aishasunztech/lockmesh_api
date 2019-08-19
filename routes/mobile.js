@@ -896,8 +896,8 @@ router.post('/device_status', async function (req, res) {
     var mac = req.body.mac_address;
     var dealer_pin = req.body.dealer_pin
     var data;
-    console.log(serial_number);
-    console.log(mac);
+    console.log('serial number: ', serial_number);
+    console.log('mac address: ',mac);
 
     if (empty(serial_number) && empty(mac)) {
         data = {
@@ -1040,7 +1040,22 @@ router.post('/device_status', async function (req, res) {
                                 }
                                 res.send(data);
                                 return;
-                            } else {
+                            }
+                            else if (deviceStatus === Constants.DEVICE_UNLINKED) {
+                                var d = new Date(user_acc[0].expiry_date);
+                                var n = d.valueOf()
+                                data = {
+                                    status: false,
+                                    msg: deviceStatus,
+                                    expiry_date: n,
+                                    device_id: device[0].device_id,
+                                    token: token,
+                                    dealer_pin: user_acc[0].link_code
+                                }
+                                res.send(data);
+                                return;
+                            }
+                            else {
                                 data = {
                                     status: true,
                                     msg: deviceStatus,
@@ -1060,7 +1075,7 @@ router.post('/device_status', async function (req, res) {
                     status: false,
                     msg: Constants.NEW_DEVICE,
                 }
-                res.send(data);
+                return res.send(data);
             }
         }
         else {
@@ -1068,8 +1083,7 @@ router.post('/device_status', async function (req, res) {
                 status: false,
                 msg: Constants.NEW_DEVICE,
             }
-            res.send(data);
-            return
+            return res.send(data);
         }
     }
     else if (serial_number == Constants.PRE_DEFINED_SERIAL_NUMBER) {
@@ -1099,6 +1113,7 @@ router.post('/device_status', async function (req, res) {
                             type: await helpers.getUserTypeByTypeId(dealer[0].type),
                             device_id: device[0].device_id
                         }
+                        console.log("predefined serial: ", dvc);
 
                         jwt.sign({
                             dvc
@@ -1141,7 +1156,6 @@ router.post('/device_status', async function (req, res) {
                                     return;
                                 }
                                 else {
-
                                     data = {
                                         status: true,
                                         msg: deviceStatus,
@@ -1198,7 +1212,23 @@ router.post('/device_status', async function (req, res) {
                                 }
                                 res.send(data);
                                 return;
-                            } else {
+                            } 
+                            else if (deviceStatus === Constants.DEVICE_UNLINKED) {
+                                var d = new Date(user_acc[0].expiry_date);
+                                var n = d.valueOf()
+                                data = {
+                                    status: false,
+                                    msg: deviceStatus,
+                                    expiry_date: n,
+                                    device_id: device[0].device_id,
+                                    token: token,
+                                    dealer_pin: user_acc[0].link_code
+                                }
+                                res.send(data);
+                                return;
+                            }
+                            
+                            else {
                                 data = {
                                     status: true,
                                     msg: deviceStatus,

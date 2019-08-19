@@ -20,9 +20,9 @@ const device_helpers = require("./device_helpers");
 
 // let usr_acc_query_text =
 // 	"usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id, usr_acc.user_id, usr_acc.account_email, usr_acc.account_name,usr_acc.dealer_id, usr_acc.prnt_dlr_id,usr_acc.link_code, usr_acc.client_id, usr_acc.start_date, usr_acc.expiry_months, usr_acc.expiry_date,usr_acc.activation_code, usr_acc.status,usr_acc.device_status, usr_acc.activation_status, usr_acc.account_status,usr_acc.unlink_status, usr_acc.transfer_status, usr_acc.dealer_name, usr_acc.prnt_dlr_name, usr_acc.del_status, usr_acc.note, usr_acc.validity, usr_acc.batch_no, usr_acc.type, usr_acc.version";
-	let usr_acc_query_text =  Constants.usr_acc_query_text;
+let usr_acc_query_text = Constants.usr_acc_query_text;
 
-	module.exports = {
+module.exports = {
 	convertToLang: async function (lngWord, constant) {
 		if (lngWord !== undefined && lngWord !== "" && lngWord !== null) {
 			return lngWord;
@@ -281,32 +281,48 @@ const device_helpers = require("./device_helpers");
 	isAllowedAction: async function (componentId, actionId, userId) { },
 
 	//Helper function to get unique device_id in format like "ASGH457862"
-
 	getDeviceId: async function (sn, mac) {
-		// let sqlQuery = "SELECT device_id from devices where serial_number = '" + sn + "' OR mac_address = '" + mac + "'";
-		// let result = await sql.query(sqlQuery)
-		let unlickQuery;
-		if (sn === Constants.PRE_DEFINED_SERIAL_NUMBER) {
-			unlickQuery =
-				"SELECT device_id from acc_action_history where mac_address = '" +
-				mac +
-				"'";
-		} else if (mac === Constants.PRE_DEFINED_MAC_ADDRESS) {
-			unlickQuery =
-				"SELECT device_id from acc_action_history where serial_number = '" +
-				sn +
-				"'";
-		} else {
-			unlickQuery =
-				"SELECT device_id from acc_action_history where serial_number = '" +
-				sn +
-				"' OR mac_address = '" +
-				mac +
-				"'";
+		// previous checks
+		// let unlinkQuery;
+		// if (sn === Constants.PRE_DEFINED_SERIAL_NUMBER) {
+		// 	unlinkQuery =
+		// 		"SELECT device_id from acc_action_history where mac_address = '" +
+		// 		mac +
+		// 		"'";
+		// } else if (mac === Constants.PRE_DEFINED_MAC_ADDRESS) {
+		// 	unlinkQuery =
+		// 		"SELECT device_id from acc_action_history where serial_number = '" +
+		// 		sn +
+		// 		"'";
+		// } else {
+		// 	unlinkQuery =
+		// 		"SELECT device_id from acc_action_history where serial_number = '" +
+		// 		sn +
+		// 		"' OR mac_address = '" +
+		// 		mac +
+		// 		"'";
+		// }
+
+		/*
+		* we move device from device table to history table on unlink
+		* First we see if same device exist in history with both mac and serial matched
+		* if we get nothing 
+		* we will see if any one of them (mac or serial) matched but not fake one
+		*/
+		let unlinkQuery = `SELECT device_id FROM acc_action_history 
+		WHERE serial_number = '${sn}' AND mac_address = '${mac}' 
+		ORDER BY id DESC LIMIT 1 `;
+
+		let unlinkedResult = await sql.query(unlinkQuery);
+		if (unlinkedResult.length < 1) {
+			unlinkQuery = `SELECT device_id FROM acc_action_history 
+			WHERE (serial_number = '${sn}' AND serial_number != '${Constants.PRE_DEFINED_SERIAL_NUMBER}') OR 
+			(mac_address = '${mac}' AND mac_address != '${Constants.PRE_DEFINED_MAC_ADDRESS}')
+			ORDER BY id DESC LIMIT 1 `;
+			unlinkedResult = await sql.query(unlinkQuery);
 		}
 
-		let unlinkedResult = await sql.query(unlickQuery);
-		if (unlinkedResult.length) {
+		if (unlinkedResult.length >= 1) {
 			return unlinkedResult[0].device_id;
 		} else {
 			console.log(sn, "MAC", mac);
@@ -327,7 +343,7 @@ const device_helpers = require("./device_helpers");
 			}
 			var deviceId = str.toUpperCase() + num;
 
-			//this.replaceAt('FDEA999907', 2, 'L'); // FDLA999907
+			//this.replaceAt('FDEA999907', 2, 'L'); // FLEA999907
 			deviceId = this.replaceAt(
 				deviceId,
 				app_constants.DEVICE_ID_SYSTEM_LETTER_INDEX,
@@ -404,28 +420,28 @@ const device_helpers = require("./device_helpers");
 			.add(expiryMonth, "M")
 			.strftime("%Y/%m/%d");
 	},
-	checkDeviceId: async function (device_id, sn, mac) {
-		let query =
-			"SELECT device_id FROM devices WHERE device_id = '" +
-			device_id +
-			"';";
-		let result = await sql.query(query);
-		if (result.length > 0) {
-			let query =
-				"SELECT device_id FROM devices WHERE device_id = '" +
-				device_id +
-				"' AND serial_number = '" + sn + "' AND mac_address = '" + mac + "'";
-			let result = await sql.query(query)
-			if (result.length > 0) {
-				return device_id
-			} else {
-				device_id = this.getDeviceId(sn, mac);
-				checkDeviceId(device_id, sn, mac);
-			}
-		} else {
-			return device_id;
-		}
-	},
+	// checkDeviceId: async function (device_id, sn, mac) {
+	// 	let query =
+	// 		"SELECT device_id FROM devices WHERE device_id = '" +
+	// 		device_id +
+	// 		"';";
+	// 	let result = await sql.query(query);
+	// 	if (result.length > 0) {
+	// 		let query =
+	// 			"SELECT device_id FROM devices WHERE device_id = '" +
+	// 			device_id +
+	// 			"' AND serial_number = '" + sn + "' AND mac_address = '" + mac + "'";
+	// 		let result = await sql.query(query)
+	// 		if (result.length > 0) {
+	// 			return device_id
+	// 		} else {
+	// 			device_id = this.getDeviceId(sn, mac);
+	// 			checkDeviceId(device_id, sn, mac);
+	// 		}
+	// 	} else {
+	// 		return device_id;
+	// 	}
+	// },
 	validateEmail: email => {
 		var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 		return re.test(String(email).toLowerCase());
@@ -1113,7 +1129,7 @@ const device_helpers = require("./device_helpers");
 			]);
 		});
 
-		if(policyAppValues.length){
+		if (policyAppValues.length) {
 			await sql.query(policyAppsQuery, [policyAppValues]);
 		}
 	},
