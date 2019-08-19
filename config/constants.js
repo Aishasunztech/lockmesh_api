@@ -130,6 +130,10 @@ if (HOST_NAME) {
 			this.SUPERADMIN_URL
 			}/api/v1/users/request_for_credits`,
 
+		RESYNC_IDS: `${
+			this.SUPERADMIN_URL
+			}/api/v1/users/resync_ids`,
+
 		SUPERADMIN_USER_CREDENTIALS: {
 			email: "whiteLabelAdmin!786@gmial.com",
 			password: "whiteLabel@Admin!786"

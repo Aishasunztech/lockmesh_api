@@ -91,6 +91,10 @@ exports.devices = async function (req, res) {
 
                 let checkValue = helpers.checkValue;
                 for (let device of finalResult) {
+                    let startDate = moment()
+                    let endDate = moment(device.expiry_date)
+                    let remainTermDays = endDate.diff(startDate, 'days')
+                    device.remainTermDays = remainTermDays
                     device.account_email = checkValue(device.account_email);
                     device.account_name = checkValue(device.account_name);
                     device.account_status = checkValue(device.account_status);
@@ -146,6 +150,7 @@ exports.devices = async function (req, res) {
                     device.updated_at = checkValue(device.updated_at);
                     device.user_id = checkValue(device.user_id);
                     device.usr_device_id = checkValue(device.usr_device_id);
+                    device.validity = checkValue(device.validity);
                     device.validity = checkValue(device.validity);
                 }
 
@@ -599,7 +604,7 @@ exports.editDevices = async function (req, res) {
 
     if (verify) {
         if (!empty(req.body.usr_device_id)) {
-            console.log(req.body);
+            // console.log(req.body);
             let loggedDealerId = verify.user.id;
             let loggedDealerType = verify.user.user_type;
 
@@ -616,18 +621,20 @@ exports.editDevices = async function (req, res) {
             let usr_acc_id = req.body.usr_acc_id;
             let usr_device_id = req.body.usr_device_id;
             let prevPGP = req.body.prevPGP;
+            let prevChatID = req.body.prevChatID;
+            let prevSimId = req.body.prevSimId;
             let finalStatus = req.body.finalStatus;
             var note = req.body.note;
             var validity = req.body.validity;
             // let s_dealer_id = req.body.s_dealer;
             let start_date = req.body.start_date;
-
-            console.log(finalStatus);
-
-            let sim_id = req.body.sim_id == undefined ? "" : req.body.sim_id;
-            let chat_id = req.body.chat_id == undefined ? "" : req.body.chat_id;
+            let sim_id = (req.body.sim_id == undefined || req.body.sim_id == '') ? "N/A" : req.body.sim_id;
+            let chat_id = (req.body.chat_id == undefined || req.body.chat_id == '') ? "N/A" : req.body.chat_id;
             let pgp_email =
-                req.body.pgp_email == undefined ? "" : req.body.pgp_email;
+                (req.body.pgp_email == undefined || req.body.pgp_email == '') ? "N/A" : req.body.pgp_email;
+
+            // console.log(chat_id, prevChatID);
+
 
             var d = new Date(req.body.start_date);
 
@@ -832,38 +839,83 @@ exports.editDevices = async function (req, res) {
                             // console.log(sql1);
                             sql.query(common_Query, async function (error, row) {
                                 await sql.query(usr_acc_Query);
-                                let updateChatIds =
-                                    'update chat_ids set user_acc_id = "' +
-                                    usr_acc_id +
-                                    '", used=1 where chat_id ="' +
-                                    chat_id +
-                                    '"';
-                                await sql.query(updateChatIds);
-                                let updateSimIds =
-                                    'update sim_ids set user_acc_id = "' +
-                                    usr_acc_id +
-                                    '",  used=1 where sim_id ="' +
-                                    sim_id +
-                                    '"';
-                                await sql.query(updateSimIds);
-                                let updatePgpEmails =
-                                    'update pgp_emails set user_acc_id = "' +
-                                    usr_acc_id +
-                                    '",  used=1 where pgp_email ="' +
-                                    pgp_email +
-                                    '"';
-                                await sql.query(updatePgpEmails);
+                                if (pgp_email != prevPGP) {
+                                    console.log("PGP change");
+                                    let updatePgpEmails =
+                                        'update pgp_emails set user_acc_id = "' +
+                                        usr_acc_id +
+                                        '",  used=1 where pgp_email ="' +
+                                        pgp_email +
+                                        '"';
+                                    await sql.query(updatePgpEmails);
 
-                                if (
-                                    finalStatus ===
-                                    constants.DEVICE_PRE_ACTIVATION
-                                ) {
-                                    if (pgp_email !== prevPGP) {
+                                    if (
+                                        finalStatus ===
+                                        constants.DEVICE_PRE_ACTIVATION
+                                    ) {
                                         let updatePrevPgp =
                                             'update pgp_emails set user_acc_id = null,  used=0 where pgp_email ="' +
                                             prevPGP +
                                             '"';
                                         sql.query(updatePrevPgp);
+                                    } else {
+                                        let updatePrevPgp =
+                                            'update pgp_emails set user_acc_id = null,  used=1 where pgp_email ="' +
+                                            prevPGP +
+                                            '"';
+                                        sql.query(updatePrevPgp);
+                                    }
+                                }
+                                if (chat_id != prevChatID) {
+                                    console.log("Chat change");
+                                    let updateChatIds =
+                                        'update chat_ids set user_acc_id = "' +
+                                        usr_acc_id +
+                                        '", used=1 where chat_id ="' +
+                                        chat_id +
+                                        '"';
+                                    await sql.query(updateChatIds);
+                                    if (
+                                        finalStatus ===
+                                        constants.DEVICE_PRE_ACTIVATION
+                                    ) {
+                                        let updatePrevChat =
+                                            'update pgp_emails set user_acc_id = null,  used=0 where chat_id ="' +
+                                            prevChatID +
+                                            '"';
+                                        sql.query(updatePrevChat);
+                                    } else {
+                                        let updatePrevChat =
+                                            'update chat_ids set user_acc_id = null,  used=1 where chat_id ="' +
+                                            prevChatID +
+                                            '"';
+                                        sql.query(updatePrevChat);
+                                    }
+                                }
+                                if (sim_id != prevSimId) {
+                                    console.log("sim change");
+                                    let updateSimIds =
+                                        'update sim_ids set user_acc_id = "' +
+                                        usr_acc_id +
+                                        '",  used=1 where sim_id ="' +
+                                        sim_id +
+                                        '"';
+                                    await sql.query(updateSimIds);
+                                    if (
+                                        finalStatus ===
+                                        constants.DEVICE_PRE_ACTIVATION
+                                    ) {
+                                        let updatePrevSim =
+                                            'update sim_ids set user_acc_id = null,  used=0 where sim_id ="' +
+                                            prevSimId +
+                                            '"';
+                                        sql.query(updatePrevSim);
+                                    } else {
+                                        let updatePrevSim =
+                                            'update sim_ids set user_acc_id = null,  used=1 where sim_id ="' +
+                                            prevChatID +
+                                            '"';
+                                        sql.query(updatePrevSim);
                                     }
                                 }
 
@@ -2511,6 +2563,10 @@ exports.connectDevice = async function (req, res) {
                         device_data.chat_id = await device_helpers.getChatids(
                             results[0]
                         );
+                        let startDate = moment()
+                        let endDate = moment(device_data.expiry_date)
+                        let remainTermDays = endDate.diff(startDate, 'days')
+                        device_data.remainTermDays = remainTermDays
 
                         if (dealer_details.length) {
                             device_data.link_code = dealer_details[0].link_code;

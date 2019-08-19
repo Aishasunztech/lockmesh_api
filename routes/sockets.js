@@ -212,7 +212,9 @@ sockets.listen = function (server) {
 
                     await device_helpers.updateExtensions(extensions, device_id);
 
-                    await device_helpers.insertOrUpdateSettings(controls, device_id);
+                    if(controls !== '{}' && controls !== ''){
+                        await device_helpers.insertOrUpdateSettings(controls, device_id);
+                    }
                     
                     // these methods are old and wrong
 
