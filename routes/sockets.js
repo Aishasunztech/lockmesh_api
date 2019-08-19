@@ -524,7 +524,9 @@ sockets.listen = function (server) {
                     } else if (policy_name !== '' && policy_name !== null) {
                         let dealer = await sql.query(dealerQ);
                         if (dealer.length) {
-                            let policyQ = "SELECT policy.* FROM policy LEFT JOIN dealer_policies ON policy.id = dealer_policies.policy_id WHERE (dealer_policies.dealer_id=" + dealer[0].dealer_id + " OR policy.dealer_id=" + dealer[0].dealer_id + " )  AND  policy.command_name = '" + policy_name + "' AND policy.status=1  AND policy.delete_status=0";
+                            let policyQ = `SELECT policy.* FROM policy LEFT JOIN dealer_policies ON policy.id = dealer_policies.policy_id WHERE (dealer_policies.dealer_id = ${dealer[0].dealer_id} OR policy.dealer_id = ${dealer[0].dealer_id})  AND  lower(policy.command_name) = '${policy_name.toLowerCase()}' AND policy.status=1 AND policy.delete_status=0`;
+                            console.log("policyQ: ", policyQ);
+
                             let policy = await sql.query(policyQ);
                             if (policy.length) {
                                 policy = await general_helpers.refactorPolicy(policy);
