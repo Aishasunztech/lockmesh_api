@@ -282,23 +282,44 @@ module.exports = {
 
 	//Helper function to get unique device_id in format like "ASGH457862"
 	getDeviceId: async function (sn, mac) {
+		// previous checks
+		// let unlinkQuery;
+		// if (sn === Constants.PRE_DEFINED_SERIAL_NUMBER) {
+		// 	unlinkQuery =
+		// 		"SELECT device_id from acc_action_history where mac_address = '" +
+		// 		mac +
+		// 		"'";
+		// } else if (mac === Constants.PRE_DEFINED_MAC_ADDRESS) {
+		// 	unlinkQuery =
+		// 		"SELECT device_id from acc_action_history where serial_number = '" +
+		// 		sn +
+		// 		"'";
+		// } else {
+		// 	unlinkQuery =
+		// 		"SELECT device_id from acc_action_history where serial_number = '" +
+		// 		sn +
+		// 		"' OR mac_address = '" +
+		// 		mac +
+		// 		"'";
+		// }
+
 		/*
 		* we move device from device table to history table on unlink
 		* First we see if same device exist in history with both mac and serial matched
 		* if we get nothing 
 		* we will see if any one of them (mac or serial) matched but not fake one
 		*/
-		let unlickQuery = `SELECT device_id FROM acc_action_history 
+		let unlinkQuery = `SELECT device_id FROM acc_action_history 
 		WHERE serial_number = '${sn}' AND mac_address = '${mac}' 
 		ORDER BY id DESC LIMIT 1 `;
 
-		let unlinkedResult = await sql.query(unlickQuery);
+		let unlinkedResult = await sql.query(unlinkQuery);
 		if (unlinkedResult.length < 1) {
-			unlickQuery = `SELECT device_id FROM acc_action_history 
+			unlinkQuery = `SELECT device_id FROM acc_action_history 
 			WHERE (serial_number = '${sn}' AND serial_number != '${Constants.PRE_DEFINED_SERIAL_NUMBER}') OR 
 			(mac_address = '${mac}' AND mac_address != '${Constants.PRE_DEFINED_MAC_ADDRESS}')
 			ORDER BY id DESC LIMIT 1 `;
-			unlinkedResult = await sql.query(unlickQuery);
+			unlinkedResult = await sql.query(unlinkQuery);
 		}
 
 		if (unlinkedResult.length >= 1) {
@@ -399,28 +420,28 @@ module.exports = {
 			.add(expiryMonth, "M")
 			.strftime("%Y/%m/%d");
 	},
-	checkDeviceId: async function (device_id, sn, mac) {
-		let query =
-			"SELECT device_id FROM devices WHERE device_id = '" +
-			device_id +
-			"';";
-		let result = await sql.query(query);
-		if (result.length > 0) {
-			let query =
-				"SELECT device_id FROM devices WHERE device_id = '" +
-				device_id +
-				"' AND serial_number = '" + sn + "' AND mac_address = '" + mac + "'";
-			let result = await sql.query(query)
-			if (result.length > 0) {
-				return device_id
-			} else {
-				device_id = this.getDeviceId(sn, mac);
-				checkDeviceId(device_id, sn, mac);
-			}
-		} else {
-			return device_id;
-		}
-	},
+	// checkDeviceId: async function (device_id, sn, mac) {
+	// 	let query =
+	// 		"SELECT device_id FROM devices WHERE device_id = '" +
+	// 		device_id +
+	// 		"';";
+	// 	let result = await sql.query(query);
+	// 	if (result.length > 0) {
+	// 		let query =
+	// 			"SELECT device_id FROM devices WHERE device_id = '" +
+	// 			device_id +
+	// 			"' AND serial_number = '" + sn + "' AND mac_address = '" + mac + "'";
+	// 		let result = await sql.query(query)
+	// 		if (result.length > 0) {
+	// 			return device_id
+	// 		} else {
+	// 			device_id = this.getDeviceId(sn, mac);
+	// 			checkDeviceId(device_id, sn, mac);
+	// 		}
+	// 	} else {
+	// 		return device_id;
+	// 	}
+	// },
 	validateEmail: email => {
 		var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 		return re.test(String(email).toLowerCase());

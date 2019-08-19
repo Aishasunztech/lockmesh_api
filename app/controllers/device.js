@@ -1022,7 +1022,10 @@ exports.unlinkDevice = async function (req, res) {
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
         if (!empty(device_id)) {
+            console.log("device id:", device_id);
             let dvcId = await device_helpers.getDvcIDByDeviceID(device_id);
+            console.log("dvc id:", dvcId);
+            
             var sql1 = `UPDATE  usr_acc SET unlink_status = 1, device_status = 0 where device_id=${device_id}`;
             sql.query(sql1, async function (error, results) {
                 if (error) {
