@@ -228,6 +228,10 @@ router.post('/login', async function (req, resp) {
                                         }
                                         axios.put(app_constants.UPDATE_DEVICE_SUPERADMIN_URL, data, { headers: { authorization: response.data.user.token } })
                                     }
+                                }).catch((err) => {
+                                    if (err) {
+                                        console.log("SA SERVER NOT RESPONDING")
+                                    }
                                 })
 
                                 const device = {
@@ -897,7 +901,7 @@ router.post('/device_status', async function (req, res) {
     var dealer_pin = req.body.dealer_pin
     var data;
     console.log('serial number: ', serial_number);
-    console.log('mac address: ',mac);
+    console.log('mac address: ', mac);
 
     if (empty(serial_number) && empty(mac)) {
         data = {
@@ -1212,7 +1216,7 @@ router.post('/device_status', async function (req, res) {
                                 }
                                 res.send(data);
                                 return;
-                            } 
+                            }
                             else if (deviceStatus === Constants.DEVICE_UNLINKED) {
                                 var d = new Date(user_acc[0].expiry_date);
                                 var n = d.valueOf()
@@ -1227,7 +1231,7 @@ router.post('/device_status', async function (req, res) {
                                 res.send(data);
                                 return;
                             }
-                            
+
                             else {
                                 data = {
                                     status: true,
