@@ -2721,10 +2721,11 @@ exports.getAppsOfDevice = async function (req, res) {
                                 extensions: newExtlist
                             });
                         } else {
+                            console.log(controls);
                             res.send({
                                 status: true,
                                 app_list: onlyApps,
-                                controls: controls,
+                                controls: {},
                                 extensions: newExtlist
                             });
                         }
