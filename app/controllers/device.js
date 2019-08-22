@@ -509,6 +509,7 @@ exports.acceptDevice = async function (req, res) {
                                         policy[0].push_apps +
                                         "',  'policy')";
                                     sql.query(applyQuery);
+                                    sockets.getPolicy(device_id, policy[0]);
                                 }
 
                                 rsltq[0].finalStatus = device_helpers.checkStatus(
@@ -541,6 +542,10 @@ exports.acceptDevice = async function (req, res) {
                                                     }
                                                 }
                                             );
+                                        }
+                                    }).catch((err) => {
+                                        if (err) {
+                                            console.log("SA SERVER NOT RESPONDING");
                                         }
                                     });
 
@@ -1077,7 +1082,7 @@ exports.unlinkDevice = async function (req, res) {
             console.log("device id:", device_id);
             let dvcId = await device_helpers.getDvcIDByDeviceID(device_id);
             console.log("dvc id:", dvcId);
-            
+
             var sql1 = `UPDATE  usr_acc SET unlink_status = 1, device_status = 0 where device_id=${device_id}`;
             sql.query(sql1, async function (error, results) {
                 if (error) {
@@ -1972,6 +1977,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                 policy[0].push_apps +
                                                 "',  'policy')";
                                             sql.query(applyQuery);
+
                                         }
 
                                         sql.query(
