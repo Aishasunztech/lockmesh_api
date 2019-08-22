@@ -13,15 +13,21 @@ let DB_PASSWORD = "";
 let SMTP_FROM_EMAIL = "admin@lockmesh.com";
 let SMTP_FROM_NAME = "Admin";
 
-// Device ID and Dealer Pin
+// Device ID Prefixes/Postfixes
 let DEVICE_ID_SYSTEM_LETTER = "L";
 let DEVICE_ID_SYSTEM_LETTER_INDEX = 2;
 
+// Dealer ID Prefixes/Postfixes
 let DEALER_PIN_SYSTEM_LETTER = "6";
 let DEALER_PIN_SYSTEM_LETTER_INDEX = 4;
 
+// Staff ID Prefixes/Postfixes
 let STAFF_ID_SYSTEM_LETTER = '1';
 let STAFF_ID_SYSTEM_LETTER_INDEX = 1;
+
+// Livezilla API URL
+
+let CHAT_API = 'http://localhost/livezilla_server/livezilla/api/v2/api.php '
 
 if (HOST_NAME) {
 	APP_TITLE = HOST_NAME;
@@ -118,6 +124,8 @@ if (HOST_NAME) {
 		// Fixer API key
 		FIXER_API_KEY: "96035c5c5b46baea5a96b84930eaed79",
 		BASE_CURRENCY: "USD",
+
+		CHAT_API: CHAT_API,
 
 		// SUPERADMIN URLs
 		SUPERADMIN_LOGIN_URL: `${
