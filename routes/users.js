@@ -588,6 +588,8 @@ router.get("/get_sim_ids", accountController.getSimIDs);
 
 router.get("/get_all_sim_ids", accountController.getAllSimIDs);
 
+router.get("/resync_ids", accountController.getAllSimIDs);
+
 // router.get('/get_used_sim_ids', accountController.getUsedSimIDs);
 
 router.get("/get_chat_ids", accountController.getChatIDs);
