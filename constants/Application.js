@@ -57,6 +57,7 @@ module.exports = {
 
   // sockets
   GET_SYNC_STATUS: "get_sync_status_",
+  SYSTEM_EVENT: "system_event_",
   GET_APPLIED_SETTINGS: "get_applied_settings_",
   SETTING_APPLIED_STATUS: "settings_applied_status_",
   DEVICE_STATUS: 'device_status_',
@@ -102,7 +103,7 @@ module.exports = {
   ACK_pull_APPS: 'ack_pull_apps_',
   ACK_FINISHED_PULL_APPS: 'ack_finished_pull_apps_',
   ACK_SINGLE_PULL_APP: 'ack_single_pull_app_',
-  ACK_SETTING_APPLIED:'ack_setting_applied_',
+  ACK_SETTING_APPLIED: 'ack_setting_applied_',
   ACTION_IN_PROCESS: 'action_in_process',
 
   // Policy
