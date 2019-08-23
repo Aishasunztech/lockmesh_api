@@ -1077,7 +1077,7 @@ exports.unlinkDevice = async function (req, res) {
             console.log("device id:", device_id);
             let dvcId = await device_helpers.getDvcIDByDeviceID(device_id);
             console.log("dvc id:", dvcId);
-            
+
             var sql1 = `UPDATE  usr_acc SET unlink_status = 1, device_status = 0 where device_id=${device_id}`;
             sql.query(sql1, async function (error, results) {
                 if (error) {
@@ -1330,7 +1330,7 @@ exports.transferUser = async function (req, res) {
             let OldUser = req.body.OldUser;
             let usr_device_id = req.body.OldUsr_device_id;
 
-            console.log('NewUser is: ', NewUser)
+            // console.log('NewUser is: ', NewUser)
             // console.log('OldUser is: ', OldUser)
             // console.log('usr_device_id is: ', usr_device_id)
 
@@ -1341,9 +1341,10 @@ exports.transferUser = async function (req, res) {
 
                 if (resp.affectedRows > 0) {
 
-                    // Updae dealer id of Old user
-                    var OldUserResult = await sql.query(`SELECT * from users WHERE user_id='${OldUser}'`);
-                    await sql.query(`UPDATE users SET dealer_id= ${OldUserResult[0].dealer_id} WHERE user_id='${NewUser}'`);
+
+                    // Updae device name
+                    var getDeviceName = await sql.query(`SELECT user_name from users WHERE user_id='${NewUser}'`);
+                    await sql.query(`UPDATE devices SET name= '${getDeviceName[0].user_name}' WHERE id=${usr_device_id}`);
 
                     // Save History into "acc_action_history"
                     let resquery = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE devices.reject_status = 0 AND devices.id= "' + usr_device_id + '"')
