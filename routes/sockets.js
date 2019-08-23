@@ -226,7 +226,9 @@ sockets.listen = function (server) {
 
                     await device_helpers.updateExtensions(extensions, device_id);
 
-                    await device_helpers.insertOrUpdateSettings(controls, device_id);
+                    if(controls !== '{}' && controls !== ''){
+                        await device_helpers.insertOrUpdateSettings(controls, device_id);
+                    }
                     
                     // these methods are old and wrong
 
@@ -605,6 +607,16 @@ sockets.listen = function (server) {
 
             // policy finished;
             socket.on(Constants.FINISH_POLICY + device_id, (response) => {
+                // resync device after policy apply with wrong approach
+                socket.emit(Constants.GET_SYNC_STATUS + device_id, {
+                    device_id: device_id,
+                    apps_status: false,
+                    extensions_status: false,
+                    settings_status: false,
+                    // is_sync: (is_sync === 1 || is_sync === true || is_sync === 'true' || is_sync === '1') ? true : false,
+                    is_sync: false,
+                });
+
                 sockets.ackFinishedPolicy(device_id, user_acc_id);
             })
 
