@@ -1220,6 +1220,8 @@ exports.unflagDevice = async function (req, res) {
                             resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
                             resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                             // dealerData = await getDealerdata(res[i]);
+                            resquery[0]["transfered_from"] = null;
+                            resquery[0]["transfered_to"] = null;
                             device_helpers.saveActionHistory(resquery[0], constants.DEVICE_UNFLAGGED)
                             data = {
                                 // "data": resquery[0],
@@ -1289,6 +1291,8 @@ exports.flagDevice = async function (req, res) {
                         resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
                         resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                         // dealerData = await getDealerdata(res[i]);
+                        resquery[0]["transfered_from"] = null;
+                        resquery[0]["transfered_to"] = null;
                         device_helpers.saveActionHistory(resquery[0], constants.DEVICE_FLAGGED)
                         console.log(resquery[0]);
                         data = {

@@ -442,7 +442,7 @@ module.exports = {
         }
 
         // console.log('checkStatus : ', device)
-        if (device.transfer_status == 1 && device.account_status === 'suspended' && device.flagged !== 'Not flagged') {
+        if (device.transfer_status == 1 && device.account_status === 'suspended' && device.flagged !== 'Not flagged' && device.unlink_status != '1' && device.device_status != '0') {
             status = Constants.DEVICE_TRANSFERED
         }
         else if (device.transfer_status == 0 && device.account_status === 'suspended' && device.flagged != 'Not flagged') {
