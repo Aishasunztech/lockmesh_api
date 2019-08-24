@@ -442,7 +442,12 @@ module.exports = {
         }
 
         // console.log('checkStatus : ', device)
-        if (device.transfer_status == 1 && device.account_status === 'suspended' && device.flagged !== 'Not flagged' && device.unlink_status != '1' && device.device_status != '0') {
+
+        if ((device.unlink_status === '1' || device.unlink_status === 1) && (device.device_status === 0 || device.device_status === '0')) {
+            // status = 'Unlinked';
+            status = Constants.DEVICE_UNLINKED;
+        }
+        else if (device.transfer_status == 1 && device.account_status === 'suspended' && device.flagged !== 'Not flagged') {
             status = Constants.DEVICE_TRANSFERED
         }
         else if (device.transfer_status == 0 && device.account_status === 'suspended' && device.flagged != 'Not flagged') {
@@ -453,10 +458,6 @@ module.exports = {
         }
         else if (device.status === 'trial' && (device.account_status === '' || device.account_status === null) && device.unlink_status === 0 && (device.device_status === 1 || device.device_status === '1')) {
             status = Constants.DEVICE_TRIAL
-        }
-        else if ((device.unlink_status === '1' || device.unlink_status === 1) && (device.device_status === 0 || device.device_status === '0')) {
-            // status = 'Unlinked';
-            status = Constants.DEVICE_UNLINKED;
         }
         else if (device.status === 'expired') {
             // status = 'Expired';
