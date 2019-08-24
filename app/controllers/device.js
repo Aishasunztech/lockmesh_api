@@ -509,6 +509,7 @@ exports.acceptDevice = async function (req, res) {
                                         policy[0].push_apps +
                                         "',  'policy')";
                                     sql.query(applyQuery);
+                                    sockets.getPolicy(device_id, policy[0]);
                                 }
 
                                 rsltq[0].finalStatus = device_helpers.checkStatus(
@@ -541,6 +542,10 @@ exports.acceptDevice = async function (req, res) {
                                                     }
                                                 }
                                             );
+                                        }
+                                    }).catch((err) => {
+                                        if (err) {
+                                            console.log("SA SERVER NOT RESPONDING");
                                         }
                                     });
 
@@ -1977,6 +1982,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                 policy[0].push_apps +
                                                 "',  'policy')";
                                             sql.query(applyQuery);
+
                                         }
 
                                         sql.query(
@@ -2720,10 +2726,11 @@ exports.getAppsOfDevice = async function (req, res) {
                                 extensions: newExtlist
                             });
                         } else {
+                            console.log(controls);
                             res.send({
                                 status: true,
                                 app_list: onlyApps,
-                                controls: controls,
+                                controls: {},
                                 extensions: newExtlist
                             });
                         }
