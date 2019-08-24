@@ -1136,3 +1136,53 @@ exports.updateDealerPins = async function (req, res) {
         }
     );
 };
+
+
+/**
+ * 
+ */
+exports.twoFactorAuth = async function (req, res) {
+	var verify = req.decoded;
+	// if (verify['status'] !== undefined && verify.status === true) {
+	if (verify) {
+		let loggedDealerId = verify.user.id;
+		isEnable = req.body.isEnable;
+		let updateDealerQ =
+			"UPDATE dealers SET is_two_factor_auth=" +
+			isEnable +
+			" WHERE dealer_id=" +
+			loggedDealerId;
+		let updatedDealer = await sql.query(updateDealerQ);
+		if (updatedDealer.affectedRows) {
+			if (isEnable) {
+				data = {
+					status: true,
+					msg: await general_helpers.convertToLang(
+						req.translation[MsgConstants.DUAL_AUTH_SUCC_ENBL],
+						"Dual Authentication is Successfully enabled"
+					), // Dual Authentication is Successfully enabled
+					isEnable: isEnable
+				};
+			} else {
+				data = {
+					status: true,
+					msg: await general_helpers.convertToLang(
+						req.translation[MsgConstants.DUAL_AUTH_SUCC_DISABL],
+						"Dual Authentication is Successfully disabled"
+					), // Dual Authentication is Successfully disabled
+					isEnable: isEnable
+				};
+			}
+			return res.send(data);
+		} else {
+			data = {
+				status: false,
+				msg: await general_helpers.convertToLang(
+					req.translation[MsgConstants.DUAL_AUTH_NOT_ENBL],
+					"Dual Authentication could not be enabled"
+				) // Dual Authentication could not be enabled
+			};
+			return res.send(data);
+		}
+	}
+}

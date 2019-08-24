@@ -336,7 +336,6 @@ exports.checkApkName = async function (req, res) {
 exports.upload = async function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
 
-    console.log();
     var verify = req.decoded;
 
     if (verify) {
