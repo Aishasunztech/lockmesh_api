@@ -1546,6 +1546,7 @@ exports.transferDeviceProfile = async function (req, res) {
                                     resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                                     device_helpers.saveActionHistory(resquery[0], "Device Transfered");
                                     // console.log(resquery[0]);
+                                    sockets.sendDeviceStatus(resquery[0].device_id, "Transfered");
 
 
                                     console.log('==============> :: 017')
