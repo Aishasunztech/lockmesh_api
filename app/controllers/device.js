@@ -69,6 +69,7 @@ exports.devices = async function (req, res) {
                 // console.log('query ', 'select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 ' + where_con + ' order by devices.id DESC')
                 if (error) throw error;
                 for (var i = 0; i < results.length; i++) {
+                    // console.log('device is ', results[i]); return;
                     results[i].finalStatus = device_helpers.checkStatus(
                         results[i]
                     );
@@ -79,6 +80,9 @@ exports.devices = async function (req, res) {
                         results[i]
                     );
                     results[i].chat_id = await device_helpers.getChatids(
+                        results[i]
+                    );
+                    results[i].lastOnline = await device_helpers.getLastLoginDetail(
                         results[i]
                     );
                     results[i].validity = await device_helpers.checkRemainDays(
@@ -2589,6 +2593,9 @@ exports.connectDevice = async function (req, res) {
                             results[0]
                         );
                         device_data.chat_id = await device_helpers.getChatids(
+                            results[0]
+                        );
+                        device_data.lastOnline = await device_helpers.getLastLoginDetail(
                             results[0]
                         );
 
