@@ -91,7 +91,7 @@ const socketMiddleware = async (socket, next) => {
 sockets.listen = function (server) {
 
     // socket configuration options
-    
+
     // {
     //    path: '/socket.io',
     //    serveClient: false,
@@ -118,17 +118,17 @@ sockets.listen = function (server) {
     // ===============================================================================
     // io.of('/') is for middleware not for path/namespace/endpoint 
     // ===============================================================================
-    
+
     // ===============================================================================
     // io.of('dynamic of for device_id') for dynamic/namespace/endpoint
     // ===============================================================================
     // const dynamicNsp = io.of(/^\/\d+$/).on('connect', (socket) => {
     //     const newNamespace = socket.nsp; // newNamespace.name === '/dynamic-101'
-      
+
     //     // broadcast to all clients in the given sub-namespace
     //     newNamespace.emit('hello');
     // });
-    
+
     io.listen(server);
 
 
@@ -182,11 +182,11 @@ sockets.listen = function (server) {
 
             console.log("device_id: ", device_id);
 
-            await device_helpers.onlineOfflineDevice(device_id, socket.id, Constants.DEVICE_ONLINE);
-
             dvc_id = await device_helpers.getOriginalIdByDeviceId(device_id);
             console.log("dvc_id: ", dvc_id);
-
+            
+            await device_helpers.onlineOfflineDevice(device_id, socket.id, Constants.DEVICE_ONLINE, dvc_id);
+            
             is_sync = await device_helpers.getDeviceSyncStatus(device_id);
             console.log("is_sync:", is_sync);
 
@@ -226,10 +226,10 @@ sockets.listen = function (server) {
 
                     await device_helpers.updateExtensions(extensions, device_id);
 
-                    if(controls !== '{}' && controls !== ''){
+                    if (controls !== '{}' && controls !== '') {
                         await device_helpers.insertOrUpdateSettings(controls, device_id);
                     }
-                    
+
                     // these methods are old and wrong
 
                     // await device_helpers.insertApps(app_list, device_id);
@@ -278,6 +278,27 @@ sockets.listen = function (server) {
                     settings_status: false,
                     is_sync: false,
                 });
+            });
+
+            // system event from mobile side
+            socket.on(Constants.SYSTEM_EVENT + device_id, async (data) => {
+                console.log("Data System event", data);
+                if (data.action === "type_version") {
+
+                    let type = data.object.type;
+
+                    let version = data.object.version;
+                    console.log(`UPDATE usr_acc set type = '${type}' , version = '${version}' where id = ${user_acc_id}`);
+                    sql.query(`UPDATE usr_acc set type = '${type}' , version = '${version}' where id = ${user_acc_id}`, function (err, result) {
+                        if (err) {
+                            console.log("Type And version Not changed");
+                        }
+                        if (result.affectedRows > 0) {
+
+                            console.log("Type And version changed Successfully");
+                        }
+                    })
+                }
             });
 
             // get system settings from mobile side
@@ -607,6 +628,16 @@ sockets.listen = function (server) {
 
             // policy finished;
             socket.on(Constants.FINISH_POLICY + device_id, (response) => {
+                // resync device after policy apply with wrong approach
+                socket.emit(Constants.GET_SYNC_STATUS + device_id, {
+                    device_id: device_id,
+                    apps_status: false,
+                    extensions_status: false,
+                    settings_status: false,
+                    // is_sync: (is_sync === 1 || is_sync === true || is_sync === 'true' || is_sync === '1') ? true : false,
+                    is_sync: false,
+                });
+
                 sockets.ackFinishedPolicy(device_id, user_acc_id);
             })
 
@@ -649,12 +680,12 @@ sockets.listen = function (server) {
             // socket.on(Constants.GET_INSTALLED_APPS + device_id, sockets.installedApps)
 
             // socket.on(Constants.GET_UNINSTALLED_APPS + device_id, sockets.uninstalledApps)
-            
-            socket.on(Constants.GET_INSTALLED_APPS + device_id, (response)=> {
+
+            socket.on(Constants.GET_INSTALLED_APPS + device_id, (response) => {
                 sockets.installedApps(device_id, dvc_id, response)
             })
 
-            socket.on(Constants.GET_UNINSTALLED_APPS + device_id, (response)=> {
+            socket.on(Constants.GET_UNINSTALLED_APPS + device_id, (response) => {
                 sockets.uninstalledApps(device_id, dvc_id, response)
             })
 
@@ -870,7 +901,7 @@ sockets.sendDeviceStatus = async function (device_id, device_status, status = fa
     });
 }
 
-sockets.ackSettingApplied = async function (device_id, app_list, extensions, controls){
+sockets.ackSettingApplied = async function (device_id, app_list, extensions, controls) {
     console.log("ackSettingApplied() ", device_id, controls);
     io.emit(Constants.ACK_SETTING_APPLIED + device_id, {
         app_list: app_list,
@@ -885,8 +916,8 @@ sockets.installedApps = async (deviceId, dvcId, response) => {
     let app_list = JSON.parse(response);
 
     let application = await device_helpers.pushAppProcess(deviceId, dvcId, app_list);
-    
-    if(application.length){
+
+    if (application.length) {
         io.emit(Constants.ACK_INSTALLED_APPS + deviceId, {
             app_list: application,
             status: true
@@ -897,7 +928,7 @@ sockets.installedApps = async (deviceId, dvcId, response) => {
             status: true
         })
     }
-    
+
 
 }
 
@@ -905,7 +936,7 @@ sockets.installedApps = async (deviceId, dvcId, response) => {
 sockets.ackSinglePushApp = async function (device_id, dvcId, response) {
     console.log("ackSinglePushApp()");
     // let pushApp = null;
-    
+
     // if(response.status){
     //     pushApp = await device_helpers.pushAppProcess(deviceId, dvcId, response.packageName);
 
@@ -964,20 +995,20 @@ sockets.ackSinglePullApp = async function (device_id, dvc_id, response) {
     // console.log("SINGLE PULL PUSH");
     // if (response.status) {
 
-        // Pull apps ki loading wala code he yeh, bad me use kia jayga
-        // let completePushApps = 0
-        // let queueAppsData = await sql.query(`SELECT * FROM apps_queue_jobs WHERE device_id = '${device_id}' AND type = 'push' ORDER BY created_at DESC LIMIT 1`)
-        // if (queueAppsData.length) {
+    // Pull apps ki loading wala code he yeh, bad me use kia jayga
+    // let completePushApps = 0
+    // let queueAppsData = await sql.query(`SELECT * FROM apps_queue_jobs WHERE device_id = '${device_id}' AND type = 'push' ORDER BY created_at DESC LIMIT 1`)
+    // if (queueAppsData.length) {
 
-        //     completePushApps = queueAppsData[0].complete_apps + 1
-        //     await sql.query(`UPDATE apps_queue_jobs SET complete_apps = ${completePushApps} WHERE device_id = '${device_id}' AND type = 'pull'`)
+    //     completePushApps = queueAppsData[0].complete_apps + 1
+    //     await sql.query(`UPDATE apps_queue_jobs SET complete_apps = ${completePushApps} WHERE device_id = '${device_id}' AND type = 'pull'`)
 
-        //     io.emit(Constants.ACK_SINGLE_PULL_APP + device_id, {
-        //         status: true
-        //     })
-        // }
+    //     io.emit(Constants.ACK_SINGLE_PULL_APP + device_id, {
+    //         status: true
+    //     })
+    // }
 
-        // pullApp = await device_helpers.pullAppProcess(deviceId, dvc_id, response.packageName);
+    // pullApp = await device_helpers.pullAppProcess(deviceId, dvc_id, response.packageName);
     // } else {
     //     console.log("app is not pulled successfully")
     // }

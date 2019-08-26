@@ -69,6 +69,7 @@ exports.devices = async function (req, res) {
                 // console.log('query ', 'select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 ' + where_con + ' order by devices.id DESC')
                 if (error) throw error;
                 for (var i = 0; i < results.length; i++) {
+                    // console.log('device is ', results[i]); return;
                     results[i].finalStatus = device_helpers.checkStatus(
                         results[i]
                     );
@@ -81,6 +82,9 @@ exports.devices = async function (req, res) {
                     results[i].chat_id = await device_helpers.getChatids(
                         results[i]
                     );
+                    results[i].lastOnline = await device_helpers.getLastLoginDetail(
+                        results[i]
+                    );
                     results[i].validity = await device_helpers.checkRemainDays(
                         results[i].created_at,
                         results[i].validity
@@ -91,8 +95,13 @@ exports.devices = async function (req, res) {
 
                 let checkValue = helpers.checkValue;
                 for (let device of finalResult) {
-                    let startDate = moment()
-                    let endDate = moment(device.expiry_date)
+
+                    let startDate = moment(new Date())
+                    let expiray_date = new Date(device.expiry_date)
+                    let endDate = moment(expiray_date)
+
+                    // let startDate = moment()
+                    // let endDate = moment(device.expiry_date)
                     let remainTermDays = endDate.diff(startDate, 'days')
                     device.remainTermDays = remainTermDays
                     device.account_email = checkValue(device.account_email);
@@ -509,40 +518,50 @@ exports.acceptDevice = async function (req, res) {
                                         policy[0].push_apps +
                                         "',  'policy')";
                                     sql.query(applyQuery);
+                                    sockets.getPolicy(device_id, policy[0]);
                                 }
 
                                 rsltq[0].finalStatus = device_helpers.checkStatus(
                                     rsltq[0]
                                 );
 
-                                axios
-                                    .post(
-                                        app_constants.SUPERADMIN_LOGIN_URL,
-                                        app_constants.SUPERADMIN_USER_CREDENTIALS,
-                                        { headers: {} }
-                                    )
-                                    .then(response => {
-                                        // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
-                                        if (response.data.status) {
-                                            let data = {
-                                                linkToWL: true,
-                                                SN: rsltq[0].serial_number,
-                                                mac: rsltq[0].mac_address,
-                                                device_id: rsltq[0].device_id
-                                            };
-                                            axios.put(
-                                                app_constants.UPDATE_DEVICE_SUPERADMIN_URL,
-                                                data,
-                                                {
-                                                    headers: {
-                                                        authorization:
-                                                            response.data.user
-                                                                .token
+                                try {
+                                    axios
+                                        .post(
+                                            app_constants.SUPERADMIN_LOGIN_URL,
+                                            app_constants.SUPERADMIN_USER_CREDENTIALS,
+                                            { headers: {} }
+                                        )
+                                        .then(response => {
+                                            // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
+                                            if (response.data.status) {
+                                                let data = {
+                                                    linkToWL: true,
+                                                    SN: rsltq[0].serial_number,
+                                                    mac: rsltq[0].mac_address,
+                                                    device_id: rsltq[0].device_id
+                                                };
+                                                axios.put(
+                                                    app_constants.UPDATE_DEVICE_SUPERADMIN_URL,
+                                                    data,
+                                                    {
+                                                        headers: {
+                                                            authorization:
+                                                                response.data.user
+                                                                    .token
+                                                        }
                                                     }
-                                                }
-                                            );
-                                        }
-                                    });
+                                                );
+                                            }
+                                        }).catch((err) => {
+                                            if (err) {
+                                                console.log("SA SERVER NOT RESPONDING");
+                                            }
+                                        });
+
+                                } catch (err) {
+                                    console.log(err);
+                                }
 
                                 data = {
                                     status: true,
@@ -1077,7 +1096,7 @@ exports.unlinkDevice = async function (req, res) {
             console.log("device id:", device_id);
             let dvcId = await device_helpers.getDvcIDByDeviceID(device_id);
             console.log("dvc id:", dvcId);
-            
+
             var sql1 = `UPDATE  usr_acc SET unlink_status = 1, device_status = 0 where device_id=${device_id}`;
             sql.query(sql1, async function (error, results) {
                 if (error) {
@@ -1124,33 +1143,41 @@ exports.unlinkDevice = async function (req, res) {
                         constants.DEVICE_UNLINKED
                     );
                     sockets.sendDeviceStatus(dvcId, "unlinked", true);
-                    axios
-                        .post(
-                            app_constants.SUPERADMIN_LOGIN_URL,
-                            app_constants.SUPERADMIN_USER_CREDENTIALS,
-                            { headers: {} }
-                        )
-                        .then(async function (response) {
-                            // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
-                            if (response.data.status) {
-                                let data = {
-                                    linkToWL: false,
-                                    device_id: dvcId
-                                };
-                                axios.put(
-                                    app_constants.UPDATE_DEVICE_SUPERADMIN_URL,
-                                    data,
-                                    {
-                                        headers: {
-                                            authorization:
-                                                response.data.user.token
+
+                    try {
+                        axios
+                            .post(
+                                app_constants.SUPERADMIN_LOGIN_URL,
+                                app_constants.SUPERADMIN_USER_CREDENTIALS,
+                                { headers: {} }
+                            )
+                            .then(async function (response) {
+                                // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
+                                if (response.data.status) {
+                                    let data = {
+                                        linkToWL: false,
+                                        device_id: dvcId
+                                    };
+                                    axios.put(
+                                        app_constants.UPDATE_DEVICE_SUPERADMIN_URL,
+                                        data,
+                                        {
+                                            headers: {
+                                                authorization:
+                                                    response.data.user.token
+                                            }
                                         }
-                                    }
-                                );
-                            }
-                        });
+                                    );
+                                }
+                            }).catch((err) => {
+                                if (err) {
+                                    console.log("SA SERVER NOT RESPONDING");
+                                }
+                            });
 
-
+                    } catch (err) {
+                        console.log(err);
+                    }
 
                     data = {
                         status: true,
@@ -1523,6 +1550,7 @@ exports.transferDeviceProfile = async function (req, res) {
                                     resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                                     device_helpers.saveActionHistory(resquery[0], "Device Transfered");
                                     // console.log(resquery[0]);
+                                    sockets.sendDeviceStatus(resquery[0].device_id, "Transfered");
 
 
                                     console.log('==============> :: 017')
@@ -1972,6 +2000,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                 policy[0].push_apps +
                                                 "',  'policy')";
                                             sql.query(applyQuery);
+
                                         }
 
                                         sql.query(
@@ -2566,8 +2595,15 @@ exports.connectDevice = async function (req, res) {
                         device_data.chat_id = await device_helpers.getChatids(
                             results[0]
                         );
-                        let startDate = moment()
-                        let endDate = moment(device_data.expiry_date)
+                        device_data.lastOnline = await device_helpers.getLastLoginDetail(
+                            results[0]
+                        );
+
+                        let startDate = moment(new Date())
+                        let expiray_date = new Date(device_data.expiry_date)
+                        let endDate = moment(expiray_date)
+                        // let startDate = moment()
+                        // let endDate = moment(device_data.expiry_date)
                         let remainTermDays = endDate.diff(startDate, 'days')
                         device_data.remainTermDays = remainTermDays
 
@@ -2715,10 +2751,11 @@ exports.getAppsOfDevice = async function (req, res) {
                                 extensions: newExtlist
                             });
                         } else {
+                            console.log(controls);
                             res.send({
                                 status: true,
                                 app_list: onlyApps,
-                                controls: controls,
+                                controls: {},
                                 extensions: newExtlist
                             });
                         }

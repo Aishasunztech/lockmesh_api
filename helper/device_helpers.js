@@ -16,7 +16,7 @@ module.exports = {
             return true;
         }
     },
-    onlineOfflineDevice: async function (deviceId = null, sessionId, status) {
+    onlineOfflineDevice: async function (deviceId = null, sessionId, status, PK_DeviceID = null) {
         // try {
         let query = "";
         if (deviceId) {
@@ -29,6 +29,13 @@ module.exports = {
 
         let res = await sql.query(query);
         if (res) {
+            if (PK_DeviceID) {
+                query = `SELECT dvc.id, dvc.device_id, dvc.session_id, dvc.ip_address, dvc.mac_address, usr_acc.dealer_id FROM devices AS dvc LEFT JOIN usr_acc ON(usr_acc.device_id = dvc.id) WHERE dvc.id = ${PK_DeviceID}`;
+                let loginDevice = await sql.query(query);
+
+                query = `INSERT INTO login_history (device_id, dealer_id, socket_id, ip_address, mac_address, logged_in_client, type) VALUES (${PK_DeviceID}, '${loginDevice[0].dealer_id}', '${loginDevice[0].session_id}', '${loginDevice[0].ip_address}', '${loginDevice[0].mac_address}', 'device', 'socket');`;
+                await sql.query(query);
+            }
             return true;
         }
         return false;
@@ -442,7 +449,12 @@ module.exports = {
         }
 
         // console.log('checkStatus : ', device)
-        if (device.transfer_status == 1 && device.account_status === 'suspended' && device.flagged !== 'Not flagged') {
+
+        if ((device.unlink_status === '1' || device.unlink_status === 1) && (device.device_status === 0 || device.device_status === '0')) {
+            // status = 'Unlinked';
+            status = Constants.DEVICE_UNLINKED;
+        }
+        else if (device.transfer_status == 1 && device.account_status === 'suspended' && device.flagged !== 'Not flagged') {
             status = Constants.DEVICE_TRANSFERED
         }
         else if (device.transfer_status == 0 && device.account_status === 'suspended' && device.flagged != 'Not flagged') {
@@ -453,10 +465,6 @@ module.exports = {
         }
         else if (device.status === 'trial' && (device.account_status === '' || device.account_status === null) && device.unlink_status === 0 && (device.device_status === 1 || device.device_status === '1')) {
             status = Constants.DEVICE_TRIAL
-        }
-        else if ((device.unlink_status === '1' || device.unlink_status === 1) && (device.device_status === 0 || device.device_status === '0')) {
-            // status = 'Unlinked';
-            status = Constants.DEVICE_UNLINKED;
         }
         else if (device.status === 'expired') {
             // status = 'Expired';
@@ -503,6 +511,15 @@ module.exports = {
         let results = await sql.query(query);
         if (results.length) {
             return results[0].chat_id
+        } else {
+            return 'N/A'
+        }
+    },
+    getLastLoginDetail: async (result) => {
+        let query = `SELECT created_at FROM login_history WHERE device_id = '${result.usr_device_id}' ORDER BY id DESC`;
+        let results = await sql.query(query);
+        if (results.length) {
+            return results[0].created_at
         } else {
             return 'N/A'
         }
