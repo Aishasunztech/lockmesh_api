@@ -130,7 +130,7 @@ exports.getDealers = async function (req, res) {
             role = await general_helpers.getDealerTypeIdByName(req.params.pageName);
         } else if (verify.user.user_type === constants.DEALER) {
             role = await general_helpers.getDealerTypeIdByName('sdealer');
-            where = ` AND connected_dealer =${verify.user.id} `
+            where = ` AND connected_dealer =${verify.user.id}`
         }
 
         if (!empty(role)) {
