@@ -185,7 +185,7 @@ exports.getDashboardData = async function (req, res) {
             if(users && users.length){
                 dashboardData.users = users[0].total_users;
             }
-
+ 
 
             // link requests
            let link_requests = await sql.query(`select count(*) as link_requests FROM devices LEFT JOIN usr_acc ON  (devices.id = usr_acc.device_id) WHERE ((usr_acc.device_status=0 OR usr_acc.device_status="0") AND (usr_acc.unlink_status=0 OR usr_acc.unlink_status="0") AND (usr_acc.activation_status IS NULL)) AND devices.reject_status = 0  AND (usr_acc.dealer_id =${verify.user.id}) ORDER BY devices.id DESC`)
