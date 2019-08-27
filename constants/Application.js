@@ -153,6 +153,7 @@ module.exports = {
     { "key": "validity", "value": "tableHeadings.REMAININGDAYS" },
     { "key": "transfered_to", "value": "tableHeadings.TRANSFERED" },
     { "key": "status", "value": "tableHeadings.STATUS" },
+    { "key": "lastOnline", "value": "tableHeadings.lastOnline" },
     { "key": "online", "value": "tableHeadings.MODE" },
     { "key": "type", "value": "tableHeadings.TYPE" },
     { "key": "version", "value": "tableHeadings.VERSION" },

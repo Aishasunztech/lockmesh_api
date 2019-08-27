@@ -7,6 +7,7 @@ var empty = require("is-empty");
 var multipart = require('connect-multiparty');
 var multipartMiddleware = multipart();
 
+
 // ========= Helper =============
 const { sql } = require("../config/database");
 // const sockets = require('../routes/sockets');
@@ -39,6 +40,8 @@ const appController = require('../app/controllers/app');
 const languageController = require('../app/controllers/language');
 const simController = require('../app/controllers/sim');
 const agentController = require('../app/controllers/agent');
+
+const dashboardController = require('../app/controllers/dashboard');
 
 
 // constants
@@ -976,5 +979,16 @@ router.put('/agents/:agentID/reset-pwd', agentController.resetPwd);
  * @security JWT
  */
 router.delete('/agents/:agentID', agentController.deleteAgent);
+
+// Dashboard
+
+/**
+ * @route GET /users/dashboard-data
+ * @group Dashboard - Operations about Dashboard
+ * @returns {object} 200 - An array of dashboard items info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+router.get('/dashboard-data', dashboardController.getDashboardData);
 
 module.exports = router;
