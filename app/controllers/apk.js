@@ -244,7 +244,6 @@ exports.upload = async function (req, res) {
 
         let fieldName = req.query.fieldName;
         if(fieldName){
-            let fileUploaded = false;
             let fileName = "";
             let mimeType = "";
             let apk_id = req.headers["id"] ? Number(req.headers["id"]) : null;
@@ -276,14 +275,20 @@ exports.upload = async function (req, res) {
                 
                 console.log(filePath);
                 let versionCode = await helpers.getAPKVersionCode(filePath);
-                console.log("version code", versionCode);
-                let packageName = await helpers.getAPKPackageName(filePath);
-                packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                let versionName = await helpers.getAPKVersionName(filePath);
-                versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                console.log("Package Name", packageName);
-    
+                console.log("version code: ", versionCode);
+                
                 if (versionCode) {
+                    versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+
+
+                    let packageName = await helpers.getAPKPackageName(filePath);
+                    packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+                    console.log("Package Name: ", packageName);
+                    
+                    let versionName = await helpers.getAPKVersionName(filePath);
+                    versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+                    console.log("Version Name: ", versionName);
+
                     fileName = fieldName + '-' + Date.now() + '.apk';
                     let target_path = path.join(__dirname, "../../uploads/" + fileName);
                     helpers.move(filePath, target_path, async function (error) {
