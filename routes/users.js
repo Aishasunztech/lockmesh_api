@@ -1,23 +1,12 @@
 // ====== libraries
 var express = require("express");
 var router = express.Router();
-var generator = require("generate-password");
 var md5 = require("md5");
 var empty = require("is-empty");
-var datetime = require("node-datetime");
-var jwt = require("jsonwebtoken");
-var randomize = require("randomatic");
-var multer = require("multer");
 
-const url = require("url");
-var path = require("path");
-var fs = require("fs");
-var moment = require("moment-strftime");
-var mime = require("mime");
+var multipart = require('connect-multiparty');
+var multipartMiddleware = multipart();
 
-const axios = require("axios");
-var util = require("util");
-const stripe = require("stripe")("sk_test_1rS6KC3GoPT8wlOYWSLEQFk6");
 
 // ========= Helper =============
 const { sql } = require("../config/database");
@@ -52,57 +41,14 @@ const languageController = require('../app/controllers/language');
 const simController = require('../app/controllers/sim');
 const agentController = require('../app/controllers/agent');
 
+const dashboardController = require('../app/controllers/dashboard');
+
 
 // constants
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
 
 // enable or disable two factor auth
-router.post("/two_factor_auth", async function (req, res) {
-	var verify = req.decoded;
-	// if (verify['status'] !== undefined && verify.status === true) {
-	if (verify) {
-		let loggedDealerId = verify.user.id;
-		isEnable = req.body.isEnable;
-		let updateDealerQ =
-			"UPDATE dealers SET is_two_factor_auth=" +
-			isEnable +
-			" WHERE dealer_id=" +
-			loggedDealerId;
-		let updatedDealer = await sql.query(updateDealerQ);
-		if (updatedDealer.affectedRows) {
-			if (isEnable) {
-				data = {
-					status: true,
-					msg: await helpers.convertToLang(
-						req.translation[MsgConstants.DUAL_AUTH_SUCC_ENBL],
-						"Dual Authentication is Successfully enabled"
-					), // Dual Authentication is Successfully enabled
-					isEnable: isEnable
-				};
-				res.send(data);
-			} else {
-				data = {
-					status: true,
-					msg: await helpers.convertToLang(
-						req.translation[MsgConstants.DUAL_AUTH_SUCC_DISABL],
-						"Dual Authentication is Successfully disabled"
-					), // Dual Authentication is Successfully disabled
-					isEnable: isEnable
-				};
-				res.send(data);
-			}
-		} else {
-			data = {
-				status: false,
-				msg: await helpers.convertToLang(
-					req.translation[MsgConstants.DUAL_AUTH_NOT_ENBL],
-					"Dual Authentication could not be enabled"
-				) // Dual Authentication could not be enabled
-			};
-			res.send(data);
-		}
-	}
-});
+router.post("/two_factor_auth", dealerController.twoFactorAuth);
 
 /**
  * This function comment is parsed by doctrine
@@ -629,7 +575,7 @@ router.get('/apklist', apkController.apkList);
  * @security JWT
  */
 // upload test apk
-router.post('/upload', apkController.upload);
+router.post('/upload', multipartMiddleware, apkController.upload);
 
 
 /**
@@ -1033,5 +979,16 @@ router.put('/agents/:agentID/reset-pwd', agentController.resetPwd);
  * @security JWT
  */
 router.delete('/agents/:agentID', agentController.deleteAgent);
+
+// Dashboard
+
+/**
+ * @route GET /users/dashboard-data
+ * @group Dashboard - Operations about Dashboard
+ * @returns {object} 200 - An array of dashboard items info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+router.get('/dashboard-data', dashboardController.getDashboardData);
 
 module.exports = router;
