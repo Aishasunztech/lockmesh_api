@@ -182,11 +182,11 @@ sockets.listen = function (server) {
 
             console.log("device_id: ", device_id);
 
-            await device_helpers.onlineOfflineDevice(device_id, socket.id, Constants.DEVICE_ONLINE);
-
             dvc_id = await device_helpers.getOriginalIdByDeviceId(device_id);
             console.log("dvc_id: ", dvc_id);
-
+            
+            await device_helpers.onlineOfflineDevice(device_id, socket.id, Constants.DEVICE_ONLINE, dvc_id);
+            
             is_sync = await device_helpers.getDeviceSyncStatus(device_id);
             console.log("is_sync:", is_sync);
 

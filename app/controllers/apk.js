@@ -233,206 +233,92 @@ exports.checkApkName = async function (req, res) {
     }
 }
 
-// will be used later
-
-// exports.uploadApk = async function (req, res) {
-//     let fileUploaded = false;
-//     let fileName = "";
-//     let mimeType = "";
-//     let fieldName = req.params.fieldName;
-
-//     let file = null
-//     if (fieldName === Constants.LOGO) {
-//         file = req.files.logo;
-//     } else if (fieldName === Constants.APK) {
-//         file = req.files.apk;
-//     } else {
-//         res.send({
-//             status: false,
-//             msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while uploading"
-//         })
-//         return;
-//     }
-
-//     filePath = file.path;
-//     mimeType = file.type;
-//     bytes = file.size
-//     let formatByte = helpers.formatBytes(bytes);
-
-//     if (fieldName === Constants.APK) {
-//         // let file = path.join(__dirname, "../../uploads/" + filename);
-//         let versionCode = await helpers.getAPKVersionCode(filePath);
-
-//         // let apk_stats = fs.statSync(file);
-
-//         // let formatByte = helpers.formatBytes(apk_stats.size);
-//         if (versionCode) {
-
-//             fileName = fieldName + '-' + Date.now() + '.apk';
-//             let target_path = path.join(__dirname, "../../../uploads/" + fileName);
-
-//             helpers.move(filePath, target_path, async function (error) {
-//                 console.log(error);
-//                 if (error) {
-//                     res.send({
-//                         status: false,
-//                         msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while uploading"
-//                     })
-//                 }
-//                 console.log(fileName);
-//                 data = {
-//                     status: true,
-//                     msg: await helpers.convertToLang(req.translation[MsgConstants.UPLOADED_SUCCESSFULLY], "Uploaded Successfully"), // 'Uploaded Successfully',
-//                     fileName: fileName,
-//                     size: formatByte
-//                 };
-//                 res.send(data)
-//                 return
-//             });
-//         } else {
-//             data = {
-//                 status: false,
-//                 msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while Uploading",
-//             };
-//             res.send(data);
-//             return;
-//         }
-//     } else if (fieldName === Constants.LOGO) {
-//         // console.log(req.files);
-
-
-//         fileName = fieldName + '-' + Date.now() + '.jpg';
-//         let target_path = path.join(__dirname, "../../../uploads/" + fileName);
-
-//         helpers.move(filePath, target_path, async function (error) {
-//             console.log(error);
-//             if (error) {
-//                 res.send({
-//                     status: false,
-//                     msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while uploading"
-//                 })
-//             }
-//             data = {
-//                 status: true,
-//                 msg: await helpers.convertToLang(req.translation[MsgConstants.UPLOADED_SUCCESSFULLY], "Uploaded Successfully"), // 'Uploaded Successfully',
-//                 fileName: fileName,
-//                 size: formatByte
-
-//             };
-//             res.send(data)
-//             return
-//         });
-//     }
-//     else {
-//         data = {
-//             status: false,
-//             msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while Uploading"
-//         }
-//         res.send(data);
-//         return;
-//     }
-// }
 
 exports.upload = async function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
 
-    console.log();
     var verify = req.decoded;
 
     if (verify) {
-        let fileUploaded = false;
-        let filename = "";
-        let mimeType = "";
-        let fieldName = "";
-        let apk_id = req.headers["id"] ? Number(req.headers["id"]) : null;
-        let featureApk = req.headers["featured"] ? req.headers["featured"] : null;
-        console.log(featureApk);
-        console.log("File Uploading started.");
+        console.log("field name: ", req.query.fieldName);
 
-        var storage = multer.diskStorage({
-            destination: function (req, file, callback) {
-                callback(null, path.join(__dirname, "../../uploads/"));
-            },
+        let fieldName = req.query.fieldName;
+        if(fieldName){
+            let fileName = "";
+            let mimeType = "";
+            let apk_id = req.headers["id"] ? Number(req.headers["id"]) : null;
+            let featureApk = req.headers["featured"] ? req.headers["featured"] : null;
+            let file = null;
+            let formatByte = '';
+            let filePath = null;
+            let bytes = null;
 
-            filename: function (req, file, callback) {
-                mimeType = file.mimetype;
-                fieldName = file.fieldname;
-
-                var filetypes = /jpeg|jpg|apk|png/;
-
-                if (fieldName === Constants.LOGO && filetypes.test(mimeType)) {
-                    fileUploaded = true;
-                    filename = fieldName + '-' + Date.now() + '.jpg';
-                    console.log("filename", filename);
-                    callback(null, filename);
-                } else if (fieldName === Constants.APK && mimeType === "application/vnd.android.package-archive" || mimeType === "application/octet-stream") {
-                    fileUploaded = true;
-                    filename = fieldName + '-' + Date.now() + '.apk';
-                    // apk manifest should be check here
-                    // helpers.getAPKVersionCode(req.files.apk);
-                    callback(null, filename);
-                } else {
-                    callback("File type is not supported.");
-                }
-            }
-        });
-
-        var upload = multer({
-            storage: storage,
-            limits: { fileSize: "100mb" }
-        }).fields([{
-            name: 'logo',
-            maxCount: 1
-        }, {
-            name: 'apk',
-            maxCount: 1
-        }]);
-
-        upload(req, res, async function (err) {
-            if (err) {
-                return res.send({
+            if (fieldName === Constants.LOGO) {
+                file = req.files.logo;
+            } else if (fieldName === Constants.APK) {
+                file = req.files.apk;
+            } else {
+                data = {
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Some error occurred") + err, // "Error: " + err
-                });
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.UNAUTHORIZED_FILE_UPLOADING_ATTEMPT], "Error: Unauthorized file uploading attempt."), // "Error: Unauthorized file uploading attempt."
+                }
+                return res.send(data);
             }
+            
+            filePath = file.path;
+            mimeType = file.type;
+            bytes = file.size
+            formatByte = helpers.formatBytes(bytes);
+            console.log(formatByte);
+            
+            if (fieldName === Constants.APK) {
+                
+                console.log(filePath);
+                let versionCode = await helpers.getAPKVersionCode(filePath);
+                console.log("version code: ", versionCode);
+                
+                if (versionCode) {
+                    versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
 
-            if (fileUploaded) {
-                console.log("file uploaded")
-                if (fieldName === Constants.APK) {
-                    let file = path.join(__dirname, "../../uploads/" + filename);
-                    console.log(file);
-                    let versionCode = await helpers.getAPKVersionCode(file);
-                    console.log("version code", versionCode);
-                    let packageName = await helpers.getAPKPackageName(file);
+
+                    let packageName = await helpers.getAPKPackageName(filePath);
                     packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                    let versionName = await helpers.getAPKVersionName(file);
+                    console.log("Package Name: ", packageName);
+                    
+                    let versionName = await helpers.getAPKVersionName(filePath);
                     versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                    console.log("Package Name", packageName);
+                    console.log("Version Name: ", versionName);
 
-                    let apk_stats = fs.statSync(file);
-
-                    let formatByte = helpers.formatBytes(apk_stats.size);
-                    if (versionCode) {
+                    fileName = fieldName + '-' + Date.now() + '.apk';
+                    let target_path = path.join(__dirname, "../../uploads/" + fileName);
+                    helpers.move(filePath, target_path, async function (error) {
+                        if (error) {
+                            return res.send({
+                                status: false,
+                                msg: "Error while uploading"
+                            });
+                        }
+                        console.log("fileName:", fileName);
+                        
                         if ((packageName === 'com.armorSec.android' || packageName === 'ca.unlimitedwireless.mailpgp' || packageName === 'com.rim.mobilefusion.client' || packageName === 'com.secure.vpn') && featureApk == null) {
                             data = {
                                 status: false,
                                 msg: await helpers.convertToLang(req.translation["not allowed"], "Error: Uploaded Apk is not Allowed."), // "Error: Unable to read APP properties.",
                             };
-                            res.send(data);
-                            return;
+                            return res.send(data);
                         } else {
-
+    
                             if (featureApk !== null) {
-
+    
                                 if (featureApk === "CHAT" && packageName === 'com.armorSec.android') {
                                     data = {
                                         status: true,
                                         msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
-                                        fileName: filename,
+                                        fileName: fileName,
                                         size: formatByte,
                                         version: versionName
-
-
+    
+    
                                     };
                                     res.send(data);
                                     return;
@@ -440,10 +326,10 @@ exports.upload = async function (req, res) {
                                     data = {
                                         status: true,
                                         msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
-                                        fileName: filename,
+                                        fileName: fileName,
                                         size: formatByte,
                                         version: versionName
-
+    
                                     };
                                     res.send(data);
                                     return;
@@ -451,10 +337,10 @@ exports.upload = async function (req, res) {
                                     data = {
                                         status: true,
                                         msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
-                                        fileName: filename,
+                                        fileName: fileName,
                                         size: formatByte,
                                         version: versionName
-
+    
                                     };
                                     res.send(data);
                                     return;
@@ -462,10 +348,10 @@ exports.upload = async function (req, res) {
                                     data = {
                                         status: true,
                                         msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
-                                        fileName: filename,
+                                        fileName: fileName,
                                         size: formatByte,
                                         version: versionName
-
+    
                                     };
                                     res.send(data);
                                     return;
@@ -483,7 +369,7 @@ exports.upload = async function (req, res) {
                                 if (apk_id) {
                                     checkPackage = checkPackage + " AND id != " + apk_id
                                 }
-                                console.log(checkPackage);
+                                
                                 let checkPackageResult = await sql.query(checkPackage);
                                 if (checkPackageResult.length) {
                                     data = {
@@ -497,50 +383,78 @@ exports.upload = async function (req, res) {
                                     data = {
                                         status: true,
                                         msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
-                                        fileName: filename,
+                                        fileName: fileName,
                                         size: formatByte,
                                         version: versionName
-
+    
                                     };
                                     res.send(data);
                                     return;
                                 }
                             }
                         }
-                    } else {
-                        data = {
-                            status: false,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.UNABLE_TO_READ_APP_PROPERTIES], "Error: Unable to read APP properties."), // "Error: Unable to read APP properties.",
-                        };
-                        res.send(data);
-                        return;
-                    }
-                } else if (fieldName === Constants.LOGO) {
-                    console.log("file was image");
-                    data = {
-                        status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.APP_LOGO_UPLOADED_SUCCESSFULLY], "Success: App logo Uploaded Successfully"), // 'Success: App logo Uploaded Successfully.',
-                        fileName: filename,
-                    };
-                    res.send(data);
+
+                        // data = {
+                        //     status: true,
+                        //     msg: 'Uploaded Successfully',
+                        //     fileName: fileName,
+                        //     size: formatByte
+                        // };
+                        // res.send(data)
+                        // return
+                    });
                     return;
                 } else {
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.UNAUTHORIZED_FILE_UPLOADING_ATTEMPT], "Error: Unauthorized file uploading attempt."), // "Error: Unauthorized file uploading attempt."
-                    }
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.UNABLE_TO_READ_APP_PROPERTIES], "Error: Unable to read APP properties."), // "Error: Unable to read APP properties.",
+                    };
                     res.send(data);
                     return;
                 }
+    
+            } else if (fieldName === Constants.LOGO) {
+                // console.log(req.files);
+        
+        
+                fileName = fieldName + '-' + Date.now() + '.jpg';
+                let target_path = path.join(__dirname, "../../uploads/" + fileName);
+        
+                helpers.move(filePath, target_path, async function (error) {
+                    console.log(error);
+                    if (error) {
+                        return res.send({
+                            status: false,
+                            msg: "Error while uploading"
+                        })
+                    }
+
+                    data = {
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.APP_LOGO_UPLOADED_SUCCESSFULLY], "Success: App logo Uploaded Successfully"), // 'Success: App logo Uploaded Successfully.',
+                        fileName: fileName,
+                        size: formatByte
+                    };
+                    return res.send(data)
+                });
+                return;
             } else {
                 data = {
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.UPLOADED_FILE_IS_CORRUPT], "Error: Uploaded file is corrupt."), // "Error: Uploaded file is corrupt.",
-                };
-                res.send(data);
-                return;
+                    msg: "Error while Uploading"
+                }
+                return res.send(data);
             }
-        });
+
+        }else {
+            return res.send({
+                status: false,
+                msg: "Error while uploading: Field not defined"
+            })
+        }
+
+       
+        
     }
 }
 
@@ -611,6 +525,7 @@ exports.addApk = async function (req, res) {
                             deleteable: (newData[0].apk_type == "permanent") ? false : true,
                             apk_type: newData[0].apk_type,
                             size: newData[0].apk_size,
+                            label: newData[0].label,
                             package_name: newData[0].package_name,
                             version: newData[0].version_name,
                             updated_at: newData[0].modified,
@@ -720,6 +635,7 @@ exports.editApk = async function (req, res) {
                             deleteable: (newData[0].apk_type == "permanent") ? false : true,
                             apk_type: newData[0].apk_type,
                             size: newData[0].apk_size,
+                            label: newData[0].label,
                             package_name: newData[0].package_name,
                             version: newData[0].version_name,
                             updated_at: newData[0].modified,
