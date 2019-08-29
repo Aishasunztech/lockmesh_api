@@ -991,4 +991,15 @@ router.delete('/agents/:agentID', agentController.deleteAgent);
  */
 router.get('/dashboard-data', dashboardController.getDashboardData);
 
+// Filtered Bulk Devices
+
+/**
+ * @route POST /users/filtered-bulkDevices
+ * @group BulkDevices - Operations about BulkDevices
+ * @returns {object} 200 - An array of BulkDevices items info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+router.post('/filtered-bulkDevices', deviceController.getFilteredBulkDevices);
+
 module.exports = router;
