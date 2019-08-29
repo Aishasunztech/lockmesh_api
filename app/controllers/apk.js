@@ -308,13 +308,14 @@ exports.upload = async function (req, res) {
                         console.log("fileName:", fileName);
 
                         if ((packageName === 'com.armorSec.android' || packageName === 'ca.unlimitedwireless.mailpgp' || packageName === 'com.rim.mobilefusion.client' || packageName === 'com.secure.vpn') && featureApk == null) {
+                            // console.log(packageName, 'pkg name if')
                             data = {
                                 status: false,
                                 msg: await helpers.convertToLang(req.translation["not allowed"], "Error: Uploaded Apk is not Allowed."), // "Error: Unable to read APP properties.",
                             };
                             return res.send(data);
                         } else {
-
+                            // console.log('else featured', featureApk)
                             if (featureApk !== null) {
 
                                 if (featureApk === "CHAT" && packageName === 'com.armorSec.android') {
@@ -372,43 +373,40 @@ exports.upload = async function (req, res) {
                                     return;
                                 }
                             } else {
+                                let checkFileQuery = '';
                                 if (screen == 'autoUpdate') {
-
+                                    checkFileQuery = "SELECT * FROM apk_details where label = '" + label + "' AND package_name = '" + packageName + "' AND delete_status=0";
                                 } else {
-                                    let checkFileQuery = '';
-                                    if (screen == 'autoUpdate') {
-                                        checkFileQuery = "SELECT * FROM apk_details where label = '" + label + "'  AND delete_status=0";
-                                    } else {
-                                        checkFileQuery = "SELECT * FROM apk_details where package_name = '" + packageName + "'  AND delete_status=0";
-                                    }
-
-                                    if (apk_id) {
-                                        checkFileQuery = checkFileQuery + " AND id != " + apk_id
-                                    }
-
-                                    let checkPackageResult = await sql.query(checkFileQuery);
-                                    if (checkPackageResult.length) {
-                                        data = {
-                                            status: false,
-                                            msg: await helpers.convertToLang(req.translation[""], "Error: Apk with same package name already uploaded. Please choose another apk and try again"), // "Error: Unable to read APP properties.",
-                                        };
-                                        res.send(data);
-                                        return;
-                                    } else {
-                                        console.log(versionName);
-                                        data = {
-                                            status: true,
-                                            msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
-                                            fileName: fileName,
-                                            size: formatByte,
-                                            version: versionName
-
-                                        };
-                                        res.send(data);
-                                        return;
-                                    }
+                                    checkFileQuery = "SELECT * FROM apk_details where package_name = '" + packageName + "'  AND delete_status=0";
                                 }
 
+                                if (apk_id) {
+                                    checkFileQuery = checkFileQuery + " AND id != " + apk_id
+                                }
+
+                                let checkPackageResult = await sql.query(checkFileQuery);
+                                if (checkPackageResult.length) {
+                                    // console.log(checkPackageResult, 'error version');
+
+                                    data = {
+                                        status: false,
+                                        msg: await helpers.convertToLang(req.translation[""], "Error: Apk with same package name already uploaded. Please choose another apk and try again"), // "Error: Unable to read APP properties.",
+                                    };
+                                    res.send(data);
+                                    return;
+                                } else {
+                                    console.log(versionName, 'success version');
+                                    data = {
+                                        status: true,
+                                        msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
+                                        fileName: fileName,
+                                        size: formatByte,
+                                        version: versionName
+
+                                    };
+                                    res.send(data);
+                                    return;
+                                }
                             }
                         }
 
