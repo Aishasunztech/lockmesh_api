@@ -233,7 +233,6 @@ exports.checkApkName = async function (req, res) {
     }
 }
 
-
 exports.upload = async function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
 
@@ -517,7 +516,7 @@ exports.addApk = async function (req, res) {
                     packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                     label = label.toString().replace(/(\r\n|\n|\r)/gm, "");
                     details = details.toString().replace(/(\r\n|\n|\r)/gm, "");
-                    console.log(labe)
+                    // console.log(labe)    
 
                     let apk_type = (verify.user.user_type === Constants.AUTO_UPDATE_ADMIN) ? 'permanent' : 'basic'
 
@@ -569,6 +568,7 @@ exports.addApk = async function (req, res) {
                     return;
                 }
             } else {
+                console.log('error while uploading', logo, apk, apk_name)
                 data = {
                     status: false,
                     msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error While Uploading"
@@ -576,6 +576,7 @@ exports.addApk = async function (req, res) {
                 return res.send(data);
             }
         } catch (error) {
+            console.log(error, 'error while upload')
             data = {
                 status: false,
                 msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while Uploading",
