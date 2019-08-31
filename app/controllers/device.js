@@ -3483,6 +3483,16 @@ exports.writeIMEI = async function (req, res) {
         console.log(error);
     }
 };
+exports.submitDevicePassword = async function (req, res) {
+    try {
+        var verify = req.decoded; // await verifyToken(req, res);
+        // if (verify.status !== undefined && verify.status == true) {
+        if (verify) {
+        }
+    } catch (error) {
+        console.log(error);
+    }
+};
 
 exports.getActivities = async function (req, res) {
     try {
