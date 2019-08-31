@@ -1007,10 +1007,10 @@ router.post('/filtered-bulkDevices', bulkDevicesController.getFilteredBulkDevice
 
 
 /** Suspend Account Devices / client **/
-router.post("/suspend", bulkDevicesController.suspendBulkAccountDevices);
+router.post("/bulkSuspend", bulkDevicesController.suspendBulkAccountDevices);
 
-// /** Activate Device **/
-// router.post("/activate/:id", bulkDevicesController.activateDevice);
+/** Activate Device **/
+router.post("/bulkActivate", bulkDevicesController.activateBulkDevices);
 
 // /** Unlink Device  **/
 // router.post("/unlink/:id", bulkDevicesController.unlinkDevice);

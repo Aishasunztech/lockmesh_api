@@ -218,21 +218,21 @@ exports.suspendBulkAccountDevices = async function (req, res) {
         let SuspendDevices = [];
 
         var selectQuery = `select * from usr_acc WHERE device_id IN (${device_ids})`;
-        var deviceData = await sql.query(selectQuery);
+        var getDevices = await sql.query(selectQuery);
 
-        for (let index = 0; index < deviceData.length; index++) {
+        for (let index = 0; index < getDevices.length; index++) {
 
-            if (deviceData[index].expiry_date == "" || deviceData[index].expiry_date == null || deviceData[index].expiry_date >= formatted_dt) {
-                var updateStatusQuery = "update usr_acc set account_status='suspended' where device_id = '" + deviceData[index].device_id + "'";
+            if (getDevices[index].expiry_date == "" || getDevices[index].expiry_date == null || getDevices[index].expiry_date >= formatted_dt) {
+                var updateStatusQuery = "update usr_acc set account_status='suspended' where device_id = '" + getDevices[index].device_id + "'";
 
                 let results = await sql.query(updateStatusQuery);
                 if (results.affectedRows == 0) {
-                    failedToSuspend.push(deviceData[index].device_id);
+                    failedToSuspend.push(getDevices[index].device_id);
                 } else {
                     let selectQuery = "select devices.*  ," +
                         usr_acc_query_text +
                         ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
-                        deviceData[index].device_id +
+                        getDevices[index].device_id +
                         '"';
 
                     let resquery = await sql.query(selectQuery);
@@ -264,7 +264,7 @@ exports.suspendBulkAccountDevices = async function (req, res) {
                     }
                 }
             } else {
-                alreadyExpired.push(deviceData[index].device_id);
+                alreadyExpired.push(getDevices[index].device_id);
             }
         }
 
@@ -292,6 +292,111 @@ exports.suspendBulkAccountDevices = async function (req, res) {
         data = {
             status: false,
             msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEVICE], "Invalid Device") // Invalid Device."
+        };
+        res.send(data);
+    }
+};
+
+
+exports.activateBulkDevices = async function (req, res) {
+    var verify = req.decoded;
+    // var device_id = req.params.id;
+    var tod_dat = datetime.create();
+    var formatted_dt = tod_dat.format("Y-m-d H:M:S");
+    let device_ids = req.body;
+
+    if (verify && device_ids.length) {
+        let alreadyExpired = [];
+        let failedToActivate = [];
+        let ActivateDevices = [];
+
+        var selectQuery = `select * from usr_acc WHERE device_id IN (${device_ids})`;
+        var getDevices = await sql.query(selectQuery);
+
+        for (let index = 0; index < getDevices.length; index++) {
+
+            if (getDevices[0].expiry_date < formatted_dt) {
+                alreadyExpired.push(getDevices[index].device_id);
+            } else {
+                var updateStatus = "update usr_acc set account_status='' where device_id = '" + getDevices[index].device_id + "'";
+
+                var results = sql.query(updateStatus);
+
+                if (results.affectedRows == 0) {
+                    failedToActivate.push(getDevices[index].device_id);
+                } else {
+
+                    let selectQuery = "select devices.*  ," +
+                        usr_acc_query_text +
+                        ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
+                        getDevices[index].device_id +
+                        '"'
+
+                    let resquery = sql.query(selectQuery);
+
+                    console.log("lolo else", resquery[0]);
+
+                    if (resquery.length) {
+                        resquery[0].finalStatus = device_helpers.checkStatus(
+                            resquery[0]
+                        );
+                        resquery[0].pgp_email = await device_helpers.getPgpEmails(
+                            resquery[0]
+                        );
+                        resquery[0].sim_id = await device_helpers.getSimids(
+                            resquery[0]
+                        );
+                        resquery[0].chat_id = await device_helpers.getChatids(
+                            resquery[0]
+                        );
+                        // dealerData = await getDealerdata(res[i]);
+                        sockets.sendDeviceStatus(
+                            resquery[0].device_id,
+                            "active",
+                            true
+                        );
+
+                        ActivateDevices.push(resquery[0]);
+
+                        device_helpers.saveActionHistory(
+                            resquery[0],
+                            constants.DEVICE_ACTIVATED
+                        );
+                        // res.send(data);
+                    }
+
+                }
+
+            }
+
+        }
+
+        if (alreadyExpired.length > 0) {
+            data = {
+                status: false,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_ACTIV_EXP], "Devices cannnot be activated.It is expired already") // Device cannnot be activated.It is expired already.
+            };
+        } else if (failedToActivate.length > 0) {
+            data = {
+                status: false,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_ACTIV], "Devices not activated.Please try again") // Device not activated.Please try again."
+            };
+        } else if (ActivateDevices.length > 0) {
+            data = {
+                data: ActivateDevices,
+                status: true,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_ACTIV_SUCC], "Devices activated successfully") // Device activated successfully.
+            };
+        }
+        res.send(data);
+
+    } else {
+        data = {
+            status: false,
+            msg: await helpers.convertToLang(
+                req.translation[MsgConstants.INVALID_DEVICE],
+                "Invalid Device"
+            ) // Invalid Device."
         };
         res.send(data);
     }
