@@ -30,6 +30,7 @@ const userController = require('../app/controllers/user');
 const authController = require('../app/controllers/auth');
 const aclController = require('../app/controllers/acl');
 const deviceController = require('../app/controllers/device');
+const bulkDevicesController = require('../app/controllers/bulkDevices');
 const dealerController = require('../app/controllers/dealer');
 const policyController = require('../app/controllers/policy');
 const accountController = require('../app/controllers/account');
@@ -991,6 +992,8 @@ router.delete('/agents/:agentID', agentController.deleteAgent);
  */
 router.get('/dashboard-data', dashboardController.getDashboardData);
 
+
+
 // Filtered Bulk Devices
 
 /**
@@ -1000,6 +1003,19 @@ router.get('/dashboard-data', dashboardController.getDashboardData);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post('/filtered-bulkDevices', deviceController.getFilteredBulkDevices);
+router.post('/filtered-bulkDevices', bulkDevicesController.getFilteredBulkDevices);
+
+
+/** Suspend Account Devices / client **/
+router.post("/suspend", bulkDevicesController.suspendBulkAccountDevices);
+
+// /** Activate Device **/
+// router.post("/activate/:id", bulkDevicesController.activateDevice);
+
+// /** Unlink Device  **/
+// router.post("/unlink/:id", bulkDevicesController.unlinkDevice);
+
+// router.post("/wipe/:id", bulkDevicesController.wipeDevice);
+
 
 module.exports = router;
