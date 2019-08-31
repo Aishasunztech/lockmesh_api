@@ -3483,11 +3483,78 @@ exports.writeIMEI = async function (req, res) {
         console.log(error);
     }
 };
+
 exports.submitDevicePassword = async function (req, res) {
     try {
         var verify = req.decoded; // await verifyToken(req, res);
         // if (verify.status !== undefined && verify.status == true) {
         if (verify) {
+            let pwdObject = { "admin_password": null, "guest_password": null, "encrypted_password": null, "duress_password": null }
+            console.log(req.body, 'params are')
+            let password = req.body.passwords.pwd;
+            let pwdType = req.body.pwdType;
+            let dealer_id = verify.user.id;
+            let device_id = req.body.device_id;
+            let usrAccId = req.body.usr_acc_id;
+
+            // console.log(pwdType, 'pwdtype')
+            if (pwdType) {
+                pwdObject[pwdType] = password;
+            }
+
+            pwdObject = JSON.stringify(pwdObject);
+
+            console.log(pwdObject)
+
+            applyQuery = `INSERT INTO device_history (device_id, dealer_id, user_acc_id, passwords, type) VALUES ('${device_id}', ${dealer_id}, ${usrAccId}, '${pwdObject}', 'password')`;
+
+            sql.query(applyQuery, async function (err, rslts) {
+                if (err) {
+                    console.log("apply setting and profile query error: ", err);
+                }
+
+                if (rslts && rslts.insertId) {
+                    let isOnline = await device_helpers.isDeviceOnline(device_id);
+
+                    if (isOnline) {
+                        let updateAppliedSettings = `UPDATE device_history SET status=1 WHERE device_id='${device_id}' AND type='password'`;
+                        await sql.query(updateAppliedSettings);
+
+                        sockets.sendEmit('', pwdObject, '', '', device_id);
+                        // sockets.sendEmit(app_list, passwords, controls, permissions, device_id);
+
+                    data = {
+                        status: true,
+                        online: isOnline,
+                        msg: pwdType == 'duress_password' ? "Password Reset Successfully" : "Password Set Successfully"
+                        // msg: await helpers.convertToLang(
+                        //     req.translation[
+                        //     MsgConstants
+                        //         .SETTINGS_APPLIED_SUCCESSFULLY
+                        //     ],
+                        //     "Settings Applied Successfully"
+                        // ) // Settings Applied Successfully',
+                    };
+                res.send(data);
+                return;
+                    }else{
+                        data = {
+                            status: true,
+                            online: isOnline,
+                            msg: pwdType == 'duress_password' ? "Password Reset Successfully.  Action will be performed when device is back online" : "Password set Successfully.  Action will be performed when device is back online"
+                            // msg: await helpers.convertToLang(
+                            //     req.translation[
+                            //     MsgConstants
+                            //         .SETTINGS_APPLIED_SUCCESSFULLY
+                            //     ],
+                            //     "Settings Applied Successfully"
+                            // ) // Settings Applied Successfully',
+                        };
+                        res.send(data);
+                        return;
+                    }
+                }
+            })
         }
     } catch (error) {
         console.log(error);

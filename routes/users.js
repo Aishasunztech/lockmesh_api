@@ -726,7 +726,7 @@ router.put("/handleUninstall/:apk_id", apkController.handleUninstallApk);
 // Write IMEI on device
 router.post("/writeImei/:device_id", deviceController.writeIMEI);
 
-router.get("/submit-device-passwords", deviceController.submitDevicePassword);
+router.post("/submit-device-passwords", deviceController.submitDevicePassword);
 // get activities
 router.get("/get_activities/:device_id", deviceController.getActivities);
 
