@@ -184,9 +184,9 @@ sockets.listen = function (server) {
 
             dvc_id = await device_helpers.getOriginalIdByDeviceId(device_id);
             console.log("dvc_id: ", dvc_id);
-            
+
             await device_helpers.onlineOfflineDevice(device_id, socket.id, Constants.DEVICE_ONLINE, dvc_id);
-            
+
             is_sync = await device_helpers.getDeviceSyncStatus(device_id);
             console.log("is_sync:", is_sync);
 
@@ -340,26 +340,89 @@ sockets.listen = function (server) {
                 });
 
             } else {
-                var setting_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='history' order by created_at desc limit 1";
+                var setting_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='history'  order by created_at desc limit 1";
                 let setting_res = await sql.query(setting_query);
                 if (setting_res.length) {
-                    let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND type='history' ";
+                    let pwdObject = { "admin_password": null, "guest_password": null, "encrypted_password": null, "duress_password": null }
+
+                    let getPasswordQ = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='password' order by created_at asc"
+                    let allPwdHistry = await sql.query(getPasswordQ);
+                    if (allPwdHistry && allPwdHistry.length) {
+                        // console.log(allPwdHistry);
+                        for (let item of allPwdHistry) {
+                            if (item.passwords) {
+                                let pwd = JSON.parse(item.passwords)
+                                if (pwd['admin_password'] != null && pwd['admin_password'] != 'null') {
+                                    pwdObject['admin_password'] = pwd['admin_password'];
+                                } else if (pwd['guest_password'] != null && pwd['guest_password'] != 'null') {
+                                    pwdObject['guest_password'] = pwd['guest_password'];
+                                } else if (pwd['encrypted_password'] != null && pwd['encrypted_password'] != 'null') {
+                                    pwdObject['encrypted_password'] = pwd['encrypted_password'];
+                                } else if (pwd['duress_password'] != null && pwd['duress_password'] != 'null') {
+                                    pwdObject['duress_password'] = pwd['duress_password'];
+                                }
+                            }
+
+                        }
+                        pwdObject = JSON.stringify(pwdObject);
+                    }
+
+
+                    let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND (type='history' OR type='password' ) ";
                     await sql.query(historyUpdate);
 
 
                     socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
                         device_id: device_id,
                         app_list: (setting_res[0].app_list === undefined || setting_res[0].app_list === null || setting_res[0].app_list === '') ? '[]' : setting_res[0].app_list,
-                        passwords: (setting_res[0].passwords === undefined || setting_res[0].passwords === null || setting_res[0].passwords === '') ? '{}' : setting_res[0].passwords,
+                        passwords: (pwdObject === undefined || pwdObject === null || pwdObject === '') ? '{}' : pwdObject,
                         settings: (setting_res[0].controls === undefined || setting_res[0].controls === null || setting_res[0].controls === '') ? '{}' : setting_res[0].controls,
                         extension_list: (setting_res[0].permissions === undefined || setting_res[0].permissions === null || setting_res[0].permissions === '') ? '[]' : setting_res[0].permissions,
                         status: true
                     });
                 } else {
-                    socket.emit('get_applied_settings_' + device_id, {
-                        device_id: device_id,
-                        status: false
-                    });
+
+                    let pwdObject = { "admin_password": null, "guest_password": null, "encrypted_password": null, "duress_password": null }
+
+                    let getPasswordQ = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='password' order by created_at asc"
+                    let allPwdHistry = await sql.query(getPasswordQ);
+                    if (allPwdHistry && allPwdHistry.length) {
+                        // console.log(allPwdHistry);
+                        for (let item of allPwdHistry) {
+                            if (item.passwords) {
+                                let pwd = JSON.parse(item.passwords)
+                                if (pwd['admin_password'] != null && pwd['admin_password'] != 'null') {
+                                    pwdObject['admin_password'] = pwd['admin_password'];
+                                } else if (pwd['guest_password'] != null && pwd['guest_password'] != 'null') {
+                                    pwdObject['guest_password'] = pwd['guest_password'];
+                                } else if (pwd['encrypted_password'] != null && pwd['encrypted_password'] != 'null') {
+                                    pwdObject['encrypted_password'] = pwd['encrypted_password'];
+                                } else if (pwd['duress_password'] != null && pwd['duress_password'] != 'null') {
+                                    pwdObject['duress_password'] = pwd['duress_password'];
+                                }
+                            }
+
+                        }
+                        pwdObject = JSON.stringify(pwdObject);
+                        let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND type='password' ";
+                        await sql.query(historyUpdate);
+
+
+                        socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
+                            device_id: device_id,
+                            app_list: '[]',
+                            passwords: (pwdObject === undefined || pwdObject === null || pwdObject === '') ? '{}' : pwdObject,
+                            settings: '{}' ,
+                            extension_list: '[]',
+                            status: true
+                        });
+
+                    } else {
+                        socket.emit('get_applied_settings_' + device_id, {
+                            device_id: device_id,
+                            status: false
+                        });
+                    }
                 }
             }
 
@@ -827,6 +890,7 @@ sockets.updateSimRecord = async function (device_id, response) {
 
 
 sockets.sendEmit = async (app_list, passwords, controls, permissions, device_id) => {
+    // console.log('password socket')
 
     io.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
         device_id: device_id,
