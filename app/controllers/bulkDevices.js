@@ -210,9 +210,14 @@ exports.suspendBulkAccountDevices = async function (req, res) {
     // var device_id = req.params.id;
     var tod_dat = datetime.create();
     var formatted_dt = tod_dat.format("Y-m-d H:M:S");
-    let device_ids = req.body;
+    let device_ids = req.body.device_ids;
 
     if (verify && device_ids.length) {
+        let userId = verify.user.id;
+        console.log("userId ", userId);
+        // let usertype = await helpers.getUserType(userId);
+        // console.log("usertype ", usertype);
+
         let alreadyExpired = [];
         let failedToSuspend = [];
         let SuspendDevices = [];
@@ -286,7 +291,14 @@ exports.suspendBulkAccountDevices = async function (req, res) {
                 msg: await helpers.convertToLang(req.translation[MsgConstants.ACC_SUSP_SUCC], "Account suspended successfully") // Account suspended successfully.
             };
 
-            device_helpers.saveBuklActionHistory(SuspendDevices, constants.BULK_SUSPENDED_DEVICES);
+            let dvc_ids = [];
+            SuspendDevices.forEach((item) => {
+                dvc_ids.push(item.usr_device_id);
+            });
+            req.body["device_ids"] = dvc_ids;
+            req.body["action_by"] = userId;
+
+            device_helpers.saveBuklActionHistory(req.body, constants.BULK_SUSPENDED_DEVICES);
 
         }
         res.send(data);
@@ -306,9 +318,15 @@ exports.activateBulkDevices = async function (req, res) {
     // var device_id = req.params.id;
     var tod_dat = datetime.create();
     var formatted_dt = tod_dat.format("Y-m-d H:M:S");
-    let device_ids = req.body;
+    let device_ids = req.body.device_ids;
+    console.log('data is: ', req.body)
 
     if (verify && device_ids.length) {
+        let userId = verify.user.id;
+        console.log("userId ", userId);
+        // let usertype = await helpers.getUserType(userId);
+        // console.log("usertype ", usertype);
+
         let alreadyExpired = [];
         let failedToActivate = [];
         let ActivateDevices = [];
@@ -390,7 +408,13 @@ exports.activateBulkDevices = async function (req, res) {
                 msg: await helpers.convertToLang(req.translation[""], "Devices activated successfully")
             };
 
-            device_helpers.saveBuklActionHistory(ActivateDevices, constants.BULK_ACTIVATED_DEVICES);
+            let dvc_ids = [];
+            ActivateDevices.forEach((item) => {
+                dvc_ids.push(item.usr_device_id);
+            });
+            req.body["device_ids"] = dvc_ids;
+            req.body["action_by"] = userId;
+            device_helpers.saveBuklActionHistory(req.body, constants.BULK_ACTIVATED_DEVICES);
         }
         res.send(data);
 
@@ -409,13 +433,24 @@ exports.activateBulkDevices = async function (req, res) {
 
 exports.bulkDevicesHistory = async function (req, res) {
     var verify = req.decoded;
+    let userId = verify.user.id;
 
     console.log('at bulk history:')
-    return;
+    // return;
     if (verify) {
 
-        var selectQuery = `SELECT * FROM bulk_device_history WHERE action_by ${user_id}`;
+        var selectQuery = `SELECT * FROM bulk_device_history WHERE action_by = '${userId}'`;
         var getHistory = await sql.query(selectQuery);
+
+        getHistory[0]["data"] = JSON.stringify([{ a: "aa" }]);
+        console.log("getHistory ", getHistory);
+
+        // data = {
+        //     status: true,
+        //     data: getHistory
+        // }
+
+        res.send(getHistory);
 
     }
 }

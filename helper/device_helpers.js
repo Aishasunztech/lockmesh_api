@@ -765,9 +765,9 @@ module.exports = {
     saveBuklActionHistory: async (data, action) => {
         console.log('saveBuklActionHistory ', action, data);
         
-        let InsertQuery = `INSERT INTO bulk_device_history (action, dealer_ids, user_ids, device_ids, action_by) VALUES ('${action}', '${data.dealer_ids}', '${data.user_ids}', '${data.device_ids}', '${data.action_by}');`;
+        let InsertQuery = `INSERT INTO bulk_device_history (action, dealer_ids, user_ids, device_ids, action_by) VALUES ('${action}', '${JSON.stringify(data.dealer_ids)}', '${JSON.stringify(data.user_ids)}', '${JSON.stringify(data.device_ids)}', '${data.action_by}');`;
         console.log(InsertQuery);
-        // await sql.query(InsertQuery);
+        await sql.query(InsertQuery);
     },
 }
 
