@@ -285,6 +285,9 @@ exports.suspendBulkAccountDevices = async function (req, res) {
                 status: true,
                 msg: await helpers.convertToLang(req.translation[MsgConstants.ACC_SUSP_SUCC], "Account suspended successfully") // Account suspended successfully.
             };
+
+            device_helpers.saveBuklActionHistory(SuspendDevices, constants.BULK_SUSPENDED_DEVICES);
+
         }
         res.send(data);
 
@@ -320,7 +323,7 @@ exports.activateBulkDevices = async function (req, res) {
             } else {
                 var updateStatus = "update usr_acc set account_status='' where device_id = '" + getDevices[index].device_id + "'";
 
-                var results = sql.query(updateStatus);
+                var results = await sql.query(updateStatus);
 
                 if (results.affectedRows == 0) {
                     failedToActivate.push(getDevices[index].device_id);
@@ -332,7 +335,7 @@ exports.activateBulkDevices = async function (req, res) {
                         getDevices[index].device_id +
                         '"'
 
-                    let resquery = sql.query(selectQuery);
+                    let resquery = await sql.query(selectQuery);
 
                     console.log("lolo else", resquery[0]);
 
@@ -362,7 +365,6 @@ exports.activateBulkDevices = async function (req, res) {
                             resquery[0],
                             constants.DEVICE_ACTIVATED
                         );
-                        // res.send(data);
                     }
 
                 }
@@ -374,19 +376,21 @@ exports.activateBulkDevices = async function (req, res) {
         if (alreadyExpired.length > 0) {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_ACTIV_EXP], "Devices cannnot be activated.It is expired already") // Device cannnot be activated.It is expired already.
+                msg: await helpers.convertToLang(req.translation[""], "Devices cannnot be activated.It is expired already")
             };
         } else if (failedToActivate.length > 0) {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_ACTIV], "Devices not activated.Please try again") // Device not activated.Please try again."
+                msg: await helpers.convertToLang(req.translation[""], "Devices not activated.Please try again")
             };
         } else if (ActivateDevices.length > 0) {
             data = {
                 data: ActivateDevices,
                 status: true,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_ACTIV_SUCC], "Devices activated successfully") // Device activated successfully.
+                msg: await helpers.convertToLang(req.translation[""], "Devices activated successfully")
             };
+
+            device_helpers.saveBuklActionHistory(ActivateDevices, constants.BULK_ACTIVATED_DEVICES);
         }
         res.send(data);
 
@@ -394,10 +398,24 @@ exports.activateBulkDevices = async function (req, res) {
         data = {
             status: false,
             msg: await helpers.convertToLang(
-                req.translation[MsgConstants.INVALID_DEVICE],
-                "Invalid Device"
-            ) // Invalid Device."
+                req.translation[""],
+                "Invalid Devices"
+            )
         };
         res.send(data);
     }
 };
+
+
+exports.bulkDevicesHistory = async function (req, res) {
+    var verify = req.decoded;
+
+    console.log('at bulk history:')
+    return;
+    if (verify) {
+
+        var selectQuery = `SELECT * FROM bulk_device_history WHERE action_by ${user_id}`;
+        var getHistory = await sql.query(selectQuery);
+
+    }
+}
