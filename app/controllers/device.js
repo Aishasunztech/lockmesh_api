@@ -2650,31 +2650,34 @@ exports.connectDevice = async function (req, res) {
 
 exports.getAppsOfDevice = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
-
-    if (verify) {
-        if (!empty(req.params.device_id)) {
-            // var query = 'SELECT user_apps.*, apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon from user_apps LEFT JOIN apps_info on user_apps.app_id = apps_info.id LEFT JOIN devices on user_apps.device_id=devices.id where devices.device_id ="' + req.params.device_id + '"';
-            // console.log(query);
-            var getAppsQ =
-                `SELECT user_apps.id, user_apps.device_id, user_apps.app_id, user_apps.guest, user_apps.encrypted, user_apps.enable,
+    try {
+        if (verify) {
+            if (req.params.device_id) {
+                // var query = 'SELECT user_apps.*, apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon from user_apps LEFT JOIN apps_info on user_apps.app_id = apps_info.id LEFT JOIN devices on user_apps.device_id=devices.id where devices.device_id ="' + req.params.device_id + '"';
+                // console.log(query);
+                var getAppsQ =
+                    `SELECT user_apps.id, user_apps.device_id, user_apps.app_id, user_apps.guest, user_apps.encrypted, user_apps.enable,
 				apps_info.label, apps_info.default_app, apps_info.system_app, apps_info.package_name, apps_info.visible, apps_info.unique_name as uniqueName, apps_info.icon as icon , apps_info.extension, apps_info.extension_id
 				FROM user_apps
-				LEFT JOIN apps_info on (user_apps.app_id = apps_info.id)
-				LEFT JOIN devices on (user_apps.device_id=devices.id)
+				LEFT JOIN apps_info ON (user_apps.app_id = apps_info.id)
+				LEFT JOIN devices ON (user_apps.device_id=devices.id)
 				WHERE devices.device_id = '${req.params.device_id}'`;
-            // console.log("get apps query", getAppsQ);
-            try {
+
                 sql.query(getAppsQ, async (error, apps) => {
                     if (error) {
-                        throw Error("Query Expection");
+                        console.log(error);
+                        return res.send({
+                            status: false,
+                            msg:''
+                        });
                     }
-                    // console.log('app list is ', apps);
+                    
                     let Extension = [];
                     let onlyApps = [];
                     let settings = [];
+                    
                     for (let item of apps) {
-                        let subExtension = [];
-                        // console.log("extenstion id", item.extension_id);
+                        
                         if (item.extension === 1 && item.extension_id === 0) {
                             Extension.push(item);
                         }
@@ -2732,21 +2735,21 @@ exports.getAppsOfDevice = async function (req, res) {
                             extension: ext.extension
                         });
                     }
+
                     // console.log("apps length" + apps.length);
-                    var query1 =
-                        'SELECT * from user_app_permissions where device_id ="' +
-                        req.params.device_id +
-                        '" limit 1';
+                    var systemPermissionQ = `SELECT * from user_app_permissions WHERE device_id ='${req.params.device_id}' LIMIT 1`;
                     //
-                    sql.query(query1, async (error, controls) => {
+                    sql.query(systemPermissionQ, async (error, controls) => {
                         if (error) {
-                            throw Error("Query Expection");
+                            console.log("Error:", error);
+
                         }
+
                         if (controls.length > 0) {
                             // console.log("geting device app");
                             let cntrls = JSON.parse(controls[0].permissions);
                             //    consrols.push(settings);
-                            res.send({
+                            return res.send({
                                 status: true,
                                 app_list: onlyApps,
                                 controls: {
@@ -2757,7 +2760,7 @@ exports.getAppsOfDevice = async function (req, res) {
                             });
                         } else {
                             console.log(controls);
-                            res.send({
+                            return res.send({
                                 status: true,
                                 app_list: onlyApps,
                                 controls: {},
@@ -2765,11 +2768,18 @@ exports.getAppsOfDevice = async function (req, res) {
                             });
                         }
                     });
+                    return;
                 });
-            } catch (error) {
-                console.error(error);
+                return;
+            } else {
+                return res.send({
+                    status: false,
+                    msg: 'Device not found'
+                })
             }
         }
+    } catch (error) {
+        console.error(error);
     }
 };
 
@@ -3528,21 +3538,21 @@ exports.submitDevicePassword = async function (req, res) {
                         sockets.sendEmit('', pwdObject, '', '', device_id);
                         // sockets.sendEmit(app_list, passwords, controls, permissions, device_id);
 
-                    data = {
-                        status: true,
-                        online: isOnline,
-                        msg: pwdType == 'duress_password' ? "Password Reset Successfully" : "Password Set Successfully"
-                        // msg: await helpers.convertToLang(
-                        //     req.translation[
-                        //     MsgConstants
-                        //         .SETTINGS_APPLIED_SUCCESSFULLY
-                        //     ],
-                        //     "Settings Applied Successfully"
-                        // ) // Settings Applied Successfully',
-                    };
-                res.send(data);
-                return;
-                    }else{
+                        data = {
+                            status: true,
+                            online: isOnline,
+                            msg: pwdType == 'duress_password' ? "Password Reset Successfully" : "Password Set Successfully"
+                            // msg: await helpers.convertToLang(
+                            //     req.translation[
+                            //     MsgConstants
+                            //         .SETTINGS_APPLIED_SUCCESSFULLY
+                            //     ],
+                            //     "Settings Applied Successfully"
+                            // ) // Settings Applied Successfully',
+                        };
+                        res.send(data);
+                        return;
+                    } else {
                         data = {
                             status: true,
                             online: isOnline,
