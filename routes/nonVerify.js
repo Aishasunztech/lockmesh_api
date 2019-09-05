@@ -184,6 +184,50 @@ router.get('/refactor_policy_sys_permissions', async function (req, res) {
             console.log('new')
         }
     });
+
+    let histories = await sql.query('SELECt * FROM device_history WHERE status=1');
+    histories.forEach(async (history) => {
+        if(history.controls){
+
+            let sysPermissions = JSON.parse(history.controls);
+    
+            if (sysPermissions.wifi_status !== undefined) {
+                let data = []
+                for (var obj in sysPermissions) {
+                    data.push({
+                        setting_name: obj,
+                        setting_status: sysPermissions[obj]
+                    });
+                }
+                policyUpdateQ = `UPDATE device_history SET controls='${JSON.stringify(data)}' WHERE id=${history.id}`;
+                await sql.query(policyUpdateQ);
+            } else {
+                console.log('new')
+            }
+        }
+    });
+    
+    let profiles = await sql.query('SELECt * FROM usr_acc_profile');
+    profiles.forEach(async (profile) => {
+        if(profile.controls){
+
+            let sysPermissions = JSON.parse(profile.controls);
+    
+            if (sysPermissions.wifi_status !== undefined || sysPermissions.bluetooth_status !== undefined) {
+                let data = []
+                for (var obj in sysPermissions) {
+                    data.push({
+                        setting_name: obj,
+                        setting_status: sysPermissions[obj]
+                    });
+                }
+                policyUpdateQ = `UPDATE usr_acc_profile SET controls='${JSON.stringify(data)}' WHERE id=${profile.id}`;
+                await sql.query(policyUpdateQ);
+            } else {
+                console.log('new')
+            }
+        }
+    });
     res.send("refactor policies system permissions");
 })
 /** Get back up DB File **/
