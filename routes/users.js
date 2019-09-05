@@ -924,6 +924,7 @@ router.put("/sim-update", simController.simUpdate);
 router.post("/sim-delete", simController.simDelete);
 router.get("/get-sims/:device_id", simController.getSims);
 router.get("/sim-history/:device_id", simController.simHistory);
+router.get("/get-unRegSims/:device_id", simController.getUnRegisterSims);
 
 // Agents
 

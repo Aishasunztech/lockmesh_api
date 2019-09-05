@@ -71,6 +71,7 @@ module.exports = {
   ACK_SIM: 'ack_sim_',
   RECV_SIM: 'sendSim_',
   RECV_SIM_DATA: 'receiveSimData_',
+  // DD: 'unRegister_sim_',
 
   // Transfer
   FLAGGED: 'flagged_',

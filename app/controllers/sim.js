@@ -107,6 +107,7 @@ exports.simUpdate = async function (req, res) {
                 // await sql.query(`INSERT IGNORE INTO sims_history (device_id, action, unrGuest, unrEncrypt) 
                 // VALUES ('${simData.device_id}', 'update', ${simData.unrGuest}, ${simData.unrEncrypt});`);
 
+                // sockets.sendRegSim(simData.device_id, "sim_inserted");
                 sockets.sendRegSim(simData.device_id, "sim_unregister", simData);
                 data = {
                     status: true,
@@ -240,36 +241,33 @@ exports.simDelete = async function (req, res) {
 
 exports.getSims = async function (req, res) {
     var verify = req.decoded;
-    if (verify) {
-        if (!empty(req.params.device_id)) {
-            var IQry = `SELECT * FROM sims WHERE device_id= '${req.params.device_id}' AND del = '0'`;
-            sql.query(IQry, async function (err, result) {
-                // console.log("=======================================")
-                // console.log('result is :', result)
-                if (err) console.log(err);
+    let deviceId = req.params.device_id;
+    if (verify && deviceId) {
 
-                if (result.length > 0) {
-                    data = {
-                        status: true,
-                        data: result
-                    }
-                } else {
-                    data = {
-                        status: false,
-                        data: []
-                    }
+        // sockets.sendRegSim(deviceId, "sim_inserted");
+
+        var IQry = `SELECT * FROM sims WHERE device_id= '${deviceId}' AND del = '0'`;
+        sql.query(IQry, async function (err, result) {
+            // console.log("=======================================")
+            // console.log('result is :', result)
+            if (err) console.log(err);
+
+            if (result.length > 0) {
+                data = {
+                    status: true,
+                    data: result
                 }
-                res.send(data);
-
-            })
-
+            } else {
+                data = {
+                    status: false,
+                    data: []
+                }
+            }
+            res.send(data);
             return;
-        } else {
-            res.send({
-                status: false,
-            })
-            return;
-        }
+        })
+
+
     } else {
         res.send({
             status: false,
@@ -320,5 +318,18 @@ exports.simHistory = async function (req, res) {
             })
             // return;
         }
+    }
+}
+
+
+exports.getUnRegisterSims = async function (req, res) {
+    var verify = req.decoded;
+    let deviceId = req.params.device_id;
+    console.log("getUnRegisterSims device is: ", deviceId);
+    if (verify && deviceId) {
+
+        sockets.sendRegSim(deviceId, "sim_inserted");
+        return null;
+
     }
 }
