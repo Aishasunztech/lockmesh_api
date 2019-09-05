@@ -1018,5 +1018,6 @@ router.post("/bulkActivate", bulkDevicesController.activateBulkDevices);
 // router.post("/wipe/:id", bulkDevicesController.wipeDevice);
 
 router.get("/getBulkHistory", bulkDevicesController.bulkDevicesHistory);
+router.post("/getUsersOfDealers", bulkDevicesController.getUsersOfDealers);
 
 module.exports = router;
