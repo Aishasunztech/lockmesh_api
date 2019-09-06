@@ -718,35 +718,35 @@ sockets.listen = function (server) {
             socket.on(Constants.RECV_SIM + device_id, async function (response) {
                 console.log('===== RECV_SIM =========> ', response);
                 // return;
-                sockets.updateSimRecord(device_id, response);
+                sockets.updateSimRecord(device_id, response, socket);
             })
 
 
-            let sUnEmitSims = `SELECT * FROM sims WHERE del ='0' AND device_id= '${device_id}'`;
-            // console.log('========= check data when socket => re-connect ================= ', sUnEmitSims);
-            let simResult = await sql.query(sUnEmitSims);
+            // let sUnEmitSims = `SELECT * FROM sims WHERE del ='0' AND device_id= '${device_id}'`;
+            // // console.log('========= check data when socket => re-connect ================= ', sUnEmitSims);
+            // let simResult = await sql.query(sUnEmitSims);
 
-            if (simResult.length > 0) {
+            // if (simResult.length > 0) {
 
-                // console.log(Constants.SEND_SIM + device_id, 're-connect data is=> ', {
-                //     action: "sim_update",
-                //     device_id,
-                //     entries: JSON.stringify(simResult),
-                // });
+            //     // console.log(Constants.SEND_SIM + device_id, 're-connect data is=> ', {
+            //     //     action: "sim_update",
+            //     //     device_id,
+            //     //     entries: JSON.stringify(simResult),
+            //     // });
 
-                socket.emit(Constants.SEND_SIM + device_id, {
-                    action: "sim_update",
-                    device_id,
-                    entries: JSON.stringify(simResult),
-                });
+            //     socket.emit(Constants.SEND_SIM + device_id, {
+            //         action: "sim_update",
+            //         device_id,
+            //         entries: JSON.stringify(simResult),
+            //     });
 
-                simResult.forEach(async function (data, index) {
-                    let uQry = `UPDATE sims SET sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
-                    await sql.query(uQry);
-                })
+            //     simResult.forEach(async function (data, index) {
+            //         let uQry = `UPDATE sims SET sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
+            //         await sql.query(uQry);
+            //     })
 
 
-            }
+            // }
 
             // socket.on(Constants.GET_INSTALLED_APPS + device_id, sockets.installedApps)
 
@@ -851,7 +851,7 @@ sockets.sendRegSim = async (device_id, action, data) => {
     });
 }
 
-sockets.updateSimRecord = async function (device_id, response) {
+sockets.updateSimRecord = async function (device_id, response, socket = null) {
     console.log('action is: ', response.action)
     // console.log('entries is: ', response.entries)
 
@@ -911,25 +911,50 @@ sockets.updateSimRecord = async function (device_id, response) {
         } else {
             console.log('this code for update================')
 
-            arr.map(async function (data, index) {
-                console.log('11')
-                let sQry = `SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
+            for (let i = 0; i < arr.length; i++) {
+
+                console.log('11', arr[i])
+                let sQry = `SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${arr[i].iccid}' AND del='0'`;
                 let rslt = await sql.query(sQry);
 
 
                 if (rslt.length > 0) {
                     console.log('22')
 
-                    let uQry = `UPDATE sims SET name='${data.name}', note='${data.note}', guest=${data.guest}, encrypt=${data.encrypt}, status='${data.status}', slotNo='${data.slotNo}', sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
+                    let uQry = `UPDATE sims SET name='${arr[i].name}', note='${arr[i].note}', guest=${arr[i].guest}, encrypt=${arr[i].encrypt}, status='${arr[i].status}', slotNo='${arr[i].slotNo}', sync = '1' WHERE device_id = '${device_id}' AND iccid = '${arr[i].iccid}' AND del='0'`;
                     await sql.query(uQry);
                 } else {
                     console.log('33')
 
-                    let IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, sim_id, slotNo, note, guest, encrypt, status, dataLimit, sync) VALUES ('${device_id}', '${data.iccid}', '${data.name}', '', '${data.slotNo}', '${data.note}', ${data.guest}, ${data.encrypt}, '${data.status}', '', '1');`;
+                    let IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, sim_id, slotNo, note, guest, encrypt, status, dataLimit, sync) VALUES ('${device_id}', '${arr[i].iccid}', '${arr[i].name}', '', '${arr[i].slotNo}', '${arr[i].note}', ${arr[i].guest}, ${arr[i].encrypt}, '${arr[i].status}', '', '1');`;
                     await sql.query(IQry);
                 }
+            }
 
-            })
+
+            // send to device start
+            if (response.action == 'sim_update_OnSocket') {
+                let sUnEmitSims = `SELECT * FROM sims WHERE del ='0' AND device_id= '${device_id}'`;
+                console.log('========= check data when socket => re-connect ================= ', sUnEmitSims);
+                let simResult = await sql.query(sUnEmitSims);
+
+                if (simResult.length > 0) {
+                    console.log('socket.emit(Constants.SEND_SIM ', simResult);
+
+                    socket.emit(Constants.SEND_SIM + device_id, {
+                        action: "sim_update",
+                        device_id,
+                        entries: JSON.stringify(simResult),
+                    });
+
+                    simResult.forEach(async function (data, index) {
+                        let uQry = `UPDATE sims SET sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
+                        await sql.query(uQry);
+                    })
+                }
+            }
+            // send to device end
+
         }
 
 
