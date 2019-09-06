@@ -227,7 +227,7 @@ sockets.listen = function (server) {
                     await device_helpers.updateExtensions(extensions, device_id);
 
                     if (controls.length) {
-                        controls.map(control=>{
+                        controls.map(control => {
                             delete control.isChanged;
                         });
 
@@ -869,21 +869,24 @@ sockets.updateSimRecord = async function (device_id, response, socket = null) {
             let iccids = [];
 
             if (arr.length) {
-                arr.map(async function (data, index) {
+
+                for (let i = 0; i < arr.length; i++) {
+                    // arr.map(async function (data, index) {
 
                     // let uQry = `UPDATE sims SET name='${data.name}', note='${data.note}', guest=${data.guest}, encrypt=${data.encrypt}, status='${data.status}', slotNo='${data.slotNo}', sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
-                    let uQry = `UPDATE sims SET name='${data.name}', note='${data.note}', guest=${data.guest}, encrypt=${data.encrypt}, status='${data.status}', slotNo='${data.slotNo}', sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
+                    let uQry = `UPDATE sims SET name='${arr[i].name}', note='${arr[i].note}', guest=${arr[i].guest}, encrypt=${arr[i].encrypt}, status='${arr[i].status}', slotNo='${arr[i].slotNo}', sync = '1' WHERE device_id = '${device_id}' AND iccid = '${arr[i].iccid}' AND del='0'`;
                     let result = await sql.query(uQry);
 
                     if (result.affectedRows > 0) {
-                        iccids.push(`"${data.iccid}"`);
+                        iccids.push(`"${arr[i].iccid}"`);
                     } else {
                         var IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, note, guest, encrypt, dataLimit, sync) 
-                VALUES ('${device_id}', '${data.iccid}', '${data.name}', '${data.note}', ${data.guest}, ${data.encrypt}, '', '1');`;
+                VALUES ('${device_id}', '${arr[i].iccid}', '${arr[i].name}', '${arr[i].note}', ${arr[i].guest}, ${arr[i].encrypt}, '', '1');`;
                         await sql.query(IQry);
                     }
 
-                })
+                    // })
+                }
 
                 console.log('iccids: ', iccids);
                 if (iccids.length) {
@@ -913,22 +916,22 @@ sockets.updateSimRecord = async function (device_id, response, socket = null) {
                 await sql.query(dQry);
             })
         } else {
-            console.log('this code for update================')
+            // console.log('this code for update================')
 
             for (let i = 0; i < arr.length; i++) {
 
-                console.log('11', arr[i])
+                // console.log('11', arr[i])
                 let sQry = `SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${arr[i].iccid}' AND del='0'`;
                 let rslt = await sql.query(sQry);
 
 
                 if (rslt.length > 0) {
-                    console.log('22')
+                    // console.log('22')
 
                     let uQry = `UPDATE sims SET name='${arr[i].name}', note='${arr[i].note}', guest=${arr[i].guest}, encrypt=${arr[i].encrypt}, status='${arr[i].status}', slotNo='${arr[i].slotNo}', sync = '1' WHERE device_id = '${device_id}' AND iccid = '${arr[i].iccid}' AND del='0'`;
                     await sql.query(uQry);
                 } else {
-                    console.log('33')
+                    // console.log('33')
 
                     let IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, sim_id, slotNo, note, guest, encrypt, status, dataLimit, sync) VALUES ('${device_id}', '${arr[i].iccid}', '${arr[i].name}', '', '${arr[i].slotNo}', '${arr[i].note}', ${arr[i].guest}, ${arr[i].encrypt}, '${arr[i].status}', '', '1');`;
                     await sql.query(IQry);
@@ -936,38 +939,38 @@ sockets.updateSimRecord = async function (device_id, response, socket = null) {
             }
 
 
-            // send to device start
-            if (response.action == 'sim_update_OnSocket') {
-                let sUnEmitSims = `SELECT * FROM sims WHERE del ='0' AND device_id= '${device_id}'`;
-                console.log('========= check data when socket => re-connect ================= ', sUnEmitSims);
-                let simResult = await sql.query(sUnEmitSims);
+            //******************************** send to device start */ 
+            // if (response.action == 'sim_update_OnSocket') {
+            let sUnEmitSims = `SELECT * FROM sims WHERE del ='0' AND device_id= '${device_id}'`;
+            // console.log('========= check data when socket => re-connect ================= ', sUnEmitSims);
+            let simResult = await sql.query(sUnEmitSims);
 
-                if (simResult.length > 0) {
-                    console.log('socket.emit(Constants.SEND_SIM ', simResult);
+            if (simResult.length > 0) {
+                // console.log('socket.emit(Constants.SEND_SIM ', simResult);
 
-                    socket.emit(Constants.SEND_SIM + device_id, {
-                        action: "sim_update",
-                        device_id,
-                        entries: JSON.stringify(simResult),
-                    });
+                socket.emit(Constants.SEND_SIM + device_id, {
+                    action: "sim_update",
+                    device_id,
+                    entries: JSON.stringify(simResult),
+                });
 
-                    simResult.forEach(async function (data, index) {
-                        let uQry = `UPDATE sims SET sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
-                        await sql.query(uQry);
-                    })
-                }
+                simResult.forEach(async function (data, index) {
+                    let uQry = `UPDATE sims SET sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
+                    await sql.query(uQry);
+                })
             }
-            // send to device end
+            // }
+            // ****************************** send to device end ***************** 
 
         }
 
 
 
 
-        console.log('44', {
-            status: true,
-            unRegSims: dataIs
-        })
+        // console.log('44', {
+        //     status: true,
+        //     unRegSims: dataIs
+        // })
 
         io.emit(Constants.RECV_SIM_DATA + device_id, {
             status: true,
