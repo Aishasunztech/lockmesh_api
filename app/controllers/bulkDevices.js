@@ -679,3 +679,181 @@ exports.getUsersOfDealers = async function (req, res) {
 
     }
 }
+
+
+exports.applyBulkPushApps = async function (req, res) {
+    try {
+        var verify = req.decoded; // await verifyToken(req, res);
+        // if (verify.status !== undefined && verify.status == true) {
+        if (verify) {
+            let device_id = req.params.device_id;
+
+            let dealer_id = verify.user.id;
+
+            let usrAccId = req.body.usrAccId;
+
+            let push_apps = req.body.push_apps;
+            let noOfApps = push_apps.length;
+
+            let apps = push_apps === undefined ? "" : JSON.stringify(push_apps);
+
+            var applyQuery =
+                "INSERT INTO device_history (device_id,dealer_id,user_acc_id, push_apps, type) VALUES ('" +
+                device_id +
+                "'," +
+                dealer_id +
+                "," +
+                usrAccId +
+                ", '" +
+                apps +
+                "', 'push_apps')";
+
+            sql.query(applyQuery, async function (err, rslts) {
+                if (err) {
+                    console.log(err);
+                }
+                if (rslts) {
+                    let isOnline = await device_helpers.isDeviceOnline(
+                        device_id
+                    );
+                    //job Queue query
+                    var loadDeviceQ =
+                        "INSERT INTO apps_queue_jobs (device_id,action,type,total_apps,is_in_process) " +
+                        " VALUES ('" +
+                        device_id +
+                        "', 'push', 'push', " +
+                        noOfApps +
+                        " ,1)";
+                    // var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
+                    await sql.query(loadDeviceQ);
+
+                    if (isOnline) {
+                        sockets.applyPushApps(apps, device_id);
+                        data = {
+                            status: true,
+                            online: true,
+                            noOfApps: noOfApps,
+                            msg: await helpers.convertToLang(
+                                req.translation[
+                                MsgConstants.APPS_ARE_BEING_PUSHED
+                                ],
+                                "Apps are Being pushed"
+                            ),
+                            content: ""
+                        };
+                    } else {
+                        sockets.applyPushApps(apps, device_id);
+                        data = {
+                            status: true,
+                            noOfApps: noOfApps,
+                            msg: await helpers.convertToLang(
+                                req.translation[
+                                MsgConstants.WARNING_DEVICE_OFFLINE
+                                ],
+                                "Warning Device Offline"
+                            ),
+                            content: await helpers.convertToLang(
+                                req.translation[
+                                MsgConstants
+                                    .APPS_PUSHED_TO_DEVICE_ON_BACK_ONLINE
+                                ],
+                                "Apps pushed to device. Action will be performed when device is back online"
+                            )
+                        };
+                    }
+                    res.send(data);
+                } else {
+                    data = {
+                        status: false,
+                        msg: await helpers.convertToLang(
+                            req.translation[MsgConstants.ERROR_PROC],
+                            "Error while Processing"
+                        ), // Error while Processing',
+                        content: ""
+                    };
+                    res.send(data);
+                }
+            });
+        }
+    } catch (error) {
+        console.log(error);
+    }
+};
+
+exports.applyBulkPullApps = async function (req, res) {
+    try {
+        var verify = req.decoded;
+
+        if (verify) {
+            let device_id = req.params.device_id;
+
+            let usrAccId = req.body.usrAccId;
+
+            let dealer_id = verify.user.id;
+            let pull_apps = req.body.pull_apps;
+            let noOfApps = pull_apps.length;
+
+            let apps = pull_apps === undefined ? "" : JSON.stringify(pull_apps);
+
+            var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, pull_apps, type) VALUES ('${device_id}', ${dealer_id}, ${usrAccId}, '${apps}', 'pull_apps')`;
+
+            sql.query(applyQuery, async function (err, rslts) {
+                if (err) {
+                    console.log(err);
+                }
+
+                if (rslts) {
+                    let isOnline = await device_helpers.isDeviceOnline(device_id);
+
+                    var loadDeviceQ = `INSERT INTO apps_queue_jobs (device_id, action, type, total_apps, is_in_process)
+						VALUES ('${device_id}', 'pull', 'pull', ${noOfApps}, 1)`;
+
+                    await sql.query(loadDeviceQ);
+
+                    if (isOnline) {
+                        data = {
+                            status: true,
+                            online: true,
+                            noOfApps: noOfApps,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.APPS_ARE_BEING_PULLED], "Apps are Being pulled"),
+                            content: ""
+                        };
+                        sockets.getPullApps(apps, device_id);
+                    } else {
+                        data = {
+                            status: true,
+                            noOfApps: noOfApps,
+                            msg: await helpers.convertToLang(
+                                req.translation[
+                                MsgConstants.WARNING_DEVICE_OFFLINE
+                                ],
+                                "Warning Device Offline"
+                            ),
+                            content: await helpers.convertToLang(
+                                req.translation[
+                                MsgConstants
+                                    .APPS_PULLED_TO_DEVICE_ON_BACK_ONLINE
+                                ],
+                                "Apps pulled to device. Action will be performed when device is back online"
+                            )
+                        };
+                    }
+
+                    return res.send(data);
+                } else {
+                    data = {
+                        status: false,
+                        msg: await helpers.convertToLang(
+                            req.translation[MsgConstants.ERROR_PROC],
+                            "Error while Processing"
+                        ), // Error while Processing',
+                        content: ""
+                    };
+                    res.send(data);
+                }
+            });
+        }
+    } catch (error) {
+        console.log(error);
+    }
+};

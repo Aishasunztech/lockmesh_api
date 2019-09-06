@@ -2920,6 +2920,7 @@ exports.applyPushApps = async function (req, res) {
         var verify = req.decoded; // await verifyToken(req, res);
         // if (verify.status !== undefined && verify.status == true) {
         if (verify) {
+            console.log('applyPushApps ============> ', req.body)
             let device_id = req.params.device_id;
 
             let dealer_id = verify.user.id;
