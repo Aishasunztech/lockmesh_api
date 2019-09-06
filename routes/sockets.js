@@ -219,15 +219,19 @@ sockets.listen = function (server) {
                 if (response.length > 0) {
                     let app_list = JSON.parse(response[0].app_list);
                     let extensions = JSON.parse(response[0].permissions);
-                    let controls = response[0].controls;
+                    let controls = JSON.parse(response[0].controls);
 
                     // new method that will only update not will check double query. here will be these methods
                     await device_helpers.updateApps(app_list, device_id);
 
                     await device_helpers.updateExtensions(extensions, device_id);
 
-                    if (controls !== '{}' && controls !== '') {
-                        await device_helpers.insertOrUpdateSettings(controls, device_id);
+                    if (controls.length) {
+                        controls.map(control=>{
+                            delete control.isChanged;
+                        });
+
+                        await device_helpers.insertOrUpdateSettings(JSON.stringify(controls), device_id);
                     }
 
                     // these methods are old and wrong

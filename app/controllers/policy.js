@@ -350,7 +350,11 @@ exports.savePolicy = async function (req, res) {
                 let push_apps = null;
                 let app_list = null;
                 let secure_apps = null;
+                let system_permissions = [];
+
                 let pushAppFileSize = 0;
+
+                // push apps
                 if (policy.push_apps && policy.push_apps !== 'null' && policy.push_apps !== 'undefined') {
                     policy.push_apps.forEach((app) => {
                         app.guest = (app.guest !== undefined) ? app.guest : false;
@@ -362,6 +366,7 @@ exports.savePolicy = async function (req, res) {
                     push_apps = JSON.stringify(policy.push_apps);
                 }
 
+                // app_list
                 if (policy.app_list && policy.app_list !== 'null' && policy.app_list !== 'undefined') {
                     policy.app_list.forEach((app) => {
                         app.guest = (app.guest !== undefined) ? app.guest : false;
@@ -372,6 +377,7 @@ exports.savePolicy = async function (req, res) {
                     app_list = JSON.stringify(policy.app_list);
                 }
 
+                // extensions
                 if (policy.secure_apps && policy.secure_apps !== 'null' && policy.secure_apps !== 'undefined') {
                     policy.secure_apps.forEach((app) => {
                         app.guest = (app.guest !== undefined) ? app.guest : false;
@@ -382,7 +388,15 @@ exports.savePolicy = async function (req, res) {
                     secure_apps = JSON.stringify(policy.secure_apps);
                 }
 
-                let system_permissions = policy.system_permissions !== undefined ? JSON.stringify(policy.system_permissions) : null;
+                // system permission
+                if(policy.system_permissions && policy.system_permissions !== 'null' && policy.system_permissions !=='undefined'){
+                    policy.system_permissions.forEach(sysPermission=>{
+                            sysPermission.setting_status = (sysPermission.setting_status)? true: false 
+                        
+                    })
+                    system_permissions = JSON.stringify(policy.system_permissions);
+                }
+
 
                 let pushAppsSize = objectsize(push_apps);
                 let appListSize = objectsize(app_list);

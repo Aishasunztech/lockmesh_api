@@ -423,8 +423,6 @@ router.get('/get_usr_acc_id/:device_id', async function (req, res) {
 	}
 })
 
-router.get('/get_app_permissions', appController.getAppPermissions);
-
 
 // =========== Policy ============= //
 
@@ -507,6 +505,7 @@ router.get("/get_usr_acc_id/:device_id", async function (req, res) {
 
 router.get("/get_app_permissions", appController.getAppPermissions);
 
+router.get('/get_system_permissions', appController.getSystemPermissions)
 
 // policy name should be unique
 
