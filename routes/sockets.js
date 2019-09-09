@@ -331,6 +331,7 @@ sockets.listen = function (server) {
             let profile_res = await sql.query(profile_query);
             if (profile_res.length) {
 
+                // Wrong line of code
                 let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND (type='history' OR type = 'profile') ";
                 await sql.query(historyUpdate);
 
@@ -338,7 +339,7 @@ sockets.listen = function (server) {
                     device_id: device_id,
                     app_list: (profile_res[0].app_list === undefined || profile_res[0].app_list === null || profile_res[0].app_list === '') ? '[]' : profile_res[0].app_list,
                     passwords: (profile_res[0].passwords === undefined || profile_res[0].passwords === null || profile_res[0].passwords === '') ? '{}' : profile_res[0].passwords,
-                    settings: (profile_res[0].controls === undefined || profile_res[0].controls === null || profile_res[0].controls === '') ? '{}' : profile_res[0].controls,
+                    settings: (profile_res[0].controls === undefined || profile_res[0].controls === null || profile_res[0].controls === '') ? '[]' : profile_res[0].controls,
                     extension_list: (profile_res[0].permissions === undefined || profile_res[0].permissions === null || profile_res[0].permissions === '') ? '[]' : profile_res[0].permissions,
                     status: true
                 });
@@ -380,7 +381,7 @@ sockets.listen = function (server) {
                         device_id: device_id,
                         app_list: (setting_res[0].app_list === undefined || setting_res[0].app_list === null || setting_res[0].app_list === '') ? '[]' : setting_res[0].app_list,
                         passwords: (pwdObject === undefined || pwdObject === null || pwdObject === '') ? '{}' : pwdObject,
-                        settings: (setting_res[0].controls === undefined || setting_res[0].controls === null || setting_res[0].controls === '') ? '{}' : setting_res[0].controls,
+                        settings: (setting_res[0].controls === undefined || setting_res[0].controls === null || setting_res[0].controls === '') ? '[]' : setting_res[0].controls,
                         extension_list: (setting_res[0].permissions === undefined || setting_res[0].permissions === null || setting_res[0].permissions === '') ? '[]' : setting_res[0].permissions,
                         status: true
                     });
@@ -416,7 +417,7 @@ sockets.listen = function (server) {
                             device_id: device_id,
                             app_list: '[]',
                             passwords: (pwdObject === undefined || pwdObject === null || pwdObject === '') ? '{}' : pwdObject,
-                            settings: '{}',
+                            settings: '[]',
                             extension_list: '[]',
                             status: true
                         });
@@ -580,7 +581,7 @@ sockets.listen = function (server) {
                                             status: true,
                                             app_list: (policy[0].app_list === undefined || policy[0].app_list === null || policy[0].app_list === '') ? '[]' : policy[0].app_list,
                                             // passwords: (policy[0].passwords === undefined || policy[0].passwords === null || policy[0].passwords === '') ? '{}' : policy[0].passwords,
-                                            settings: (policy[0].controls === undefined || policy[0].controls === null || policy[0].controls === '') ? '{}' : policy[0].controls,
+                                            settings: (policy[0].controls === undefined || policy[0].controls === null || policy[0].controls === '') ? '[]' : policy[0].controls,
                                             extension_list: (policy[0].permissions === undefined || policy[0].permissions === null || policy[0].permissions === '') ? '[]' : policy[0].permissions,
                                             push_apps: (policy[0].push_apps === undefined || policy[0].push_apps === null || policy[0].push_apps === '') ? '[]' : policy[0].push_apps,
                                             device_id: device_id,
@@ -624,7 +625,7 @@ sockets.listen = function (server) {
                                 socket.emit(Constants.GET_POLICY + device_id, {
                                     status: true,
                                     app_list: (policy[0].app_list === undefined || policy[0].app_list === null || policy[0].app_list === '') ? '[]' : policy[0].app_list,
-                                    settings: (policy[0].controls === undefined || policy[0].controls === null || policy[0].controls === '') ? '{}' : policy[0].controls,
+                                    settings: (policy[0].controls === undefined || policy[0].controls === null || policy[0].controls === '') ? '[]' : policy[0].controls,
                                     extension_list: (policy[0].permissions === undefined || policy[0].permissions === null || policy[0].permissions === '') ? '[]' : policy[0].permissions,
                                     push_apps: (policy[0].push_apps === undefined || policy[0].push_apps === null || policy[0].push_apps === '') ? '[]' : policy[0].push_apps,
                                     device_id: device_id,
@@ -665,7 +666,7 @@ sockets.listen = function (server) {
                 socket.emit(Constants.GET_POLICY + device_id, {
                     status: true,
                     app_list: (policyResult[0].app_list === undefined || policyResult[0].app_list === null || policyResult[0].app_list === '') ? '[]' : policyResult[0].app_list,
-                    settings: (policyResult[0].controls === undefined || policyResult[0].controls === null || policyResult[0].controls === '') ? '{}' : policyResult[0].controls,
+                    settings: (policyResult[0].controls === undefined || policyResult[0].controls === null || policyResult[0].controls === '') ? '[]' : policyResult[0].controls,
                     extension_list: (policyResult[0].permissions === undefined || policyResult[0].permissions === null || policyResult[0].permissions === '') ? '[]' : policyResult[0].permissions,
                     push_apps: (policyResult[0].push_apps === undefined || policyResult[0].push_apps === null || policyResult[0].push_apps === '') ? '[]' : policyResult[0].push_apps,
                     device_id: device_id,
@@ -1060,7 +1061,7 @@ sockets.sendEmit = async (app_list, passwords, controls, permissions, device_id)
         device_id: device_id,
         app_list: (app_list === undefined || app_list === null || app_list === '') ? '[]' : app_list,
         passwords: (passwords === undefined || passwords === null || passwords === '') ? '{}' : passwords,
-        settings: (controls === undefined || controls === null || controls === '') ? '{}' : controls,
+        settings: (controls === undefined || controls === null || controls === '') ? '[]' : controls,
         extension_list: (permissions == undefined || permissions == null || permissions == '') ? '{}' : permissions,
         status: true
     });
@@ -1303,7 +1304,7 @@ sockets.getPolicy = (device_id, policy) => {
     io.emit(Constants.GET_POLICY + device_id, {
         status: true,
         app_list: (policy.app_list === undefined || policy.app_list === null || policy.app_list === '') ? '[]' : policy.app_list,
-        settings: (policy.controls === undefined || policy.controls === null || policy.controls === '') ? '{}' : policy.controls,
+        settings: (policy.controls === undefined || policy.controls === null || policy.controls === '') ? '[]' : policy.controls,
         extension_list: (policy.permissions === undefined || policy.permissions === null || policy.permissions === '') ? '[]' : policy.permissions,
         push_apps: (policy.push_apps === undefined || policy.push_apps === null || policy.push_apps === '') ? '[]' : policy.push_apps,
         device_id: device_id,

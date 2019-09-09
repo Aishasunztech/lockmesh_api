@@ -11,7 +11,7 @@ module.exports = (req, res, next) => {
     if (token) {
         jwt.verify(token, config.SECRET, async function (err, decoded) {
             if (err) {
-                console.log(err);
+                // console.log(err);
                 ath = {
                     status: false,
                     success: false

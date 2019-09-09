@@ -165,69 +165,145 @@ router.get('/refactor_policy_apps', async function (req, res) {
 })
 
 router.get('/refactor_policy_sys_permissions', async function (req, res) {
+
+    let permissions = {
+        "wifi_status": "Wifi",
+        "bluetooth_status": "Bluetooth",
+        "hotspot_status": "Hotspot Configuration",
+        "screenshot_status": "Screen Capture",
+        "call_status": 'Block Calls',
+        'bluetooth_sharing_status': 'Bluetooth File Sharing',
+        "camera_status": "Camera",
+        "speaker_status": 'Speaker',
+        "mic_status": "Microphone",
+        // "location_status"
+        // "nfc_status"
+    }
+
+    // refactoring previous policies
     let policies = await sql.query('SELECt * FROM policy');
     policies.forEach(async (policy) => {
-        let sysPermissions = JSON.parse(policy.controls);
+        if (policy.controls) {
+            let sysPermissions = JSON.parse(policy.controls);
 
-        if (sysPermissions.wifi_status !== undefined) {
-            let data = []
-            for (var obj in sysPermissions) {
-                data.push({
-                    setting_name: obj,
-                    setting_status: sysPermissions[obj]
-                });
-            }
-            console.log(data);
-            policyUpdateQ = `UPDATE policy SET controls='${JSON.stringify(data)}' WHERE id=${policy.id}`;
-            await sql.query(policyUpdateQ);
-        } else {
-            console.log('new')
-        }
-    });
+            if (sysPermissions instanceof Array) {
+                console.log("new policy");
 
-    let histories = await sql.query('SELECt * FROM device_history WHERE status=1');
-    histories.forEach(async (history) => {
-        if(history.controls){
+                sysPermissions.forEach((permission) => {
+                    if (permissions[permission.setting_name]) {
+                        permission.setting_name = permissions[permission.setting_name]
+                    }
+                })
 
-            let sysPermissions = JSON.parse(history.controls);
-    
-            if (sysPermissions.wifi_status !== undefined) {
+                policyUpdateQ = `UPDATE policy SET controls='${JSON.stringify(sysPermissions)}' WHERE id=${policy.id}`;
+                await sql.query(policyUpdateQ);
+
+            } else {
+                console.log("old policy");
                 let data = []
                 for (var obj in sysPermissions) {
-                    data.push({
-                        setting_name: obj,
-                        setting_status: sysPermissions[obj]
-                    });
+                    if (permissions[obj]) {
+                        data.push({
+                            setting_name: permmissions[obj],
+                            setting_status: sysPermissions[obj]
+                        });
+                    } else {
+                        data.push({
+                            setting_name: obj,
+                            setting_status: sysPermissions[obj]
+                        });
+                    }
                 }
-                policyUpdateQ = `UPDATE device_history SET controls='${JSON.stringify(data)}' WHERE id=${history.id}`;
+                
+                policyUpdateQ = `UPDATE policy SET controls='${JSON.stringify(data)}' WHERE id=${policy.id}`;
                 await sql.query(policyUpdateQ);
+            }
+        }
+
+    });
+
+    // refactoring previous histories
+
+    let histories = await sql.query('SELECt * FROM device_history');
+    histories.forEach(async (history) => {
+        if (history.controls) {
+
+            let sysPermissions = JSON.parse(history.controls);
+            console.log(sysPermissions);
+
+
+            if (sysPermissions instanceof Array) {
+                console.log('new history');
+                sysPermissions.forEach((permission) => {
+                    if (permissions[permission.setting_name]) {
+                        permission.setting_name = permissions[permission.setting_name]
+                    }
+                })
+                historyUpdateQ = `UPDATE device_history SET controls='${JSON.stringify(sysPermissions)}' WHERE id=${history.id}`;
+                await sql.query(historyUpdateQ);
+
             } else {
-                console.log('new')
+                console.log('old history')
+                let data = []
+                for (var obj in sysPermissions) {
+                    if (permissions[obj]) {
+                        data.push({
+                            setting_name: permmissions[obj],
+                            setting_status: sysPermissions[obj]
+                        });
+                    } else {
+                        data.push({
+                            setting_name: obj,
+                            setting_status: sysPermissions[obj]
+                        });
+                    }
+
+                }
+                historyUpdateQ = `UPDATE device_history SET controls='${JSON.stringify(data)}' WHERE id=${history.id}`;
+                await sql.query(historyUpdateQ);
             }
         }
     });
-    
+
+    // refactoring previous profiles
     let profiles = await sql.query('SELECt * FROM usr_acc_profile');
     profiles.forEach(async (profile) => {
         if(profile.controls){
 
             let sysPermissions = JSON.parse(profile.controls);
-    
-            if (sysPermissions.wifi_status !== undefined || sysPermissions.bluetooth_status !== undefined) {
+
+            if (sysPermissions instanceof Array) {
+                console.log("new profile");
+                sysPermissions.forEach((permission) => {
+                    if (permissions[permission.setting_name]) {
+                        permission.setting_name = permissions[permission.setting_name]
+                    }
+                })
+                profileUpdateQ = `UPDATE usr_acc_profile SET controls='${JSON.stringify(sysPermissions)}' WHERE id=${profile.id}`;
+                await sql.query(profileUpdateQ);
+
+            } else {
+                console.log('old profile')
                 let data = []
                 for (var obj in sysPermissions) {
-                    data.push({
-                        setting_name: obj,
-                        setting_status: sysPermissions[obj]
-                    });
+                    if (permissions[obj]) {
+                        data.push({
+                            setting_name: permmissions[obj],
+                            setting_status: sysPermissions[obj]
+                        });
+                    } else {
+                        data.push({
+                            setting_name: obj,
+                            setting_status: sysPermissions[obj]
+                        });
+                    }
                 }
-                policyUpdateQ = `UPDATE usr_acc_profile SET controls='${JSON.stringify(data)}' WHERE id=${profile.id}`;
-                await sql.query(policyUpdateQ);
-            } else {
-                console.log('new')
+                profileUpdateQ = `UPDATE usr_acc_profile SET controls='${JSON.stringify(data)}' WHERE id=${profile.id}`;
+                await sql.query(profileUpdateQ);
             }
         }
     });
+
     res.send("refactor policies system permissions");
 })
 /** Get back up DB File **/
