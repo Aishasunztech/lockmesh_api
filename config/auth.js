@@ -9,10 +9,10 @@ module.exports = async (req, res, next) => {
     // console.log(token);
     // try {
     if (token) {
-        let checkTokenQ = `SELECT id FROM login_history WHERE token='${token}' AND status=1`;
-        let checkToken = await sql.query(checkTokenQ);
+        // let checkTokenQ = `SELECT id FROM login_history WHERE token='${token}' AND status=1`;
+        // let checkToken = await sql.query(checkTokenQ);
         
-        if(checkToken.length){
+        // if(checkToken.length){
             jwt.verify(token, config.SECRET, async function (err, decoded) {
                 if (err) {
                     
@@ -73,16 +73,16 @@ module.exports = async (req, res, next) => {
                 }
             });
 
-        } else {
-            ath = {
-                status: false,
-                success: false
-            };
-            return res.send({
-                success: false,
-                msg: 'Invalid Token'
-            });
-        }
+        // } else {
+        //     ath = {
+        //         status: false,
+        //         success: false
+        //     };
+        //     return res.send({
+        //         success: false,
+        //         msg: 'Invalid Token'
+        //     });
+        // }
 
     } else {
         ath = {
