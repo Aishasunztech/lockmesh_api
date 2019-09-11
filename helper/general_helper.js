@@ -364,11 +364,28 @@ module.exports = {
 			'"'
 		);
 		if (results.length) {
+			let devices_acc_array = [];
+			for (let i = 0; i < results.length; i++) {
+				devices_acc_array.push(results[i].id)
+			}
+			let user_acc_ids = devices_acc_array.join()
+			let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
+			let sim_ids = await device_helpers.getSimids(user_acc_ids);
+			let chat_ids = await device_helpers.getChatids(user_acc_ids);
 			for (let device of results) {
 				device.finalStatus = device_helpers.checkStatus(device);
-				device.pgp_email = await device_helpers.getPgpEmails(device);
-				device.sim_id = await device_helpers.getSimids(device);
-				device.chat_id = await device_helpers.getChatids(device);
+				let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === device.id);
+				if (pgp_email) {
+					device.pgp_email = pgp_email.pgp_email
+				}
+				let sim_id = sim_ids.find(sim_id => sim_id.user_acc_id === device.id);
+				if (sim_id) {
+					device.sim_id = sim_id.sim_id
+				}
+				let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === device.id);
+				if (chat_id) {
+					device.chat_id = chat_id.chat_id
+				}
 			}
 
 			return results;
@@ -501,13 +518,28 @@ module.exports = {
 			device_id +
 			'"'
 		);
+		let pgp_emails = await device_helpers.getPgpEmails(results[0].id);
+		let sim_ids = await device_helpers.getSimids(results[0].id);
+		let chat_ids = await device_helpers.getChatids(results[0].id);
 		if (results.length) {
 			results[0].finalStatus = device_helpers.checkStatus(results[0]);
-			results[0].pgp_email = await device_helpers.getPgpEmails(
-				results[0]
-			);
-			results[0].sim_id = await device_helpers.getSimids(results[0]);
-			results[0].chat_id = await device_helpers.getChatids(results[0]);
+			if (pgp_emails[0] && pgp_emails[0].pgp_email) {
+				results[0].pgp_email = pgp_emails[0].pgp_email
+			} else {
+				results[0].pgp_email = "N/A"
+			}
+			if (sim_ids[0] && sim_ids[0].sim_id) {
+				results[0].sim_id = sim_ids[0].sim_id
+			} else {
+				results[0].sim_id = "N/A"
+			}
+			if (chat_ids[0] && chat_ids[0].chat_id) {
+				results[0].chat_id = chat_ids[0].chat_id
+			}
+			else {
+				results[0].chat_id = "N/A"
+
+			}
 			return results[0];
 		} else {
 			return [];
@@ -892,15 +924,28 @@ module.exports = {
 			'"'
 		);
 		if (results.length) {
+			let devices_acc_array = [];
+			for (let i = 0; i < results.length; i++) {
+				devices_acc_array.push(results[i].id)
+			}
+			let user_acc_ids = devices_acc_array.join()
+			let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
+			let sim_ids = await device_helpers.getSimids(user_acc_ids);
+			let chat_ids = await device_helpers.getChatids(user_acc_ids);
 			for (var i = 0; i < results.length; i++) {
 				results[i].finalStatus = device_helpers.checkStatus(results[i]);
-				results[i].pgp_email = await device_helpers.getPgpEmails(
-					results[i]
-				);
-				results[i].sim_id = await device_helpers.getSimids(results[i]);
-				results[i].chat_id = await device_helpers.getChatids(
-					results[i]
-				);
+				let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === results[i].id);
+				if (pgp_email) {
+					results[i].pgp_email = pgp_email.pgp_email
+				}
+				let sim_id = sim_ids.find(sim_id => sim_id.user_acc_id === results[i].id);
+				if (sim_id) {
+					results[i].sim_id = sim_id.sim_id
+				}
+				let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === results[i].id);
+				if (chat_id) {
+					results[i].chat_id = chat_id.chat_id
+				}
 			}
 			return results;
 		} else {
@@ -1102,8 +1147,8 @@ module.exports = {
 			delete app.default_app;
 		});
 		let controls = JSON.parse(policy[0].controls);
-		controls.forEach(control=>{
-			control.setting_status= (control.setting_status)? true: false; 
+		controls.forEach(control => {
+			control.setting_status = (control.setting_status) ? true : false;
 		})
 		console.log('controls', controls);
 		// copy refactored
