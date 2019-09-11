@@ -12,15 +12,15 @@ const device_helpers = require('../helper/device_helpers.js');
 
 /** Cron for device expiry date **/
 cron.schedule('0 0 0 * * *', async () => {
-    var tod_dat = datetime.create();
-    var formatted_dt = tod_dat.format('Y/m/d');
+    var tod_date = datetime.create();
+    var formatted_date = tod_date.format('Y/m/d');
     var userAccQ = "SELECT * FROM usr_acc WHERE device_status = 1";
     var results = await sql.query(userAccQ);
 
     for (var i = 0; i < results.length; i++) {
 
-        if (formatted_dt >= results[i].expiry_date) {
-            var updateUsrAcc = `update usr_acc set status = 'expired' where device_id ='${results[i].device_id}'`;
+        if (formatted_date >= results[i].expiry_date) {
+            var updateUsrAcc = `UPDATE usr_acc SET status = 'expired' WHERE device_id ='${results[i].device_id}'`;
             var dvcID = await device_helpers.getDvcIDByDeviceID(results[i].device_id);
             sql.query(updateUsrAcc, function (error, results) {
                 if (error) console.log(error);
@@ -30,7 +30,7 @@ cron.schedule('0 0 0 * * *', async () => {
                 } else {
                     try {
                         console.log('expired');
-                        require("../bin/www").sendDeviceStatus(dvcID, "expired", true);
+                        require("../routes/sockets").sendDeviceStatus(dvcID, "expired", true);
                     } catch (error) {
                         console.log(error);
                     }
