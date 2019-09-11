@@ -17,13 +17,21 @@ module.exports = function (app) {
 
 	app.use('/mobile', mobileRoutes);
 
-	app.use('/users', authRoutes);
-	app.use('/users', nonVerifyRoutes);
+	// app.use('/users', authRoutes);
+	// app.use('/users', nonVerifyRoutes);
 
-	app.use('/users',
-	authMiddleware,
-	userRoutes);
+	// app.use('/users',
+	// 	authMiddleware,
+	// 	userRoutes);
 
+	app.group('/users', function (router) {
+		router.use(authRoutes);
+		router.use(nonVerifyRoutes);
+
+		router.use(
+			authMiddleware,
+			userRoutes);
+	})
 	app.group('/api/v1', function (router) {
 		router.use('/agent', agentAuth);
 		router.use('/agent', agentAuthMiddleware, agentRoutes);
