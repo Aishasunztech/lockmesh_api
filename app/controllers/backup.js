@@ -11,10 +11,10 @@ const constants = require('../../constants/Application');
 
 
 // let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
-let usr_acc_query_text =  constants.usr_acc_query_text;
+let usr_acc_query_text = constants.usr_acc_query_text;
 
-var  data;
-exports.createBackupDB =  async function (req, res) {
+var data;
+exports.createBackupDB = async function (req, res) {
 
     res.setHeader('Content-Type', 'application/json');
 
@@ -27,13 +27,45 @@ exports.createBackupDB =  async function (req, res) {
         let query = "SELECT * From acc_action_history WHERE action = 'UNLINKED'";
         let newArray = await sql.query(query)
         let results = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 order by devices.id DESC')
-        for (var i = 0; i < results.length; i++) {
-            results[i].finalStatus = device_helpers.checkStatus(results[i])
-            results[i].pgp_email = await device_helpers.getPgpEmails(results[i])
-            results[i].sim_id = await device_helpers.getSimids(results[i])
-            results[i].chat_id = await device_helpers.getChatids(results[i])
-            results[i].validity = await device_helpers.checkRemainDays(results[i].created_at, results[i].validity)
-            // dealerData = await device_helpers.getDealerdata(results[i]);
+        if (results.length) {
+            let devices_acc_array = [];
+            let usr_device_ids_array = []
+            for (let i = 0; i < results.length; i++) {
+                devices_acc_array.push(results[i].id)
+                usr_device_ids_array.push(results[i].usr_device_id)
+            }
+            let user_acc_ids = devices_acc_array.join()
+            let usr_device_ids = usr_device_ids_array.join()
+            let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
+            let sim_ids = await device_helpers.getSimids(user_acc_ids);
+            let chat_ids = await device_helpers.getChatids(user_acc_ids);
+            let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
+
+            for (var i = 0; i < results.length; i++) {
+                let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === results[i].id);
+                if (pgp_email) {
+                    results[i].pgp_email = pgp_email.pgp_email
+                }
+                let sim_id = sim_ids.find(sim_id => sim_id.user_acc_id === results[i].id);
+                if (sim_id) {
+                    results[i].sim_id = sim_id.sim_id
+                }
+                let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === results[i].id);
+                if (chat_id) {
+                    results[i].chat_id = chat_id.chat_id
+                }
+                let lastOnline = loginHistoryData.find(record => record.device_id === results[i].usr_device_id);
+                if (lastOnline) {
+                    results[i].lastOnline = lastOnline.created_at
+                }
+                results[i].finalStatus = device_helpers.checkStatus(
+                    results[i]
+                );
+                results[i].validity = await device_helpers.checkRemainDays(
+                    results[i].created_at,
+                    results[i].validity
+                );
+            }
         }
         let finalResult = [...results, ...newArray]
         // console.log('old', finalResult);
@@ -114,7 +146,7 @@ exports.createBackupDB =  async function (req, res) {
 }
 
 
-exports.getBackupFiles =  async function (req, res) {
+exports.getBackupFiles = async function (req, res) {
     // var loggedInuid = req.decoded.user.id;
     let file = path.join(__dirname, "../../db_backup/" + req.params.file);
     if (fs.existsSync(file)) {
