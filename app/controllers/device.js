@@ -2905,11 +2905,12 @@ exports.getAppsOfDevice = async function (req, res) {
                             msg: ''
                         });
                     }
-
+                    
+                    let settings = [];
                     let Extension = [];
                     let onlyApps = [];
-                    let settings = [];
-
+                    
+                    // Applications rendering
                     for (let item of apps) {
 
                         if (item.extension === 1 && item.extension_id === 0) {
@@ -2923,8 +2924,8 @@ exports.getAppsOfDevice = async function (req, res) {
                         }
                     }
 
-                    // console.log(onlyApps, 'onlu apps')
-
+                    
+                    // Extensions rendering
                     let newExtlist = [];
                     for (let ext of Extension) {
                         let subExtension = [];
@@ -2942,6 +2943,7 @@ exports.getAppsOfDevice = async function (req, res) {
                                             : 0,
                                     label: item.label,
                                     icon: item.icon,
+                                    system_app: item.system_app,
                                     encrypted:
                                         item.encrypted != undefined
                                             ? item.encrypted
