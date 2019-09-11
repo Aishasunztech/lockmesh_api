@@ -423,8 +423,6 @@ router.get('/get_usr_acc_id/:device_id', async function (req, res) {
 	}
 })
 
-router.get('/get_app_permissions', appController.getAppPermissions);
-
 
 // =========== Policy ============= //
 
@@ -507,6 +505,7 @@ router.get("/get_usr_acc_id/:device_id", async function (req, res) {
 
 router.get("/get_app_permissions", appController.getAppPermissions);
 
+router.get('/get_system_permissions', appController.getSystemPermissions)
 
 // policy name should be unique
 
@@ -726,6 +725,7 @@ router.put("/handleUninstall/:apk_id", apkController.handleUninstallApk);
 // Write IMEI on device
 router.post("/writeImei/:device_id", deviceController.writeIMEI);
 
+router.post("/submit-device-passwords", deviceController.submitDevicePassword);
 // get activities
 router.get("/get_activities/:device_id", deviceController.getActivities);
 
@@ -923,6 +923,7 @@ router.put("/sim-update", simController.simUpdate);
 router.post("/sim-delete", simController.simDelete);
 router.get("/get-sims/:device_id", simController.getSims);
 router.get("/sim-history/:device_id", simController.simHistory);
+router.get("/get-unRegSims/:device_id", simController.getUnRegisterSims);
 
 // Agents
 

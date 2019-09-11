@@ -11,10 +11,11 @@ module.exports = async (req, res, next) => {
     if (token) {
         let checkTokenQ = `SELECT id FROM login_history WHERE token='${token}' AND status=1`;
         let checkToken = await sql.query(checkTokenQ);
+        
         if(checkToken.length){
             jwt.verify(token, config.SECRET, async function (err, decoded) {
                 if (err) {
-                    console.log(err);
+                    
                     ath = {
                         status: false,
                         success: false
@@ -98,5 +99,6 @@ module.exports = async (req, res, next) => {
     // } catch (error) {
     //     console.log(error);
     // }
+
 }
 

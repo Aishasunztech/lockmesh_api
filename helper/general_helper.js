@@ -1064,6 +1064,7 @@ module.exports = {
 	// Policy Helpers
 	refactorPolicy: async function (policy) {
 		// check if push application is updated
+		// push apps
 		let pushApps = JSON.parse(policy[0].push_apps);
 		let apksQ = "SELECT * FROM apk_details WHERE delete_status != 1";
 		let apks = await sql.query(apksQ);
@@ -1100,10 +1101,15 @@ module.exports = {
 			// delete app.package_name;
 			delete app.default_app;
 		});
-
+		let controls = JSON.parse(policy[0].controls);
+		controls.forEach(control=>{
+			control.setting_status= (control.setting_status)? true: false; 
+		})
+		console.log('controls', controls);
 		// copy refactored
 		policy[0].app_list = JSON.stringify(appList);
 		policy[0].permissions = JSON.stringify(permissions);
+		policy[0].controls = JSON.stringify(controls)
 		return policy;
 	},
 	insertPolicyPushApps: async function (
