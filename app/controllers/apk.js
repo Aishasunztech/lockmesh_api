@@ -552,7 +552,7 @@ exports.addApk = async function (req, res) {
 
                         data = {
                             status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.APK_IS_UPLOADED], "Apk is uploaded"), // "Apk is uploaded",
+                            msg: `${newData[0].app_name} ${await helpers.convertToLang(req.translation["was uploaded successfully"], "was uploaded successfully")}`, // MsgConstants.APK_IS_UPLOADED
                             data: dta
                         };
                         return res.send(data);
@@ -662,7 +662,7 @@ exports.editApk = async function (req, res) {
 
                         data = {
                             status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.APK_IS_UPLOADED], "Apk is uploaded"), // "Apk is uploaded",
+                            msg: `${newData[0].app_name} ${await helpers.convertToLang(req.translation["was uploaded successfully"], "was uploaded successfully")}`, // MsgConstants.APK_IS_UPLOADED
                             data: dta
                         };
                         return res.send(data);

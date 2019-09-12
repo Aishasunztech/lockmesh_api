@@ -1122,7 +1122,7 @@ sockets.syncDevice = async (device_id) => {
 
 // live device status activity
 sockets.sendDeviceStatus = async function (device_id, device_status, status = false) {
-    console.log("send device status", device_id);
+    console.log("send device status", device_id, device_status);
     io.emit(Constants.DEVICE_STATUS + device_id, {
         device_id: device_id,
         status: status,
