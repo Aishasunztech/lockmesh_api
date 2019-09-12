@@ -24,6 +24,7 @@ exports.getAllowedComponents = async function (req, res) {
     }
 };
 
+
 exports.checkComponent = async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
     var verify = req.decoded;

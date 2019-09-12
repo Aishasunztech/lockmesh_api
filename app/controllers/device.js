@@ -1242,6 +1242,25 @@ exports.unflagDevice = async function (req, res) {
                             let sim_ids = await device_helpers.getSimids(resquery[0].id);
                             let chat_ids = await device_helpers.getChatids(resquery[0].id);
                             resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
+
+
+                            let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id);
+                            if (loginHistoryData[0] && loginHistoryData[0].created_at) {
+                                resquery[0].lastOnline = loginHistoryData[0].created_at
+                            } else {
+                                resquery[0].lastOnline = "N/A"
+                            }
+                            let remainTermDays = "N/A"
+    
+                            if (resquery[0].expiry_date !== null) {
+                                let startDate = moment(new Date())
+                                let expiray_date = new Date(resquery[0].expiry_date)
+                                let endDate = moment(expiray_date)
+                                remainTermDays = endDate.diff(startDate, 'days')
+                            }
+                            resquery[0].remainTermDays = remainTermDays
+
+
                             if (pgp_emails[0] && pgp_emails[0].pgp_email) {
                                 resquery[0].pgp_email = pgp_emails[0].pgp_email
                             } else {
@@ -1277,7 +1296,7 @@ exports.unflagDevice = async function (req, res) {
                             sockets.sendDeviceStatus(resquery[0].device_id, msgStatus, status);
                             device_helpers.saveActionHistory(resquery[0], constants.DEVICE_UNFLAGGED)
                             data = {
-                                // "data": resquery[0],
+                                "data": resquery[0],
                                 status: true,
                                 msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_UNFLAG_SUCC], "Device Unflagged successfully"), // Device Unflagged successfully.
                             }
@@ -1339,6 +1358,24 @@ exports.flagDevice = async function (req, res) {
                         let sim_ids = await device_helpers.getSimids(resquery[0].id);
                         let chat_ids = await device_helpers.getChatids(resquery[0].id);
                         resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
+
+                        let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id);
+                        if (loginHistoryData[0] && loginHistoryData[0].created_at) {
+                            resquery[0].lastOnline = loginHistoryData[0].created_at
+                        } else {
+                            resquery[0].lastOnline = "N/A"
+                        }
+                        let remainTermDays = "N/A"
+
+                        if (resquery[0].expiry_date !== null) {
+                            let startDate = moment(new Date())
+                            let expiray_date = new Date(resquery[0].expiry_date)
+                            let endDate = moment(expiray_date)
+                            remainTermDays = endDate.diff(startDate, 'days')
+                        }
+                        resquery[0].remainTermDays = remainTermDays
+
+
                         if (pgp_emails[0] && pgp_emails[0].pgp_email) {
                             resquery[0].pgp_email = pgp_emails[0].pgp_email
                         } else {
