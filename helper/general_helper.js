@@ -978,24 +978,19 @@ module.exports = {
 		}
 	},
 	// Get Dealer Id by link code or activation code
-	getDealerIdByLinkOrActivation: async function (code) {
-		let query =
-			"SELECT dealer_id FROM dealers WHERE link_code ='" + code + "' ";
+	getDealerIDByLinkOrActivation: async function (code) {
+		let query = "";
+		if (code.length <= 6) {
+			query = `SELECT dealer_id FROM dealers WHERE link_code ='${code}' `;
+		} else if (code.length >= 7) {
+			query = `SELECT dealer_id FROM usr_acc WHERE activation_code ='${code}' `;
+		}
+
 		let result = await sql.query(query);
 		if (result.length) {
 			return result[0].dealer_id;
-		} else {
-			let query =
-				"SELECT dealer_id FROM usr_acc WHERE activation_code ='" +
-				code +
-				"'";
-			let result = await sql.query(query);
-			if (result.length) {
-				return result[0].dealer_id;
-			} else {
-				return null;
-			}
 		}
+		return null;
 	},
 
 	getDealerByDealerId: async function (id) {
