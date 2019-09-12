@@ -22,7 +22,7 @@ exports.getAllUsers = async function (req, res) {
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
         if (verify.user.user_type == ADMIN) {
-            var role = await helpers.getuserTypeIdByName(verify.user.user_type);
+            var role = await helpers.getUserTypeIDByName(verify.user.user_type);
             let results = await sql.query("select * from users where del_status =0 order by created_at DESC")
             if (results.length) {
                 for (let i = 0; i < results.length; i++) {

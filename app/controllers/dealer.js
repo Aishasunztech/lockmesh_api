@@ -30,7 +30,7 @@ exports.getAllDealers = async function (req, res) {
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
 
-        var role = await general_helpers.getuserTypeIdByName(verify.user.user_type);
+        var role = await general_helpers.getUserTypeIDByName(verify.user.user_type);
         if (verify.user.user_type == constants.ADMIN) {
 
             sql.query(`SELECT * FROM dealers WHERE type!=${role} AND type != 4 AND type !=5 ORDER BY created DESC`, async function (error, results) {

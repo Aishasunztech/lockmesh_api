@@ -499,7 +499,7 @@ module.exports = {
 			return "N/A";
 		}
 	},
-	getuserTypeIdByName: async function (userType) {
+	getUserTypeIDByName: async function (userType) {
 		// console.log(userType);
 		var query = "SELECT * FROM user_roles where role ='" + userType + "'";
 		var dType = await sql.query(query);
