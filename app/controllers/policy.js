@@ -209,7 +209,7 @@ exports.checkPolicyName = async function (req, res) {
         try {
             let policy_name = req.body.name !== undefined ? req.body.name : null;
             let policy_id = req.body.policy_id;
-            console.log(policy_id, 'policy id is')
+            // console.log(policy_id, 'policy id is')
             let loggedDealerId = verify.user.id;
             let loggedDealerType = verify.user.user_type;
             let connectedDealer = verify.user.connected_dealer;
@@ -268,7 +268,7 @@ exports.changePolicyStatus = async function (req, res) {
 
     if (verify) {
         let id = req.body.id;
-        let value = req.body.value == true ? 1 : 0;
+        let value = req.body.value == true || req.body.value == 1 ? 1 : 0;
         let key = req.body.key;
 
         let query = "UPDATE policy SET " + key + " = '" + value + "' WHERE id='" + id + "'";
@@ -280,7 +280,7 @@ exports.changePolicyStatus = async function (req, res) {
                 console.log(error);
             }
             // console.log(result, 'relstsdf')
-            if (result.affectedRows) {
+            if (result && result.affectedRows) {
                 data = {
                     status: true,
                     msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "successful"), // successful'
