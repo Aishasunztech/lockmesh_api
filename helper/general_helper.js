@@ -354,7 +354,7 @@ module.exports = {
 		}
 	},
 
-	getAllRecordbyDealerId: async function (dealer_id) {
+	getAllRecordByDealerID: async function (dealer_id) {
 		// console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.id = ' + device_id)
 		let results = await sql.query(
 			"select devices.*  ," +
@@ -394,7 +394,7 @@ module.exports = {
 		}
 	},
 
-	genrateLinkCode: async function () {
+	generateLinkCode: async function () {
 		let link_code = randomize("0", 1, { exclude: "0" }) + randomize("0", 5);
 		link_code = this.replaceAt(
 			link_code,
@@ -404,7 +404,7 @@ module.exports = {
 		let query = `SELECT link_code FROM dealers WHERE link_code = '${link_code}' `;
 		let result = await sql.query(query);
 		if (result.length > 1) {
-			link_code = this.genrateLinkCode();
+			link_code = this.generateLinkCode();
 		}
 		return link_code;
 	},

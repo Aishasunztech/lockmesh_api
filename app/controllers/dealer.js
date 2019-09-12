@@ -163,7 +163,7 @@ exports.getDealers = async function (req, res) {
                         created: results[i].created,
                         modified: results[i].modified,
                         connected_devices: get_connected_devices,
-                        devicesList: await general_helpers.getAllRecordbyDealerId(results[i].dealer_id)
+                        devicesList: await general_helpers.getAllRecordByDealerID(results[i].dealer_id)
                     };
 
                     if (get_parent_dealer != undefined && get_parent_dealer.length > 0) {
@@ -224,7 +224,7 @@ exports.addDealer = async function (req, res) {
 
             /* var link_code = randomize('0', 6);
             link_code = await general_helpers.checkLinkCode(link_code); */
-            var link_code = await general_helpers.genrateLinkCode();
+            var link_code = await general_helpers.generateLinkCode();
 
             var type = await general_helpers.getDealerTypeIdByName(pageType);
 
