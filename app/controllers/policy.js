@@ -34,7 +34,7 @@ exports.getPolicies = async function (req, res) {
                 let query = "SELECT * FROM policy where delete_status=0";
                 sql.query(query, async (error, results) => {
                     if (results.length) {
-                        let adminRoleId = await helpers.getuserTypeIdByName(app_Constants.ADMIN);
+                        let adminRoleId = await helpers.getUserTypeIDByName(app_Constants.ADMIN);
                         let dealerCount = await helpers.dealerCount(adminRoleId);
 
                         for (var i = 0; i < results.length; i++) {
@@ -111,7 +111,7 @@ exports.getPolicies = async function (req, res) {
                     }
                     if (results.length > 0) {
                         // console.log(results);
-                        let dealerRole = await helpers.getuserTypeIdByName(app_Constants.DEALER);
+                        let dealerRole = await helpers.getUserTypeIDByName(app_Constants.DEALER);
                         let default_policy = await sql.query("SELECT * from default_policies WHERE dealer_id = '" + userId + "'")
                         let default_policy_id = (default_policy.length) ? default_policy[0].policy_id : null
 

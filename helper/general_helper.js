@@ -354,7 +354,7 @@ module.exports = {
 		}
 	},
 
-	getAllRecordbyDealerId: async function (dealer_id) {
+	getAllRecordByDealerID: async function (dealer_id) {
 		// console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.id = ' + device_id)
 		let results = await sql.query(
 			"select devices.*  ," +
@@ -394,7 +394,7 @@ module.exports = {
 		}
 	},
 
-	genrateLinkCode: async function () {
+	generateLinkCode: async function () {
 		let link_code = randomize("0", 1, { exclude: "0" }) + randomize("0", 5);
 		link_code = this.replaceAt(
 			link_code,
@@ -404,7 +404,7 @@ module.exports = {
 		let query = `SELECT link_code FROM dealers WHERE link_code = '${link_code}' `;
 		let result = await sql.query(query);
 		if (result.length > 1) {
-			link_code = this.genrateLinkCode();
+			link_code = this.generateLinkCode();
 		}
 		return link_code;
 	},
@@ -499,7 +499,7 @@ module.exports = {
 			return "N/A";
 		}
 	},
-	getuserTypeIdByName: async function (userType) {
+	getUserTypeIDByName: async function (userType) {
 		// console.log(userType);
 		var query = "SELECT * FROM user_roles where role ='" + userType + "'";
 		var dType = await sql.query(query);
@@ -978,24 +978,19 @@ module.exports = {
 		}
 	},
 	// Get Dealer Id by link code or activation code
-	getDealerIdByLinkOrActivation: async function (code) {
-		let query =
-			"SELECT dealer_id FROM dealers WHERE link_code ='" + code + "' ";
+	getDealerIDByLinkOrActivation: async function (code) {
+		let query = "";
+		if (code.length <= 6) {
+			query = `SELECT dealer_id FROM dealers WHERE link_code ='${code}' `;
+		} else if (code.length >= 7) {
+			query = `SELECT dealer_id FROM usr_acc WHERE activation_code ='${code}' `;
+		}
+
 		let result = await sql.query(query);
 		if (result.length) {
 			return result[0].dealer_id;
-		} else {
-			let query =
-				"SELECT dealer_id FROM usr_acc WHERE activation_code ='" +
-				code +
-				"'";
-			let result = await sql.query(query);
-			if (result.length) {
-				return result[0].dealer_id;
-			} else {
-				return null;
-			}
 		}
+		return null;
 	},
 
 	getDealerByDealerId: async function (id) {

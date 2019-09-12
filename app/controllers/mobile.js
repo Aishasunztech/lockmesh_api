@@ -1515,7 +1515,7 @@ exports.adminSMAppList = async function (req, res) {
 exports.SMAppList = async function (req, res) {
     let data = [];
 
-    let dealer_id = await helpers.getDealerIdByLinkOrActivation(req.params.linkCode)
+    let dealer_id = await helpers.getDealerIDByLinkOrActivation(req.params.linkCode)
 
     if (dealer_id) {
         sql.query("SELECT apk_details.*, secure_market_apps.is_restrict_uninstall from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id WHERE apk_details.delete_status = 0 AND (secure_market_apps.dealer_id = '" + dealer_id + "' OR dealer_type = 'admin')", function (err, results) {

@@ -27,7 +27,7 @@ exports.apkList = async function (req, res) {
 
                 if (results.length > 0) {
 
-                    let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                    let adminRoleId = await helpers.getUserTypeIDByName(Constants.ADMIN);
                     let dealerCount = await helpers.dealerCount(adminRoleId);
                     // console.log("dealer count", dealerCount)
                     for (var i = 0; i < results.length; i++) {
@@ -848,7 +848,7 @@ exports.saveApkPermission = async function (req, res) {
                         console.log("Verify user id", verify.user.user_type);
                         if (verify.user.user_type === Constants.ADMIN) {
                             if (permission !== undefined && permission !== null && permission !== '[]') {
-                                let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                                let adminRoleId = await helpers.getUserTypeIDByName(Constants.ADMIN);
                                 let dealerCount = await helpers.dealerCount(adminRoleId);
                                 permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
 
@@ -933,7 +933,7 @@ exports.saveApkPermission = async function (req, res) {
                         console.log("Verify user id", verify.user.user_type);
                         if (verify.user.user_type === Constants.ADMIN) {
                             if (permission !== undefined && permission !== null && permission !== '[]') {
-                                let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                                let adminRoleId = await helpers.getUserTypeIDByName(Constants.ADMIN);
                                 let dealerCount = await helpers.dealerCount(adminRoleId);
                                 permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
 
@@ -1030,7 +1030,7 @@ exports.savePolicyPermissions = async function (req, res) {
                         // console.log("Verify user id", verify.user.user_type);
                         if (verify.user.user_type === Constants.ADMIN) {
                             if (permission !== undefined && permission !== null && permission !== '[]') {
-                                let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                                let adminRoleId = await helpers.getUserTypeIDByName(Constants.ADMIN);
                                 let dealerCount = await helpers.dealerCount(adminRoleId);
                                 console.log('amdin add all', permission.length, dealerCount)
                                 permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
@@ -1118,7 +1118,7 @@ exports.savePolicyPermissions = async function (req, res) {
                         console.log("Verify user id", verify.user.user_type);
                         if (verify.user.user_type === Constants.ADMIN) {
                             if (permission !== undefined && permission !== null && permission !== '[]') {
-                                let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                                let adminRoleId = await helpers.getUserTypeIDByName(Constants.ADMIN);
                                 let dealerCount = await helpers.dealerCount(adminRoleId);
                                 permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
 
