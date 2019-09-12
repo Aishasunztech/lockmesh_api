@@ -104,7 +104,8 @@ exports.devices = async function (req, res) {
                         if (chat_id) {
                             results[i].chat_id = chat_id.chat_id
                         }
-                        let lastOnline = loginHistoryData.find(record => record.device_id === results[i].usr_device_id);
+                        let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
+                        console.log(lastOnline);
                         if (lastOnline) {
                             results[i].lastOnline = lastOnline.created_at
                         }
@@ -952,7 +953,7 @@ exports.editDevices = async function (req, res) {
                                     else {
                                         rsltq[0].chat_id = "N/A"
                                     }
-                                    if (loginHistoryData[0] && loginHistoryData.lastOnline) {
+                                    if (loginHistoryData[0] && loginHistoryData.created_at) {
                                         rsltq[0].lastOnline = loginHistoryData[0].created_at
                                     }
                                     else {
@@ -2838,8 +2839,6 @@ exports.connectDevice = async function (req, res) {
                             results[0].lastOnline = "N/A"
                         }
                         let device_data = results[0]
-
-
                         let startDate = moment(new Date())
                         let expiray_date = new Date(device_data.expiry_date)
                         let endDate = moment(expiray_date)
@@ -2905,11 +2904,11 @@ exports.getAppsOfDevice = async function (req, res) {
                             msg: ''
                         });
                     }
-                    
+
                     let settings = [];
                     let Extension = [];
                     let onlyApps = [];
-                    
+
                     // Applications rendering
                     for (let item of apps) {
 
@@ -2924,7 +2923,7 @@ exports.getAppsOfDevice = async function (req, res) {
                         }
                     }
 
-                    
+
                     // Extensions rendering
                     let newExtlist = [];
                     for (let ext of Extension) {
