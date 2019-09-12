@@ -137,7 +137,7 @@ exports.getFilteredBulkDevices = async function (req, res) {
                             if (chat_id) {
                                 results[i].chat_id = chat_id.chat_id
                             }
-                            let lastOnline = loginHistoryData.find(record => record.device_id === results[i].usr_device_id);
+                            let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
                             if (lastOnline) {
                                 results[i].lastOnline = lastOnline.created_at
                             }
