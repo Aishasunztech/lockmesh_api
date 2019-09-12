@@ -358,7 +358,7 @@ router.post('/linkdevice', async function (req, resp) {
                         if (deviceCheckResponse[0].dealer_id == dId) {
                             let currentDate = moment(new Date()).format("YYYY/MM/DD")
                             if (deviceCheckResponse[0].expiry_date > currentDate) {
-                                var sql1 = `UPDATE  usr_acc SET unlink_status = 0, device_status = 1 where device_id=${deviceCheckResponse[0].usr_device_id}`;
+                                var sql1 = `UPDATE  usr_acc SET unlink_status = 0, device_status = 0, pending_services=1 WHERE device_id=${deviceCheckResponse[0].usr_device_id}`;
                                 await sql.query(sql1)
                                 resp.send({
                                     status: true,

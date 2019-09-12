@@ -453,35 +453,26 @@ module.exports = {
         if ((device.unlink_status === '1' || device.unlink_status === 1) && (device.device_status === 0 || device.device_status === '0')) {
             // status = 'Unlinked';
             status = Constants.DEVICE_UNLINKED;
-        }
-        else if (device.transfer_status == 1 && device.account_status === 'suspended' && device.flagged !== 'Not flagged') {
+        } else if (device.transfer_status == 1 && device.account_status === 'suspended' && device.flagged !== 'Not flagged') {
             status = Constants.DEVICE_TRANSFERED
-        }
-        else if (device.transfer_status == 0 && device.account_status === 'suspended' && device.flagged != 'Not flagged') {
+        } else if (device.transfer_status == 0 && device.account_status === 'suspended' && device.flagged != 'Not flagged') {
             status = Constants.DEVICE_FLAGGED
-        }
-        else if (device.status === 'active' && (device.account_status === '' || device.account_status === null) && device.unlink_status === 0 && (device.device_status === 1 || device.device_status === '1')) {
+        } else if (device.status === 'active' && (device.account_status === '' || device.account_status === null) && device.unlink_status === 0 && (device.device_status === 1 || device.device_status === '1')) {
             status = Constants.DEVICE_ACTIVATED
-        }
-        else if (device.status === 'trial' && (device.account_status === '' || device.account_status === null) && device.unlink_status === 0 && (device.device_status === 1 || device.device_status === '1')) {
+        } else if (device.status === 'trial' && (device.account_status === '' || device.account_status === null) && device.unlink_status === 0 && (device.device_status === 1 || device.device_status === '1')) {
             status = Constants.DEVICE_TRIAL
-        }
-        else if (device.status === 'expired') {
+        } else if (device.status === 'expired') {
             // status = 'Expired';
             status = Constants.DEVICE_EXPIRED;
-        }
-        else if ((device.device_status === '0' || device.device_status === 0) && (device.unlink_status === '0' || device.unlink_status === 0) && (device.activation_status === null || device.activation_status === '')) {
+        } else if ((device.device_status === '0' || device.device_status === 0) && (device.unlink_status === '0' || device.unlink_status === 0) && (device.activation_status === null || device.activation_status === '')) {
             // status = 'Pending activation';
             status = Constants.DEVICE_PENDING_ACTIVATION;
-        }
-        else if ((device.device_status === '0' || device.device_status === 0) && (device.unlink_status === '0' || device.unlink_status === 0) && (device.activation_status === 0)) {
+        } else if ((device.device_status === '0' || device.device_status === 0) && (device.unlink_status === '0' || device.unlink_status === 0) && (device.activation_status === 0)) {
             status = Constants.DEVICE_PRE_ACTIVATION;
-        }
-        else if (device.account_status === 'suspended') {
+        } else if (device.account_status === 'suspended') {
             // status = 'Suspended';
             status = Constants.DEVICE_SUSPENDED;
-        }
-        else {
+        } else {
             status = 'N/A';
         }
         return status;
