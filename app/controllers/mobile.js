@@ -1431,7 +1431,7 @@ exports.checkForUpdate = async (req, res) => {
 exports.getUpdate = async (req, res) => {
     // let verify = await verifyToken(req, res);
     // if (verify.status) {
-    if (fs.existsSync(path.join(__dirname, "../uploads/" + req.params.apk + '.apk'))) {
+    if (fs.existsSync(path.join(__dirname, "../../uploads/" + req.params.apk + '.apk'))) {
         let file = path.join(__dirname, "../uploads/" + req.params.apk + '.apk');
         let fileMimeType = mime.getType(file);
         let filetypes = /jpeg|jpg|apk|png/;
