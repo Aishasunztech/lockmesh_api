@@ -1261,6 +1261,20 @@ exports.unflagDevice = async function (req, res) {
                             // dealerData = await getDealerdata(res[i]);
                             resquery[0]["transfered_from"] = null;
                             resquery[0]["transfered_to"] = null;
+
+                            let msgStatus = "";
+                            let status = false;
+
+                            if (resquery[0].finalStatus == constants.DEVICE_SUSPENDED) {
+                                msgStatus = "suspended";
+                            } else if (resquery[0].finalStatus == constants.DEVICE_ACTIVATED || resquery[0].finalStatus == constants.DEVICE_TRIAL) {
+                                msgStatus = "active";
+                                status = true;
+                            }
+                            // else if (resquery[0].finalStatus == constants.DEVICE_EXPIRED) {
+                            //     status = "Expired";
+                            // }
+                            sockets.sendDeviceStatus(resquery[0].device_id, msgStatus, status);
                             device_helpers.saveActionHistory(resquery[0], constants.DEVICE_UNFLAGGED)
                             data = {
                                 // "data": resquery[0],
@@ -1309,10 +1323,8 @@ exports.flagDevice = async function (req, res) {
             if (gtres[0].flagged === '' || gtres[0].flagged === 'null' || gtres[0].flagged === null || gtres[0].flagged === 'Not flagged') {
                 var sql1 = `update devices set flagged='${option}' where id = '${device_id}'`;
                 console.log(sql1);
-                await sql.query(sql1)
-                var sql1 = "update usr_acc set account_status='suspended' where device_id = '" + device_id + "'";
-
                 let results = await sql.query(sql1)
+
                 if (results.affectedRows == 0) {
                     data = {
                         status: false,
@@ -1322,8 +1334,6 @@ exports.flagDevice = async function (req, res) {
                     sockets.sendDeviceStatus(gtres[0].device_id, "flagged");
 
                     let resquery = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE devices.reject_status = 0 AND devices.id= "' + device_id + '"')
-                    // console.log('lolo else', resquery)
-                    // console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"');
                     if (resquery.length) {
                         let pgp_emails = await device_helpers.getPgpEmails(resquery[0].id);
                         let sim_ids = await device_helpers.getSimids(resquery[0].id);
@@ -1355,7 +1365,6 @@ exports.flagDevice = async function (req, res) {
                             status: true,
                             msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_FLAG_SUCC], "Device Flagged successfully"), // Device Flagged successfully."
                         }
-                        // sockets.deviceFlagged(device_id, "This Device Flagged Successfully");
                         res.send(data);
                     }
                 }
