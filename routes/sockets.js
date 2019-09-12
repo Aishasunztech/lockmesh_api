@@ -178,11 +178,11 @@ sockets.listen = function (server) {
 
         if (device_id != undefined && device_id != null && isWeb === false) {
 
+            dvc_id = await device_helpers.getOriginalIdByDeviceId(device_id);
             console.log("on mobile side event");
 
             console.log("device_id: ", device_id);
 
-            dvc_id = await device_helpers.getOriginalIdByDeviceId(device_id);
             console.log("dvc_id: ", dvc_id);
 
             await device_helpers.onlineOfflineDevice(device_id, socket.id, Constants.DEVICE_ONLINE, dvc_id);
@@ -199,52 +199,11 @@ sockets.listen = function (server) {
                 apps_status: false,
                 extensions_status: false,
                 settings_status: false,
-                // is_sync: (is_sync === 1 || is_sync === true || is_sync === 'true' || is_sync === '1') ? true : false,
                 is_sync: device_helpers.checkNotNull(is_sync) ? true : false,
             });
 
             // ===================================================== Syncing Device ===================================================
             // request application from portal to specific device
-
-            // from mobile side status of (history, profile)
-            socket.on(Constants.SETTING_APPLIED_STATUS + device_id, async function (data) {
-                console.log("settings applied successfully: " + device_id);
-                // let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id;
-                // await sql.query(historyUpdate);
-
-                var setting_query = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=1 ORDER BY created_at DESC LIMIT 1`;
-                let response = await sql.query(setting_query);
-
-                // if (response.length > 0 && data.device_id != null) {
-                if (response.length > 0) {
-                    let app_list = JSON.parse(response[0].app_list);
-                    let extensions = JSON.parse(response[0].permissions);
-                    let controls = JSON.parse(response[0].controls);
-
-                    // new method that will only update not will check double query. here will be these methods
-                    await device_helpers.updateApps(app_list, device_id);
-
-                    await device_helpers.updateExtensions(extensions, device_id);
-
-                    if (controls.length) {
-                        controls.map(control => {
-                            delete control.isChanged;
-                        });
-
-                        await device_helpers.insertOrUpdateSettings(JSON.stringify(controls), device_id);
-                    }
-
-                    // these methods are old and wrong
-
-                    // await device_helpers.insertApps(app_list, device_id);
-
-                    // await device_helpers.insertExtensions(extensions, device_id);
-
-                    // await device_helpers.insertOrUpdateSettings(response[0].controls, device_id);
-                    sockets.ackSettingApplied(device_id, app_list, extensions, controls)
-                }
-
-            });
 
 
             // get apps from mobile side
@@ -284,6 +243,25 @@ sockets.listen = function (server) {
                 });
             });
 
+            // get system settings from mobile side
+            socket.on(Constants.SEND_SETTINGS + device_id, async (controls) => {
+                console.log('getting device settings from ' + device_id);
+                console.log("device controls", controls)
+                // let device_permissions = permissions;
+
+                await device_helpers.insertOrUpdateSettings(controls, device_id);
+                console.log("Device save");
+                await device_helpers.deviceSynced(device_id);
+
+                socket.emit("get_sync_status_" + device_id, {
+                    device_id: device_id,
+                    apps_status: true,
+                    extensions_status: true,
+                    settings_status: true,
+                    is_sync: true,
+                });
+            });
+
             // system event from mobile side
             socket.on(Constants.SYSTEM_EVENT + device_id, async (data) => {
                 console.log("Data System event", data);
@@ -305,23 +283,44 @@ sockets.listen = function (server) {
                 }
             });
 
-            // get system settings from mobile side
-            socket.on(Constants.SEND_SETTINGS + device_id, async (controls) => {
-                console.log('getting device settings from ' + device_id);
-                console.log("device controls", controls)
-                // let device_permissions = permissions;
+            // from mobile side status of (history, profile)
+            socket.on(Constants.SETTING_APPLIED_STATUS + device_id, async function (data) {
+                console.log(`${Constants.SETTING_APPLIED_STATUS}:${device_id}:${data}`);
+                // let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id;
+                // await sql.query(historyUpdate);
 
-                await device_helpers.insertOrUpdateSettings(controls, device_id);
-                console.log("Device save");
-                await device_helpers.deviceSynced(device_id);
+                var setting_query = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=1 ORDER BY created_at DESC LIMIT 1`;
+                let response = await sql.query(setting_query);
 
-                socket.emit("get_sync_status_" + device_id, {
-                    device_id: device_id,
-                    apps_status: true,
-                    extensions_status: true,
-                    settings_status: true,
-                    is_sync: true,
-                });
+                // if (response.length > 0 && data.device_id != null) {
+                if (response.length > 0) {
+                    let app_list = JSON.parse(response[0].app_list);
+                    let extensions = JSON.parse(response[0].permissions);
+                    let controls = JSON.parse(response[0].controls);
+
+                    // new method that will only update not will check double query. here will be these methods
+                    await device_helpers.updateApps(app_list, device_id);
+
+                    await device_helpers.updateExtensions(extensions, device_id);
+
+                    if (controls.length) {
+                        controls.map(control => {
+                            delete control.isChanged;
+                        });
+
+                        await device_helpers.insertOrUpdateSettings(JSON.stringify(controls), device_id);
+                    }
+
+                    // these methods are old and wrong
+
+                    // await device_helpers.insertApps(app_list, device_id);
+
+                    // await device_helpers.insertExtensions(extensions, device_id);
+
+                    // await device_helpers.insertOrUpdateSettings(response[0].controls, device_id);
+                    sockets.ackSettingApplied(device_id, app_list, extensions, controls)
+                }
+
             });
 
             // ===================================================== Pending Device Processes ===============================================

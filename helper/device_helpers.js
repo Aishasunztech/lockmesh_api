@@ -28,7 +28,7 @@ module.exports = {
         }
 
         let res = await sql.query(query);
-        if (res) {
+        if (res.length) {
             if (PK_DeviceID) {
                 query = `SELECT dvc.id, dvc.device_id, dvc.session_id, dvc.ip_address, dvc.mac_address, usr_acc.dealer_id FROM devices AS dvc LEFT JOIN usr_acc ON(usr_acc.device_id = dvc.id) WHERE dvc.id = ${PK_DeviceID}`;
                 let loginDevice = await sql.query(query);
