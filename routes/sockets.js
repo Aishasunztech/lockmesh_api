@@ -733,7 +733,9 @@ sockets.listen = function (server) {
             socket.on(Constants.RECV_SIM + device_id, async function (response) {
                 console.log('===== RECV_SIM =========> ', response);
                 // return;
+
                 sockets.updateSimRecord(device_id, response, socket);
+
             })
 
 
@@ -877,6 +879,7 @@ sockets.updateSimRecord = async function (device_id, response, socket = null) {
     if (response && arr && device_id) {
 
         if (response.action == "sim_new_device") {
+
             let iccids = [];
 
             if (arr.length) {
@@ -910,6 +913,14 @@ sockets.updateSimRecord = async function (device_id, response, socket = null) {
                 let dQry = `UPDATE sims SET del='1' WHERE device_id = '${device_id}'`;
                 await sql.query(dQry);
             }
+
+            io.emit(Constants.GET_SYNC_STATUS + device_id, {
+                device_id: device_id,
+                apps_status: false,
+                extensions_status: false,
+                settings_status: false,
+                is_sync: false,
+            });
 
         } else if (response.action == "sim_inserted") {
             console.log('console for sim_inserted ');
