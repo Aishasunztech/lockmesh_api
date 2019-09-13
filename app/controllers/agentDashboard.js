@@ -112,6 +112,7 @@ exports.devices = async function (req, res) {
             for (let device of finalResult) {
 
                 device.account_email = checkValue(device.account_email)
+                device.firmware_info = checkValue(device.firmware_info)
                 device.account_name = checkValue(device.account_name)
                 device.account_status = checkValue(device.account_status)
                 device.activation_code = checkValue(device.activation_code)

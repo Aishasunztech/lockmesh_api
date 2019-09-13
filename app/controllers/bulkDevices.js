@@ -173,6 +173,7 @@ exports.getFilteredBulkDevices = async function (req, res) {
                         let remainTermDays = endDate.diff(startDate, 'days')
                         device.remainTermDays = remainTermDays
                         device.account_email = checkValue(device.account_email);
+                        device.firmware_info = checkValue(device.firmware_info);
                         device.account_name = checkValue(device.account_name);
                         device.account_status = checkValue(device.account_status);
                         device.activation_code = checkValue(device.activation_code);
