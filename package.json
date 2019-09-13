@@ -1,5 +1,5 @@
 {
-  "name": "lockmesh",
+  "name": "lockmesh_server",
   "version": "4.1.0",
   "private": true,
   "scripts": {
