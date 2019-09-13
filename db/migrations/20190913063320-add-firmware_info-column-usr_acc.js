@@ -12,6 +12,5 @@ module.exports = {
   },
 
   down: (queryInterface, Sequelize) => {
-    queryInterface.removeColumn('usr_acc', 'firmware_info');
   }
 };
