@@ -290,16 +290,26 @@ sockets.listen = function (server) {
                 if (data.action === "type_version") {
 
                     let type = data.object.type;
-
                     let version = data.object.version;
-                    console.log(`UPDATE usr_acc set type = '${type}' , version = '${version}' where id = ${user_acc_id}`);
-                    sql.query(`UPDATE usr_acc set type = '${type}' , version = '${version}' where id = ${user_acc_id}`, function (err, result) {
+                    let firmware_info = data.object.firmware_info;
+
+                    console.log(`UPDATE usr_acc set type = '${type}' , version = '${version}' , firmware_info = '${firmware_info}'  where id = ${user_acc_id}`);
+                    sql.query(`UPDATE usr_acc set type = '${type}' , version = '${version}' , firmware_info = '${firmware_info}' where id = ${user_acc_id}`, function (err, result) {
                         if (err) {
                             console.log("Type And version Not changed");
+                            socket.emit(Constants.SYSTEM_EVENT + device_id, {
+                                action: "type_version",
+                                status: false
+                            });
                         }
                         if (result.affectedRows > 0) {
-
                             console.log("Type And version changed Successfully");
+                            socket.emit(Constants.SYSTEM_EVENT + device_id, {
+                                device_id: device_id,
+                                action: "type_version",
+                                status: true
+                            });
+
                         }
                     })
                 }

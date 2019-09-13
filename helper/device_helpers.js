@@ -531,7 +531,6 @@ module.exports = {
      * String usr_device_ids of usr_acc table
      */
     getLastLoginDetail: async (ids) => {
-        console.log(ids);
         let query = `SELECT MAX(created_at) as created_at, device_id FROM login_history WHERE device_id IN (${ids}) GROUP BY device_id ORDER BY created_at DESC  `;
         let results = await sql.query(query);
         if (results.length) {

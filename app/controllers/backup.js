@@ -79,6 +79,7 @@ exports.createBackupDB = async function (req, res) {
                 dealer_id: checkValue(device.dealer_id),
                 dealer_name: checkValue(device.dealer_name),
                 account_email: checkValue(device.account_email),
+                firmware_info: checkValue(device.firmware_info),
                 account_name: checkValue(device.account_name),
                 model: checkValue(device.model),
                 link_code: checkValue(device.link_code),

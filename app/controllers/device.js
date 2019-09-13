@@ -105,7 +105,6 @@ exports.devices = async function (req, res) {
                             results[i].chat_id = chat_id.chat_id
                         }
                         let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
-                        console.log(lastOnline);
                         if (lastOnline) {
                             results[i].lastOnline = lastOnline.created_at
                         }
@@ -132,6 +131,7 @@ exports.devices = async function (req, res) {
                         }
                         device.remainTermDays = remainTermDays
                         device.account_email = checkValue(device.account_email);
+                        device.firmware_info = checkValue(device.firmware_info);
                         device.account_name = checkValue(device.account_name);
                         device.account_status = checkValue(device.account_status);
                         device.activation_code = checkValue(device.activation_code);
@@ -1251,7 +1251,7 @@ exports.unflagDevice = async function (req, res) {
                                 resquery[0].lastOnline = "N/A"
                             }
                             let remainTermDays = "N/A"
-    
+
                             if (resquery[0].expiry_date !== null) {
                                 let startDate = moment(new Date())
                                 let expiray_date = new Date(resquery[0].expiry_date)
