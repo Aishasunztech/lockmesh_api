@@ -3106,7 +3106,7 @@ exports.applySettings = async function (req, res) {
             if (type == "profile") {
                 applyQuery = `INSERT INTO device_history (device_id, dealer_id, user_acc_id, profile_name, app_list, passwords, controls, permissions, type) VALUES ('${device_id}', ${dealer_id}, ${usrAccId}, '${device_setting.name}' , '${app_list}', '${passwords}', '${controls}', '${subExtensions}', 'profile')`;
             } else {
-                applyQuery = `INSERT INTO device_history (device_id, dealer_id, user_acc_id, app_list, passwords, controls, permissions) VALUES ('${device_id}', ${dealer_id}, ${usrAccId}, '${app_list}', '${passwords}', '${controls}', '${subExtensions}')`;
+                applyQuery = `INSERT INTO device_history (device_id, dealer_id, user_acc_id, app_list, passwords, controls, permissions, type) VALUES ('${device_id}', ${dealer_id}, ${usrAccId}, '${app_list}', '${passwords}', '${controls}', '${subExtensions}', '${type}')`;
             }
 
             sql.query(applyQuery, async function (err, rslts) {

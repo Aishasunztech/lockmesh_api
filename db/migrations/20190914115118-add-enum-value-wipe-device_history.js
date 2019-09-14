@@ -5,7 +5,8 @@ module.exports = {
     return queryInterface.changeColumn('device_history', 'type', {
       type: Sequelize.ENUM(
         'push_apps', 'pull_apps', 'history', 'imei', 'policy', 'force_update', 'profile', 'password', 'wipe'
-      )
+      ),
+      defaultValue: 'history'
     },
     )
   },
