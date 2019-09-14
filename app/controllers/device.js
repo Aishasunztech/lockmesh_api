@@ -360,7 +360,7 @@ exports.acceptDevice = async function (req, res) {
                             return;
                         }
 
-                        if (success.length || checkDevicepgp.length) {
+                        if (success.length) {
                             res.send({
                                 status: false,
                                 msg: "PGP Email Already Used. Please use another pgp email to activate your account."
