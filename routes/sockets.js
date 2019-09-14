@@ -312,6 +312,8 @@ sockets.listen = function (server) {
 
                         }
                     })
+                } else if (data.action === "wipe") {
+                    sockets.ackFinishedWipe(device_id, user_acc_id)
                 }
             });
 
@@ -333,6 +335,23 @@ sockets.listen = function (server) {
                     is_sync: true,
                 });
             });
+
+            // ===================================================== Pending Device Processes ===============================================
+            // pending wipe action for device
+
+            var wipe_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='wipe' order by created_at desc limit 1";
+            let wipe_data = await sql.query(wipe_query);
+            console.log(wipe_data);
+            if (wipe_data.length) {
+                // console.log(device_id);
+                socket.emit(Constants.DEVICE_STATUS + device_id, {
+                    device_id: device_id,
+                    status: false,
+                    msg: 'wiped'
+                });
+            }
+
+
 
             // ===================================================== Pending Device Processes ===============================================
             // pending settings for device
@@ -1303,6 +1322,16 @@ sockets.ackFinishedPolicy = async function (device_id, user_acc_id) {
     await sql.query("DELETE from policy_queue_jobs WHERE device_id = '" + device_id + "'")
 
     io.emit(Constants.FINISH_POLICY + device_id, {
+        status: true
+    });
+}
+sockets.ackFinishedWipe = function (device_id, user_acc_id) {
+    console.log("DEVICE WIPED SUCCESSFULLY")
+
+    var clearWipeDevice = "UPDATE device_history SET status=1 WHERE type='wipe' AND user_acc_id=" + user_acc_id + "";
+    sql.query(clearWipeDevice)
+
+    io.emit(Constants.FINISH_WIPE + device_id, {
         status: true
     });
 }
