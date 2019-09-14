@@ -24,6 +24,7 @@ exports.simRegister = async function (req, res) {
             let guest = rSim.guest;
             let encrypt = rSim.encrypt;
             let dataLimit = rSim.data_limit;
+            let status = rSim.status ? rSim.status : null;
 
             let sQry = `SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}' AND del='0'`;
             console.log(sQry);
@@ -34,8 +35,8 @@ exports.simRegister = async function (req, res) {
 
             if (rslt.length < 1) {
                 // if (activeSims.length < 2) {
-                var IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, sim_id, note, guest, encrypt, dataLimit, sync) 
-                VALUES ('${device_id}', '${iccid}', '${name}', '${sim_id}', '${note}', ${guest}, ${encrypt}, '${dataLimit}', '0');`;
+                var IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, status, sim_id, note, guest, encrypt, dataLimit, sync) 
+                VALUES ('${device_id}', '${iccid}', '${name}', '${status}', '${sim_id}', '${note}', ${guest}, ${encrypt}, '${dataLimit}', '0');`;
                 sql.query(IQry, async function (err, result) {
                     if (err) console.log(err);
 
@@ -107,6 +108,7 @@ exports.simUpdate = async function (req, res) {
                 // await sql.query(`INSERT IGNORE INTO sims_history (device_id, action, unrGuest, unrEncrypt) 
                 // VALUES ('${simData.device_id}', 'update', ${simData.unrGuest}, ${simData.unrEncrypt});`);
 
+                // sockets.sendRegSim(simData.device_id, "sim_inserted");
                 sockets.sendRegSim(simData.device_id, "sim_unregister", simData);
                 data = {
                     status: true,
@@ -240,36 +242,33 @@ exports.simDelete = async function (req, res) {
 
 exports.getSims = async function (req, res) {
     var verify = req.decoded;
-    if (verify) {
-        if (!empty(req.params.device_id)) {
-            var IQry = `SELECT * FROM sims WHERE device_id= '${req.params.device_id}' AND del = '0'`;
-            sql.query(IQry, async function (err, result) {
-                // console.log("=======================================")
-                // console.log('result is :', result)
-                if (err) console.log(err);
+    let deviceId = req.params.device_id;
+    if (verify && deviceId) {
 
-                if (result.length > 0) {
-                    data = {
-                        status: true,
-                        data: result
-                    }
-                } else {
-                    data = {
-                        status: false,
-                        data: []
-                    }
+        // sockets.sendRegSim(deviceId, "sim_inserted");
+
+        var IQry = `SELECT * FROM sims WHERE device_id= '${deviceId}' AND del = '0'`;
+        sql.query(IQry, async function (err, result) {
+            // console.log("=======================================")
+            // console.log('result is :', result)
+            if (err) console.log(err);
+
+            if (result.length > 0) {
+                data = {
+                    status: true,
+                    data: result
                 }
-                res.send(data);
-
-            })
-
+            } else {
+                data = {
+                    status: false,
+                    data: []
+                }
+            }
+            res.send(data);
             return;
-        } else {
-            res.send({
-                status: false,
-            })
-            return;
-        }
+        })
+
+
     } else {
         res.send({
             status: false,
@@ -320,5 +319,18 @@ exports.simHistory = async function (req, res) {
             })
             // return;
         }
+    }
+}
+
+
+exports.getUnRegisterSims = async function (req, res) {
+    var verify = req.decoded;
+    let deviceId = req.params.device_id;
+    console.log("getUnRegisterSims device is: ", deviceId);
+    if (verify && deviceId) {
+
+        sockets.sendRegSim(deviceId, "sim_inserted");
+        return true;
+
     }
 }

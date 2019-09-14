@@ -7,7 +7,8 @@ let options = {
             title: 'LockMesh',
             version: '1.0',
         },
-        host: app_constants.HOST,
+        // host: app_constants.HOST,
+        host: 'localhost:3000',
         basePath: '/',
         produces: [
             "application/json"

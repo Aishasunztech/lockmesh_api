@@ -30,7 +30,7 @@ exports.getAllDealers = async function (req, res) {
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
 
-        var role = await general_helpers.getuserTypeIdByName(verify.user.user_type);
+        var role = await general_helpers.getUserTypeIDByName(verify.user.user_type);
         if (verify.user.user_type == constants.ADMIN) {
 
             sql.query(`SELECT * FROM dealers WHERE type!=${role} AND type != 4 AND type !=5 ORDER BY created DESC`, async function (error, results) {
@@ -163,7 +163,7 @@ exports.getDealers = async function (req, res) {
                         created: results[i].created,
                         modified: results[i].modified,
                         connected_devices: get_connected_devices,
-                        devicesList: await general_helpers.getAllRecordbyDealerId(results[i].dealer_id)
+                        devicesList: await general_helpers.getAllRecordByDealerID(results[i].dealer_id)
                     };
 
                     if (get_parent_dealer != undefined && get_parent_dealer.length > 0) {
@@ -224,7 +224,7 @@ exports.addDealer = async function (req, res) {
 
             /* var link_code = randomize('0', 6);
             link_code = await general_helpers.checkLinkCode(link_code); */
-            var link_code = await general_helpers.genrateLinkCode();
+            var link_code = await general_helpers.generateLinkCode();
 
             var type = await general_helpers.getDealerTypeIdByName(pageType);
 

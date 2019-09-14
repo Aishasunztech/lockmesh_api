@@ -34,7 +34,7 @@ exports.getPolicies = async function (req, res) {
                 let query = "SELECT * FROM policy where delete_status=0";
                 sql.query(query, async (error, results) => {
                     if (results.length) {
-                        let adminRoleId = await helpers.getuserTypeIdByName(app_Constants.ADMIN);
+                        let adminRoleId = await helpers.getUserTypeIDByName(app_Constants.ADMIN);
                         let dealerCount = await helpers.dealerCount(adminRoleId);
 
                         for (var i = 0; i < results.length; i++) {
@@ -111,7 +111,7 @@ exports.getPolicies = async function (req, res) {
                     }
                     if (results.length > 0) {
                         // console.log(results);
-                        let dealerRole = await helpers.getuserTypeIdByName(app_Constants.DEALER);
+                        let dealerRole = await helpers.getUserTypeIDByName(app_Constants.DEALER);
                         let default_policy = await sql.query("SELECT * from default_policies WHERE dealer_id = '" + userId + "'")
                         let default_policy_id = (default_policy.length) ? default_policy[0].policy_id : null
 
@@ -209,7 +209,7 @@ exports.checkPolicyName = async function (req, res) {
         try {
             let policy_name = req.body.name !== undefined ? req.body.name : null;
             let policy_id = req.body.policy_id;
-            console.log(policy_id, 'policy id is')
+            // console.log(policy_id, 'policy id is')
             let loggedDealerId = verify.user.id;
             let loggedDealerType = verify.user.user_type;
             let connectedDealer = verify.user.connected_dealer;
@@ -268,7 +268,7 @@ exports.changePolicyStatus = async function (req, res) {
 
     if (verify) {
         let id = req.body.id;
-        let value = req.body.value == true ? 1 : 0;
+        let value = req.body.value == true || req.body.value == 1 ? 1 : 0;
         let key = req.body.key;
 
         let query = "UPDATE policy SET " + key + " = '" + value + "' WHERE id='" + id + "'";
@@ -280,7 +280,7 @@ exports.changePolicyStatus = async function (req, res) {
                 console.log(error);
             }
             // console.log(result, 'relstsdf')
-            if (result.affectedRows) {
+            if (result && result.affectedRows) {
                 data = {
                     status: true,
                     msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "successful"), // successful'
@@ -350,7 +350,11 @@ exports.savePolicy = async function (req, res) {
                 let push_apps = null;
                 let app_list = null;
                 let secure_apps = null;
+                let system_permissions = [];
+
                 let pushAppFileSize = 0;
+
+                // push apps
                 if (policy.push_apps && policy.push_apps !== 'null' && policy.push_apps !== 'undefined') {
                     policy.push_apps.forEach((app) => {
                         app.guest = (app.guest !== undefined) ? app.guest : false;
@@ -362,6 +366,7 @@ exports.savePolicy = async function (req, res) {
                     push_apps = JSON.stringify(policy.push_apps);
                 }
 
+                // app_list
                 if (policy.app_list && policy.app_list !== 'null' && policy.app_list !== 'undefined') {
                     policy.app_list.forEach((app) => {
                         app.guest = (app.guest !== undefined) ? app.guest : false;
@@ -372,6 +377,7 @@ exports.savePolicy = async function (req, res) {
                     app_list = JSON.stringify(policy.app_list);
                 }
 
+                // extensions
                 if (policy.secure_apps && policy.secure_apps !== 'null' && policy.secure_apps !== 'undefined') {
                     policy.secure_apps.forEach((app) => {
                         app.guest = (app.guest !== undefined) ? app.guest : false;
@@ -382,7 +388,15 @@ exports.savePolicy = async function (req, res) {
                     secure_apps = JSON.stringify(policy.secure_apps);
                 }
 
-                let system_permissions = policy.system_permissions !== undefined ? JSON.stringify(policy.system_permissions) : null;
+                // system permission
+                if(policy.system_permissions && policy.system_permissions !== 'null' && policy.system_permissions !=='undefined'){
+                    policy.system_permissions.forEach(sysPermission=>{
+                            sysPermission.setting_status = (sysPermission.setting_status)? true: false 
+                        
+                    })
+                    system_permissions = JSON.stringify(policy.system_permissions);
+                }
+
 
                 let pushAppsSize = objectsize(push_apps);
                 let appListSize = objectsize(app_list);

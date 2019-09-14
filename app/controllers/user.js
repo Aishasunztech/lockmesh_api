@@ -22,7 +22,7 @@ exports.getAllUsers = async function (req, res) {
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
         if (verify.user.user_type == ADMIN) {
-            var role = await helpers.getuserTypeIdByName(verify.user.user_type);
+            var role = await helpers.getUserTypeIDByName(verify.user.user_type);
             let results = await sql.query("select * from users where del_status =0 order by created_at DESC")
             if (results.length) {
                 for (let i = 0; i < results.length; i++) {
@@ -176,6 +176,7 @@ exports.editUser = async function (req, res) {
 
     if (verify) {
 
+
         var userName = req.body.name;
         var userEmail = req.body.email;
         var user_id = req.body.user_id
@@ -251,7 +252,7 @@ exports.deleteUser = async function (req, res) {
                     return
                 } else {
                     data = {
-                        'status': true,
+                        'status': false,
                         'msg': await helpers.convertToLang(req.translation[MsgConstants.USER_NOT_DEL_SUCC], "User not deleted try again later"), // User not deleted try again later.'
                     }
                     res.send(data);

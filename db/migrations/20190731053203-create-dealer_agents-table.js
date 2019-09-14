@@ -65,6 +65,6 @@ module.exports = {
 	},
 
 	down: (queryInterface, Sequelize) => {
-		return queryInterface.dropTable('policy_apps');
+		return queryInterface.dropTable('dealer_agents');
 	}
 };

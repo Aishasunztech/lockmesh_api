@@ -27,7 +27,7 @@ exports.apkList = async function (req, res) {
 
                 if (results.length > 0) {
 
-                    let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                    let adminRoleId = await helpers.getUserTypeIDByName(Constants.ADMIN);
                     let dealerCount = await helpers.dealerCount(adminRoleId);
                     // console.log("dealer count", dealerCount)
                     for (var i = 0; i < results.length; i++) {
@@ -233,7 +233,6 @@ exports.checkApkName = async function (req, res) {
     }
 }
 
-
 exports.upload = async function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
 
@@ -243,7 +242,9 @@ exports.upload = async function (req, res) {
         console.log("field name: ", req.query.fieldName);
 
         let fieldName = req.query.fieldName;
-        if(fieldName){
+        let screen = req.query.screen;
+        console.log('screen is the', screen)
+        if (fieldName) {
             let fileName = "";
             let mimeType = "";
             let apk_id = req.headers["id"] ? Number(req.headers["id"]) : null;
@@ -264,19 +265,19 @@ exports.upload = async function (req, res) {
                 }
                 return res.send(data);
             }
-            
+
             filePath = file.path;
             mimeType = file.type;
             bytes = file.size
             formatByte = helpers.formatBytes(bytes);
-            console.log(formatByte);
-            
+            console.log(file);
+
             if (fieldName === Constants.APK) {
-                
+
                 console.log(filePath);
                 let versionCode = await helpers.getAPKVersionCode(filePath);
                 console.log("version code: ", versionCode);
-                
+
                 if (versionCode) {
                     versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
 
@@ -284,10 +285,15 @@ exports.upload = async function (req, res) {
                     let packageName = await helpers.getAPKPackageName(filePath);
                     packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                     console.log("Package Name: ", packageName);
-                    
+
                     let versionName = await helpers.getAPKVersionName(filePath);
                     versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                     console.log("Version Name: ", versionName);
+
+                    let label = await helpers.getAPKLabel(filePath);
+                    console.log(label)
+                    label = label.toString().replace(/(\r\n|\n|\r)/gm, "");
+                    console.log("label Name: ", label);
 
                     fileName = fieldName + '-' + Date.now() + '.apk';
                     let target_path = path.join(__dirname, "../../uploads/" + fileName);
@@ -299,17 +305,18 @@ exports.upload = async function (req, res) {
                             });
                         }
                         console.log("fileName:", fileName);
-                        
+
                         if ((packageName === 'com.armorSec.android' || packageName === 'ca.unlimitedwireless.mailpgp' || packageName === 'com.rim.mobilefusion.client' || packageName === 'com.secure.vpn') && featureApk == null) {
+                            // console.log(packageName, 'pkg name if')
                             data = {
                                 status: false,
                                 msg: await helpers.convertToLang(req.translation["not allowed"], "Error: Uploaded Apk is not Allowed."), // "Error: Unable to read APP properties.",
                             };
                             return res.send(data);
                         } else {
-    
+                            // console.log('else featured', featureApk)
                             if (featureApk !== null) {
-    
+
                                 if (featureApk === "CHAT" && packageName === 'com.armorSec.android') {
                                     data = {
                                         status: true,
@@ -317,8 +324,8 @@ exports.upload = async function (req, res) {
                                         fileName: fileName,
                                         size: formatByte,
                                         version: versionName
-    
-    
+
+
                                     };
                                     res.send(data);
                                     return;
@@ -329,7 +336,7 @@ exports.upload = async function (req, res) {
                                         fileName: fileName,
                                         size: formatByte,
                                         version: versionName
-    
+
                                     };
                                     res.send(data);
                                     return;
@@ -340,7 +347,7 @@ exports.upload = async function (req, res) {
                                         fileName: fileName,
                                         size: formatByte,
                                         version: versionName
-    
+
                                     };
                                     res.send(data);
                                     return;
@@ -351,7 +358,7 @@ exports.upload = async function (req, res) {
                                         fileName: fileName,
                                         size: formatByte,
                                         version: versionName
-    
+
                                     };
                                     res.send(data);
                                     return;
@@ -365,13 +372,21 @@ exports.upload = async function (req, res) {
                                     return;
                                 }
                             } else {
-                                let checkPackage = "SELECT * FROM apk_details where package_name = '" + packageName + "'  AND delete_status=0";
-                                if (apk_id) {
-                                    checkPackage = checkPackage + " AND id != " + apk_id
+                                let checkFileQuery = '';
+                                if (screen == 'autoUpdate') {
+                                    checkFileQuery = "SELECT * FROM apk_details where label = '" + label + "' AND package_name = '" + packageName + "' AND delete_status=0";
+                                } else {
+                                    checkFileQuery = "SELECT * FROM apk_details where package_name = '" + packageName + "'  AND delete_status=0";
                                 }
-                                
-                                let checkPackageResult = await sql.query(checkPackage);
+
+                                if (apk_id) {
+                                    checkFileQuery = checkFileQuery + " AND id != " + apk_id
+                                }
+
+                                let checkPackageResult = await sql.query(checkFileQuery);
                                 if (checkPackageResult.length) {
+                                    // console.log(checkPackageResult, 'error version');
+
                                     data = {
                                         status: false,
                                         msg: await helpers.convertToLang(req.translation[""], "Error: Apk with same package name already uploaded. Please choose another apk and try again"), // "Error: Unable to read APP properties.",
@@ -379,14 +394,14 @@ exports.upload = async function (req, res) {
                                     res.send(data);
                                     return;
                                 } else {
-                                    console.log(versionName);
+                                    console.log(versionName, 'success version');
                                     data = {
                                         status: true,
                                         msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
                                         fileName: fileName,
                                         size: formatByte,
                                         version: versionName
-    
+
                                     };
                                     res.send(data);
                                     return;
@@ -412,14 +427,14 @@ exports.upload = async function (req, res) {
                     res.send(data);
                     return;
                 }
-    
+
             } else if (fieldName === Constants.LOGO) {
                 // console.log(req.files);
-        
-        
+
+
                 fileName = fieldName + '-' + Date.now() + '.jpg';
                 let target_path = path.join(__dirname, "../../uploads/" + fileName);
-        
+
                 helpers.move(filePath, target_path, async function (error) {
                     console.log(error);
                     if (error) {
@@ -446,15 +461,15 @@ exports.upload = async function (req, res) {
                 return res.send(data);
             }
 
-        }else {
+        } else {
             return res.send({
                 status: false,
                 msg: "Error while uploading: Field not defined"
             })
         }
 
-       
-        
+
+
     }
 }
 
@@ -475,7 +490,7 @@ exports.addApk = async function (req, res) {
                     let packageName = '';
                     let label = '';
                     let details = '';
-
+                    // console.log(file)
                     versionCode = await helpers.getAPKVersionCode(file);
                     if (versionCode) {
                         versionName = await helpers.getAPKVersionName(file);
@@ -501,6 +516,7 @@ exports.addApk = async function (req, res) {
                     packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                     label = label.toString().replace(/(\r\n|\n|\r)/gm, "");
                     details = details.toString().replace(/(\r\n|\n|\r)/gm, "");
+                    // console.log(labe)    
 
                     let apk_type = (verify.user.user_type === Constants.AUTO_UPDATE_ADMIN) ? 'permanent' : 'basic'
 
@@ -536,7 +552,7 @@ exports.addApk = async function (req, res) {
 
                         data = {
                             status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.APK_IS_UPLOADED], "Apk is uploaded"), // "Apk is uploaded",
+                            msg: `${newData[0].app_name} ${await helpers.convertToLang(req.translation["was uploaded successfully"], "was uploaded successfully")}`, // MsgConstants.APK_IS_UPLOADED
                             data: dta
                         };
                         return res.send(data);
@@ -552,6 +568,7 @@ exports.addApk = async function (req, res) {
                     return;
                 }
             } else {
+                console.log('error while uploading', logo, apk, apk_name)
                 data = {
                     status: false,
                     msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error While Uploading"
@@ -559,6 +576,7 @@ exports.addApk = async function (req, res) {
                 return res.send(data);
             }
         } catch (error) {
+            console.log(error, 'error while upload')
             data = {
                 status: false,
                 msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while Uploading",
@@ -644,7 +662,7 @@ exports.editApk = async function (req, res) {
 
                         data = {
                             status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.APK_IS_UPLOADED], "Apk is uploaded"), // "Apk is uploaded",
+                            msg: `${newData[0].app_name} ${await helpers.convertToLang(req.translation["was uploaded successfully"], "was uploaded successfully")}`, // MsgConstants.APK_IS_UPLOADED
                             data: dta
                         };
                         return res.send(data);
@@ -830,7 +848,7 @@ exports.saveApkPermission = async function (req, res) {
                         console.log("Verify user id", verify.user.user_type);
                         if (verify.user.user_type === Constants.ADMIN) {
                             if (permission !== undefined && permission !== null && permission !== '[]') {
-                                let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                                let adminRoleId = await helpers.getUserTypeIDByName(Constants.ADMIN);
                                 let dealerCount = await helpers.dealerCount(adminRoleId);
                                 permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
 
@@ -915,7 +933,7 @@ exports.saveApkPermission = async function (req, res) {
                         console.log("Verify user id", verify.user.user_type);
                         if (verify.user.user_type === Constants.ADMIN) {
                             if (permission !== undefined && permission !== null && permission !== '[]') {
-                                let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                                let adminRoleId = await helpers.getUserTypeIDByName(Constants.ADMIN);
                                 let dealerCount = await helpers.dealerCount(adminRoleId);
                                 permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
 
@@ -1012,7 +1030,7 @@ exports.savePolicyPermissions = async function (req, res) {
                         // console.log("Verify user id", verify.user.user_type);
                         if (verify.user.user_type === Constants.ADMIN) {
                             if (permission !== undefined && permission !== null && permission !== '[]') {
-                                let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                                let adminRoleId = await helpers.getUserTypeIDByName(Constants.ADMIN);
                                 let dealerCount = await helpers.dealerCount(adminRoleId);
                                 console.log('amdin add all', permission.length, dealerCount)
                                 permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
@@ -1100,7 +1118,7 @@ exports.savePolicyPermissions = async function (req, res) {
                         console.log("Verify user id", verify.user.user_type);
                         if (verify.user.user_type === Constants.ADMIN) {
                             if (permission !== undefined && permission !== null && permission !== '[]') {
-                                let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                                let adminRoleId = await helpers.getUserTypeIDByName(Constants.ADMIN);
                                 let dealerCount = await helpers.dealerCount(adminRoleId);
                                 permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
 

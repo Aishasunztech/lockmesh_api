@@ -184,9 +184,9 @@ sockets.listen = function (server) {
 
             dvc_id = await device_helpers.getOriginalIdByDeviceId(device_id);
             console.log("dvc_id: ", dvc_id);
-            
+
             await device_helpers.onlineOfflineDevice(device_id, socket.id, Constants.DEVICE_ONLINE, dvc_id);
-            
+
             is_sync = await device_helpers.getDeviceSyncStatus(device_id);
             console.log("is_sync:", is_sync);
 
@@ -219,15 +219,19 @@ sockets.listen = function (server) {
                 if (response.length > 0) {
                     let app_list = JSON.parse(response[0].app_list);
                     let extensions = JSON.parse(response[0].permissions);
-                    let controls = response[0].controls;
+                    let controls = JSON.parse(response[0].controls);
 
                     // new method that will only update not will check double query. here will be these methods
                     await device_helpers.updateApps(app_list, device_id);
 
                     await device_helpers.updateExtensions(extensions, device_id);
 
-                    if (controls !== '{}' && controls !== '') {
-                        await device_helpers.insertOrUpdateSettings(controls, device_id);
+                    if (controls.length) {
+                        controls.map(control => {
+                            delete control.isChanged;
+                        });
+
+                        await device_helpers.insertOrUpdateSettings(JSON.stringify(controls), device_id);
                     }
 
                     // these methods are old and wrong
@@ -286,16 +290,26 @@ sockets.listen = function (server) {
                 if (data.action === "type_version") {
 
                     let type = data.object.type;
-
                     let version = data.object.version;
-                    console.log(`UPDATE usr_acc set type = '${type}' , version = '${version}' where id = ${user_acc_id}`);
-                    sql.query(`UPDATE usr_acc set type = '${type}' , version = '${version}' where id = ${user_acc_id}`, function (err, result) {
+                    let firmware_info = data.object.firmware_info;
+
+                    console.log(`UPDATE usr_acc set type = '${type}' , version = '${version}' , firmware_info = '${firmware_info}'  where id = ${user_acc_id}`);
+                    sql.query(`UPDATE usr_acc set type = '${type}' , version = '${version}' , firmware_info = '${firmware_info}' where id = ${user_acc_id}`, function (err, result) {
                         if (err) {
                             console.log("Type And version Not changed");
+                            socket.emit(Constants.SYSTEM_EVENT + device_id, {
+                                action: "type_version",
+                                status: false
+                            });
                         }
                         if (result.affectedRows > 0) {
-
                             console.log("Type And version changed Successfully");
+                            socket.emit(Constants.SYSTEM_EVENT + device_id, {
+                                device_id: device_id,
+                                action: "type_version",
+                                status: true
+                            });
+
                         }
                     })
                 }
@@ -327,6 +341,7 @@ sockets.listen = function (server) {
             let profile_res = await sql.query(profile_query);
             if (profile_res.length) {
 
+                // Wrong line of code
                 let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND (type='history' OR type = 'profile') ";
                 await sql.query(historyUpdate);
 
@@ -334,32 +349,95 @@ sockets.listen = function (server) {
                     device_id: device_id,
                     app_list: (profile_res[0].app_list === undefined || profile_res[0].app_list === null || profile_res[0].app_list === '') ? '[]' : profile_res[0].app_list,
                     passwords: (profile_res[0].passwords === undefined || profile_res[0].passwords === null || profile_res[0].passwords === '') ? '{}' : profile_res[0].passwords,
-                    settings: (profile_res[0].controls === undefined || profile_res[0].controls === null || profile_res[0].controls === '') ? '{}' : profile_res[0].controls,
+                    settings: (profile_res[0].controls === undefined || profile_res[0].controls === null || profile_res[0].controls === '') ? '[]' : profile_res[0].controls,
                     extension_list: (profile_res[0].permissions === undefined || profile_res[0].permissions === null || profile_res[0].permissions === '') ? '[]' : profile_res[0].permissions,
                     status: true
                 });
 
             } else {
-                var setting_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='history' order by created_at desc limit 1";
+                var setting_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='history'  order by created_at desc limit 1";
                 let setting_res = await sql.query(setting_query);
                 if (setting_res.length) {
-                    let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND type='history' ";
+                    let pwdObject = { "admin_password": null, "guest_password": null, "encrypted_password": null, "duress_password": null }
+
+                    let getPasswordQ = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='password' order by created_at asc"
+                    let allPwdHistry = await sql.query(getPasswordQ);
+                    if (allPwdHistry && allPwdHistry.length) {
+                        // console.log(allPwdHistry);
+                        for (let item of allPwdHistry) {
+                            if (item.passwords) {
+                                let pwd = JSON.parse(item.passwords)
+                                if (pwd['admin_password'] != null && pwd['admin_password'] != 'null') {
+                                    pwdObject['admin_password'] = pwd['admin_password'];
+                                } else if (pwd['guest_password'] != null && pwd['guest_password'] != 'null') {
+                                    pwdObject['guest_password'] = pwd['guest_password'];
+                                } else if (pwd['encrypted_password'] != null && pwd['encrypted_password'] != 'null') {
+                                    pwdObject['encrypted_password'] = pwd['encrypted_password'];
+                                } else if (pwd['duress_password'] != null && pwd['duress_password'] != 'null') {
+                                    pwdObject['duress_password'] = pwd['duress_password'];
+                                }
+                            }
+
+                        }
+                        pwdObject = JSON.stringify(pwdObject);
+                    }
+
+
+                    let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND (type='history' OR type='password' ) ";
                     await sql.query(historyUpdate);
 
 
                     socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
                         device_id: device_id,
                         app_list: (setting_res[0].app_list === undefined || setting_res[0].app_list === null || setting_res[0].app_list === '') ? '[]' : setting_res[0].app_list,
-                        passwords: (setting_res[0].passwords === undefined || setting_res[0].passwords === null || setting_res[0].passwords === '') ? '{}' : setting_res[0].passwords,
-                        settings: (setting_res[0].controls === undefined || setting_res[0].controls === null || setting_res[0].controls === '') ? '{}' : setting_res[0].controls,
+                        passwords: (pwdObject === undefined || pwdObject === null || pwdObject === '') ? '{}' : pwdObject,
+                        settings: (setting_res[0].controls === undefined || setting_res[0].controls === null || setting_res[0].controls === '') ? '[]' : setting_res[0].controls,
                         extension_list: (setting_res[0].permissions === undefined || setting_res[0].permissions === null || setting_res[0].permissions === '') ? '[]' : setting_res[0].permissions,
                         status: true
                     });
                 } else {
-                    socket.emit('get_applied_settings_' + device_id, {
-                        device_id: device_id,
-                        status: false
-                    });
+
+                    let pwdObject = { "admin_password": null, "guest_password": null, "encrypted_password": null, "duress_password": null }
+
+                    let getPasswordQ = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='password' order by created_at asc"
+                    let allPwdHistry = await sql.query(getPasswordQ);
+                    if (allPwdHistry && allPwdHistry.length) {
+                        // console.log(allPwdHistry);
+                        for (let item of allPwdHistry) {
+                            if (item.passwords) {
+                                let pwd = JSON.parse(item.passwords)
+                                if (pwd['admin_password'] != null && pwd['admin_password'] != 'null') {
+                                    pwdObject['admin_password'] = pwd['admin_password'];
+                                } else if (pwd['guest_password'] != null && pwd['guest_password'] != 'null') {
+                                    pwdObject['guest_password'] = pwd['guest_password'];
+                                } else if (pwd['encrypted_password'] != null && pwd['encrypted_password'] != 'null') {
+                                    pwdObject['encrypted_password'] = pwd['encrypted_password'];
+                                } else if (pwd['duress_password'] != null && pwd['duress_password'] != 'null') {
+                                    pwdObject['duress_password'] = pwd['duress_password'];
+                                }
+                            }
+
+                        }
+                        pwdObject = JSON.stringify(pwdObject);
+                        let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND type='password' ";
+                        await sql.query(historyUpdate);
+
+
+                        socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
+                            device_id: device_id,
+                            app_list: '[]',
+                            passwords: (pwdObject === undefined || pwdObject === null || pwdObject === '') ? '{}' : pwdObject,
+                            settings: '[]',
+                            extension_list: '[]',
+                            status: true
+                        });
+
+                    } else {
+                        socket.emit('get_applied_settings_' + device_id, {
+                            device_id: device_id,
+                            status: false
+                        });
+                    }
                 }
             }
 
@@ -513,7 +591,7 @@ sockets.listen = function (server) {
                                             status: true,
                                             app_list: (policy[0].app_list === undefined || policy[0].app_list === null || policy[0].app_list === '') ? '[]' : policy[0].app_list,
                                             // passwords: (policy[0].passwords === undefined || policy[0].passwords === null || policy[0].passwords === '') ? '{}' : policy[0].passwords,
-                                            settings: (policy[0].controls === undefined || policy[0].controls === null || policy[0].controls === '') ? '{}' : policy[0].controls,
+                                            settings: (policy[0].controls === undefined || policy[0].controls === null || policy[0].controls === '') ? '[]' : policy[0].controls,
                                             extension_list: (policy[0].permissions === undefined || policy[0].permissions === null || policy[0].permissions === '') ? '[]' : policy[0].permissions,
                                             push_apps: (policy[0].push_apps === undefined || policy[0].push_apps === null || policy[0].push_apps === '') ? '[]' : policy[0].push_apps,
                                             device_id: device_id,
@@ -557,7 +635,7 @@ sockets.listen = function (server) {
                                 socket.emit(Constants.GET_POLICY + device_id, {
                                     status: true,
                                     app_list: (policy[0].app_list === undefined || policy[0].app_list === null || policy[0].app_list === '') ? '[]' : policy[0].app_list,
-                                    settings: (policy[0].controls === undefined || policy[0].controls === null || policy[0].controls === '') ? '{}' : policy[0].controls,
+                                    settings: (policy[0].controls === undefined || policy[0].controls === null || policy[0].controls === '') ? '[]' : policy[0].controls,
                                     extension_list: (policy[0].permissions === undefined || policy[0].permissions === null || policy[0].permissions === '') ? '[]' : policy[0].permissions,
                                     push_apps: (policy[0].push_apps === undefined || policy[0].push_apps === null || policy[0].push_apps === '') ? '[]' : policy[0].push_apps,
                                     device_id: device_id,
@@ -598,7 +676,7 @@ sockets.listen = function (server) {
                 socket.emit(Constants.GET_POLICY + device_id, {
                     status: true,
                     app_list: (policyResult[0].app_list === undefined || policyResult[0].app_list === null || policyResult[0].app_list === '') ? '[]' : policyResult[0].app_list,
-                    settings: (policyResult[0].controls === undefined || policyResult[0].controls === null || policyResult[0].controls === '') ? '{}' : policyResult[0].controls,
+                    settings: (policyResult[0].controls === undefined || policyResult[0].controls === null || policyResult[0].controls === '') ? '[]' : policyResult[0].controls,
                     extension_list: (policyResult[0].permissions === undefined || policyResult[0].permissions === null || policyResult[0].permissions === '') ? '[]' : policyResult[0].permissions,
                     push_apps: (policyResult[0].push_apps === undefined || policyResult[0].push_apps === null || policyResult[0].push_apps === '') ? '[]' : policyResult[0].push_apps,
                     device_id: device_id,
@@ -655,27 +733,37 @@ sockets.listen = function (server) {
             socket.on(Constants.RECV_SIM + device_id, async function (response) {
                 console.log('===== RECV_SIM =========> ', response);
                 // return;
-                sockets.updateSimRecord(device_id, response);
+
+                sockets.updateSimRecord(device_id, response, socket);
+
             })
 
 
-            let sUnEmitSims = `SELECT * FROM sims WHERE sync = '0' AND del ='0'`;
-            // console.log('========= check data when socket => re-connect ================= ', sUnEmitSims);
-            let simResult = await sql.query(sUnEmitSims);
-            // console.log('results are: ', simResult);
-            if (simResult.length > 0) {
-                simResult.forEach(async function (data, index) {
-                    // data['guest'] = data.guest == 1 ? true : false;
-                    // data['encrypt'] = data.encrypt == 1 ? true : false;
-                    // console.log('updated result is: ', data);
-                    socket.emit(Constants.SEND_SIM + data.device_id, {
-                        device_id: data.device_id,
-                        sim: (data === undefined || data === null || data === '') ? '{}' : JSON.stringify(data),
-                    });
-                    let uQry = `UPDATE sims SET sync = '1' WHERE device_id = '${data.device_id}' AND iccid = '${data.iccid}' AND del='0'`;
-                    await sql.query(uQry);
-                })
-            }
+            // let sUnEmitSims = `SELECT * FROM sims WHERE del ='0' AND device_id= '${device_id}'`;
+            // // console.log('========= check data when socket => re-connect ================= ', sUnEmitSims);
+            // let simResult = await sql.query(sUnEmitSims);
+
+            // if (simResult.length > 0) {
+
+            //     // console.log(Constants.SEND_SIM + device_id, 're-connect data is=> ', {
+            //     //     action: "sim_update",
+            //     //     device_id,
+            //     //     entries: JSON.stringify(simResult),
+            //     // });
+
+            //     socket.emit(Constants.SEND_SIM + device_id, {
+            //         action: "sim_update",
+            //         device_id,
+            //         entries: JSON.stringify(simResult),
+            //     });
+
+            //     simResult.forEach(async function (data, index) {
+            //         let uQry = `UPDATE sims SET sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
+            //         await sql.query(uQry);
+            //     })
+
+
+            // }
 
             // socket.on(Constants.GET_INSTALLED_APPS + device_id, sockets.installedApps)
 
@@ -767,72 +855,234 @@ sockets.listen = function (server) {
 // }
 
 sockets.sendRegSim = async (device_id, action, data) => {
-    console.log('sendRegSim data is=> ', {
+    console.log(Constants.SEND_SIM + device_id, 'sendRegSim data is=> ', {
         action,
         device_id,
-        entries: (data === undefined || data === null || data === '') ? '{}' : JSON.stringify(data),
+        entries: (data === undefined || data === null) ? '[]' : JSON.stringify(data),
     });
 
     io.emit(Constants.SEND_SIM + device_id, {
         action,
         device_id,
-        entries: (data === undefined || data === null || data === '') ? '{}' : JSON.stringify(data),
+        entries: (data === undefined || data === null) ? '[]' : JSON.stringify(data),
     });
 }
 
-sockets.updateSimRecord = async function (device_id, response) {
-    // console.log('action is: ', response.action)
+sockets.updateSimRecord = async function (device_id, response, socket = null) {
+    console.log('action is: ', response.action)
     // console.log('entries is: ', response.entries)
 
     let arr = JSON.parse(response.entries);
     console.log('parsed data is: ', arr);
-    if (response.action == "sim_unregister") {
-        // console.log('you are at unReg Section');
-        sql.query(`UPDATE sims SET unrGuest=${arr.unrGuest}, unrEncrypt=${arr.unrEncrypt} WHERE device_id='${device_id}' AND del='0'`, async function (err, reslt) {
-            if (err) console.log(err)
-        });
-    } else {
 
-        if (arr.length > 0) {
-            if (response.action == 'sim_delete') {
-                arr.map(async function (iccid, index) {
-                    // let dQry = `DELETE FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
-                    let dQry = `UPDATE sims SET del='1' WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
+    let dataIs = [];
+    if (response && arr && device_id) {
 
-                    await sql.query(dQry);
-                })
-            } else {
-                arr.map(async function (data, index) {
-                    let sQry = `SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
-                    let rslt = await sql.query(sQry);
+        if (response.action == "sim_new_device") {
 
-                    if (rslt.length < 1) {
-                        let IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, sim_id, slotNo, note, guest, encrypt, status, dataLimit, sync) VALUES ('${device_id}', '${data.iccid}', '${data.name}', '', '${data.slotNo}', '${data.note}', ${data.guest}, ${data.encrypt}, '${data.status}', '', '1');`;
-                        await sql.query(IQry, async function (err, result) {
-                            if (err) console.log(err);
-                        })
+            let iccids = [];
+
+            if (arr.length) {
+
+                for (let i = 0; i < arr.length; i++) {
+                    // arr.map(async function (data, index) {
+
+                    // let uQry = `UPDATE sims SET name='${data.name}', note='${data.note}', guest=${data.guest}, encrypt=${data.encrypt}, status='${data.status}', slotNo='${data.slotNo}', sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
+                    let uQry = `UPDATE sims SET name='${arr[i].name}', note='${arr[i].note}', guest=${arr[i].guest}, encrypt=${arr[i].encrypt}, status='${arr[i].status}', slotNo='${arr[i].slotNo}', sync = '1' WHERE device_id = '${device_id}' AND iccid = '${arr[i].iccid}' AND del='0'`;
+                    let result = await sql.query(uQry);
+
+                    if (result.affectedRows > 0) {
+                        iccids.push(`"${arr[i].iccid}"`);
                     } else {
-                        let uQry = `UPDATE sims SET name='${data.name}', note='${data.note}', guest=${data.guest}, encrypt=${data.encrypt}, status='${data.status}', slotNo='${data.slotNo}', sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
-                        await sql.query(uQry);
+                        var IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, note, guest, encrypt, dataLimit, sync) 
+                VALUES ('${device_id}', '${arr[i].iccid}', '${arr[i].name}', '${arr[i].note}', ${arr[i].guest}, ${arr[i].encrypt}, '', '1');`;
+                        await sql.query(IQry);
                     }
 
+                    // })
+                }
+
+                console.log('iccids: ', iccids);
+                if (iccids.length) {
+                    // delete sims which are not on device
+                    let dQry = `UPDATE sims SET del='1' WHERE device_id = '${device_id}' AND iccid NOT IN (${iccid})`;
+                    await sql.query(dQry);
+                }
+            } else {
+                // delete sims which are not on device
+                let dQry = `UPDATE sims SET del='1' WHERE device_id = '${device_id}'`;
+                await sql.query(dQry);
+            }
+
+            io.emit(Constants.GET_SYNC_STATUS + device_id, {
+                device_id: device_id,
+                apps_status: false,
+                extensions_status: false,
+                settings_status: false,
+                is_sync: false,
+            });
+
+        } else if (response.action == "sim_inserted") {
+            console.log('console for sim_inserted ');
+            dataIs = arr;
+        } else if (response.action == "sim_unregister") {
+            // console.log('you are at unReg Section');
+            let uQry = `UPDATE sims SET unrGuest=${arr.unrGuest}, unrEncrypt=${arr.unrEncrypt} WHERE device_id='${device_id}' AND del='0'`;
+            await sql.query(uQry);
+
+        } else if (response.action == 'sim_delete') {
+            arr.map(async function (iccid, index) {
+                // let dQry = `DELETE FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
+                let dQry = `UPDATE sims SET del='1' WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
+
+                await sql.query(dQry);
+            })
+        } else {
+            // console.log('this code for update================')
+
+            for (let i = 0; i < arr.length; i++) {
+
+                // console.log('11', arr[i])
+                let sQry = `SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${arr[i].iccid}' AND del='0'`;
+                let rslt = await sql.query(sQry);
+
+
+                if (rslt.length > 0) {
+                    // console.log('22')
+
+                    let uQry = `UPDATE sims SET name='${arr[i].name}', note='${arr[i].note}', guest=${arr[i].guest}, encrypt=${arr[i].encrypt}, status='${arr[i].status}', slotNo='${arr[i].slotNo}', sync = '1' WHERE device_id = '${device_id}' AND iccid = '${arr[i].iccid}' AND del='0'`;
+                    await sql.query(uQry);
+                } else {
+                    // console.log('33')
+
+                    let IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, sim_id, slotNo, note, guest, encrypt, status, dataLimit, sync) VALUES ('${device_id}', '${arr[i].iccid}', '${arr[i].name}', '', '${arr[i].slotNo}', '${arr[i].note}', ${arr[i].guest}, ${arr[i].encrypt}, '${arr[i].status}', '', '1');`;
+                    await sql.query(IQry);
+                }
+            }
+
+
+            //******************************** send to device start */ 
+            // if (response.action == 'sim_update_OnSocket') {
+            let sUnEmitSims = `SELECT * FROM sims WHERE del ='0' AND device_id= '${device_id}'`;
+            // console.log('========= check data when socket => re-connect ================= ', sUnEmitSims);
+            let simResult = await sql.query(sUnEmitSims);
+
+            if (simResult.length > 0) {
+                // console.log('socket.emit(Constants.SEND_SIM ', simResult);
+
+                socket.emit(Constants.SEND_SIM + device_id, {
+                    action: "sim_update",
+                    device_id,
+                    entries: JSON.stringify(simResult),
+                });
+
+                simResult.forEach(async function (data, index) {
+                    let uQry = `UPDATE sims SET sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
+                    await sql.query(uQry);
                 })
             }
+            // }
+            // ****************************** send to device end ***************** 
+
         }
+
+
+
+
+        // console.log('44', {
+        //     status: true,
+        //     unRegSims: dataIs
+        // })
+
+        io.emit(Constants.RECV_SIM_DATA + device_id, {
+            status: true,
+            unRegSims: dataIs
+        });
     }
-    io.emit(Constants.RECV_SIM_DATA + device_id, {
-        status: true
-    });
+
+    // if (response.action == "sim_new_device") {
+    //     let iccids = [];
+
+    //     if (arr.length) {
+    //         arr.map(async function (data, index) {
+
+    //             // let uQry = `UPDATE sims SET name='${data.name}', note='${data.note}', guest=${data.guest}, encrypt=${data.encrypt}, status='${data.status}', slotNo='${data.slotNo}', sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
+    //             let uQry = `UPDATE sims SET name='${data.name}', note='${data.note}', guest=${data.guest}, encrypt=${data.encrypt}, status='${data.status}', slotNo='${data.slotNo}', sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
+    //             let result = await sql.query(uQry);
+
+    //             if (result.affectedRows > 0) {
+    //                 iccids.push(`"${data.iccid}"`);
+    //             } else {
+    //                 var IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, note, guest, encrypt, dataLimit, sync) 
+    //             VALUES ('${device_id}', '${data.iccid}', '${data.name}', '${data.note}', ${data.guest}, ${data.encrypt}, '', '1');`;
+    //                 await sql.query(IQry);
+    //             }
+
+    //         })
+
+    //         console.log('iccids: ', iccids);
+    //         if (iccids.length) {
+    //             // delete sims which are not on device
+    //             let dQry = `UPDATE sims SET del='1' WHERE device_id = '${device_id}' AND iccid NOT IN (${iccid})`;
+    //             await sql.query(dQry);
+    //         }
+    //     } else {
+    //         // delete sims which are not on device
+    //         let dQry = `UPDATE sims SET del='1' WHERE device_id = '${device_id}'`;
+    //         await sql.query(dQry);
+    //     }
+
+    // } else {
+
+    //     if (response.action == "sim_unregister") {
+    //         // console.log('you are at unReg Section');
+    //         sql.query(`UPDATE sims SET unrGuest=${arr.unrGuest}, unrEncrypt=${arr.unrEncrypt} WHERE device_id='${device_id}' AND del='0'`, async function (err, reslt) {
+    //             if (err) console.log(err)
+    //         });
+    //     } else {
+
+    //         if (arr.length > 0) {
+    //             if (response.action == 'sim_delete') {
+    //                 arr.map(async function (iccid, index) {
+    //                     // let dQry = `DELETE FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
+    //                     let dQry = `UPDATE sims SET del='1' WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
+
+    //                     await sql.query(dQry);
+    //                 })
+    //             } else {
+    //                 console.log('this code for update================')
+    //                 arr.map(async function (data, index) {
+    //                     let sQry = `SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
+    //                     let rslt = await sql.query(sQry);
+
+    //                     if (rslt.length < 1) {
+    //                         let IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, sim_id, slotNo, note, guest, encrypt, status, dataLimit, sync) VALUES ('${device_id}', '${data.iccid}', '${data.name}', '', '${data.slotNo}', '${data.note}', ${data.guest}, ${data.encrypt}, '${data.status}', '', '1');`;
+    //                         await sql.query(IQry, async function (err, result) {
+    //                             if (err) console.log(err);
+    //                         })
+    //                     } else {
+    //                         let uQry = `UPDATE sims SET name='${data.name}', note='${data.note}', guest=${data.guest}, encrypt=${data.encrypt}, status='${data.status}', slotNo='${data.slotNo}', sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
+    //                         await sql.query(uQry);
+    //                     }
+
+    //                 })
+    //             }
+    //         }
+    //     }
+
+    // }
+
 }
 
 
 sockets.sendEmit = async (app_list, passwords, controls, permissions, device_id) => {
+    // console.log('password socket')
 
     io.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
         device_id: device_id,
         app_list: (app_list === undefined || app_list === null || app_list === '') ? '[]' : app_list,
         passwords: (passwords === undefined || passwords === null || passwords === '') ? '{}' : passwords,
-        settings: (controls === undefined || controls === null || controls === '') ? '{}' : controls,
+        settings: (controls === undefined || controls === null || controls === '') ? '[]' : controls,
         extension_list: (permissions == undefined || permissions == null || permissions == '') ? '{}' : permissions,
         status: true
     });
@@ -893,7 +1143,7 @@ sockets.syncDevice = async (device_id) => {
 
 // live device status activity
 sockets.sendDeviceStatus = async function (device_id, device_status, status = false) {
-    console.log("send device status", device_id);
+    console.log("send device status", device_id, device_status);
     io.emit(Constants.DEVICE_STATUS + device_id, {
         device_id: device_id,
         status: status,
@@ -1075,7 +1325,7 @@ sockets.getPolicy = (device_id, policy) => {
     io.emit(Constants.GET_POLICY + device_id, {
         status: true,
         app_list: (policy.app_list === undefined || policy.app_list === null || policy.app_list === '') ? '[]' : policy.app_list,
-        settings: (policy.controls === undefined || policy.controls === null || policy.controls === '') ? '{}' : policy.controls,
+        settings: (policy.controls === undefined || policy.controls === null || policy.controls === '') ? '[]' : policy.controls,
         extension_list: (policy.permissions === undefined || policy.permissions === null || policy.permissions === '') ? '[]' : policy.permissions,
         push_apps: (policy.push_apps === undefined || policy.push_apps === null || policy.push_apps === '') ? '[]' : policy.push_apps,
         device_id: device_id,
