@@ -340,11 +340,12 @@ exports.acceptDevice = async function (req, res) {
                 }
 
                 if (rows.length) {
-                    let checkUniquePgp = `SELECT pgp_email FROM pgp_emails WHERE (pgp_email= '${pgp_email}' AND used=1)`;
-                    let checkDevicepgp = await sql.query(checkUniquePgp);
+                    // let checkUniquePgp = `SELECT pgp_email FROM pgp_emails WHERE (pgp_email= '${pgp_email}' AND used=1)`;
+                    // let checkDevicepgp = await sql.query(checkUniquePgp);
 
-                    let checkUnique = `SELECT usr_acc.* FROM usr_acc WHERE account_email= '${device_email}' AND device_id != '${device_id}' AND user_id != '${user_id}'`;
-                    sql.query(checkUnique, async (checkUniqueEror, success) => {
+                    // let checkUnique = `SELECT usr_acc.* FROM usr_acc WHERE account_email= '${device_email}' AND device_id != '${device_id}' AND user_id != '${user_id}'`;
+                    let checkUniquePgp = `SELECT pgp_email FROM pgp_emails WHERE (pgp_email= '${pgp_email}' AND used=1)`;
+                    sql.query(checkUniquePgp, async (checkUniqueEror, success) => {
                         if (checkUniqueEror) {
                             console.log(checkUniqueEror);
                             res.send({
@@ -362,7 +363,7 @@ exports.acceptDevice = async function (req, res) {
                         if (success.length || checkDevicepgp.length) {
                             res.send({
                                 status: false,
-                                msg: "Account Email OR PGP Email already taken"
+                                msg: "PGP Email Already Used. Please use another pgp email to activate your account."
                             });
                             return;
                         } else if (dealer_id !== 0 && dealer_id !== null) {
@@ -2007,28 +2008,23 @@ exports.createDeviceProfile = async function (req, res) {
                 });
                 return;
             }
-
-
-
-
-
-
         } else {
-            let checkUnique =
-                "SELECT account_email from usr_acc WHERE account_email= '" +
-                email +
-                "' AND user_id != '" +
-                user_id +
-                "'";
+            // let checkUnique =
+            //     "SELECT account_email from usr_acc WHERE account_email= '" +
+            //     email +
+            //     "' AND user_id != '" +
+            //     user_id +
+            //     "'";
             let checkUniquePgp =
                 "SELECT pgp_email from pgp_emails WHERE (pgp_email= '" +
                 pgp_email +
                 "' AND used=1)";
 
-            let checkDevice = await sql.query(checkUnique);
+            // let checkDevice = await sql.query(checkUnique);
             let checkDevicepgp = await sql.query(checkUniquePgp);
 
-            if (checkDevice.length || checkDevicepgp.length) {
+            // if (checkDevice.length || checkDevicepgp.length) {
+            if (checkDevicepgp.length) {
                 res.send({
                     status: false,
                     msg: "Account email or PGP email already taken"
