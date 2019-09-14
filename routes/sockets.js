@@ -212,7 +212,7 @@ sockets.listen = function (server) {
                 // let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id;
                 // await sql.query(historyUpdate);
 
-                var setting_query = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=1 ORDER BY created_at DESC LIMIT 1`;
+                var setting_query = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND (type='history' OR type='profile') AND status=1 ORDER BY created_at DESC LIMIT 1`;
                 let response = await sql.query(setting_query);
 
                 // if (response.length > 0 && data.device_id != null) {
