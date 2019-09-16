@@ -302,7 +302,7 @@ sockets.listen = function (server) {
                                 status: false
                             });
                         }
-                        if (result.affectedRows > 0) {
+                        if (result && result.affectedRows > 0) {
                             console.log("Type And version changed Successfully");
                             socket.emit(Constants.SYSTEM_EVENT + device_id, {
                                 device_id: device_id,
