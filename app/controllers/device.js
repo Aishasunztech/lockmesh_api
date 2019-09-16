@@ -773,7 +773,9 @@ exports.editDevices = async function (req, res) {
                                         email +
                                         "',status = '" +
                                         status +
-                                        "',client_id = '" +
+                                        "',note = '" +
+                                        note +
+                                        "' ,client_id = '" +
                                         client_id +
                                         "', device_status = 1, unlink_status=0 ,  start_date = '" +
                                         start_date +
@@ -788,7 +790,9 @@ exports.editDevices = async function (req, res) {
                                         email +
                                         "', status = '" +
                                         status +
-                                        "',client_id = '" +
+                                        "',note = '" +
+                                        note +
+                                        "' ,client_id = '" +
                                         client_id +
                                         "', device_status = 1, unlink_status=0 ,  start_date = '" +
                                         start_date +
