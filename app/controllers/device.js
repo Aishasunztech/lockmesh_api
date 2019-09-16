@@ -1099,106 +1099,123 @@ exports.unlinkDevice = async function (req, res) {
             console.log("dvc id:", dvcId);
 
             var sql1 = `UPDATE  usr_acc SET unlink_status = 1, device_status = 0 where device_id=${device_id}`;
-            sql.query(sql1, async function (error, results) {
-                if (error) {
-                    data = {
-                        status: false,
-                        msg: await helpers.convertToLang(
-                            req.translation[MsgConstants.DEVICE_NOT_UNLNK],
-                            "Device not unlinked"
+            // sql.query(sql1, async function (error, results) {
+            let results = sql.query(sql1);
+            // if (error) {
+            //     data = {
+            //         status: false,
+            //         msg: await helpers.convertToLang(
+            //             req.translation[MsgConstants.DEVICE_NOT_UNLNK],
+            //             "Device not unlinked"
+            //         )
+            //     };
+            // }
+
+            if (results && results.affectedRows) {
+                // Update device details on Super admin
+
+
+                // var sqlDevice =
+                //     "DELETE from devices where id = '" + device_id + "'";
+                // await sql.query(sqlDevice);
+
+                var userAccId = await device_helpers.getUsrAccIDbyDvcId(
+                    device_id
+                );
+
+                // await sql.query(
+                //     "update pgp_emails set user_acc_id = null WHERE user_acc_id = '" +
+                //     userAccId +
+                //     "'"
+                // );
+                // await sql.query(
+                //     "update chat_ids set user_acc_id = null WHERE user_acc_id = '" +
+                //     userAccId +
+                //     "'"
+                // );
+
+                // await sql.query(
+                //     "update sim_ids set user_acc_id = null WHERE user_acc_id = '" +
+                //     userAccId +
+                //     "'"
+                // );
+
+                device_helpers.saveActionHistory(
+                    req.body.device,
+                    constants.DEVICE_UNLINKED
+                );
+                sockets.sendDeviceStatus(dvcId, "unlinked", true);
+
+                try {
+                    axios
+                        .post(
+                            app_constants.SUPERADMIN_LOGIN_URL,
+                            app_constants.SUPERADMIN_USER_CREDENTIALS,
+                            { headers: {} }
                         )
-                    };
-                }
-
-                if (results && results.affectedRows) {
-                    // Update device details on Super admin
-
-
-                    // var sqlDevice =
-                    //     "DELETE from devices where id = '" + device_id + "'";
-                    // await sql.query(sqlDevice);
-
-                    var userAccId = await device_helpers.getUsrAccIDbyDvcId(
-                        device_id
-                    );
-
-                    // await sql.query(
-                    //     "update pgp_emails set user_acc_id = null WHERE user_acc_id = '" +
-                    //     userAccId +
-                    //     "'"
-                    // );
-                    // await sql.query(
-                    //     "update chat_ids set user_acc_id = null WHERE user_acc_id = '" +
-                    //     userAccId +
-                    //     "'"
-                    // );
-
-                    // await sql.query(
-                    //     "update sim_ids set user_acc_id = null WHERE user_acc_id = '" +
-                    //     userAccId +
-                    //     "'"
-                    // );
-
-                    device_helpers.saveActionHistory(
-                        req.body.device,
-                        constants.DEVICE_UNLINKED
-                    );
-                    sockets.sendDeviceStatus(dvcId, "unlinked", true);
-
-                    try {
-                        axios
-                            .post(
-                                app_constants.SUPERADMIN_LOGIN_URL,
-                                app_constants.SUPERADMIN_USER_CREDENTIALS,
-                                { headers: {} }
-                            )
-                            .then(async function (response) {
-                                // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
-                                if (response.data.status) {
-                                    let data = {
-                                        linkToWL: false,
-                                        device_id: dvcId
-                                    };
-                                    axios.put(
-                                        app_constants.UPDATE_DEVICE_SUPERADMIN_URL,
-                                        data,
-                                        {
-                                            headers: {
-                                                authorization:
-                                                    response.data.user.token
-                                            }
+                        .then(async function (response) {
+                            // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
+                            if (response.data.status) {
+                                let data = {
+                                    linkToWL: false,
+                                    device_id: dvcId
+                                };
+                                axios.put(
+                                    app_constants.UPDATE_DEVICE_SUPERADMIN_URL,
+                                    data,
+                                    {
+                                        headers: {
+                                            authorization:
+                                                response.data.user.token
                                         }
-                                    );
-                                }
-                            }).catch((err) => {
-                                if (err) {
-                                    console.log("SA SERVER NOT RESPONDING");
-                                }
-                            });
+                                    }
+                                );
+                            }
+                        }).catch((err) => {
+                            if (err) {
+                                console.log("SA SERVER NOT RESPONDING");
+                            }
+                        });
 
-                    } catch (err) {
-                        console.log(err);
-                    }
-
-                    data = {
-                        status: true,
-                        msg: await helpers.convertToLang(
-                            req.translation[MsgConstants.DEVICE_UNLNK_SUCC],
-                            "Device unlinked successfully"
-                        ) // Device unlinked successfully.
-                    };
-                } else {
-                    data = {
-                        status: false,
-                        msg: await helpers.convertToLang(
-                            req.translation[MsgConstants.DEVICE_NOT_UNLNK],
-                            "Device not unlinked"
-                        ) // Device not unlinked.
-                    };
+                } catch (err) {
+                    console.log(err);
                 }
-                res.send(data);
-                return;
-            });
+
+                data = {
+                    status: true,
+                    msg: await helpers.convertToLang(
+                        req.translation[MsgConstants.DEVICE_UNLNK_SUCC],
+                        "Device unlinked successfully"
+                    ) // Device unlinked successfully.
+                };
+
+
+                // Delete unlinked & Transferred device 
+                let getUnlinDevice = `SELECT * FROM usr_acc WHERE id=${userAccId} AND device_id='${device_id}'`;
+                let getUnlinDeviceResult = await sql.query(getUnlinDevice);
+                console.log("getUnlinDeviceResult ", getUnlinDeviceResult);
+                if (getUnlinDeviceResult[0].transfer_status = 1) {
+                    let deleteQuery = `DELETE FROM usr_acc WHERE id=${userAccId} AND device_id='${device_id}' AND transfer_status = 0`;
+                    console.log("deleteQuery usr_acc ", deleteQuery)
+                    await sql.query(deleteQuery);
+
+                    deleteQuery = `DELETE FROM devices WHERE id='${device_id}'`;
+                    console.log("deleteQuery devices ", deleteQuery)
+                    await sql.query(deleteQuery);
+                }
+
+            } else {
+                data = {
+                    status: false,
+                    msg: await helpers.convertToLang(
+                        req.translation[MsgConstants.DEVICE_NOT_UNLNK],
+                        "Device not unlinked"
+                    ) // Device not unlinked.
+                };
+            }
+            res.send(data);
+            return;
+            // });
         } else {
             data = {
                 status: false,
@@ -3772,14 +3789,14 @@ exports.transferDeviceProfile = async function (req, res) {
                 if (err) throw Error("Query Expection");
 
                 console.log('==============> :: 02')
-                // console.log('Get data of Flagged Device ', rsltq)
+                console.log('Get data of Flagged Device ', rsltq[0])
                 // return;
                 if (rsltq.length > 0) {
 
                     console.log('==============> :: 03', reqDevice.usr_device_id)
 
                     // Update New usr_acc
-                    let Update_UsrAcc_Query = `UPDATE usr_acc SET user_id='${rsltq[0].user_id}', account_email='${rsltq[0].account_email}',account_name='${rsltq[0].account_name}',dealer_id='${rsltq[0].dealer_id}',prnt_dlr_id='${rsltq[0].prnt_dlr_id}',link_code='${rsltq[0].link_code}',client_id='${rsltq[0].client_id}',start_date='${rsltq[0].start_date}',expiry_months='${rsltq[0].expiry_months}',expiry_date='${rsltq[0].expiry_date}',activation_code='${rsltq[0].activation_code}',status='${rsltq[0].status}',device_status='${rsltq[0].device_status}',activation_status='${rsltq[0].activation_status}',account_status='',unlink_status='0',transfer_status='0', transfered_from='${flagged_device.device_id}', transfered_to='${reqDevice.device_id}',dealer_name='${rsltq[0].dealer_name}',prnt_dlr_name='${rsltq[0].prnt_dlr_name}',del_status='0',note='${rsltq[0].note}',validity='${rsltq[0].validity}', batch_no='${rsltq[0].batch_no}',type='${rsltq[0].type}',version='${rsltq[0].version}'  WHERE device_id=${reqDevice.usr_device_id};`;
+                    let Update_UsrAcc_Query = `UPDATE usr_acc SET user_id='${rsltq[0].user_id}', account_email='${rsltq[0].account_email}',account_name='${rsltq[0].account_name}',dealer_id='${rsltq[0].dealer_id}',prnt_dlr_id='${rsltq[0].prnt_dlr_id}',link_code='${rsltq[0].link_code}',client_id='${rsltq[0].client_id}',start_date='${rsltq[0].start_date}',expiry_months='${rsltq[0].expiry_months}',expiry_date='${rsltq[0].expiry_date}',status='${rsltq[0].status}',device_status='${rsltq[0].device_status}',activation_status='${rsltq[0].activation_status}',account_status='${rsltq[0].account_status}',unlink_status='0',transfer_status='0', transfered_from='${flagged_device.device_id}', transfered_to='${reqDevice.device_id}',dealer_name='${rsltq[0].dealer_name}',prnt_dlr_name='${rsltq[0].prnt_dlr_name}',del_status='0',note='${rsltq[0].note}',validity='${rsltq[0].validity}', batch_no='${rsltq[0].batch_no}'  WHERE device_id=${reqDevice.usr_device_id};`;
 
                     console.log('==============> :: 04 ', Update_UsrAcc_Query)
                     await sql.query(Update_UsrAcc_Query, async function (err, resp) {
@@ -3801,55 +3818,46 @@ exports.transferDeviceProfile = async function (req, res) {
                                 // return;
                                 if (resp.affectedRows > 0) {
 
-                                    console.log('==============> :: 08', flagged_device.id)
-                                    // Get usr_acc_profile
-                                    let Select_UsrAccProfile = `SELECT * FROM usr_acc_profile WHERE user_acc_id = ${flagged_device.id} AND delete_status = '0'`;
-                                    console.log('Select_UsrAccProfile ', Select_UsrAccProfile)
-                                    let UsrAccProfile_Result = await sql.query(Select_UsrAccProfile)
-
-                                    // Copy usr_acc_profile
-                                    if (UsrAccProfile_Result.length > 0) {
-
-                                        console.log('==============> :: 09')
-                                        // Update usr_acc_profile
-                                        // let Update_UsrAccProfile = `UPDATE usr_acc_profile SET profile_name='${UsrAccProfile_Result[0].profile_name}', profile_note='${UsrAccProfile_Result[0].profile_note}', policy_id='${UsrAccProfile_Result[0].policy_id}', user_acc_id='${reqDevice.id}', dealer_id='${UsrAccProfile_Result[0].dealer_id}', app_list='${UsrAccProfile_Result[0].app_list}', permissions='${UsrAccProfile_Result[0].permissions}', controls='${UsrAccProfile_Result[0].controls}', passwords='${UsrAccProfile_Result[0].passwords}', status='${UsrAccProfile_Result[0].status}' WHERE user_acc_id=${reqDevice.id};`;
-                                        let Insert_UsrAccProfile = `INSERT INTO usr_acc_profile (profile_name, profile_note, policy_id, user_acc_id, dealer_id, app_list, permissions, controls, passwords, status) 
-                                        VALUES('${UsrAccProfile_Result[0].profile_name}', '${UsrAccProfile_Result[0].profile_note}', '${UsrAccProfile_Result[0].policy_id}', '${reqDevice.id}', '${UsrAccProfile_Result[0].dealer_id}', '${UsrAccProfile_Result[0].app_list}', '${UsrAccProfile_Result[0].permissions}', '${UsrAccProfile_Result[0].controls}', '${UsrAccProfile_Result[0].passwords}', '${UsrAccProfile_Result[0].status}');`;
-
-                                        let resp = await sql.query(Insert_UsrAccProfile);
-                                        // await sql.query(Insert_UsrAccProfile, async function (err, resp) {
-
-                                        console.log('Insert_UsrAccProfile ', Insert_UsrAccProfile)
-                                        console.log('==============> :: 10')
-                                        if (resp.affectedRows > 0) {
-
-                                            console.log('==============> :: 11')
-                                            // Delete Old usr_acc_profile
-                                            let delete_UsrAccProfile = `UPDATE usr_acc_profile SET delete_status = '1' WHERE user_acc_id=${flagged_device.id};`;
-                                            console.log('delete_UsrAccProfile ', delete_UsrAccProfile)
-                                              await sql.query(delete_UsrAccProfile);
-                                        }
-                                        // });
+                                    // Updae device name
+                                    var getDeviceName = await sql.query(`SELECT name from devices WHERE id='${flagged_device.usr_device_id}'`);
+                                    console.log("device name is: ", getDeviceName)
+                                    await sql.query(`UPDATE devices SET name='${getDeviceName[0].name}', is_sync='0' WHERE id=${reqDevice.usr_device_id}`);
 
 
-                                        // await sql.query(Insert_UsrAccProfile, async function (err, resp) {
-                                        //     if (err) throw Error("Query Expection");
+                                    // console.log('==============> :: 08', flagged_device.id)
+                                    // // Get usr_acc_profile
+                                    // let Select_UsrAccProfile = `SELECT * FROM usr_acc_profile WHERE user_acc_id = ${flagged_device.id} AND delete_status = '0'`;
+                                    // console.log('Select_UsrAccProfile ', Select_UsrAccProfile)
+                                    // let UsrAccProfile_Result = await sql.query(Select_UsrAccProfile)
 
-                                        //     console.log('Insert_UsrAccProfile ', Insert_UsrAccProfile)
-                                        //     console.log('==============> :: 10')
-                                        //     if (resp.affectedRows > 0) {
+                                    // // Copy usr_acc_profile
+                                    // if (UsrAccProfile_Result.length > 0) {
 
-                                        //         console.log('==============> :: 11')
-                                        //         // Delete Old usr_acc_profile
-                                        //         let delete_UsrAccProfile = `UPDATE usr_acc_profile SET delete_status = '1' WHERE user_acc_id=${flagged_device.id};`;
-                                        //         console.log('delete_UsrAccProfile ', delete_UsrAccProfile)
-                                        //         await sql.query(delete_UsrAccProfile, async function (err, resp) {
-                                        //             if (err) throw Error("Query Expection")
-                                        //         });
-                                        //     }
-                                        // });
+                                    //     console.log('==============> :: 09')
+                                    //     // Update usr_acc_profile
+                                    //     // let Update_UsrAccProfile = `UPDATE usr_acc_profile SET profile_name='${UsrAccProfile_Result[0].profile_name}', profile_note='${UsrAccProfile_Result[0].profile_note}', policy_id='${UsrAccProfile_Result[0].policy_id}', user_acc_id='${reqDevice.id}', dealer_id='${UsrAccProfile_Result[0].dealer_id}', app_list='${UsrAccProfile_Result[0].app_list}', permissions='${UsrAccProfile_Result[0].permissions}', controls='${UsrAccProfile_Result[0].controls}', passwords='${UsrAccProfile_Result[0].passwords}', status='${UsrAccProfile_Result[0].status}' WHERE user_acc_id=${reqDevice.id};`;
+                                    //     let Insert_UsrAccProfile = `INSERT INTO usr_acc_profile (profile_name, profile_note, policy_id, user_acc_id, dealer_id, app_list, permissions, controls, passwords, status) 
+                                    //     VALUES('${UsrAccProfile_Result[0].profile_name}', '${UsrAccProfile_Result[0].profile_note}', '${UsrAccProfile_Result[0].policy_id}', '${reqDevice.id}', '${UsrAccProfile_Result[0].dealer_id}', '${UsrAccProfile_Result[0].app_list}', '${UsrAccProfile_Result[0].permissions}', '${UsrAccProfile_Result[0].controls}', '${UsrAccProfile_Result[0].passwords}', '${UsrAccProfile_Result[0].status}');`;
 
-                                    }
+                                    //     let resp = await sql.query(Insert_UsrAccProfile);
+                                    //     // await sql.query(Insert_UsrAccProfile, async function (err, resp) {
+
+                                    //     console.log('Insert_UsrAccProfile ', Insert_UsrAccProfile)
+                                    //     console.log('==============> :: 10')
+                                    //     if (resp.affectedRows > 0) {
+
+                                    //         console.log('==============> :: 11')
+                                    //         // Delete Old usr_acc_profile
+                                    //         let delete_UsrAccProfile = `UPDATE usr_acc_profile SET delete_status = '1' WHERE user_acc_id=${flagged_device.id};`;
+                                    //         console.log('delete_UsrAccProfile ', delete_UsrAccProfile)
+                                    //           await sql.query(delete_UsrAccProfile);
+                                    //     }
+                                    //     // });
+
+
+
+
+                                    // }
                                     // else {
                                     //     console.log('==============> :: 12')
                                     //     data = {
@@ -3867,10 +3875,10 @@ exports.transferDeviceProfile = async function (req, res) {
 
                                         console.log('==============> :: 013')
                                         let InsertChatIds = `INSERT INTO chat_ids (chat_id, user_acc_id) VALUES('${ChatIds_Result[0].chat_id}', '${reqDevice.id}')`;
-                                         await sql.query(InsertChatIds);
+                                        await sql.query(InsertChatIds);
                                         // Update chat_ids
                                         let UpdateChatIds = `UPDATE chat_ids SET delete_status = '1' WHERE user_acc_id=${flagged_device.id};`;
-                                         await sql.query(UpdateChatIds);
+                                        await sql.query(UpdateChatIds);
                                     }
 
                                     // pgp_emails
@@ -3882,12 +3890,13 @@ exports.transferDeviceProfile = async function (req, res) {
                                         let InsertPgp_emails = `INSERT INTO pgp_emails (pgp_email, user_acc_id) VALUES('${pgp_emails_Result[0].pgp_email}', '${reqDevice.id}')`;
                                         await sql.query(InsertPgp_emails);
                                         let UpdatePgp_emails = `UPDATE pgp_emails SET delete_status = '1' WHERE user_acc_id=${flagged_device.id};`;
-                                         await sql.query(UpdatePgp_emails);
+                                        await sql.query(UpdatePgp_emails);
                                     }
 
                                     // SimIds
                                     let SimIds = `SELECT * FROM sim_ids WHERE user_acc_id = '${flagged_device.id}' AND delete_status = '0'`;
                                     let SimIds_Result = await sql.query(SimIds);
+                                    console.log("previous sims are: ", SimIds_Result);
                                     if (SimIds_Result.length > 0) {
                                         console.log('==============> :: 015')
                                         for (var i = 0; i < SimIds_Result.length; i++) {
