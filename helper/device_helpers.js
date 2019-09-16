@@ -454,10 +454,10 @@ module.exports = {
             // status = 'Unlinked';
             status = Constants.DEVICE_UNLINKED;
         }
-        else if (device.transfer_status == 1 && device.account_status === 'suspended' && device.flagged !== 'Not flagged') {
+        else if (device.transfer_status == 1 && device.flagged !== 'Not flagged') {
             status = Constants.DEVICE_TRANSFERED
         }
-        else if (device.transfer_status == 0 && device.account_status === 'suspended' && device.flagged != 'Not flagged') {
+        else if (device.transfer_status == 0 && device.flagged != 'Not flagged') {
             status = Constants.DEVICE_FLAGGED
         }
         else if (device.status === 'active' && (device.account_status === '' || device.account_status === null) && device.unlink_status === 0 && (device.device_status === 1 || device.device_status === '1')) {
@@ -531,7 +531,6 @@ module.exports = {
      * String usr_device_ids of usr_acc table
      */
     getLastLoginDetail: async (ids) => {
-        console.log(ids);
         let query = `SELECT MAX(created_at) as created_at, device_id FROM login_history WHERE device_id IN (${ids}) GROUP BY device_id ORDER BY created_at DESC  `;
         let results = await sql.query(query);
         if (results.length) {

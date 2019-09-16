@@ -212,7 +212,7 @@ sockets.listen = function (server) {
                 // let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id;
                 // await sql.query(historyUpdate);
 
-                var setting_query = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=1 ORDER BY created_at DESC LIMIT 1`;
+                var setting_query = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND (type='history' OR type='profile') AND status=1 ORDER BY created_at DESC LIMIT 1`;
                 let response = await sql.query(setting_query);
 
                 // if (response.length > 0 && data.device_id != null) {
@@ -290,18 +290,30 @@ sockets.listen = function (server) {
                 if (data.action === "type_version") {
 
                     let type = data.object.type;
-
                     let version = data.object.version;
-                    console.log(`UPDATE usr_acc set type = '${type}' , version = '${version}' where id = ${user_acc_id}`);
-                    sql.query(`UPDATE usr_acc set type = '${type}' , version = '${version}' where id = ${user_acc_id}`, function (err, result) {
+                    let firmware_info = data.object.firmware_info;
+
+                    console.log(`UPDATE usr_acc set type = '${type}' , version = '${version}' , firmware_info = '${firmware_info}'  where id = ${user_acc_id}`);
+                    sql.query(`UPDATE usr_acc set type = '${type}' , version = '${version}' , firmware_info = '${firmware_info}' where id = ${user_acc_id}`, function (err, result) {
                         if (err) {
                             console.log("Type And version Not changed");
+                            socket.emit(Constants.SYSTEM_EVENT + device_id, {
+                                action: "type_version",
+                                status: false
+                            });
                         }
-                        if (result.affectedRows > 0) {
-
+                        if (result && result.affectedRows > 0) {
                             console.log("Type And version changed Successfully");
+                            socket.emit(Constants.SYSTEM_EVENT + device_id, {
+                                device_id: device_id,
+                                action: "type_version",
+                                status: true
+                            });
+
                         }
                     })
+                } else if (data.action === "wipe") {
+                    sockets.ackFinishedWipe(device_id, user_acc_id)
                 }
             });
 
@@ -323,6 +335,23 @@ sockets.listen = function (server) {
                     is_sync: true,
                 });
             });
+
+            // ===================================================== Pending Device Processes ===============================================
+            // pending wipe action for device
+
+            var wipe_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='wipe' order by created_at desc limit 1";
+            let wipe_data = await sql.query(wipe_query);
+            console.log(wipe_data);
+            if (wipe_data.length) {
+                // console.log(device_id);
+                socket.emit(Constants.DEVICE_STATUS + device_id, {
+                    device_id: device_id,
+                    status: false,
+                    msg: 'wiped'
+                });
+            }
+
+
 
             // ===================================================== Pending Device Processes ===============================================
             // pending settings for device
@@ -736,7 +765,9 @@ sockets.listen = function (server) {
             socket.on(Constants.RECV_SIM + device_id, async function (response) {
                 console.log('===== RECV_SIM =========> ', response);
                 // return;
+
                 sockets.updateSimRecord(device_id, response, socket);
+
             })
 
 
@@ -880,6 +911,7 @@ sockets.updateSimRecord = async function (device_id, response, socket = null) {
     if (response && arr && device_id) {
 
         if (response.action == "sim_new_device") {
+
             let iccids = [];
 
             if (arr.length) {
@@ -913,6 +945,14 @@ sockets.updateSimRecord = async function (device_id, response, socket = null) {
                 let dQry = `UPDATE sims SET del='1' WHERE device_id = '${device_id}'`;
                 await sql.query(dQry);
             }
+
+            io.emit(Constants.GET_SYNC_STATUS + device_id, {
+                device_id: device_id,
+                apps_status: false,
+                extensions_status: false,
+                settings_status: false,
+                is_sync: false,
+            });
 
         } else if (response.action == "sim_inserted") {
             console.log('console for sim_inserted ');
@@ -1135,7 +1175,7 @@ sockets.syncDevice = async (device_id) => {
 
 // live device status activity
 sockets.sendDeviceStatus = async function (device_id, device_status, status = false) {
-    console.log("send device status", device_id);
+    console.log("send device status", device_id, device_status);
     io.emit(Constants.DEVICE_STATUS + device_id, {
         device_id: device_id,
         status: status,
@@ -1295,6 +1335,16 @@ sockets.ackFinishedPolicy = async function (device_id, user_acc_id) {
     await sql.query("DELETE from policy_queue_jobs WHERE device_id = '" + device_id + "'")
 
     io.emit(Constants.FINISH_POLICY + device_id, {
+        status: true
+    });
+}
+sockets.ackFinishedWipe = function (device_id, user_acc_id) {
+    console.log("DEVICE WIPED SUCCESSFULLY")
+
+    var clearWipeDevice = "UPDATE device_history SET status=1 WHERE type='wipe' AND user_acc_id=" + user_acc_id + "";
+    sql.query(clearWipeDevice)
+
+    io.emit(Constants.FINISH_WIPE + device_id, {
         status: true
     });
 }

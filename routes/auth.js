@@ -11,6 +11,8 @@ router.post('/super_admin_login', authController.superAdminLogin)
 /**
  * @route POST /users/login
  * @group Auth - Operations about user
+ * @param {string} demail.formData.required - dealer email
+ * @param {string} pwd.formData.required - dealer password
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
  */
@@ -19,6 +21,7 @@ router.post('/login', authController.login);
 /**
  * @route POST /users/verify_code
  * @group Auth - Operations about user
+ * @param {string} verify_code.formData.required - varification code
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
  */

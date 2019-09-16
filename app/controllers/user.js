@@ -176,6 +176,7 @@ exports.editUser = async function (req, res) {
 
     if (verify) {
 
+
         var userName = req.body.name;
         var userEmail = req.body.email;
         var user_id = req.body.user_id
@@ -251,7 +252,7 @@ exports.deleteUser = async function (req, res) {
                     return
                 } else {
                     data = {
-                        'status': true,
+                        'status': false,
                         'msg': await helpers.convertToLang(req.translation[MsgConstants.USER_NOT_DEL_SUCC], "User not deleted try again later"), // User not deleted try again later.'
                     }
                     res.send(data);
