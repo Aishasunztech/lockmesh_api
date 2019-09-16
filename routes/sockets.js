@@ -511,7 +511,7 @@ sockets.listen = function (server) {
 
             // ========================================================== PUSH APPS ============================================
             // pending pushed apps for device
-            var pendingAppsQ = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=0 AND type='push_apps' ORDER BY created_at DESC LIMIT 1`;
+            var pendingAppsQ = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=0 AND type='push_apps' ORDER BY created_at DESC`;
             let pendingPushApps = await sql.query(pendingAppsQ);
 
             if (pendingPushApps.length) {
@@ -520,14 +520,15 @@ sockets.listen = function (server) {
                 pendingPushApps.map((pendingPushApp)=>{
                     let prevPushApps = JSON.parse(pendingPushApp.push_apps);
                     prevPushApps.map((prevPushApp)=>{
-
                         if(!pushAppsPackages.includes(prevPushApp.package_name)){
                             pushApps.push(prevPushApp);
-                            pushAppsPackages.push(prevPushApps.package_name);
+                            pushAppsPackages.push(prevPushApp.package_name);
                         }
                     })
 
                 });
+                
+                console.log(pushApps);
 
                 io.emit(Constants.GET_PUSHED_APPS + device_id, {
                     status: true,
