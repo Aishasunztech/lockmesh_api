@@ -115,6 +115,7 @@ module.exports = {
   FINISH_POLICY_SETTINGS: "finish_policy_settings_",
   FINISH_POLICY_EXTENSIONS: "finish_policy_extensions_",
   FINISH_POLICY: 'finish_policy_',
+  FINISH_WIPE: 'finish_wipe_',
   FINISH_POLICY_STEP: 'finish_policy_step_',
 
   // INSTALL OR UNINSTALL APPS

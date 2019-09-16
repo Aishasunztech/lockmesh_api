@@ -340,11 +340,12 @@ exports.acceptDevice = async function (req, res) {
                 }
 
                 if (rows.length) {
-                    let checkUniquePgp = `SELECT pgp_email FROM pgp_emails WHERE (pgp_email= '${pgp_email}' AND used=1)`;
-                    let checkDevicepgp = await sql.query(checkUniquePgp);
+                    // let checkUniquePgp = `SELECT pgp_email FROM pgp_emails WHERE (pgp_email= '${pgp_email}' AND used=1)`;
+                    // let checkDevicepgp = await sql.query(checkUniquePgp);
 
-                    let checkUnique = `SELECT usr_acc.* FROM usr_acc WHERE account_email= '${device_email}' AND device_id != '${device_id}' AND user_id != '${user_id}'`;
-                    sql.query(checkUnique, async (checkUniqueEror, success) => {
+                    // let checkUnique = `SELECT usr_acc.* FROM usr_acc WHERE account_email= '${device_email}' AND device_id != '${device_id}' AND user_id != '${user_id}'`;
+                    let checkUniquePgp = `SELECT pgp_email FROM pgp_emails WHERE (pgp_email= '${pgp_email}' AND used=1)`;
+                    sql.query(checkUniquePgp, async (checkUniqueEror, success) => {
                         if (checkUniqueEror) {
                             console.log(checkUniqueEror);
                             res.send({
@@ -359,10 +360,10 @@ exports.acceptDevice = async function (req, res) {
                             return;
                         }
 
-                        if (success.length || checkDevicepgp.length) {
+                        if (success.length) {
                             res.send({
                                 status: false,
-                                msg: "Account Email OR PGP Email already taken"
+                                msg: "PGP Email Already Used. Please use another pgp email to activate your account."
                             });
                             return;
                         } else if (dealer_id !== 0 && dealer_id !== null) {
@@ -2011,28 +2012,23 @@ exports.createDeviceProfile = async function (req, res) {
                 });
                 return;
             }
-
-
-
-
-
-
         } else {
-            let checkUnique =
-                "SELECT account_email from usr_acc WHERE account_email= '" +
-                email +
-                "' AND user_id != '" +
-                user_id +
-                "'";
+            // let checkUnique =
+            //     "SELECT account_email from usr_acc WHERE account_email= '" +
+            //     email +
+            //     "' AND user_id != '" +
+            //     user_id +
+            //     "'";
             let checkUniquePgp =
                 "SELECT pgp_email from pgp_emails WHERE (pgp_email= '" +
                 pgp_email +
                 "' AND used=1)";
 
-            let checkDevice = await sql.query(checkUnique);
+            // let checkDevice = await sql.query(checkUnique);
             let checkDevicepgp = await sql.query(checkUniquePgp);
 
-            if (checkDevice.length || checkDevicepgp.length) {
+            // if (checkDevice.length || checkDevicepgp.length) {
+            if (checkDevicepgp.length) {
                 res.send({
                     status: false,
                     msg: "Account email or PGP email already taken"
@@ -2702,15 +2698,22 @@ exports.wipeDevice = async function (req, res) {
     var device_id = req.params.id;
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
-        var sql2 = "select * from devices where id = '" + device_id + "'";
-        var gtres = await sql.query(sql2);
-        if (!empty(device_id)) {
-            var sql1 =
-                "update usr_acc set wipe_status='wipe' where device_id = '" +
-                device_id +
-                "'";
+        var deviceQuery = "select devices.*  ," +
+            usr_acc_query_text +
+            ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
+            device_id +
+            '"';
+        var resquery = await sql.query(deviceQuery);
+        if (device_id && resquery.length) {
+            var sql1 = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, type) VALUES ('" +
+                resquery[0].device_id +
+                "'," +
+                resquery[0].dealer_id +
+                "," +
+                resquery[0].id +
+                ", 'wipe')";
 
-            var rest = sql.query(sql1, async function (error, results) {
+            sql.query(sql1, async function (error, results) {
                 if (error) {
                     console.log(error);
                 }
@@ -2724,79 +2727,71 @@ exports.wipeDevice = async function (req, res) {
                     };
                     res.send(data);
                 } else {
-                    sockets.sendDeviceStatus(
-                        gtres[0].device_id,
+                    let wipe_device_date = await sql.query("SELECT created_at FROM device_history WHERE id= " + results.insertId)
+                    let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + resquery[0].id + " AND (type = 'push_apps' || type = 'pull_apps' || type = 'policy' || type = 'profile') AND created_at <= '" + wipe_device_date[0].created_at + "'";
+                    await sql.query(historyUpdate);
+
+                    if (resquery[0].online === constants.DEVICE_ONLINE) {
+                        sockets.sendDeviceStatus(
+                            resquery[0].device_id,
+                            constants.DEVICE_WIPE
+                        );
+                        data = {
+                            status: true,
+                            online: true,
+                            msg: await helpers.convertToLang(
+                                req.translation[""],
+                                "Device is being Wiped."
+                            ),
+                            content: ""
+                        }
+                    } else {
+                        data = {
+                            status: true,
+                            online: false,
+                            msg: await helpers.convertToLang(
+                                req.translation[
+                                MsgConstants.WARNING_DEVICE_OFFLINE
+                                ],
+                                "Warning Device Offline"
+                            ),
+                            content: await helpers.convertToLang(
+                                req.translation[
+                                ""
+                                ],
+                                "Wipe command sent to device. Action will be performed when device is back online"
+                            )
+                        }
+                    }
+
+                    let pgp_emails = await device_helpers.getPgpEmails(resquery[0].id);
+                    let sim_ids = await device_helpers.getSimids(resquery[0].id);
+                    let chat_ids = await device_helpers.getChatids(resquery[0].id);
+                    resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
+                    if (pgp_emails[0] && pgp_emails[0].pgp_email) {
+                        resquery[0].pgp_email = pgp_emails[0].pgp_email
+                    } else {
+                        resquery[0].pgp_email = "N/A"
+                    }
+                    if (sim_ids[0] && sim_ids[0].sim_id) {
+                        resquery[0].sim_id = sim_ids[0].sim_id
+                    } else {
+                        resquery[0].sim_id = "N/A"
+                    }
+                    if (chat_ids[0] && chat_ids[0].chat_id) {
+                        resquery[0].chat_id = chat_ids[0].chat_id
+                    }
+                    else {
+                        resquery[0].chat_id = "N/A"
+                    }
+
+                    device_helpers.saveActionHistory(
+                        resquery[0],
                         constants.DEVICE_WIPE
                     );
 
-                    sql.query(
-                        "select devices.*  ," +
-                        usr_acc_query_text +
-                        ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
-                        device_id +
-                        '"',
-                        async function (error, resquery, fields) {
-                            if (error) {
-                                console.log(error);
-                            }
-                            // console.log('lolo else', resquery[0])
+                    res.send(data);
 
-                            if (resquery.length) {
-                                let pgp_emails = await device_helpers.getPgpEmails(resquery[0].id);
-                                let sim_ids = await device_helpers.getSimids(resquery[0].id);
-                                let chat_ids = await device_helpers.getChatids(resquery[0].id);
-                                resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
-                                if (pgp_emails[0] && pgp_emails[0].pgp_email) {
-                                    resquery[0].pgp_email = pgp_emails[0].pgp_email
-                                } else {
-                                    resquery[0].pgp_email = "N/A"
-                                }
-                                if (sim_ids[0] && sim_ids[0].sim_id) {
-                                    resquery[0].sim_id = sim_ids[0].sim_id
-                                } else {
-                                    resquery[0].sim_id = "N/A"
-                                }
-                                if (chat_ids[0] && chat_ids[0].chat_id) {
-                                    resquery[0].chat_id = chat_ids[0].chat_id
-                                }
-                                else {
-                                    resquery[0].chat_id = "N/A"
-                                }
-                                let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
-                                if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                                    resquery[0].lastOnline = loginHistoryData[0].created_at
-                                } else {
-                                    resquery[0].lastOnline = "N/A"
-                                }
-
-                                let remainTermDays = "N/A"
-
-                                if (resquery[0].expiry_date !== null) {
-                                    let startDate = moment(new Date())
-                                    let expiray_date = new Date(resquery[0].expiry_date)
-                                    let endDate = moment(expiray_date)
-                                    remainTermDays = endDate.diff(startDate, 'days')
-                                }
-                                resquery[0].remainTermDays = remainTermDays
-
-                                device_helpers.saveActionHistory(
-                                    resquery[0],
-                                    constants.DEVICE_WIPE
-                                );
-                                data = {
-                                    data: resquery[0],
-                                    status: true,
-                                    msg: await helpers.convertToLang(
-                                        req.translation[
-                                        MsgConstants.DEVICE_WIPE_SUCC
-                                        ],
-                                        "Device Wiped successfully"
-                                    ) // Device Wiped successfully.
-                                };
-                                res.send(data);
-                            }
-                        }
-                    );
                 }
             });
         } else {
@@ -3111,7 +3106,7 @@ exports.applySettings = async function (req, res) {
             if (type == "profile") {
                 applyQuery = `INSERT INTO device_history (device_id, dealer_id, user_acc_id, profile_name, app_list, passwords, controls, permissions, type) VALUES ('${device_id}', ${dealer_id}, ${usrAccId}, '${device_setting.name}' , '${app_list}', '${passwords}', '${controls}', '${subExtensions}', 'profile')`;
             } else {
-                applyQuery = `INSERT INTO device_history (device_id, dealer_id, user_acc_id, app_list, passwords, controls, permissions) VALUES ('${device_id}', ${dealer_id}, ${usrAccId}, '${app_list}', '${passwords}', '${controls}', '${subExtensions}')`;
+                applyQuery = `INSERT INTO device_history (device_id, dealer_id, user_acc_id, app_list, passwords, controls, permissions, type) VALUES ('${device_id}', ${dealer_id}, ${usrAccId}, '${app_list}', '${passwords}', '${controls}', '${subExtensions}', '${type}')`;
             }
 
             sql.query(applyQuery, async function (err, rslts) {
