@@ -3816,22 +3816,38 @@ exports.transferDeviceProfile = async function (req, res) {
                                         let Insert_UsrAccProfile = `INSERT INTO usr_acc_profile (profile_name, profile_note, policy_id, user_acc_id, dealer_id, app_list, permissions, controls, passwords, status) 
                                         VALUES('${UsrAccProfile_Result[0].profile_name}', '${UsrAccProfile_Result[0].profile_note}', '${UsrAccProfile_Result[0].policy_id}', '${reqDevice.id}', '${UsrAccProfile_Result[0].dealer_id}', '${UsrAccProfile_Result[0].app_list}', '${UsrAccProfile_Result[0].permissions}', '${UsrAccProfile_Result[0].controls}', '${UsrAccProfile_Result[0].passwords}', '${UsrAccProfile_Result[0].status}');`;
 
-                                        await sql.query(Insert_UsrAccProfile, async function (err, resp) {
-                                            if (err) throw Error("Query Expection");
+                                        let resp = await sql.query(Insert_UsrAccProfile);
+                                        // await sql.query(Insert_UsrAccProfile, async function (err, resp) {
 
-                                            console.log('Insert_UsrAccProfile ', Insert_UsrAccProfile)
-                                            console.log('==============> :: 10')
-                                            if (resp.affectedRows > 0) {
+                                        console.log('Insert_UsrAccProfile ', Insert_UsrAccProfile)
+                                        console.log('==============> :: 10')
+                                        if (resp.affectedRows > 0) {
 
-                                                console.log('==============> :: 11')
-                                                // Delete Old usr_acc_profile
-                                                let delete_UsrAccProfile = `UPDATE usr_acc_profile SET delete_status = '1' WHERE user_acc_id=${flagged_device.id};`;
-                                                console.log('delete_UsrAccProfile ', delete_UsrAccProfile)
-                                                await sql.query(delete_UsrAccProfile, async function (err, resp) {
-                                                    if (err) throw Error("Query Expection")
-                                                });
-                                            }
-                                        });
+                                            console.log('==============> :: 11')
+                                            // Delete Old usr_acc_profile
+                                            let delete_UsrAccProfile = `UPDATE usr_acc_profile SET delete_status = '1' WHERE user_acc_id=${flagged_device.id};`;
+                                            console.log('delete_UsrAccProfile ', delete_UsrAccProfile)
+                                              await sql.query(delete_UsrAccProfile);
+                                        }
+                                        // });
+
+
+                                        // await sql.query(Insert_UsrAccProfile, async function (err, resp) {
+                                        //     if (err) throw Error("Query Expection");
+
+                                        //     console.log('Insert_UsrAccProfile ', Insert_UsrAccProfile)
+                                        //     console.log('==============> :: 10')
+                                        //     if (resp.affectedRows > 0) {
+
+                                        //         console.log('==============> :: 11')
+                                        //         // Delete Old usr_acc_profile
+                                        //         let delete_UsrAccProfile = `UPDATE usr_acc_profile SET delete_status = '1' WHERE user_acc_id=${flagged_device.id};`;
+                                        //         console.log('delete_UsrAccProfile ', delete_UsrAccProfile)
+                                        //         await sql.query(delete_UsrAccProfile, async function (err, resp) {
+                                        //             if (err) throw Error("Query Expection")
+                                        //         });
+                                        //     }
+                                        // });
 
                                     }
                                     // else {
@@ -3851,22 +3867,22 @@ exports.transferDeviceProfile = async function (req, res) {
 
                                         console.log('==============> :: 013')
                                         let InsertChatIds = `INSERT INTO chat_ids (chat_id, user_acc_id) VALUES('${ChatIds_Result[0].chat_id}', '${reqDevice.id}')`;
-                                        await sql.query(InsertChatIds);
+                                         await sql.query(InsertChatIds);
                                         // Update chat_ids
                                         let UpdateChatIds = `UPDATE chat_ids SET delete_status = '1' WHERE user_acc_id=${flagged_device.id};`;
-                                        await sql.query(UpdateChatIds);
+                                         await sql.query(UpdateChatIds);
                                     }
 
                                     // pgp_emails
-                                    let pgp_emails = `SELECT * FROM pgp_emails WHERE user_acc_id = '${flagged_device.id}' AND delete_status = '0'`; // "flagged_device.id" is user id(primary key) at usr_acc table
-                                    let pgp_emails_Result = await sql.query(pgp_emails)
+                                    let pgpEmails = `SELECT * FROM pgp_emails WHERE user_acc_id = '${flagged_device.id}' AND delete_status = '0'`; // "flagged_device.id" is user id(primary key) at usr_acc table
+                                    let pgp_emails_Result = await sql.query(pgpEmails)
                                     if (pgp_emails_Result.length > 0) {
 
                                         console.log('==============> :: 014')
                                         let InsertPgp_emails = `INSERT INTO pgp_emails (pgp_email, user_acc_id) VALUES('${pgp_emails_Result[0].pgp_email}', '${reqDevice.id}')`;
                                         await sql.query(InsertPgp_emails);
                                         let UpdatePgp_emails = `UPDATE pgp_emails SET delete_status = '1' WHERE user_acc_id=${flagged_device.id};`;
-                                        await sql.query(UpdatePgp_emails);
+                                         await sql.query(UpdatePgp_emails);
                                     }
 
                                     // SimIds
@@ -3877,13 +3893,14 @@ exports.transferDeviceProfile = async function (req, res) {
                                         for (var i = 0; i < SimIds_Result.length; i++) {
                                             console.log('==============> :: 016')
                                             let InsertSimIds = `INSERT INTO sim_ids (sim_id, user_acc_id) VALUES('${SimIds_Result[0].sim_id}', '${reqDevice.id}')`;
-                                            await sql.query(InsertSimIds, async function (err, resp) {
-                                                if (err) throw Error('Query Exception!');
+                                            let resp = await sql.query(InsertSimIds);
 
-                                                // Update sim_ids
+                                            // Update sim_ids
+                                            if (resp.affectedRows > 0) {
                                                 let UpdateSim_ids = `UPDATE sim_ids SET delete_status = '1' WHERE user_acc_id=${flagged_device.id};`;
                                                 await sql.query(UpdateSim_ids);
-                                            });
+                                            }
+                                            // });
                                         }
                                     }
 
