@@ -524,6 +524,57 @@ module.exports = {
             return 'N/A'
         }
     },
+
+    getPgpEmails_deviceList: async (ids) => {
+
+
+        let query = "SELECT pgp_email ,user_acc_id from pgp_emails WHERE user_acc_id IN (" + ids + ")"
+        let results = await sql.query(query);
+        if (results.length) {
+            return results
+        }
+        else {
+            return []
+        }
+    },
+    /**
+     * String ids of usr_acc table
+     */
+    getSimids_deviceList: async (ids) => {
+        let query = "SELECT sim_id,user_acc_id FROM sim_ids WHERE user_acc_id IN (" + ids + ")"
+        // console.log(query);
+        let results = await sql.query(query);
+        if (results.length) {
+            return results
+        } else {
+            return []
+        }
+    },
+    /**
+     * String ids of usr_acc table
+     */
+    getChatids_deviceList: async (ids) => {
+        let query = "SELECT chat_id,user_acc_id FROM chat_ids WHERE user_acc_id IN (" + ids + ")"
+        let results = await sql.query(query);
+        if (results.length) {
+            return results
+        } else {
+            return []
+        }
+    },
+    /**
+     * String usr_device_ids of usr_acc table
+     */
+    getLastLoginDetail_deviceList: async (ids) => {
+        let query = `SELECT MAX(created_at) as created_at, device_id FROM login_history WHERE device_id IN (${ids}) GROUP BY device_id ORDER BY created_at DESC  `;
+        let results = await sql.query(query);
+        if (results.length) {
+            return results
+        } else {
+            return []
+        }
+    },
+
     getAppJobQueue: async (device_id) => {
 
         let policyQueue = "SELECT * FROM policy_queue_jobs WHERE device_id = '" + device_id + "' order by created_at desc limit 1"

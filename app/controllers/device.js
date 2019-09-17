@@ -59,36 +59,51 @@ exports.devices = async function (req, res) {
             let query = `SELECT * From acc_action_history WHERE action = 'UNLINKED'`;
             newArray = await sql.query(query);
         }
-
-        // console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 ' + where_con + ' order by devices.id DESC');
-        // sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id where usr_acc.transfer_status = 0 ' + where_con + ' order by devices.id DESC', function (error, results, fields) {
-        // console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 ' + where_con + ' order by devices.id DESC');
         sql.query(
             `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) WHERE devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0  ${where_con} ORDER BY devices.id DESC`,
             async function (error, results, fields) {
                 // console.log('query ', 'select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 ' + where_con + ' order by devices.id DESC')
                 if (error) throw error;
-                for (var i = 0; i < results.length; i++) {
-                    // console.log('device is ', results[i]); return;
-                    results[i].finalStatus = device_helpers.checkStatus(
-                        results[i]
-                    );
-                    results[i].pgp_email = await device_helpers.getPgpEmails(
-                        results[i]
-                    );
-                    results[i].sim_id = await device_helpers.getSimids(
-                        results[i]
-                    );
-                    results[i].chat_id = await device_helpers.getChatids(
-                        results[i]
-                    );
-                    results[i].lastOnline = await device_helpers.getLastLoginDetail(
-                        results[i]
-                    );
-                    results[i].validity = await device_helpers.checkRemainDays(
-                        results[i].created_at,
-                        results[i].validity
-                    );
+                if (results && results.length) {
+                    let devices_acc_array = [];
+                    let usr_device_ids_array = []
+                    for (let i = 0; i < results.length; i++) {
+                        devices_acc_array.push(results[i].id)
+                        usr_device_ids_array.push(results[i].usr_device_id)
+                    }
+                    let user_acc_ids = devices_acc_array.join()
+                    let usr_device_ids = usr_device_ids_array.join()
+                    let pgp_emails = await device_helpers.getPgpEmails_deviceList(user_acc_ids);
+                    let sim_ids = await device_helpers.getSimids_deviceList(user_acc_ids);
+                    let chat_ids = await device_helpers.getChatids_deviceList(user_acc_ids);
+                    let loginHistoryData = await device_helpers.getLastLoginDetail_deviceList(usr_device_ids)
+
+                    for (var i = 0; i < results.length; i++) {
+                        let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === results[i].id);
+                        if (pgp_email) {
+                            results[i].pgp_email = pgp_email.pgp_email
+                        }
+                        let sim_id = sim_ids.find(sim_id => sim_id.user_acc_id === results[i].id);
+                        if (sim_id) {
+                            results[i].sim_id = sim_id.sim_id
+                        }
+                        let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === results[i].id);
+                        if (chat_id) {
+                            results[i].chat_id = chat_id.chat_id
+                        }
+                        let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
+                        if (lastOnline) {
+                            results[i].lastOnline = lastOnline.created_at
+                        }
+                        results[i].finalStatus = device_helpers.checkStatus(
+                            results[i]
+                        );
+                        results[i].validity = await device_helpers.checkRemainDays(
+                            results[i].created_at,
+                            results[i].validity
+                        );
+                    }
+
                 }
 
                 let finalResult = [...results, ...newArray];
