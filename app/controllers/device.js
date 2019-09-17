@@ -1103,41 +1103,16 @@ exports.unlinkDevice = async function (req, res) {
                 if (error) {
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang(
-                            req.translation[MsgConstants.DEVICE_NOT_UNLNK],
-                            "Device not unlinked"
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_UNLNK], "Device not unlinked"
                         )
                     };
                 }
 
                 if (results && results.affectedRows) {
-                    // Update device details on Super admin
-
-
-                    // var sqlDevice =
-                    //     "DELETE from devices where id = '" + device_id + "'";
-                    // await sql.query(sqlDevice);
 
                     var userAccId = await device_helpers.getUsrAccIDbyDvcId(
                         device_id
                     );
-
-                    // await sql.query(
-                    //     "update pgp_emails set user_acc_id = null WHERE user_acc_id = '" +
-                    //     userAccId +
-                    //     "'"
-                    // );
-                    // await sql.query(
-                    //     "update chat_ids set user_acc_id = null WHERE user_acc_id = '" +
-                    //     userAccId +
-                    //     "'"
-                    // );
-
-                    // await sql.query(
-                    //     "update sim_ids set user_acc_id = null WHERE user_acc_id = '" +
-                    //     userAccId +
-                    //     "'"
-                    // );
 
                     device_helpers.saveActionHistory(
                         req.body.device,
@@ -1181,36 +1156,25 @@ exports.unlinkDevice = async function (req, res) {
                     }
 
 
-
                     // // Delete unlinked & Transferred device 
-                    let getUnlinDevice = `SELECT * FROM usr_acc WHERE id=${userAccId} AND device_id='${device_id}'`;
-                    let getUnlinDeviceResult = await sql.query(getUnlinDevice);
+                    let getUnlinDeviceResult = await sql.query(`SELECT * FROM usr_acc WHERE id=${userAccId} AND device_id='${device_id}'`);
                     console.log("getUnlinDeviceResult ", getUnlinDeviceResult);
                     if (getUnlinDeviceResult[0].transfer_status == 1) {
-                        let deleteQuery = `DELETE FROM usr_acc WHERE id=${userAccId} AND device_id='${device_id}' AND transfer_status = 0`;
-                        console.log("deleteQuery usr_acc ", deleteQuery)
-                        await sql.query(deleteQuery);
-
-                        deleteQuery = `DELETE FROM devices WHERE id='${device_id}'`;
-                        console.log("deleteQuery devices ", deleteQuery)
-                        await sql.query(deleteQuery);
+                        let response = await sql.query(`DELETE FROM usr_acc WHERE id=${userAccId}`);
+                        console.log("response ", response)
+                        if (response.affectedRows > 0) {
+                            await sql.query(`DELETE FROM devices WHERE id=${device_id}`);
+                        }
                     }
-
 
                     data = {
                         status: true,
-                        msg: await helpers.convertToLang(
-                            req.translation[MsgConstants.DEVICE_UNLNK_SUCC],
-                            "Device unlinked successfully"
-                        ) // Device unlinked successfully.
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_UNLNK_SUCC], "Device unlinked successfully") // Device unlinked successfully.
                     };
                 } else {
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang(
-                            req.translation[MsgConstants.DEVICE_NOT_UNLNK],
-                            "Device not unlinked"
-                        ) // Device not unlinked.
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_UNLNK], "Device not unlinked") // Device not unlinked.
                     };
                 }
                 res.send(data);
@@ -1219,10 +1183,7 @@ exports.unlinkDevice = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(
-                    req.translation[MsgConstants.INVALID_DEVICE_ID],
-                    "Invalid device id"
-                ) // Invalid device id.
+                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEVICE_ID], "Invalid device id") // Invalid device id.
             };
             res.send(data);
             return;
