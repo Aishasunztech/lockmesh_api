@@ -983,6 +983,17 @@ exports.editDevices = async function (req, res) {
                                     ].chat_id = await device_helpers.getChatids(
                                         rsltq[i]
                                     );
+                                    rsltq[i].lastOnline = await device_helpers.getLastLoginDetail(
+                                        rsltq[i]
+                                    );
+                                    let startDate = moment(new Date())
+                                    let expiray_date = new Date(rsltq[i].expiry_date)
+                                    let endDate = moment(expiray_date)
+
+                                    // let startDate = moment()
+                                    // let endDate = moment(rsltq[i].expiry_date)
+                                    let remainTermDays = endDate.diff(startDate, 'days')
+                                    rsltq[i].remainTermDays = remainTermDays
                                     // dealerData = await device_helpers.getDealerdata(results[i]);
                                 }
 
