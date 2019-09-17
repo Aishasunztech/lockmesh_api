@@ -284,6 +284,25 @@ sockets.listen = function (server) {
                 });
             });
 
+            // get system settings from mobile side
+            socket.on(Constants.SEND_SETTINGS + device_id, async (controls) => {
+                console.log('getting device settings from ' + device_id);
+                console.log("device controls", controls)
+                // let device_permissions = permissions;
+
+                await device_helpers.insertOrUpdateSettings(controls, device_id);
+                console.log("Device save");
+                await device_helpers.deviceSynced(device_id);
+
+                socket.emit("get_sync_status_" + device_id, {
+                    device_id: device_id,
+                    apps_status: true,
+                    extensions_status: true,
+                    settings_status: true,
+                    is_sync: true,
+                });
+            });
+
             // system event from mobile side
             socket.on(Constants.SYSTEM_EVENT + device_id, async (data) => {
                 console.log("Data System event", data);
@@ -317,151 +336,6 @@ sockets.listen = function (server) {
                 }
             });
 
-            // get system settings from mobile side
-            socket.on(Constants.SEND_SETTINGS + device_id, async (controls) => {
-                console.log('getting device settings from ' + device_id);
-                console.log("device controls", controls)
-                // let device_permissions = permissions;
-
-                await device_helpers.insertOrUpdateSettings(controls, device_id);
-                console.log("Device save");
-                await device_helpers.deviceSynced(device_id);
-
-                socket.emit("get_sync_status_" + device_id, {
-                    device_id: device_id,
-                    apps_status: true,
-                    extensions_status: true,
-                    settings_status: true,
-                    is_sync: true,
-                });
-            });
-
-            // ===================================================== Pending Device Processes ===============================================
-            // pending wipe action for device
-
-            var wipe_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='wipe' order by created_at desc limit 1";
-            let wipe_data = await sql.query(wipe_query);
-            console.log(wipe_data);
-            if (wipe_data.length) {
-                // console.log(device_id);
-                socket.emit(Constants.DEVICE_STATUS + device_id, {
-                    device_id: device_id,
-                    status: false,
-                    msg: 'wiped'
-                });
-            }
-
-
-
-            // ===================================================== Pending Device Processes ===============================================
-            // pending settings for device
-
-            var profile_query = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=0 AND type='profile' order by created_at desc limit 1`;
-            let profile_res = await sql.query(profile_query);
-            if (profile_res.length) {
-
-                // Wrong line of code
-                let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND (type='history' OR type = 'profile') ";
-                await sql.query(historyUpdate);
-
-                socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
-                    device_id: device_id,
-                    app_list: (profile_res[0].app_list === undefined || profile_res[0].app_list === null || profile_res[0].app_list === '') ? '[]' : profile_res[0].app_list,
-                    passwords: (profile_res[0].passwords === undefined || profile_res[0].passwords === null || profile_res[0].passwords === '') ? '{}' : profile_res[0].passwords,
-                    settings: (profile_res[0].controls === undefined || profile_res[0].controls === null || profile_res[0].controls === '') ? '[]' : profile_res[0].controls,
-                    extension_list: (profile_res[0].permissions === undefined || profile_res[0].permissions === null || profile_res[0].permissions === '') ? '[]' : profile_res[0].permissions,
-                    status: true
-                });
-
-            } else {
-                var setting_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='history'  order by created_at desc limit 1";
-                let setting_res = await sql.query(setting_query);
-                if (setting_res.length) {
-                    let pwdObject = { "admin_password": null, "guest_password": null, "encrypted_password": null, "duress_password": null }
-
-                    let getPasswordQ = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='password' order by created_at asc"
-                    let allPwdHistry = await sql.query(getPasswordQ);
-                    if (allPwdHistry && allPwdHistry.length) {
-                        // console.log(allPwdHistry);
-                        for (let item of allPwdHistry) {
-                            if (item.passwords) {
-                                let pwd = JSON.parse(item.passwords)
-                                if (pwd['admin_password'] != null && pwd['admin_password'] != 'null') {
-                                    pwdObject['admin_password'] = pwd['admin_password'];
-                                } else if (pwd['guest_password'] != null && pwd['guest_password'] != 'null') {
-                                    pwdObject['guest_password'] = pwd['guest_password'];
-                                } else if (pwd['encrypted_password'] != null && pwd['encrypted_password'] != 'null') {
-                                    pwdObject['encrypted_password'] = pwd['encrypted_password'];
-                                } else if (pwd['duress_password'] != null && pwd['duress_password'] != 'null') {
-                                    pwdObject['duress_password'] = pwd['duress_password'];
-                                }
-                            }
-
-                        }
-                        pwdObject = JSON.stringify(pwdObject);
-                    }
-
-
-                    let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND (type='history' OR type='password' ) ";
-                    await sql.query(historyUpdate);
-
-
-                    socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
-                        device_id: device_id,
-                        app_list: (setting_res[0].app_list === undefined || setting_res[0].app_list === null || setting_res[0].app_list === '') ? '[]' : setting_res[0].app_list,
-                        passwords: (pwdObject === undefined || pwdObject === null || pwdObject === '') ? '{}' : pwdObject,
-                        settings: (setting_res[0].controls === undefined || setting_res[0].controls === null || setting_res[0].controls === '') ? '[]' : setting_res[0].controls,
-                        extension_list: (setting_res[0].permissions === undefined || setting_res[0].permissions === null || setting_res[0].permissions === '') ? '[]' : setting_res[0].permissions,
-                        status: true
-                    });
-                } else {
-
-                    let pwdObject = { "admin_password": null, "guest_password": null, "encrypted_password": null, "duress_password": null }
-
-                    let getPasswordQ = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='password' order by created_at asc"
-                    let allPwdHistry = await sql.query(getPasswordQ);
-                    if (allPwdHistry && allPwdHistry.length) {
-                        // console.log(allPwdHistry);
-                        for (let item of allPwdHistry) {
-                            if (item.passwords) {
-                                let pwd = JSON.parse(item.passwords)
-                                if (pwd['admin_password'] != null && pwd['admin_password'] != 'null') {
-                                    pwdObject['admin_password'] = pwd['admin_password'];
-                                } else if (pwd['guest_password'] != null && pwd['guest_password'] != 'null') {
-                                    pwdObject['guest_password'] = pwd['guest_password'];
-                                } else if (pwd['encrypted_password'] != null && pwd['encrypted_password'] != 'null') {
-                                    pwdObject['encrypted_password'] = pwd['encrypted_password'];
-                                } else if (pwd['duress_password'] != null && pwd['duress_password'] != 'null') {
-                                    pwdObject['duress_password'] = pwd['duress_password'];
-                                }
-                            }
-
-                        }
-                        pwdObject = JSON.stringify(pwdObject);
-                        let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND type='password' ";
-                        await sql.query(historyUpdate);
-
-
-                        socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
-                            device_id: device_id,
-                            app_list: '[]',
-                            passwords: (pwdObject === undefined || pwdObject === null || pwdObject === '') ? '{}' : pwdObject,
-                            settings: '[]',
-                            extension_list: '[]',
-                            status: true
-                        });
-
-                    } else {
-                        socket.emit('get_applied_settings_' + device_id, {
-                            device_id: device_id,
-                            status: false
-                        });
-                    }
-                }
-            }
-
-
-
             // ================================================================ IMEI ===================================================
             // IMEI SOCKET
             socket.on(Constants.IMEI_APPLIED + device_id, async function (data) {
@@ -493,56 +367,7 @@ sockets.listen = function (server) {
                 }
             });
 
-
-            // IMEI History
-            var imei_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='imei' order by created_at desc limit 1";
-            let imei_res = await sql.query(imei_query);
-
-            if (imei_res.length) {
-                io.emit(Constants.ACTION_IN_PROCESS + device_id, {
-                    status: true,
-                    type: 'imei'
-                })
-                socket.emit(Constants.WRITE_IMEI + device_id, {
-                    device_id: device_id,
-                    imei: imei_res[0].imei
-                });
-            }
-
-            // ========================================================== PUSH APPS ============================================
-            // pending pushed apps for device
-            var pendingAppsQ = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=0 AND type='push_apps' ORDER BY created_at DESC`;
-            let pendingPushApps = await sql.query(pendingAppsQ);
-
-            if (pendingPushApps.length) {
-                let pushApps = [];
-                let pushAppsPackages = [];
-                pendingPushApps.map((pendingPushApp)=>{
-                    let prevPushApps = JSON.parse(pendingPushApp.push_apps);
-                    prevPushApps.map((prevPushApp)=>{
-                        if(!pushAppsPackages.includes(prevPushApp.package_name)){
-                            pushApps.push(prevPushApp);
-                            pushAppsPackages.push(prevPushApp.package_name);
-                        }
-                    })
-
-                });
-                
-                console.log(pushApps);
-
-                io.emit(Constants.GET_PUSHED_APPS + device_id, {
-                    status: true,
-                    device_id: device_id,
-                    push_apps: JSON.stringify(pushApps)
-                });
-
-                // push apps process on frontend
-                io.emit(Constants.ACTION_IN_PROCESS + device_id, {
-                    status: true,
-                    type: 'push'
-                })
-            }
-
+            // ============================================================ PUSH APPS =================================================            
             socket.on(Constants.SEND_PUSHED_APPS_STATUS + device_id, async (pushedApps) => {
                 sockets.ackSinglePushApp(device_id, dvc_id, pushedApps);
             });
@@ -555,49 +380,11 @@ sockets.listen = function (server) {
                 // });
             });
 
-            // =====================================================PULL APPS=================================================
-            // pending pull apps
-            var pendingPullAppsQ = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=0 AND type='pull_apps' ORDER BY created_at DESC`;
-            let pendingPullApps = await sql.query(pendingPullAppsQ);
-
-            if (pendingPullApps.length) {
-                console.log("pendingPulledApps");
-                let pullApps = [];
-                let pullAppsPackages = [];
-                pendingPullApps.map((pendingPushApp)=>{
-                    let prevPullApps = JSON.parse(pendingPushApp.push_apps);
-                    prevPullApps.map((prevPullApp)=>{
-                        if(!pullAppsPackages.includes(prevPullApp.package_name)){
-                            pullApps.push(prevPullApp);
-                            pullAppsPackages.push(prevPullApp.package_name);
-                        }
-                    })
-
-                });
-                
-                console.log(pullApps);
-
-                io.emit(Constants.GET_PULLED_APPS + device_id, {
-                    status: true,
-                    device_id: device_id,
-                    pull_apps: pendingPullApps[0].pull_apps
-                });
-
-                // pull apps process on frontend
-                io.emit(Constants.ACTION_IN_PROCESS + device_id, {
-                    status: true,
-                    type: 'pull'
-                })
-
-                
-            }
-
-
+            // ============================================================== PULL APPS =================================================
             socket.on(Constants.SEND_PULLED_APPS_STATUS + device_id, async (pushedApps) => {
                 console.log("send_pulled_apps_status_", pushedApps);
                 sockets.ackSinglePullApp(device_id, dvc_id, pushedApps);
             })
-
 
             socket.on(Constants.FINISHED_PULL_APPS + device_id, async (response) => {
                 console.log("FINISHED PULLED APPS", response);
@@ -608,9 +395,7 @@ sockets.listen = function (server) {
                 // });
             });
 
-
-            // ======================================================= Policy ============================================================= \\
-
+            // ============================================================== POLICY =================================================
             // load policy from mobile menu via command
             socket.on(Constants.LOAD_POLICY + device_id, async (response) => {
                 let { link_code, device_id, policy_name, is_default } = response;
@@ -720,20 +505,6 @@ sockets.listen = function (server) {
                 }
             });
 
-            //apply_policy_offline with top priority
-            let policyHistoryQ = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='policy' order by created_at desc limit 1";
-            let policyResult = await sql.query(policyHistoryQ)
-            if (policyResult.length) {
-
-                socket.emit(Constants.GET_POLICY + device_id, {
-                    status: true,
-                    app_list: (policyResult[0].app_list === undefined || policyResult[0].app_list === null || policyResult[0].app_list === '') ? '[]' : policyResult[0].app_list,
-                    settings: (policyResult[0].controls === undefined || policyResult[0].controls === null || policyResult[0].controls === '') ? '[]' : policyResult[0].controls,
-                    extension_list: (policyResult[0].permissions === undefined || policyResult[0].permissions === null || policyResult[0].permissions === '') ? '[]' : policyResult[0].permissions,
-                    push_apps: (policyResult[0].push_apps === undefined || policyResult[0].push_apps === null || policyResult[0].push_apps === '') ? '[]' : policyResult[0].push_apps,
-                    device_id: device_id,
-                });
-            }
 
             // policy step 1;
             socket.on(Constants.FINISH_POLICY_PUSH_APPS + device_id, (response) => {
@@ -790,37 +561,6 @@ sockets.listen = function (server) {
 
             })
 
-
-            // let sUnEmitSims = `SELECT * FROM sims WHERE del ='0' AND device_id= '${device_id}'`;
-            // // console.log('========= check data when socket => re-connect ================= ', sUnEmitSims);
-            // let simResult = await sql.query(sUnEmitSims);
-
-            // if (simResult.length > 0) {
-
-            //     // console.log(Constants.SEND_SIM + device_id, 're-connect data is=> ', {
-            //     //     action: "sim_update",
-            //     //     device_id,
-            //     //     entries: JSON.stringify(simResult),
-            //     // });
-
-            //     socket.emit(Constants.SEND_SIM + device_id, {
-            //         action: "sim_update",
-            //         device_id,
-            //         entries: JSON.stringify(simResult),
-            //     });
-
-            //     simResult.forEach(async function (data, index) {
-            //         let uQry = `UPDATE sims SET sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
-            //         await sql.query(uQry);
-            //     })
-
-
-            // }
-
-            // socket.on(Constants.GET_INSTALLED_APPS + device_id, sockets.installedApps)
-
-            // socket.on(Constants.GET_UNINSTALLED_APPS + device_id, sockets.uninstalledApps)
-
             socket.on(Constants.GET_INSTALLED_APPS + device_id, (response) => {
                 sockets.installedApps(device_id, dvc_id, response)
             })
@@ -829,7 +569,236 @@ sockets.listen = function (server) {
                 sockets.uninstalledApps(device_id, dvc_id, response)
             })
 
-            // ====================================================== Force Update =====================================
+
+            // ===================================================== Pending Device Processes ===============================================
+            // pending wipe action for device
+
+            var pendingActionsQ = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=0 `;
+            let pendingActions = await sql.query(pendingActionsQ);
+
+            if (pendingActions.length) {
+                console.log("all Pending Actions: ", pendingActions)
+                let wipe_data = null;
+                let setting_res = null;
+                let imei_res = null;
+                let policyResult = null;
+
+                let pendingPushApps = [];
+                let pendingPullApps = [];
+
+                pendingActions.map((action) => {
+                    if (action.type === 'push_apps') {
+                        pendingPushApps.push(action)
+                    } else if (action.type === 'pull_apps') {
+                        pendingPullApps.push(action);
+                    } else if (action.type === 'wipe') {
+                        wipe_data = action;
+                    } else if (action.type === 'profile' || action.type === 'history') {
+                        setting_res = action;
+                    } else if (action.type === 'imei') {
+                        imei_res = action;
+                    } else if (action.type === 'policy'){
+                        policyResult = action;
+                    }
+                });
+
+                // pending wipe_data
+                if (wipe_data) {
+                    console.log('wip_data: ', wipe_data);
+                    socket.emit(Constants.DEVICE_STATUS + device_id, {
+                        device_id: device_id,
+                        status: false,
+                        msg: 'wiped'
+                    });
+                }
+
+                // pending setting and profiles
+                if (setting_res) {
+                    if (setting_res.type === "profile") {
+
+                        // wrong data updation
+                        let historyUpdate = `UPDATE device_history SET status=1 WHERE user_acc_id=${user_acc_id} AND (type='history' OR type = 'profile')`;
+                        await sql.query(historyUpdate);
+
+                        socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
+                            device_id: device_id,
+                            app_list: (setting_res.app_list === undefined || setting_res.app_list === null || setting_res.app_list === '') ? '[]' : setting_res.app_list,
+                            passwords: '{}',
+                            settings: (setting_res.controls === undefined || setting_res.controls === null || setting_res.controls === '') ? '[]' : setting_res.controls,
+                            extension_list: (setting_res.permissions === undefined || setting_res.permissions === null || setting_res.permissions === '') ? '[]' : setting_res.permissions,
+                            status: true
+                        });
+                    } else {
+                        let pwdObject = { "admin_password": null, "guest_password": null, "encrypted_password": null, "duress_password": null }
+
+                        let allPwdHistory = pendingActions.find((action) => action.type === 'password');
+                        console.log("allPwdHistory:", allPwdHistory);
+
+                        if (allPwdHistory && allPwdHistory.length) {
+                            for (let item of allPwdHistory) {
+                                if (item.passwords) {
+                                    let pwd = JSON.parse(item.passwords)
+                                    if (pwd['admin_password'] != null && pwd['admin_password'] != 'null') {
+                                        pwdObject['admin_password'] = pwd['admin_password'];
+                                    } else if (pwd['guest_password'] != null && pwd['guest_password'] != 'null') {
+                                        pwdObject['guest_password'] = pwd['guest_password'];
+                                    } else if (pwd['encrypted_password'] != null && pwd['encrypted_password'] != 'null') {
+                                        pwdObject['encrypted_password'] = pwd['encrypted_password'];
+                                    } else if (pwd['duress_password'] != null && pwd['duress_password'] != 'null') {
+                                        pwdObject['duress_password'] = pwd['duress_password'];
+                                    }
+                                }
+
+                            }
+                            pwdObject = JSON.stringify(pwdObject);
+                        }
+
+                        // wrong data updation
+                        let historyUpdate = `UPDATE device_history SET status=1 WHERE user_acc_id=${user_acc_id} AND (type='history' OR type='password' ) `;
+                        await sql.query(historyUpdate);
+
+
+                        socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
+                            device_id: device_id,
+                            app_list: (setting_res.app_list === undefined || setting_res.app_list === null || setting_res.app_list === '') ? '[]' : setting_res.app_list,
+                            passwords: (pwdObject === undefined || pwdObject === null || pwdObject === '') ? '{}' : pwdObject,
+                            settings: (setting_res.controls === undefined || setting_res.controls === null || setting_res.controls === '') ? '[]' : setting_res.controls,
+                            extension_list: (setting_res.permissions === undefined || setting_res.permissions === null || setting_res.permissions === '') ? '[]' : setting_res.permissions,
+                            status: true
+                        });
+                    }
+                }
+
+                // pending IMEI History
+                if (imei_res) {
+                    io.emit(Constants.ACTION_IN_PROCESS + device_id, {
+                        status: true,
+                        type: 'imei'
+                    })
+                    socket.emit(Constants.WRITE_IMEI + device_id, {
+                        device_id: device_id,
+                        imei: imei_res.imei
+                    });
+                }
+
+                // pending push apps
+                if (pendingPushApps.length) {
+                    console.log("pendingPushApps");
+                    let pushApps = [];
+                    let pushAppsPackages = [];
+                    pendingPushApps.map((pendingPushApp) => {
+                        let prevPushApps = JSON.parse(pendingPushApp.push_apps);
+                        prevPushApps.map((prevPushApp) => {
+                            if (!pushAppsPackages.includes(prevPushApp.package_name)) {
+                                pushApps.push(prevPushApp);
+                                pushAppsPackages.push(prevPushApp.package_name);
+                            }
+                        })
+
+                    });
+
+                    console.log(pushApps);
+
+                    io.emit(Constants.GET_PUSHED_APPS + device_id, {
+                        status: true,
+                        device_id: device_id,
+                        push_apps: JSON.stringify(pushApps)
+                    });
+
+                    // push apps process on frontend
+                    io.emit(Constants.ACTION_IN_PROCESS + device_id, {
+                        status: true,
+                        type: 'push'
+                    })
+                }
+
+                // pending pull apps
+                if (pendingPullApps.length) {
+                    console.log("pendingPulledApps");
+                    let pullApps = [];
+                    let pullAppsPackages = [];
+                    pendingPullApps.map((pendingPushApp) => {
+                        let prevPullApps = JSON.parse(pendingPushApp.push_apps);
+                        prevPullApps.map((prevPullApp) => {
+                            if (!pullAppsPackages.includes(prevPullApp.package_name)) {
+                                pullApps.push(prevPullApp);
+                                pullAppsPackages.push(prevPullApp.package_name);
+                            }
+                        })
+
+                    });
+
+                    console.log(pullApps);
+
+                    io.emit(Constants.GET_PULLED_APPS + device_id, {
+                        status: true,
+                        device_id: device_id,
+                        pull_apps: pendingPullApps[0].pull_apps
+                    });
+
+                    // pull apps process on frontend
+                    io.emit(Constants.ACTION_IN_PROCESS + device_id, {
+                        status: true,
+                        type: 'pull'
+                    })
+
+
+                }
+
+
+                if (policyResult) {
+
+                    socket.emit(Constants.GET_POLICY + device_id, {
+                        status: true,
+                        app_list: (policyResult.app_list === undefined || policyResult.app_list === null || policyResult.app_list === '') ? '[]' : policyResult.app_list,
+                        settings: (policyResult.controls === undefined || policyResult.controls === null || policyResult.controls === '') ? '[]' : policyResult.controls,
+                        extension_list: (policyResult.permissions === undefined || policyResult.permissions === null || policyResult.permissions === '') ? '[]' : policyResult.permissions,
+                        push_apps: (policyResult.push_apps === undefined || policyResult.push_apps === null || policyResult.push_apps === '') ? '[]' : policyResult.push_apps,
+                        device_id: device_id,
+                    });
+                }
+            }
+
+
+
+
+            //         let pwdObject = { "admin_password": null, "guest_password": null, "encrypted_password": null, "duress_password": null }
+
+            //         let getPasswordQ = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='password' order by created_at asc"
+            //         let allPwdHistry = await sql.query(getPasswordQ);
+            //         if (allPwdHistry && allPwdHistry.length) {
+            //             // console.log(allPwdHistry);
+            //             for (let item of allPwdHistry) {
+            //                 if (item.passwords) {
+            //                     let pwd = JSON.parse(item.passwords)
+            //                     if (pwd['admin_password'] != null && pwd['admin_password'] != 'null') {
+            //                         pwdObject['admin_password'] = pwd['admin_password'];
+            //                     } else if (pwd['guest_password'] != null && pwd['guest_password'] != 'null') {
+            //                         pwdObject['guest_password'] = pwd['guest_password'];
+            //                     } else if (pwd['encrypted_password'] != null && pwd['encrypted_password'] != 'null') {
+            //                         pwdObject['encrypted_password'] = pwd['encrypted_password'];
+            //                     } else if (pwd['duress_password'] != null && pwd['duress_password'] != 'null') {
+            //                         pwdObject['duress_password'] = pwd['duress_password'];
+            //                     }
+            //                 }
+
+            //             }
+            //             pwdObject = JSON.stringify(pwdObject);
+            //             let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND type='password' ";
+            //             await sql.query(historyUpdate);
+
+
+            //             socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
+            //                 device_id: device_id,
+            //                 app_list: '[]',
+            //                 passwords: (pwdObject === undefined || pwdObject === null || pwdObject === '') ? '{}' : pwdObject,
+            //                 settings: '[]',
+            //                 extension_list: '[]',
+            //                 status: true
+            //             });
+
+            //     }
+            // }
 
         } else {
             // socket.join('testRoom');
