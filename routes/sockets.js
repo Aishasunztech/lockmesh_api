@@ -302,7 +302,7 @@ sockets.listen = function (server) {
                                 status: false
                             });
                         }
-                        if (result.affectedRows > 0) {
+                        if (result && result.affectedRows > 0) {
                             console.log("Type And version changed Successfully");
                             socket.emit(Constants.SYSTEM_EVENT + device_id, {
                                 device_id: device_id,
@@ -511,16 +511,32 @@ sockets.listen = function (server) {
 
             // ========================================================== PUSH APPS ============================================
             // pending pushed apps for device
-            var pendingAppsQ = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='push_apps' order by created_at desc limit 1";
-            let pendingPushedApps = await sql.query(pendingAppsQ);
+            var pendingAppsQ = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=0 AND type='push_apps' ORDER BY created_at DESC`;
+            let pendingPushApps = await sql.query(pendingAppsQ);
 
-            if (pendingPushedApps.length) {
+            if (pendingPushApps.length) {
+                let pushApps = [];
+                let pushAppsPackages = [];
+                pendingPushApps.map((pendingPushApp)=>{
+                    let prevPushApps = JSON.parse(pendingPushApp.push_apps);
+                    prevPushApps.map((prevPushApp)=>{
+                        if(!pushAppsPackages.includes(prevPushApp.package_name)){
+                            pushApps.push(prevPushApp);
+                            pushAppsPackages.push(prevPushApp.package_name);
+                        }
+                    })
+
+                });
+                
+                console.log(pushApps);
 
                 io.emit(Constants.GET_PUSHED_APPS + device_id, {
                     status: true,
                     device_id: device_id,
-                    push_apps: pendingPushedApps[0].push_apps
+                    push_apps: JSON.stringify(pushApps)
                 });
+
+                // push apps process on frontend
                 io.emit(Constants.ACTION_IN_PROCESS + device_id, {
                     status: true,
                     type: 'push'
@@ -541,22 +557,39 @@ sockets.listen = function (server) {
 
             // =====================================================PULL APPS=================================================
             // pending pull apps
-            var pendingPullAppsQ = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=0 AND type='pull_apps' order by created_at desc limit 1`;
-            let pendingPulledApps = await sql.query(pendingPullAppsQ);
+            var pendingPullAppsQ = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=0 AND type='pull_apps' ORDER BY created_at DESC`;
+            let pendingPullApps = await sql.query(pendingPullAppsQ);
 
-            if (pendingPulledApps.length) {
+            if (pendingPullApps.length) {
                 console.log("pendingPulledApps");
+                let pullApps = [];
+                let pullAppsPackages = [];
+                pendingPullApps.map((pendingPushApp)=>{
+                    let prevPullApps = JSON.parse(pendingPushApp.push_apps);
+                    prevPullApps.map((prevPullApp)=>{
+                        if(!pullAppsPackages.includes(prevPullApp.package_name)){
+                            pullApps.push(prevPullApp);
+                            pullAppsPackages.push(prevPullApp.package_name);
+                        }
+                    })
 
+                });
+                
+                console.log(pullApps);
+
+                io.emit(Constants.GET_PULLED_APPS + device_id, {
+                    status: true,
+                    device_id: device_id,
+                    pull_apps: pendingPullApps[0].pull_apps
+                });
+
+                // pull apps process on frontend
                 io.emit(Constants.ACTION_IN_PROCESS + device_id, {
                     status: true,
                     type: 'pull'
                 })
 
-                io.emit(Constants.GET_PULLED_APPS + device_id, {
-                    status: true,
-                    device_id: device_id,
-                    pull_apps: pendingPulledApps[0].pull_apps
-                });
+                
             }
 
 
