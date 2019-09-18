@@ -349,6 +349,9 @@ sockets.listen = function (server) {
                     status: false,
                     msg: 'wiped'
                 });
+                // Need to remove this code after APP TEAM release
+                var clearWipeDevice = "UPDATE device_history SET status=1 WHERE type='wipe' AND user_acc_id=" + user_acc_id + "";
+                sql.query(clearWipeDevice)
             }
 
 
@@ -517,17 +520,17 @@ sockets.listen = function (server) {
             if (pendingPushApps.length) {
                 let pushApps = [];
                 let pushAppsPackages = [];
-                pendingPushApps.map((pendingPushApp)=>{
+                pendingPushApps.map((pendingPushApp) => {
                     let prevPushApps = JSON.parse(pendingPushApp.push_apps);
-                    prevPushApps.map((prevPushApp)=>{
-                        if(!pushAppsPackages.includes(prevPushApp.package_name)){
+                    prevPushApps.map((prevPushApp) => {
+                        if (!pushAppsPackages.includes(prevPushApp.package_name)) {
                             pushApps.push(prevPushApp);
                             pushAppsPackages.push(prevPushApp.package_name);
                         }
                     })
 
                 });
-                
+
                 console.log(pushApps);
 
                 io.emit(Constants.GET_PUSHED_APPS + device_id, {
@@ -564,17 +567,17 @@ sockets.listen = function (server) {
                 console.log("pendingPulledApps");
                 let pullApps = [];
                 let pullAppsPackages = [];
-                pendingPullApps.map((pendingPullApp)=>{
+                pendingPullApps.map((pendingPullApp) => {
                     let prevPullApps = JSON.parse(pendingPullApp.pull_apps);
-                    prevPullApps.map((prevPullApp)=>{
-                        if(!pullAppsPackages.includes(prevPullApp.package_name)){
+                    prevPullApps.map((prevPullApp) => {
+                        if (!pullAppsPackages.includes(prevPullApp.package_name)) {
                             pullApps.push(prevPullApp);
                             pullAppsPackages.push(prevPullApp.package_name);
                         }
                     })
 
                 });
-                
+
                 console.log(pullApps);
 
                 io.emit(Constants.GET_PULLED_APPS + device_id, {
@@ -589,7 +592,7 @@ sockets.listen = function (server) {
                     type: 'pull'
                 })
 
-                
+
             }
 
 

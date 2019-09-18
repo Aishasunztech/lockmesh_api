@@ -2742,10 +2742,13 @@ exports.wipeDevice = async function (req, res) {
                             online: true,
                             msg: await helpers.convertToLang(
                                 req.translation[""],
-                                "Device is being Wiped."
+                                "Device Wiped Susseccfully."
                             ),
                             content: ""
                         }
+                        // Need to remove this code after APP TEAM release
+                        var clearWipeDevice = "UPDATE device_history SET status=1 WHERE type='wipe' AND user_acc_id=" + resquery[0].id + "";
+                        sql.query(clearWipeDevice)
                     } else {
                         data = {
                             status: true,
