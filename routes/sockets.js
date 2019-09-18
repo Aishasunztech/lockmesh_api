@@ -580,7 +580,7 @@ sockets.listen = function (server) {
                 io.emit(Constants.GET_PULLED_APPS + device_id, {
                     status: true,
                     device_id: device_id,
-                    pull_apps: pendingPullApps[0].pull_apps
+                    pull_apps: pullApps
                 });
 
                 // pull apps process on frontend
