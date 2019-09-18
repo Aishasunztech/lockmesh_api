@@ -28,7 +28,7 @@ const app_constants = require('../../config/constants');
 
 // constants
 // let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id, usr_acc.account_email, usr_acc.account_name, usr_acc.dealer_id, usr_acc.dealer_id, usr_acc.prnt_dlr_id, usr_acc.link_code, usr_acc.client_id, usr_acc.start_date, usr_acc.expiry_months, usr_acc.expiry_date, usr_acc.activation_code, usr_acc.status, usr_acc.device_status, usr_acc.activation_status, usr_acc.account_status, usr_acc.unlink_status, usr_acc.transfer_status, usr_acc.dealer_name, usr_acc.prnt_dlr_name, usr_acc.del_status, usr_acc.note, usr_acc.validity, usr_acc.batch_no, usr_acc.type, usr_acc.version"
-let usr_acc_query_text =  constants.usr_acc_query_text;
+let usr_acc_query_text = constants.usr_acc_query_text;
 var data;
 
 
@@ -64,13 +64,46 @@ exports.devices = async function (req, res) {
             if (error) {
                 console.log(error);
             }
+            if (results.length) {
 
-            for (var i = 0; i < results.length; i++) {
-                results[i].finalStatus = device_helpers.checkStatus(results[i])
-                results[i].pgp_email = await device_helpers.getPgpEmails(results[i])
-                results[i].sim_id = await device_helpers.getSimids(results[i])
-                results[i].chat_id = await device_helpers.getChatids(results[i])
-                results[i].validity = await device_helpers.checkRemainDays(results[i].created_at, results[i].validity)
+                let devices_acc_array = [];
+                let usr_device_ids_array = []
+                for (let i = 0; i < results.length; i++) {
+                    devices_acc_array.push(results[i].id)
+                    usr_device_ids_array.push(results[i].usr_device_id)
+                }
+                let user_acc_ids = devices_acc_array.join()
+                let usr_device_ids = usr_device_ids_array.join()
+                let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
+                let sim_ids = await device_helpers.getSimids(user_acc_ids);
+                let chat_ids = await device_helpers.getChatids(user_acc_ids);
+                let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
+
+                for (var i = 0; i < results.length; i++) {
+                    let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === results[i].id);
+                    if (pgp_email) {
+                        results[i].pgp_email = pgp_email.pgp_email
+                    }
+                    let sim_id = sim_ids.find(sim_id => sim_id.user_acc_id === results[i].id);
+                    if (sim_id) {
+                        results[i].sim_id = sim_id.sim_id
+                    }
+                    let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === results[i].id);
+                    if (chat_id) {
+                        results[i].chat_id = chat_id.chat_id
+                    }
+                    let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
+                    if (lastOnline) {
+                        results[i].lastOnline = lastOnline.created_at
+                    }
+                    results[i].finalStatus = device_helpers.checkStatus(
+                        results[i]
+                    );
+                    results[i].validity = await device_helpers.checkRemainDays(
+                        results[i].created_at,
+                        results[i].validity
+                    );
+                }
             }
 
             let finalResult = [...results, ...newArray]
@@ -79,6 +112,7 @@ exports.devices = async function (req, res) {
             for (let device of finalResult) {
 
                 device.account_email = checkValue(device.account_email)
+                device.firmware_info = checkValue(device.firmware_info)
                 device.account_name = checkValue(device.account_name)
                 device.account_status = checkValue(device.account_status)
                 device.activation_code = checkValue(device.activation_code)
@@ -592,12 +626,33 @@ exports.editDevices = async function (req, res) {
                                 // console.log(slctquery);
                                 rsltq = await sql.query(slctquery);
                                 // console.log(rsltq);
-                                for (var i = 0; i < rsltq.length; i++) {
-                                    rsltq[i].finalStatus = device_helpers.checkStatus(rsltq[i])
-                                    rsltq[i].pgp_email = await device_helpers.getPgpEmails(rsltq[i])
-                                    rsltq[i].sim_id = await device_helpers.getSimids(rsltq[i])
-                                    rsltq[i].chat_id = await device_helpers.getChatids(rsltq[i])
-                                    // dealerData = await device_helpers.getDealerdata(results[i]);
+                                if (rsltq.length) {
+                                    let devices_acc_array = [];
+                                    for (let i = 0; i < rsltq.length; i++) {
+                                        devices_acc_array.push(rsltq[i].id)
+                                    }
+                                    let user_acc_ids = devices_acc_array.join()
+                                    let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
+                                    let sim_ids = await device_helpers.getSimids(user_acc_ids);
+                                    let chat_ids = await device_helpers.getChatids(user_acc_ids);
+
+                                    for (var i = 0; i < rsltq.length; i++) {
+                                        let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === rsltq[i].id);
+                                        if (pgp_email) {
+                                            rsltq[i].pgp_email = pgp_email.pgp_email
+                                        }
+                                        let sim_id = sim_ids.find(sim_id => sim_id.user_acc_id === rsltq[i].id);
+                                        if (sim_id) {
+                                            rsltq[i].sim_id = sim_id.sim_id
+                                        }
+                                        let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === rsltq[i].id);
+                                        if (chat_id) {
+                                            rsltq[i].chat_id = chat_id.chat_id
+                                        }
+                                        rsltq[i].finalStatus = device_helpers.checkStatus(
+                                            rsltq[i]
+                                        );
+                                    }
                                 }
 
                                 data = {
@@ -789,10 +844,26 @@ exports.suspendDevice = async function (req, res) {
                                 // console.log('lolo else', resquery[0])
 
                                 if (resquery.length) {
-                                    resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
-                                    resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
-                                    resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
-                                    resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
+                                    let pgp_emails = await device_helpers.getPgpEmails(results[0].id);
+                                    let sim_ids = await device_helpers.getSimids(results[0].id);
+                                    let chat_ids = await device_helpers.getChatids(results[0].id);
+                                    results[0].finalStatus = device_helpers.checkStatus(results[0]);
+                                    if (pgp_emails[0] && pgp_emails[0].pgp_email) {
+                                        results[0].pgp_email = pgp_emails[0].pgp_email
+                                    } else {
+                                        results[0].pgp_email = "N/A"
+                                    }
+                                    if (sim_ids[0] && sim_ids[0].sim_id) {
+                                        results[0].sim_id = sim_ids[0].sim_id
+                                    } else {
+                                        results[0].sim_id = "N/A"
+                                    }
+                                    if (chat_ids[0] && chat_ids[0].chat_id) {
+                                        results[0].chat_id = chat_ids[0].chat_id
+                                    }
+                                    else {
+                                        results[0].chat_id = "N/A"
+                                    }
                                     // dealerData = await getDealerdata(res[i]);
                                     data = {
                                         data: resquery[0],
@@ -919,10 +990,27 @@ exports.activateDevice = async function (req, res) {
                                 }
 
                                 if (resquery.length) {
-                                    resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
-                                    resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
-                                    resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
-                                    resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
+                                    let pgp_emails = await device_helpers.getPgpEmails(results[0].id);
+                                    let sim_ids = await device_helpers.getSimids(results[0].id);
+                                    let chat_ids = await device_helpers.getChatids(results[0].id);
+                                    results[0].finalStatus = device_helpers.checkStatus(results[0]);
+                                    if (pgp_emails[0] && pgp_emails[0].pgp_email) {
+                                        results[0].pgp_email = pgp_emails[0].pgp_email
+                                    } else {
+                                        results[0].pgp_email = "N/A"
+                                    }
+                                    if (sim_ids[0] && sim_ids[0].sim_id) {
+                                        results[0].sim_id = sim_ids[0].sim_id
+                                    } else {
+                                        results[0].sim_id = "N/A"
+                                    }
+                                    if (chat_ids[0] && chat_ids[0].chat_id) {
+                                        results[0].chat_id = chat_ids[0].chat_id
+                                    }
+                                    else {
+                                        results[0].chat_id = "N/A"
+
+                                    }
                                     // dealerData = await getDealerdata(res[i]);
                                     sockets.sendDeviceStatus(resquery[0].device_id, "active", true);
                                     data = {
@@ -989,7 +1077,7 @@ exports.resetPwd = async function (req, res) {
                 var dealerQ = `SELECT * FROM dealers WHERE link_code='${dealer_pin}' LIMIT 1`;
                 let dealer = await sql.query(dealerQ);
                 if (dealer.length) {
-                    
+
                     var agentPwd = generator.generate({
                         length: 10,
                         numbers: true
@@ -1015,7 +1103,7 @@ exports.resetPwd = async function (req, res) {
 
                         sendEmail("Agent password changed successfully", html, verify.user.dealer_email)
                         sendEmail("Agent password changed successfully", html, dealerAgent[0].email)
-                        
+
                         data = {
                             status: true,
                             msg: "Password changed successfully", // Password changed successfully.Please check your email.
@@ -1053,7 +1141,7 @@ exports.getStatus = async function (req, res) {
         let agentID = verify.user.agent_id;
         let agentQ = `SELECT * FROM dealer_agents WHERE id = ${agentID} AND delete_status=0`;
         let agent = await sql.query(agentQ);
-        if(agent.length){
+        if (agent.length) {
             return res.send({
                 status: true,
                 agent_status: agent[0].status,

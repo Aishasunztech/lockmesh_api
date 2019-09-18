@@ -1,6 +1,6 @@
 {
-  "name": "webportalbackend",
-  "version": "0.0.0",
+  "name": "lockmesh_server",
+  "version": "4.1.0",
   "private": true,
   "scripts": {
     "start": "node ./bin/www"
