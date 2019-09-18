@@ -14,347 +14,6 @@ const device_helpers = require('../../helper/device_helpers');
 const helpers = require('../../helper/general_helper');
 
 
-exports.apklist = async function (req, res) {
-    // console.log(req.decoded);
-
-    let data = []
-    sql.query("select * from apk_details where delete_status=0 AND apk_type = 'permanent' order by id ASC", async function (error, results) {
-        if (error) throw error;
-
-        if (results.length > 0) {
-            // let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
-            // let dealerCount = await helpers.dealerCount(adminRoleId);
-            // console.log("dealer count", dealerCount)
-            for (var i = 0; i < results.length; i++) {
-                // let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
-                // let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
-                // let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
-                dta = {
-                    "apk_id": results[i].id,
-                    "apk_name": results[i].app_name,
-                    "logo": results[i].logo,
-                    "apk": results[i].apk_file,
-                    "permissions": [],
-                    "apk_status": results[i].status,
-                    "size": results[i].apk_size,
-                    "permission_count": '',
-                    "deleteable": (results[i].apk_type == "permanent") ? false : true
-                }
-                data.push(dta);
-            }
-
-            return res.json({
-                status: true,
-                success: true,
-                list: data
-            });
-
-        } else {
-            data = {
-                status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // "No result found",
-                list: []
-            }
-            res.send(data);
-        }
-
-    });
-}
-
-exports.uploadApk = async function (req, res) {
-    let fileUploaded = false;
-    let fileName = "";
-    let mimeType = "";
-    let fieldName = req.params.fieldName;
-
-    let file = null
-    if (fieldName === Constants.LOGO) {
-        file = req.files.logo;
-    } else if (fieldName === Constants.APK) {
-        file = req.files.apk;
-    } else {
-        res.send({
-            status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while uploading"
-        })
-        return;
-    }
-
-    console.log(file);
-    filePath = file.path;
-    mimeType = file.type;
-    bytes = file.size
-    let formatByte = general_helpers.formatBytes(bytes);
-    console.log(formatByte);
-
-    if (fieldName === Constants.APK) {
-        // let file = path.join(__dirname, "../../uploads/" + filename);
-        let versionCode = await general_helpers.getAPKVersionCode(filePath);
-
-        // let apk_stats = fs.statSync(file);
-
-        // let formatByte = helpers.formatBytes(apk_stats.size);
-        if (versionCode) {
-
-            fileName = fieldName + '-' + Date.now() + '.apk';
-            let target_path = path.join(__dirname, "../../../uploads/" + fileName);
-
-            general_helpers.move(filePath, target_path, async function (error) {
-                console.log(error);
-                if (error) {
-                    res.send({
-                        status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while uploading"
-                    })
-                }
-                console.log(fileName);
-                data = {
-                    status: true,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.UPLOADED_SUCCESSFULLY], "Uploaded Successfully"), // 'Uploaded Successfully',
-                    fileName: fileName,
-                    size: formatByte
-                };
-                res.send(data)
-                return
-            });
-        } else {
-            data = {
-                status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while Uploading",
-            };
-            res.send(data);
-            return;
-        }
-    } else if (fieldName === Constants.LOGO) {
-        // console.log(req.files);
-
-
-        fileName = fieldName + '-' + Date.now() + '.jpg';
-        let target_path = path.join(__dirname, "../../../uploads/" + fileName);
-
-        general_helpers.move(filePath, target_path, async function (error) {
-            console.log(error);
-            if (error) {
-                res.send({
-                    status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while uploading"
-                })
-            }
-            data = {
-                status: true,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.UPLOADED_SUCCESSFULLY], "Uploaded Successfully"), // 'Uploaded Successfully',
-                fileName: fileName,
-                size: formatByte
-
-            };
-            res.send(data)
-            return
-        });
-    }
-    else {
-        data = {
-            status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while Uploading"
-        }
-        res.send(data);
-        return;
-    }
-}
-
-// exports.addApk = async function (req, res) {
-//     try {
-//         let logo = req.body.logo;
-//         let apk = req.body.apk;
-//         let apk_name = req.body.name;
-//         if (!empty(logo) && !empty(apk) && !empty(apk_name)) {
-
-//             let file = path.join(__dirname, "../../../uploads/" + apk);
-//             console.log("File", file);
-//             if (fs.existsSync(file)) {
-//                 let versionCode = '';
-//                 let versionName = '';
-//                 let packageName = '';
-//                 let label = '';
-//                 let details = '';
-
-//                 versionCode = await general_helpers.getAPKVersionCode(file);
-//                 if (versionCode) {
-//                     versionName = await general_helpers.getAPKVersionName(file);
-//                     if (!versionName) {
-//                         versionName = ''
-//                     }
-
-//                     packageName = await general_helpers.getAPKPackageName(file);
-//                     if (!packageName) {
-//                         packageName = '';
-//                     }
-
-//                     label = await general_helpers.getAPKLabel(file);
-//                     console.log("Label", label);
-
-//                     if (!label) {
-//                         label = ''
-
-//                     }
-//                 } else {
-//                     versionCode = '';
-//                 }
-
-//                 versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-//                 versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-//                 packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-//                 label = label.toString().replace(/(\r\n|\n|\r)/gm, "");
-//                 details = details.toString().replace(/(\r\n|\n|\r)/gm, "");
-
-//                 let apk_type = 'permanent'
-
-//                 let apk_stats = fs.statSync(file);
-
-//                 let formatByte = general_helpers.formatBytes(apk_stats.size);
-
-//                 sql.query(`INSERT INTO apk_details (app_name, logo, apk_file, apk_type, version_code, version_name, package_name, details, apk_bytes, apk_size, label) VALUES ('${apk_name}' , '${logo}' , '${apk}', '${apk_type}', '${versionCode}', '${versionName}', '${packageName}', '${details}', ${apk_stats.size}, '${formatByte}', '${label}')`, async function (err, rslts) {
-//                     let newData = await sql.query("SELECT * from apk_details where id = " + rslts.insertId)
-//                     // console.log(newData[0]);
-//                     dta = {
-//                         apk_id: newData[0].id,
-//                         apk_name: newData[0].app_name,
-//                         logo: newData[0].logo,
-//                         apk: newData[0].apk_file,
-//                         permissions: [],
-//                         apk_status: newData[0].status,
-//                         permission_count: 0,
-//                         deleteable: (newData[0].apk_type == "permanent") ? false : true,
-//                         apk_type: newData[0].apk_type,
-//                         size: newData[0].apk_size,
-//                     }
-
-
-//                     if (err) throw err;
-//                     data = {
-//                         status: true,
-//                         msg: await helpers.convertToLang(req.translation[MsgConstants.APK_IS_UPLOADED], "Apk is uploaded"), // "Apk is uploaded",
-//                         data: dta
-//                     };
-//                     res.send(data);
-//                     return;
-//                 });
-
-//             } else {
-//                 console.log("file not found");
-//                 res.send({
-//                     status: false,
-//                     msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error While Uploading"
-//                 })
-//                 return;
-//             }
-
-//         } else {
-//             data = {
-//                 status: false,
-//                 msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error While Uploading"
-//             };
-//             res.send(data);
-//             return;
-//         }
-//     } catch (error) {
-//         console.log(error);
-//         data = {
-//             status: false,
-//             msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while Uploading",
-//         };
-//         return;
-//     }
-// }
-
-// exports.editApk = async function (req, res) {
-//     // console.log(req.body);
-//     try {
-//         let logo = req.body.logo;
-//         let apk = req.body.apk;
-//         let apk_name = req.body.name;
-//         if (!empty(logo) && !empty(apk) && !empty(apk_name)) {
-//             // console.log("object");
-//             let file = path.join(__dirname, "../../../uploads/" + apk);
-//             // console.log(file);
-//             if (fs.existsSync(file)) {
-//                 let versionCode = '';
-//                 let versionName = '';
-//                 let packageName = ' ';
-//                 let label = '';
-//                 let details = '';
-
-//                 versionCode = await general_helpers.getAPKVersionCode(file);
-//                 if (versionCode) {
-//                     versionName = await general_helpers.getAPKVersionName(file);
-//                     if (!versionName) {
-//                         versionName = ''
-//                     }
-//                     packageName = await general_helpers.getAPKPackageName(file);
-//                     if (!packageName) {
-//                         packageName = '';
-//                     }
-//                     label = await general_helpers.getAPKLabel(file);
-//                     console.log("Label", label);
-
-//                     if (!label) {
-//                         label = ''
-//                     }
-//                 } else {
-//                     versionCode = '';
-//                 }
-
-//                 versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-//                 versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-//                 packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-//                 label = label.replace(/(\r\n|\n|\r)/gm, "");
-//                 details = details.replace(/(\r\n|\n|\r)/gm, "");
-
-//                 // let apk_type = (verify.user.user_type === AUTO_UPDATE_ADMIN) ? 'permanent' : 'basic'
-
-//                 let apk_stats = fs.statSync(file);
-
-//                 let formatByte = general_helpers.formatBytes(apk_stats.size);
-
-//                 sql.query("UPDATE apk_details SET label = '" + label + "', app_name = '" + apk_name + "', logo = '" + logo + "', apk_file = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_bytes='" + apk_stats.size + "',  apk_size='" + formatByte + "'  WHERE id = '" + req.body.apk_id + "'", async function (err, rslts) {
-//                     if (err) { console.log(err) };
-
-//                     data = {
-//                         status: true,
-//                         msg: await helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record Updated"), // "Record Updated"
-
-//                     };
-//                     res.send(data);
-//                     return;
-//                 });
-//                 return;
-//             } else {
-//                 data = {
-//                     status: false,
-//                     msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error While Uploading"
-//                 };
-//                 res.send(data);
-//                 return;
-//             }
-
-//         } else {
-//             data = {
-//                 status: false,
-//                 msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error While Uploading"
-//             };
-//             res.send(data);
-//             return;
-//         }
-//     } catch (error) {
-//         data = {
-//             status: false,
-//             msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while Uploading",
-//         };
-//         res.send(data);
-//         return;
-//     }
-// }
-
-
 exports.apkList = async function (req, res) {
     var verify = req.decoded;
     var data = [];
@@ -367,27 +26,31 @@ exports.apkList = async function (req, res) {
                 }
 
                 if (results.length > 0) {
-                    let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+
+                    let adminRoleId = await helpers.getUserTypeIDByName(Constants.ADMIN);
                     let dealerCount = await helpers.dealerCount(adminRoleId);
                     // console.log("dealer count", dealerCount)
                     for (var i = 0; i < results.length; i++) {
+                        let policies = await sql.query(`SELECT * FROM policy LEFT JOIN policy_apps on (policy.id = policy_apps.policy_id) WHERE policy_apps.apk_id=${results[i].id} AND policy.delete_status=0`)
                         let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
                         let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
                         let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
                         dta = {
-                            "apk_id": results[i].id,
-                            "apk_name": results[i].app_name,
-                            "logo": results[i].logo,
-                            "apk": results[i].apk,
-                            "permissions": permissions,
-                            "apk_status": results[i].status,
-                            "size": results[i].apk_size,
-                            "permission_count": permissionC,
-                            "deleteable": (results[i].apk_type == "permanent") ? false : true,
-                            "package_name": results[i].package_name,
-                            "version": results[i].version_name,
-                            "updated_at": results[i].modified,
-                            "created_at": results[i].created,
+                            apk_id: results[i].id,
+                            apk_name: results[i].app_name,
+                            logo: results[i].logo,
+                            apk: results[i].apk,
+                            permissions: permissions,
+                            apk_status: results[i].status,
+                            size: results[i].apk_size,
+                            permission_count: permissionC,
+                            deleteable: (results[i].apk_type == "permanent") ? false : true,
+                            label: results[i].label,
+                            package_name: results[i].package_name,
+                            policies: policies,
+                            version: results[i].version_name,
+                            updated_at: results[i].modified,
+                            created_at: results[i].created,
                         }
                         data.push(dta);
                     }
@@ -413,13 +76,14 @@ exports.apkList = async function (req, res) {
                 if (error) {
                     console.log(error);
                 }
-                if (results.length > 0) {
+                if (results && results.length > 0) {
 
                     let sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
                     // console.log(sdealerList);
                     let dealerCount = sdealerList ? sdealerList.length : 0;
                     // console.log("dealer_count ", dealerCount);
                     for (var i = 0; i < results.length; i++) {
+                        let policies = await sql.query(`SELECT * FROM policy LEFT JOIN policy_apps on (policy.id = policy_apps.policy_id) WHERE policy_apps.apk_id=${results[i].id} AND policy.delete_status=0`)
                         let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
                         let Sdealerpermissions = permissions.filter(function (item) {
                             for (let i = 0; i < sdealerList.length; i++) {
@@ -432,17 +96,19 @@ exports.apkList = async function (req, res) {
                         let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
                         let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
                         dta = {
-                            "apk_id": results[i].id,
-                            "apk_name": results[i].app_name,
-                            "logo": results[i].logo,
-                            "apk": results[i].apk,
-                            "permissions": Sdealerpermissions,
-                            "apk_status": results[i].status,
-                            "permission_count": permissionC,
-                            "package_name": results[i].package_name,
-                            "version": results[i].version_name,
-                            "updated_at": results[i].modified,
-                            "created_at": results[i].created,
+                            apk_id: results[i].id,
+                            apk_name: results[i].app_name,
+                            logo: results[i].logo,
+                            apk: results[i].apk,
+                            permissions: Sdealerpermissions,
+                            apk_status: results[i].status,
+                            permission_count: permissionC,
+                            label: results[i].label,
+                            package_name: results[i].package_name,
+                            policies: policies,
+                            version: results[i].version_name,
+                            updated_at: results[i].modified,
+                            created_at: results[i].created,
                             // "deleteable": (results[i].apk_type == "permanent") ? false : true
                         }
                         data.push(dta);
@@ -471,6 +137,17 @@ exports.apkList = async function (req, res) {
                 if (results.length > 0) {
                     // console.log("dealer_count ", dealerCount);
                     for (var i = 0; i < results.length; i++) {
+                        // dta = {
+                        //     apk_id: results[i].id,
+                        //     apk_name: results[i].app_name,
+                        //     logo: results[i].logo,
+                        //     apk: results[i].apk,
+                        //     permissions: [],
+                        //     apk_status: results[i].status,
+                        //     permission_count: 0,
+                        //     // "deleteable": (results[i].apk_type == "permanent") ? false : true
+                        // }
+
                         dta = {
                             apk_id: results[i].id,
                             apk_name: results[i].app_name,
@@ -479,6 +156,11 @@ exports.apkList = async function (req, res) {
                             permissions: [],
                             apk_status: results[i].status,
                             permission_count: 0,
+                            label: results[i].label,
+                            package_name: results[i].package_name,
+                            version: results[i].version_name,
+                            updated_at: results[i].modified,
+                            created_at: results[i].created,
                             // "deleteable": (results[i].apk_type == "permanent") ? false : true
                         }
                         data.push(dta);
@@ -510,9 +192,6 @@ exports.apkList = async function (req, res) {
     }
 }
 
-exports.showPoliciesUsedApk = async function (req, res) {
-
-}
 
 exports.checkApkName = async function (req, res) {
     var verify = req.decoded;
@@ -557,99 +236,94 @@ exports.checkApkName = async function (req, res) {
 exports.upload = async function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
 
-    console.log();
     var verify = req.decoded;
 
     if (verify) {
-        let fileUploaded = false;
-        let filename = "";
-        let mimeType = "";
-        let fieldName = "";
-        let apk_id = req.headers["id"] ? Number(req.headers["id"]) : null;
-        let featureApk = req.headers["featured"] ? req.headers["featured"] : null;
-        console.log(featureApk);
-        console.log("File Uploading started.");
+        console.log("field name: ", req.query.fieldName);
 
-        var storage = multer.diskStorage({
-            destination: function (req, file, callback) {
-                callback(null, path.join(__dirname, "../../uploads/"));
-            },
+        let fieldName = req.query.fieldName;
+        let screen = req.query.screen;
+        console.log('screen is the', screen)
+        if (fieldName) {
+            let fileName = "";
+            let mimeType = "";
+            let apk_id = req.headers["id"] ? Number(req.headers["id"]) : null;
+            let featureApk = req.headers["featured"] ? req.headers["featured"] : null;
+            let file = null;
+            let formatByte = '';
+            let filePath = null;
+            let bytes = null;
 
-            filename: function (req, file, callback) {
-                mimeType = file.mimetype;
-                fieldName = file.fieldname;
-
-                var filetypes = /jpeg|jpg|apk|png/;
-
-                if (fieldName === Constants.LOGO && filetypes.test(mimeType)) {
-                    fileUploaded = true;
-                    filename = fieldName + '-' + Date.now() + '.jpg';
-                    console.log("filename", filename);
-                    callback(null, filename);
-                } else if (fieldName === Constants.APK && mimeType === "application/vnd.android.package-archive" || mimeType === "application/octet-stream") {
-                    fileUploaded = true;
-                    filename = fieldName + '-' + Date.now() + '.apk';
-                    // apk manifest should be check here
-                    // helpers.getAPKVersionCode(req.files.apk);
-                    callback(null, filename);
-                } else {
-                    callback("File type is not supported.");
-                }
-            }
-        });
-
-        var upload = multer({
-            storage: storage,
-            limits: { fileSize: "100mb" }
-        }).fields([{
-            name: 'logo',
-            maxCount: 1
-        }, {
-            name: 'apk',
-            maxCount: 1
-        }]);
-
-        upload(req, res, async function (err) {
-            if (err) {
-                return res.send({
+            if (fieldName === Constants.LOGO) {
+                file = req.files.logo;
+            } else if (fieldName === Constants.APK) {
+                file = req.files.apk;
+            } else {
+                data = {
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Some error occurred") + err, // "Error: " + err
-                });
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.UNAUTHORIZED_FILE_UPLOADING_ATTEMPT], "Error: Unauthorized file uploading attempt."), // "Error: Unauthorized file uploading attempt."
+                }
+                return res.send(data);
             }
 
-            if (fileUploaded) {
-                console.log("file uploaded")
-                if (fieldName === Constants.APK) {
-                    let file = path.join(__dirname, "../../uploads/" + filename);
-                    console.log(file);
-                    let versionCode = await helpers.getAPKVersionCode(file);
-                    console.log("version code", versionCode);
-                    let packageName = await helpers.getAPKPackageName(file);
+            filePath = file.path;
+            mimeType = file.type;
+            bytes = file.size
+            formatByte = helpers.formatBytes(bytes);
+            console.log(file);
+
+            if (fieldName === Constants.APK) {
+
+                console.log(filePath);
+                let versionCode = await helpers.getAPKVersionCode(filePath);
+                console.log("version code: ", versionCode);
+
+                if (versionCode) {
+                    versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+
+
+                    let packageName = await helpers.getAPKPackageName(filePath);
                     packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                    let versionName = await helpers.getAPKVersionName(file);
+                    console.log("Package Name: ", packageName);
+
+                    let versionName = await helpers.getAPKVersionName(filePath);
                     versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                    console.log("Package Name", packageName);
+                    console.log("Version Name: ", versionName);
 
-                    let apk_stats = fs.statSync(file);
+                    let label = await helpers.getAPKLabel(filePath);
+                    console.log(label)
+                    label = label.toString().replace(/(\r\n|\n|\r)/gm, "");
+                    console.log("label Name: ", label);
 
-                    let formatByte = helpers.formatBytes(apk_stats.size);
-                    if (versionCode) {
-                        if ((packageName === 'com.armorSec.android' || packageName === 'ca.unlimitedwireless.mailpgp' || packageName === 'com.rim.mobilefusion.client') && featureApk == null) {
+                    let current_date = moment().format("YYYYMMDDHHmmss")
+                    fileName = fieldName + '-' + current_date + '.apk';
+                    console.log(fileName);
+                    let target_path = path.join(__dirname, "../../uploads/" + fileName);
+                    helpers.move(filePath, target_path, async function (error) {
+                        if (error) {
+                            return res.send({
+                                status: false,
+                                msg: "Error while uploading"
+                            });
+                        }
+                        console.log("fileName:", fileName);
+
+                        if ((packageName === 'com.armorSec.android' || packageName === 'ca.unlimitedwireless.mailpgp' || packageName === 'com.rim.mobilefusion.client' || packageName === 'com.secure.vpn') && featureApk == null) {
+                            // console.log(packageName, 'pkg name if')
                             data = {
                                 status: false,
                                 msg: await helpers.convertToLang(req.translation["not allowed"], "Error: Uploaded Apk is not Allowed."), // "Error: Unable to read APP properties.",
                             };
-                            res.send(data);
-                            return;
+                            return res.send(data);
                         } else {
-
+                            // console.log('else featured', featureApk)
                             if (featureApk !== null) {
 
                                 if (featureApk === "CHAT" && packageName === 'com.armorSec.android') {
                                     data = {
                                         status: true,
                                         msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
-                                        fileName: filename,
+                                        fileName: fileName,
                                         size: formatByte,
                                         version: versionName
 
@@ -661,7 +335,7 @@ exports.upload = async function (req, res) {
                                     data = {
                                         status: true,
                                         msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
-                                        fileName: filename,
+                                        fileName: fileName,
                                         size: formatByte,
                                         version: versionName
 
@@ -672,14 +346,26 @@ exports.upload = async function (req, res) {
                                     data = {
                                         status: true,
                                         msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
-                                        fileName: filename,
+                                        fileName: fileName,
                                         size: formatByte,
                                         version: versionName
 
                                     };
                                     res.send(data);
                                     return;
-                                } else {
+                                } else if (featureApk === "VPN" && packageName === 'com.secure.vpn') {
+                                    data = {
+                                        status: true,
+                                        msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
+                                        fileName: fileName,
+                                        size: formatByte,
+                                        version: versionName
+
+                                    };
+                                    res.send(data);
+                                    return;
+                                }
+                                else {
                                     data = {
                                         status: false,
                                         msg: await helpers.convertToLang(req.translation[""], "Error: Wrong apk uploaded. Please choose another apk and try again"), // "Error: Unable to read APP properties.",
@@ -688,13 +374,21 @@ exports.upload = async function (req, res) {
                                     return;
                                 }
                             } else {
-                                let checkPackage = "SELECT * FROM apk_details where package_name = '" + packageName + "'  AND delete_status=0";
-                                if (apk_id) {
-                                    checkPackage = checkPackage + " AND id != " + apk_id
+                                let checkFileQuery = '';
+                                if (screen == 'autoUpdate') {
+                                    checkFileQuery = "SELECT * FROM apk_details where label = '" + label + "' AND package_name = '" + packageName + "' AND delete_status=0";
+                                } else {
+                                    checkFileQuery = "SELECT * FROM apk_details where package_name = '" + packageName + "'  AND delete_status=0";
                                 }
-                                console.log(checkPackage);
-                                let checkPackageResult = await sql.query(checkPackage);
+
+                                if (apk_id) {
+                                    checkFileQuery = checkFileQuery + " AND id != " + apk_id
+                                }
+
+                                let checkPackageResult = await sql.query(checkFileQuery);
                                 if (checkPackageResult.length) {
+                                    // console.log(checkPackageResult, 'error version');
+
                                     data = {
                                         status: false,
                                         msg: await helpers.convertToLang(req.translation[""], "Error: Apk with same package name already uploaded. Please choose another apk and try again"), // "Error: Unable to read APP properties.",
@@ -702,11 +396,11 @@ exports.upload = async function (req, res) {
                                     res.send(data);
                                     return;
                                 } else {
-                                    console.log(versionName);
+                                    console.log(versionName, 'success version');
                                     data = {
                                         status: true,
                                         msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
-                                        fileName: filename,
+                                        fileName: fileName,
                                         size: formatByte,
                                         version: versionName
 
@@ -716,40 +410,68 @@ exports.upload = async function (req, res) {
                                 }
                             }
                         }
-                    } else {
-                        data = {
-                            status: false,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.UNABLE_TO_READ_APP_PROPERTIES], "Error: Unable to read APP properties."), // "Error: Unable to read APP properties.",
-                        };
-                        res.send(data);
-                        return;
-                    }
-                } else if (fieldName === Constants.LOGO) {
-                    console.log("file was image");
-                    data = {
-                        status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.APP_LOGO_UPLOADED_SUCCESSFULLY], "Success: App logo Uploaded Successfully"), // 'Success: App logo Uploaded Successfully.',
-                        fileName: filename,
-                    };
-                    res.send(data);
+
+                        // data = {
+                        //     status: true,
+                        //     msg: 'Uploaded Successfully',
+                        //     fileName: fileName,
+                        //     size: formatByte
+                        // };
+                        // res.send(data)
+                        // return
+                    });
                     return;
                 } else {
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.UNAUTHORIZED_FILE_UPLOADING_ATTEMPT], "Error: Unauthorized file uploading attempt."), // "Error: Unauthorized file uploading attempt."
-                    }
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.UNABLE_TO_READ_APP_PROPERTIES], "Error: Unable to read APP properties."), // "Error: Unable to read APP properties.",
+                    };
                     res.send(data);
                     return;
                 }
+
+            } else if (fieldName === Constants.LOGO) {
+                // console.log(req.files);
+                let current_date = moment().format("YYYYMMDDHHmmss")
+                fileName = fieldName + '-' + current_date + '.jpg';
+                console.log(fileName);
+                let target_path = path.join(__dirname, "../../uploads/" + fileName);
+
+                helpers.move(filePath, target_path, async function (error) {
+                    console.log(error);
+                    if (error) {
+                        return res.send({
+                            status: false,
+                            msg: "Error while uploading"
+                        })
+                    }
+
+                    data = {
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.APP_LOGO_UPLOADED_SUCCESSFULLY], "Success: App logo Uploaded Successfully"), // 'Success: App logo Uploaded Successfully.',
+                        fileName: fileName,
+                        size: formatByte
+                    };
+                    return res.send(data)
+                });
+                return;
             } else {
                 data = {
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.UPLOADED_FILE_IS_CORRUPT], "Error: Uploaded file is corrupt."), // "Error: Uploaded file is corrupt.",
-                };
-                res.send(data);
-                return;
+                    msg: "Error while Uploading"
+                }
+                return res.send(data);
             }
-        });
+
+        } else {
+            return res.send({
+                status: false,
+                msg: "Error while uploading: Field not defined"
+            })
+        }
+
+
+
     }
 }
 
@@ -764,15 +486,13 @@ exports.addApk = async function (req, res) {
             if (!empty(logo) && !empty(apk) && !empty(apk_name)) {
 
                 let file = path.join(__dirname, "../../uploads/" + apk);
-
-
                 if (fs.existsSync(file)) {
                     let versionCode = '';
                     let versionName = '';
                     let packageName = '';
                     let label = '';
                     let details = '';
-
+                    // console.log(file)
                     versionCode = await helpers.getAPKVersionCode(file);
                     if (versionCode) {
                         versionName = await helpers.getAPKVersionName(file);
@@ -798,6 +518,7 @@ exports.addApk = async function (req, res) {
                     packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                     label = label.toString().replace(/(\r\n|\n|\r)/gm, "");
                     details = details.toString().replace(/(\r\n|\n|\r)/gm, "");
+                    // console.log(labe)    
 
                     let apk_type = (verify.user.user_type === Constants.AUTO_UPDATE_ADMIN) ? 'permanent' : 'basic'
 
@@ -822,6 +543,7 @@ exports.addApk = async function (req, res) {
                             deleteable: (newData[0].apk_type == "permanent") ? false : true,
                             apk_type: newData[0].apk_type,
                             size: newData[0].apk_size,
+                            label: newData[0].label,
                             package_name: newData[0].package_name,
                             version: newData[0].version_name,
                             updated_at: newData[0].modified,
@@ -832,7 +554,7 @@ exports.addApk = async function (req, res) {
 
                         data = {
                             status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.APK_IS_UPLOADED], "Apk is uploaded"), // "Apk is uploaded",
+                            msg: `${newData[0].app_name} ${await helpers.convertToLang(req.translation["was uploaded successfully"], "was uploaded successfully")}`, // MsgConstants.APK_IS_UPLOADED
                             data: dta
                         };
                         return res.send(data);
@@ -848,6 +570,7 @@ exports.addApk = async function (req, res) {
                     return;
                 }
             } else {
+                console.log('error while uploading', logo, apk, apk_name)
                 data = {
                     status: false,
                     msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error While Uploading"
@@ -855,6 +578,7 @@ exports.addApk = async function (req, res) {
                 return res.send(data);
             }
         } catch (error) {
+            console.log(error, 'error while upload')
             data = {
                 status: false,
                 msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_WHILE_UPLOADING], "Error while uploading"), // "Error while Uploading",
@@ -931,6 +655,7 @@ exports.editApk = async function (req, res) {
                             deleteable: (newData[0].apk_type == "permanent") ? false : true,
                             apk_type: newData[0].apk_type,
                             size: newData[0].apk_size,
+                            label: newData[0].label,
                             package_name: newData[0].package_name,
                             version: newData[0].version_name,
                             updated_at: newData[0].modified,
@@ -939,7 +664,7 @@ exports.editApk = async function (req, res) {
 
                         data = {
                             status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.APK_IS_UPLOADED], "Apk is uploaded"), // "Apk is uploaded",
+                            msg: `${newData[0].app_name} ${await helpers.convertToLang(req.translation["was uploaded successfully"], "was uploaded successfully")}`, // MsgConstants.APK_IS_UPLOADED
                             data: dta
                         };
                         return res.send(data);
@@ -1086,7 +811,6 @@ exports.saveApkPermission = async function (req, res) {
 
         if (action === 'save') {
             var parsedDealers = JSON.parse(dealers);
-            console.log("hello parsed", parsedDealers);
 
             for (let i = 0; i < parsedDealers.length; i++) {
                 if (prevParsDealers.indexOf(parsedDealers[i]) === -1) {
@@ -1126,7 +850,7 @@ exports.saveApkPermission = async function (req, res) {
                         console.log("Verify user id", verify.user.user_type);
                         if (verify.user.user_type === Constants.ADMIN) {
                             if (permission !== undefined && permission !== null && permission !== '[]') {
-                                let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                                let adminRoleId = await helpers.getUserTypeIDByName(Constants.ADMIN);
                                 let dealerCount = await helpers.dealerCount(adminRoleId);
                                 permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
 
@@ -1211,7 +935,7 @@ exports.saveApkPermission = async function (req, res) {
                         console.log("Verify user id", verify.user.user_type);
                         if (verify.user.user_type === Constants.ADMIN) {
                             if (permission !== undefined && permission !== null && permission !== '[]') {
-                                let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                                let adminRoleId = await helpers.getUserTypeIDByName(Constants.ADMIN);
                                 let dealerCount = await helpers.dealerCount(adminRoleId);
                                 permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
 
@@ -1308,7 +1032,7 @@ exports.savePolicyPermissions = async function (req, res) {
                         // console.log("Verify user id", verify.user.user_type);
                         if (verify.user.user_type === Constants.ADMIN) {
                             if (permission !== undefined && permission !== null && permission !== '[]') {
-                                let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                                let adminRoleId = await helpers.getUserTypeIDByName(Constants.ADMIN);
                                 let dealerCount = await helpers.dealerCount(adminRoleId);
                                 console.log('amdin add all', permission.length, dealerCount)
                                 permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
@@ -1396,7 +1120,7 @@ exports.savePolicyPermissions = async function (req, res) {
                         console.log("Verify user id", verify.user.user_type);
                         if (verify.user.user_type === Constants.ADMIN) {
                             if (permission !== undefined && permission !== null && permission !== '[]') {
-                                let adminRoleId = await helpers.getuserTypeIdByName(Constants.ADMIN);
+                                let adminRoleId = await helpers.getUserTypeIDByName(Constants.ADMIN);
                                 let dealerCount = await helpers.dealerCount(adminRoleId);
                                 permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
 

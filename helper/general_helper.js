@@ -18,8 +18,10 @@ const { sql } = require("../config/database");
 var Constants = require("../constants/Application");
 const device_helpers = require("./device_helpers");
 
-let usr_acc_query_text =
-	"usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id, usr_acc.user_id, usr_acc.account_email, usr_acc.account_name,usr_acc.dealer_id, usr_acc.prnt_dlr_id,usr_acc.link_code, usr_acc.client_id, usr_acc.start_date, usr_acc.expiry_months, usr_acc.expiry_date,usr_acc.activation_code, usr_acc.status,usr_acc.device_status, usr_acc.activation_status, usr_acc.account_status,usr_acc.unlink_status, usr_acc.transfer_status, usr_acc.dealer_name, usr_acc.prnt_dlr_name, usr_acc.del_status, usr_acc.note, usr_acc.validity, usr_acc.batch_no, usr_acc.type, usr_acc.version";
+// let usr_acc_query_text =
+// 	"usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id, usr_acc.user_id, usr_acc.account_email, usr_acc.account_name,usr_acc.dealer_id, usr_acc.prnt_dlr_id,usr_acc.link_code, usr_acc.client_id, usr_acc.start_date, usr_acc.expiry_months, usr_acc.expiry_date,usr_acc.activation_code, usr_acc.status,usr_acc.device_status, usr_acc.activation_status, usr_acc.account_status,usr_acc.unlink_status, usr_acc.transfer_status, usr_acc.dealer_name, usr_acc.prnt_dlr_name, usr_acc.del_status, usr_acc.note, usr_acc.validity, usr_acc.batch_no, usr_acc.type, usr_acc.version";
+let usr_acc_query_text = Constants.usr_acc_query_text;
+
 module.exports = {
 	convertToLang: async function (lngWord, constant) {
 		if (lngWord !== undefined && lngWord !== "" && lngWord !== null) {
@@ -289,32 +291,48 @@ module.exports = {
 	isAllowedAction: async function (componentId, actionId, userId) { },
 
 	//Helper function to get unique device_id in format like "ASGH457862"
-
 	getDeviceId: async function (sn, mac) {
-		// let sqlQuery = "SELECT device_id from devices where serial_number = '" + sn + "' OR mac_address = '" + mac + "'";
-		// let result = await sql.query(sqlQuery)
-		let unlickQuery;
-		if (sn === Constants.PRE_DEFINED_SERIAL_NUMBER) {
-			unlickQuery =
-				"SELECT device_id from acc_action_history where mac_address = '" +
-				mac +
-				"'";
-		} else if (mac === Constants.PRE_DEFINED_MAC_ADDRESS) {
-			unlickQuery =
-				"SELECT device_id from acc_action_history where serial_number = '" +
-				sn +
-				"'";
-		} else {
-			unlickQuery =
-				"SELECT device_id from acc_action_history where serial_number = '" +
-				sn +
-				"' OR mac_address = '" +
-				mac +
-				"'";
+		// previous checks
+		// let unlinkQuery;
+		// if (sn === Constants.PRE_DEFINED_SERIAL_NUMBER) {
+		// 	unlinkQuery =
+		// 		"SELECT device_id from acc_action_history where mac_address = '" +
+		// 		mac +
+		// 		"'";
+		// } else if (mac === Constants.PRE_DEFINED_MAC_ADDRESS) {
+		// 	unlinkQuery =
+		// 		"SELECT device_id from acc_action_history where serial_number = '" +
+		// 		sn +
+		// 		"'";
+		// } else {
+		// 	unlinkQuery =
+		// 		"SELECT device_id from acc_action_history where serial_number = '" +
+		// 		sn +
+		// 		"' OR mac_address = '" +
+		// 		mac +
+		// 		"'";
+		// }
+
+		/*
+		* we move device from device table to history table on unlink
+		* First we see if same device exist in history with both mac and serial matched
+		* if we get nothing 
+		* we will see if any one of them (mac or serial) matched but not fake one
+		*/
+		let unlinkQuery = `SELECT device_id FROM acc_action_history 
+		WHERE serial_number = '${sn}' AND mac_address = '${mac}' 
+		ORDER BY id DESC LIMIT 1 `;
+
+		let unlinkedResult = await sql.query(unlinkQuery);
+		if (unlinkedResult.length < 1) {
+			unlinkQuery = `SELECT device_id FROM acc_action_history 
+			WHERE (serial_number = '${sn}' AND serial_number != '${Constants.PRE_DEFINED_SERIAL_NUMBER}') OR 
+			(mac_address = '${mac}' AND mac_address != '${Constants.PRE_DEFINED_MAC_ADDRESS}')
+			ORDER BY id DESC LIMIT 1 `;
+			unlinkedResult = await sql.query(unlinkQuery);
 		}
 
-		let unlinkedResult = await sql.query(unlickQuery);
-		if (unlinkedResult.length) {
+		if (unlinkedResult.length >= 1) {
 			return unlinkedResult[0].device_id;
 		} else {
 			console.log(sn, "MAC", mac);
@@ -335,7 +353,7 @@ module.exports = {
 			}
 			var deviceId = str.toUpperCase() + num;
 
-			//this.replaceAt('FDEA999907', 2, 'L'); // FDLA999907
+			//this.replaceAt('FDEA999907', 2, 'L'); // FLEA999907
 			deviceId = this.replaceAt(
 				deviceId,
 				app_constants.DEVICE_ID_SYSTEM_LETTER_INDEX,
@@ -346,7 +364,7 @@ module.exports = {
 		}
 	},
 
-	getAllRecordbyDealerId: async function (dealer_id) {
+	getAllRecordByDealerID: async function (dealer_id) {
 		// console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.id = ' + device_id)
 		let results = await sql.query(
 			"select devices.*  ," +
@@ -356,12 +374,28 @@ module.exports = {
 			'"'
 		);
 		if (results.length) {
+			let devices_acc_array = [];
+			for (let i = 0; i < results.length; i++) {
+				devices_acc_array.push(results[i].id)
+			}
+			let user_acc_ids = devices_acc_array.join()
+			let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
+			let sim_ids = await device_helpers.getSimids(user_acc_ids);
+			let chat_ids = await device_helpers.getChatids(user_acc_ids);
 			for (let device of results) {
 				device.finalStatus = device_helpers.checkStatus(device);
-				device.pgp_email = await device_helpers.getPgpEmails(device);
-				device.sim_id = await device_helpers.getSimids(device);
-				device.chat_id = await device_helpers.getChatids(device);
-				device.vpn = await device_helpers.getVpn(device);
+				let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === device.id);
+				if (pgp_email) {
+					device.pgp_email = pgp_email.pgp_email
+				}
+				let sim_id = sim_ids.find(sim_id => sim_id.user_acc_id === device.id);
+				if (sim_id) {
+					device.sim_id = sim_id.sim_id
+				}
+				let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === device.id);
+				if (chat_id) {
+					device.chat_id = chat_id.chat_id
+				}
 			}
 
 			return results;
@@ -370,8 +404,8 @@ module.exports = {
 		}
 	},
 
-	genrateLinkCode: async function () {
-		let link_code = randomize("0", 6);
+	generateLinkCode: async function () {
+		let link_code = randomize("0", 1, { exclude: "0" }) + randomize("0", 5);
 		link_code = this.replaceAt(
 			link_code,
 			app_constants.DEALER_PIN_SYSTEM_LETTER_INDEX,
@@ -380,7 +414,7 @@ module.exports = {
 		let query = `SELECT link_code FROM dealers WHERE link_code = '${link_code}' `;
 		let result = await sql.query(query);
 		if (result.length > 1) {
-			link_code = this.genrateLinkCode();
+			link_code = this.generateLinkCode();
 		}
 		return link_code;
 	},
@@ -413,19 +447,28 @@ module.exports = {
 			.add(expiryMonth, "M")
 			.strftime("%Y/%m/%d");
 	},
-	checkDeviceId: async (device_id, sn, mac) => {
-		let query =
-			"SELECT device_id FROM devices WHERE device_id = '" +
-			device_id +
-			"';";
-		let result = await sql.query(query);
-		if (result.length > 1) {
-			device_id = helpers.getDeviceId(sn, mac);
-			checkDeviceId(device_id, sn, mac);
-		} else {
-			return device_id;
-		}
-	},
+	// checkDeviceId: async function (device_id, sn, mac) {
+	// 	let query =
+	// 		"SELECT device_id FROM devices WHERE device_id = '" +
+	// 		device_id +
+	// 		"';";
+	// 	let result = await sql.query(query);
+	// 	if (result.length > 0) {
+	// 		let query =
+	// 			"SELECT device_id FROM devices WHERE device_id = '" +
+	// 			device_id +
+	// 			"' AND serial_number = '" + sn + "' AND mac_address = '" + mac + "'";
+	// 		let result = await sql.query(query)
+	// 		if (result.length > 0) {
+	// 			return device_id
+	// 		} else {
+	// 			device_id = this.getDeviceId(sn, mac);
+	// 			checkDeviceId(device_id, sn, mac);
+	// 		}
+	// 	} else {
+	// 		return device_id;
+	// 	}
+	// },
 	validateEmail: email => {
 		var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 		return re.test(String(email).toLowerCase());
@@ -466,7 +509,7 @@ module.exports = {
 			return "N/A";
 		}
 	},
-	getuserTypeIdByName: async function (userType) {
+	getUserTypeIDByName: async function (userType) {
 		// console.log(userType);
 		var query = "SELECT * FROM user_roles where role ='" + userType + "'";
 		var dType = await sql.query(query);
@@ -485,14 +528,28 @@ module.exports = {
 			device_id +
 			'"'
 		);
+		let pgp_emails = await device_helpers.getPgpEmails(results[0].id);
+		let sim_ids = await device_helpers.getSimids(results[0].id);
+		let chat_ids = await device_helpers.getChatids(results[0].id);
 		if (results.length) {
 			results[0].finalStatus = device_helpers.checkStatus(results[0]);
-			results[0].pgp_email = await device_helpers.getPgpEmails(
-				results[0]
-			);
-			results[0].sim_id = await device_helpers.getSimids(results[0]);
-			results[0].chat_id = await device_helpers.getChatids(results[0]);
-			results[0].vpn = await device_helpers.getVpn(results[0]);
+			if (pgp_emails[0] && pgp_emails[0].pgp_email) {
+				results[0].pgp_email = pgp_emails[0].pgp_email
+			} else {
+				results[0].pgp_email = "N/A"
+			}
+			if (sim_ids[0] && sim_ids[0].sim_id) {
+				results[0].sim_id = sim_ids[0].sim_id
+			} else {
+				results[0].sim_id = "N/A"
+			}
+			if (chat_ids[0] && chat_ids[0].chat_id) {
+				results[0].chat_id = chat_ids[0].chat_id
+			}
+			else {
+				results[0].chat_id = "N/A"
+
+			}
 			return results[0];
 		} else {
 			return [];
@@ -877,19 +934,28 @@ module.exports = {
 			'"'
 		);
 		if (results.length) {
+			let devices_acc_array = [];
+			for (let i = 0; i < results.length; i++) {
+				devices_acc_array.push(results[i].id)
+			}
+			let user_acc_ids = devices_acc_array.join()
+			let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
+			let sim_ids = await device_helpers.getSimids(user_acc_ids);
+			let chat_ids = await device_helpers.getChatids(user_acc_ids);
 			for (var i = 0; i < results.length; i++) {
 				results[i].finalStatus = device_helpers.checkStatus(results[i]);
-				results[i].pgp_email = await device_helpers.getPgpEmails(
-					results[i]
-				);
-				let simIds = await device_helpers.getSimids(results[i])
-                results[i].sim_id = simIds.sim_id
-                results[i].sim_id = simIds.sim_id2
-
-				results[i].vpn = await device_helpers.getVpn(results[i]);
-				results[i].chat_id = await device_helpers.getChatids(
-					results[i]
-				);
+				let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === results[i].id);
+				if (pgp_email) {
+					results[i].pgp_email = pgp_email.pgp_email
+				}
+				let sim_id = sim_ids.find(sim_id => sim_id.user_acc_id === results[i].id);
+				if (sim_id) {
+					results[i].sim_id = sim_id.sim_id
+				}
+				let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === results[i].id);
+				if (chat_id) {
+					results[i].chat_id = chat_id.chat_id
+				}
 			}
 			return results;
 		} else {
@@ -922,24 +988,19 @@ module.exports = {
 		}
 	},
 	// Get Dealer Id by link code or activation code
-	getDealerIdByLinkOrActivation: async function (code) {
-		let query =
-			"SELECT dealer_id FROM dealers WHERE link_code ='" + code + "' ";
+	getDealerIDByLinkOrActivation: async function (code) {
+		let query = "";
+		if (code.length <= 6) {
+			query = `SELECT dealer_id FROM dealers WHERE link_code ='${code}' `;
+		} else if (code.length >= 7) {
+			query = `SELECT dealer_id FROM usr_acc WHERE activation_code ='${code}' `;
+		}
+
 		let result = await sql.query(query);
 		if (result.length) {
 			return result[0].dealer_id;
-		} else {
-			let query =
-				"SELECT dealer_id FROM usr_acc WHERE activation_code ='" +
-				code +
-				"'";
-			let result = await sql.query(query);
-			if (result.length) {
-				return result[0].dealer_id;
-			} else {
-				return null;
-			}
 		}
+		return null;
 	},
 
 	getDealerByDealerId: async function (id) {
@@ -1052,8 +1113,8 @@ module.exports = {
 
 	// Policy Helpers
 	refactorPolicy: async function (policy) {
-
 		// check if push application is updated
+		// push apps
 		let pushApps = JSON.parse(policy[0].push_apps);
 		let apksQ = "SELECT * FROM apk_details WHERE delete_status != 1";
 		let apks = await sql.query(apksQ);
@@ -1090,10 +1151,15 @@ module.exports = {
 			// delete app.package_name;
 			delete app.default_app;
 		});
-
+		let controls = JSON.parse(policy[0].controls);
+		controls.forEach(control => {
+			control.setting_status = (control.setting_status) ? true : false;
+		})
+		console.log('controls', controls);
 		// copy refactored
 		policy[0].app_list = JSON.stringify(appList);
 		policy[0].permissions = JSON.stringify(permissions);
+		policy[0].controls = JSON.stringify(controls)
 		return policy;
 	},
 	insertPolicyPushApps: async function (
@@ -1118,7 +1184,10 @@ module.exports = {
 				app.enable
 			]);
 		});
-		await sql.query(policyAppsQuery, [policyAppValues]);
+
+		if (policyAppValues.length) {
+			await sql.query(policyAppsQuery, [policyAppValues]);
+		}
 	},
 	generateStaffID: async function () {
 
@@ -1131,8 +1200,36 @@ module.exports = {
 		let query = `SELECT staff_id FROM dealer_agents WHERE staff_id = '${staff_id}'`;
 		let result = await sql.query(query);
 		if (result.length > 1) {
-			staff_id = this.genrateLinkCode();
+			staff_id = this.this.generateStaffID();
 		}
 		return staff_id;
+	},
+	move: (oldPath, newPath, callback) => {
+
+		fs.rename(oldPath, newPath, function (err) {
+			if (err) {
+				if (err.code === 'EXDEV') {
+					copy();
+				} else {
+					callback(err);
+				}
+				return;
+			}
+			callback();
+		});
+
+		function copy() {
+			var readStream = fs.createReadStream(oldPath);
+			var writeStream = fs.createWriteStream(newPath);
+
+			readStream.on('error', callback);
+			writeStream.on('error', callback);
+
+			readStream.on('close', function () {
+				fs.unlink(oldPath, callback);
+			});
+
+			readStream.pipe(writeStream);
+		}
 	},
 }

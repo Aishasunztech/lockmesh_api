@@ -9,6 +9,8 @@ const axios = require('axios');
 var moment = require('moment-strftime');
 var randomize = require('randomatic');
 var datetime = require('node-datetime');
+var generator = require('generate-password');
+const bcrypt = require('bcrypt');
 
 // custom Libraries
 const { sendEmail } = require('../../lib/email');
@@ -25,9 +27,10 @@ var MsgConstants = require('../../constants/MsgConstants');
 const app_constants = require('../../config/constants');
 
 // constants
-let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id, usr_acc.account_email, usr_acc.account_name, usr_acc.dealer_id, usr_acc.dealer_id, usr_acc.prnt_dlr_id, usr_acc.link_code, usr_acc.client_id, usr_acc.start_date, usr_acc.expiry_months, usr_acc.expiry_date, usr_acc.activation_code, usr_acc.status, usr_acc.device_status, usr_acc.activation_status, usr_acc.account_status, usr_acc.unlink_status, usr_acc.transfer_status, usr_acc.dealer_name, usr_acc.prnt_dlr_name, usr_acc.del_status, usr_acc.note, usr_acc.validity, usr_acc.batch_no, usr_acc.type, usr_acc.version"
-
+// let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id, usr_acc.account_email, usr_acc.account_name, usr_acc.dealer_id, usr_acc.dealer_id, usr_acc.prnt_dlr_id, usr_acc.link_code, usr_acc.client_id, usr_acc.start_date, usr_acc.expiry_months, usr_acc.expiry_date, usr_acc.activation_code, usr_acc.status, usr_acc.device_status, usr_acc.activation_status, usr_acc.account_status, usr_acc.unlink_status, usr_acc.transfer_status, usr_acc.dealer_name, usr_acc.prnt_dlr_name, usr_acc.del_status, usr_acc.note, usr_acc.validity, usr_acc.batch_no, usr_acc.type, usr_acc.version"
+let usr_acc_query_text = constants.usr_acc_query_text;
 var data;
+
 
 /**GET all the devices**/
 exports.devices = async function (req, res) {
@@ -61,14 +64,46 @@ exports.devices = async function (req, res) {
             if (error) {
                 console.log(error);
             }
+            if (results.length) {
 
-            for (var i = 0; i < results.length; i++) {
-                results[i].finalStatus = device_helpers.checkStatus(results[i])
-                results[i].pgp_email = await device_helpers.getPgpEmails(results[i])
-                results[i].sim_id = await device_helpers.getSimids(results[i])
-                results[i].chat_id = await device_helpers.getChatids(results[i])
-                results[i].vpn = await device_helpers.getVpn(results[i])
-                results[i].validity = await device_helpers.checkRemainDays(results[i].created_at, results[i].validity)
+                let devices_acc_array = [];
+                let usr_device_ids_array = []
+                for (let i = 0; i < results.length; i++) {
+                    devices_acc_array.push(results[i].id)
+                    usr_device_ids_array.push(results[i].usr_device_id)
+                }
+                let user_acc_ids = devices_acc_array.join()
+                let usr_device_ids = usr_device_ids_array.join()
+                let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
+                let sim_ids = await device_helpers.getSimids(user_acc_ids);
+                let chat_ids = await device_helpers.getChatids(user_acc_ids);
+                let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
+
+                for (var i = 0; i < results.length; i++) {
+                    let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === results[i].id);
+                    if (pgp_email) {
+                        results[i].pgp_email = pgp_email.pgp_email
+                    }
+                    let sim_id = sim_ids.find(sim_id => sim_id.user_acc_id === results[i].id);
+                    if (sim_id) {
+                        results[i].sim_id = sim_id.sim_id
+                    }
+                    let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === results[i].id);
+                    if (chat_id) {
+                        results[i].chat_id = chat_id.chat_id
+                    }
+                    let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
+                    if (lastOnline) {
+                        results[i].lastOnline = lastOnline.created_at
+                    }
+                    results[i].finalStatus = device_helpers.checkStatus(
+                        results[i]
+                    );
+                    results[i].validity = await device_helpers.checkRemainDays(
+                        results[i].created_at,
+                        results[i].validity
+                    );
+                }
             }
 
             let finalResult = [...results, ...newArray]
@@ -77,6 +112,7 @@ exports.devices = async function (req, res) {
             for (let device of finalResult) {
 
                 device.account_email = checkValue(device.account_email)
+                device.firmware_info = checkValue(device.firmware_info)
                 device.account_name = checkValue(device.account_name)
                 device.account_status = checkValue(device.account_status)
                 device.activation_code = checkValue(device.activation_code)
@@ -590,13 +626,33 @@ exports.editDevices = async function (req, res) {
                                 // console.log(slctquery);
                                 rsltq = await sql.query(slctquery);
                                 // console.log(rsltq);
-                                for (var i = 0; i < rsltq.length; i++) {
-                                    rsltq[i].finalStatus = device_helpers.checkStatus(rsltq[i])
-                                    rsltq[i].pgp_email = await device_helpers.getPgpEmails(rsltq[i])
-                                    rsltq[i].sim_id = await device_helpers.getSimids(rsltq[i])
-                                    rsltq[i].chat_id = await device_helpers.getChatids(rsltq[i])
-                                    rsltq[i].vpn = await device_helpers.getVpn(rsltq[i])
-                                    // dealerData = await device_helpers.getDealerdata(results[i]);
+                                if (rsltq.length) {
+                                    let devices_acc_array = [];
+                                    for (let i = 0; i < rsltq.length; i++) {
+                                        devices_acc_array.push(rsltq[i].id)
+                                    }
+                                    let user_acc_ids = devices_acc_array.join()
+                                    let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
+                                    let sim_ids = await device_helpers.getSimids(user_acc_ids);
+                                    let chat_ids = await device_helpers.getChatids(user_acc_ids);
+
+                                    for (var i = 0; i < rsltq.length; i++) {
+                                        let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === rsltq[i].id);
+                                        if (pgp_email) {
+                                            rsltq[i].pgp_email = pgp_email.pgp_email
+                                        }
+                                        let sim_id = sim_ids.find(sim_id => sim_id.user_acc_id === rsltq[i].id);
+                                        if (sim_id) {
+                                            rsltq[i].sim_id = sim_id.sim_id
+                                        }
+                                        let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === rsltq[i].id);
+                                        if (chat_id) {
+                                            rsltq[i].chat_id = chat_id.chat_id
+                                        }
+                                        rsltq[i].finalStatus = device_helpers.checkStatus(
+                                            rsltq[i]
+                                        );
+                                    }
                                 }
 
                                 data = {
@@ -788,11 +844,26 @@ exports.suspendDevice = async function (req, res) {
                                 // console.log('lolo else', resquery[0])
 
                                 if (resquery.length) {
-                                    resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
-                                    resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
-                                    resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
-                                    resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
-                                    resquery[0].vpn = await device_helpers.getVpn(resquery[0])
+                                    let pgp_emails = await device_helpers.getPgpEmails(results[0].id);
+                                    let sim_ids = await device_helpers.getSimids(results[0].id);
+                                    let chat_ids = await device_helpers.getChatids(results[0].id);
+                                    results[0].finalStatus = device_helpers.checkStatus(results[0]);
+                                    if (pgp_emails[0] && pgp_emails[0].pgp_email) {
+                                        results[0].pgp_email = pgp_emails[0].pgp_email
+                                    } else {
+                                        results[0].pgp_email = "N/A"
+                                    }
+                                    if (sim_ids[0] && sim_ids[0].sim_id) {
+                                        results[0].sim_id = sim_ids[0].sim_id
+                                    } else {
+                                        results[0].sim_id = "N/A"
+                                    }
+                                    if (chat_ids[0] && chat_ids[0].chat_id) {
+                                        results[0].chat_id = chat_ids[0].chat_id
+                                    }
+                                    else {
+                                        results[0].chat_id = "N/A"
+                                    }
                                     // dealerData = await getDealerdata(res[i]);
                                     data = {
                                         data: resquery[0],
@@ -919,11 +990,27 @@ exports.activateDevice = async function (req, res) {
                                 }
 
                                 if (resquery.length) {
-                                    resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
-                                    resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
-                                    resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
-                                    resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
-                                    resquery[0].getVpn = await device_helpers.getVpn(resquery[0])
+                                    let pgp_emails = await device_helpers.getPgpEmails(results[0].id);
+                                    let sim_ids = await device_helpers.getSimids(results[0].id);
+                                    let chat_ids = await device_helpers.getChatids(results[0].id);
+                                    results[0].finalStatus = device_helpers.checkStatus(results[0]);
+                                    if (pgp_emails[0] && pgp_emails[0].pgp_email) {
+                                        results[0].pgp_email = pgp_emails[0].pgp_email
+                                    } else {
+                                        results[0].pgp_email = "N/A"
+                                    }
+                                    if (sim_ids[0] && sim_ids[0].sim_id) {
+                                        results[0].sim_id = sim_ids[0].sim_id
+                                    } else {
+                                        results[0].sim_id = "N/A"
+                                    }
+                                    if (chat_ids[0] && chat_ids[0].chat_id) {
+                                        results[0].chat_id = chat_ids[0].chat_id
+                                    }
+                                    else {
+                                        results[0].chat_id = "N/A"
+
+                                    }
                                     // dealerData = await getDealerdata(res[i]);
                                     sockets.sendDeviceStatus(resquery[0].device_id, "active", true);
                                     data = {
@@ -969,123 +1056,103 @@ exports.activateDevice = async function (req, res) {
 
 }
 
-exports.flagDevice = async function (req, res) {
-    var verify = req.decoded // await verifyToken(req, res);
-    var device_id = req.params.id;
-    var option = req.body.data
-    // console.log(option);
 
-    // if (verify.status !== undefined && verify.status == true) {
+exports.resetPwd = async function (req, res) {
+    var verify = req.decoded;
     if (verify) {
-        var sql2 = "select * from devices where id = '" + device_id + "'";
-        var gtres = await sql.query(sql2);
-        if (!empty(device_id)) {
+        console.log(verify);
+        // var agentID = req.params.agentID;
 
-            if (gtres[0].flagged === '' || gtres[0].flagged === 'null' || gtres[0].flagged === null || gtres[0].flagged === 'Not flagged') {
-                var sql1 = "update devices set flagged='" + option + "' where id = '" + device_id + "'";
-                console.log(sql1);
-                await sql.query(sql1)
-                var sql1 = "update usr_acc set account_status='suspended' where device_id = '" + device_id + "'";
+        var dealer_pin = req.body.dealer_pin;
+        var email = req.body.email;
+        console.log(dealer_pin, email)
 
-                let results = await sql.query(sql1)
-                if (results.affectedRows == 0) {
-                    data = {
-                        status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FLAG], "Device not Flagged.Please try again"), // Device not Flagged.Please try again."
+        if (!empty(dealer_pin) && dealer_pin !== undefined && !empty(email) && email !== undefined) {
+            console.log("again", dealer_pin, email)
+
+            var dealerAgentQ = `SELECT * FROM dealer_agents WHERE email= '${email}' AND delete_status=0 LIMIT 1`;
+            var dealerAgent = await sql.query(dealerAgentQ);
+
+            if (dealerAgent.length) {
+                var dealerQ = `SELECT * FROM dealers WHERE link_code='${dealer_pin}' LIMIT 1`;
+                let dealer = await sql.query(dealerQ);
+                if (dealer.length) {
+
+                    var agentPwd = generator.generate({
+                        length: 10,
+                        numbers: true
+                    });
+                    var enc_pwd = await bcrypt.hash(agentPwd, 10);
+
+                    let updateDealerAgentQ = `UPDATE dealer_agents SET password='${enc_pwd}' WHERE email='${email}'`;
+                    let updateDealer = await sql.query(updateDealerAgentQ);
+                    if (updateDealer.affectedRows === 0) {
+                        data = {
+                            status: false,
+                            msg: "Agent password is not changed.", // Password changed successfully.Please check your email.
+                        };
+                        return res.send(data);
+                    } else {
+
+                        var html = `Your Agent details are: <br/>
+                                Staff ID : ${dealerAgent[0].staff_id} <br/>
+                                Username : ${dealerAgent[0].name} <br/>
+                                Email : ${dealerAgent[0].email} <br/> 
+                                Password : ${agentPwd} <br/>
+                                Dealer Pin : ${dealer[0].link_code}`;
+
+                        sendEmail("Agent password changed successfully", html, verify.user.dealer_email)
+                        sendEmail("Agent password changed successfully", html, dealerAgent[0].email)
+
+                        data = {
+                            status: true,
+                            msg: "Password changed successfully", // Password changed successfully.Please check your email.
+                        };
+                        return res.send(data);
                     }
                 } else {
-                    sockets.sendDeviceStatus(gtres[0].device_id, "suspended");
-
-                    let resquery = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"')
-                    // console.log('lolo else', resquery)
-                    // console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"');
-                    if (resquery.length) {
-                        resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
-                        resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
-                        resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
-                        resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
-                        resquery[0].vpn = await device_helpers.getVpn(resquery[0])
-                        // dealerData = await getDealerdata(res[i]);
-                        device_helpers.saveActionHistory(resquery[0], constants.DEVICE_FLAGGED)
-                        // console.log(resquery[0]);
-                        data = {
-                            "data": resquery[0],
-                            status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_FLAG_SUCC], "Device Flagged successfully"), // Device Flagged successfully."
-                        }
-
-                        res.send(data);
+                    data = {
+                        status: false,
+                        msg: "Invalid Agent", // Invalid User.
                     }
+                    return res.send(data);
                 }
 
             } else {
                 data = {
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_ALRDY_FLAG], "Device Already Flagged"), // Device Already Flagged
+                    msg: "Invalid Agent", // Invalid User.
                 }
-                res.send(data);
+                return res.send(data);
             }
-
         } else {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEVICE], "Invalid Device"), // Invalid Device."
+                msg: "Invalid Agent", // Invalid User.
             }
-            res.send(data);
+            return res.send(data);
         }
     }
 }
 
-exports.unflagDevice = async function (req, res) {
-    var verify = req.decoded // await verifyToken(req, res);
-    var device_id = req.params.id;
-
+exports.getStatus = async function (req, res) {
+    var verify = req.decoded;
     if (verify) {
-        if (!empty(device_id)) {
-            var sql1 = "update devices set flagged= 'Not flagged' where device_id='" + device_id + "'";
-            var rest = sql.query(sql1, async function (error, results) {
-                if (error) {
-                    console.log(error);
-                } else if (results.affectedRows == 0) {
-                    data = {
-                        status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_UNFLAG], "Device not Unflagged.Please try again"), // Device not Unflagged.Please try again.
-                    }
-                    return res.send(data);
-                } else {
-                    await sql.query('select devices.*, ' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.device_id= "' + device_id + '"', async function (error, resquery, fields) {
-                        if (error) {
-                            console.log(error);
-                        }
-
-                        if (resquery.length) {
-                            resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
-                            resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
-                            resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
-                            resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
-                            resquery[0].vpn = await device_helpers.getVpn(resquery[0])
-                            // dealerData = await getDealerdata(res[i]);
-                            data = {
-                                // "data": resquery[0],
-                                status: true,
-                                msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_UNFLAG_SUCC], "Device Unflagged successfully"), // Device Unflagged successfully.
-                            }
-                        }
-                        device_helpers.saveActionHistory(resquery[0], constants.DEVICE_UNFLAGGED)
-                        return res.send(data);
-                    })
-
-                }
-            });
-
+        let agentID = verify.user.agent_id;
+        let agentQ = `SELECT * FROM dealer_agents WHERE id = ${agentID} AND delete_status=0`;
+        let agent = await sql.query(agentQ);
+        if (agent.length) {
+            return res.send({
+                status: true,
+                agent_status: agent[0].status,
+                agent_type: agent[0].type,
+                agent_email: agent[0].email
+            })
+        } else {
+            return res.send({
+                status: false,
+                msg: "Agent not found"
+            })
         }
-
-    } else {
-
-        data = {
-            status: false,
-            msg: "Device not Unflagged. Please try again", // Device Is not unflagged.Please try again"
-        }
-        return res.send(data);
     }
 }

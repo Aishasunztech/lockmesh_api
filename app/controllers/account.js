@@ -4,6 +4,7 @@ const MsgConstants = require('../../constants/MsgConstants');
 const helpers = require('../../helper/general_helper');
 const device_helpers = require('../../helper/device_helpers');
 var app_constants = require('../../config/constants');
+const constants = require("../../constants/Application");
 var XLSX = require('xlsx');
 var path = require('path');
 var fs = require("fs");
@@ -13,8 +14,8 @@ const ADMIN = "admin";
 const DEALER = "dealer";
 const SDEALER = "sdealer";
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
-let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
-
+// let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
+let usr_acc_query_text = constants.usr_acc_query_text;
 
 exports.getProfiles = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
@@ -42,8 +43,8 @@ exports.getProfiles = async function (req, res) {
             sql.query(query, async function (error, results) {
 
                 for (var i = 0; i < results.length; i++) {
-                    // console.log('push apps', results[i].push_apps)
-                    let controls = (results[i].controls !== undefined && results[i].controls !== null) ? JSON.parse(results[i].controls) : JSON.parse('[]');;
+                    // console.log('push apps', results[i].controls)
+                    let controls = (results[i].controls !== undefined && results[i].controls !== null && results[i].controls) ? JSON.parse(results[i].controls) : JSON.parse('[]');
                     let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== null) ? JSON.parse(results[i].app_list) : JSON.parse('[]');
                     let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : JSON.parse('[]');
                     let passwords = (results[i].passwords !== undefined && results[i].passwords !== null) ? JSON.parse(results[i].passwords) : JSON.parse('[]');
@@ -298,6 +299,35 @@ exports.getAllSimIDs = async (req, res) => {
 
 }
 
+exports.resync_ids = async (req, res) => {
+    var verify = req.decoded; // await verifyToken(req, res);
+    if (verify) {
+    }
+
+}
+
+// exports.getUsedSimIDs = async function (req, res) {
+//     var verify = req.decoded; // await verifyToken(req, res);
+//     if (verify) {
+//         var loggedInuid = verify.user.id;
+//         let query = "select * from sim_ids where used=1";
+//         sql.query(query, async function (error, resp) {
+//             data = {
+//                 status: false,
+//                 msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
+//                 data: resp
+//             }
+//             res.send(data);
+//         });
+//     }
+//     else {
+//         data = {
+//             status: false,
+//             msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
+//         }
+//         res.send(data)
+//     }
+// }
 
 
 exports.getChatIDs = async (req, res) => {
@@ -610,7 +640,6 @@ exports.purchaseCredits = async function (req, res) {
                                             return
                                         }
                                     })
-
                                 } else {
                                     res.send()
                                 }
@@ -817,11 +846,18 @@ exports.saveProfile = async function (req, res) {
                         console.log(err)
                     }
                     // console.log(rslts, 'rslt is query')
-                    if (rslts.affectedRows) {
+                    if (rslts && rslts.affectedRows) {
                         data = {
                             status: true,
                             msg: await helpers.convertToLang(req.translation[MsgConstants.PROFILE_SAV_SUCC], "Profile Saved Successfully"), // Profile Saved Successfully
-                            data: rslts
+                            data: {
+                                app_list: app_list ? JSON.parse(app_list) : [],
+                                controls: controls ? JSON.parse(controls): [],
+                                passwords: JSON.parse(passwords),
+                                secure_apps: permissions ? JSON.parse(permissions) : [],
+                                profile_name: name,
+                                id: rslts.insertId
+                            } 
                         };
                         res.send(data);
                     } else {

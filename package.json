@@ -1,6 +1,6 @@
 {
-  "name": "webportalbackend",
-  "version": "0.0.0",
+  "name": "lockmesh_server",
+  "version": "4.1.0",
   "private": true,
   "scripts": {
     "start": "node ./bin/www"
@@ -11,6 +11,7 @@
     "archiver-zip-encryptable": "^1.0.2",
     "axios": "^0.19.0",
     "bcrypt": "^3.0.6",
+    "connect-multiparty": "^2.2.0",
     "cookie-parser": "~1.4.3",
     "cors": "^2.8.4",
     "crypto-js": "^3.1.9-1",

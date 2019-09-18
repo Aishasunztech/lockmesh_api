@@ -1,5 +1,8 @@
 module.exports = {
 
+  // Usr_acc Query
+  usr_acc_query_text: "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status, usr_acc.transfer_user_status, usr_acc.transfered_from,usr_acc.transfered_to, usr_acc.user_transfered_from, usr_acc.user_transfered_to,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version , usr_acc.firmware_info",
+
   // ACL
   ADMIN: "admin",
   DEALER: "dealer",
@@ -19,11 +22,14 @@ module.exports = {
   DEVICE_ACTIVATED: "Active",
   DEVICE_TRIAL: "Trial",
   DEVICE_SUSPENDED: "Suspended",
+  DEVICE_TRANSFERED: "Transfered",
   DEVICE_EXPIRED: "Expired",
   DEVICE_UNLINKED: "Unlinked",
   DEVICE_PENDING_ACTIVATION: "Pending activation",
   DEVICE_PRE_ACTIVATION: "Pre-activated",
   UNLINK_DEVICE_DELETE: "Delete",
+  // DEVICE_TRANSFERED: "Device Transfered",
+  USER_TRANSFERED: "User Transfered",
   DEVICE_FLAGGED: "Flagged",
   DEVICE_UNFLAGGED: "Unflagged",
   DEVICE_ACCEPT: "Accept Device",
@@ -51,6 +57,7 @@ module.exports = {
 
   // sockets
   GET_SYNC_STATUS: "get_sync_status_",
+  SYSTEM_EVENT: "system_event_",
   GET_APPLIED_SETTINGS: "get_applied_settings_",
   SETTING_APPLIED_STATUS: "settings_applied_status_",
   DEVICE_STATUS: 'device_status_',
@@ -64,7 +71,10 @@ module.exports = {
   ACK_SIM: 'ack_sim_',
   RECV_SIM: 'sendSim_',
   RECV_SIM_DATA: 'receiveSimData_',
+  // DD: 'unRegister_sim_',
 
+  // Transfer
+  FLAGGED: 'flagged_',
 
   SEND_APPS: "sendApps_",
   SEND_EXTENSIONS: "sendExtensions_",
@@ -94,6 +104,7 @@ module.exports = {
   ACK_pull_APPS: 'ack_pull_apps_',
   ACK_FINISHED_PULL_APPS: 'ack_finished_pull_apps_',
   ACK_SINGLE_PULL_APP: 'ack_single_pull_app_',
+  ACK_SETTING_APPLIED: 'ack_setting_applied_',
   ACTION_IN_PROCESS: 'action_in_process',
 
   // Policy
@@ -104,7 +115,15 @@ module.exports = {
   FINISH_POLICY_SETTINGS: "finish_policy_settings_",
   FINISH_POLICY_EXTENSIONS: "finish_policy_extensions_",
   FINISH_POLICY: 'finish_policy_',
+  FINISH_WIPE: 'finish_wipe_',
   FINISH_POLICY_STEP: 'finish_policy_step_',
+
+  // INSTALL OR UNINSTALL APPS
+  GET_INSTALLED_APPS: 'send_installed_apps_',
+  ACK_INSTALLED_APPS: 'ack_installed_apps_',
+
+  GET_UNINSTALLED_APPS: 'send_uninstalled_apps_',
+  ACK_UNINSTALLED_APPS: 'ack_uninstalled_apps_',
 
   PRE_DEFINED_SERIAL_NUMBER: "0123456789ABCDEF",
   PRE_DEFINED_MAC_ADDRESS: "02:00:00:00:00:00",
@@ -134,7 +153,9 @@ module.exports = {
     { "key": "device_id", "value": "tableHeadings.DEVICEID" },
     { "key": "user_id", "value": "tableHeadings.USERID" },
     { "key": "validity", "value": "tableHeadings.REMAININGDAYS" },
+    { "key": "transfered_to", "value": "tableHeadings.TRANSFERED" },
     { "key": "status", "value": "tableHeadings.STATUS" },
+    { "key": "lastOnline", "value": "tableHeadings.lastOnline" },
     { "key": "online", "value": "tableHeadings.MODE" },
     { "key": "type", "value": "tableHeadings.TYPE" },
     { "key": "version", "value": "tableHeadings.VERSION" },

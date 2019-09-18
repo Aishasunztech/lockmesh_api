@@ -1,10 +1,13 @@
+const app_constants = require('./constants');
+
 let options = {
     swaggerDefinition: {
         info: {
-            description: 'This is a sample server',
+            description: 'This is secure MDM API',
             title: 'LockMesh',
             version: '1.0',
         },
+        // host: app_constants.HOST,
         host: 'localhost:3000',
         basePath: '/',
         produces: [

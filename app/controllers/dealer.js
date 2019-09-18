@@ -22,14 +22,15 @@ const ADMIN = "admin";
 const DEALER = "dealer";
 const SDEALER = "sdealer";
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
-let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
+// let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
+let usr_acc_query_text =  constants.usr_acc_query_text;
 
 exports.getAllDealers = async function (req, res) {
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
 
-        var role = await general_helpers.getuserTypeIdByName(verify.user.user_type);
+        var role = await general_helpers.getUserTypeIDByName(verify.user.user_type);
         if (verify.user.user_type == constants.ADMIN) {
 
             sql.query(`SELECT * FROM dealers WHERE type!=${role} AND type != 4 AND type !=5 ORDER BY created DESC`, async function (error, results) {
@@ -223,7 +224,7 @@ exports.getDealers = async function (req, res) {
             role = await general_helpers.getDealerTypeIdByName(req.params.pageName);
         } else if (verify.user.user_type === constants.DEALER) {
             role = await general_helpers.getDealerTypeIdByName('sdealer');
-            where = ` AND connected_dealer =${verify.user.id} `
+            where = ` AND connected_dealer =${verify.user.id}`
         }
 
         if (!empty(role)) {
@@ -256,7 +257,7 @@ exports.getDealers = async function (req, res) {
                         created: results[i].created,
                         modified: results[i].modified,
                         connected_devices: get_connected_devices,
-                        devicesList: await general_helpers.getAllRecordbyDealerId(results[i].dealer_id)
+                        devicesList: await general_helpers.getAllRecordByDealerID(results[i].dealer_id)
                     };
 
                     if (get_parent_dealer != undefined && get_parent_dealer.length > 0) {
@@ -317,7 +318,7 @@ exports.addDealer = async function (req, res) {
 
             /* var link_code = randomize('0', 6);
             link_code = await general_helpers.checkLinkCode(link_code); */
-            var link_code = await general_helpers.genrateLinkCode();
+            var link_code = await general_helpers.generateLinkCode();
 
             var type = await general_helpers.getDealerTypeIdByName(pageType);
 
@@ -1229,3 +1230,53 @@ exports.updateDealerPins = async function (req, res) {
         }
     );
 };
+
+
+/**
+ * 
+ */
+exports.twoFactorAuth = async function (req, res) {
+	var verify = req.decoded;
+	// if (verify['status'] !== undefined && verify.status === true) {
+	if (verify) {
+		let loggedDealerId = verify.user.id;
+		isEnable = req.body.isEnable;
+		let updateDealerQ =
+			"UPDATE dealers SET is_two_factor_auth=" +
+			isEnable +
+			" WHERE dealer_id=" +
+			loggedDealerId;
+		let updatedDealer = await sql.query(updateDealerQ);
+		if (updatedDealer.affectedRows) {
+			if (isEnable) {
+				data = {
+					status: true,
+					msg: await general_helpers.convertToLang(
+						req.translation[MsgConstants.DUAL_AUTH_SUCC_ENBL],
+						"Dual Authentication is Successfully enabled"
+					), // Dual Authentication is Successfully enabled
+					isEnable: isEnable
+				};
+			} else {
+				data = {
+					status: true,
+					msg: await general_helpers.convertToLang(
+						req.translation[MsgConstants.DUAL_AUTH_SUCC_DISABL],
+						"Dual Authentication is Successfully disabled"
+					), // Dual Authentication is Successfully disabled
+					isEnable: isEnable
+				};
+			}
+			return res.send(data);
+		} else {
+			data = {
+				status: false,
+				msg: await general_helpers.convertToLang(
+					req.translation[MsgConstants.DUAL_AUTH_NOT_ENBL],
+					"Dual Authentication could not be enabled"
+				) // Dual Authentication could not be enabled
+			};
+			return res.send(data);
+		}
+	}
+}

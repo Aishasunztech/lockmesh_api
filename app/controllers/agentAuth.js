@@ -13,7 +13,7 @@ var app_constants = require('../../constants/Application');
 var MsgConstants = require('../../constants/MsgConstants');
 
 const constants = require('../../config/constants');
-const { sendEmail } = require('../../lib/email');
+// const { sendEmail } = require('../../lib/email');
 
 
 var data;
@@ -23,9 +23,6 @@ exports.login = async function (req, res) {
     var email = req.body.email;
     var pwd = req.body.password;
     var dealer_pin = req.body.dealer_pin;
-
-    console.log("email", email);
-    console.log('pwd', pwd);
 
     var data = '';
     // let compare = await bcrypt.compare(pwd);
@@ -42,21 +39,23 @@ exports.login = async function (req, res) {
         }
         return res.send(data);
     } else {
-        bcrypt.compare(pwd, agent[0].password, async function (err, compareSuccess) {
-            if (err) {
-                data = {
-                    status: false,
-                    msg: 'Agent info is not valid', // await helpers.convertToLang(req.translation[MsgConstants.USER_DOES_NOT_EXIST], MsgConstants.USER_DOES_NOT_EXIST),
-                    data: null
-                }
-                return res.send(data);
-            }
+        if (agent[0].status) {
 
-            if (compareSuccess) {
-                let dealerQ = `SELECT * FROM dealers WHERE link_code = '${dealer_pin}' LIMIT 1`;
-                let dealer = await sql.query(dealerQ);
-                if (dealer.length && dealer[0].dealer_id === agent[0].dealer_id) {
-                    if (agent[0].status) {
+            bcrypt.compare(pwd, agent[0].password, async function (err, compareSuccess) {
+                if (err) {
+                    data = {
+                        status: false,
+                        msg: 'Agent info is not valid', // await helpers.convertToLang(req.translation[MsgConstants.USER_DOES_NOT_EXIST], MsgConstants.USER_DOES_NOT_EXIST),
+                        data: null
+                    }
+                    return res.send(data);
+                }
+
+                if (compareSuccess) {
+                    let dealerQ = `SELECT * FROM dealers WHERE link_code = '${dealer_pin}' LIMIT 1`;
+                    let dealer = await sql.query(dealerQ);
+                    if (dealer.length && dealer[0].dealer_id === agent[0].dealer_id) {
+
 
                         var userType = await helpers.getUserType(dealer[0].dealer_id);
                         var ip = req.header('x-real-ip') || req.connection.remoteAddress
@@ -68,13 +67,13 @@ exports.login = async function (req, res) {
                             agent_email: agent[0].email,
                             agent_username: agent[0].name,
                             agent_type: agent[0].type,
-
+                            staff_id: agent[0].staff_id,
                             dealer_name: dealer[0].dealer_name,
                             dealer_email: dealer[0].dealer_email,
                             link_code: dealer[0].link_code,
                             dealer_pin: dealer[0].link_code,
                             connected_dealer: dealer[0].connected_dealer,
-                            
+
                             user_type: userType,
                             ip_address: ip,
                         }
@@ -107,10 +106,11 @@ exports.login = async function (req, res) {
                                         user,
                                     }
                                     return res.send(data);
-                                    
+
                                 }
                             }
                         );
+
                     } else {
                         data = {
                             status: false,
@@ -127,16 +127,17 @@ exports.login = async function (req, res) {
                     }
                     return res.send(data);
                 }
-            } else {
-                data = {
-                    status: false,
-                    msg: 'Agent info is not valid', // await helpers.convertToLang(req.translation[MsgConstants.USER_DOES_NOT_EXIST], MsgConstants.USER_DOES_NOT_EXIST),
-                    data: null
-                }
-                return res.send(data);
-            }
 
-        });
+            });
+
+        } else {
+            data = {
+                status: false,
+                msg: 'Your account disabled, please contact to your dealer', // await helpers.convertToLang(req.translation[MsgConstants.USER_DOES_NOT_EXIST], MsgConstants.USER_DOES_NOT_EXIST),
+                data: null
+            }
+            return res.send(data);
+        }
         return;
 
     }
