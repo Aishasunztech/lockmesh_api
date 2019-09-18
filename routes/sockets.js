@@ -1216,7 +1216,6 @@ sockets.sendDeviceStatus = async function (device_id, device_status, status = fa
 }
 
 sockets.ackSettingApplied = async function (device_id, app_list, extensions, controls) {
-    console.log("ackSettingApplied() ", device_id, controls);
     io.emit(Constants.ACK_SETTING_APPLIED + device_id, {
         app_list: app_list,
         extensions: extensions,
