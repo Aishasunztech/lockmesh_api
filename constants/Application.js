@@ -56,6 +56,7 @@ module.exports = {
   DEVICE_HISTORY_FORCE_UPDATE: 'force_update',
 
   // sockets
+  SEND_ONLINE_OFFLINE_STATUS: 'send_online_offline_status_',
   GET_SYNC_STATUS: "get_sync_status_",
   SYSTEM_EVENT: "system_event_",
   GET_APPLIED_SETTINGS: "get_applied_settings_",

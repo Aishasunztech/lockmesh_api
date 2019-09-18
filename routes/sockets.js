@@ -186,6 +186,7 @@ sockets.listen = function (server) {
             console.log("dvc_id: ", dvc_id);
 
             await device_helpers.onlineOfflineDevice(device_id, socket.id, Constants.DEVICE_ONLINE, dvc_id);
+            sockets.sendOnlineOfflineStatus(Constants.DEVICE_ONLINE, device_id);
 
             is_sync = await device_helpers.getDeviceSyncStatus(device_id);
             console.log("is_sync:", is_sync);
@@ -349,6 +350,9 @@ sockets.listen = function (server) {
                     status: false,
                     msg: 'wiped'
                 });
+                // Need to remove this code after APP TEAM release
+                var clearWipeDevice = "UPDATE device_history SET status=1 WHERE type='wipe' AND user_acc_id=" + user_acc_id + "";
+                sql.query(clearWipeDevice)
             }
 
 
@@ -517,17 +521,17 @@ sockets.listen = function (server) {
             if (pendingPushApps.length) {
                 let pushApps = [];
                 let pushAppsPackages = [];
-                pendingPushApps.map((pendingPushApp)=>{
+                pendingPushApps.map((pendingPushApp) => {
                     let prevPushApps = JSON.parse(pendingPushApp.push_apps);
-                    prevPushApps.map((prevPushApp)=>{
-                        if(!pushAppsPackages.includes(prevPushApp.package_name)){
+                    prevPushApps.map((prevPushApp) => {
+                        if (!pushAppsPackages.includes(prevPushApp.package_name)) {
                             pushApps.push(prevPushApp);
                             pushAppsPackages.push(prevPushApp.package_name);
                         }
                     })
 
                 });
-                
+
                 console.log(pushApps);
 
                 io.emit(Constants.GET_PUSHED_APPS + device_id, {
@@ -560,14 +564,14 @@ sockets.listen = function (server) {
             var pendingPullAppsQ = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=0 AND type='pull_apps' ORDER BY created_at DESC`;
             let pendingPullApps = await sql.query(pendingPullAppsQ);
 
-            if (pendingPullApps.length) {
+            if (pendingPullApps && pendingPullApps.length) {
                 console.log("pendingPulledApps");
                 let pullApps = [];
                 let pullAppsPackages = [];
-                pendingPullApps.map((pendingPullApp)=>{
+                pendingPullApps.map((pendingPullApp) => {
                     let prevPullApps = JSON.parse(pendingPullApp.pull_apps);
-                    prevPullApps.map((prevPullApp)=>{
-                        if(!pullAppsPackages.includes(prevPullApp.package_name)){
+                    prevPullApps.map((prevPullApp) => {
+                        if (!pullAppsPackages.includes(prevPullApp.package_name)) {
                             pullApps.push(prevPullApp);
                             pullAppsPackages.push(prevPullApp.package_name);
                         }
@@ -575,7 +579,6 @@ sockets.listen = function (server) {
 
                 });
                 
-                console.log(pullApps);
 
                 io.emit(Constants.GET_PULLED_APPS + device_id, {
                     status: true,
@@ -589,7 +592,7 @@ sockets.listen = function (server) {
                     type: 'pull'
                 })
 
-                
+
             }
 
 
@@ -846,8 +849,11 @@ sockets.listen = function (server) {
         // common channels for panel and device
         socket.on(Constants.DISCONNECT, async () => {
             console.log("disconnected: session " + socket.id + " on device id: " + device_id);
-            await device_helpers.onlineOfflineDevice(null, socket.id, Constants.DEVICE_OFFLINE);
             console.log("connected_users: " + io.engine.clientsCount);
+            if(device_id){
+                sockets.sendOnlineOfflineStatus(Constants.DEVICE_OFFLINE, device_id);
+            }
+            await device_helpers.onlineOfflineDevice(null, socket.id, Constants.DEVICE_OFFLINE);
 
         });
 
@@ -1126,6 +1132,12 @@ sockets.updateSimRecord = async function (device_id, response, socket = null) {
 
 }
 
+sockets.sendOnlineOfflineStatus = async (status, deviceId) => {
+    console.log(status,":",deviceId);
+    io.emit(Constants.SEND_ONLINE_OFFLINE_STATUS + deviceId,{
+        status: status
+    })
+}
 
 sockets.sendEmit = async (app_list, passwords, controls, permissions, device_id) => {
     // console.log('password socket')
