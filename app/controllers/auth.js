@@ -62,16 +62,14 @@ exports.login = async function (req, res) {
 						msg:  'Your account is suspended', // await helpers.convertToLang(req.translation[MsgConstants.YOUR_ACCOUNT_IS_SUSPENDED], MsgConstants.YOUR_ACCOUNT_IS_SUSPENDED),
 						data: null
 					}
-					res.send(data);
-					return;
+					return res.send(data);
 				} else if (dealerStatus === app_constants.DEALER_UNLINKED) {
 					data = {
 						status: false,
 						msg:  'Your account is deleted', // await helpers.convertToLang(req.translation[MsgConstants.YOUR_ACCOUNT_IS_DELETED], MsgConstants.YOUR_ACCOUNT_IS_DELETED),
 						data: null
 					}
-					res.send(data);
-					return;
+					return res.send(data);
 				} else {
 
 					if (users[0].is_two_factor_auth === 1 || users[0].is_two_factor_auth === true) {
@@ -121,10 +119,10 @@ exports.login = async function (req, res) {
 							connected_devices: get_connected_devices,
 							account_status: users[0].account_status,
 							user_type: userType,
-							created: users[0].created,
-							modified: users[0].modified,
 							two_factor_auth: users[0].is_two_factor_auth,
 							ip_address: ip,
+							created: users[0].created,
+							modified: users[0].modified,
 						}
 
 						jwt.sign(
@@ -133,16 +131,15 @@ exports.login = async function (req, res) {
 							},
 							constants.SECRET,
 							{
-								expiresIn: constants.EXPIRES_IN
+								expiresIn: constants.DASHBOARD_EXPIRES_IN
 							}, async function (err, token) {
 								if (err) {
-									res.send({
+									return res.send({
 										status: false,
 										err: err
 									});
-									return;
 								} else {
-									user.expiresIn = constants.EXPIRES_IN;
+									user.expiresIn = constants.DASHBOARD_EXPIRES_IN;
 									// console.log("logged in user", user[0]);
 									user.verified = (users[0].is_two_factor_auth === true || users[0].is_two_factor_auth === 1) ? false : true;
 									user.token = token;
@@ -155,8 +152,7 @@ exports.login = async function (req, res) {
 										user,
 										two_factor_auth: false,
 									}
-									res.send(data);
-									return;
+									return res.send(data);
 								}
 							}
 						);
@@ -191,15 +187,14 @@ exports.verifyCode = async function (req, res) {
 		
 		sql.query(updateVerificationQ, async function (error, response) {
             if (error) {
-				res.send({
+				return res.send({
                     status: false,
                     msg:  'Invalid verification code', // await helpers.convertToLang(req.translation[MsgConstants.INVALID_VERIFICATION_CODE], MsgConstants.INVALID_VERIFICATION_CODE),
                     data: null
 				})
-				return;
 			}
 
-            if (response.affectedRows) {
+            if (response && response.affectedRows) {
                 let dealerStatus = helpers.getDealerStatus(checkRes[0]);
                 if (dealerStatus === app_constants.DEALER_SUSPENDED) {
                     data = {
@@ -246,36 +241,34 @@ exports.verifyCode = async function (req, res) {
                     jwt.sign({
                         user
                     }, constants.SECRET, {
-                            expiresIn: constants.EXPIRES_IN
+                            expiresIn: constants.DASHBOARD_EXPIRES_IN
                         }, async function (err, token) {
                             if (err) {
-                                res.send({
-                                    'err': err
+                                return res.send({
+									'err': err,
+									status: false,
 								});
-								return;
                             } else {
-                                user.expiresIn = constants.EXPIRES_IN;
+                                user.expiresIn = constants.DASHBOARD_EXPIRES_IN;
                                 user.verified = checkRes[0].verified;
                                 user.token = token;
                                 helpers.saveLogin(user, userType, app_constants.TOKEN, 1);
 
-                                res.send({
+                                return res.send({
                                     token: token,
                                     status: true,
-                                    msg: 'User loged in Successfully', //                                   expiresIn: constants.EXPIRES_IN, // await helpers.convertToLang(req.translation[MsgConstants.USER_LOGED_IN_SUCCESSFULLY], MsgConstants.USER_LOGED_IN_SUCCESSFULLY),
+                                    msg: 'User loged in Successfully', //  expiresIn: constants.EXPIRES_IN, // await helpers.convertToLang(req.translation[MsgConstants.USER_LOGED_IN_SUCCESSFULLY], MsgConstants.USER_LOGED_IN_SUCCESSFULLY),
                                     user
 								});
-								return;
                             }
                         });
                 }
             } else {
-                res.send({
+                return res.send({
                     status: false,
                     msg:  'Invalid verification code', // await helpers.convertToLang(req.translation[MsgConstants.INVALID_VERIFICATION_CODE], MsgConstants.INVALID_VERIFICATION_CODE),
                     data: null
 				})
-				return;
             }
         });
 
@@ -285,8 +278,7 @@ exports.verifyCode = async function (req, res) {
             msg:  'Invalid verification code', // await helpers.convertToLang(req.translation[MsgConstants.INVALID_VERIFICATION_CODE], MsgConstants.INVALID_VERIFICATION_CODE),
             data: null
         }
-		res.send(data);
-		return;
+		return res.send(data);
     }
 
 }

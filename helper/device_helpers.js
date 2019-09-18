@@ -454,10 +454,10 @@ module.exports = {
             // status = 'Unlinked';
             status = Constants.DEVICE_UNLINKED;
         }
-        else if (device.transfer_status == 1 && device.account_status === 'suspended' && device.flagged !== 'Not flagged') {
+        else if (device.transfer_status == 1 && device.flagged !== 'Not flagged') {
             status = Constants.DEVICE_TRANSFERED
         }
-        else if (device.transfer_status == 0 && device.account_status === 'suspended' && device.flagged != 'Not flagged') {
+        else if (device.transfer_status == 0 && device.flagged != 'Not flagged') {
             status = Constants.DEVICE_FLAGGED
         }
         else if (device.status === 'active' && (device.account_status === '' || device.account_status === null) && device.unlink_status === 0 && (device.device_status === 1 || device.device_status === '1')) {
@@ -487,41 +487,56 @@ module.exports = {
         return status;
 
     },
-    getPgpEmails: async (result) => {
-        let query = "SELECT pgp_email FROM pgp_emails WHERE user_acc_id = '" + result.id + "' AND used = 1"
+    /**
+     * String ids of usr_acc table
+     */
+    getPgpEmails: async (ids) => {
+
+
+        let query = "SELECT pgp_email ,user_acc_id from pgp_emails WHERE user_acc_id IN (" + ids + ")"
         let results = await sql.query(query);
         if (results.length) {
-            return results[0].pgp_email
+            return results
         }
         else {
-            return 'N/A'
+            return []
         }
     },
-    getSimids: async (result) => {
-        let query = "SELECT sim_id FROM sim_ids WHERE user_acc_id = '" + result.id + "' AND used = 1"
+    /**
+     * String ids of usr_acc table
+     */
+    getSimids: async (ids) => {
+        let query = "SELECT sim_id,user_acc_id FROM sim_ids WHERE user_acc_id IN (" + ids + ")"
+        // console.log(query);
         let results = await sql.query(query);
         if (results.length) {
-            return results[0].sim_id
+            return results
         } else {
-            return 'N/A'
+            return []
         }
     },
-    getChatids: async (result) => {
-        let query = "SELECT chat_id FROM chat_ids WHERE user_acc_id = '" + result.id + "' AND used = 1"
+    /**
+     * String ids of usr_acc table
+     */
+    getChatids: async (ids) => {
+        let query = "SELECT chat_id,user_acc_id FROM chat_ids WHERE user_acc_id IN (" + ids + ")"
         let results = await sql.query(query);
         if (results.length) {
-            return results[0].chat_id
+            return results
         } else {
-            return 'N/A'
+            return []
         }
     },
-    getLastLoginDetail: async (result) => {
-        let query = `SELECT created_at FROM login_history WHERE device_id = '${result.usr_device_id}' ORDER BY id DESC`;
+    /**
+     * String usr_device_ids of usr_acc table
+     */
+    getLastLoginDetail: async (ids) => {
+        let query = `SELECT MAX(created_at) as created_at, device_id FROM login_history WHERE device_id IN (${ids}) GROUP BY device_id ORDER BY created_at DESC  `;
         let results = await sql.query(query);
         if (results.length) {
-            return results[0].created_at
+            return results
         } else {
-            return 'N/A'
+            return []
         }
     },
 

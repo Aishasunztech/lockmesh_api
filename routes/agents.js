@@ -5,7 +5,7 @@ var router = express.Router();
 const AgentDashboardController = require('../app/controllers/agentDashboard');
 
 /**
- * @route GET api/v1/agent/devices
+ * @route GET /api/v1/agent/devices
  * @group Agent Dashboard - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
@@ -14,7 +14,7 @@ const AgentDashboardController = require('../app/controllers/agentDashboard');
 router.get("/devices", AgentDashboardController.devices)
 
 /**
- * @route PUT api/v1/agent/edit-device
+ * @route PUT /api/v1/agent/edit-device
  * @group Agent Dashboard - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
@@ -24,7 +24,7 @@ router.get("/devices", AgentDashboardController.devices)
 router.put('/edit-device', AgentDashboardController.editDevices);
 
 /**
- * @route PUT api/v1/agent/activate-device
+ * @route PUT /api/v1/agent/activate-device
  * @group Agent Dashboard - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
@@ -34,7 +34,7 @@ router.put('/edit-device', AgentDashboardController.editDevices);
 router.put('/activate-device/:id', AgentDashboardController.activateDevice);
 
 /**
- * @route PUT api/v1/agent/suspend-device
+ * @route PUT /api/v1/agent/suspend-device
  * @group Agent Dashboard - test route
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error

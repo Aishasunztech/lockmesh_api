@@ -43,8 +43,8 @@ exports.getProfiles = async function (req, res) {
             sql.query(query, async function (error, results) {
 
                 for (var i = 0; i < results.length; i++) {
-                    // console.log('push apps', results[i].push_apps)
-                    let controls = (results[i].controls !== undefined && results[i].controls !== null) ? JSON.parse(results[i].controls) : JSON.parse('[]');;
+                    // console.log('push apps', results[i].controls)
+                    let controls = (results[i].controls !== undefined && results[i].controls !== null && results[i].controls) ? JSON.parse(results[i].controls) : JSON.parse('[]');
                     let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== null) ? JSON.parse(results[i].app_list) : JSON.parse('[]');
                     let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : JSON.parse('[]');
                     let passwords = (results[i].passwords !== undefined && results[i].passwords !== null) ? JSON.parse(results[i].passwords) : JSON.parse('[]');
@@ -867,11 +867,18 @@ exports.saveProfile = async function (req, res) {
                         console.log(err)
                     }
                     // console.log(rslts, 'rslt is query')
-                    if (rslts.affectedRows) {
+                    if (rslts && rslts.affectedRows) {
                         data = {
                             status: true,
                             msg: await helpers.convertToLang(req.translation[MsgConstants.PROFILE_SAV_SUCC], "Profile Saved Successfully"), // Profile Saved Successfully
-                            data: rslts
+                            data: {
+                                app_list: app_list ? JSON.parse(app_list) : [],
+                                controls: controls ? JSON.parse(controls): [],
+                                passwords: JSON.parse(passwords),
+                                secure_apps: permissions ? JSON.parse(permissions) : [],
+                                profile_name: name,
+                                id: rslts.insertId
+                            } 
                         };
                         res.send(data);
                     } else {

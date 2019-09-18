@@ -2,13 +2,13 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    /*
-      Add altering commands here.
-      Return a promise to correctly handle asynchronicity.
-
-      Example:
-      return queryInterface.createTable('users', { id: Sequelize.INTEGER });
-    */
+    return queryInterface.changeColumn('device_history', 'type', {
+      type: Sequelize.ENUM(
+        'push_apps', 'pull_apps', 'history', 'imei', 'policy', 'force_update', 'profile', 'password', 'wipe'
+      ),
+      defaultValue: 'history'
+    },
+    )
   },
 
   down: (queryInterface, Sequelize) => {
