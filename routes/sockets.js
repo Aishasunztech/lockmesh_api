@@ -564,8 +564,8 @@ sockets.listen = function (server) {
                 console.log("pendingPulledApps");
                 let pullApps = [];
                 let pullAppsPackages = [];
-                pendingPullApps.map((pendingPushApp)=>{
-                    let prevPullApps = JSON.parse(pendingPushApp.push_apps);
+                pendingPullApps.map((pendingPullApp)=>{
+                    let prevPullApps = JSON.parse(pendingPullApp.pull_apps);
                     prevPullApps.map((prevPullApp)=>{
                         if(!pullAppsPackages.includes(prevPullApp.package_name)){
                             pullApps.push(prevPullApp);
