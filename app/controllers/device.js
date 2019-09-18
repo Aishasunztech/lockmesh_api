@@ -3678,13 +3678,13 @@ exports.writeIMEI = async function (req, res) {
                                     data = {
                                         status: true,
                                         // 'insertedData': insertedData
-                                        content1: await helpers.convertToLang(
+                                        title1: await helpers.convertToLang(
                                             req.translation[
                                             MsgConstants.WRITE_TO
                                             ],
                                             " write to "
                                         ),
-                                        content2: await helpers.convertToLang(
+                                        title2: await helpers.convertToLang(
                                             req.translation[
                                             MsgConstants
                                                 .ACTION_PERFORMED_ON_BACK_ONLINE
@@ -3740,15 +3740,42 @@ exports.writeIMEI = async function (req, res) {
                                 sockets.writeImei(newImei, device_id);
                                 data = {
                                     status: true,
-                                    online: true
+                                    online: true,
                                     // 'insertedData': insertedData
+                                    title1: await helpers.convertToLang(
+                                        req.translation[
+                                        MsgConstants
+                                            .SUCCESSFULLY_WRITTEN_TO
+                                        ],
+                                        " successfully written to "
+                                    ),
+                                    title2: await helpers.convertToLang(
+                                        req.translation[
+                                        MsgConstants
+                                            .RESTART_DEVICE_REQUIRED_TO_APPLY_IMEI
+                                        ],
+                                        " on Device.Restart device is required to apply IMEI."
+                                    )
                                 };
                                 res.send(data);
                             } else {
                                 data = {
                                     status: true,
-                                    online: false
+                                    online: false,
                                     // 'insertedData': insertedData
+                                    title1: await helpers.convertToLang(
+                                        req.translation[
+                                        MsgConstants.WRITE_TO
+                                        ],
+                                        " write to "
+                                    ),
+                                    title2: await helpers.convertToLang(
+                                        req.translation[
+                                        MsgConstants
+                                            .ACTION_PERFORMED_ON_BACK_ONLINE
+                                        ],
+                                        ". Action will be performed when device is back online"
+                                    )
                                 };
                                 res.send(data);
                             }
