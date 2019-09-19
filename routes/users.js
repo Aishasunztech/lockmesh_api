@@ -95,7 +95,7 @@ router.get("/user_type", aclController.getUserType);
 
 /**
  * @route GET /users/devices
- * @group Device - test route
+ * @group Device - All Operation about Devices
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
  * @security JWT
@@ -601,7 +601,7 @@ router.post('/check_policy_name', policyController.checkPolicyName);
 router.post('/save_policy', policyController.savePolicy);
 
 /**
- * @route POST /users/apply_policy/:device_id
+ * @route POST /users/apply_policy/{device_id}
  * @group Policy - test route
  * @param {string} device_id.path.required - Device id
  * @param {string} userAccId.formData.required - user account id
@@ -634,56 +634,195 @@ router.get("/get_usr_acc_id/:device_id", async function (req, res) {
 	}
 });
 
+/**
+ * @route GET /users/get_app_permissions
+ * @group APK - All Operations on  apks
+ * @returns {object} 200 - An array of app Permission and an array of Extenstions
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.get("/get_app_permissions", appController.getAppPermissions);
-
+/**
+ * @route GET /users/get_system_permissions
+ * @group APK - All Operations on  apks
+ * @returns {object} 200 - An array of system permissions
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.get('/get_system_permissions', appController.getSystemPermissions)
 
 // policy name should be unique
 
 
 router.post("/save/profile", accountController.saveProfile);
-
+/**
+ * @route GET /users/apply_settings/{device_id}
+ * @group Device - All Operation about Devices
+ * @param {string} device_id.path.required - Device id
+ * @param {string} usr_acc_id.formData.required - User account id
+ * @param {Object} device_setting.formData.required - Device Settings (lists of apps, controls, subExtensions and passwords)
+ * @returns {object} 200 - Success message
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.post("/apply_settings/:device_id", deviceController.applySettings);
-
+/**
+ * @route GET /users/apply_pushapps/{device_id}
+ * @group Device - All Operation about Devices
+ * @param {string} device_id.path.required - Device id
+ * @param {string} usrAccId.formData.required - User account id
+ * @param {Array} push_apps.formData.required - Array of push apps
+ * @returns {object} 200 - Success message + noOfApps
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.post("/apply_pushapps/:device_id", deviceController.applyPushApps);
-
+/**
+ * @route GET /users/apply_pullapps/{device_id}
+ * @group Device - All Operation about Devices
+ * @param {string} device_id.path.required - Device id
+ * @param {string} usrAccId.formData.required - User account id
+ * @param {Array} pull_apps.formData.required - Array of pull apps
+ * @returns {object} 200 - Success message + noOfApps
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.post("/apply_pullapps/:device_id", deviceController.applyPullApps);
-
+/**
+ * @route POST /users/get_profiles
+ * @group Account  -Operations on account
+ * @param {string} device_id.formData.required - Device id
+ * @returns {object} 200 - An array of profiles
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.post("/get_profiles", accountController.getProfiles);
 
 router.post("/get_device_history", deviceController.getDeviceHistory);
-
+/**
+ * @route POST /users/save_new_data
+ * @group Account  -Operations on account
+ * @param {Array} newData.formData.required - Array of new data
+ * @param {string} type.formData.required - data type (sim_id || chat_id || pgp_email)
+ * @returns {object} 200 - suscess message
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.post("/save_new_data", accountController.saveNewData);
 
 // import sims
+/**
+ * @route POST /users/import/{fieldName}
+ * @group Account  -Operations on account
+ * @param {Array} parsedData.formData.required - Array of data
+ * @param {string} fieldName.path.required - field name (sim_id || chat_id || pgp_email)
+ * @returns {object} 200 - suscess message
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.post("/import/:fieldName", accountController.importIDs);
-
+/**
+ * @route POST /users/export/{fieldName}
+ * @group Account  -Operations on account
+ * @param {string} fieldName.path.required - field name (sim_id || chat_id || pgp_email)
+ * @returns {object} 200 - Array of related data
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.get("/export/:fieldName", accountController.exportIDs);
-
+/**
+ * @route GET /users/get_sim_ids
+ * @group Account  -Operations on account
+ * @returns {object} 200 - Array of sim ids
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.get("/get_sim_ids", accountController.getSimIDs);
-
+/**
+ * @route GET /users/get_all_sim_ids
+ * @group Account  -Operations on account
+ * @returns {object} 200 - Array of sim ids
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.get("/get_all_sim_ids", accountController.getAllSimIDs);
-
+/**
+ * @route GET /users/resync_ids
+ * @group Account  -Operations on account
+ * @returns {object} 200 - Array of sim ids
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.get("/resync_ids", accountController.getAllSimIDs);
 
+/**
+ * @route GET /users/get_chat_ids
+ * @group Account  -Operations on account
+ * @returns {object} 200 - Array of chat ids
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 // router.get('/get_used_sim_ids', accountController.getUsedSimIDs);
-
 router.get("/get_chat_ids", accountController.getChatIDs);
-
+/**
+ * @route GET /users/get_all_chat_ids
+ * @group Account  -Operations on account
+ * @returns {object} 200 - Array of chat ids
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.get("/get_all_chat_ids", accountController.getAllChatIDs);
-
+/**
+ * @route GET /users/get_used_chat_ids
+ * @group Account  -Operations on account
+ * @returns {object} 200 - Array of chat ids
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.get("/get_used_chat_ids", accountController.getUsedChatIDs);
-
+/**
+ * @route GET /users/get_pgp_emails
+ * @group Account  -Operations on account
+ * @returns {object} 200 - Array of chat ids
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.get("/get_pgp_emails", accountController.getPGPEmails);
-
+/**
+ * @route GET /users/get_all_pgp_emails
+ * @group Account  -Operations on account
+ * @returns {object} 200 - Array of pgp emails
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.get("/get_all_pgp_emails", accountController.getAllPGPEmails);
-
+/**
+ * @route GET /users/get_used_pgp_emails
+ * @group Account  -Operations on account
+ * @returns {object} 200 - Array of pgp emails
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.get("/get_used_pgp_emails", accountController.getUsedPGPEmails);
-
+/**
+ * @route GET /users/get_used_sim_ids
+ * @group Account  -Operations on account
+ * @returns {object} 200 - Array of sim ids
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.get("/get_used_sim_ids", accountController.getUsedSimIDs);
 
 // router.get('/get_packages', accountController.getPackages);
-
+/**
+ * @route GET /users/get_used_sim_ids
+ * @group Account  -Operations on account
+ * @param {Array} ids.formData.required - Array of ids
+ * @param {string} fieldName.path.required - field name (sim_id || chat_id || pgp_email)
+ * @returns {object} 200 - Array of sim ids
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.post("/delete_CSV_ids/:fieldName", accountController.deleteCSV);
 
 /**
@@ -785,13 +924,37 @@ router.post("/toggle", apkController.toggle);
  */
 /** Save apk Permissions**/
 router.post("/save_apk_permissions", apkController.saveApkPermission);
-
+/**
+ * @route GET /users/purchase_credits
+ * @group Account  -Operations on account
+ * @param {Object} data.formData.required - Credit details
+ * @returns {object} 200 - Success message
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 // Purchase credits_CASH
 router.post("/purchase_credits", accountController.purchaseCredits);
-
+/**
+ * @route GET /users/purchase_credits_CC
+ * @group Account  -Operations on account
+ * @param {Object} creditInfo.formData.required - Credit details
+ * @param {Object} cardInfo.formData.required - Card details
+ * @returns {object} 200 - Success message
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 // Purchase credits form Credit card
 router.post("/purchase_credits_CC", accountController.purchaseCredits_CC);
-
+/**
+ * @route POST /users/save_policy_permissions
+ * @group APK - test route
+ * @param {string} action.formData.required - action ('save')
+ * @param {string} policyId.formData.required - policy id
+ * @param {Array} dealers.formData.required - dealers list 
+ * @returns {object} 200 - Success message
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 /** Save Policy Permission **/
 router.post('/save_policy_permissions', apkController.savePolicyPermissions);
 
