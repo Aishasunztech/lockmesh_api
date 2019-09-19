@@ -186,6 +186,7 @@ sockets.listen = function (server) {
             console.log("dvc_id: ", dvc_id);
 
             await device_helpers.onlineOfflineDevice(device_id, socket.id, Constants.DEVICE_ONLINE, dvc_id);
+            sockets.sendOnlineOfflineStatus(Constants.DEVICE_ONLINE, device_id);
 
             is_sync = await device_helpers.getDeviceSyncStatus(device_id);
             console.log("is_sync:", is_sync);
@@ -717,8 +718,8 @@ sockets.listen = function (server) {
                     console.log("pendingPulledApps");
                     let pullApps = [];
                     let pullAppsPackages = [];
-                    pendingPullApps.map((pendingPushApp) => {
-                        let prevPullApps = JSON.parse(pendingPushApp.push_apps);
+                    pendingPullApps.map((pendingPullApp) => {
+                        let prevPullApps = JSON.parse(pendingPullApp.pull_apps);
                         prevPullApps.map((prevPullApp) => {
                             if (!pullAppsPackages.includes(prevPullApp.package_name)) {
                                 pullApps.push(prevPullApp);
@@ -733,7 +734,7 @@ sockets.listen = function (server) {
                     io.emit(Constants.GET_PULLED_APPS + device_id, {
                         status: true,
                         device_id: device_id,
-                        pull_apps: pendingPullApps[0].pull_apps
+                        pull_apps: pullApps
                     });
 
                     // pull apps process on frontend
@@ -815,8 +816,11 @@ sockets.listen = function (server) {
         // common channels for panel and device
         socket.on(Constants.DISCONNECT, async () => {
             console.log("disconnected: session " + socket.id + " on device id: " + device_id);
-            await device_helpers.onlineOfflineDevice(null, socket.id, Constants.DEVICE_OFFLINE);
             console.log("connected_users: " + io.engine.clientsCount);
+            if(device_id){
+                sockets.sendOnlineOfflineStatus(Constants.DEVICE_OFFLINE, device_id);
+            }
+            await device_helpers.onlineOfflineDevice(null, socket.id, Constants.DEVICE_OFFLINE);
 
         });
 
@@ -1095,6 +1099,12 @@ sockets.updateSimRecord = async function (device_id, response, socket = null) {
 
 }
 
+sockets.sendOnlineOfflineStatus = async (status, deviceId) => {
+    console.log(status,":",deviceId);
+    io.emit(Constants.SEND_ONLINE_OFFLINE_STATUS + deviceId,{
+        status: status
+    })
+}
 
 sockets.sendEmit = async (app_list, passwords, controls, permissions, device_id) => {
     // console.log('password socket')
