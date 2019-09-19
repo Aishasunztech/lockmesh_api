@@ -186,6 +186,7 @@ sockets.listen = function (server) {
             console.log("dvc_id: ", dvc_id);
 
             await device_helpers.onlineOfflineDevice(device_id, socket.id, Constants.DEVICE_ONLINE, dvc_id);
+            sockets.sendOnlineOfflineStatus(Constants.DEVICE_ONLINE, device_id);
 
             is_sync = await device_helpers.getDeviceSyncStatus(device_id);
             console.log("is_sync:", is_sync);
@@ -212,7 +213,7 @@ sockets.listen = function (server) {
                 // let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id;
                 // await sql.query(historyUpdate);
 
-                var setting_query = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=1 ORDER BY created_at DESC LIMIT 1`;
+                var setting_query = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND (type='history' OR type='profile') AND status=1 ORDER BY created_at DESC LIMIT 1`;
                 let response = await sql.query(setting_query);
 
                 // if (response.length > 0 && data.device_id != null) {
@@ -302,7 +303,7 @@ sockets.listen = function (server) {
                                 status: false
                             });
                         }
-                        if (result.affectedRows > 0) {
+                        if (result && result.affectedRows > 0) {
                             console.log("Type And version changed Successfully");
                             socket.emit(Constants.SYSTEM_EVENT + device_id, {
                                 device_id: device_id,
@@ -312,6 +313,8 @@ sockets.listen = function (server) {
 
                         }
                     })
+                } else if (data.action === "wipe") {
+                    sockets.ackFinishedWipe(device_id, user_acc_id)
                 }
             });
 
@@ -333,6 +336,23 @@ sockets.listen = function (server) {
                     is_sync: true,
                 });
             });
+
+            // ===================================================== Pending Device Processes ===============================================
+            // pending wipe action for device
+
+            var wipe_query = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='wipe' order by created_at desc limit 1";
+            let wipe_data = await sql.query(wipe_query);
+            console.log(wipe_data);
+            if (wipe_data.length) {
+                // console.log(device_id);
+                socket.emit(Constants.DEVICE_STATUS + device_id, {
+                    device_id: device_id,
+                    status: false,
+                    msg: 'wiped'
+                });
+            }
+
+
 
             // ===================================================== Pending Device Processes ===============================================
             // pending settings for device
@@ -492,16 +512,32 @@ sockets.listen = function (server) {
 
             // ========================================================== PUSH APPS ============================================
             // pending pushed apps for device
-            var pendingAppsQ = "SELECT * FROM device_history WHERE user_acc_id=" + user_acc_id + " AND status=0 AND type='push_apps' order by created_at desc limit 1";
-            let pendingPushedApps = await sql.query(pendingAppsQ);
+            var pendingAppsQ = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=0 AND type='push_apps' ORDER BY created_at DESC`;
+            let pendingPushApps = await sql.query(pendingAppsQ);
 
-            if (pendingPushedApps.length) {
+            if (pendingPushApps.length) {
+                let pushApps = [];
+                let pushAppsPackages = [];
+                pendingPushApps.map((pendingPushApp)=>{
+                    let prevPushApps = JSON.parse(pendingPushApp.push_apps);
+                    prevPushApps.map((prevPushApp)=>{
+                        if(!pushAppsPackages.includes(prevPushApp.package_name)){
+                            pushApps.push(prevPushApp);
+                            pushAppsPackages.push(prevPushApp.package_name);
+                        }
+                    })
+
+                });
+                
+                console.log(pushApps);
 
                 io.emit(Constants.GET_PUSHED_APPS + device_id, {
                     status: true,
                     device_id: device_id,
-                    push_apps: pendingPushedApps[0].push_apps
+                    push_apps: JSON.stringify(pushApps)
                 });
+
+                // push apps process on frontend
                 io.emit(Constants.ACTION_IN_PROCESS + device_id, {
                     status: true,
                     type: 'push'
@@ -522,22 +558,38 @@ sockets.listen = function (server) {
 
             // =====================================================PULL APPS=================================================
             // pending pull apps
-            var pendingPullAppsQ = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=0 AND type='pull_apps' order by created_at desc limit 1`;
-            let pendingPulledApps = await sql.query(pendingPullAppsQ);
+            var pendingPullAppsQ = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=0 AND type='pull_apps' ORDER BY created_at DESC`;
+            let pendingPullApps = await sql.query(pendingPullAppsQ);
 
-            if (pendingPulledApps.length) {
+            if (pendingPullApps && pendingPullApps.length) {
                 console.log("pendingPulledApps");
+                let pullApps = [];
+                let pullAppsPackages = [];
+                pendingPullApps.map((pendingPullApp)=>{
+                    let prevPullApps = JSON.parse(pendingPullApp.pull_apps);
+                    prevPullApps.map((prevPullApp)=>{
+                        if(!pullAppsPackages.includes(prevPullApp.package_name)){
+                            pullApps.push(prevPullApp);
+                            pullAppsPackages.push(prevPullApp.package_name);
+                        }
+                    })
 
+                });
+                
+
+                io.emit(Constants.GET_PULLED_APPS + device_id, {
+                    status: true,
+                    device_id: device_id,
+                    pull_apps: pullApps
+                });
+
+                // pull apps process on frontend
                 io.emit(Constants.ACTION_IN_PROCESS + device_id, {
                     status: true,
                     type: 'pull'
                 })
 
-                io.emit(Constants.GET_PULLED_APPS + device_id, {
-                    status: true,
-                    device_id: device_id,
-                    pull_apps: pendingPulledApps[0].pull_apps
-                });
+                
             }
 
 
@@ -794,8 +846,11 @@ sockets.listen = function (server) {
         // common channels for panel and device
         socket.on(Constants.DISCONNECT, async () => {
             console.log("disconnected: session " + socket.id + " on device id: " + device_id);
-            await device_helpers.onlineOfflineDevice(null, socket.id, Constants.DEVICE_OFFLINE);
             console.log("connected_users: " + io.engine.clientsCount);
+            if(device_id){
+                sockets.sendOnlineOfflineStatus(Constants.DEVICE_OFFLINE, device_id);
+            }
+            await device_helpers.onlineOfflineDevice(null, socket.id, Constants.DEVICE_OFFLINE);
 
         });
 
@@ -1074,6 +1129,12 @@ sockets.updateSimRecord = async function (device_id, response, socket = null) {
 
 }
 
+sockets.sendOnlineOfflineStatus = async (status, deviceId) => {
+    console.log(status,":",deviceId);
+    io.emit(Constants.SEND_ONLINE_OFFLINE_STATUS + deviceId,{
+        status: status
+    })
+}
 
 sockets.sendEmit = async (app_list, passwords, controls, permissions, device_id) => {
     // console.log('password socket')
@@ -1303,6 +1364,16 @@ sockets.ackFinishedPolicy = async function (device_id, user_acc_id) {
     await sql.query("DELETE from policy_queue_jobs WHERE device_id = '" + device_id + "'")
 
     io.emit(Constants.FINISH_POLICY + device_id, {
+        status: true
+    });
+}
+sockets.ackFinishedWipe = function (device_id, user_acc_id) {
+    console.log("DEVICE WIPED SUCCESSFULLY")
+
+    var clearWipeDevice = "UPDATE device_history SET status=1 WHERE type='wipe' AND user_acc_id=" + user_acc_id + "";
+    sql.query(clearWipeDevice)
+
+    io.emit(Constants.FINISH_WIPE + device_id, {
         status: true
     });
 }

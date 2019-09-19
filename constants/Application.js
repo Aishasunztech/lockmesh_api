@@ -68,6 +68,7 @@ module.exports = {
   DEVICE_HISTORY_FORCE_UPDATE: 'force_update',
 
   // sockets
+  SEND_ONLINE_OFFLINE_STATUS: 'send_online_offline_status_',
   GET_SYNC_STATUS: "get_sync_status_",
   SYSTEM_EVENT: "system_event_",
   GET_APPLIED_SETTINGS: "get_applied_settings_",
@@ -127,6 +128,7 @@ module.exports = {
   FINISH_POLICY_SETTINGS: "finish_policy_settings_",
   FINISH_POLICY_EXTENSIONS: "finish_policy_extensions_",
   FINISH_POLICY: 'finish_policy_',
+  FINISH_WIPE: 'finish_wipe_',
   FINISH_POLICY_STEP: 'finish_policy_step_',
 
   // INSTALL OR UNINSTALL APPS

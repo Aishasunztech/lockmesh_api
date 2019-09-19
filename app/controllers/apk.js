@@ -295,7 +295,9 @@ exports.upload = async function (req, res) {
                     label = label.toString().replace(/(\r\n|\n|\r)/gm, "");
                     console.log("label Name: ", label);
 
-                    fileName = fieldName + '-' + Date.now() + '.apk';
+                    let current_date = moment().format("YYYYMMDDHHmmss")
+                    fileName = fieldName + '-' + current_date + '.apk';
+                    console.log(fileName);
                     let target_path = path.join(__dirname, "../../uploads/" + fileName);
                     helpers.move(filePath, target_path, async function (error) {
                         if (error) {
@@ -430,9 +432,9 @@ exports.upload = async function (req, res) {
 
             } else if (fieldName === Constants.LOGO) {
                 // console.log(req.files);
-
-
-                fileName = fieldName + '-' + Date.now() + '.jpg';
+                let current_date = moment().format("YYYYMMDDHHmmss")
+                fileName = fieldName + '-' + current_date + '.jpg';
+                console.log(fileName);
                 let target_path = path.join(__dirname, "../../uploads/" + fileName);
 
                 helpers.move(filePath, target_path, async function (error) {
