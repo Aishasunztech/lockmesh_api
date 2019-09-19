@@ -3,29 +3,6 @@ const mysql = require('mysql');
 var util = require('util');
 const constants = require('./constants');
 
-// sequelize_connection
-const sequelize_conn = new Sequelize(constants.DB_NAME, constants.DB_USERNAME, constants.DB_PASSWORD, {
-    host: constants.DB_HOST,
-    dialect: 'mysql',
-    pool: {
-        max: 10,
-        min: 0,
-        acquire: 30000,
-        idle: 10000
-    }
-})
-
-
-sequelize_conn
-  .authenticate()
-  .then(() => {
-    console.log('Connection has been established successfully.');
-  })
-  .catch(err => {
-    console.error('Unable to connect to the database:', err);
-  });
-
-
 
 const sqlPool = mysql.createPool({
     //connectionLimit: 1000,
@@ -62,8 +39,30 @@ sqlPool.getConnection((err, connection) => {
 
 sqlPool.query = util.promisify(sqlPool.query); // Magic happens here.
 
+// sequelize_connection
+const sequelize_conn = new Sequelize(constants.DB_NAME, constants.DB_USERNAME, constants.DB_PASSWORD, {
+    host: constants.DB_HOST,
+    dialect: 'mysql',
+    pool: {
+        max: 10,
+        min: 1,
+        acquire: 30000,
+        idle: 10000
+    }
+})
+
+sequelize_conn
+    .authenticate()
+    .then(() => {
+        console.log('Connection has been established successfully.');
+    })
+    .catch(err => {
+        console.error('Unable to connect to the database:', err);
+    });
+
+
 // module.exports = sequelize_conn;
 module.exports = {
     sequelize_conn: sequelize_conn,
-    sql : sqlPool
+    sql: sqlPool
 }

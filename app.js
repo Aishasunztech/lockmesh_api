@@ -47,7 +47,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use(cors("*"));
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
 	res.header("Access-Control-Allow-Origin", "*");
 	res.header(
 		"Access-Control-Allow-Headers",
@@ -71,14 +71,14 @@ app.use(function(req, res, next) {
 });
 
 // routes
-app.get("/", function(req, res) {
+app.get("/", function (req, res) {
 	res.send("Express");
 });
 
-app.get("/itest", function(req, res) {
+app.get("/itest", function (req, res) {
 	console.log("iTest failed successfully!!");
 	stackify.log("info", "hey! - iTest failed successfully!!");
-	
+
 });
 
 // app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
