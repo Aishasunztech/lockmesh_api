@@ -212,7 +212,7 @@ exports.newDevices = async function (req, res) {
                 // console.log('done of dealer', verify.user.id)
                 where_con = ` AND (usr_acc.dealer_id =${
                     verify.user.id
-                    } OR usr_acc.prnt_dlr_id = ${verify.user.id}) `;
+                    } ) `;
             } else {
                 where_con = ` AND usr_acc.dealer_id = ${verify.user.id} `;
             }
