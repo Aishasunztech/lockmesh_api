@@ -388,9 +388,10 @@ module.exports = {
 				if (pgp_email) {
 					device.pgp_email = pgp_email.pgp_email
 				}
-				let sim_id = sim_ids.find(sim_id => sim_id.user_acc_id === device.id);
-				if (sim_id) {
-					device.sim_id = sim_id.sim_id
+				let sim_idArray = sim_ids.filter(sim_id => sim_id.user_acc_id === device.id);
+				if (sim_idArray && sim_idArray.length) {
+					device.sim_id = sim_idArray[0].sim_id
+					device.sim_id2 = sim_idArray[1] ? sim_idArray[1].sim_id : "N/A"
 				}
 				let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === device.id);
 				if (chat_id) {
@@ -538,10 +539,9 @@ module.exports = {
 			} else {
 				results[0].pgp_email = "N/A"
 			}
-			if (sim_ids[0] && sim_ids[0].sim_id) {
-				results[0].sim_id = sim_ids[0].sim_id
-			} else {
-				results[0].sim_id = "N/A"
+			if (sim_ids && sim_ids.length) {
+				results[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
+				results[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
 			}
 			if (chat_ids[0] && chat_ids[0].chat_id) {
 				results[0].chat_id = chat_ids[0].chat_id
@@ -948,9 +948,10 @@ module.exports = {
 				if (pgp_email) {
 					results[i].pgp_email = pgp_email.pgp_email
 				}
-				let sim_id = sim_ids.find(sim_id => sim_id.user_acc_id === results[i].id);
-				if (sim_id) {
-					results[i].sim_id = sim_id.sim_id
+				let sim_idArray = sim_ids.filter(sim_id => sim_id.user_acc_id === results[i].id);
+				if (sim_idArray && sim_idArray.length) {
+					results[i].sim_id = sim_idArray[0].sim_id
+					results[i].sim_id2 = sim_idArray[1] ? sim_idArray[1].sim_id : "N/A"
 				}
 				let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === results[i].id);
 				if (chat_id) {

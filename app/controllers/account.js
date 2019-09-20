@@ -939,7 +939,7 @@ exports.savePackagePermissions = async function (req, res) {
                         // console.log("Verify user id", verify.user.user_type);
                         if (verify.user.user_type === ADMIN) {
                             if (permission !== undefined && permission !== null && permission !== '[]') {
-                                let dealerRoleId = await helpers.getuserTypeIdByName(DEALER);
+                                let dealerRoleId = await helpers.getUserTypeIDByName(DEALER);
                                 let dealerCount = await helpers.userDealerCount(dealerRoleId);
                                 console.log('amdin add all', permission.length, dealerCount)
                                 permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
@@ -1026,7 +1026,7 @@ exports.savePackagePermissions = async function (req, res) {
                         console.log("Verify user id", verify.user.user_type);
                         if (verify.user.user_type === ADMIN) {
                             if (permission !== undefined && permission !== null && permission !== '[]') {
-                                let dealerRoleId = await helpers.getuserTypeIdByName(DEALER);
+                                let dealerRoleId = await helpers.getUserTypeIDByName(DEALER);
                                 let dealerCount = await helpers.userDealerCount(dealerRoleId);
                                 permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
 

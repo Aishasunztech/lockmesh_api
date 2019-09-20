@@ -493,7 +493,7 @@ module.exports = {
     getPgpEmails: async (ids) => {
 
 
-        let query = "SELECT pgp_email ,user_acc_id from pgp_emails WHERE user_acc_id IN (" + ids + ")"
+        let query = "SELECT pgp_email ,user_acc_id from pgp_emails WHERE user_acc_id IN (" + ids + ") AND used = 1"
         let results = await sql.query(query);
         if (results.length) {
             return results
@@ -506,14 +506,11 @@ module.exports = {
      * String ids of usr_acc table
      */
     getSimids: async (ids) => {
-        let query = "SELECT sim_id,user_acc_id FROM sim_ids WHERE user_acc_id IN (" + ids + ")"
+        let query = "SELECT sim_id,user_acc_id FROM sim_ids WHERE user_acc_id IN (" + ids + ") AND used = 1"
         // console.log(query);
         let results = await sql.query(query);
         if (results.length) {
-            return [{
-                sim_id: results[0].sim_id,
-                sim_id2: results[1] ? results[1].sim_id : "N/A"
-            }]
+            return results
         } else {
             return []
         }
@@ -522,7 +519,7 @@ module.exports = {
      * String ids of usr_acc table
      */
     getChatids: async (ids) => {
-        let query = "SELECT chat_id,user_acc_id FROM chat_ids WHERE user_acc_id IN (" + ids + ")"
+        let query = "SELECT chat_id,user_acc_id FROM chat_ids WHERE user_acc_id IN (" + ids + ") AND used = 1"
         let results = await sql.query(query);
         if (results.length) {
             return results
