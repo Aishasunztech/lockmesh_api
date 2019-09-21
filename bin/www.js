@@ -9,7 +9,7 @@ const { sql } = require("../config/database");
 
 var port = normalizePort(process.env.PORT || "3000");
 app.set("port", port);
-
+var events = require('../crons/db_events');
 /**
  * Create HTTP server.
  */
@@ -27,11 +27,9 @@ server.on("error", onError);
 server.on("listening", onListening);
 
 require("../crons/index");
-require("../crons/db_events")
-	.deviceQueue()
+events.deviceQueue()
 	.then(() => console.log('Waiting for database events...'))
 	.catch(console.error);
-
 
 
 function normalizePort(val) {
