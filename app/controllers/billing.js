@@ -11,7 +11,7 @@ const DEALER = "dealer";
 const SDEALER = "sdealer";
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
 // let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
-let usr_acc_query_text =  constants.usr_acc_query_text;
+let usr_acc_query_text = constants.usr_acc_query_text;
 
 exports.acceptRequest = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
@@ -139,7 +139,8 @@ exports.savePrices = async function (req, res) {
                         for (var innerKey in innerObject) {
                             if (innerObject.hasOwnProperty(innerKey)) {
                                 let days = 0;
-                                // console.log(innerKey + " -> " + innerObject[innerKey]);
+                                let f_key = innerKey;
+                                console.log(innerKey + " -> " + innerObject[innerKey]);
                                 if (innerObject[innerKey]) {
 
                                     // console.log('is string', string)
@@ -166,7 +167,7 @@ exports.savePrices = async function (req, res) {
                                 }
                                 // console.log(days, 'days are')
                                 let unit_price = innerKey;
-                                let updateQuery = "UPDATE prices SET unit_price='" + innerObject[innerKey] + "', price_expiry='" + days + "', dealer_id='" + dealer_id + "' WHERE price_term='" + innerKey + "' AND price_for='" + key + "'";
+                                let updateQuery = "UPDATE prices SET unit_price='" + innerObject[f_key] + "', price_expiry='" + days + "' WHERE dealer_id='" + dealer_id + "' AND price_term='" + innerKey + "' AND price_for='" + key + "'";
                                 // console.log(updateQuery, 'query')
                                 sql.query(updateQuery, async function (err, result) {
                                     if (err) {
@@ -176,8 +177,8 @@ exports.savePrices = async function (req, res) {
                                     if (result) {
                                         // console.log('outerKey', outerKey)
                                         if (!result.affectedRows) {
-                                            let insertQuery = "INSERT INTO prices (price_for, unit_price, price_term, price_expiry, dealer_id) VALUES('" + outerKey + "', '" + innerObject[innerKey] + "', '" + unit_price + "', '" + days + "', '" + dealer_id + "')";
-                                            console.log('Billing query', insertQuery)
+                                            let insertQuery = "INSERT INTO prices (price_for, unit_price, price_term, price_expiry, dealer_id) VALUES('" + outerKey + "', '" + innerObject[f_key] + "', '" + unit_price + "', '" + days + "', '" + dealer_id + "')";
+                                            // console.log('Billing query', insertQuery)
                                             let rslt = await sql.query(insertQuery);
                                             if (rslt) {
                                                 if (rslt.affectedRows == 0) {
@@ -236,45 +237,57 @@ exports.savePackage = async function (req, res) {
             // let dealer_id = req.body.data.dealer_id;
             if (dealer_id) {
                 // console.log(dealer_id, 'whitelableid');
-                let days = 0;
-                if (data.pkgTerm) {
-                    stringarray = data.pkgTerm.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
-                    if (stringarray) {
-                        // console.log(stringarray,'is string lenth', stringarray.length)
-                        if (stringarray.length) {
-                            month = stringarray[0];
-                            // console.log('is month', month, stringarray[1])
-                            if (month && stringarray[1]) {
-                                // console.log('sring[1]', stringarray[1])
-                                if (stringarray[1] == 'month') {
-                                    days = parseInt(month) * 30
-                                } else if (string[1] == 'year') {
-                                    days = parseInt(month) * 365
-                                } else {
-                                    days = 30
+
+                let checkExistingQ = "SELECT pkg_name FROM packages WHERE pkg_name='" + data.pkgName + "'";
+                let checkExisting = await sql.query(checkExistingQ);
+                if (checkExisting && checkExisting.length) {
+                    res.send({
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[''], "Package Name Already Exist, Please change the Pakcage name"), // 'Invalid Dealer'
+                    })
+                    return
+                } else {
+                    let days = 0;
+                    if (data.pkgTerm) {
+                        stringarray = data.pkgTerm.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
+                        if (stringarray) {
+                            // console.log(stringarray,'is string lenth', stringarray.length)
+                            if (stringarray.length) {
+                                month = stringarray[0];
+                                // console.log('is month', month, stringarray[1])
+                                if (month && stringarray[1]) {
+                                    // console.log('sring[1]', stringarray[1])
+                                    if (stringarray[1] == 'month') {
+                                        days = parseInt(month) * 30
+                                    } else if (string[1] == 'year') {
+                                        days = parseInt(month) * 365
+                                    } else {
+                                        days = 30
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                let pkg_features = JSON.stringify(data.pkgFeatures)
-                let insertQuery = "INSERT INTO packages (dealer_id , dealer_type , pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features) VALUES('" + dealer_id + "' ,'" + verify.user.user_type + "' , '" + data.pkgName + "', '" + data.pkgTerm + "', '" + data.pkgPrice + "','" + days + "', '" + pkg_features + "')";
-                sql.query(insertQuery, async (err, rslt) => {
-                    if (err) {
-                        console.log(err)
-                    }
-
-                    if (rslt) {
-                        if (rslt.affectedRows) {
-                            insertedRecord = await sql.query("SELECT * FROM packages WHERE dealer_id='" + dealer_id + "' AND id='" + rslt.insertId + "'")
-                            res.send({
-                                status: true,
-                                msg: await helpers.convertToLang(req.translation[MsgConstants.PACKAGE_SAVED_SUCCESSFULLY], "Package Saved Successfully"), // 'Package Saved Successfully',
-                                data: insertedRecord
-                            })
+                    let pkg_features = JSON.stringify(data.pkgFeatures)
+                    let insertQuery = "INSERT INTO packages (dealer_id , dealer_type , pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features) VALUES('" + dealer_id + "' ,'" + verify.user.user_type + "' , '" + data.pkgName + "', '" + data.pkgTerm + "', '" + data.pkgPrice + "','" + days + "', '" + pkg_features + "')";
+                    sql.query(insertQuery, async (err, rslt) => {
+                        if (err) {
+                            console.log(err)
                         }
-                    }
-                })
+
+                        if (rslt) {
+                            if (rslt.affectedRows) {
+                                insertedRecord = await sql.query("SELECT * FROM packages WHERE dealer_id='" + dealer_id + "' AND id='" + rslt.insertId + "'")
+                                res.send({
+                                    status: true,
+                                    msg: await helpers.convertToLang(req.translation[MsgConstants.PACKAGE_SAVED_SUCCESSFULLY], "Package Saved Successfully"), // 'Package Saved Successfully',
+                                    data: insertedRecord
+                                })
+                            }
+                        }
+                    })
+                }
+
 
             } else {
                 res.send({
@@ -311,7 +324,7 @@ exports.getPrices = async function (req, res) {
                     console.log(err)
                 }
                 if (reslt) {
-                    console.log('result for get prices are is ', reslt);
+                    // console.log('result for get prices are is ', reslt);
 
                     if (reslt.length) {
                         for (let item of reslt) {
@@ -331,7 +344,7 @@ exports.getPrices = async function (req, res) {
                             pgp_email: pgp_email ? pgp_email : {},
                             vpn: vpn ? vpn : {}
                         }
-                        console.log(data, 'reslt data of prices')
+                        // console.log(data, 'reslt data of prices')
                         res.send({
                             status: true,
                             msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
@@ -401,10 +414,10 @@ exports.getPackages = async function (req, res) {
                 }
 
                 if (reslt) {
-                    console.log('result for get prices are is ', reslt);
+                    // console.log('result for get prices are is ', reslt);
 
                     if (reslt.length) {
-                        console.log(reslt, 'reslt data of prices')
+                        // console.log(reslt, 'reslt data of prices')
                         res.send({
                             status: true,
                             msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
