@@ -53,7 +53,7 @@ router.post("/two_factor_auth", dealerController.twoFactorAuth);
 /**
  * This function comment is parsed by doctrine
  * @route GET /users/get_allowed_components
- * @group ACL - test route
+ * @group ACL - Admin Control List Actions
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
  * @security JWT
@@ -63,7 +63,7 @@ router.get('/get_allowed_components', aclController.getAllowedComponents);
 /**
  * This function comment is parsed by doctrine
  * @route POST /users/check_component
- * @group ACL - test route
+ * @group ACL - Admin Control List Actions
  * @param {string} ComponentUri.formData.required - component url
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
@@ -73,7 +73,7 @@ router.post('/check_component', aclController.checkComponent);
 
 /**
  * @route GET /users/is_admin
- * @group ACL - test route
+ * @group ACL - Admin Control List Actions
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
  */
@@ -83,7 +83,7 @@ router.get("/is_admin", aclController.isAdmin);
 
 /**
  * @route GET /users/user_type
- * @group ACL - test route
+ * @group ACL - Admin Control List Actions
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
  */
@@ -95,7 +95,7 @@ router.get("/user_type", aclController.getUserType);
 
 /**
  * @route GET /users/devices
- * @group Device - All Operation about Devices
+ * @group Device - Operation about Devices
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
  * @security JWT
@@ -106,7 +106,7 @@ router.get("/devices", deviceController.devices);
 
 /**
  * @route PUT /users/new/device
- * @group Device - test route
+ * @group Device - Operation about Devices
  * @param {string} user_id.formData.required - user id
  * @param {string} device_id.formData.required - device id
  * @param {string} client_id.formData.required - client id
@@ -130,7 +130,7 @@ router.put("/new/device", deviceController.acceptDevice);
 
 /**
  * @route GET /users/new/devices
- * @group Device - test route
+ * @group Device - Operation about Devices
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
  * @security JWT
@@ -143,7 +143,7 @@ router.get("/new/devices", deviceController.newDevices);
 /***Add devices (not using) ***/
 /**
  * @route POST /users/create/device_profile
- * @group Device - test route
+ * @group Device - Operation about Devices
  * @param {string} client_id.formData.required - client id
  * @param {string} chat_id.formData - chat id
  * @param {string} model.formData - model
@@ -167,7 +167,7 @@ router.post("/create/device_profile", deviceController.createDeviceProfile);
 
 /**
  * @route POST /users/transfer/device_profile
- * @group Device - test route
+ * @group Device - Operation about Devices
  * @param {object} flagged_device.formData.required - flaged device
  * @param {object} reqDevice.formData.required - device on which flaged device will be transfered 
  * @returns {object} 200 - An array of user info
@@ -180,7 +180,7 @@ router.post("/transfer/device_profile", deviceController.transferDeviceProfile);
 
 /**
  * @route POST /users/transfer/user
- * @group Device - test route
+ * @group Device - Operation about Devices
  * @param {object} NewUser.formData.required - new user
  * @param {object} OldUser.formData.required - old user
  * @param {string} OldUsr_device_id.formData.required - old user device id
@@ -217,7 +217,7 @@ router.post("/flagDevice/:id", deviceController.flagDevice);
 /**
  * This function comment is parsed by doctrine
  * @route GET /users/connect/{device_id}
- * @group Device - test route
+ * @group Device - Operation about Devices
  * @param {string} device_id.path.required - agent email
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
@@ -257,7 +257,7 @@ router.get("/dealer/update_dealer_pins", dealerController.updateDealerPins);
 /**
  * This function comment is parsed by doctrine
  * @route POST /users/add/user
- * @group Dealer User - test route
+ * @group Dealer User - Dealer Users Operations
  * @param {string} name.formData.required - user name
  * @param {string} email.formData.required - user email
  * @returns {object} 200 - An array of user info
@@ -271,7 +271,7 @@ router.post("/add/user", userController.addUser);
 /**
  * This function comment is parsed by doctrine
  * @route POST /users/edit/user
- * @group Dealer User - test route
+ * @group Dealer User - Dealer Users Operations
  * @param {string} name.formData.required - user name
  * @param {string} email.formData.required - user email
  * @param {string} user_id.formData.required - user id
@@ -285,7 +285,7 @@ router.post('/edit/user', userController.editUser);
 /**
  * This function comment is parsed by doctrine
  * @route PUT /users/delete_user/{user_id}
- * @group Dealer User - test route
+ * @group Dealer User - Dealer Users Operations
  * @param {string} user_id.path.required - user id 
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
@@ -298,7 +298,7 @@ router.put("/delete_user/:user_id", userController.deleteUser);
 /**
  * This function comment is parsed by doctrine
  * @route PUT /users/undo_delete_user/{user_id}
- * @group Dealer User - test route
+ * @group Dealer User - Dealer Users Operations
  * @param {string} user_id.path.required - user id 
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
@@ -310,7 +310,7 @@ router.put('/undo_delete_user/:user_id', userController.undoDeleteUser);
 /**
  * This function comment is parsed by doctrine
  * @route PUT /users/updateProfile/{id}
- * @group Dealer User - test route
+ * @group Dealer User - Dealer Users Operations
  * @param {string} name.formData.required - dealer name
  * @param {string} dealerId.formData.required - dealer id
  * @returns {object} 200 - An array of user info
@@ -324,7 +324,7 @@ router.put('/updateProfile/:id', userController.updateProfile);
 /**
  * This function comment is parsed by doctrine
  * @route POST /users/resetpwd
- * @group Dealer User - test route
+ * @group Dealer User - Dealer Users Operations
  * @param {string} pageName.formData.required - page name 
  * @param {string} dealer_id.formData.required - dealer id
  * @param {string} dealer_email.formData.required - dealer email
@@ -343,7 +343,7 @@ router.post("/resetpwd", dealerController.resetPwd);
 /**
  * This function comment is parsed by doctrine
  * @route GET /users/dealers
- * @group Dealer - test route
+ * @group Dealer - Operations about Dealers
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
  * @security JWT
@@ -354,7 +354,7 @@ router.get("/dealers", dealerController.getAllDealers);
 /**
  * This function comment is parsed by doctrine
  * @route GET /users/dealers/{pageName}
- * @group Dealer - test route
+ * @group Dealer - Operations about Dealers
  * @param {string} pageName.path.required - page name
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
@@ -366,7 +366,7 @@ router.get("/dealers/:pageName", dealerController.getDealers);
 /**
  * This function comment is parsed by doctrine
  * @route POST /users/add/dealer
- * @group Dealer - test route
+ * @group Dealer - Operations about Dealers
  * @param {string} name.formData.required - dealer name
  * @param {string} email.formData.required - dealer email
  * @param {string} pageType.formData.required - page type 
@@ -380,7 +380,7 @@ router.post("/add/dealer", dealerController.addDealer);
 /**
  * This function comment is parsed by doctrine
  * @route PUT /users/edit/dealers
- * @group Dealer - test route
+ * @group Dealer - Operations about Dealers
  * @param {string} name.formData.required - dealer name 
  * @param {string} email.formData.required - dealer email 
  * @param {integer} dealer_id.formData.required - dealer id 
@@ -394,7 +394,7 @@ router.put("/edit/dealers", dealerController.editDealers);
 /**
  * This function comment is parsed by doctrine
  * @route POST /users/dealer/delete
- * @group Dealer - test route
+ * @group Dealer - Operations about Dealers
  * @param {string} dealer_id.formData.required - dealer id  
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
@@ -405,7 +405,7 @@ router.post("/dealer/delete/", dealerController.deleteDealer);
 /**
  * This function comment is parsed by doctrine
  * @route POST /users/dealer/undo
- * @group Dealer - test route
+ * @group Dealer - Operations about Dealers
  * @param {string} dealer_id.formData.required - dealer id  
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
@@ -417,7 +417,7 @@ router.post("/dealer/undo", dealerController.undoDealer);
 /**
  * This function comment is parsed by doctrine
  * @route POST /users/dealer/suspend
- * @group Dealer - test route
+ * @group Dealer - Operations about Dealers
  * @param {string} dealer_id.formData.required - dealer id   
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
@@ -429,7 +429,7 @@ router.post("/dealer/suspend", dealerController.suspendDealer);
 /**
  * This function comment is parsed by doctrine
  * @route POST /users/dealer/activate
- * @group Dealer - test route
+ * @group Dealer - Operations about Dealers
  * @param {string} dealer_id.formData.required - dealer id    
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
@@ -440,7 +440,7 @@ router.post("/dealer/activate", dealerController.activateDealer);
 /**
  * This function comment is parsed by doctrine
  * @route GET /users/dealer/gtdropdown/{dropdownType}
- * @group Dealer - test route
+ * @group Dealer - Operations about Dealers
  * @param {string} dropdownType.path.required - dropdown type
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
@@ -454,7 +454,7 @@ router.get(
 /**
  * This function comment is parsed by doctrine
  * @route POST /users/dealer/dropdown
- * @group Dealer - test route
+ * @group Dealer - Operations about Dealers
  * @param {string} pageName.formData.required - page name
  * @param {Array} selected_items.formData.required - Dropdown value
  * @returns {object} 200 - An array of user info
@@ -466,7 +466,7 @@ router.post("/dealer/dropdown", dealerController.dropDown);
 /**
  * This function comment is parsed by doctrine
  * @route GET /users/dealer/getPagination/{dropdownType}
- * @group Dealer - test route
+ * @group Dealer - Operations about Dealers
  * @param {string} dropdownType.path.required - page name
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
@@ -480,7 +480,7 @@ router.get(
 /**
  * This function comment is parsed by doctrine
  * @route POST /users/dealer/postPagination/{dropdownType}
- * @group Dealer - test route
+ * @group Dealer - Operations about Dealers
  * @param {string} pageName.formData.required - page name
  * @param {object} selectedValue.formData.required - pagination value
  * @returns {object} 200 - An array of user info
@@ -492,7 +492,7 @@ router.post("/dealer/postPagination", dealerController.postPagination);
 /**
  * This function comment is parsed by doctrine
  * @route GET /users/getinfo
- * @group Dealer - test route
+ * @group Dealer - Operations about Dealers
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
  * @security JWT
@@ -502,7 +502,7 @@ router.get("/getinfo", dealerController.getInfo);
 /**
  * This function comment is parsed by doctrine
  * @route GET /users/get_dealer_apps
- * @group Dealer - test route
+ * @group Dealer - Operations about Dealers
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
  * @security JWT
@@ -513,7 +513,7 @@ router.get('/get_dealer_apps', dealerController.getLoggedDealerApps);
 /**
  * This function comment is parsed by doctrine
  * @route GET /users/get_usr_acc_id/{device_id}
- * @group Dealer - test route
+ * @group Dealer - Operations about Dealers
  * @param {string} device_id.path.required - device id
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
@@ -544,7 +544,7 @@ router.get('/get_usr_acc_id/:device_id', async function (req, res) {
 // policy name should be unique
 /**
  * @route GET /users/get_policies
- * @group Policy - test route
+ * @group Policy - Operations on Policies
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
  * @security JWT
@@ -553,7 +553,7 @@ router.get('/get_policies', policyController.getPolicies);
 
 /**
  * @route POST /users/change_policy_status
- * @group Policy - test route
+ * @group Policy - Operations on Policies
  * @param {string} id.formData.required - policy id
  * @param {string} key.formData.required - key (status or delete_status)
  * @param {boolean} value.formData.required - value (treu or false)
@@ -565,7 +565,7 @@ router.post('/change_policy_status', policyController.changePolicyStatus);
 
 /**
  * @route PUT /users/save_policy_changes
- * @group Policy - test route
+ * @group Policy - Operations on Policies
  * @param {string} id.formData.required - policy id
  * @param {Array} push_apps.formData.required - Push apps
  * @param {Array} controls.formData.required - System Settings (controls)
@@ -581,7 +581,7 @@ router.post('/save_policy_changes', policyController.savePolicyChanges);
 
 /**
  * @route POST /users/check_policy_name
- * @group Policy - test route 
+ * @group Policy - Operations on Policies
  * @param {string} name.formData.required - Policy Name
  * @param {string} policy_id.formData.required - Policy id
  * @returns {object} 200 - An array of user info
@@ -592,7 +592,7 @@ router.post('/check_policy_name', policyController.checkPolicyName);
 
 /**
  * @route POST /users/save_policy
- * @group Policy - test route data
+ * @group Policy - Operations on Policies
  * @param {object} data.formData.required - Object of policy detaile
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
@@ -602,7 +602,7 @@ router.post('/save_policy', policyController.savePolicy);
 
 /**
  * @route POST /users/apply_policy/{device_id}
- * @group Policy - test route
+ * @group Policy - Operations on Policies
  * @param {string} device_id.path.required - Device id
  * @param {string} userAccId.formData.required - user account id
  * @param {string} policyId.formData.required - policy id
@@ -644,7 +644,7 @@ router.get("/get_usr_acc_id/:device_id", async function (req, res) {
 router.get("/get_app_permissions", appController.getAppPermissions);
 /**
  * @route GET /users/get_system_permissions
- * @group APK - All Operations on  apks
+ * @group APK - All Operations on apks
  * @returns {object} 200 - An array of system permissions
  * @returns {Error}  default - Unexpected error
  * @security JWT
@@ -657,7 +657,7 @@ router.get('/get_system_permissions', appController.getSystemPermissions)
 router.post("/save/profile", accountController.saveProfile);
 /**
  * @route GET /users/apply_settings/{device_id}
- * @group Device - All Operation about Devices
+ * @group Device - Operation about Devices
  * @param {string} device_id.path.required - Device id
  * @param {string} usr_acc_id.formData.required - User account id
  * @param {Object} device_setting.formData.required - Device Settings (lists of apps, controls, subExtensions and passwords)
@@ -668,7 +668,7 @@ router.post("/save/profile", accountController.saveProfile);
 router.post("/apply_settings/:device_id", deviceController.applySettings);
 /**
  * @route GET /users/apply_pushapps/{device_id}
- * @group Device - All Operation about Devices
+ * @group Device - Operation about Devices
  * @param {string} device_id.path.required - Device id
  * @param {string} usrAccId.formData.required - User account id
  * @param {Array} push_apps.formData.required - Array of push apps
@@ -679,7 +679,7 @@ router.post("/apply_settings/:device_id", deviceController.applySettings);
 router.post("/apply_pushapps/:device_id", deviceController.applyPushApps);
 /**
  * @route GET /users/apply_pullapps/{device_id}
- * @group Device - All Operation about Devices
+ * @group Device - Operation about Devices
  * @param {string} device_id.path.required - Device id
  * @param {string} usrAccId.formData.required - User account id
  * @param {Array} pull_apps.formData.required - Array of pull apps
@@ -827,7 +827,7 @@ router.post("/delete_CSV_ids/:fieldName", accountController.deleteCSV);
 
 /**
  * @route GET /users/apklist
- * @group APK - test route
+ * @group APK - All Operations on  apks
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
  * @security JWT
@@ -838,7 +838,7 @@ router.get('/apklist', apkController.apkList);
 /** Get Apk List Admin Panel **/
 /**
  * @route POST /users/upload
- * @group APK - test route
+ * @group APK - All Operations on  apks
  * @param {string} fieldName.query.required - field name
  * @param {file} apk.formData - screen
  * @returns {object} 200 - An array of user info
@@ -851,7 +851,7 @@ router.post('/upload', multipartMiddleware, apkController.upload);
 
 /**
  * @route POST /users/checkApkName
- * @group APK - test route
+ * @group APK - All Operations on  apks
  * @param {string} name.formData.required - apk name
  * @param {string} apk_id.formData.required - apk id
  * @returns {object} 200 - An array of user info
@@ -864,7 +864,7 @@ router.post("/checkApkName", apkController.checkApkName);
 
 /**
  * @route POST /users/addApk
- * @group APK - test route
+ * @group APK - All Operations on  apks
  * @param {string} logo.formData.required - logo name
  * @param {string} apk.formData.required - apk
  * @param {string} name.formData.required - name
@@ -877,7 +877,7 @@ router.post("/addApk", apkController.addApk);
  
 /**
  * @route POST /users/edit/apk
- * @group APK - test route
+ * @group APK - All Operations on  apks
  * @param {string} logo.formData.required - logo name
  * @param {string} apk.formData.required - apk
  * @param {string} name.formData.required - name
@@ -891,7 +891,7 @@ router.post("/edit/apk", apkController.editApk);
 
 /**
  * @route POST /users/apk/delete
- * @group APK - test route
+ * @group APK - All Operations on apks
  * @param {string} apk_id.formData.required - apk id
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
@@ -902,7 +902,7 @@ router.post("/apk/delete", apkController.deleteApk);
 
 /**
  * @route POST /users/toggle
- * @group APK - test route
+ * @group APK - All Operations on apks
  * @param {string} apk_id.formData.required - apk id
  * @param {string} status.formData.required - apk status
  * @returns {object} 200 - An array of user info
@@ -914,7 +914,7 @@ router.post("/toggle", apkController.toggle);
 
 /**
  * @route POST /users/save_apk_permissions
- * @group APK - test route
+ * @group APK - All Operations on apks
  * @param {string} action.formData.required - action ('save')
  * @param {string} apkId.formData.required - apk id
  * @param {Array} dealers.formData.required - dealers list 
@@ -947,7 +947,7 @@ router.post("/purchase_credits", accountController.purchaseCredits);
 router.post("/purchase_credits_CC", accountController.purchaseCredits_CC);
 /**
  * @route POST /users/save_policy_permissions
- * @group APK - test route
+ * @group APK - All Operations on apks
  * @param {string} action.formData.required - action ('save')
  * @param {string} policyId.formData.required - policy id
  * @param {Array} dealers.formData.required - dealers list 
