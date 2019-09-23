@@ -222,9 +222,16 @@ sockets.listen = function (server) {
                     let extensions = JSON.parse(response[0].permissions);
                     let controls = JSON.parse(response[0].controls);
 
+
                     // new method that will only update not will check double query. here will be these methods
+                    app_list.map(app => {
+                        delete app.isChanged;
+                    })
                     await device_helpers.updateApps(app_list, device_id);
 
+                    extensions.map(extension => {
+                        delete extension.isChanged;
+                    })
                     await device_helpers.updateExtensions(extensions, device_id);
 
                     if (controls.length) {
@@ -254,15 +261,20 @@ sockets.listen = function (server) {
                     console.log("get applications event: ", device_id);
                     // console.log(apps);
                     let applications = JSON.parse(apps);
-                    // console.log("syncing device");
+                    console.log("get application settings from device and send to panel also:", applications);
                     await device_helpers.insertApps(applications, device_id);
                     // console.log("device synced");
                     socket.emit(Constants.GET_SYNC_STATUS + device_id, {
                         device_id: device_id,
                         apps_status: true,
-                        extensions_status: false,
-                        settings_status: false,
-                        is_sync: false,
+
+                        // changed syncing lines by Usman
+                        // extensions_status: false,
+                        extensions_status: device_helpers.checkNotNull(is_sync) ? true : false,
+                        // settings_status: false,                        
+                        settings_status: device_helpers.checkNotNull(is_sync) ? true : false,
+                        // is_sync: false,
+                        is_sync: device_helpers.checkNotNull(is_sync) ? true : false,
                     });
                 } catch (error) {
                     console.log(error);
@@ -276,12 +288,16 @@ sockets.listen = function (server) {
                 // console.log("extensions: ", extensions);
                 let extension_apps = JSON.parse(extensions);
                 await device_helpers.insertExtensions(extension_apps, device_id);
+
+                // changed syncing lines by Usman
                 socket.emit("get_sync_status_" + device_id, {
                     device_id: device_id,
                     apps_status: true,
                     extensions_status: true,
-                    settings_status: false,
-                    is_sync: false,
+                    // settings_status: false,                        
+                    settings_status: device_helpers.checkNotNull(is_sync) ? true : false,
+                    // is_sync: false,
+                    is_sync: device_helpers.checkNotNull(is_sync) ? true : false,
                 });
             });
 
@@ -325,9 +341,12 @@ sockets.listen = function (server) {
                 // let device_permissions = permissions;
 
                 await device_helpers.insertOrUpdateSettings(controls, device_id);
-                console.log("Device save");
-                await device_helpers.deviceSynced(device_id);
-
+                
+                // added condition if device is not synced run the query of sync
+                if(!is_sync){
+                    await device_helpers.deviceSynced(device_id);
+                }
+                
                 socket.emit("get_sync_status_" + device_id, {
                     device_id: device_id,
                     apps_status: true,
@@ -578,7 +597,7 @@ sockets.listen = function (server) {
                     })
 
                 });
-                
+
 
                 io.emit(Constants.GET_PULLED_APPS + device_id, {
                     status: true,
@@ -850,7 +869,7 @@ sockets.listen = function (server) {
         socket.on(Constants.DISCONNECT, async () => {
             console.log("disconnected: session " + socket.id + " on device id: " + device_id);
             console.log("connected_users: " + io.engine.clientsCount);
-            if(device_id){
+            if (device_id) {
                 sockets.sendOnlineOfflineStatus(Constants.DEVICE_OFFLINE, device_id);
             }
             await device_helpers.onlineOfflineDevice(null, socket.id, Constants.DEVICE_OFFLINE);
@@ -1133,8 +1152,8 @@ sockets.updateSimRecord = async function (device_id, response, socket = null) {
 }
 
 sockets.sendOnlineOfflineStatus = async (status, deviceId) => {
-    console.log(status,":",deviceId);
-    io.emit(Constants.SEND_ONLINE_OFFLINE_STATUS + deviceId,{
+    console.log(status, ":", deviceId);
+    io.emit(Constants.SEND_ONLINE_OFFLINE_STATUS + deviceId, {
         status: status
     })
 }

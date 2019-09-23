@@ -3424,13 +3424,18 @@ exports.resyncDevice = async function (req, res) {
     if (verify) {
         let deviceId = req.body.device_id;
         if (!empty(deviceId)) {
-            let query = `SELECT * FROM devices WHERE device_id = '${deviceId}' LIMIT 1`;
 
-            sql.query(query, async function (error, device) {
+            let getDeviceQ = `SELECT * FROM devices WHERE device_id = '${deviceId}' LIMIT 1`;
+
+            sql.query(getDeviceQ, async function (error, device) {
                 if (error) console.log(error);
                 if (device.length) {
                     if (device[0].online === constants.DEVICE_ONLINE) {
                         sockets.syncDevice(deviceId);
+                        let updateSyncStatusQ = `UPDATE devices SET is_sync=0 WHERE device_id = '${deviceId}' `;
+                        await sql.query(updateSyncStatusQ);
+
+                        
                     } else {
                     }
                     res.send({
