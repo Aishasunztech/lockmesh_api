@@ -3432,8 +3432,10 @@ exports.resyncDevice = async function (req, res) {
                 if (device.length) {
                     if (device[0].online === constants.DEVICE_ONLINE) {
                         sockets.syncDevice(deviceId);
-                        let updateSyncStatusQ = `UPDATE devices SET is_sync=0 WHERE device_id = '${deviceId}' `;
-                        await sql.query(updateSyncStatusQ);
+                        
+                        // sync device on real time
+                        // let updateSyncStatusQ = `UPDATE devices SET is_sync=0 WHERE device_id = '${deviceId}' `;
+                        // await sql.query(updateSyncStatusQ);
 
                         
                     } else {

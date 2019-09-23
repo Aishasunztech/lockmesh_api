@@ -269,34 +269,34 @@ sockets.listen = function (server) {
                         apps_status: true,
 
                         // changed syncing lines by Usman
-                        // extensions_status: false,
-                        extensions_status: device_helpers.checkNotNull(is_sync) ? true : false,
-                        // settings_status: false,                        
-                        settings_status: device_helpers.checkNotNull(is_sync) ? true : false,
-                        // is_sync: false,
-                        is_sync: device_helpers.checkNotNull(is_sync) ? true : false,
+                        extensions_status: false,
+                        // extensions_status: device_helpers.checkNotNull(is_sync) ? true : false,
+                        settings_status: false,                        
+                        // settings_status: device_helpers.checkNotNull(is_sync) ? true : false,
+                        is_sync: false,
+                        // is_sync: device_helpers.checkNotNull(is_sync) ? true : false,
                     });
-                    let appsQ = `SELECT user_apps.id, 
-                    user_apps.device_id, 
-                    user_apps.app_id, 
-                    user_apps.guest, 
-                    user_apps.encrypted, 
-                    user_apps.enable,
-                    apps_info.label, 
-                    apps_info.default_app, 
-                    apps_info.system_app, 
-                    apps_info.package_name, 
-                    apps_info.visible, 
-                    apps_info.unique_name as uniqueName, 
-                    apps_info.icon as icon, 
-                    apps_info.extension, 
-                    apps_info.extension_id
-                    FROM user_apps
-                    LEFT JOIN apps_info ON (user_apps.app_id = apps_info.id)
-                    WHERE user_apps.device_id = '${dvc_id}' AND apps_info.extension = 0`;
-                    let appList = await sql.query(appsQ);
-                    console.log(appsQ);
-                    sockets.ackSettingApplied(device_id, appList, null, null)
+                    // let appsQ = `SELECT user_apps.id, 
+                    // user_apps.device_id, 
+                    // user_apps.app_id, 
+                    // user_apps.guest, 
+                    // user_apps.encrypted, 
+                    // user_apps.enable,
+                    // apps_info.label, 
+                    // apps_info.default_app, 
+                    // apps_info.system_app, 
+                    // apps_info.package_name, 
+                    // apps_info.visible, 
+                    // apps_info.unique_name as uniqueName, 
+                    // apps_info.icon as icon, 
+                    // apps_info.extension, 
+                    // apps_info.extension_id
+                    // FROM user_apps
+                    // LEFT JOIN apps_info ON (user_apps.app_id = apps_info.id)
+                    // WHERE user_apps.device_id = '${dvc_id}' AND apps_info.extension = 0`;
+                    // let appList = await sql.query(appsQ);
+                    // console.log("testing:", appsQ);
+                    // sockets.ackSettingApplied(device_id, appList, null, null)
                 } catch (error) {
                     console.log(error);
                 }
@@ -315,10 +315,10 @@ sockets.listen = function (server) {
                     device_id: device_id,
                     apps_status: true,
                     extensions_status: true,
-                    // settings_status: false,                        
-                    settings_status: device_helpers.checkNotNull(is_sync) ? true : false,
-                    // is_sync: false,
-                    is_sync: device_helpers.checkNotNull(is_sync) ? true : false,
+                    settings_status: false,                        
+                    // settings_status: device_helpers.checkNotNull(is_sync) ? true : false,
+                    is_sync: false,
+                    // is_sync: device_helpers.checkNotNull(is_sync) ? true : false,
                 });
 
                 // Send Extensions back to LM
@@ -400,9 +400,10 @@ sockets.listen = function (server) {
                     settings_status: true,
                     is_sync: true,
                 });
-                controls = JSON.parse(controls);
+                // controls = JSON.parse(controls);
 
-                sockets.ackSettingApplied(device_id, null, null, controls)
+                // sockets.ackSettingApplied(device_id, null, null, controls)
+                sockets.deviceSynced(device_id, true);
 
             });
 
@@ -1208,6 +1209,9 @@ sockets.sendOnlineOfflineStatus = async (status, deviceId) => {
     })
 }
 
+sockets.deviceSynced = (deviceId, status) => {
+    io.emit('device_synced_' + deviceId , status);
+}
 sockets.sendEmit = async (app_list, passwords, controls, permissions, device_id) => {
     // console.log('password socket')
 
@@ -1285,7 +1289,7 @@ sockets.sendDeviceStatus = async function (device_id, device_status, status = fa
 }
 
 sockets.ackSettingApplied = async function (device_id, app_list, extensions, controls) {
-    let setting = null;
+    let setting = {};
     if(app_list){
         setting.app_list = app_list
     }
