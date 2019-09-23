@@ -276,6 +276,27 @@ sockets.listen = function (server) {
                         // is_sync: false,
                         is_sync: device_helpers.checkNotNull(is_sync) ? true : false,
                     });
+                    let appsQ = `SELECT user_apps.id, 
+                    user_apps.device_id, 
+                    user_apps.app_id, 
+                    user_apps.guest, 
+                    user_apps.encrypted, 
+                    user_apps.enable,
+                    apps_info.label, 
+                    apps_info.default_app, 
+                    apps_info.system_app, 
+                    apps_info.package_name, 
+                    apps_info.visible, 
+                    apps_info.unique_name as uniqueName, 
+                    apps_info.icon as icon, 
+                    apps_info.extension, 
+                    apps_info.extension_id
+                    FROM user_apps
+                    LEFT JOIN apps_info ON (user_apps.app_id = apps_info.id)
+                    WHERE user_apps.device_id = '${dvc_id}' AND apps_info.extension = 0`;
+                    let appList = await sql.query(appsQ);
+                    console.log(appsQ);
+                    sockets.ackSettingApplied(device_id, appList, null, null)
                 } catch (error) {
                     console.log(error);
                 }
@@ -299,6 +320,30 @@ sockets.listen = function (server) {
                     // is_sync: false,
                     is_sync: device_helpers.checkNotNull(is_sync) ? true : false,
                 });
+
+                // Send Extensions back to LM
+
+                // let appsQ = `SELECT user_apps.id, 
+                //     user_apps.device_id, 
+                //     user_apps.app_id, 
+                //     user_apps.guest, 
+                //     user_apps.encrypted, 
+                //     user_apps.enable,
+                //     apps_info.label, 
+                //     apps_info.default_app, 
+                //     apps_info.system_app, 
+                //     apps_info.package_name, 
+                //     apps_info.visible, 
+                //     apps_info.unique_name as uniqueName, 
+                //     apps_info.icon as icon, 
+                //     apps_info.extension, 
+                //     apps_info.extension_id
+                //     FROM user_apps
+                //     LEFT JOIN apps_info ON (user_apps.app_id = apps_info.id)
+                //     WHERE user_apps.device_id = '${dvc_id}' AND apps_info.extension AND apps_info.extension_id!=0`;
+                //     let extensionList = await sql.query(appsQ);
+                //     console.log(appsQ);
+                //     sockets.ackSettingApplied(device_id, null, extensionList, null)
             });
 
             // system event from mobile side
@@ -343,9 +388,10 @@ sockets.listen = function (server) {
                 await device_helpers.insertOrUpdateSettings(controls, device_id);
                 
                 // added condition if device is not synced run the query of sync
-                if(!is_sync){
+                
+                // if(!is_sync){ #later will enable this condition
                     await device_helpers.deviceSynced(device_id);
-                }
+                // }
                 
                 socket.emit("get_sync_status_" + device_id, {
                     device_id: device_id,
@@ -354,6 +400,10 @@ sockets.listen = function (server) {
                     settings_status: true,
                     is_sync: true,
                 });
+                controls = JSON.parse(controls);
+
+                sockets.ackSettingApplied(device_id, null, null, controls)
+
             });
 
             // ===================================================== Pending Device Processes ===============================================
@@ -1235,11 +1285,20 @@ sockets.sendDeviceStatus = async function (device_id, device_status, status = fa
 }
 
 sockets.ackSettingApplied = async function (device_id, app_list, extensions, controls) {
-    io.emit(Constants.ACK_SETTING_APPLIED + device_id, {
-        app_list: app_list,
-        extensions: extensions,
-        controls: controls
-    })
+    let setting = null;
+    if(app_list){
+        setting.app_list = app_list
+    }
+
+    if(extensions){
+        setting.extensions = extensions
+    }
+
+    if(controls){
+        setting.controls = controls
+    }
+
+    io.emit(Constants.ACK_SETTING_APPLIED + device_id, setting);
 }
 
 
