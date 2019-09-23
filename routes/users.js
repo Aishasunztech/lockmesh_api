@@ -751,7 +751,7 @@ router.post("/checkApkName", apkController.checkApkName);
  */
 // add apk. endpoints name should be changed
 router.post("/addApk", apkController.addApk);
- 
+
 /**
  * @route POST /users/edit/apk
  * @group APK - test route
@@ -1060,7 +1060,7 @@ router.get('/get-parent-product-prices', billingController.getProductPrices);
 
 router.patch('/check-package-name', billingController.checkPackageName);
 
-router.post("/update_credit", billingController.updateCredit);
+router.post("/credit-request-ack", accountController.ackCreditRequest);
 
 router.get("/newRequests", billingController.newRequests);
 

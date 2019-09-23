@@ -317,14 +317,51 @@ exports.acceptDevice = async function (req, res) {
                     let dealer_credits = (result.length) ? result[0].credits : 0
                     let admin_credits = 0
                     if (dealer_credits > total_price || term === '0') {
-                        if (loggedDealerType === constants.DEALER) {
+                        if (term !== '0') {
                             dealer_credits = dealer_credits - total_price
-                        } else if (loggedDealerType === constants.SDEALER) {
+                            let packagesIds = []
+                            let productIds = []
+                            packages.map((item) => {
+                                packagesIds.push(item.id)
+                            })
+                            products.map((item) => {
+                                productIds.push(item.id)
+                            })
 
+                            if (loggedDealerType === constants.DEALER) {
+                                console.log("PACKAGES AND PRICES", packages, products);
+                                let packagesData = []
+                                let pricesData = []
+                                let adminProfit = 0
+                                if (packagesIds.length) {
+
+                                    packagesData = await sql.query("SELECT * from packages where id IN (" + packagesIds.join(",") + ")")
+                                }
+                                if (productIds.length) {
+                                    pricesData = await sql.query("SELECT * from prices where id IN (" + productIds.join(",") + ")")
+                                }
+                                if (packagesData.length) {
+                                    // console.log(packagesData);
+                                    packagesData.map(async (item) => {
+                                        if (item.dealer_type === 'super_admin') {
+                                            packages.map((pkg) => {
+                                                if (pkg.id === item.id) {
+                                                    adminProfit += pkg.pkg_price - item.pkg_price
+                                                }
+                                            })
+                                        } else if (item.dealer_type === 'admin') {
+
+                                        }
+                                    })
+                                    console.log(adminProfit);
+                                }
+                                if (pricesData.length) {
+
+                                }
+                            } else if (loggedDealerType === constants.SDEALER) {
+                            }
                         }
-
-                        // console.log(dealer_credits, total_price);
-
+                        return
                         if (!empty(usr_device_id)) {
 
                             if (packages.length || products.length) {

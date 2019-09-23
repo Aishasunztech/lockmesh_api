@@ -243,7 +243,6 @@ exports.upload = async function (req, res) {
 
         let fieldName = req.query.fieldName;
         let screen = req.query.screen;
-        console.log('screen is the', screen)
         if (fieldName) {
             let fileName = "";
             let mimeType = "";

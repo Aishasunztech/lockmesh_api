@@ -910,6 +910,7 @@ exports.getProductPrices = async function (req, res) {
                             data: []
                         })
                         return
+
                     }
 
                     if (reslt.length) {
@@ -1003,74 +1004,7 @@ exports.checkPackageName = async function (req, res) {
 
 }
 
-exports.updateCredit = async function (req, res) {
-    var verify = req.decoded; // await verifyToken(req, res);
 
-    if (verify) {
-        try {
-            let credits = req.body.data.credits
-            let dealer_id = req.body.data.dealer_id
-            console.log(credits);
-            if (dealer_id !== '' && dealer_id !== undefined && dealer_id !== null) {
-                sql.query("SELECt * from dealer_credits where dealer_id = " + dealer_id, async function (err, result) {
-                    if (err) {
-                        console.log(err)
-                    }
-
-                    if (result.length) {
-                        let newCredit = credits + result[0].credits
-                        sql.query("update dealer_credits set credits = " + newCredit + " where dealer_id = " + dealer_id, async function (err, reslt) {
-                            if (err) {
-                                console.log(err)
-                            }
-
-                            if (reslt && reslt.affectedRows > 0) {
-                                res.send({
-                                    status: true,
-                                    msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_ADDED_SUCCESSFULLY], "Credits added successfully"), // "Credits added successfully."
-                                })
-                                return
-                            }
-                            else {
-                                res.send({
-                                    status: false,
-                                    msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_NOT_UPDATED], "Credits not updated please try again"), // "Credits not updated please try again."
-                                })
-                                returns
-
-                            }
-                        })
-                    }
-                    else {
-                        let query = `INSERT into dealer_credits (dealer_id,credits) VALUES (${dealer_id}, ${credits})`;
-                        sql.query(query, async function (err, reslt) {
-                            if (err) {
-                                console.log(err);
-                            }
-                            if (reslt && reslt.affectedRows > 0) {
-                                res.send({
-                                    status: true,
-                                    msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_ADDED_SUCCESSFULLY], "Credits added successfully"), // "Credits added successfully."
-                                })
-                                return
-                            }
-                            else {
-                                res.send({
-                                    status: false,
-                                    msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_NOT_UPDATED], "Credits not updated please try again"), // "Credits not updated please try again."
-                                })
-                                returns
-
-                            }
-                        })
-                    }
-                })
-            }
-        } catch (error) {
-            console.log(error)
-        }
-    }
-}
 
 exports.newRequests = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
