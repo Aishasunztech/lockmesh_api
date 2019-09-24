@@ -2931,12 +2931,11 @@ exports.connectDevice = async function (req, res) {
 
 
 exports.getAppsOfDevice = async function (req, res) {
-    var verify = req.decoded; // await verifyToken(req, res);
     try {
+        var verify = req.decoded; // await verifyToken(req, res);
         if (verify) {
             if (req.params.device_id) {
-                // var query = 'SELECT user_apps.*, apps_info.label, apps_info.unique_name as uniqueName, apps_info.icon as icon from user_apps LEFT JOIN apps_info on user_apps.app_id = apps_info.id LEFT JOIN devices on user_apps.device_id=devices.id where devices.device_id ="' + req.params.device_id + '"';
-                // console.log(query);
+
                 var getAppsQ =
                     `SELECT user_apps.id, user_apps.device_id, user_apps.app_id, user_apps.guest, user_apps.encrypted, user_apps.enable,
 				apps_info.label, apps_info.default_app, apps_info.system_app, apps_info.package_name, apps_info.visible, apps_info.unique_name as uniqueName, apps_info.icon as icon , apps_info.extension, apps_info.extension_id
@@ -2954,73 +2953,34 @@ exports.getAppsOfDevice = async function (req, res) {
                         });
                     }
 
-                    let settings = [];
-                    let Extension = [];
+                    let mainExtensions = [];
+
+                    let extensions = [];
                     let onlyApps = [];
 
-                    // Applications rendering
-                    for (let item of apps) {
+                    for (let app of apps) {
 
-                        if (item.extension === 1 && item.extension_id === 0) {
-                            Extension.push(item);
-                        }
-                        if (item.extension == 0 && item.visible == 1) {
-                            onlyApps.push(item);
-                        }
-                        if (item.visible == 0) {
-                            settings.push(item);
-                        }
-                    }
-
-
-                    // Extensions rendering
-                    let newExtlist = [];
-                    for (let ext of Extension) {
-                        let subExtension = [];
-
-                        for (let item of apps) {
-                            // console.log(ext.app_id, ' ', item.visible);
-                            if (ext.app_id === item.extension_id) {
-                                //  console.log(ext.uniqueName);
-                                subExtension.push({
-                                    uniqueName: ext.uniqueName,
-                                    uniqueExtension: item.uniqueName,
-                                    guest:
-                                        item.guest != undefined
-                                            ? item.guest
-                                            : 0,
-                                    label: item.label,
-                                    icon: item.icon,
-                                    system_app: item.system_app,
-                                    encrypted:
-                                        item.encrypted != undefined
-                                            ? item.encrypted
-                                            : 0,
-                                    id: item.id,
-                                    device_id: item.device_id,
-                                    app_id: item.app_id,
-                                    default_app: item.default_app
-                                });
+                        if (app.extension == 0 || (app.extension === 1 && app.extension_id == 0)) {
+                            onlyApps.push(app);
+                            if(app.extension === 1 && app.extension_id == 0){
+                                mainExtensions.push(app);
                             }
                         }
-
-                        // console.log('subextensiondsf ', subExtension)
-
-                        newExtlist.push({
-                            uniqueName: ext.uniqueName,
-                            guest: ext.guest != undefined ? ext.guest : 0,
-                            encrypted:
-                                ext.encrypted != undefined ? ext.encrypted : 0,
-                            enable: ext.enable != undefined ? ext.enable : 0,
-                            label: ext.label,
-                            subExtension: subExtension,
-                            visible: ext.visible,
-                            default_app: ext.default_app,
-                            extension: ext.extension
-                        });
                     }
 
-                    // console.log("apps length" + apps.length);
+                    for (let app of apps) {
+
+                        if (app.extension === 1 && app.extension_id !== 0) {
+                            let ext = mainExtensions.find(mainExtension => mainExtension.app_id === app.extension_id);
+                            if(ext){
+                                app.uniqueName= ext.uniqueName,
+                                app.uniqueExtension= app.uniqueName,
+                                
+                                extensions.push(app);
+                            }
+                        }
+                    }
+                    
                     var systemPermissionQ = `SELECT * from user_app_permissions WHERE device_id ='${req.params.device_id}' LIMIT 1`;
                     //
                     sql.query(systemPermissionQ, async (error, controls) => {
@@ -3028,29 +2988,18 @@ exports.getAppsOfDevice = async function (req, res) {
                             console.log("Error:", error);
 
                         }
-
+                        
+                        let cntrls = []
                         if (controls.length > 0) {
-                            // console.log("geting device app");
-                            let cntrls = JSON.parse(controls[0].permissions);
-                            //    consrols.push(settings);
-                            return res.send({
-                                status: true,
-                                app_list: onlyApps,
-                                controls: {
-                                    controls: cntrls,
-                                    settings: settings
-                                },
-                                extensions: newExtlist
-                            });
-                        } else {
-                            console.log(controls);
-                            return res.send({
-                                status: true,
-                                app_list: onlyApps,
-                                controls: {},
-                                extensions: newExtlist
-                            });
+                            cntrls = JSON.parse(controls[0].permissions);
                         }
+
+                        return res.send({
+                            status: true,
+                            app_list: onlyApps,
+                            controls: cntrls,
+                            extensions: extensions
+                        });
                     });
                     return;
                 });
@@ -3432,12 +3381,12 @@ exports.resyncDevice = async function (req, res) {
                 if (device.length) {
                     if (device[0].online === constants.DEVICE_ONLINE) {
                         sockets.syncDevice(deviceId);
-                        
+
                         // sync device on real time
                         // let updateSyncStatusQ = `UPDATE devices SET is_sync=0 WHERE device_id = '${deviceId}' `;
                         // await sql.query(updateSyncStatusQ);
 
-                        
+
                     } else {
                     }
                     res.send({
