@@ -19,7 +19,7 @@ var Policy = require('../app/models/Policy');
 // Helpers and Constants
 const helpers = require('../helper/general_helper');
 const MsgConstants = require('../constants/MsgConstants');
-
+const constants = require('../constants/Application');
 
 /**
  * This function comment is parsed by doctrine
@@ -172,6 +172,142 @@ router.get('/refactor_policy_apps', async function (req, res) {
 
     res.send('test');
 })
+
+router.get('/update_device_columns', async function (req, res) {
+    let data = {};
+
+    sql.query(`UPDATE dealer_dropdown_list SET selected_items='${JSON.stringify(constants.deviceColumns)}' 
+    WHERE type = "devices"`, async function (error, result) {
+
+        if (error) {
+            data = {
+                status: false,
+                msg: "Query error to update devices column dropdown"
+            }
+            res.send(data);
+            return;
+        }
+
+        if (result && result.affectedRows) {
+            data = {
+                status: true,
+                msg: "Devices Dropdown update successfully"
+            }
+            res.send(data);
+            return;
+        } else {
+            data = {
+                status: false,
+                msg: "No affected any record"
+            }
+            res.send(data);
+            return;
+        }
+    });
+
+});
+
+router.get('/update_dealer_columns', async function (req, res) {
+    let data = {};
+
+    sql.query(`UPDATE dealer_dropdown_list SET selected_items='${JSON.stringify(constants.dealerColumns)}' 
+    WHERE type = "dealer"`, async function (error, result) {
+
+        if (error) {
+            data = {
+                status: false,
+                msg: "Query error to update dealer column dropdown"
+            }
+            res.send(data);
+            return;
+        }
+
+        if (result && result.affectedRows) {
+            data = {
+                status: true,
+                msg: "Dealer Dropdown update successfully"
+            }
+            res.send(data);
+            return;
+        } else {
+            data = {
+                status: false,
+                msg: "No affected any record"
+            }
+            res.send(data);
+            return;
+        }
+    });
+
+});
+
+router.get('/update_sdealer_columns', async function (req, res) {
+    let data = {};
+
+    sql.query(`UPDATE dealer_dropdown_list SET selected_items='${JSON.stringify(constants.sdealerColumns)}' 
+    WHERE type = "sdealer"`, async function (error, result) {
+
+        if (error) {
+            data = {
+                status: false,
+                msg: "Query error to update sdealer column dropdown"
+            }
+            res.send(data);
+            return;
+        }
+
+        if (result && result.affectedRows) {
+            data = {
+                status: true,
+                msg: "S-Dealer Dropdown update successfully"
+            }
+            res.send(data);
+            return;
+        } else {
+            data = {
+                status: false,
+                msg: "No affected any record"
+            }
+            res.send(data);
+            return;
+        }
+    });
+
+});
+
+router.get('/update_apk_columns', async function (req, res) {
+    let data = {};
+
+    sql.query(`UPDATE dealer_dropdown_list SET selected_items='${JSON.stringify(constants.apkColumns)}' 
+    WHERE type = "apk"`, async function (error, result) {
+
+        if (error) {
+            data = {
+                status: false,
+                msg: "Query error to update apk column dropdown"
+            }
+            res.send(data);
+            return;
+        }
+
+        if (result && result.affectedRows) {
+            data = {
+                status: true,
+                msg: "apk dropdown update successfully"
+            }
+            res.send(data);
+            return;
+        } else {
+            data = {
+                status: false,
+                msg: "No affected any record"
+            }
+            res.send(data);
+            return;
+        }
+    });
+
+});
 
 router.get('/refactor_policy_sys_permissions', async function (req, res) {
 
