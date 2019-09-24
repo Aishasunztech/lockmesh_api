@@ -209,7 +209,9 @@ module.exports = {
     { "key": "apk", "value": "apk.id" },
     { "key": "apk_name", "value": "app.name.id" },
     { "key": "apk_logo", "value": "app.logo.id" },
-
+    { "key": "apk_size", "value": "SIZE" },
+    { "key": "label", "value": "LABEL" },
+    { "key": "package_name", "value": "PACKAGE NAME" },
     { "key": "version", "value": "VERSION" },
     { "key": "created_at", "value": "UPLOAD DATE" },
     { "key": "updated_at", "value": "EDIT DATE" },

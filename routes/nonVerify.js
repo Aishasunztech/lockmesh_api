@@ -266,6 +266,40 @@ router.get('/update_sdealer_columns', async function (req, res) {
 
 });
 
+router.get('/update_apk_columns', async function (req, res) {
+    let data = {};
+
+    sql.query(`UPDATE dealer_dropdown_list SET selected_items='${JSON.stringify(constants.apkColumns)}' 
+    WHERE type = "apk"`, async function (error, result) {
+
+        if (error) {
+            data = {
+                status: false,
+                msg: "Query error to update apk column dropdown"
+            }
+            res.send(data);
+            return;
+        }
+
+        if (result && result.affectedRows) {
+            data = {
+                status: true,
+                msg: "apk dropdown update successfully"
+            }
+            res.send(data);
+            return;
+        } else {
+            data = {
+                status: false,
+                msg: "No affected any record"
+            }
+            res.send(data);
+            return;
+        }
+    });
+
+});
+
 router.get('/refactor_policy_sys_permissions', async function (req, res) {
 
     let permissions = {
