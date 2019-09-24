@@ -150,13 +150,22 @@ router.get('/', async function (req, res, next) {
 
 router.get('/refactor_policy_apps', async function (req, res) {
     let policies = await sql.query('SELECT * FROM policy');
+    let policyAppsIds = await sql.query('SELECT * FROM policy_apps');
+    let apk_ids = [];
+    let policy_ids = [];
+    policyAppsIds.map((app) => {
+        apk_ids.push(app.apk_id)
+        policy_ids.push(app.policy_id)
+    })
     policies.forEach(async (policy) => {
         let pushApps = JSON.parse(policy.push_apps);
-        console.log("pushApps: ", pushApps)
         if (pushApps.length) {
             pushApps.forEach(async (app) => {
-                let insertRelQ = `INSERT IGNORE INTO policy_apps (policy_id, apk_id, guest, encrypted, enable) VALUES (${policy.id}, ${app.apk_id}, ${app.guest}, ${app.encrypted}, ${app.enable})`;
-                await sql.query(insertRelQ);
+                console.log(!policy_ids.includes(policy.id), !apk_ids.includes(app.apk_id));
+                if (!policy_ids.includes(policy.id) || !apk_ids.includes(app.apk_id)) {
+                    let insertRelQ = `INSERT INTO policy_apps (policy_id, apk_id, guest, encrypted, enable) VALUES (${policy.id}, ${app.apk_id}, ${app.guest}, ${app.encrypted}, ${app.enable})`;
+                    await sql.query(insertRelQ);
+                }
             })
         }
     });
@@ -214,7 +223,7 @@ router.get('/refactor_policy_sys_permissions', async function (req, res) {
                         });
                     }
                 }
-                
+
                 policyUpdateQ = `UPDATE policy SET controls='${JSON.stringify(data)}' WHERE id=${policy.id}`;
                 await sql.query(policyUpdateQ);
             }
@@ -229,7 +238,7 @@ router.get('/refactor_policy_sys_permissions', async function (req, res) {
         if (history.controls) {
 
             let sysPermissions = JSON.parse(history.controls);
-            
+
 
             if (sysPermissions instanceof Array) {
                 console.log('new history');
@@ -267,7 +276,7 @@ router.get('/refactor_policy_sys_permissions', async function (req, res) {
     // refactoring previous profiles
     let profiles = await sql.query('SELECt * FROM usr_acc_profile');
     profiles.forEach(async (profile) => {
-        if(profile.controls){
+        if (profile.controls) {
 
             let sysPermissions = JSON.parse(profile.controls);
 
@@ -305,11 +314,11 @@ router.get('/refactor_policy_sys_permissions', async function (req, res) {
 
     // refactoring user_app_permissions
     let user_app_permissions = await sql.query('SELECt * FROM user_app_permissions');
-    
+
     user_app_permissions.forEach(async (user_app_permission) => {
-        
-        if(user_app_permission.permissions && user_app_permission.permissions!=='null'){
-           
+
+        if (user_app_permission.permissions && user_app_permission.permissions !== 'null') {
+
             let sysPermissions = JSON.parse(user_app_permission.permissions);
 
             if (sysPermissions instanceof Array) {
