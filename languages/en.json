@@ -1,2110 +1,529 @@
-[
-    {
-        "key_id": "sidebar.main",
-        "key_value": "Main"
-    },
-    {
-        "key_id": "sidebar.devices",
-        "key_value": "Devices"
-    },
-    {
-        "key_id": "sidebar.users",
-        "key_value": "Users"
-    },
-    {
-        "key_id": "sidebar.dealers",
-        "key_value": "Dealers"
-    },
-    {
-        "key_id": "sidebar.policy",
-        "key_value": "Policy"
-    },
-    {
-        "key_id": "sidebar.sdealers",
-        "key_value": "S-Dealers"
-    },
-    {
-        "key_id": "sidebar.app",
-        "key_value": "App"
-    },
-    {
-        "key_id": "sidebar.account",
-        "key_value": "Account"
-    },
-    {
-        "key_id": "sidebar.settings",
-        "key_value": "Settings"
-    },
-    {
-        "key_id": "sidebar.logout",
-        "key_value": "Logout"
-    },
-    {
-        "key_id": "button.Modify",
-        "key_value": "Modify"
-    },
-    {
-        "key_id": "button.Delete",
-        "key_value": "Delete"
-    },
-    {
-        "key_id": "button.Activate",
-        "key_value": "Activate"
-    },
-    {
-        "key_id": "button.Connect",
-        "key_value": "Connect"
-    },
-    {
-        "key_id": "button.Yes",
-        "key_value": "Yes"
-    },
-    {
-        "key_id": "button.No",
-        "key_value": "No"
-    },
-    {
-        "key_id": "button.Ok",
-        "key_value": "OK"
-    },
-    {
-        "key_id": "button.Cancel",
-        "key_value": "Cancel"
-    },
-    {
-        "key_id": "button.Suspend",
-        "key_value": "Suspend"
-    },
-    {
-        "key_id": "button.Edit",
-        "key_value": "Edit"
-    },
-    {
-        "key_id": "button.passwordreset",
-        "key_value": "Password Reset"
-    },
-    {
-        "key_id": "button.submit",
-        "key_value": "Submit"
-    },
-    {
-        "key_id": "button.Flag",
-        "key_value": "Flag"
-    },
-    {
-        "key_id": "button.UNFLAG",
-        "key_value": "UNFLAG"
-    },
-    {
-        "key_id": "button.SetPassword",
-        "key_value": "Set Password"
-    },
-    {
-        "key_id": "button.Apply",
-        "key_value": "Apply"
-    },
-    {
-        "key_id": "button.Undo",
-        "key_value": "Undo"
-    },
-    {
-        "key_id": "button.Redo",
-        "key_value": "Redo"
-    },
-    {
-        "key_id": "button.Clear",
-        "key_value": "Clear"
-    },
-    {
-        "key_id": "button.Refresh",
-        "key_value": "Refresh"
-    },
-    {
-        "key_id": "button.Next",
-        "key_value": "Next"
-    },
-    {
-        "key_id": "button.previous",
-        "key_value": "Previous"
-    },
-    {
-        "key_id": "button.AddDealer",
-        "key_value": "Add Dealer"
-    },
-    {
-        "key_id": "button.AddS-dealer",
-        "key_value": "Add S-dealer"
-    },
-    {
-        "key_id": "button.UploadApk",
-        "key_value": "Upload Apk"
-    },
-    {
-        "key_id": "button.Save",
-        "key_value": "Save"
-    },
-    {
-        "key_id": "button.Update",
-        "key_value": "Update"
-    },
-    {
-        "key_id": "button.Open",
-        "key_value": "Open"
-    },
-    {
-        "key_id": "button.Sample",
-        "key_value": "Sample"
-    },
-    {
-        "key_id": "button.Import",
-        "key_value": "Import"
-    },
-    {
-        "key_id": "button.Export",
-        "key_value": "Export"
-    },
-    {
-        "key_id": "button.Release",
-        "key_value": "Release"
-    },
-    {
-        "key_id": "button.View",
-        "key_value": "View"
-    },
-    {
-        "key_id": "button.ChangePassword",
-        "key_value": "Change Password"
-    },
-    {
-        "key_id": "button.ChangeEmail",
-        "key_value": "Change Email"
-    },
-    {
-        "key_id": "button.AddPolicy",
-        "key_value": "Add Policy"
-    },
-    {
-        "key_id": "button.Add",
-        "key_value": "Add"
-    },
-    {
-        "key_id": "button.AddExceptSelected",
-        "key_value": "Add Except Selected"
-    },
-    {
-        "key_id": "button.AddAll",
-        "key_value": "Add All"
-    },
-    {
-        "key_id": "button.RemoveAll",
-        "key_value": "Remove All"
-    },
-    {
-        "key_id": "button.RemoveExcept",
-        "key_value": "Remove Except"
-    },
-    {
-        "key_id": "button.BackupNow",
-        "key_value": "Backup Now"
-    },
-    {
-        "key_id": "button.DeleteUser",
-        "key_value": "Delete User"
-    },
-    {
-        "key_id": "button.AddApps",
-        "key_value": "Add Apps"
-    },
-    {
-        "key_id": "button.Push",
-        "key_value": "Push"
-    },
-    {
-        "key_id": "button.LoadProfile",
-        "key_value": "Load Profile"
-    },
-    {
-        "key_id": "button.LoadPolicy",
-        "key_value": "Load Policy"
-    },
-    {
-        "key_id": "button.IMEI",
-        "key_value": "IMEI"
-    },
-    {
-        "key_id": "button.Pull",
-        "key_value": "Pull"
-    },
-    {
-        "key_id": "button.SaveProfile",
-        "key_value": "Save Profile"
-    },
-    {
-        "key_id": "button.Activity",
-        "key_value": "Activity"
-    },
-    {
-        "key_id": "button.SIM",
-        "key_value": "SIM"
-    },
-    {
-        "key_id": "button.Transfer",
-        "key_value": "Transfer"
-    },
-    {
-        "key_id": "button.WipeDevice",
-        "key_value": "Wipe Device"
-    },
-    {
-        "key_id": "button.Unlink",
-        "key_value": "Unlink"
-    },
-    {
-        "key_id": "appfilter.SelectAll",
-        "key_value": "SELECT ALL"
-    },
-    {
-        "key_id": "appfilter.ShowDevices",
-        "key_value": "Show Devices"
-    },
-    {
-        "key_id": "appfilter.SearchDevices",
-        "key_value": "Search Devices"
-    },
-    {
-        "key_id": "Dealer Top Bar",
-        "key_value": "----Dealer Top Bar----"
-    },
-    {
-        "key_id": "appfilter.ShowDealer",
-        "key_value": "Show Dealer"
-    },
-    {
-        "key_id": "appfilter.SearchDealer",
-        "key_value": "Search Dealer"
-    },
-    {
-        "key_id": "tab.All",
-        "key_value": "All"
-    },
-    {
-        "key_id": "tab.Active",
-        "key_value": "Active"
-    },
-    {
-        "key_id": "tab.Expired",
-        "key_value": "Expired"
-    },
-    {
-        "key_id": "tab.Trial",
-        "key_value": "Trial"
-    },
-    {
-        "key_id": "tab.Suspended",
-        "key_value": "Suspended"
-    },
-    {
-        "key_id": "tab.PreActivated",
-        "key_value": "Pre Activated"
-    },
-    {
-        "key_id": "tab.PendingActivation",
-        "key_value": "Pending Activation"
-    },
-    {
-        "key_id": "tab.Transfer",
-        "key_value": "Transferred"
-    },
-    {
-        "key_id": "tab.Unlinked",
-        "key_value": "Unlinked"
-    },
-    {
-        "key_id": "tab.Flagged",
-        "key_value": "Flagged"
-    },
-    {
-        "key_id": "tab.ComingSoon",
-        "key_value": "Coming Soon"
-    },
-    {
-        "key_id": "tab.Archived",
-        "key_value": "Archived"
-    },
-    {
-        "key_id": "tableHeadings.DEVICEID",
-        "key_value": "DEVICE ID"
-    },
-    {
-        "key_id": "tableHeadings.USERID",
-        "key_value": "USER ID"
-    },
-    {
-        "key_id": "tableHeadings.STATUS",
-        "key_value": "STATUS"
-    },
-    {
-        "key_id": "tableHeadings.MODE",
-        "key_value": "MODE"
-    },
-    {
-        "key_id": "tableHeadings.FLAGGED",
-        "key_value": "FLAGGED"
-    },
-    {
-        "key_id": "tableHeadings.DEVICENAME",
-        "key_value": "DEVICE NAME"
-    },
-    {
-        "key_id": "tableHeadings.ACCOUNTEMAIL",
-        "key_value": "ACCOUNT EMAIL"
-    },
-    {
-        "key_id": "tableHeadings.CLIENTID",
-        "key_value": "CLIENT ID"
-    },
-    {
-        "key_id": "tableHeadings.ACTIVATIONCODE",
-        "key_value": "ACTIVATION CODE"
-    },
-    {
-        "key_id": "tableHeadings.PGPEMAIL",
-        "key_value": "PGP EMAIL"
-    },
-    {
-        "key_id": "tableHeadings.SIMID",
-        "key_value": "SIM ID"
-    },
-    {
-        "key_id": "tableHeadings.CHATID",
-        "key_value": "CHAT ID"
-    },
-    {
-        "key_id": "tableHeadings.DEALERID",
-        "key_value": "DEALER ID"
-    },
-    {
-        "key_id": "tableHeadings.DEALERNAME",
-        "key_value": "DEALER NAME"
-    },
-    {
-        "key_id": "tableHeadings.DEALERPIN",
-        "key_value": "DEALER PIN"
-    },
-    {
-        "key_id": "tableHeadings.MACADDRESS",
-        "key_value": "MAC ADDRESS"
-    },
-    {
-        "key_id": "tableHeadings.IMEI1",
-        "key_value": "IMEI1"
-    },
-    {
-        "key_id": "tableHeadings.SIM1",
-        "key_value": "SIM1"
-    },
-    {
-        "key_id": "tableHeadings.SIM2",
-        "key_value": "SIM2"
-    },
-    {
-        "key_id": "tableHeadings.IMEI2",
-        "key_value": "IMEI2"
-    },
-    {
-        "key_id": "tableHeadings.SERIALNUMBER",
-        "key_value": "SERIAL NUMBER"
-    },
-    {
-        "key_id": "tableHeadings.MODEL",
-        "key_value": "MODEL"
-    },
-    {
-        "key_id": "tableHeadings.S-DEALER",
-        "key_value": "S-DEALER"
-    },
-    {
-        "key_id": "tableHeadings.S-DEALERNAME",
-        "key_value": "S-DEALER NAME"
-    },
-    {
-        "key_id": "tableHeadings.STARTDATE",
-        "key_value": "START DATE"
-    },
-    {
-        "key_id": "tableHeadings.EXPIRYDATE",
-        "key_value": "DEVICE EXPIRY DATE"
-    },
-    {
-        "key_id": "DevicesConst.PGPEmail",
-        "key_value": " E-mail PGP"
-    },
-    {
-        "key_id": "usersColHeading.Action",
-        "key_value": "Action"
-    },
-    {
-        "key_id": "usersColHeading.USERID",
-        "key_value": "USER ID"
-    },
-    {
-        "key_id": "usersColHeading.DEVICES",
-        "key_value": "DEVICES"
-    },
-    {
-        "key_id": "usersColHeading.NAME",
-        "key_value": "NAME"
-    },
-    {
-        "key_id": "usersColHeading.EMAIL",
-        "key_value": "EMAIL"
-    },
-    {
-        "key_id": "usersColHeading.TOKENS",
-        "key_value": "TOKENS"
-    },
-    {
-        "key_id": "usersColHeading.DATEREGISTERED",
-        "key_value": "DATE REGISTERED"
-    },
-    {
-        "key_id": "app.userAuth",
-        "key_value": "User Auth"
-    },
-    {
-        "key_id": "app.userAuth.login",
-        "key_value": "Login"
-    },
-    {
-        "key_id": "app.userAuth.signIn",
-        "key_value": "Sign In"
-    },
-    {
-        "key_id": "app.userAuth.send",
-        "key_value": "SEND"
-    },
-    {
-        "key_id": "app.userAuth.bySigning",
-        "key_value": "By Signing Up, you can avail full features of our services."
-    },
-    {
-        "key_id": "app.userAuth.or",
-        "key_value": "or"
-    },
-    {
-        "key_id": "app.userAuth.forgotPassword",
-        "key_value": "Forgot Password"
-    },
-    {
-        "key_id": "app.userAuth.forgot",
-        "key_value": "Don't worry. Recovering the password is easy.Just tell us the email you have registered with jumbo"
-    },
-    {
-        "key_id": "app.userAuth.signUp",
-        "key_value": "Sign Up"
-    },
-    {
-        "key_id": "app.userAuth.getAccount",
-        "key_value": "Get an account !!!"
-    },
-    {
-        "key_id": "app.userAuth.resetPassword",
-        "key_value": "Reset Password"
-    },
-    {
-        "key_id": "app.userAuth.reset",
-        "key_value": "RESET"
-    },
-    {
-        "key_id": "app.userAuth.lockScreen",
-        "key_value": "Lock Screen"
-    },
-    {
-        "key_id": "app.userAuth.unLock",
-        "key_value": "UNLOCK"
-    },
-    {
-        "key_id": "appModule.enterPasswordUnlock",
-        "key_value": "Enter your password to unlock the screen!"
-    },
-    {
-        "key_id": "appModule.enterPasswordReset",
-        "key_value": "Enter a new password for your account"
-    },
-    {
-        "key_id": "appModule.loginSuccessfully",
-        "key_value": "Login Successfully"
-    },
-    {
-        "key_id": "appModule.password",
-        "key_value": "Password"
-    },
-    {
-        "key_id": "appModule.email",
-        "key_value": "Email"
-    },
-    {
-        "key_id": "appModule.name",
-        "key_value": "Name"
-    },
-    {
-        "key_id": "appModule.phone",
-        "key_value": "Phone"
-    },
-    {
-        "key_id": "appModule.designation",
-        "key_value": "Designation"
-    },
-    {
-        "key_id": "appModule.regsiter",
-        "key_value": "Regsiter"
-    },
-    {
-        "key_id": "appModule.regsiterNow",
-        "key_value": "Regsiter No"
-    },
-    {
-        "key_id": "appModule.hvAccount",
-        "key_value": "Have an account"
-    },
-    {
-        "key_id": "appModule.createAccount",
-        "key_value": "Create an account"
-    },
-    {
-        "key_id": "appModule.termAndCondition",
-        "key_value": "Term & Condition"
-    },
-    {
-        "key_id": "appModule.iAccept",
-        "key_value": "by signing up, I accept"
-    },
-    {
-        "key_id": "sweetAlerts.basic",
-        "key_value": "Basic"
-    },
-    {
-        "key_id": "sweetAlerts.description",
-        "key_value": "With Description"
-    },
-    {
-        "key_id": "sweetAlerts.success",
-        "key_value": "Success"
-    },
-    {
-        "key_id": "sweetAlerts.warning",
-        "key_value": "Warning"
-    },
-    {
-        "key_id": "sweetAlerts.custom",
-        "key_value": "Custom"
-    },
-    {
-        "key_id": "sweetAlerts.htmlTag",
-        "key_value": "Html Tag"
-    },
-    {
-        "key_id": "sweetAlerts.prompt",
-        "key_value": "Prompt"
-    },
-    {
-        "key_id": "sweetAlerts.itsBlue",
-        "key_value": "It's Green!"
-    },
-    {
-        "key_id": "sweetAlerts.passwordPrompt",
-        "key_value": "Password Prompt"
-    },
-    {
-        "key_id": "sweetAlerts.customStyle",
-        "key_value": "Custom Style"
-    },
-    {
-        "key_id": "sweetAlerts.itPretty",
-        "key_value": "It's pretty, isn't it?"
-    },
-    {
-        "key_id": "sweetAlerts.btnClicked",
-        "key_value": "You clicked the button!"
-    },
-    {
-        "key_id": "sweetAlerts.youWillFind",
-        "key_value": "You will find they are up!"
-    },
-    {
-        "key_id": "sweetAlerts.youWillNotAble",
-        "key_value": "You will not be able to recover this imaginary file!"
-    },
-    {
-        "key_id": "sweetAlerts.hereIsaMessage",
-        "key_value": "Here's a message!"
-    },
-    {
-        "key_id": "sweetAlerts.goodJob",
-        "key_value": "Good job!"
-    },
-    {
-        "key_id": "sweetAlerts.yesDeleteIt",
-        "key_value": "Yes, delete it!"
-    },
-    {
-        "key_id": "sweetAlerts.areYouSure",
-        "key_value": "Are you sure?"
-    },
-    {
-        "key_id": "sweetAlerts.doYouLikeThumb",
-        "key_value": "Do you like thumbs?"
-    },
-    {
-        "key_id": "sweetAlerts.anInput",
-        "key_value": "An input!"
-    },
-    {
-        "key_id": "sweetAlerts.writeSomethingInteresting",
-        "key_value": "Write something interesting:"
-    },
-    {
-        "key_id": "sweetAlerts.writeSomething",
-        "key_value": "Write something"
-    },
-    {
-        "key_id": "sweetAlerts.youMustEnterPassword",
-        "key_value": "You must enter your password!"
-    },
-    {
-        "key_id": "sweetAlerts.enterPassword",
-        "key_value": "Enter Password"
-    },
-    {
-        "key_id": "extension.notification",
-        "key_value": "Notification"
-    },
-    {
-        "key_id": "notification.infoMsg",
-        "key_value": "Info message"
-    },
-    {
-        "key_id": "notification.successMessage",
-        "key_value": "Success message"
-    },
-    {
-        "key_id": "notification.warningMessage",
-        "key_value": "Warning message"
-    },
-    {
-        "key_id": "notification.closeAfter3000ms",
-        "key_value": "Close after 3000ms"
-    },
-    {
-        "key_id": "notification.errorMessage",
-        "key_value": "Error message"
-    },
-    {
-        "key_id": "notification.titleHere",
-        "key_value": "Title here"
-    },
-    {
-        "key_id": "notification.clickMe",
-        "key_value": "Click me!"
-    },
-    {
-        "key_id": "notification.info",
-        "key_value": "Info"
-    },
-    {
-        "key_id": "notification.success",
-        "key_value": "Success"
-    },
-    {
-        "key_id": "notification.warning",
-        "key_value": "Warning"
-    },
-    {
-        "key_id": "notification.error",
-        "key_value": "Error"
-    },
-    {
-        "key_id": "sidebar.editors",
-        "key_value": "Editors"
-    },
-    {
-        "key_id": "sidebar.editors.CKEditor",
-        "key_value": "CKEditor"
-    },
-    {
-        "key_id": "sidebar.editors.WYSISWYGEditor",
-        "key_value": "WYSISWYG Editor"
-    },
-    {
-        "key_id": "picker.color.alpha",
-        "key_value": "Alpha Pickers"
-    },
-    {
-        "key_id": "picker.color.hue",
-        "key_value": "Hue Pickers"
-    },
-    {
-        "key_id": "picker.color.circle",
-        "key_value": "Circle Pickers"
-    },
-    {
-        "key_id": "picker.color.compact",
-        "key_value": "Compact Pickers"
-    },
-    {
-        "key_id": "picker.color.block",
-        "key_value": "Block Pickers"
-    },
-    {
-        "key_id": "picker.color.chrome",
-        "key_value": "Chrome Pickers"
-    },
-    {
-        "key_id": "picker.color.github",
-        "key_value": "Github Pickers"
-    },
-    {
-        "key_id": "picker.color.twitter",
-        "key_value": "Twitter Pickers"
-    },
-    {
-        "key_id": "picker.color.withRedux",
-        "key_value": "With Redux"
-    },
-    {
-        "key_id": "picker.color.sketch",
-        "key_value": "Sketch Pickers"
-    },
-    {
-        "key_id": "picker.color.material",
-        "key_value": "Material Pickers"
-    },
-    {
-        "key_id": "picker.color.slider",
-        "key_value": "Slider Pickers"
-    },
-    {
-        "key_id": "picker.color.basic",
-        "key_value": "Basic Pickers"
-    },
-    {
-        "key_id": "picker.color.basicToggle",
-        "key_value": "Basic Toggle"
-    },
-    {
-        "key_id": "picker.color.custom",
-        "key_value": "Custom Pickers"
-    },
-    {
-        "key_id": "picker.color.customPointer",
-        "key_value": "Custom Pointer"
-    },
-    {
-        "key_id": "picker.color.photoshop",
-        "key_value": "Photoshop Pickers"
-    },
-    {
-        "key_id": "picker.color.swatches",
-        "key_value": "Swatches Pickers"
-    },
-    {
-        "key_id": "picker.color.basicPositioning",
-        "key_value": "Basic Positioning"
-    },
-    {
-        "key_id": "sidebar.social",
-        "key_value": "Social Apps"
-    },
-    {
-        "key_id": "app.dt.01.id",
-        "key_value": "BYOD Launcher Apk, Tools, etc... can be found here"
-    },
-    {
-        "key_id": "tableHeadings.IPAddress",
-        "key_value": "IP Address"
-    },
-    {
-        "key_id": "show.on.device.id",
-        "key_value": "SHOW ON DEVICE"
-    },
-    {
-        "key_id": "app.name.id",
-        "key_value": "APP NAME"
-    },
-    {
-        "key_id": "app.logo.id",
-        "key_value": "APP LOGO"
-    },
-    {
-        "key_id": "permission.id",
-        "key_value": "PERMISSION"
-    },
-    {
-        "key_id": "action.id",
-        "key_value": "ACTION"
-    },
-    {
-        "key_id": "apk.search.id",
-        "key_value": "Search APK"
-    },
-    {
-        "key_id": "apk.upload.id",
-        "key_value": "Upload APK"
-    },
-    {
-        "key_id": "permission.list.id",
-        "key_value": "Permission List"
-    },
-    {
-        "key_id": "permission.add.modal.title.id",
-        "key_value": "Add Dealer to permissions list for this App"
-    },
-    {
-        "key_id": "permission.remove.modal.title.id",
-        "key_value": "Remove Dealers from permissions list for this App"
-    },
-    {
-        "key_id": "permission.add.except.selected.modal.title.id",
-        "key_value": "Add Except Dealers from permissions list for this App"
-    },
-    {
-        "key_id": "app.manage.apks.id",
-        "key_value": "Manage APK's"
-    },
-    {
-        "key_id": "app.manage.policy.id",
-        "key_value": "Manage Policy"
-    },
-    {
-        "key_id": "app.secure.market.id",
-        "key_value": "Secure Market"
-    },
-    {
-        "key_id": "app.download.tools",
-        "key_value": "Download Tools"
-    },
-    {
-        "key_id": "ap.secure.panel.apk.id",
-        "key_value": "Secure Panel APK"
-    },
-    {
-        "key_id": "app.md.01.id",
-        "key_value": "Manage apk's"
-    },
-    {
-        "key_id": "appfilter.Display",
-        "key_value": "Display"
-    },
-    {
-        "key_id": "appfilter.SearchUser",
-        "key_value": "Search"
-    },
-    {
-        "key_id": "appfilter.SearchManageData",
-        "key_value": "Search"
-    },
-    {
-        "key_id": "button.buy.id",
-        "key_value": "Buy"
-    },
-    {
-        "key_id": "button.set.prices.id",
-        "key_value": "Set Price"
-    },
-    {
-        "key_id": "button.set.id",
-        "key_value": "SET"
-    },
-    {
-        "key_id": "button.unset.id",
-        "key_value": "UNSET"
-    },
-    {
-        "key_id": "button.download.id",
-        "key_value": "Download"
-    },
-    {
-        "key_id": "switch.button.uninstall.id",
-        "key_value": "Uninstall"
-    },
-    {
-        "key_id": "button.save.changes",
-        "key_value": "Save Changes"
-    },
-    {
-        "key_id": "button.Remove",
-        "key_value": "Remove"
-    },
-    {
-        "key_id": "button.DeleteExceptSelected",
-        "key_value": "Delete Except Selected"
-    },
-    {
-        "key_id": "button.add.user",
-        "key_value": "Add User"
-    },
-    {
-        "key_id": "application.permission.id",
-        "key_value": "Application Permission"
-    },
-    {
-        "key_id": "secure.settings.permission.id",
-        "key_value": "Secure Settings Permission"
-    },
-    {
-        "key_id": "system.permission.id",
-        "key_value": "System Permission"
-    },
-    {
-        "key_id": "manage.passwords.id",
-        "key_value": "Manage Passwords"
-    },
-    {
-        "key_id": "policy.details.id",
-        "key_value": "Policy Details"
-    },
-    {
-        "key_id": "1.month.id",
-        "key_value": "1 month"
-    },
-    {
-        "key_id": "3.month.id",
-        "key_value": "3 month"
-    },
-    {
-        "key_id": "6.month.id",
-        "key_value": "6 month"
-    },
-    {
-        "key_id": "12.month.id",
-        "key_value": "12 month"
-    },
-    {
-        "key_id": "search.id",
-        "key_value": "Search"
-    },
-    {
-        "key_id": "modal.text",
-        "key_value": "Model"
-    },
-    {
-        "key_id": "start.date",
-        "key_value": "Start Date"
-    },
-    {
-        "key_id": "expire.date",
-        "key_value": "Expire Date"
-    },
-    {
-        "key_id": "expire.date.require",
-        "key_value": "Expiry Date is Required !"
-    },
-    {
-        "key_id": "days.id",
-        "key_value": "Days"
-    },
-    {
-        "key_id": "user.name.require",
-        "key_value": "Name is Required"
-    },
-    {
-        "key_id": "only.alpha.numeric.id",
-        "key_value": "Please insert only alphabets and numbers"
-    },
-    {
-        "key_id": "not.valid.email.id",
-        "key_value": "The input is not valid E-mail!"
-    },
-    {
-        "key_id": "require.email.id",
-        "key_value": "Email is Required !"
-    },
-    {
-        "key_id": "email.id",
-        "key_value": "E-mail"
-    },
-    {
-        "key_id": "name.id",
-        "key_value": "Name"
-    },
-    {
-        "key_id": "value.id",
-        "key_value": "Value"
-    },
-    {
-        "key_id": "login.email.id",
-        "key_value": "Login Email"
-    },
-    {
-        "key_id": "devices.id",
-        "key_value": "DEVICES"
-    },
-    {
-        "key_id": "profile.info.id",
-        "key_value": "Profile Info"
-    },
-    {
-        "key_id": "change.profile.id",
-        "key_value": "Change Profile"
-    },
-    {
-        "key_id": "edit.profile.id",
-        "key_value": "Edit Profile"
-    },
-    {
-        "key_id": "edit.profile.01.id",
-        "key_value": "Change password"
-    },
-    {
-        "key_id": "edit.profile.02.id",
-        "key_value": "Change Email"
-    },
-    {
-        "key_id": "edit.profile.03.id",
-        "key_value": "Enable Dual Authentication"
-    },
-    {
-        "key_id": "change.password.id",
-        "key_value": "Change Password"
-    },
-    {
-        "key_id": "change.email.id",
-        "key_value": "Change Email"
-    },
-    {
-        "key_id": "login.email.authentication",
-        "key_value": "Login Email Authentication"
-    },
-    {
-        "key_id": "date.text.id",
-        "key_value": "Date"
-    },
-    {
-        "key_id": "themes.and.colors",
-        "key_value": "Themes and Colors"
-    },
-    {
-        "key_id": "theme.list.01.id",
-        "key_value": "Edit Themes for the panel"
-    },
-    {
-        "key_id": "theme.list.02.id",
-        "key_value": "Edit the color Schemes for the panel"
-    },
-    {
-        "key_id": "theme.id",
-        "key_value": "Theme"
-    },
-    {
-        "key_id": "lite.id",
-        "key_value": "Lite"
-    },
-    {
-        "key_id": "semi.dark.id",
-        "key_value": "Semi Dark"
-    },
-    {
-        "key_id": "dark.id",
-        "key_value": "Dark"
-    },
-    {
-        "key_id": "colors.id",
-        "key_value": "Colors"
-    },
-    {
-        "key_id": "preset.color.pallets.id",
-        "key_value": "Preset Color Pallets"
-    },
-    {
-        "key_id": "customize.id",
-        "key_value": "Customize"
-    },
-    {
-        "key_id": "reset.theme.id",
-        "key_value": "Reset Theme"
-    },
-    {
-        "key_id": "nav.style.id",
-        "key_value": " Nav Style"
-    },
-    {
-        "key_id": "dealer.id",
-        "key_value": "DEALER ID"
-    },
-    {
-        "key_id": "dealer.name.id",
-        "key_value": "DEALER NAME"
-    },
-    {
-        "key_id": "dealer.email.id",
-        "key_value": "DEALER EMAIL"
-    },
-    {
-        "key_id": "dealer.pin.id",
-        "key_value": "DEALER PIN"
-    },
-    {
-        "key_id": "devices",
-        "key_value": "DEVICES"
-    },
-    {
-        "key_id": "tokens.id",
-        "key_value": "TOKENS"
-    },
-    {
-        "key_id": "parent.dealer.id",
-        "key_value": "PARENT DEALER"
-    },
-    {
-        "key_id": "login.histoy.id",
-        "key_value": "Login History"
-    },
-    {
-        "key_id": "required.fields.id",
-        "key_value": "Required Fields"
-    },
-    {
-        "key_id": "tableHeadings.Select.SIMID",
-        "key_value": "Select Sim ID"
-    },
-    {
-        "key_id": "tableHeadings.Select.CHATID",
-        "key_value": "Select Chat ID"
-    },
-    {
-        "key_id": "device.note.id",
-        "key_value": "Note"
-    },
-    {
-        "key_id": "device.valid.for.id",
-        "key_value": "VALID FOR(DAYS)"
-    },
-    {
-        "key_id": "device.valid.days.required.id",
-        "key_value": "Valid days required"
-    },
-    {
-        "key_id": "label.id",
-        "key_value": "LABEL"
-    },
-    {
-        "key_id": "chat.id.id",
-        "key_value": "CHAT ID"
-    },
-    {
-        "key_id": "sim.id.id",
-        "key_value": "SIM ID"
-    },
-    {
-        "key_id": "pgp.email.id",
-        "key_value": "PGP EMAIL"
-    },
-    {
-        "key_id": "vpn.id",
-        "key_value": "VPN"
-    },
-    {
-        "key_id": "created.at.id",
-        "key_value": "CREATED AT"
-    },
-    {
-        "key_id": "sim.id",
-        "key_value": "SIM"
-    },
-    {
-        "key_id": "chat.id",
-        "key_value": "CHAT"
-    },
-    {
-        "key_id": "pgp.id",
-        "key_value": "PGP"
-    },
-    {
-        "key_id": "policy.action.id",
-        "key_value": "ACTION"
-    },
-    {
-        "key_id": "policy.default.id",
-        "key_value": "DEFAULT"
-    },
-    {
-        "key_id": "policy.name.id",
-        "key_value": "POLICY NAME"
-    },
-    {
-        "key_id": "policy.app.name.id",
-        "key_value": "APP NAME"
-    },
-    {
-        "key_id": "policy.status.id",
-        "key_value": "STATUS"
-    },
-    {
-        "key_id": "policy.permissions.id",
-        "key_value": "PERMISSIONS"
-    },
-    {
-        "key_id": "policy.command.id",
-        "key_value": "POLICY COMMAND"
-    },
-    {
-        "key_id": "policy.info.id",
-        "key_value": "POLICY INFO"
-    },
-    {
-        "key_id": "policy.note.id",
-        "key_value": "POLICY NOTE"
-    },
-    {
-        "key_id": "policy.save.changes.id",
-        "key_value": "Save changes to Policy?"
-    },
-    {
-        "key_id": "policy.search.id",
-        "key_value": "Search Policy"
-    },
-    {
-        "key_id": "policy.add.id",
-        "key_value": "Add Policy"
-    },
-    {
-        "key_id": "policy.edit.id",
-        "key_value": "Edit Policy"
-    },
-    {
-        "key_id": "policy.save.confirmation.id",
-        "key_value": "Are You Sure, You Want to Save Changes"
-    },
-    {
-        "key_id": "policy.delete.confirmation.id",
-        "key_value": "Do you want to delete this Policy?"
-    },
-    {
-        "key_id": "policy.change.default.confirmation.id",
-        "key_value": "Do you want to change your default Policy?"
-    },
-    {
-        "key_id": "tab.used",
-        "key_value": "Used"
-    },
-    {
-        "key_id": "tab.unused",
-        "key_value": "Unused"
-    },
-    {
-        "key_id": "tab.id.prices.id",
-        "key_value": "ID Prices"
-    },
-    {
-        "key_id": "tab.packages.id",
-        "key_value": "Packages"
-    },
-    {
-        "key_id": "tab.set.id.prices.id",
-        "key_value": "Set ID Prices"
-    },
-    {
-        "key_id": "tab.set.packages.prices.id",
-        "key_value": "Set Packages Price"
-    },
-    {
-        "key_id": "tab.policy.selected.apps.id",
-        "key_value": "Selected Apps"
-    },
-    {
-        "key_id": "tab.policy.detail.id",
-        "key_value": "Policy Detai"
-    },
-    {
-        "key_id": "tab.policy.dealer.permissions.id",
-        "key_value": "Dealer PERMISSIONS"
-    },
-    {
-        "key_id": "guest.id",
-        "key_value": "GUEST"
-    },
-    {
-        "key_id": "encrypted.id",
-        "key_value": "ENCRYPTED"
-    },
-    {
-        "key_id": "enable.id",
-        "key_value": "ENABLE"
-    },
-    {
-        "key_id": "manage.data.id",
-        "key_value": "Manage Data"
-    },
-    {
-        "key_id": "backup_database.id",
-        "key_value": "Backup Database"
-    },
-    {
-        "key_id": "purchase.credits.id",
-        "key_value": "Purchase Credits"
-    },
-    {
-        "key_id": "packages.and.ids.id",
-        "key_value": "Packages and ID's"
-    },
-    {
-        "key_id": "package.name.id",
-        "key_value": "PACKAGE NAME"
-    },
-    {
-        "key_id": "package.term.id",
-        "key_value": "PACKAGE TERM"
-    },
-    {
-        "key_id": "package.services.id",
-        "key_value": "PACKAGE SERVICES"
-    },
-    {
-        "key_id": "package.price.id",
-        "key_value": "PACKAGE PRICE"
-    },
-    {
-        "key_id": "packege.expiry.id",
-        "key_value": "PACKAGE EXPIRY"
-    },
-    {
-        "key_id": "package.search.id",
-        "key_value": "Search"
-    },
-    {
-        "key_id": "package.service.name.id",
-        "key_value": "SERVICE NAME"
-    },
-    {
-        "key_id": "package.included.id",
-        "key_value": "INCLUDED"
-    },
-    {
-        "key_id": "price.term.id",
-        "key_value": "PRICE TERM"
-    },
-    {
-        "key_id": "unit.price.id",
-        "key_value": "UNIT PRICE"
-    },
-    {
-        "key_id": "select.price.id",
-        "key_value": "SELECT PRICE"
-    },
-    {
-        "key_id": "price.id",
-        "key_value": "PRICE"
-    },
-    {
-        "key_id": "tableHeadings.REMAININGDAYS",
-        "key_value": "VALID DAYS"
-    },
-    {
-        "key_id": "appfilter.export",
-        "key_value": "Export"
-    },
-    {
-        "key_id": "account.manage.data.01.id",
-        "key_value": "Manage data such as SIM ID, <br style={{ marginLeft: 4 }} />CHAT ID, PGP Email, etc.."
-    },
-    {
-        "key_id": "account.manage.data.02.id",
-        "key_value": "View/Edit your data"
-    },
-    {
-        "key_id": "account.manage.data.03.id",
-        "key_value": "Release previously used data back to system"
-    },
-    {
-        "key_id": "upload.file.id",
-        "key_value": "UPLOAD FILE"
-    },
-    {
-        "key_id": "upload.file.extension.id",
-        "key_value": ".xls, .xlsx, .csv"
-    },
-    {
-        "key_id": "backup_database.description.id",
-        "key_value": "This feature allows you to keep a backup of the complete system database for offline safekeeping"
-    },
-    {
-        "key_id": "purchase.credits.description.id",
-        "key_value": "Buy more Credits instantly with Bitcoin or Credit card and check out using our secure payment gateway."
-    },
-    {
-        "key_id": "packages.and.ids.01.id",
-        "key_value": "Distribute tokens"
-    },
-    {
-        "key_id": "packages.and.ids.02.id",
-        "key_value": "Set prices and delay for each token"
-    },
-    {
-        "key_id": "packages.and.ids.03.id",
-        "key_value": "Set permissions for Tokens"
-    },
-    {
-        "key_id": "parent.dealer.id.id",
-        "key_value": "PARENT DEALER ID"
-    },
-    {
-        "key_id": "button.add.s.dealer",
-        "key_value": "Add S-Dealer"
-    },
-    {
-        "key_id": "button.add.dealer",
-        "key_value": "Add Dealer"
-    },
-    {
-        "key_id": "spa.apps.id",
-        "key_value": "Apps"
-    },
-    {
-        "key_id": "push.apps.id",
-        "key_value": "PUSH APPS"
-    },
-    {
-        "key_id": "alert.change.language.id",
-        "key_value": "Are you sure you want to change the language?"
-    },
-    {
-        "key_id": "button.Yess",
-        "key_value": "Oui"
-    },
-    {
-        "key_id": "button.Noo",
-        "key_value": "Non"
-    },
-    {
-        "key_id": "dealer.already.registered.id",
-        "key_value": "Dealer Already Registered. Please use another email."
-    },
-    {
-        "key_id": "email.not.sent.id",
-        "key_value": "Email could not sent due to error:"
-    },
-    {
-        "key_id": "dealer.register.succ.id",
-        "key_value": "Dealer has been registered successfully"
-    },
-    {
-        "key_id": "dealer.not.added.id",
-        "key_value": "Dealer could not be added"
-    },
-    {
-        "key_id": "email.already.use.other.dealer.id",
-        "key_value": "Email is already in use of other dealer"
-    },
-    {
-        "key_id": "record.updated.succ.email.not.send.id",
-        "key_value": "Record updated successfully. Email not sent"
-    },
-    {
-        "key_id": "record.updated.succ.email.send.id",
-        "key_value": "Record updated successfully. Email has been sent."
-    },
-    {
-        "key_id": "dealer.delete.succ.id",
-        "key_value": "Dealer deleted successfully."
-    },
-    {
-        "key_id": "invalid.dealer.id",
-        "key_value": "Invalid Dealer."
-    },
-    {
-        "key_id": "dealer.added.again.id",
-        "key_value": "Dealer added again."
-    },
-    {
-        "key_id": "dealer.suspended.succ.id",
-        "key_value": "Dealer suspended successfully."
-    },
-    {
-        "key_id": "dealer.not.suspend.id",
-        "key_value": "Dealer not suspended."
-    },
-    {
-        "key_id": "dealer.not.activated.id",
-        "key_value": "Dealer not activated."
-    },
-    {
-        "key_id": "dealer.activated.succ.id",
-        "key_value": "Dealer activated successfully."
-    },
-    {
-        "key_id": "failed.auth.token.id",
-        "key_value": "Failed to authenticate token."
-    },
-    {
-        "key_id": "no.token.provide.id",
-        "key_value": "No token provided."
-    },
-    {
-        "key_id": "dual.auth.succ.enabled.id",
-        "key_value": "Dual Authentication is Successfully enabled"
-    },
-    {
-        "key_id": "dual.auth.succ.disabled.id",
-        "key_value": "Dual Authentication is Successfully disabled"
-    },
-    {
-        "key_id": "dual.auth.not.enabled.id",
-        "key_value": "Dual Authentication could not be enabled"
-    },
-    {
-        "key_id": "user.already.registered.id",
-        "key_value": "User Already Registered. Please use another email."
-    },
-    {
-        "key_id": "user.registered.succ.id",
-        "key_value": "User has been registered successfully."
-    },
-    {
-        "key_id": "user.info.changed.succ.id",
-        "key_value": "User Info has been changed successfully."
-    },
-    {
-        "key_id": "user.deleted.succ.id",
-        "key_value": "User deleted successfully."
-    },
-    {
-        "key_id": "user.not.deleted.succ.id",
-        "key_value": "User not deleted successfully."
-    },
-    {
-        "key_id": "user.added.again.id",
-        "key_value": "User added again successfully."
-    },
-    {
-        "key_id": "user.not.added.id",
-        "key_value": "User not added try again later."
-    },
-    {
-        "key_id": "error.upload.profile.id",
-        "key_value": "Error While Updating Profile"
-    },
-    {
-        "key_id": "profile.uploaded.succ.id",
-        "key_value": "Profile Updated Successfully"
-    },
-    {
-        "key_id": "pass.change.succ.id",
-        "key_value": "Password changed successfully.Please check your email."
-    },
-    {
-        "key_id": "profile.save.succ.id",
-        "key_value": "Profile Saved Successfully"
-    },
-    {
-        "key_id": "Profile.Name.is.already.Exist.id",
-        "key_value": "Profile Name is already Exist"
-    },
-    {
-        "key_id": "Profile.Applied.Successfully.id",
-        "key_value": "Profile Applied Successfully"
-    },
-    {
-        "key_id": "Settings.Applied.Successfully.id",
-        "key_value": "Settings Applied Successfully"
-    },
-    {
-        "key_id": "Inserted.Successfully.id",
-        "key_value": "Inserted Successfully"
-    },
-    {
-        "key_id": "no.data.to.import.id",
-        "key_value": "no data to import"
-    },
-    {
-        "key_id": "access.forbidden.id",
-        "key_value": "access forbidden"
-    },
-    {
-        "key_id": "CSV.Released.Successfully.id",
-        "key_value": "CSV Released Successfully."
-    },
-    {
-        "key_id": "CSV.Not.Released.id",
-        "key_value": "CSV Not Released."
-    },
-    {
-        "key_id": "App.Uploaded.Successfully.id",
-        "key_value": "Success: App Uploaded Successfully"
-    },
-    {
-        "key_id": "Unable.to.read.APP.properties.id",
-        "key_value": "Error! Unable to read APP properties"
-    },
-    {
-        "key_id": "App.logo.Uploaded.Successfully.id",
-        "key_value": "Success! App logo Uploaded Successfully."
-    },
-    {
-        "key_id": "Unauthorized.file.uploading.attempt.id",
-        "key_value": "Unauthorized file uploading attempt"
-    },
-    {
-        "key_id": "Uploaded.file.is.corrupt.id",
-        "key_value": "Uploaded file is corrupt"
-    },
-    {
-        "key_id": "Not.allowed.to.make.request.id",
-        "key_value": "Not allowed to make request."
-    },
-    {
-        "key_id": "Request.submitted.successfully.id",
-        "key_value": "Request submitted successfully"
-    },
-    {
-        "key_id": "Request.not.submitted.successfully.id",
-        "key_value": "Request not submitted successfully"
-    },
-    {
-        "key_id": "Apk.is.uploaded.id",
-        "key_value": "APK is uploaded"
-    },
-    {
-        "key_id": "Apk.not.deleted.id",
-        "key_value": "Apk not deleted"
-    },
-    {
-        "key_id": "Apk.deleted.successfully.id",
-        "key_value": "Apk deleted successfully"
-    },
-    {
-        "key_id": "Status.Updated.id",
-        "key_value": "Status Updated"
-    },
-    {
-        "key_id": "Status.not.Updated.id",
-        "key_value": "Status Not Updated"
-    },
-    {
-        "key_id": "Permission.saved.successfully.id",
-        "key_value": "Permission saved successfully"
-    },
-    {
-        "key_id": "Permission.couldnt.be.saved.id",
-        "key_value": "Permission couldn't be saved"
-    },
-    {
-        "key_id": "Permission.Removed.successfully.id",
-        "key_value": "Permission Removed successfully"
-    },
-    {
-        "key_id": "Uninstall.permission.changed.id",
-        "key_value": "Uninstall permission changed"
-    },
-    {
-        "key_id": "Uninstall.permission.not.changed.id",
-        "key_value": "Uninstall permission not changed"
-    },
-    {
-        "key_id": "Apps.Transfered.Sussecfully.id",
-        "key_value": "Apps Transfered Sussecfully"
-    },
-    {
-        "key_id": "Invalid.IMEI.number.id",
-        "key_value": "Invalid IMEI number, please make sure you are using a valid IMEI number and try again"
-    },
-    {
-        "key_id": "Default.policy.changed.successfully.id",
-        "key_value": "Default policy changed successfully"
-    },
-    {
-        "key_id": "force.update.has.been.applied.id",
-        "key_value": "force update has been applied"
-    },
-    {
-        "key_id": "force.update.will.apply.id",
-        "key_value": "force update will apply when device will come online"
-    },
-    {
-        "key_id": "Payment.has.been.done.id",
-        "key_value": "Payment has been done"
-    },
-    {
-        "key_id": "Prices.Set.Successfully.id",
-        "key_value": "Prices Set Successfully"
-    },
-    {
-        "key_id": "Package.Saved.Successfully.id",
-        "key_value": "Package Saved Successfully"
-    },
-    {
-        "key_id": "Language.changed.Successfully.id",
-        "key_value": "Language changed Successfully"
-    },
-    {
-        "key_id": "Invalid.dealer_id.id",
-        "key_value": "Invalid dealer_id"
-    },
-    {
-        "key_id": "Credits.added.successfully.id",
-        "key_value": "Credits added successfully"
-    },
-    {
-        "key_id": "Credits.not.updated.id",
-        "key_value": "Credits not updated please try again"
-    },
-    {
-        "key_id": "credits.not.enough.accept.request.id",
-        "key_value": "Your credits are not enough to accept a request"
-    },
-    {
-        "key_id": "Request.deleted.successfully.id",
-        "key_value": "Request deleted successfully"
-    },
-    {
-        "key_id": "Request.not.deleted.id",
-        "key_value": "Request not deleted please try again"
-    },
-    {
-        "key_id": "Request.is.already.deleted.id",
-        "key_value": "Request is already deleted"
-    },
-    {
-        "key_id": "invalid.user.id",
-        "key_value": "Invalid User."
-    },
-    {
-        "key_id": "invalid.user.and.pass.id",
-        "key_value": "Invalid User and Password."
-    },
-    {
-        "key_id": "pre_activation.added.succ.email.send.id",
-        "key_value": "Pre-activations added succcessfully. Email sent to your account."
-    },
-    {
-        "key_id": "pre_activation.succ.add.id",
-        "key_value": "Pre-activation added succcessfully."
-    },
-    {
-        "key_id": "device.not.added.id",
-        "key_value": "Device couldn't added"
-    },
-    {
-        "key_id": "record.transfer.succ.id",
-        "key_value": "Record Transfered Successfully. "
-    },
-    {
-        "key_id": "error.while.transfering.id",
-        "key_value": "Error While Transfere."
-    },
-    {
-        "key_id": "pgp.email.already.taken.id",
-        "key_value": "PGP email already taken"
-    },
-    {
-        "key_id": "device.not.unlinked.id",
-        "key_value": "Device not unlinked."
-    },
-    {
-        "key_id": "device.unlinked.succ.id",
-        "key_value": "Device unlinked successfully."
-    },
-    {
-        "key_id": "account.not.suspended.id",
-        "key_value": "Account not suspended.Please try again."
-    },
-    {
-        "key_id": "account.suspend.succ.id",
-        "key_value": "Account suspended successfully."
-    },
-    {
-        "key_id": "cant.suspend.account.expired.id",
-        "key_value": "Can't suspend !!! Account Already Expired."
-    },
-    {
-        "key_id": "device.not.activate.id",
-        "key_value": "Device not activated.Please try again."
-    },
-    {
-        "key_id": "device.activated.succ.id",
-        "key_value": "Device activated successfully."
-    },
-    {
-        "key_id": "device.not.activated.expired.id",
-        "key_value": "Device cannnot be activated.It is expired already."
-    },
-    {
-        "key_id": "device.not.wipe.id",
-        "key_value": "Device not wiped.Please try again."
-    },
-    {
-        "key_id": "device.wipe.succ.id",
-        "key_value": "Device Wiped successfully."
-    },
-    {
-        "key_id": "device.not.unflaged.id",
-        "key_value": "Device not Unflagged. Please try again."
-    },
-    {
-        "key_id": "device.unflag.succ.id",
-        "key_value": "Device Unflagged successfully."
-    },
-    {
-        "key_id": "device.not.flaged.id",
-        "key_value": "Device not Flagged. Please try again."
-    },
-    {
-        "key_id": "device.flag.succ.id",
-        "key_value": "Device Flagged successfully."
-    },
-    {
-        "key_id": "device.already.flaged.id",
-        "key_value": "Device Already Flagged"
-    },
-    {
-        "key_id": "device.sync.succ.id",
-        "key_value": "device synced successfully"
-    },
-    {
-        "key_id": "items.added.id",
-        "key_value": "Items Added."
-    },
-    {
-        "key_id": "items.updated.id",
-        "key_value": "Items Updated."
-    },
-    {
-        "key_id": "items.not.updated.id",
-        "key_value": "Items Not Updated."
-    },
-    {
-        "key_id": "policy.update.succ.id",
-        "key_value": "Policy Updated Successfully"
-    },
-    {
-        "key_id": "policy.name.already.taken.id",
-        "key_value": "Policy name has already been taken"
-    },
-    {
-        "key_id": "policy.save.succ.id",
-        "key_value": "Policy Saved Successfully"
-    },
-    {
-        "key_id": "policy.not.save.id",
-        "key_value": "Policy Couldn't be saved"
-    },
-    {
-        "key_id": "invalid.deviceID.id",
-        "key_value": "Invalid device id."
-    },
-    {
-        "key_id": "invalid.device.id",
-        "key_value": "Invalid device."
-    },
-    {
-        "key_id": "device.not.found.id",
-        "key_value": "No Device found"
-    },
-    {
-        "key_id": "device.deleted.succ.id",
-        "key_value": "Device deleted successfully."
-    },
-    {
-        "key_id": "device.not.delete.id",
-        "key_value": "Device not deleted."
-    },
-    {
-        "key_id": "invalid.email.or.name.id",
-        "key_value": "Invalid email or name"
-    },
-    {
-        "key_id": "record.not.updated.id",
-        "key_value": "Record not updated."
-    },
-    {
-        "key_id": "enter.valid.detail.id",
-        "key_value": "Please enter valid details"
-    },
-    {
-        "key_id": "record.not.delete.id",
-        "key_value": "Record not deleted."
-    },
-    {
-        "key_id": "record.updated.succ.id",
-        "key_value": "Record updated successfully."
-    },
-    {
-        "key_id": "no.detail.found.id",
-        "key_value": "No details found"
-    },
-    {
-        "key_id": "successful.id",
-        "key_value": "successful"
-    },
-    {
-        "key_id": "error.id",
-        "key_value": "error"
-    },
-    {
-        "key_id": "Error.While.Uploading.id",
-        "key_value": "Error While Uploading"
-    },
-    {
-        "key_id": "error.while.processing.id",
-        "key_value": "Error while Processing"
-    },
-    {
-        "key_id": "not.deleted.id",
-        "key_value": "Not Deleted, Try Again!"
-    },
-    {
-        "key_id": "no.data.found.id",
-        "key_value": "No data found "
-    },
-    {
-        "key_id": "data.found.id",
-        "key_value": "Data found "
-    },
-    {
-        "key_id": "file.not.found.id",
-        "key_value": "file not found"
-    },
-    {
-        "key_id": "Invalid.Data.id",
-        "key_value": "Invalid Data"
-    },
-    {
-        "key_id": "apk.upload.file.id",
-        "key_value": "Upload APK FILE"
-    },
-    {
-        "key_id": "apk.upload.icon.id",
-        "key_value": "Upload ICON"
-    },
-    {
-        "key_id": "insert.valid.dealer.name.id",
-        "key_value": "Please Insert dealer Name"
-    },
-    {
-        "key_id": "edit.dealer.id",
-        "key_value": "Edit Dealer"
-    },
-    {
-        "key_id": "account.email.id",
-        "key_value": "Account Email"
-    },
-    {
-        "key_id": "select.id",
-        "key_value": "Select"
-    },
-    {
-        "key_id": "select.dealer.id",
-        "key_value": "Select Dealer "
-    },
-    {
-        "key_id": "alert.allow.permission.dealer.id",
-        "key_value": "Do you realy Want to allow Permission for all Dealers?"
-    },
-    {
-        "key_id": "alert.remove.permission.dealer.id",
-        "key_value": "Do you realy Want to Remove Permission for all Dealers?"
-    },
-    {
-        "key_id": "alert.delete.apk.id",
-        "key_value": "Are you sure, you want to delete the Apk ?"
-    },
-    {
-        "key_id": "edit.user.id",
-        "key_value": "Edit User"
-    },
-    {
-        "key_id": "DELETE.USER.id",
-        "key_value": "DELETE USER"
-    },
-    {
-        "key_id": "Do.you.want.to.DELETE.user.id",
-        "key_value": "Do you want to DELETE user "
-    },
-    {
-        "key_id": "Do.you.want.to.UNDO.user.id",
-        "key_value": "Do you want to UNDELETE user "
-    },
-    {
-        "key_id": "Extension.NAME.id",
-        "key_value": "Extension NAME"
-    },
-    {
-        "key_id": "History.Date.id",
-        "key_value": "History Date"
-    },
-    {
-        "key_id": "User.does.not.exist.id",
-        "key_value": "User does not exist"
-    },
-    {
-        "key_id": "Your.account.is.suspended.id",
-        "key_value": "Your account is suspended"
-    },
-    {
-        "key_id": "Your.account.is.Deleted.id",
-        "key_value": "Your account is Deleted"
-    },
-    {
-        "key_id": "Verification.Code.sent.to.Your.Email.id",
-        "key_value": "Verification Code sent to Your Email"
-    },
-    {
-        "key_id": "User.loged.in.Successfully.id",
-        "key_value": "User loged in Successfully"
-    },
-    {
-        "key_id": "invalid.verification.code.id",
-        "key_value": "Invalid verification code"
-    },
-    {
-        "key_id": "New.Device.Not.Added.id",
-        "key_value": "New Device Not Added Please try Again"
-    },
-    {
-        "key_id": "Uploaded.Successfully.id",
-        "key_value": "Uploaded Successfully "
-    },
-    {
-        "key_id": "button.back.id",
-        "key_value": "Back"
-    },
-    {
-        "key_id": "download.tools.modal.body.7.id",
-        "key_value": "Neutral Launcher (BYOD7)  <b>(Android v7)</b>"
-    },
-    {
-        "key_id": "Are.you.sure.you.want.to.logout.id",
-        "key_value": "Are you sure you want to logout?"
-    },
-    {
-        "key_id": "model.text",
-        "key_value": "Model"
-    },
-    {
-        "key_id": "tableHeadings.TYPE",
-        "key_value": "Type"
-    },
-    {
-        "key_id": "tableHeadings.VERSION",
-        "key_value": "Version"
-    },
-    {
-        "key_id": "apk.size.id",
-        "key_value": "APK SIZE"
-    },
-    {
-        "key_id": "apk.id",
-        "key_value": "APK"
-    },
-    {
-        "key_id": "pre.activated.tab.extra.id",
-        "key_value": "PRE-ACTIVATED TAB"
-    },
-    {
-        "key_id": "tableHeadings.TRANSFERED",
-        "key_value": "TRANSFERED TO"
-    },
-    {
-        "key_id": "tableHeadings.lastOnline",
-        "key_value": "Last Online"
-    }
-]
+{
+    "sidebar.main": "Main",
+    "sidebar.devices": "Devices",
+    "sidebar.users": "Users",
+    "sidebar.dealers": "Dealers",
+    "sidebar.policy": "Policy",
+    "sidebar.sdealers": "S-Dealers",
+    "sidebar.app": "App",
+    "sidebar.account": "Account",
+    "sidebar.settings": "Settings",
+    "sidebar.logout": "Logout",
+    "button.Modify": "Modify",
+    "button.Delete": "Delete",
+    "button.Activate": "Activate",
+    "button.Connect": "Connect",
+    "button.Yes": "Yes",
+    "button.No": "No",
+    "button.Ok": "OK",
+    "button.Cancel": "Cancel",
+    "button.Suspend": "Suspend",
+    "button.Edit": "Edit",
+    "button.passwordreset": "Password Reset",
+    "button.submit": "Submit",
+    "button.Flag": "Flag",
+    "button.UNFLAG": "UNFLAG",
+    "button.SetPassword": "Set Password",
+    "button.Apply": "Apply",
+    "button.Undo": "Undo",
+    "button.Redo": "Redo",
+    "button.Clear": "Clear",
+    "button.Refresh": "Refresh",
+    "button.Next": "Next",
+    "button.previous": "Previous",
+    "button.AddDealer": "Add Dealer",
+    "button.AddS-dealer": "Add S-dealer",
+    "button.UploadApk": "Upload Apk",
+    "button.Save": "Save",
+    "button.Update": "Update",
+    "button.Open": "Open",
+    "button.Sample": "Sample",
+    "button.Import": "Import",
+    "button.Export": "Export",
+    "button.Release": "Release",
+    "button.View": "View",
+    "button.ChangePassword": "Change Password",
+    "button.ChangeEmail": "Change Email",
+    "button.AddPolicy": "Add Policy",
+    "button.Add": "Add",
+    "button.AddExceptSelected": "Add Except Selected",
+    "button.AddAll": "Add All",
+    "button.RemoveAll": "Remove All",
+    "button.RemoveExcept": "Remove Except",
+    "button.BackupNow": "Backup Now",
+    "button.DeleteUser": "Delete User",
+    "button.AddApps": "Add Apps",
+    "button.Push": "Push",
+    "button.LoadProfile": "Load Profile",
+    "button.LoadPolicy": "Load Policy",
+    "button.IMEI": "IMEI",
+    "button.Pull": "Pull",
+    "button.SaveProfile": "Save Profile",
+    "button.Activity": "Activity",
+    "button.SIM": "SIM",
+    "button.Transfer": "Transfer",
+    "button.WipeDevice": "Wipe Device",
+    "button.Unlink": "Unlink",
+    "appfilter.SelectAll": "SELECT ALL",
+    "appfilter.ShowDevices": "Show Devices",
+    "appfilter.SearchDevices": "Search Devices",
+    "Dealer Top Bar": "----Dealer Top Bar----",
+    "appfilter.ShowDealer": "Show Dealer",
+    "appfilter.SearchDealer": "Search Dealer",
+    "tab.All": "All",
+    "tab.Active": "Active",
+    "tab.Expired": "Expired",
+    "tab.Trial": "Trial",
+    "tab.Suspended": "Suspended",
+    "tab.PreActivated": "Pre Activated",
+    "tab.PendingActivation": "Pending Activation",
+    "tab.Transfer": "Transferred",
+    "tab.Unlinked": "Unlinked",
+    "tab.Flagged": "Flagged",
+    "tab.ComingSoon": "Coming Soon",
+    "tab.Archived": "Archived",
+    "tableHeadings.DEVICEID": "DEVICE ID",
+    "tableHeadings.USERID": "USER ID",
+    "tableHeadings.STATUS": "STATUS",
+    "tableHeadings.MODE": "MODE",
+    "tableHeadings.FLAGGED": "FLAGGED",
+    "tableHeadings.DEVICENAME": "DEVICE NAME",
+    "tableHeadings.ACCOUNTEMAIL": "ACCOUNT EMAIL",
+    "tableHeadings.CLIENTID": "CLIENT ID",
+    "tableHeadings.ACTIVATIONCODE": "ACTIVATION CODE",
+    "tableHeadings.PGPEMAIL": "PGP EMAIL",
+    "tableHeadings.SIMID": "SIM ID",
+    "tableHeadings.CHATID": "CHAT ID",
+    "tableHeadings.DEALERID": "DEALER ID",
+    "tableHeadings.DEALERNAME": "DEALER NAME",
+    "tableHeadings.DEALERPIN": "DEALER PIN",
+    "tableHeadings.MACADDRESS": "MAC ADDRESS",
+    "tableHeadings.IMEI1": "IMEI1",
+    "tableHeadings.SIM1": "SIM1",
+    "tableHeadings.SIM2": "SIM2",
+    "tableHeadings.IMEI2": "IMEI2",
+    "tableHeadings.SERIALNUMBER": "SERIAL NUMBER",
+    "tableHeadings.MODEL": "MODEL",
+    "tableHeadings.S-DEALER": "S-DEALER",
+    "tableHeadings.S-DEALERNAME": "S-DEALER NAME",
+    "tableHeadings.STARTDATE": "START DATE",
+    "tableHeadings.EXPIRYDATE": "DEVICE EXPIRY DATE",
+    "DevicesConst.PGPEmail": " E-mail PGP",
+    "usersColHeading.Action": "Action",
+    "usersColHeading.USERID": "USER ID",
+    "usersColHeading.DEVICES": "DEVICES",
+    "usersColHeading.NAME": "NAME",
+    "usersColHeading.EMAIL": "EMAIL",
+    "usersColHeading.TOKENS": "TOKENS",
+    "usersColHeading.DATEREGISTERED": "DATE REGISTERED",
+    "app.userAuth": "User Auth",
+    "app.userAuth.login": "Login",
+    "app.userAuth.signIn": "Sign In",
+    "app.userAuth.send": "SEND",
+    "app.userAuth.bySigning": "By Signing Up, you can avail full features of our services.",
+    "app.userAuth.or": "or",
+    "app.userAuth.forgotPassword": "Forgot Password",
+    "app.userAuth.forgot": "Don't worry. Recovering the password is easy.Just tell us the email you have registered with jumbo",
+    "app.userAuth.signUp": "Sign Up",
+    "app.userAuth.getAccount": "Get an account !!!",
+    "app.userAuth.resetPassword": "Reset Password",
+    "app.userAuth.reset": "RESET",
+    "app.userAuth.lockScreen": "Lock Screen",
+    "app.userAuth.unLock": "UNLOCK",
+    "appModule.enterPasswordUnlock": "Enter your password to unlock the screen!",
+    "appModule.enterPasswordReset": "Enter a new password for your account",
+    "appModule.loginSuccessfully": "Login Successfully",
+    "appModule.password": "Password",
+    "appModule.email": "Email",
+    "appModule.name": "Name",
+    "appModule.phone": "Phone",
+    "appModule.designation": "Designation",
+    "appModule.regsiter": "Regsiter",
+    "appModule.regsiterNow": "Regsiter No",
+    "appModule.hvAccount": "Have an account",
+    "appModule.createAccount": "Create an account",
+    "appModule.termAndCondition": "Term & Condition",
+    "appModule.iAccept": "by signing up, I accept",
+    "sweetAlerts.basic": "Basic",
+    "sweetAlerts.description": "With Description",
+    "sweetAlerts.success": "Success",
+    "sweetAlerts.warning": "Warning",
+    "sweetAlerts.custom": "Custom",
+    "sweetAlerts.htmlTag": "Html Tag",
+    "sweetAlerts.prompt": "Prompt",
+    "sweetAlerts.itsBlue": "It's Green!",
+    "sweetAlerts.passwordPrompt": "Password Prompt",
+    "sweetAlerts.customStyle": "Custom Style",
+    "sweetAlerts.itPretty": "It's pretty, isn't it?",
+    "sweetAlerts.btnClicked": "You clicked the button!",
+    "sweetAlerts.youWillFind": "You will find they are up!",
+    "sweetAlerts.youWillNotAble": "You will not be able to recover this imaginary file!",
+    "sweetAlerts.hereIsaMessage": "Here's a message!",
+    "sweetAlerts.goodJob": "Good job!",
+    "sweetAlerts.yesDeleteIt": "Yes, delete it!",
+    "sweetAlerts.areYouSure": "Are you sure?",
+    "sweetAlerts.doYouLikeThumb": "Do you like thumbs?",
+    "sweetAlerts.anInput": "An input!",
+    "sweetAlerts.writeSomethingInteresting": "Write something interesting:",
+    "sweetAlerts.writeSomething": "Write something",
+    "sweetAlerts.youMustEnterPassword": "You must enter your password!",
+    "sweetAlerts.enterPassword": "Enter Password",
+    "extension.notification": "Notification",
+    "notification.infoMsg": "Info message",
+    "notification.successMessage": "Success message",
+    "notification.warningMessage": "Warning message",
+    "notification.closeAfter3000ms": "Close after 3000ms",
+    "notification.errorMessage": "Error message",
+    "notification.titleHere": "Title here",
+    "notification.clickMe": "Click me!",
+    "notification.info": "Info",
+    "notification.success": "Success",
+    "notification.warning": "Warning",
+    "notification.error": "Error",
+    "sidebar.editors": "Editors",
+    "sidebar.editors.CKEditor": "CKEditor",
+    "sidebar.editors.WYSISWYGEditor": "WYSISWYG Editor",
+    "picker.color.alpha": "Alpha Pickers",
+    "picker.color.hue": "Hue Pickers",
+    "picker.color.circle": "Circle Pickers",
+    "picker.color.compact": "Compact Pickers",
+    "picker.color.block": "Block Pickers",
+    "picker.color.chrome": "Chrome Pickers",
+    "picker.color.github": "Github Pickers",
+    "picker.color.twitter": "Twitter Pickers",
+    "picker.color.withRedux": "With Redux",
+    "picker.color.sketch": "Sketch Pickers",
+    "picker.color.material": "Material Pickers",
+    "picker.color.slider": "Slider Pickers",
+    "picker.color.basic": "Basic Pickers",
+    "picker.color.basicToggle": "Basic Toggle",
+    "picker.color.custom": "Custom Pickers",
+    "picker.color.customPointer": "Custom Pointer",
+    "picker.color.photoshop": "Photoshop Pickers",
+    "picker.color.swatches": "Swatches Pickers",
+    "picker.color.basicPositioning": "Basic Positioning",
+    "sidebar.social": "Social Apps",
+    "app.dt.01.id": "BYOD Launcher Apk, Tools, etc... can be found here",
+    "tableHeadings.IPAddress": "IP Address",
+    "show.on.device.id": "SHOW ON DEVICE",
+    "app.name.id": "APP NAME",
+    "app.logo.id": "APP LOGO",
+    "permission.id": "PERMISSION",
+    "action.id": "ACTION",
+    "apk.search.id": "Search APK",
+    "apk.upload.id": "Upload APK",
+    "permission.list.id": "Permission List",
+    "permission.add.modal.title.id": "Add Dealer to permissions list for this App",
+    "permission.remove.modal.title.id": "Remove Dealers from permissions list for this App",
+    "permission.add.except.selected.modal.title.id": "Add Except Dealers from permissions list for this App",
+    "app.manage.apks.id": "Manage APK's",
+    "app.manage.policy.id": "Manage Policy",
+    "app.secure.market.id": "Secure Market",
+    "app.download.tools": "Download Tools",
+    "ap.secure.panel.apk.id": "Secure Panel APK",
+    "app.md.01.id": "Manage apk's",
+    "appfilter.Display": "Display",
+    "appfilter.SearchUser": "Search",
+    "appfilter.SearchManageData": "Search",
+    "button.buy.id": "Buy",
+    "button.set.prices.id": "Set Price",
+    "button.set.id": "SET",
+    "button.unset.id": "UNSET",
+    "button.download.id": "Download",
+    "switch.button.uninstall.id": "Uninstall",
+    "button.save.changes": "Save Changes",
+    "button.Remove": "Remove",
+    "button.DeleteExceptSelected": "Delete Except Selected",
+    "button.add.user": "Add User",
+    "application.permission.id": "Application Permission",
+    "secure.settings.permission.id": "Secure Settings Permission",
+    "system.permission.id": "System Permission",
+    "manage.passwords.id": "Manage Passwords",
+    "policy.details.id": "Policy Details",
+    "1.month.id": "1 month",
+    "3.month.id": "3 month",
+    "6.month.id": "6 month",
+    "12.month.id": "12 month",
+    "search.id": "Search",
+    "modal.text": "Model",
+    "start.date": "Start Date",
+    "expire.date": "Expire Date",
+    "expire.date.require": "Expiry Date is Required !",
+    "days.id": "Days",
+    "user.name.require": "Name is Required",
+    "only.alpha.numeric.id": "Please insert only alphabets and numbers",
+    "not.valid.email.id": "The input is not valid E-mail!",
+    "require.email.id": "Email is Required !",
+    "email.id": "E-mail",
+    "name.id": "Name",
+    "value.id": "Value",
+    "login.email.id": "Login Email",
+    "devices.id": "DEVICES",
+    "profile.info.id": "Profile Info",
+    "change.profile.id": "Change Profile",
+    "edit.profile.id": "Edit Profile",
+    "edit.profile.01.id": "Change password",
+    "edit.profile.02.id": "Change Email",
+    "edit.profile.03.id": "Enable Dual Authentication",
+    "change.password.id": "Change Password",
+    "change.email.id": "Change Email",
+    "login.email.authentication": "Login Email Authentication",
+    "date.text.id": "Date",
+    "themes.and.colors": "Themes and Colors",
+    "theme.list.01.id": "Edit Themes for the panel",
+    "theme.list.02.id": "Edit the color Schemes for the panel",
+    "theme.id": "Theme",
+    "lite.id": "Lite",
+    "semi.dark.id": "Semi Dark",
+    "dark.id": "Dark",
+    "colors.id": "Colors",
+    "preset.color.pallets.id": "Preset Color Pallets",
+    "customize.id": "Customize",
+    "reset.theme.id": "Reset Theme",
+    "nav.style.id": " Nav Style",
+    "dealer.id": "DEALER ID",
+    "dealer.name.id": "DEALER NAME",
+    "dealer.email.id": "DEALER EMAIL",
+    "dealer.pin.id": "DEALER PIN",
+    "devices": "DEVICES",
+    "tokens.id": "TOKENS",
+    "parent.dealer.id": "PARENT DEALER",
+    "login.histoy.id": "Login History",
+    "required.fields.id": "Required Fields",
+    "tableHeadings.Select.SIMID": "Select Sim ID",
+    "tableHeadings.Select.CHATID": "Select Chat ID",
+    "device.note.id": "Note",
+    "device.valid.for.id": "VALID FOR(DAYS)",
+    "device.valid.days.required.id": "Valid days required",
+    "label.id": "LABEL",
+    "chat.id.id": "CHAT ID",
+    "sim.id.id": "SIM ID",
+    "pgp.email.id": "PGP EMAIL",
+    "vpn.id": "VPN",
+    "created.at.id": "CREATED AT",
+    "sim.id": "SIM",
+    "chat.id": "CHAT",
+    "pgp.id": "PGP",
+    "policy.action.id": "ACTION",
+    "policy.default.id": "DEFAULT",
+    "policy.name.id": "POLICY NAME",
+    "policy.app.name.id": "APP NAME",
+    "policy.status.id": "STATUS",
+    "policy.permissions.id": "PERMISSIONS",
+    "policy.command.id": "POLICY COMMAND",
+    "policy.info.id": "POLICY INFO",
+    "policy.note.id": "POLICY NOTE",
+    "policy.save.changes.id": "Save changes to Policy?",
+    "policy.search.id": "Search Policy",
+    "policy.add.id": "Add Policy",
+    "policy.edit.id": "Edit Policy",
+    "policy.save.confirmation.id": "Are You Sure, You Want to Save Changes",
+    "policy.delete.confirmation.id": "Do you want to delete this Policy?",
+    "policy.change.default.confirmation.id": "Do you want to change your default Policy?",
+    "tab.used": "Used",
+    "tab.unused": "Unused",
+    "tab.id.prices.id": "ID Prices",
+    "tab.packages.id": "Packages",
+    "tab.set.id.prices.id": "Set ID Prices",
+    "tab.set.packages.prices.id": "Set Packages Price",
+    "tab.policy.selected.apps.id": "Selected Apps",
+    "tab.policy.detail.id": "Policy Detai",
+    "tab.policy.dealer.permissions.id": "Dealer PERMISSIONS",
+    "guest.id": "GUEST",
+    "encrypted.id": "ENCRYPTED",
+    "enable.id": "ENABLE",
+    "manage.data.id": "Manage Data",
+    "backup_database.id": "Backup Database",
+    "purchase.credits.id": "Purchase Credits",
+    "packages.and.ids.id": "Packages and ID's",
+    "package.name.id": "PACKAGE NAME",
+    "package.term.id": "PACKAGE TERM",
+    "package.services.id": "PACKAGE SERVICES",
+    "package.price.id": "PACKAGE PRICE",
+    "packege.expiry.id": "PACKAGE EXPIRY",
+    "package.search.id": "Search",
+    "package.service.name.id": "SERVICE NAME",
+    "package.included.id": "INCLUDED",
+    "price.term.id": "PRICE TERM",
+    "unit.price.id": "UNIT PRICE",
+    "select.price.id": "SELECT PRICE",
+    "price.id": "PRICE",
+    "tableHeadings.REMAININGDAYS": "VALID DAYS",
+    "appfilter.export": "Export",
+    "account.manage.data.01.id": "Manage data such as SIM ID, <br style={{ marginLeft: 4 }} />CHAT ID, PGP Email, etc..",
+    "account.manage.data.02.id": "View/Edit your data",
+    "account.manage.data.03.id": "Release previously used data back to system",
+    "upload.file.id": "UPLOAD FILE",
+    "upload.file.extension.id": ".xls, .xlsx, .csv",
+    "backup_database.description.id": "This feature allows you to keep a backup of the complete system database for offline safekeeping",
+    "purchase.credits.description.id": "Buy more Credits instantly with Bitcoin or Credit card and check out using our secure payment gateway.",
+    "packages.and.ids.01.id": "Distribute tokens",
+    "packages.and.ids.02.id": "Set prices and delay for each token",
+    "packages.and.ids.03.id": "Set permissions for Tokens",
+    "parent.dealer.id.id": "PARENT DEALER ID",
+    "button.add.s.dealer": "Add S-Dealer",
+    "button.add.dealer": "Add Dealer",
+    "spa.apps.id": "Apps",
+    "push.apps.id": "PUSH APPS",
+    "alert.change.language.id": "Are you sure you want to change the language?",
+    "button.Yess": "Oui",
+    "button.Noo": "Non",
+    "dealer.already.registered.id": "Dealer Already Registered. Please use another email.",
+    "email.not.sent.id": "Email could not sent due to error:",
+    "dealer.register.succ.id": "Dealer has been registered successfully",
+    "dealer.not.added.id": "Dealer could not be added",
+    "email.already.use.other.dealer.id": "Email is already in use of other dealer",
+    "record.updated.succ.email.not.send.id": "Record updated successfully. Email not sent",
+    "record.updated.succ.email.send.id": "Record updated successfully. Email has been sent.",
+    "dealer.delete.succ.id": "Dealer deleted successfully.",
+    "invalid.dealer.id": "Invalid Dealer.",
+    "dealer.added.again.id": "Dealer added again.",
+    "dealer.suspended.succ.id": "Dealer suspended successfully.",
+    "dealer.not.suspend.id": "Dealer not suspended.",
+    "dealer.not.activated.id": "Dealer not activated.",
+    "dealer.activated.succ.id": "Dealer activated successfully.",
+    "failed.auth.token.id": "Failed to authenticate token.",
+    "no.token.provide.id": "No token provided.",
+    "dual.auth.succ.enabled.id": "Dual Authentication is Successfully enabled",
+    "dual.auth.succ.disabled.id": "Dual Authentication is Successfully disabled",
+    "dual.auth.not.enabled.id": "Dual Authentication could not be enabled",
+    "user.already.registered.id": "User Already Registered. Please use another email.",
+    "user.registered.succ.id": "User has been registered successfully.",
+    "user.info.changed.succ.id": "User Info has been changed successfully.",
+    "user.deleted.succ.id": "User deleted successfully.",
+    "user.not.deleted.succ.id": "User not deleted successfully.",
+    "user.added.again.id": "User added again successfully.",
+    "user.not.added.id": "User not added try again later.",
+    "error.upload.profile.id": "Error While Updating Profile",
+    "profile.uploaded.succ.id": "Profile Updated Successfully",
+    "pass.change.succ.id": "Password changed successfully.Please check your email.",
+    "profile.save.succ.id": "Profile Saved Successfully",
+    "Profile.Name.is.already.Exist.id": "Profile Name is already Exist",
+    "Profile.Applied.Successfully.id": "Profile Applied Successfully",
+    "Settings.Applied.Successfully.id": "Settings Applied Successfully",
+    "Inserted.Successfully.id": "Inserted Successfully",
+    "no.data.to.import.id": "no data to import",
+    "access.forbidden.id": "access forbidden",
+    "CSV.Released.Successfully.id": "CSV Released Successfully.",
+    "CSV.Not.Released.id": "CSV Not Released.",
+    "App.Uploaded.Successfully.id": "Success: App Uploaded Successfully",
+    "Unable.to.read.APP.properties.id": "Error! Unable to read APP properties",
+    "App.logo.Uploaded.Successfully.id": "Success! App logo Uploaded Successfully.",
+    "Unauthorized.file.uploading.attempt.id": "Unauthorized file uploading attempt",
+    "Uploaded.file.is.corrupt.id": "Uploaded file is corrupt",
+    "Not.allowed.to.make.request.id": "Not allowed to make request.",
+    "Request.submitted.successfully.id": "Request submitted successfully",
+    "Request.not.submitted.successfully.id": "Request not submitted successfully",
+    "Apk.is.uploaded.id": "APK is uploaded",
+    "Apk.not.deleted.id": "Apk not deleted",
+    "Apk.deleted.successfully.id": "Apk deleted successfully",
+    "Status.Updated.id": "Status Updated",
+    "Status.not.Updated.id": "Status Not Updated",
+    "Permission.saved.successfully.id": "Permission saved successfully",
+    "Permission.couldnt.be.saved.id": "Permission couldn't be saved",
+    "Permission.Removed.successfully.id": "Permission Removed successfully",
+    "Uninstall.permission.changed.id": "Uninstall permission changed",
+    "Uninstall.permission.not.changed.id": "Uninstall permission not changed",
+    "Apps.Transfered.Sussecfully.id": "Apps Transfered Sussecfully",
+    "Invalid.IMEI.number.id": "Invalid IMEI number, please make sure you are using a valid IMEI number and try again",
+    "Default.policy.changed.successfully.id": "Default policy changed successfully",
+    "force.update.has.been.applied.id": "force update has been applied",
+    "force.update.will.apply.id": "force update will apply when device will come online",
+    "Payment.has.been.done.id": "Payment has been done",
+    "Prices.Set.Successfully.id": "Prices Set Successfully",
+    "Package.Saved.Successfully.id": "Package Saved Successfully",
+    "Language.changed.Successfully.id": "Language changed Successfully",
+    "Invalid.dealer_id.id": "Invalid dealer_id",
+    "Credits.added.successfully.id": "Credits added successfully",
+    "Credits.not.updated.id": "Credits not updated please try again",
+    "credits.not.enough.accept.request.id": "Your credits are not enough to accept a request",
+    "Request.deleted.successfully.id": "Request deleted successfully",
+    "Request.not.deleted.id": "Request not deleted please try again",
+    "Request.is.already.deleted.id": "Request is already deleted",
+    "invalid.user.id": "Invalid User.",
+    "invalid.user.and.pass.id": "Invalid User and Password.",
+    "pre_activation.added.succ.email.send.id": "Pre-activations added succcessfully. Email sent to your account.",
+    "pre_activation.succ.add.id": "Pre-activation added succcessfully.",
+    "device.not.added.id": "Device couldn't added",
+    "record.transfer.succ.id": "Record Transfered Successfully. ",
+    "error.while.transfering.id": "Error While Transfere.",
+    "pgp.email.already.taken.id": "PGP email already taken",
+    "device.not.unlinked.id": "Device not unlinked.",
+    "device.unlinked.succ.id": "Device unlinked successfully.",
+    "account.not.suspended.id": "Account not suspended.Please try again.",
+    "account.suspend.succ.id": "Account suspended successfully.",
+    "cant.suspend.account.expired.id": "Can't suspend !!! Account Already Expired.",
+    "device.not.activate.id": "Device not activated.Please try again.",
+    "device.activated.succ.id": "Device activated successfully.",
+    "device.not.activated.expired.id": "Device cannnot be activated.It is expired already.",
+    "device.not.wipe.id": "Device not wiped.Please try again.",
+    "device.wipe.succ.id": "Device Wiped successfully.",
+    "device.not.unflaged.id": "Device not Unflagged. Please try again.",
+    "device.unflag.succ.id": "Device Unflagged successfully.",
+    "device.not.flaged.id": "Device not Flagged. Please try again.",
+    "device.flag.succ.id": "Device Flagged successfully.",
+    "device.already.flaged.id": "Device Already Flagged",
+    "device.sync.succ.id": "device synced successfully",
+    "items.added.id": "Items Added.",
+    "items.updated.id": "Items Updated.",
+    "items.not.updated.id": "Items Not Updated.",
+    "policy.update.succ.id": "Policy Updated Successfully",
+    "policy.name.already.taken.id": "Policy name has already been taken",
+    "policy.save.succ.id": "Policy Saved Successfully",
+    "policy.not.save.id": "Policy Couldn't be saved",
+    "invalid.deviceID.id": "Invalid device id.",
+    "invalid.device.id": "Invalid device.",
+    "device.not.found.id": "No Device found",
+    "device.deleted.succ.id": "Device deleted successfully.",
+    "device.not.delete.id": "Device not deleted.",
+    "invalid.email.or.name.id": "Invalid email or name",
+    "record.not.updated.id": "Record not updated.",
+    "enter.valid.detail.id": "Please enter valid details",
+    "record.not.delete.id": "Record not deleted.",
+    "record.updated.succ.id": "Record updated successfully.",
+    "no.detail.found.id": "No details found",
+    "successful.id": "successful",
+    "error.id": "error",
+    "Error.While.Uploading.id": "Error While Uploading",
+    "error.while.processing.id": "Error while Processing",
+    "not.deleted.id": "Not Deleted, Try Again!",
+    "no.data.found.id": "No data found ",
+    "data.found.id": "Data found ",
+    "file.not.found.id": "file not found",
+    "Invalid.Data.id": "Invalid Data",
+    "apk.upload.file.id": "Upload APK FILE",
+    "apk.upload.icon.id": "Upload ICON",
+    "insert.valid.dealer.name.id": "Please Insert dealer Name",
+    "edit.dealer.id": "Edit Dealer",
+    "account.email.id": "Account Email",
+    "select.id": "Select",
+    "select.dealer.id": "Select Dealer ",
+    "alert.allow.permission.dealer.id": "Do you realy Want to allow Permission for all Dealers?",
+    "alert.remove.permission.dealer.id": "Do you realy Want to Remove Permission for all Dealers?",
+    "alert.delete.apk.id": "Are you sure, you want to delete the Apk ?",
+    "edit.user.id": "Edit User",
+    "DELETE.USER.id": "DELETE USER",
+    "Do.you.want.to.DELETE.user.id": "Do you want to DELETE user ",
+    "Do.you.want.to.UNDO.user.id": "Do you want to UNDELETE user ",
+    "Extension.NAME.id": "Extension NAME",
+    "History.Date.id": "History Date",
+    "User.does.not.exist.id": "User does not exist",
+    "Your.account.is.suspended.id": "Your account is suspended",
+    "Your.account.is.Deleted.id": "Your account is Deleted",
+    "Verification.Code.sent.to.Your.Email.id": "Verification Code sent to Your Email",
+    "User.loged.in.Successfully.id": "User loged in Successfully",
+    "invalid.verification.code.id": "Invalid verification code",
+    "New.Device.Not.Added.id": "New Device Not Added Please try Again",
+    "Uploaded.Successfully.id": "Uploaded Successfully ",
+    "button.back.id": "Back",
+    "download.tools.modal.body.7.id": "Neutral Launcher (BYOD7)  <b>(Android v7)</b>",
+    "Are.you.sure.you.want.to.logout.id": "Are you sure you want to logout?",
+    "model.text": "Model",
+    "tableHeadings.TYPE": "Type",
+    "tableHeadings.VERSION": "Version",
+    "apk.size.id": "APK SIZE",
+    "apk.id": "APK",
+    "pre.activated.tab.extra.id": "PRE-ACTIVATED TAB",
+    "tableHeadings.TRANSFERED": "TRANSFERED TO",
+    "tableHeadings.lastOnline": "Last Online"
+}

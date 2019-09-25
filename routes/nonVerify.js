@@ -527,30 +527,36 @@ router.get("/getFile/:file", async function (req, res) {
 
 router.get('/languages', languageController.languages)
 
-router.get('/create_lng_file', async function (req, res) {
-    sql.query("SELECT * FROM languages", async function (err, data) {
-        if (data.length) {
-            // console.log(data);
-            if (!fs.existsSync(path.join(__dirname, "../languages"))) {
-                fs.mkdirSync(path.join(__dirname, "../languages"));
-            }
-            for (var i = 0; i < data.length; i++) {
-                let language_data = await sql.query("SELECT key_id,key_value FROM lng_translations WHERE lng_id = " + data[i].id)
-                if (language_data.length) {
-                    let jsonData = JSON.stringify(language_data)
-                    fileName = data[i].locale + ".json"
-                    let target_path = path.join(__dirname, "../languages/" + fileName);
-                    fs.writeFile(target_path, jsonData, 'utf8', function (err, res) {
-                        if (err) {
-                            console.log(err);
-                        }
-                    });
-                }
-            }
-            res.send("FILE CREATED")
-        }
-    })
-})
+// router.get('/create_lng_file', async function (req, res) {
+//     sql.query("SELECT * FROM languages", async function (err, data) {
+//         if (data.length) {
+//             // console.log(data);
+//             if (!fs.existsSync(path.join(__dirname, "../languages"))) {
+//                 fs.mkdirSync(path.join(__dirname, "../languages"));
+//             }
+//             for (var i = 0; i < data.length; i++) {
+//                 let language_data = await sql.query("SELECT key_id,key_value FROM lng_translations WHERE lng_id = " + data[i].id)
+//                 if (language_data.length) {
+//                     let lan_obj = {}
+//                     language_data.forEach((elem) => {
+//                         let key_id = elem.key_id;
+//                         lan_obj[key_id] = elem.key_value
+//                     })
+//                     let jsonData = JSON.stringify(lan_obj)
+//                     fileName = data[i].locale + ".json"
+//                     let target_path = path.join(__dirname, "../languages/" + fileName);
+//                     fs.writeFile(target_path, jsonData, 'utf8', function (err, res) {
+//                         if (err) {
+//                             console.log(err);
+//                         }
+//                     });
+//                 }
+//             }
+
+//             res.send("FILE CREATED")
+//         }
+//     })
+// })
 
 
 
