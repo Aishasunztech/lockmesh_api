@@ -739,7 +739,7 @@ exports.editDevices = async function (req, res) {
                                     "YYYY/MM/DD"
                                 );
                                 // console.log(currentDate, expiry_date);
-                                if (currentDate < expiry_date) {
+                                if (currentDate < expiry_date && finalStatus === constants.DEVICE_EXPIRED) {
                                     // console.log(device);
                                     sockets.sendDeviceStatus(
                                         device_id,
@@ -747,6 +747,7 @@ exports.editDevices = async function (req, res) {
                                         true
                                     );
                                     status = "active";
+                                    
                                 }
                             } else {
                                 if (finalStatus === constants.DEVICE_TRIAL) {
@@ -2962,7 +2963,7 @@ exports.getAppsOfDevice = async function (req, res) {
 
                         if (app.extension == 0 || (app.extension === 1 && app.extension_id == 0)) {
                             onlyApps.push(app);
-                            if(app.extension === 1 && app.extension_id == 0){
+                            if (app.extension === 1 && app.extension_id == 0) {
                                 mainExtensions.push(app);
                             }
                         }
@@ -2972,15 +2973,15 @@ exports.getAppsOfDevice = async function (req, res) {
 
                         if (app.extension === 1 && app.extension_id !== 0) {
                             let ext = mainExtensions.find(mainExtension => mainExtension.app_id === app.extension_id);
-                            if(ext){
-                                app.uniqueName= ext.uniqueName,
-                                app.uniqueExtension= app.uniqueName,
-                                
-                                extensions.push(app);
+                            if (ext) {
+                                app.uniqueName = ext.uniqueName,
+                                    app.uniqueExtension = app.uniqueName,
+
+                                    extensions.push(app);
                             }
                         }
                     }
-                    
+
                     var systemPermissionQ = `SELECT * from user_app_permissions WHERE device_id ='${req.params.device_id}' LIMIT 1`;
                     //
                     sql.query(systemPermissionQ, async (error, controls) => {
@@ -2988,7 +2989,7 @@ exports.getAppsOfDevice = async function (req, res) {
                             console.log("Error:", error);
 
                         }
-                        
+
                         let cntrls = []
                         if (controls.length > 0) {
                             cntrls = JSON.parse(controls[0].permissions);
