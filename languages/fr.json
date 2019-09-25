@@ -1,0 +1,2574 @@
+[
+    {
+        "key_id": "tableHeadings.IPAddress",
+        "key_value": " Adresse IP"
+    },
+    {
+        "key_id": "app.announced",
+        "key_value": "Une nouvelle version sortira le 25 décembre. Restez à l'écoute!"
+    },
+    {
+        "key_id": "sidebar.main",
+        "key_value": "Principale"
+    },
+    {
+        "key_id": "sidebar.devices",
+        "key_value": "Dispositifs"
+    },
+    {
+        "key_id": "sidebar.users",
+        "key_value": "Utilisateurs"
+    },
+    {
+        "key_id": "sidebar.dealers",
+        "key_value": "Revendeur"
+    },
+    {
+        "key_id": "sidebar.sdealers",
+        "key_value": "S-Revendeur"
+    },
+    {
+        "key_id": "sidebar.app",
+        "key_value": "App"
+    },
+    {
+        "key_id": "sidebar.policy",
+        "key_value": "Politique"
+    },
+    {
+        "key_id": "sidebar.account",
+        "key_value": "Compte"
+    },
+    {
+        "key_id": "sidebar.settings",
+        "key_value": "Paramètres"
+    },
+    {
+        "key_id": "sidebar.logout",
+        "key_value": "Déconnexion"
+    },
+    {
+        "key_id": "button.Modify",
+        "key_value": "Modifier"
+    },
+    {
+        "key_id": "button.Delete",
+        "key_value": "Effacer"
+    },
+    {
+        "key_id": "button.Activate",
+        "key_value": "Activer"
+    },
+    {
+        "key_id": "button.Connect",
+        "key_value": "Connecter"
+    },
+    {
+        "key_id": "button.Yes",
+        "key_value": "Oui"
+    },
+    {
+        "key_id": "button.No",
+        "key_value": "Non"
+    },
+    {
+        "key_id": "button.ok",
+        "key_value": "OK"
+    },
+    {
+        "key_id": "button.Cancel",
+        "key_value": "Annuler"
+    },
+    {
+        "key_id": "button.Suspend",
+        "key_value": "Suspendre"
+    },
+    {
+        "key_id": "button.Edit",
+        "key_value": "Modifier"
+    },
+    {
+        "key_id": "button.passwordreset",
+        "key_value": "Réinitialiser le mot de passe"
+    },
+    {
+        "key_id": "button.submit",
+        "key_value": "Soumettre"
+    },
+    {
+        "key_id": "button.Flag",
+        "key_value": "Drapeau"
+    },
+    {
+        "key_id": "button.UNFLAG",
+        "key_value": "Restaurer"
+    },
+    {
+        "key_id": "button.SetPassword",
+        "key_value": "Définir le mot de passe"
+    },
+    {
+        "key_id": "button.Apply",
+        "key_value": "Appliquer"
+    },
+    {
+        "key_id": "button.Undo",
+        "key_value": "Ramener"
+    },
+    {
+        "key_id": "button.Redo",
+        "key_value": "Refaire"
+    },
+    {
+        "key_id": "button.Clear",
+        "key_value": "Annuler"
+    },
+    {
+        "key_id": "button.Refresh",
+        "key_value": "Rafraîchir"
+    },
+    {
+        "key_id": "button.Next",
+        "key_value": "Suivant"
+    },
+    {
+        "key_id": "button.previous",
+        "key_value": "Précédent"
+    },
+    {
+        "key_id": "button.AddDealer",
+        "key_value": "Ajouter Revendeur"
+    },
+    {
+        "key_id": "button.AddS-dealer",
+        "key_value": "Ajouter S-Revendeur"
+    },
+    {
+        "key_id": "button.UploadApk",
+        "key_value": "Télécharger Apk"
+    },
+    {
+        "key_id": "button.Save",
+        "key_value": "Sauvegarder"
+    },
+    {
+        "key_id": "button.Update",
+        "key_value": "Mettre à jour"
+    },
+    {
+        "key_id": "button.Open",
+        "key_value": "Ouvrir"
+    },
+    {
+        "key_id": "button.Sample",
+        "key_value": "Échantillon"
+    },
+    {
+        "key_id": "button.Import",
+        "key_value": "Import"
+    },
+    {
+        "key_id": "button.Export",
+        "key_value": "Export"
+    },
+    {
+        "key_id": "button.Release",
+        "key_value": "Libérer"
+    },
+    {
+        "key_id": "button.View",
+        "key_value": "Voir"
+    },
+    {
+        "key_id": "button.ChangePassword",
+        "key_value": "Changer le mot de passe"
+    },
+    {
+        "key_id": "button.ChangeEmail",
+        "key_value": "Changer Email"
+    },
+    {
+        "key_id": "button.AddPolicy",
+        "key_value": "Ajouter Politique"
+    },
+    {
+        "key_id": "button.Add",
+        "key_value": "Ajouter"
+    },
+    {
+        "key_id": "button.AddExceptSelected",
+        "key_value": "Ajouter sauf sélectionné"
+    },
+    {
+        "key_id": "button.AddAll",
+        "key_value": "Tout ajouter"
+    },
+    {
+        "key_id": "button.RemoveAll",
+        "key_value": "Enlever tout"
+    },
+    {
+        "key_id": "button.RemoveExcept",
+        "key_value": "Supprimer sauf"
+    },
+    {
+        "key_id": "button.BackupNow",
+        "key_value": "Sauvegarder maintenant"
+    },
+    {
+        "key_id": "button.DeleteUser",
+        "key_value": "Supprimer L'utilisateur"
+    },
+    {
+        "key_id": "button.AddApps",
+        "key_value": "Ajouter Applications"
+    },
+    {
+        "key_id": "button.Push",
+        "key_value": "Pousser"
+    },
+    {
+        "key_id": "button.LoadProfile",
+        "key_value": "Charger le profil"
+    },
+    {
+        "key_id": "button.LoadPolicy",
+        "key_value": "Appliquer politique"
+    },
+    {
+        "key_id": "button.IMEI",
+        "key_value": "IMEI"
+    },
+    {
+        "key_id": "button.Pull",
+        "key_value": "Tirer"
+    },
+    {
+        "key_id": "button.SaveProfile",
+        "key_value": "Enregistrer le profil"
+    },
+    {
+        "key_id": "button.Activity",
+        "key_value": "Activité"
+    },
+    {
+        "key_id": "button.SIM",
+        "key_value": "SIM"
+    },
+    {
+        "key_id": "button.Transfer",
+        "key_value": "Transfert"
+    },
+    {
+        "key_id": "button.WipeDevice",
+        "key_value": "Essuyer le périphérique"
+    },
+    {
+        "key_id": "button.Unlink",
+        "key_value": "Dissocier"
+    },
+    {
+        "key_id": "Devices Top Bar",
+        "key_value": "----Devices Top Bar----"
+    },
+    {
+        "key_id": "appfilter.SelectAll",
+        "key_value": "Tout sélectionner"
+    },
+    {
+        "key_id": "appfilter.ShowDevices",
+        "key_value": "Afficher les périphériques"
+    },
+    {
+        "key_id": "appfilter.SearchDevices",
+        "key_value": "Cherche Périphériques"
+    },
+    {
+        "key_id": "appfilter.ShowDealer",
+        "key_value": "Montrer Revendeur"
+    },
+    {
+        "key_id": "appfilter.SearchDealer",
+        "key_value": "Rechercher Revendeur"
+    },
+    {
+        "key_id": "tab.All",
+        "key_value": "Tout"
+    },
+    {
+        "key_id": "tab.Active",
+        "key_value": "Actif"
+    },
+    {
+        "key_id": "tab.Expired",
+        "key_value": "Expiré"
+    },
+    {
+        "key_id": "tab.Trial",
+        "key_value": "Demo"
+    },
+    {
+        "key_id": "tab.Suspended",
+        "key_value": "Suspendu"
+    },
+    {
+        "key_id": "tab.PreActivated",
+        "key_value": "Pré activé"
+    },
+    {
+        "key_id": "tab.PendingActivation",
+        "key_value": "En Attente"
+    },
+    {
+        "key_id": "tab.Transfer",
+        "key_value": "Transféré"
+    },
+    {
+        "key_id": "tab.Unlinked",
+        "key_value": "Non Lié"
+    },
+    {
+        "key_id": "tab.Flagged",
+        "key_value": "Marqué"
+    },
+    {
+        "key_id": "tab.ComingSoon",
+        "key_value": "Coming Soono"
+    },
+    {
+        "key_id": "tab.Archived",
+        "key_value": "Archivé"
+    },
+    {
+        "key_id": "tableHeadings.DEVICEID",
+        "key_value": "DEVICE ID"
+    },
+    {
+        "key_id": "tableHeadings.USERID",
+        "key_value": "UTILISATEUR ID"
+    },
+    {
+        "key_id": "tableHeadings.STATUS",
+        "key_value": "STATUT"
+    },
+    {
+        "key_id": "tableHeadings.MODE",
+        "key_value": "MODE"
+    },
+    {
+        "key_id": "tableHeadings.FLAGGED",
+        "key_value": "Marqué"
+    },
+    {
+        "key_id": "tableHeadings.DEVICENAME",
+        "key_value": "NOM DE L'APPAREIL"
+    },
+    {
+        "key_id": "tableHeadings.ACCOUNTEMAIL",
+        "key_value": "COMPTE EMAIL"
+    },
+    {
+        "key_id": "tableHeadings.CLIENTID",
+        "key_value": "MODE"
+    },
+    {
+        "key_id": "tableHeadings.ACTIVATIONCODE",
+        "key_value": "CODE D'ACTIVATION"
+    },
+    {
+        "key_id": "tableHeadings.PGPEMAIL",
+        "key_value": "E-mail PGP"
+    },
+    {
+        "key_id": "tableHeadings.SIMID",
+        "key_value": "SIM ID"
+    },
+    {
+        "key_id": "tableHeadings.CHATID",
+        "key_value": "CHAT ID"
+    },
+    {
+        "key_id": "tableHeadings.DEALERID",
+        "key_value": "REVENDEUR ID"
+    },
+    {
+        "key_id": "tableHeadings.DEALERNAME",
+        "key_value": "NOM DU REVENDEUR"
+    },
+    {
+        "key_id": "tableHeadings.DEALERPIN",
+        "key_value": "CODE REVENDEUR"
+    },
+    {
+        "key_id": "tableHeadings.MACADDRESS",
+        "key_value": "ADRESSE MAC"
+    },
+    {
+        "key_id": "tableHeadings.IMEI1",
+        "key_value": "IMEI1"
+    },
+    {
+        "key_id": "tableHeadings.SIM1",
+        "key_value": "SIM1"
+    },
+    {
+        "key_id": "tableHeadings.SIM2",
+        "key_value": "SIM2"
+    },
+    {
+        "key_id": "tableHeadings.IMEI2",
+        "key_value": "IMEI2"
+    },
+    {
+        "key_id": "tableHeadings.SERIALNUMBER",
+        "key_value": "NUMÉRO DE SÉRIE"
+    },
+    {
+        "key_id": "tableHeadings.MODEL",
+        "key_value": "MODÈLE"
+    },
+    {
+        "key_id": "tableHeadings.S-DEALER",
+        "key_value": "S-Revendeur"
+    },
+    {
+        "key_id": "tableHeadings.S-DEALERNAME",
+        "key_value": "NOM S-REVENDEUR"
+    },
+    {
+        "key_id": "tableHeadings.STARTDATE",
+        "key_value": "DATE DÉBUT"
+    },
+    {
+        "key_id": "tableHeadings.EXPIRYDATE",
+        "key_value": "DATE D'EXPIRATION DE L'APPAREIL"
+    },
+    {
+        "key_id": "DevicesConst.PGPEmail",
+        "key_value": " E-mail PGP"
+    },
+    {
+        "key_id": "DevicesConst.IPAddress",
+        "key_value": " Adresse IP"
+    },
+    {
+        "key_id": "usersColHeading.Action",
+        "key_value": "ACTION"
+    },
+    {
+        "key_id": "usersColHeading.USERID",
+        "key_value": "UTILISATEUR ID"
+    },
+    {
+        "key_id": "usersColHeading.DEVICES",
+        "key_value": ""
+    },
+    {
+        "key_id": "usersColHeading.NAME",
+        "key_value": "PRÉNOM"
+    },
+    {
+        "key_id": "usersColHeading.EMAIL",
+        "key_value": "E-MAIL"
+    },
+    {
+        "key_id": "usersColHeading.TOKENS",
+        "key_value": "JETONS"
+    },
+    {
+        "key_id": "usersColHeading.DATEREGISTERED",
+        "key_value": "DATE INSCRITE"
+    },
+    {
+        "key_id": "app.userAuth",
+        "key_value": "Authentification utilisateur"
+    },
+    {
+        "key_id": "app.userAuth.login",
+        "key_value": "S'identifier"
+    },
+    {
+        "key_id": "app.userAuth.signIn",
+        "key_value": "Se connecter"
+    },
+    {
+        "key_id": "app.userAuth.send",
+        "key_value": "ENVOYER"
+    },
+    {
+        "key_id": "app.userAuth.bySigning",
+        "key_value": "En vous inscrivant, vous pouvez profiter des caractéristiques complètes de nos services."
+    },
+    {
+        "key_id": "app.userAuth.or",
+        "key_value": "ou"
+    },
+    {
+        "key_id": "app.userAuth.forgotPassword",
+        "key_value": "Mot de passe oublié"
+    },
+    {
+        "key_id": "app.userAuth.forgot",
+        "key_value": "Ne t'inquiète pas. Récupérer le mot de passe est facile. Dites-nous simplement l'email que vous avez enregistré avec jumbo"
+    },
+    {
+        "key_id": "app.userAuth.signUp",
+        "key_value": "S'inscrire"
+    },
+    {
+        "key_id": "app.userAuth.getAccount",
+        "key_value": "Avoir un compte !!!"
+    },
+    {
+        "key_id": "app.userAuth.resetPassword",
+        "key_value": "réinitialiser le mot de passe"
+    },
+    {
+        "key_id": "app.userAuth.reset",
+        "key_value": "RÉINITIALISER"
+    },
+    {
+        "key_id": "app.userAuth.lockScreen",
+        "key_value": "Écran verrouillé"
+    },
+    {
+        "key_id": "app.userAuth.unLock",
+        "key_value": "OUVRIR"
+    },
+    {
+        "key_id": "appModule.enterPasswordUnlock",
+        "key_value": "Entrez votre mot de passe pour déverrouiller l'écran!"
+    },
+    {
+        "key_id": "appModule.enterPasswordReset",
+        "key_value": "Entrez un nouveau mot de passe pour votre compte"
+    },
+    {
+        "key_id": "appModule.loginSuccessfully",
+        "key_value": "Connectez-vous avec succès"
+    },
+    {
+        "key_id": "appModule.password",
+        "key_value": "Mot de passe"
+    },
+    {
+        "key_id": "appModule.email",
+        "key_value": "Email"
+    },
+    {
+        "key_id": "appModule.name",
+        "key_value": "prénom"
+    },
+    {
+        "key_id": "appModule.phone",
+        "key_value": "Téléphone"
+    },
+    {
+        "key_id": "appModule.designation",
+        "key_value": "La désignation"
+    },
+    {
+        "key_id": "appModule.regsiter",
+        "key_value": "registre"
+    },
+    {
+        "key_id": "appModule.regsiterNow",
+        "key_value": "Inscrivez-vous Non"
+    },
+    {
+        "key_id": "appModule.hvAccount",
+        "key_value": "Avoir un compte"
+    },
+    {
+        "key_id": "appModule.createAccount",
+        "key_value": "Créer un compte"
+    },
+    {
+        "key_id": "appModule.termAndCondition",
+        "key_value": "Terme et condition"
+    },
+    {
+        "key_id": "appModule.iAccept",
+        "key_value": "en vous inscrivant, j'accepte"
+    },
+    {
+        "key_id": "sweetAlerts.basic",
+        "key_value": "De base"
+    },
+    {
+        "key_id": "sweetAlerts.description",
+        "key_value": "Avec description"
+    },
+    {
+        "key_id": "sweetAlerts.success",
+        "key_value": "Succès"
+    },
+    {
+        "key_id": "sweetAlerts.warning",
+        "key_value": "Attention"
+    },
+    {
+        "key_id": "sweetAlerts.custom",
+        "key_value": "Douane"
+    },
+    {
+        "key_id": "sweetAlerts.htmlTag",
+        "key_value": "Balise Html"
+    },
+    {
+        "key_id": "sweetAlerts.prompt",
+        "key_value": "Rapide"
+    },
+    {
+        "key_id": "sweetAlerts.itsBlue",
+        "key_value": "C'est bleu!"
+    },
+    {
+        "key_id": "sweetAlerts.passwordPrompt",
+        "key_value": "Invite de mot de passe"
+    },
+    {
+        "key_id": "sweetAlerts.customStyle",
+        "key_value": "Style personnalisé"
+    },
+    {
+        "key_id": "sweetAlerts.itPretty",
+        "key_value": "C'est joli, n'est-ce pas?"
+    },
+    {
+        "key_id": "sweetAlerts.btnClicked",
+        "key_value": "Vous avez cliqué sur le bouton!"
+    },
+    {
+        "key_id": "sweetAlerts.youWillFind",
+        "key_value": "Vous trouverez qu'ils sont en place!"
+    },
+    {
+        "key_id": "sweetAlerts.youWillNotAble",
+        "key_value": "Vous ne serez pas capable de récupérer ce fichier imaginaire!"
+    },
+    {
+        "key_id": "sweetAlerts.hereIsaMessage",
+        "key_value": "Voici un message!"
+    },
+    {
+        "key_id": "sweetAlerts.goodJob",
+        "key_value": "Bon travail!"
+    },
+    {
+        "key_id": "sweetAlerts.yesDeleteIt",
+        "key_value": "Oui, supprimez-le!"
+    },
+    {
+        "key_id": "sweetAlerts.areYouSure",
+        "key_value": "Êtes-vous sûr?"
+    },
+    {
+        "key_id": "sweetAlerts.doYouLikeThumb",
+        "key_value": "Aimez-vous les pouces?"
+    },
+    {
+        "key_id": "sweetAlerts.anInput",
+        "key_value": "Une entrée!"
+    },
+    {
+        "key_id": "sweetAlerts.writeSomethingInteresting",
+        "key_value": "Ecrire quelque chose d'intéressant:"
+    },
+    {
+        "key_id": "sweetAlerts.writeSomething",
+        "key_value": "Écris quelque chose"
+    },
+    {
+        "key_id": "sweetAlerts.youMustEnterPassword",
+        "key_value": "Vous devez entrer votre mot de passe!"
+    },
+    {
+        "key_id": "sweetAlerts.enterPassword",
+        "key_value": "Entrer le mot de passe"
+    },
+    {
+        "key_id": "extension.notification",
+        "key_value": "Notification"
+    },
+    {
+        "key_id": "notification.infoMsg",
+        "key_value": "Message d'information"
+    },
+    {
+        "key_id": "notification.successMessage",
+        "key_value": "Message de réussite"
+    },
+    {
+        "key_id": "notification.warningMessage",
+        "key_value": "Message d'alerte"
+    },
+    {
+        "key_id": "notification.closeAfter3000ms",
+        "key_value": "Fermer après 3000ms"
+    },
+    {
+        "key_id": "notification.errorMessage",
+        "key_value": "Message d'erreur"
+    },
+    {
+        "key_id": "notification.titleHere",
+        "key_value": "Titre ici"
+    },
+    {
+        "key_id": "notification.clickMe",
+        "key_value": "Clique moi!"
+    },
+    {
+        "key_id": "notification.info",
+        "key_value": "Info"
+    },
+    {
+        "key_id": "notification.success",
+        "key_value": "Succès"
+    },
+    {
+        "key_id": "notification.warning",
+        "key_value": "Attention"
+    },
+    {
+        "key_id": "notification.error",
+        "key_value": "Erreur"
+    },
+    {
+        "key_id": "sidebar.editors",
+        "key_value": "Éditeurs"
+    },
+    {
+        "key_id": "picker.color.alpha",
+        "key_value": "Alpha Pickers"
+    },
+    {
+        "key_id": "picker.color.hue",
+        "key_value": "Pickers de teinte"
+    },
+    {
+        "key_id": "picker.color.circle",
+        "key_value": "Cueilleurs de cercle"
+    },
+    {
+        "key_id": "picker.color.compact",
+        "key_value": "Pickers compacts"
+    },
+    {
+        "key_id": "picker.color.block",
+        "key_value": "Ramasseurs de blocs"
+    },
+    {
+        "key_id": "picker.color.chrome",
+        "key_value": "Chrome Pickers"
+    },
+    {
+        "key_id": "picker.color.github",
+        "key_value": "Github Cueilleurs"
+    },
+    {
+        "key_id": "picker.color.twitter",
+        "key_value": "Capteurs Twitter"
+    },
+    {
+        "key_id": "picker.color.withRedux",
+        "key_value": "Avec Redux"
+    },
+    {
+        "key_id": "picker.color.sketch",
+        "key_value": "Sketch Pickers"
+    },
+    {
+        "key_id": "picker.color.material",
+        "key_value": "Ramasseurs de matériel"
+    },
+    {
+        "key_id": "picker.color.slider",
+        "key_value": "Sliders Pickers"
+    },
+    {
+        "key_id": "picker.color.basic",
+        "key_value": "Cueilleurs de base"
+    },
+    {
+        "key_id": "picker.color.basicToggle",
+        "key_value": "Bascule basique"
+    },
+    {
+        "key_id": "picker.color.custom",
+        "key_value": "Pickers personnalisés"
+    },
+    {
+        "key_id": "picker.color.customPointer",
+        "key_value": "Pointeur personnalisé"
+    },
+    {
+        "key_id": "picker.color.photoshop",
+        "key_value": "Photoshop Pickers"
+    },
+    {
+        "key_id": "picker.color.swatches",
+        "key_value": "Nuanciers"
+    },
+    {
+        "key_id": "picker.color.basicPositioning",
+        "key_value": "Positionnement de base"
+    },
+    {
+        "key_id": "show.on.device.id",
+        "key_value": "MONTRER SUR APPAREIL"
+    },
+    {
+        "key_id": "apk.id",
+        "key_value": "APK"
+    },
+    {
+        "key_id": "app.name.id",
+        "key_value": "NOM DE L'APPLICATION"
+    },
+    {
+        "key_id": "app.logo.id",
+        "key_value": "LOGO DE L'APP"
+    },
+    {
+        "key_id": "permission.id",
+        "key_value": "AUTORISATION"
+    },
+    {
+        "key_id": "action.id",
+        "key_value": "ACTION"
+    },
+    {
+        "key_id": "apk.search.id",
+        "key_value": "Recherche Apk"
+    },
+    {
+        "key_id": "apk.upload.id",
+        "key_value": "Télécharger Apk"
+    },
+    {
+        "key_id": "permission.list.id",
+        "key_value": "Liste De Permission"
+    },
+    {
+        "key_id": "permission.add.modal.title.id",
+        "key_value": "Ajouter des Revendeurs à la liste des autorisations pour cette application"
+    },
+    {
+        "key_id": "permission.remove.modal.title.id",
+        "key_value": "Supprimer les Revendeur de la liste des autorisations pour cette application"
+    },
+    {
+        "key_id": "app.manage.data.id",
+        "key_value": "Gérer les données"
+    },
+    {
+        "key_id": "app.manage.policy.id",
+        "key_value": "Gérer la politique"
+    },
+    {
+        "key_id": "app.secure.market.id",
+        "key_value": "Marché sécurisé"
+    },
+    {
+        "key_id": "app.download.tools",
+        "key_value": "Outils de téléchargement"
+    },
+    {
+        "key_id": "ap.secure.panel.apk.id",
+        "key_value": "Panneau sécurisé Apk"
+    },
+    {
+        "key_id": "app.md.01.id",
+        "key_value": "Gérer les apk"
+    },
+    {
+        "key_id": "app.md.02.id",
+        "key_value": "Ajouter une permission"
+    },
+    {
+        "key_id": "app.md.03.id",
+        "key_value": "Activer apk push"
+    },
+    {
+        "key_id": "app.md.04.id",
+        "key_value": "Définir les autorisations du revendeur apk"
+    },
+    {
+        "key_id": "app.mp.01.id",
+        "key_value": "Créer / Modifier les politiques"
+    },
+    {
+        "key_id": "app.mp.02.id",
+        "key_value": "Définir les autorisations du Politique"
+    },
+    {
+        "key_id": "app.sm.01.id",
+        "key_value": "Ajouter/supprimer des applications sur le marché sécurisé"
+    },
+    {
+        "key_id": "app.sm.02.id",
+        "key_value": "Marché sécurisé"
+    },
+    {
+        "key_id": "app.sm.03.id",
+        "key_value": "Définir les autorisations"
+    },
+    {
+        "key_id": "app.dt.01.id",
+        "key_value": "BYOD Launcher Apk, Tools, etc... can be found here"
+    },
+    {
+        "key_id": "app.spa.01.id",
+        "key_value": "Modifier/créer des utilisateurs et ajouter des autorisations pour Secure Panel Apk"
+    },
+    {
+        "key_id": "app.spa.02.id",
+        "key_value": "Outil très utile pour votre personnel de support client"
+    },
+    {
+        "key_id": "download.tools.modal.heading.id",
+        "key_value": "Outils de téléchargement"
+    },
+    {
+        "key_id": "download.tools.modal.body.id",
+        "key_value": "Neutral Launcher (BYOD) <b>(Android v8+)</b>"
+    },
+    {
+        "key_id": "spa.app.id",
+        "key_value": "APPLI"
+    },
+    {
+        "key_id": "spa.search.id",
+        "key_value": "Search here"
+    },
+    {
+        "key_id": "spa.notification.bar.id",
+        "key_value": "Déplacer  <b>(Applications Disponibles)</b> vers <b>(Marché Sécurisé)</b> pour les faire apparaître sur les appareils des utilisateurs"
+    },
+    {
+        "key_id": "spa.title.available.apps.id",
+        "key_value": "Applications Disponibles"
+    },
+    {
+        "key_id": "spa.title.secure.market.id",
+        "key_value": "Marché Sécurisé"
+    },
+    {
+        "key_id": "spa.uninstall.helping.text.function.id",
+        "key_value": "Désactivez le commutateur pour empêcher<br /> la désinstallation de l'application par l'utilisateur."
+    },
+    {
+        "key_id": "app.add.more.id",
+        "key_value": "et plus..."
+    },
+    {
+        "key_id": "appfilter.Display",
+        "key_value": "Afficher"
+    },
+    {
+        "key_id": "appfilter.SearchUser",
+        "key_value": "Rechercher Utilisateur"
+    },
+    {
+        "key_id": "appfilter.SearchManageData",
+        "key_value": "Rechercher"
+    },
+    {
+        "key_id": "button.buy.id",
+        "key_value": "Acheter"
+    },
+    {
+        "key_id": "button.set.prices.id",
+        "key_value": "Fixer le prix"
+    },
+    {
+        "key_id": "button.set.id",
+        "key_value": "ENSEMBLE"
+    },
+    {
+        "key_id": "button.unset.id",
+        "key_value": "Annuler"
+    },
+    {
+        "key_id": "button.download.id",
+        "key_value": "Télécharger"
+    },
+    {
+        "key_id": "switch.button.uninstall.id",
+        "key_value": "Désinstaller"
+    },
+    {
+        "key_id": "button.save.changes",
+        "key_value": "Sauvegarder les modifications"
+    },
+    {
+        "key_id": "button.Remove",
+        "key_value": "Supprimer"
+    },
+    {
+        "key_id": "button.DeleteExceptSelected",
+        "key_value": "Supprimer sauf sélectionné"
+    },
+    {
+        "key_id": "button.add.user",
+        "key_value": "Ajouter Un Utilisateur"
+    },
+    {
+        "key_id": "application.permission.id",
+        "key_value": "Permission d'application"
+    },
+    {
+        "key_id": "secure.settings.permission.id",
+        "key_value": "Permission Paramètres Sécurisés"
+    },
+    {
+        "key_id": "system.permission.id",
+        "key_value": "Permission Du Système"
+    },
+    {
+        "key_id": "manage.passwords.id",
+        "key_value": "Gérer Les Mots De Passe"
+    },
+    {
+        "key_id": "policy.details.id",
+        "key_value": "Détails de la politique"
+    },
+    {
+        "key_id": "1.month.id",
+        "key_value": "1 mois"
+    },
+    {
+        "key_id": "3.month.id",
+        "key_value": "3 mois"
+    },
+    {
+        "key_id": "6.month.id",
+        "key_value": "6 mois"
+    },
+    {
+        "key_id": "12.month.id",
+        "key_value": "12 mois"
+    },
+    {
+        "key_id": "search.id",
+        "key_value": "Rechercher"
+    },
+    {
+        "key_id": "modal.text",
+        "key_value": "Modèle"
+    },
+    {
+        "key_id": "start.date",
+        "key_value": "Date De Début"
+    },
+    {
+        "key_id": "expire.date",
+        "key_value": "Date d'expiration"
+    },
+    {
+        "key_id": "expire.date.require",
+        "key_value": "La date d'expiration est requise!"
+    },
+    {
+        "key_id": "days.id",
+        "key_value": "Jours"
+    },
+    {
+        "key_id": "user.name.require",
+        "key_value": "Le nom est requis"
+    },
+    {
+        "key_id": "only.alpha.numeric.id",
+        "key_value": "Veuillez insérer uniquement des lettres et des chiffres"
+    },
+    {
+        "key_id": "not.valid.email.id",
+        "key_value": "L'entrée n'est pas un email valide"
+    },
+    {
+        "key_id": "require.email.id",
+        "key_value": "Email est requis !"
+    },
+    {
+        "key_id": "email.id",
+        "key_value": "Email"
+    },
+    {
+        "key_id": "name.id",
+        "key_value": "Prénom"
+    },
+    {
+        "key_id": "value.id",
+        "key_value": "Valeur"
+    },
+    {
+        "key_id": "login.email.id",
+        "key_value": "Connection Email "
+    },
+    {
+        "key_id": "devices.id",
+        "key_value": "DISPOSITIFS"
+    },
+    {
+        "key_id": "profile.info.id",
+        "key_value": "Info Profile"
+    },
+    {
+        "key_id": "change.profile.id",
+        "key_value": "Change de profil"
+    },
+    {
+        "key_id": "edit.profile.id",
+        "key_value": "Modifier le profil"
+    },
+    {
+        "key_id": "edit.profile.01.id",
+        "key_value": "Changer le mot de passe"
+    },
+    {
+        "key_id": "edit.profile.02.id",
+        "key_value": "Modifier l'adresse e-mail"
+    },
+    {
+        "key_id": "edit.profile.03.id",
+        "key_value": "Activer la double authentification"
+    },
+    {
+        "key_id": "change.password.id",
+        "key_value": "Changer le mot de passe"
+    },
+    {
+        "key_id": "change.email.id",
+        "key_value": "Modifier l'adresse E-mail"
+    },
+    {
+        "key_id": "login.email.authentication",
+        "key_value": "Authentification Par Courriel"
+    },
+    {
+        "key_id": "date.text.id",
+        "key_value": "Date"
+    },
+    {
+        "key_id": "themes.and.colors",
+        "key_value": "Thèmes et couleurs"
+    },
+    {
+        "key_id": "theme.list.01.id",
+        "key_value": "Modifier les thèmes du panneau"
+    },
+    {
+        "key_id": "theme.list.02.id",
+        "key_value": "Modifier les jeux de couleurs pour le panneau"
+    },
+    {
+        "key_id": "theme.id",
+        "key_value": "THÈME"
+    },
+    {
+        "key_id": "lite.id",
+        "key_value": "Léger"
+    },
+    {
+        "key_id": "semi.dark.id",
+        "key_value": "Semi-sombre"
+    },
+    {
+        "key_id": "dark.id",
+        "key_value": "Foncé"
+    },
+    {
+        "key_id": "colors.id",
+        "key_value": "Couleurs"
+    },
+    {
+        "key_id": "preset.color.pallets.id",
+        "key_value": "Palettes de couleurs prédéfinies"
+    },
+    {
+        "key_id": "customize.id",
+        "key_value": "Personnaliser"
+    },
+    {
+        "key_id": "reset.theme.id",
+        "key_value": "Réinitialiser le thème"
+    },
+    {
+        "key_id": "nav.style.id",
+        "key_value": " STYLE NAV"
+    },
+    {
+        "key_id": "dealer.id",
+        "key_value": "REVENDEUR ID"
+    },
+    {
+        "key_id": "dealer.name.id",
+        "key_value": "NOM REVENDEUR"
+    },
+    {
+        "key_id": "dealer.email.id",
+        "key_value": "EMAIL REVENDEUR"
+    },
+    {
+        "key_id": "dealer.pin.id",
+        "key_value": "CODE REVENDEUR"
+    },
+    {
+        "key_id": "devices",
+        "key_value": "DISPOSITIFS"
+    },
+    {
+        "key_id": "tokens.id",
+        "key_value": "JETONS"
+    },
+    {
+        "key_id": "parent.dealer.id",
+        "key_value": "REVENDEUR PARENT"
+    },
+    {
+        "key_id": "login.histoy.id",
+        "key_value": "Historique <br/>de connexion"
+    },
+    {
+        "key_id": "required.fields.id",
+        "key_value": "Champs Obligatoires"
+    },
+    {
+        "key_id": "tableHeadings.Select.SIMID",
+        "key_value": "Sélectionner  SIM ID"
+    },
+    {
+        "key_id": "tableHeadings.Select.CHATID",
+        "key_value": "Sélectionner un ID de chat"
+    },
+    {
+        "key_id": "device.note.id",
+        "key_value": "Note"
+    },
+    {
+        "key_id": "device.valid.for.id",
+        "key_value": "VALIDE (JOUR)"
+    },
+    {
+        "key_id": "device.valid.days.required.id",
+        "key_value": "Jours valides requis"
+    },
+    {
+        "key_id": "label.id",
+        "key_value": "ÉTIQUETTE"
+    },
+    {
+        "key_id": "chat.id.id",
+        "key_value": "CHAT ID"
+    },
+    {
+        "key_id": "sim.id.id",
+        "key_value": "SIM ID"
+    },
+    {
+        "key_id": "pgp.email.id",
+        "key_value": "E-mail PGP"
+    },
+    {
+        "key_id": "vpn.id",
+        "key_value": "VPN"
+    },
+    {
+        "key_id": "created.at.id",
+        "key_value": "CRÉÉ LE"
+    },
+    {
+        "key_id": "sim.id",
+        "key_value": "SIM"
+    },
+    {
+        "key_id": "chat.id",
+        "key_value": "CHAT"
+    },
+    {
+        "key_id": "pgp.id",
+        "key_value": "PGP"
+    },
+    {
+        "key_id": "policy.action.id",
+        "key_value": "ACTION"
+    },
+    {
+        "key_id": "policy.default.id",
+        "key_value": "DÉFAUT"
+    },
+    {
+        "key_id": "policy.name.id",
+        "key_value": "NOM DE POLITIQUE"
+    },
+    {
+        "key_id": "policy.app.name.id",
+        "key_value": "NOM DE L'APPLICATION"
+    },
+    {
+        "key_id": "policy.status.id",
+        "key_value": "STATUT"
+    },
+    {
+        "key_id": "policy.permissions.id",
+        "key_value": "AUTORISATIONS"
+    },
+    {
+        "key_id": "policy.command.id",
+        "key_value": "COMMANDE POLITIQUE"
+    },
+    {
+        "key_id": "policy.info.id",
+        "key_value": "INFO POLITIQUES"
+    },
+    {
+        "key_id": "policy.note.id",
+        "key_value": "NOTE POLITIQUE"
+    },
+    {
+        "key_id": "policy.save.changes.id",
+        "key_value": "Enregistrer les modifications Politique?"
+    },
+    {
+        "key_id": "policy.search.id",
+        "key_value": "Rechercher Politique"
+    },
+    {
+        "key_id": "policy.add.id",
+        "key_value": "Ajouter une Politique"
+    },
+    {
+        "key_id": "policy.edit.id",
+        "key_value": "Modifier La Politique"
+    },
+    {
+        "key_id": "policy.save.confirmation.id",
+        "key_value": "Êtes-vous sûr de vouloir enregistrer les modifications"
+    },
+    {
+        "key_id": "policy.delete.confirmation.id",
+        "key_value": "Voulez-vous supprimer cette politique?"
+    },
+    {
+        "key_id": "policy.change.default.confirmation.id",
+        "key_value": "Voulez-vous changer votre politique par défaut?"
+    },
+    {
+        "key_id": "tab.used",
+        "key_value": "Utilisé"
+    },
+    {
+        "key_id": "tab.unused",
+        "key_value": "Pas utilisé"
+    },
+    {
+        "key_id": "tab.id.prices.id",
+        "key_value": "Prix ??ID"
+    },
+    {
+        "key_id": "tab.packages.id",
+        "key_value": "Forfaits"
+    },
+    {
+        "key_id": "tab.set.id.prices.id",
+        "key_value": "Fixer les prix ID"
+    },
+    {
+        "key_id": "tab.set.packages.prices.id",
+        "key_value": "Prix Forfaits"
+    },
+    {
+        "key_id": "tab.policy.selected.apps.id",
+        "key_value": "Applications sélectionnées"
+    },
+    {
+        "key_id": "tab.policy.detail.id",
+        "key_value": "Détails De La Politique"
+    },
+    {
+        "key_id": "tab.policy.dealer.permissions.id",
+        "key_value": "Autorisations du Revendeur"
+    },
+    {
+        "key_id": "guest.id",
+        "key_value": "INVITÉ"
+    },
+    {
+        "key_id": "encrypted.id",
+        "key_value": "CRYPTÉ"
+    },
+    {
+        "key_id": "enable.id",
+        "key_value": "ACTIVER"
+    },
+    {
+        "key_id": "manage.data.id",
+        "key_value": "Gérer les données"
+    },
+    {
+        "key_id": "backup_database.id",
+        "key_value": "Base de données de sauvegarde"
+    },
+    {
+        "key_id": "purchase.credits.id",
+        "key_value": "Crédits d'achat"
+    },
+    {
+        "key_id": "set.prices.packages.id",
+        "key_value": "Prix Forfaits"
+    },
+    {
+        "key_id": "package.name.id",
+        "key_value": "Nom du Forfaits"
+    },
+    {
+        "key_id": "package.term.id",
+        "key_value": "Termes du Forfaits "
+    },
+    {
+        "key_id": "package.services.id",
+        "key_value": "SERVICES DU FORFAIT"
+    },
+    {
+        "key_id": "package.price.id",
+        "key_value": "PRIX DU Forfait"
+    },
+    {
+        "key_id": "packege.expiry.id",
+        "key_value": "EXPIRATION Forfait"
+    },
+    {
+        "key_id": "package.search.id",
+        "key_value": "RECHERCHER FORFAIT"
+    },
+    {
+        "key_id": "package.service.name.id",
+        "key_value": "NOM DU SERVICE"
+    },
+    {
+        "key_id": "package.included.id",
+        "key_value": "INCLUS"
+    },
+    {
+        "key_id": "price.term.id",
+        "key_value": "PRIX TERME"
+    },
+    {
+        "key_id": "unit.price.id",
+        "key_value": "PRIX UNITAIRE"
+    },
+    {
+        "key_id": "select.price.id",
+        "key_value": "SÉLECTIONNER PRIX"
+    },
+    {
+        "key_id": "price.id",
+        "key_value": "PRIX"
+    },
+    {
+        "key_id": "tableHeadings.REMAININGDAYS",
+        "key_value": "JOURS VALIDES"
+    },
+    {
+        "key_id": "account.manage.data.01.id",
+        "key_value": "Gérer des données telles que SIM ID, <br style={{ marginLeft: 4 }} /> CHAT ID, PGP ID, etc.."
+    },
+    {
+        "key_id": "account.manage.data.02.id",
+        "key_value": "Voir / Modifier vos données"
+    },
+    {
+        "key_id": "account.manage.data.03.id",
+        "key_value": "Remettre les données précédemment utilisées dans le système"
+    },
+    {
+        "key_id": "upload.file.id",
+        "key_value": "TÉLÉCHARGER FICHIER"
+    },
+    {
+        "key_id": "upload.file.extension.id",
+        "key_value": ".xls, .xlsx, .csv"
+    },
+    {
+        "key_id": "backup_database.description.id",
+        "key_value": "Cette fonctionnalité vous permet de sauvegarder du base de données complète du système pour la sauvegarde hors connexion "
+    },
+    {
+        "key_id": "purchase.credits.description.id",
+        "key_value": "Achetez plus de crédits instantanément avec Bitcoin ou Carte de crédit en utilisant notre passerelle de paiement Secure."
+    },
+    {
+        "key_id": "set.prices.packages.01.id",
+        "key_value": "Distribuer des jetons"
+    },
+    {
+        "key_id": "set.prices.packages.02.id",
+        "key_value": "Fixer les prix et les délais pour chaque jeton"
+    },
+    {
+        "key_id": "set.prices.packages.03.id",
+        "key_value": "Définir les autorisations pour les jetons"
+    },
+    {
+        "key_id": "appfilter.export",
+        "key_value": "Export"
+    },
+    {
+        "key_id": "permission.name.id",
+        "key_value": "NOM DE PERMISSION"
+    },
+    {
+        "key_id": "alert.change.language.id",
+        "key_value": "Êtes-vous certain de vouloir changer la langue?"
+    },
+    {
+        "key_id": "tableHeadings.DEVICEedit",
+        "key_value": "Modifier Le Périphérique"
+    },
+    {
+        "key_id": "UNDO.id",
+        "key_value": "RAMENER"
+    },
+    {
+        "key_id": "Settings.to.be.sent.to.Device.id",
+        "key_value": "Confirmer l'envoi des nouveaux paramètres à l'appareil"
+    },
+    {
+        "key_id": "Admin.Password.is.changed.id",
+        "key_value": "Le mot de passe administrateur est modifié"
+    },
+    {
+        "key_id": "Encrypted.Password.is.changed.id",
+        "key_value": "Le mot de passe crypté est changé"
+    },
+    {
+        "key_id": "Guest.Password.is.changed.id",
+        "key_value": "Le mot de passe d'invité est changé"
+    },
+    {
+        "key_id": "Duress.Password.is.changed.id",
+        "key_value": "Le mot de passe de contrainte est changé"
+    },
+    {
+        "key_id": "push.app.id",
+        "key_value": "APP PUSH "
+    },
+    {
+        "key_id": "save.profile.text.id",
+        "key_value": "Enregistrer Le Profil"
+    },
+    {
+        "key_id": "dealer.already.registered.id",
+        "key_value": "Revendeur déjà inscrit. Veuillez utiliser un autre email."
+    },
+    {
+        "key_id": "email.not.sent.id",
+        "key_value": "Email n'a pas pu être envoyé à cause d'une erreur:"
+    },
+    {
+        "key_id": "dealer.register.succ.id",
+        "key_value": "Le revendeur a été enregistré avec succès"
+    },
+    {
+        "key_id": "dealer.not.added.id",
+        "key_value": "Le revendeur n'a pas pu être ajouté"
+    },
+    {
+        "key_id": "email.already.use.other.dealer.id",
+        "key_value": "Le courrier électronique est déjà utilisé par un autre revendeur"
+    },
+    {
+        "key_id": "record.updated.succ.email.not.send.id",
+        "key_value": "Enregistrement mis à jour avec succès. Email non envoyé"
+    },
+    {
+        "key_id": "record.updated.succ.email.send.id",
+        "key_value": "Enregistrement mis à jour avec succès. L'email a été envoyé."
+    },
+    {
+        "key_id": "dealer.delete.succ.id",
+        "key_value": "Revendeur supprimé avec succès."
+    },
+    {
+        "key_id": "invalid.dealer.id",
+        "key_value": "Revendeur invalide."
+    },
+    {
+        "key_id": "dealer.added.again.id",
+        "key_value": "Revendeur ajouté à nouveau."
+    },
+    {
+        "key_id": "dealer.suspended.succ.id",
+        "key_value": "Le Revendeur a été suspendu avec succès."
+    },
+    {
+        "key_id": "dealer.not.suspend.id",
+        "key_value": "Revendeur non suspendu."
+    },
+    {
+        "key_id": "dealer.not.activated.id",
+        "key_value": "Revendeur non activé."
+    },
+    {
+        "key_id": "dealer.activated.succ.id",
+        "key_value": "Revendeur activé avec succès."
+    },
+    {
+        "key_id": "failed.auth.token.id",
+        "key_value": "Échec de l'authentification du jeton."
+    },
+    {
+        "key_id": "no.token.provide.id",
+        "key_value": "Aucun jeton fourni."
+    },
+    {
+        "key_id": "dual.auth.succ.enabled.id",
+        "key_value": "La double authentification est activée avec succès"
+    },
+    {
+        "key_id": "dual.auth.succ.disabled.id",
+        "key_value": "La double authentification est désactivée avec succès"
+    },
+    {
+        "key_id": "dual.auth.not.enabled.id",
+        "key_value": "La double authentification n'a pas pu être activée"
+    },
+    {
+        "key_id": "user.already.registered.id",
+        "key_value": "Utilisateur déjà inscrit. Veuillez utiliser un autre email."
+    },
+    {
+        "key_id": "user.registered.succ.id",
+        "key_value": "L'utilisateur a été enregistré avec succès."
+    },
+    {
+        "key_id": "user.info.changed.succ.id",
+        "key_value": "Les informations utilisateur ont été modifiées avec succès."
+    },
+    {
+        "key_id": "user.deleted.succ.id",
+        "key_value": "Utilisateur supprimé avec succès."
+    },
+    {
+        "key_id": "user.not.deleted.succ.id",
+        "key_value": "Utilisateur non supprimé avec succès."
+    },
+    {
+        "key_id": "user.added.again.id",
+        "key_value": "Utilisateur ajouté à nouveau avec succès."
+    },
+    {
+        "key_id": "user.not.added.id",
+        "key_value": "Utilisateur non ajouté, réessayez plus tard."
+    },
+    {
+        "key_id": "error.upload.profile.id",
+        "key_value": "Erreur lors de la mise à jour du profil"
+    },
+    {
+        "key_id": "profile.uploaded.succ.id",
+        "key_value": "Mise à jour du profil réussie"
+    },
+    {
+        "key_id": "pass.change.succ.id",
+        "key_value": "Mot de passe changé avec succès.Veuillez vérifier votre email."
+    },
+    {
+        "key_id": "profile.save.succ.id",
+        "key_value": "Profil enregistré avec succès"
+    },
+    {
+        "key_id": "Profile.Name.is.already.Exist.id",
+        "key_value": "Le nom du profil existe déjà"
+    },
+    {
+        "key_id": "Profile.Applied.Successfully.id",
+        "key_value": "Profil appliqué avec succès"
+    },
+    {
+        "key_id": "Settings.Applied.Successfully.id",
+        "key_value": "Paramètres appliqués avec succès"
+    },
+    {
+        "key_id": "Inserted.Successfully.id",
+        "key_value": "Inséré avec succès"
+    },
+    {
+        "key_id": "no.data.to.import.id",
+        "key_value": "pas de données à importer"
+    },
+    {
+        "key_id": "access.forbidden.id",
+        "key_value": "accès interdit"
+    },
+    {
+        "key_id": "CSV.Released.Successfully.id",
+        "key_value": "CSV publié avec succès."
+    },
+    {
+        "key_id": "CSV.Not.Released.id",
+        "key_value": "CSV non publié."
+    },
+    {
+        "key_id": "App.Uploaded.Successfully.id",
+        "key_value": "Succès: application téléchargée avec succès"
+    },
+    {
+        "key_id": "Unable.to.read.APP.properties.id",
+        "key_value": "Erreur! Impossible de lire les propriétés de l'application"
+    },
+    {
+        "key_id": "App.logo.Uploaded.Successfully.id",
+        "key_value": "Succès! App logo téléchargé avec succès."
+    },
+    {
+        "key_id": "Unauthorized.file.uploading.attempt.id",
+        "key_value": "Tentative de téléchargement de fichier non autorisé"
+    },
+    {
+        "key_id": "Uploaded.file.is.corrupt.id",
+        "key_value": "Le fichier téléchargé est corrompu"
+    },
+    {
+        "key_id": "Not.allowed.to.make.request.id",
+        "key_value": "Non autorisé à faire la demande."
+    },
+    {
+        "key_id": "Request.submitted.successfully.id",
+        "key_value": "Demande soumise avec succès"
+    },
+    {
+        "key_id": "Request.not.submitted.successfully.id",
+        "key_value": "Demande non soumise avec succès"
+    },
+    {
+        "key_id": "Apk.is.uploaded.id",
+        "key_value": "Apk est téléchargé"
+    },
+    {
+        "key_id": "Apk.not.deleted.id",
+        "key_value": "Apk pas supprimé"
+    },
+    {
+        "key_id": "Apk.deleted.successfully.id",
+        "key_value": "Apk supprimé avec succès"
+    },
+    {
+        "key_id": "Status.Updated.id",
+        "key_value": "Statut mis à jour"
+    },
+    {
+        "key_id": "Status.not.Updated.id",
+        "key_value": "Statut non mis à jour"
+    },
+    {
+        "key_id": "Permission.saved.successfully.id",
+        "key_value": "Permission enregistrée avec succès"
+    },
+    {
+        "key_id": "Permission.couldnt.be.saved.id",
+        "key_value": "L'autorisation n'a pas pu être sauvegardée"
+    },
+    {
+        "key_id": "Permission.Removed.successfully.id",
+        "key_value": "Autorisation supprimée avec succès"
+    },
+    {
+        "key_id": "Uninstall.permission.changed.id",
+        "key_value": "L'autorisation de désinstallation a changé"
+    },
+    {
+        "key_id": "Uninstall.permission.not.changed.id",
+        "key_value": "L'autorisation de désinstallation n'a pas changé"
+    },
+    {
+        "key_id": "Apps.Transfered.Sussecfully.id",
+        "key_value": "Applications transférées avec soin"
+    },
+    {
+        "key_id": "Invalid.IMEI.number.id",
+        "key_value": "Numéro IMEI invalide, veuillez vous assurer que vous avez un numéro IMEI valide et réessayez "
+    },
+    {
+        "key_id": "Default.policy.changed.successfully.id",
+        "key_value": "Politique par défaut modifiée avec succès"
+    },
+    {
+        "key_id": "force.update.has.been.applied.id",
+        "key_value": "la mise à jour forcée a été appliqué"
+    },
+    {
+        "key_id": "force.update.will.apply.id",
+        "key_value": "la mise à jour forcée s'appliquera lorsque l'appareil sera mis en ligne"
+    },
+    {
+        "key_id": "Payment.has.been.done.id",
+        "key_value": "Le paiement a été effectué"
+    },
+    {
+        "key_id": "Prices.Set.Successfully.id",
+        "key_value": "Prix ??fixés avec succès"
+    },
+    {
+        "key_id": "Package.Saved.Successfully.id",
+        "key_value": "Bouquet enregistré avec succès"
+    },
+    {
+        "key_id": "Language.changed.Successfully.id",
+        "key_value": "Langue changée avec succès"
+    },
+    {
+        "key_id": "Invalid.dealer_id.id",
+        "key_value": "Dealer_id invalide"
+    },
+    {
+        "key_id": "Credits.added.successfully.id",
+        "key_value": "Crédits ajoutés avec succès"
+    },
+    {
+        "key_id": "Credits.not.updated.id",
+        "key_value": "Crédits non mis à jour, veuillez réessayer."
+    },
+    {
+        "key_id": "credits.not.enough.accept.request.id",
+        "key_value": "Vos crédits ne suffisent pas pour accepter une demande"
+    },
+    {
+        "key_id": "Request.deleted.successfully.id",
+        "key_value": "Demande supprimée avec succès"
+    },
+    {
+        "key_id": "Request.not.deleted.id",
+        "key_value": "Demande non supprimée, veuillez réessayer"
+    },
+    {
+        "key_id": "Request.is.already.deleted.id",
+        "key_value": "La demande est déjà supprimée"
+    },
+    {
+        "key_id": "invalid.user.id",
+        "key_value": "Utilisateur invalide."
+    },
+    {
+        "key_id": "invalid.user.and.pass.id",
+        "key_value": "Utilisateur et mot de passe invalide."
+    },
+    {
+        "key_id": "pre_activation.added.succ.email.send.id",
+        "key_value": "Pré-activations ajoutées avec succès. Email envoyé à votre compte."
+    },
+    {
+        "key_id": "pre_activation.succ.add.id",
+        "key_value": "Pré-activation ajoutée avec succès."
+    },
+    {
+        "key_id": "device.not.added.id",
+        "key_value": "L'appareil n'a pas pu être ajouté"
+    },
+    {
+        "key_id": "record.transfer.succ.id",
+        "key_value": "Enregistrement transféré avec succès."
+    },
+    {
+        "key_id": "error.while.transfering.id",
+        "key_value": "Erreur lors du transfert."
+    },
+    {
+        "key_id": "pgp.email.already.taken.id",
+        "key_value": "Email PGP déjà pris"
+    },
+    {
+        "key_id": "device.not.unlinked.id",
+        "key_value": "Appareil non dissocié."
+    },
+    {
+        "key_id": "device.unlinked.succ.id",
+        "key_value": "Le périphérique a été déconnecté avec succès."
+    },
+    {
+        "key_id": "account.not.suspended.id",
+        "key_value": "Compte non suspendu. Veuillez réessayer."
+    },
+    {
+        "key_id": "account.suspend.succ.id",
+        "key_value": "Compte suspendu avec succès."
+    },
+    {
+        "key_id": "cant.suspend.account.expired.id",
+        "key_value": "Je ne peux pas suspendre !!! Compte déjà expiré."
+    },
+    {
+        "key_id": "device.not.activate.id",
+        "key_value": "Appareil non activé. Veuillez réessayer."
+    },
+    {
+        "key_id": "device.activated.succ.id",
+        "key_value": "Appareil activé avec succès."
+    },
+    {
+        "key_id": "device.not.activated.expired.id",
+        "key_value": "L'appareil ne peut pas être activé. Il est déjà expiré."
+    },
+    {
+        "key_id": "device.not.wipe.id",
+        "key_value": "Appareil non effacé. Veuillez réessayer."
+    },
+    {
+        "key_id": "device.wipe.succ.id",
+        "key_value": "Appareil effacé avec succès."
+    },
+    {
+        "key_id": "device.not.unflaged.id",
+        "key_value": "Appareil non marqué. Veuillez réessayer."
+    },
+    {
+        "key_id": "device.unflag.succ.id",
+        "key_value": "Appareil marqué avec succès."
+    },
+    {
+        "key_id": "device.not.flaged.id",
+        "key_value": "Appareil non marqué. Veuillez réessayer."
+    },
+    {
+        "key_id": "device.flag.succ.id",
+        "key_value": "Appareil signalé avec succès."
+    },
+    {
+        "key_id": "device.already.flaged.id",
+        "key_value": "Appareil déjà marqué"
+    },
+    {
+        "key_id": "device.sync.succ.id",
+        "key_value": "appareil synchronisé avec succès"
+    },
+    {
+        "key_id": "items.added.id",
+        "key_value": "Articles ajoutés."
+    },
+    {
+        "key_id": "items.updated.id",
+        "key_value": "Articles mis à jour."
+    },
+    {
+        "key_id": "items.not.updated.id",
+        "key_value": "Articles non mis à jour."
+    },
+    {
+        "key_id": "policy.update.succ.id",
+        "key_value": "Politique mise à jour avec succès"
+    },
+    {
+        "key_id": "policy.name.already.taken.id",
+        "key_value": "Le nom de la politique a déjà été pris"
+    },
+    {
+        "key_id": "policy.save.succ.id",
+        "key_value": "Politique sauvegardée avec succès"
+    },
+    {
+        "key_id": "policy.not.save.id",
+        "key_value": "La politique n’a pas pu être sauvegardée"
+    },
+    {
+        "key_id": "invalid.deviceID.id",
+        "key_value": "ID Périphérique invalide."
+    },
+    {
+        "key_id": "invalid.device.id",
+        "key_value": "Appareil invalide."
+    },
+    {
+        "key_id": "device.not.found.id",
+        "key_value": "Aucun appareil trouvé"
+    },
+    {
+        "key_id": "device.deleted.succ.id",
+        "key_value": "Appareil supprimé avec succès."
+    },
+    {
+        "key_id": "device.not.delete.id",
+        "key_value": "Périphérique non supprimé."
+    },
+    {
+        "key_id": "invalid.email.or.name.id",
+        "key_value": "Email ou nom invalide"
+    },
+    {
+        "key_id": "record.not.updated.id",
+        "key_value": "Enregistrement non mis à jour."
+    },
+    {
+        "key_id": "enter.valid.detail.id",
+        "key_value": "S'il vous plaît entrer des détails valides"
+    },
+    {
+        "key_id": "record.not.delete.id",
+        "key_value": "Enregistrement non supprimé."
+    },
+    {
+        "key_id": "record.updated.succ.id",
+        "key_value": "Enregistrement mis à jour avec succès."
+    },
+    {
+        "key_id": "no.detail.found.id",
+        "key_value": "Aucun détail trouvé"
+    },
+    {
+        "key_id": "successful.id",
+        "key_value": "réussi"
+    },
+    {
+        "key_id": "error.id",
+        "key_value": "Erreur"
+    },
+    {
+        "key_id": "Error.While.Uploading.id",
+        "key_value": "Erreur lors du téléchargement"
+    },
+    {
+        "key_id": "error.while.processing.id",
+        "key_value": "Erreur lors du traitement"
+    },
+    {
+        "key_id": "not.deleted.id",
+        "key_value": "Non supprimé, essayez à nouveau!"
+    },
+    {
+        "key_id": "no.data.found.id",
+        "key_value": "Aucune donnée disponible"
+    },
+    {
+        "key_id": "data.found.id",
+        "key_value": "Données trouvées"
+    },
+    {
+        "key_id": "file.not.found.id",
+        "key_value": "Fichier non trouvé"
+    },
+    {
+        "key_id": "Invalid.Data.id",
+        "key_value": "Données invalides"
+    },
+    {
+        "key_id": "button.Add.Device",
+        "key_value": "Ajouter Un Appareil"
+    },
+    {
+        "key_id": "Set.Guest.Password.id",
+        "key_value": "Définir Le Mot De Passe Invité"
+    },
+    {
+        "key_id": "Set.Encrypted.Password.id",
+        "key_value": "Définir Le Mot De Passe Crypté"
+    },
+    {
+        "key_id": "Set.Duress.Password.id",
+        "key_value": "Définir Le Mot De Passe Duress"
+    },
+    {
+        "key_id": "Change.Admin.Panel.Code.id",
+        "key_value": "Changer Le Code Du Panneau D'administration"
+    },
+    {
+        "key_id": "Are.you.sure.you.want.activate.the.device.id",
+        "key_value": "Êtes-vous sûr de vouloir activer l'appareil?"
+    },
+    {
+        "key_id": "Are.you.sure.you.want.suspend.the.device.id",
+        "key_value": "Êtes-vous sûr de vouloir suspendre l'appareil?"
+    },
+    {
+        "key_id": "app.manage.apks.id",
+        "key_value": "Gérer les apk"
+    },
+    {
+        "key_id": "app.spa.02.id.",
+        "key_value": "Outil très utile pour votre personnel de support client"
+    },
+    {
+        "key_id": "copyright.id",
+        "key_value": "Droit D'auteur"
+    },
+    {
+        "key_id": "packages.and.ids.id",
+        "key_value": "Forfaits et ID"
+    },
+    {
+        "key_id": "packages.and.ids.01.id",
+        "key_value": "Distribuer des jetons"
+    },
+    {
+        "key_id": "packages.and.ids.02.id",
+        "key_value": "Fixer les prix et les délais pour chaque jeton"
+    },
+    {
+        "key_id": "packages.and.ids.03.id",
+        "key_value": "Définir les autorisations pour les jetons"
+    },
+    {
+        "key_id": "Are.you.sure.you.want.to.logout.id",
+        "key_value": "Êtes-vous sûr de vouloir vous déconnecter?"
+    },
+    {
+        "key_id": "apk.permission.helping.text.id",
+        "key_value": "<p>Appuyez sur <a style=\"font-size: 20px;vertical-align: sub;margin-left: 4px;\"><i class=\"fa fa-caret-right\" aria-hidden=\"true\"></i> </a> pour ajouter, supprimer <br/>ou afficher les Revendeurs qui ont la <br/> permission d'utiliser cette appli</p>"
+    },
+    {
+        "key_id": "edit.user.id",
+        "key_value": "Modifier l'utilisateur"
+    },
+    {
+        "key_id": "edit.dealer.id",
+        "key_value": "Modifier Revendeur"
+    },
+    {
+        "key_id": "parent.dealer.id.id",
+        "key_value": "CODE REVENDEUR PARENT"
+    },
+    {
+        "key_id": "apk.size.id",
+        "key_value": "TAILLE APK"
+    },
+    {
+        "key_id": "tab.Disabled",
+        "key_value": "Désactiver"
+    },
+    {
+        "key_id": "SHOW.APK.id",
+        "key_value": "Montrer Apk"
+    },
+    {
+        "key_id": "show.on.device.helping.text.id",
+        "key_value": "<p>Affiche  <b>l'application</b> dans le<br /> menu <b>d'Installation</b> de l'appareils</p>"
+    },
+    {
+        "key_id": "permission.add.except.selected.modal.title.id",
+        "key_value": "Ajouter sauf Dealers à la liste des autorisations pour cette application"
+    },
+    {
+        "key_id": "Do.you.want.to.apply.id",
+        "key_value": "Voulez-vous appliquer"
+    },
+    {
+        "key_id": "policy.on.device.id",
+        "key_value": "politique sur l'appareil"
+    },
+    {
+        "key_id": "policy.permission.helping.text.id",
+        "key_value": "Ajouter des revendeurs autorisés <br/>à utiliser cette politique"
+    },
+    {
+        "key_id": "of.this.id",
+        "key_value": " De Cela "
+    },
+    {
+        "key_id": "policy.status.helping.text.id",
+        "key_value": "Activez ou désactivez cette stratégie à l'aide de <br/> la bascule ci-dessous. Lorsqu'il est désactivé, <br /> il ne peut pas être envoyé aux périphériques"
+    },
+    {
+        "key_id": "alert.allow.permission.dealer.id",
+        "key_value": "Voulez-vous vraiment autoriser la permission pour tous les revendeurs?"
+    },
+    {
+        "key_id": "alert.remove.permission.dealer.id",
+        "key_value": "Voulez-vous vraiment supprimer l'autorisation pour tous les revendeurs?"
+    },
+    {
+        "key_id": "policy.size.id",
+        "key_value": "Taille de la politique"
+    },
+    {
+        "key_id": "policy.expand.id",
+        "key_value": "Ouvrir"
+    },
+    {
+        "key_id": "Guest.All.id",
+        "key_value": "Invité Tous"
+    },
+    {
+        "key_id": "Encrypted.All.id",
+        "key_value": "Tout Crypté"
+    },
+    {
+        "key_id": "Enable.All.id",
+        "key_value": "Activer Tout"
+    },
+    {
+        "key_id": "Add.Apps.id",
+        "key_value": "Ajouter Applications"
+    },
+    {
+        "key_id": "Please.Input.Policy.Name.id",
+        "key_value": "Entrez le nom de la stratégie"
+    },
+    {
+        "key_id": "enter.Password.id",
+        "key_value": "Entrer le mot de passe"
+    },
+    {
+        "key_id": "Password.id",
+        "key_value": "Mot De Passe"
+    },
+    {
+        "key_id": "Please.confirm.your.password.id",
+        "key_value": "Veuillez confirmer votre mot de passe"
+    },
+    {
+        "key_id": "Password.Again.id",
+        "key_value": "Mot de passe à nouveau"
+    },
+    {
+        "key_id": "Set.Password.id",
+        "key_value": "Définir Le Mot De Passe"
+    },
+    {
+        "key_id": "Only.Number.are.allowed.id",
+        "key_value": "Seul le nombre est autorisé"
+    },
+    {
+        "key_id": "Please.input.your.password.id",
+        "key_value": "Veuillez saisir votre mot de passe"
+    },
+    {
+        "key_id": "passwords.are.inconsistent!.id",
+        "key_value": "Les mots de passe sont incohérents"
+    },
+    {
+        "key_id": "PANEL.PASSWORD.modal.id",
+        "key_value": "<h4>MOT DE PASSE DU  <br />PANNEAU REQUIS<br /> POUR CETTE ACTION</h4>"
+    },
+    {
+        "key_id": "SELECT.APPS.id",
+        "key_value": "SÉLECTIONNER APPS"
+    },
+    {
+        "key_id": "search_APPS.id",
+        "key_value": "App De Recherche"
+    },
+    {
+        "key_id": "MANAGE.IMEI.id",
+        "key_value": "GÉRER IMEI"
+    },
+    {
+        "key_id": "Generate.IMEI.number.id",
+        "key_value": "Générer Un Numéro Imei"
+    },
+    {
+        "key_id": "WRITE_IMEI_1.id",
+        "key_value": "ÉCRIRE IMEI 1"
+    },
+    {
+        "key_id": "WRITE_IMEI_2.id",
+        "key_value": "ÉCRIRE IMEI 2"
+    },
+    {
+        "key_id": "Changed.Date.id",
+        "key_value": "Date De Modification"
+    },
+    {
+        "key_id": "IMEI_NUMBER_REQUIRED.id",
+        "key_value": "Numéro IMEI Requis"
+    },
+    {
+        "key_id": "IMEI_Number_must_be_15_digits_long",
+        "key_value": "Le numéro IMEI doit comporter 15 chiffres"
+    },
+    {
+        "key_id": "Enter_IMEI_Number.id",
+        "key_value": "Entrez le numéro IMEI"
+    },
+    {
+        "key_id": "FlagDevice.id",
+        "key_value": "Dispositif De Drapeau"
+    },
+    {
+        "key_id": "Stolen.id",
+        "key_value": "Volée"
+    },
+    {
+        "key_id": "Lost.id",
+        "key_value": "Perdue"
+    },
+    {
+        "key_id": "Defective.id",
+        "key_value": "Défectueux"
+    },
+    {
+        "key_id": "Other.id",
+        "key_value": "Autre"
+    },
+    {
+        "key_id": "Do.you.really.want.to.unflag.the.device.id",
+        "key_value": "Voulez-vous vraiment supprimer l’appareil "
+    },
+    {
+        "key_id": "WARNING.id",
+        "key_value": "ATTENTION"
+    },
+    {
+        "key_id": "Do.you.really.want.to.Wipe.the.device.id",
+        "key_value": "Voulez-vous vraiment effacer l'appareil "
+    },
+    {
+        "key_id": "Device_not_Synced.id",
+        "key_value": "Le périphérique n'est pas synchronisé"
+    },
+    {
+        "key_id": "Device.is.id",
+        "key_value": "L'appareil est"
+    },
+    {
+        "key_id": "WARNING_Duplicate_Data.id",
+        "key_value": "ATTENTION! Données en double"
+    },
+    {
+        "key_id": "button.Unsuspend",
+        "key_value": "Activer"
+    },
+    {
+        "key_id": "policy",
+        "key_value": "Politique"
+    },
+    {
+        "key_id": "New.Data.id",
+        "key_value": "Nouvelles données"
+    },
+    {
+        "key_id": "BACKUP_DATABASE_DESCRIPTION_OF_MODAL_BODY.id",
+        "key_value": "Cliquez sur le bouton \"Sauvegarder maintenant\" ci-dessous pour sauvegarder votre base de données système complète. Pour accéder à votre base de données, décompressez d'abord les fichiers générés et ouvrez-les dans Excel."
+    },
+    {
+        "key_id": "Are.you.sure.you.want.UNLINK.the.device.id",
+        "key_value": "Êtes-vous sûr de vouloir délier le périphérique "
+    },
+    {
+        "key_id": "Do.you.want.to.id",
+        "key_value": "Veux-tu "
+    },
+    {
+        "key_id": "dealer.text.id",
+        "key_value": " Revendeur"
+    },
+    {
+        "key_id": "Suspended_TEXT.id",
+        "key_value": " Suspendu"
+    },
+    {
+        "key_id": "ORIGNAL.id",
+        "key_value": "MOOSE"
+    },
+    {
+        "key_id": "CURRENT.id",
+        "key_value": "ACTUELLE"
+    },
+    {
+        "key_id": "tab.secure.settings",
+        "key_value": "Paramètres Sécurisés"
+    },
+    {
+        "key_id": "PIN_TEXT.id",
+        "key_value": "CODE :"
+    },
+    {
+        "key_id": "Single.Device.id",
+        "key_value": "Appareil Unique"
+    },
+    {
+        "key_id": "Duplicate.Devices.id",
+        "key_value": "Dispositifs En Double"
+    },
+    {
+        "key_id": "DUPLICATE_DEVICES_HELPING_TEXT.id",
+        "key_value": "Générer plusieurs codes d'activation<br/> avec les mêmes paramètres"
+    },
+    {
+        "key_id": "User.ID.is.Required.id",
+        "key_value": "L'identifiant Est Requis"
+    },
+    {
+        "key_id": "Select.PGP.Emails.id",
+        "key_value": "Sélectionnez les emails PGP"
+    },
+    {
+        "key_id": "Duplicate.devices.required.id",
+        "key_value": "Nombre de périphériques en double requis"
+    },
+    {
+        "key_id": "DEVICE.REQUESTS.id",
+        "key_value": "DEMANDES DE DISPOSITIF"
+    },
+    {
+        "key_id": "CREDITS.CASH.REQUESTS.id",
+        "key_value": "CREDITS DEMANDE DE TRESORERIE"
+    },
+    {
+        "key_id": "CREDITS.id",
+        "key_value": "CRÉDITS"
+    },
+    {
+        "key_id": "Are.you.sure.you.want.to.decline.this.request.id",
+        "key_value": "Êtes-vous sûr de vouloir refuser cette demande?"
+    },
+    {
+        "key_id": "Are.you.sure.you.want.to.accept.this.request.id",
+        "key_value": "Êtes-vous sûr de vouloir accepter cette demande?"
+    },
+    {
+        "key_id": "PROFILE.NAME.id",
+        "key_value": "NOM DE PROFIL"
+    },
+    {
+        "key_id": "Select.User.ID.id",
+        "key_value": "Sélectionnez l'ID utilisateur"
+    },
+    {
+        "key_id": "Select.Policy.id",
+        "key_value": "Sélectionnez la politique"
+    },
+    {
+        "key_id": "user.device.helping.text.id",
+        "key_value": "Appuyez sur <a style=\"font-size: 20px;vertical-align: sub;margin-left: 4px;\"><i class=\"fa fa-caret-right\" aria-hidden=\"true\"></i></a> pour afficher la liste <br/>des périphériques de cet utilisateur."
+    },
+    {
+        "key_id": "button.On.id",
+        "key_value": "Sur"
+    },
+    {
+        "key_id": "button.off.id",
+        "key_value": "De"
+    },
+    {
+        "key_id": "please.input.your.email.id",
+        "key_value": "Veuillez saisir votre adresse e-mail"
+    },
+    {
+        "key_id": "Apk_name.id",
+        "key_value": "Nom Apk"
+    },
+    {
+        "key_id": "Apk_Icon.id",
+        "key_value": "Icône Apk"
+    },
+    {
+        "key_id": "Apk_file.id",
+        "key_value": "Fichier Apk"
+    },
+    {
+        "key_id": "Apk_size.id",
+        "key_value": "Taille Apk "
+    },
+    {
+        "key_id": "ACTIVITIES.id",
+        "key_value": "Activités"
+    },
+    {
+        "key_id": "tableHeadings.TYPE",
+        "key_value": "Type"
+    },
+    {
+        "key_id": "tableHeadings.VERSION",
+        "key_value": "Version"
+    },
+    {
+        "key_id": "ONLY_NUMBER_ARE_ALLOWED.id",
+        "key_value": "Seuls les numéros sont autorisés"
+    },
+    {
+        "key_id": "Update.Successfully.id",
+        "key_value": "Mise à jour réussie"
+    },
+    {
+        "key_id": "sim.delete.Successfully.id",
+        "key_value": "Sim supprimé avec succès"
+    },
+    {
+        "key_id": "Already_SIM_REGISTER.id",
+        "key_value": "Vous avez déjà enregistré cet Device ID et ICC-ID"
+    },
+    {
+        "key_id": "Sim.Registered.Successfully.id",
+        "key_value": "Sim enregistré avec succès"
+    },
+    {
+        "key_id": "something_wrong_delete_sim.id",
+        "key_value": "Erreur: impossible de supprimer le sim enregistré"
+    },
+    {
+        "key_id": "Query.Error.id",
+        "key_value": "Erreur de requête"
+    },
+    {
+        "key_id": "Previously.Used.Sims.id",
+        "key_value": "Sims précédemment utilisés"
+    },
+    {
+        "key_id": "ICC-ID.id",
+        "key_value": "ICC-ID"
+    },
+    {
+        "key_id": "Sim.Name.id",
+        "key_value": "Nom SIM"
+    },
+    {
+        "key_id": "Status.id",
+        "key_value": "Statut"
+    },
+    {
+        "key_id": "Note.id",
+        "key_value": "Remarque"
+    },
+    {
+        "key_id": "Data.Limit.id",
+        "key_value": "Limite de données"
+    },
+    {
+        "key_id": "alert.delete.Registered.Sim.id",
+        "key_value": "Êtes-vous sûr de vouloir supprimer le sim enregistré?"
+    },
+    {
+        "key_id": "Unregistered.id",
+        "key_value": "Non enregistré"
+    },
+    {
+        "key_id": "Registered.id",
+        "key_value": "Enregistré"
+    },
+    {
+        "key_id": "Registered Sim Cards.id",
+        "key_value": "Cartes Sim Enregistrées"
+    },
+    {
+        "key_id": "Edit.Registered.Sim.id",
+        "key_value": "Modifier le Sim Enregistré"
+    },
+    {
+        "key_id": "Add.Sim.Registration.id",
+        "key_value": "Ajouter le Sim Enregistré"
+    },
+    {
+        "key_id": "ICC_ID_20_LONG.id",
+        "key_value": "ICC-ID doit comporter 20 chiffres"
+    },
+    {
+        "key_id": "ICC_ID_IS_REQUIRED.id",
+        "key_value": "ICC-ID est requis"
+    },
+    {
+        "key_id": "SIM_SETTINGS.id",
+        "key_value": "Réglages SIM"
+    },
+    {
+        "key_id": "History.id",
+        "key_value": "Historique"
+    },
+    {
+        "key_id": "pre.activated.tab.extra.id",
+        "key_value": "ONGLET PRÉ-ACTIVÉ"
+    },
+    {
+        "key_id": "tableHeadings.TRANSFERED",
+        "key_value": "TRANSFÉRÉ À"
+    }
+]
