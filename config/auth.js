@@ -1,8 +1,8 @@
 const jwt = require('jsonwebtoken');
 const config = require('./constants');
 const { sql } = require('../config/database');
-const en_translation = require("../languages/en.json")
-const fr_translation = require("../languages/fr.json")
+
+
 
 module.exports = async (req, res, next) => {
 
@@ -50,19 +50,10 @@ module.exports = async (req, res, next) => {
                         d_lng_id = 1;
                     }
 
-                    let lan_obj = {}
                     if (d_lng_id === 1) {
-                        en_translation.forEach((elem) => {
-                            let key_id = elem.key_id;
-                            lan_obj[key_id] = elem.key_value
-                        })
-                        req.translation = lan_obj;
+                        req.translation = require("../languages/en.json");
                     } else if (d_lng_id === 2) {
-                        fr_translation.forEach((elem) => {
-                            let key_id = elem.key_id;
-                            lan_obj[key_id] = elem.key_value
-                        })
-                        req.translation = lan_obj;
+                        req.translation = require("../languages/fr.json");
                     }
                     // var sTranslation = `SELECT * FROM lng_translations WHERE lng_id = '${d_lng_id}'`;
                     // let resp = await sql.query(sTranslation);
