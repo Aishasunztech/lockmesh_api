@@ -209,7 +209,7 @@ sockets.listen = function (server) {
 
             // from mobile side status of (history, profile)
             socket.on(Constants.SETTING_APPLIED_STATUS + device_id, async function (data) {
-                console.log("settings applied successfully: " + device_id);
+                console.log("settings applied successfully: " + device_id, data);
                 // let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id;
                 // await sql.query(historyUpdate);
 
@@ -271,7 +271,7 @@ sockets.listen = function (server) {
                         // changed syncing lines by Usman
                         extensions_status: false,
                         // extensions_status: device_helpers.checkNotNull(is_sync) ? true : false,
-                        settings_status: false,                        
+                        settings_status: false,
                         // settings_status: device_helpers.checkNotNull(is_sync) ? true : false,
                         is_sync: false,
                         // is_sync: device_helpers.checkNotNull(is_sync) ? true : false,
@@ -315,7 +315,7 @@ sockets.listen = function (server) {
                     device_id: device_id,
                     apps_status: true,
                     extensions_status: true,
-                    settings_status: false,                        
+                    settings_status: false,
                     // settings_status: device_helpers.checkNotNull(is_sync) ? true : false,
                     is_sync: false,
                     // is_sync: device_helpers.checkNotNull(is_sync) ? true : false,
@@ -386,13 +386,13 @@ sockets.listen = function (server) {
                 // let device_permissions = permissions;
 
                 await device_helpers.insertOrUpdateSettings(controls, device_id);
-                
+
                 // added condition if device is not synced run the query of sync
-                
+
                 // if(!is_sync){ #later will enable this condition
-                    await device_helpers.deviceSynced(device_id);
+                await device_helpers.deviceSynced(device_id);
                 // }
-                
+
                 socket.emit("get_sync_status_" + device_id, {
                     device_id: device_id,
                     apps_status: true,
@@ -1022,7 +1022,8 @@ sockets.updateSimRecord = async function (device_id, response, socket = null) {
                     if (result.affectedRows > 0) {
                         iccids.push(`"${arr[i].iccid}"`);
                     } else {
-                        var IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, note, guest, encrypt, dataLimit, sync) 
+                        //*********/ Asked abaid to remove ingore from insert query **********//
+                        var IQry = `INSERT INTO sims (device_id, iccid, name, note, guest, encrypt, dataLimit, sync) 
                 VALUES ('${device_id}', '${arr[i].iccid}', '${arr[i].name}', '${arr[i].note}', ${arr[i].guest}, ${arr[i].encrypt}, '', '1');`;
                         await sql.query(IQry);
                     }
@@ -1082,8 +1083,8 @@ sockets.updateSimRecord = async function (device_id, response, socket = null) {
                     await sql.query(uQry);
                 } else {
                     // console.log('33')
-
-                    let IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, sim_id, slotNo, note, guest, encrypt, status, dataLimit, sync) VALUES ('${device_id}', '${arr[i].iccid}', '${arr[i].name}', '', '${arr[i].slotNo}', '${arr[i].note}', ${arr[i].guest}, ${arr[i].encrypt}, '${arr[i].status}', '', '1');`;
+                    //*********/ Asked abaid to remove ingore from insert query **********//
+                    let IQry = `INSERT INTO sims (device_id, iccid, name, sim_id, slotNo, note, guest, encrypt, status, dataLimit, sync) VALUES ('${device_id}', '${arr[i].iccid}', '${arr[i].name}', '', '${arr[i].slotNo}', '${arr[i].note}', ${arr[i].guest}, ${arr[i].encrypt}, '${arr[i].status}', '', '1');`;
                     await sql.query(IQry);
                 }
             }
@@ -1210,7 +1211,7 @@ sockets.sendOnlineOfflineStatus = async (status, deviceId) => {
 }
 
 sockets.deviceSynced = (deviceId, status) => {
-    io.emit('device_synced_' + deviceId , status);
+    io.emit('device_synced_' + deviceId, status);
 }
 sockets.sendEmit = async (app_list, passwords, controls, permissions, device_id) => {
     // console.log('password socket')
@@ -1290,15 +1291,15 @@ sockets.sendDeviceStatus = async function (device_id, device_status, status = fa
 
 sockets.ackSettingApplied = async function (device_id, app_list, extensions, controls) {
     let setting = {};
-    if(app_list){
+    if (app_list) {
         setting.app_list = app_list
     }
 
-    if(extensions){
+    if (extensions) {
         setting.extensions = extensions
     }
 
-    if(controls){
+    if (controls) {
         setting.controls = controls
     }
 

@@ -150,13 +150,22 @@ router.get('/', async function (req, res, next) {
 
 router.get('/refactor_policy_apps', async function (req, res) {
     let policies = await sql.query('SELECT * FROM policy');
+    let policyAppsIds = await sql.query('SELECT * FROM policy_apps');
+    let apk_ids = [];
+    let policy_ids = [];
+    policyAppsIds.map((app) => {
+        apk_ids.push(app.apk_id)
+        policy_ids.push(app.policy_id)
+    })
     policies.forEach(async (policy) => {
         let pushApps = JSON.parse(policy.push_apps);
-        console.log("pushApps: ", pushApps)
         if (pushApps.length) {
             pushApps.forEach(async (app) => {
-                let insertRelQ = `INSERT IGNORE INTO policy_apps (policy_id, apk_id, guest, encrypted, enable) VALUES (${policy.id}, ${app.apk_id}, ${app.guest}, ${app.encrypted}, ${app.enable})`;
-                await sql.query(insertRelQ);
+                console.log(!policy_ids.includes(policy.id), !apk_ids.includes(app.apk_id));
+                if (!policy_ids.includes(policy.id) || !apk_ids.includes(app.apk_id)) {
+                    let insertRelQ = `INSERT INTO policy_apps (policy_id, apk_id, guest, encrypted, enable) VALUES (${policy.id}, ${app.apk_id}, ${app.guest}, ${app.encrypted}, ${app.enable})`;
+                    await sql.query(insertRelQ);
+                }
             })
         }
     });
