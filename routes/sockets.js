@@ -224,13 +224,13 @@ sockets.listen = function (server) {
 
 
                     // new method that will only update not will check double query. here will be these methods
+                    await device_helpers.updateApps(app_list, device_id);
                     app_list.map(app => {
                         delete app.isChanged;
                     })
-                    await device_helpers.updateApps(app_list, device_id);
 
                     await device_helpers.updateExtensions(extensions, device_id);
-                    
+
                     extensions.map(extension => {
                         delete extension.isChanged;
                     })

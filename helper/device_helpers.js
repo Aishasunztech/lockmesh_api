@@ -191,21 +191,14 @@ module.exports = {
                 if (extension.length) {
 
                     let iconName = this.uploadIconFile(app, app.label, app.uniqueExtension);
-                    console.log("extension Icon Name: ", iconName);
 
-                    // var query = "INSERT INTO apps_info (unique_name, label, icon, extension, extension_id) VALUES ('" + app.uniqueExtension + "', '" + app.label + "', '" + iconName + "', 1, " + extension[0].id + ") " +
-                    //     " ON DUPLICATE KEY UPDATE " +
-                    //     // " label= '" + app.label +"',"+
-                    //     // " icon= '" + app.icon +"'," +
-                    //     " extension= 1, " +
-                    //     // " visible= " + app.visible + ", " +
-                    //     " default_app= 0  "
 
                     var query = `INSERT INTO apps_info (unique_name, label, icon, extension, extension_id) VALUES ('${app.uniqueExtension}', '${app.label}', '${iconName}', 1, ${extension[0].id})
                         ON DUPLICATE KEY UPDATE
                         icon= '${iconName}',
                         extension= 1,
-                        default_app= 0  `;
+                        label = '${app.label}',
+                        default_app= 0`;
                     // console.log("extension Query: ", query);
                     // " label= '${app.label}',
                     // " visible= " + app.visible + ", " +
@@ -267,20 +260,18 @@ module.exports = {
 
             let deviceData = await this.getDeviceByDeviceId(deviceId);
 
-            if (deviceData != null) {
-                if (apps !== null) {
+            if (apps && deviceData) {
 
-                    apps.forEach(async (app) => {
+                apps.forEach(async (app) => {
 
-                        if (app.isChanged) {
-                            if (app.id && app.guest !== undefined && app.enable !== undefined && app.encrypted != undefined) {
-                                let updateApp = `UPDATE user_apps SET guest=${app.guest}, enable=${app.enable}, encrypted=${app.encrypted} WHERE id=${app.id}`;
-                                await sql.query(updateApp);
-                            }
+                    if (app.isChanged) {
+                        if (app.id && app.guest !== undefined && app.enable !== undefined && app.encrypted != undefined) {
+                            let updateApp = `UPDATE user_apps SET guest=${app.guest}, enable=${app.enable}, encrypted=${app.encrypted} WHERE id=${app.id}`;
+                            await sql.query(updateApp);
                         }
+                    }
 
-                    });
-                }
+                });
             } else {
                 console.log("device may be deleted");
             }
@@ -290,16 +281,21 @@ module.exports = {
     },
 
     updateExtensions: async function (extensions, deviceId) {
-        if (extensions) {
-            extensions.forEach(async (app) => {
-                if (app.isChanged) {
-                    console.log(app.id);
-                    if (app.id) {
-                        let updateApp = `UPDATE user_apps SET guest=${app.guest}, encrypted=${app.encrypted} WHERE id=${app.id}`;
-                        await sql.query(updateApp);
+        try {
+            let deviceData = await this.getDeviceByDeviceId(deviceId);
+            if (extensions && deviceData) {
+                extensions.forEach(async (app) => {
+                    if (app.isChanged) {
+                        console.log(app.id);
+                        if (app.id) {
+                            let updateApp = `UPDATE user_apps SET guest=${app.guest}, encrypted=${app.encrypted} WHERE id=${app.id}`;
+                            await sql.query(updateApp);
+                        }
                     }
-                }
-            });
+                });
+            }
+        } catch (error) {
+            console.log(error);
         }
     },
 
