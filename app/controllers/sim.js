@@ -35,14 +35,11 @@ exports.simRegister = async function (req, res) {
 
             if (rslt.length < 1) {
                 // if (activeSims.length < 2) {
-                var IQry = `INSERT IGNORE INTO sims (device_id, iccid, name, status, sim_id, note, guest, encrypt, dataLimit, sync) 
+                //*********/ Asked abaid to remove ingore from insert query **********//
+                var IQry = `INSERT INTO sims (device_id, iccid, name, status, sim_id, note, guest, encrypt, dataLimit, sync) 
                 VALUES ('${device_id}', '${iccid}', '${name}', '${status}', '${sim_id}', '${note}', ${guest}, ${encrypt}, '${dataLimit}', '0');`;
                 sql.query(IQry, async function (err, result) {
                     if (err) console.log(err);
-
-                    // history
-                    // await sql.query(`INSERT IGNORE INTO sims_history (device_id, iccid, action, name, sim_id, note, guest, encrypt, dataLimit) 
-                    // VALUES ('${device_id}', '${iccid}', 'insert', '${name}', '${sim_id}', '${note}', ${guest}, ${encrypt}, '${dataLimit}');`);
 
                     sockets.sendRegSim(device_id, "sim_update", [rSim]);
                     data = {
@@ -104,11 +101,6 @@ exports.simUpdate = async function (req, res) {
             if (id == "unrAll") {
                 await sql.query(`UPDATE sims SET unrGuest = ${simData.unrGuest}, unrEncrypt=${simData.unrEncrypt} WHERE device_id= '${simData.device_id}' AND del='0'`);
 
-                // // history
-                // await sql.query(`INSERT IGNORE INTO sims_history (device_id, action, unrGuest, unrEncrypt) 
-                // VALUES ('${simData.device_id}', 'update', ${simData.unrGuest}, ${simData.unrEncrypt});`);
-
-                // sockets.sendRegSim(simData.device_id, "sim_inserted");
                 sockets.sendRegSim(simData.device_id, "sim_unregister", simData);
                 data = {
                     status: true,
@@ -130,12 +122,9 @@ exports.simUpdate = async function (req, res) {
                         UQry = `UPDATE sims SET ${label} = ${value} WHERE id = ${id} AND del='0'`;
                     }
 
-                    // await sql.query(`INSERT IGNORE INTO sims_history (device_id, action, ${label}) VALUES ('${simData.device_id}', 'update', ${value});`);
 
                 } else {
                     UQry = `UPDATE sims SET name='${simData.name}', note='${simData.note}', guest=${simData.guest}, encrypt=${simData.encrypt}, sync = '0' WHERE device_id = '${simData.device_id}' AND iccid = '${simData.iccid}' AND del='0'`;
-                    // history
-                    // await sql.query(`INSERT IGNORE INTO sims_history (device_id, iccid, action, name, sim_id, note, guest, encrypt) VALUES ('${simData.device_id}', '${simData.iccid}', 'update', '${simData.name}', '${simData.sim_id}', '${simData.note}', ${simData.guest}, ${simData.encrypt});`);
                 }
 
                 if (UQry != undefined) {
@@ -201,9 +190,6 @@ exports.simDelete = async function (req, res) {
                 sql.query(dQry, async function (err, result) {
                     if (err) console.log(err);
 
-                    // history
-                    // await sql.query(`INSERT IGNORE INTO sims_history (device_id, iccid, action, name, sim_id, note, guest, encrypt, dataLimit) 
-                    // VALUES ('${simData.device_id}', '${simData.iccid}', 'delete', '${simData.name}', '${simData.sim_id}', '${simData.note}', ${simData.guest}, ${simData.encrypt}, '${simData.dataLimit}');`);
 
                     sockets.sendRegSim(device_id, "sim_delete", [simData.iccid]);
                     data = {

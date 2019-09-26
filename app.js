@@ -8,14 +8,12 @@ var logger = require("morgan");
 var cors = require("cors");
 var stackify = require("stackify-logger");
 // var bodyParser = require("body-parser");
-
-const swaggerOptions = require('./config/swaggerOptions');
-
-// var swaggerUi = require("swagger-ui-express"),
-// swaggerDocument = require("./swagger.json");
+var auth = require('http-auth');
 const expressSwagger = require('express-swagger-generator')(app);
 
-expressSwagger(swaggerOptions.options);
+const swaggerOptions = require('./config/swaggerOptions');
+const constants = require('./config/constants');
+
 
 app.disable("etag");
 app.options("*", cors());
@@ -70,8 +68,24 @@ app.use(function(req, res, next) {
 	next();
 });
 
+
+var basic = auth.basic({
+	realm: "API Documentation"
+}, (username, password, callback) => { 
+	// Custom authentication
+	// Use callback(error) if you want to throw async error.
+	callback(username === constants.BASIC_AUTH_USER && password === constants.BASIC_AUTH_PASSWORD);
+}
+);
+
+app.use('/api-docs', auth.connect(basic) ,function(req, res, next){
+	next();
+})
+
+expressSwagger(swaggerOptions.options);
+
 // routes
-app.get("/", function(req, res) {
+app.get("/",function(req, res) {
 	res.send("Express");
 });
 
