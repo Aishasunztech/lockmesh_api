@@ -23,6 +23,7 @@
     "fs": "0.0.1-security",
     "generate-password": "^1.4.0",
     "hashids": "^1.2.2",
+    "http-auth": "^3.2.3",
     "is-empty": "^1.2.0",
     "jimp": "^0.6.4",
     "json-size": "^1.0.0",

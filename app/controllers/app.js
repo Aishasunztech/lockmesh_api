@@ -10,7 +10,6 @@ const SDEALER = "sdealer";
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
 // let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
 let usr_acc_query_text = Constants.usr_acc_query_text;
-
 exports.trasnferApps = async function (req, res) {
 
     let appKeys = req.body.data
@@ -22,24 +21,9 @@ exports.trasnferApps = async function (req, res) {
         let dealer_type = verify.user.user_type;
         let dealer_id = verify.user.id;
         if (dealer_type === ADMIN) {
-
             let deleteNotIn = "DELETE FROM secure_market_apps WHERE apk_id NOT IN (" + toDelete + ")"
             // console.log(deleteNotIn);
             await sql.query(deleteNotIn);
-            if (appKeys.length) {
-                let insertQuery = "INSERT IGNORE INTO secure_market_apps (dealer_type,dealer_id, apk_id) VALUES ";
-
-                let insertOrIgnore = ' '
-                for (let i = 0; i < appKeys.length; i++) {
-                    if (i === appKeys.length - 1) {
-                        insertOrIgnore = insertOrIgnore + "('" + dealer_type + "' ," + dealer_id + " , " + appKeys[i] + ")"
-                    } else {
-                        insertOrIgnore = insertOrIgnore + "('" + dealer_type + "' ," + dealer_id + " , " + appKeys[i] + "),"
-                    }
-                }
-                // console.log(insertQuery + insertOrIgnore);
-                await sql.query(insertQuery + insertOrIgnore);
-            }
         } else {
             let deleteNotIn = "DELETE FROM secure_market_apps WHERE apk_id NOT IN ('" + toDelete + "') AND dealer_id = '" + verify.user.id + " '"
             // console.log(deleteNotIn);
@@ -52,30 +36,40 @@ exports.trasnferApps = async function (req, res) {
                     appKeys.splice(index, 1)
                 }
             })
-            if (appKeys.length) {
-                let insertQuery = "INSERT IGNORE INTO secure_market_apps (dealer_type,dealer_id, apk_id) VALUES ";
-                let insertOrIgnore = ' '
-                for (let i = 0; i < appKeys.length; i++) {
-                    if (i === appKeys.length - 1) {
-                        insertOrIgnore = insertOrIgnore + "('" + dealer_type + "' ," + dealer_id + " , " + appKeys[i] + ")"
-                    } else {
-                        insertOrIgnore = insertOrIgnore + "('" + dealer_type + "' ," + dealer_id + " , " + appKeys[i] + "),"
-                    }
+        }
+
+        // get all secure markete apps
+        let sm_apps = await sql.query("SELECT apk_id FROM secure_market_apps");
+        let sm_app_ids = []
+        if (sm_apps.length) {
+            sm_apps.map((item) => sm_app_ids.push(item.apk_id))
+        }
+        if (appKeys.length) {
+            let insertQuery = "INSERT INTO secure_market_apps (dealer_type,dealer_id, apk_id) VALUES ";
+            let insertValues = ' '
+            for (let i = 0; i < appKeys.length; i++) {
+                if (sm_app_ids.indexOf(appKeys[i]) !== -1) {
+                    continue
                 }
-                await sql.query(insertQuery + insertOrIgnore);
+                insertValues = insertValues + "('" + dealer_type + "' ," + dealer_id + " , " + appKeys[i] + "),"
+            }
+            if (insertValues.length > 1) {
+                let query = insertQuery + insertValues;
+                query = query.slice(0, query.length - 1)
+                console.log(query);
+                await sql.query(query);
             }
         }
 
         where = '';
         if (verify.user.user_type !== ADMIN) {
             apklist = await sql.query("select dealer_apks.* ,apk_details.* from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'")
+            where = "AND (secure_market_apps.dealer_type = 'admin' OR secure_market_apps.dealer_id = '" + verify.user.id + "')"
         }
         else {
             apklist = await sql.query("select * from apk_details where delete_status=0 AND apk_type != 'permanent'")
         }
-        if (verify.user.user_type !== ADMIN) {
-            where = "AND (secure_market_apps.dealer_type = 'admin' OR secure_market_apps.dealer_id = '" + verify.user.id + "')"
-        }
+
         sql.query("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id, secure_market_apps.is_restrict_uninstall  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'" + where + " ORDER BY created_at desc", async function (err, results) {
             if (err) {
                 console.log(err);
@@ -89,26 +83,20 @@ exports.trasnferApps = async function (req, res) {
                         }
                     }
                 })
-                data = {
-                    status: true,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.APPS_TRANSFERED_SUSSECFULLY], "Apps Transfered Sussecfully"), // 'Apps Transfered Sussecfully',
-                    data: {
-                        marketApplist: results,
-                        availableApps: apklist
-                    }
-                }
-                res.send(data)
             } else {
-                data = {
-                    status: true,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.APPS_TRANSFERED_SUSSECFULLY], "Apps Transfered Sussecfully"), // 'Apps Transfered Sussecfully',
-                    data: {
-                        marketApplist: [],
-                        availableApps: apklist
-                    }
-                }
-                res.send(data)
+                results = [];
             }
+
+            data = {
+                status: true,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.APPS_TRANSFERED_SUSSECFULLY], "Apps Transfered Sussecfully"), // 'Apps Transfered Sussecfully',
+                data: {
+                    marketApplist: results,
+                    availableApps: apklist
+                }
+            }
+            res.send(data);
+            return
         })
     }
     else {
@@ -185,7 +173,7 @@ exports.marketApplist = async function (req, res) {
 
 exports.getAppPermissions = async function (req, res) {
     var verify = req.decoded;
-    
+
     if (verify) {
         // let loggedUserType = verify.user.user_type;
         // if (loggedUserType !== Constants.ADMIN) {
@@ -196,7 +184,7 @@ exports.getAppPermissions = async function (req, res) {
             if (error) {
                 console.log(error)
             };
-            
+
             let Extension = [];
             let onlyApps = [];
             for (let item of apps) {
@@ -276,9 +264,9 @@ exports.getSystemPermissions = async function (req, res) {
             if (error) {
                 console.log(error);
             };
-            
+
             let data = [];
-            
+
             for (let sysPermission of systemPermissions) {
                 data.push({
                     setting_name: sysPermission.setting_name,

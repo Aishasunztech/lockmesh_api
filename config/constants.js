@@ -91,6 +91,8 @@ if (HOST_NAME) {
 	EXPIRES_IN: "86400s", // 24 Hours
 	DASHBOARD_EXPIRES_IN:'10800s', //3 Hours
 	MOBILE_EXPIRES_IN:'10800s', //3 Hours
+	BASIC_AUTH_USER:"web",
+	BASIC_AUTH_PASSWORD:"Google!@#1",
 
 	// SMTP Constants
 	SMTP_HOST: "smtp.office365.com",
