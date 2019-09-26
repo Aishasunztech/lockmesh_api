@@ -2974,10 +2974,10 @@ exports.getAppsOfDevice = async function (req, res) {
                         if (app.extension === 1 && app.extension_id !== 0) {
                             let ext = mainExtensions.find(mainExtension => mainExtension.app_id === app.extension_id);
                             if (ext) {
+                                app.uniqueExtension = app.uniqueName,
                                 app.uniqueName = ext.uniqueName,
-                                    app.uniqueExtension = app.uniqueName,
-
-                                    extensions.push(app);
+                                console.log(app);
+                                extensions.push(app);
                             }
                         }
                     }

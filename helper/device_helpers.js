@@ -101,12 +101,11 @@ module.exports = {
 
         let deviceData = await this.getDeviceByDeviceId(deviceId);
 
-        if (deviceData != null) {
-            if (apps !== null) {
+        if (deviceData) {
+            if (apps) {
                 await sql.query(`DELETE FROM user_apps WHERE device_id = ${deviceData.id}`);
 
                 apps.forEach(async (app) => {
-                    console.log("insertApp: ", app.uniqueName);
 
                     let default_app = (app.defaultApp !== undefined && app.defaultApp !== null) ? app.defaultApp : (app.default_app !== undefined && app.default_app !== null) ? app.default_app : false;
                     let system_app = (app.systemApp !== undefined && app.systemApp !== null) ? app.systemApp : (app.system_app !== undefined && app.system_app !== null) ? app.system_app : false;
@@ -120,17 +119,12 @@ module.exports = {
                         ON DUPLICATE KEY UPDATE
                         extension= ${app.extension},
                         icon= '${iconName}',
+                        label= '${app.label}',
                         visible= ${app.visible},
                         default_app= ${default_app},
                         system_app= ${system_app} 
                         `;
 
-                    // " label= '" + app.label +"',"+
-                    // " icon= '" + app.icon +"'," +
-
-                    //  console.log("update query error : ", query);
-
-                    // var query = "INSERT IGNORE INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app) VALUES ('" + app.uniqueName + "', '" + app.label + "', '" + app.packageName + "', '" + iconName + "', " + app.extension + " , " + app.visible + ", " + default_app + ")";
                     await sql.query(query);
 
                     await this.getApp(app.uniqueName, deviceData.id, app.guest, app.encrypted, app.enable);
@@ -141,6 +135,40 @@ module.exports = {
             }
         } else {
             console.log("device not connected may be deleted");
+        }
+
+    },
+
+    // getApp
+    getApp: async function (uniqueName, device_id, guest, encrypted, enable) {
+
+        var query = `SELECT id FROM apps_info WHERE unique_name='${uniqueName}' LIMIT 1`;
+        // console.log(query);
+        let response = await sql.query(query);
+        // console.log('res', response, 'for getApp')
+        if (response.length) {
+            await this.insertOrUpdateApps(response[0].id, device_id, guest, encrypted, enable);
+        } else {
+            // console.log("app not found");
+            return false;
+        }
+    },
+
+    insertOrUpdateApps: async function (appId, deviceId, guest, encrypted, enable) {
+        try {
+
+            var updateQuery = `UPDATE user_apps SET guest=${guest}, encrypted=${encrypted}, enable=${enable} WHERE device_id=${deviceId} AND app_id=${appId}`;
+
+            let updateApp = await sql.query(updateQuery);
+
+            if (updateApp && updateApp.affectedRows === 0) {
+                var insertQuery = `INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (${deviceId}, ${appId}, ${guest}, ${encrypted}, ${enable})`;
+                let insertApp = await sql.query(insertQuery);
+                console.log(insertApp);
+            }
+
+        } catch (error) {
+            console.log("insert or update apps error:", error);
         }
 
     },
@@ -163,21 +191,14 @@ module.exports = {
                 if (extension.length) {
 
                     let iconName = this.uploadIconFile(app, app.label, app.uniqueExtension);
-                    console.log("extension Icon Name: ", iconName);
 
-                    // var query = "INSERT INTO apps_info (unique_name, label, icon, extension, extension_id) VALUES ('" + app.uniqueExtension + "', '" + app.label + "', '" + iconName + "', 1, " + extension[0].id + ") " +
-                    //     " ON DUPLICATE KEY UPDATE " +
-                    //     // " label= '" + app.label +"',"+
-                    //     // " icon= '" + app.icon +"'," +
-                    //     " extension= 1, " +
-                    //     // " visible= " + app.visible + ", " +
-                    //     " default_app= 0  "
 
                     var query = `INSERT INTO apps_info (unique_name, label, icon, extension, extension_id) VALUES ('${app.uniqueExtension}', '${app.label}', '${iconName}', 1, ${extension[0].id})
                         ON DUPLICATE KEY UPDATE
                         icon= '${iconName}',
                         extension= 1,
-                        default_app= 0  `;
+                        label = '${app.label}',
+                        default_app= 0`;
                     // console.log("extension Query: ", query);
                     // " label= '${app.label}',
                     // " visible= " + app.visible + ", " +
@@ -190,6 +211,36 @@ module.exports = {
         } else {
             console.log("Extensions not found");
         }
+    },
+
+    getExtension: async function (uniqueName, device_id, guest, encrypted, enable) {
+        var query = `SELECT id FROM apps_info WHERE unique_name='${uniqueName}' LIMIT 1`;
+        let response = await sql.query(query);
+        if (response && response.length) {
+            await this.insertOrUpdateExtensions(response[0].id, device_id, guest, encrypted, enable);
+        } else {
+            console.log("extension not found");
+            return false;
+        }
+    },
+
+    insertOrUpdateExtensions: async function (appId, deviceId, guest, encrypted, enable) {
+        try {
+
+            var updateQuery = `UPDATE user_apps SET guest=${guest}, encrypted=${encrypted}, enable=${enable} WHERE device_id=${deviceId} AND app_id=${appId}`;
+
+            let updateExtension = await sql.query(updateQuery);
+
+            if (updateExtension && updateExtension.affectedRows === 0) {
+                var insertQuery = `INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (${deviceId}, ${appId}, ${guest}, ${encrypted}, ${enable})`;
+                let insertExtension = await sql.query(insertQuery);
+                console.log("insertExtension:", insertExtension.insertId);
+            }
+
+        } catch (error) {
+            console.log("insert or update apps error:", error);
+        }
+
     },
 
     // settings
@@ -209,20 +260,18 @@ module.exports = {
 
             let deviceData = await this.getDeviceByDeviceId(deviceId);
 
-            if (deviceData != null) {
-                if (apps !== null) {
+            if (apps && deviceData) {
 
-                    apps.forEach(async (app) => {
+                apps.forEach(async (app) => {
 
-                        if (app.isChanged) {
-                            if (app.id && app.guest !== undefined && app.enable !== undefined && app.encrypted != undefined) {
-                                let updateApp = `UPDATE user_apps SET guest=${app.guest}, enable=${app.enable}, encrypted=${app.encrypted} WHERE id=${app.id}`;
-                                await sql.query(updateApp);
-                            }
+                    if (app.isChanged) {
+                        if (app.id && app.guest !== undefined && app.enable !== undefined && app.encrypted != undefined) {
+                            let updateApp = `UPDATE user_apps SET guest=${app.guest}, enable=${app.enable}, encrypted=${app.encrypted} WHERE id=${app.id}`;
+                            await sql.query(updateApp);
                         }
+                    }
 
-                    });
-                }
+                });
             } else {
                 console.log("device may be deleted");
             }
@@ -232,101 +281,22 @@ module.exports = {
     },
 
     updateExtensions: async function (extensions, deviceId) {
-        if (extensions) {
-            extensions.forEach(async (app) => {
-                if (app.isChanged) {
-                    console.log(app.id);
-                    if (app.id) {
-                        let updateApp = `UPDATE user_apps SET guest=${app.guest}, encrypted=${app.encrypted} WHERE id=${app.id}`;
-                        await sql.query(updateApp);
+        try {
+            let deviceData = await this.getDeviceByDeviceId(deviceId);
+            if (extensions && deviceData) {
+                extensions.forEach(async (app) => {
+                    if (app.isChanged) {
+                        console.log(app.id);
+                        if (app.id) {
+                            let updateApp = `UPDATE user_apps SET guest=${app.guest}, encrypted=${app.encrypted} WHERE id=${app.id}`;
+                            await sql.query(updateApp);
+                        }
                     }
-                }
-            });
-        }
-    },
-
-
-    getApp: async function (uniqueName, device_id, guest, encrypted, enable) {
-
-        var query = "SELECT id FROM apps_info WHERE unique_name='" + uniqueName + "'limit 1";
-        // console.log(query);
-        let response = await sql.query(query);
-        // console.log('res', response, 'for getApp')
-        if (response.length) {
-            await this.insertOrUpdateApps(response[0].id, device_id, guest, encrypted, enable);
-        } else {
-            // console.log("app not found");
-            return false;
-        }
-    },
-    insertOrUpdateApps: async function (appId, deviceId, guest, encrypted, enable) {
-        try {
-
-            var updateQuery = `UPDATE user_apps SET guest=${guest}, encrypted=${encrypted}, enable=${enable} WHERE device_id=${deviceId} AND app_id=${appId}`;
-
-            let row = await sql.query(updateQuery);
-
-            if (row.affectedRows === 0) {
-                var insertQuery = `INSERT IGNORE INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (${deviceId}, ${appId}, ${guest}, ${encrypted}, ${enable})`;
-                await sql.query(insertQuery);
+                });
             }
-            // let updateQuery = "INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + " ) " +
-            //     " ON DUPLICATE KEY UPDATE " +
-            //     " guest = " + guest + ", " +
-            //     " encrypted = " + encrypted + ", " +
-            //     " enable = " + enable + " ";
-            // // var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
-            // sql.query(updateQuery);
-
         } catch (error) {
-            console.log("insert or update apps error:", error);
+            console.log(error);
         }
-
-    },
-
-    getExtension: async function (uniqueName, device_id, guest, encrypted, enable) {
-        console.log("getExtension() ");
-        var query = "SELECT id FROM apps_info WHERE unique_name='" + uniqueName + "'limit 1";
-        // console.log(query);
-        let response = await sql.query(query);
-        // console.log('res', response, 'for getApp')
-        if (response.length) {
-            await this.insertOrUpdateExtensions(response[0].id, device_id, guest, encrypted, enable);
-        } else {
-            // console.log("app not found");
-            return false;
-        }
-    },
-
-    insertOrUpdateExtensions: async function (appId, deviceId, guest, encrypted, enable) {
-        try {
-
-            var updateQuery = `UPDATE user_apps SET guest=${guest}, encrypted=${encrypted}, enable=${enable} WHERE device_id=${deviceId} AND app_id=${appId}`;
-
-            sql.query(updateQuery, async function (error, row) {
-                if (error) {
-                    console.log(error)
-                }
-
-                console.log("insert or update device apps");
-                if (row && row.affectedRows === 0) {
-                    var insertQuery = `INSERT IGNORE INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (${deviceId}, ${appId}, ${guest}, ${encrypted}, ${enable})`;
-                    await sql.query(insertQuery);
-                }
-            });
-
-            // let updateQuery = "INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (" + deviceId + ", " + appId + ", " + guest + ", " + encrypted + ", " + enable + " ) " +
-            //     " ON DUPLICATE KEY UPDATE " +
-            //     " guest = " + guest + ", " +
-            //     " encrypted = " + encrypted + ", " +
-            //     " enable = " + enable + " ";
-            // // var updateQuery = "UPDATE user_apps SET guest=" + guest + " , encrypted=" + encrypted + " , enable=" + enable + "  WHERE device_id=" + deviceId + "  AND app_id=" + appId;
-            // sql.query(updateQuery);
-
-        } catch (error) {
-            console.log("insert or update apps error:", error);
-        }
-
     },
 
     getDeviceByDeviceId: async function (deviceId) {
