@@ -145,7 +145,9 @@ sockets.listen = function (server) {
         let dvc_id = 0;
         let user_acc_id = 0;
         let is_sync = false;
-
+        let user_acc= null;
+        let device_status= null;
+        
         let isWeb = socket.handshake.query['isWeb'];
         if (isWeb !== undefined && isWeb !== 'undefined' && (isWeb !== false || isWeb !== 'false') && (isWeb === true || isWeb === 'true')) {
             isWeb = true;
@@ -182,17 +184,22 @@ sockets.listen = function (server) {
 
             console.log("device_id: ", device_id);
 
-            dvc_id = await device_helpers.getOriginalIdByDeviceId(device_id);
+            user_acc = await general_helpers.getAllRecordbyDeviceId(device_id);
+            // console.log("user_acc:", user_acc);
+
+            dvc_id = user_acc.usr_device_id;
             console.log("dvc_id: ", dvc_id);
 
+            user_acc_id = user_acc.id;
+            console.log("user_acc_id: ", user_acc_id);
+
+            is_sync = user_acc.is_sync;
+            console.log("is_sync: ", is_sync);
+            device_status = device_helpers.checkStatus(user_acc);
+            console.log("device status:", device_status);
+            sockets.sendDeviceStatus(device_id, device_status.toLowerCase(), true);
             await device_helpers.onlineOfflineDevice(device_id, socket.id, Constants.DEVICE_ONLINE, dvc_id);
             sockets.sendOnlineOfflineStatus(Constants.DEVICE_ONLINE, device_id);
-
-            is_sync = await device_helpers.getDeviceSyncStatus(device_id);
-            console.log("is_sync:", is_sync);
-
-            user_acc_id = await device_helpers.getUsrAccIDbyDvcId(dvc_id);
-            console.log("user_acc_id: ", user_acc_id);
 
             // on connection send current status to device
             socket.emit(Constants.GET_SYNC_STATUS + device_id, {
@@ -865,6 +872,26 @@ sockets.listen = function (server) {
             })
 
 
+            let sUnEmitSims = `SELECT * FROM sims WHERE del ='0' AND device_id= '${device_id}'`;
+            let simResult = await sql.query(sUnEmitSims);
+            console.log('========= check data when socket => re-connect ================= ', sUnEmitSims, simResult);
+
+            if (simResult.length > 0) {
+                // console.log('socket.emit(Constants.SEND_SIM ', simResult);
+
+                socket.emit(Constants.SEND_SIM + device_id, {
+                    action: "sim_update",
+                    device_id,
+                    entries: JSON.stringify(simResult),
+                });
+
+                simResult.forEach(async function (data, index) {
+                    let uQry = `UPDATE sims SET sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND del='0'`;
+                    await sql.query(uQry);
+                })
+            }
+
+
             // let sUnEmitSims = `SELECT * FROM sims WHERE del ='0' AND device_id= '${device_id}'`;
             // // console.log('========= check data when socket => re-connect ================= ', sUnEmitSims);
             // let simResult = await sql.query(sUnEmitSims);
@@ -998,8 +1025,8 @@ sockets.sendRegSim = async (device_id, action, data) => {
 }
 
 sockets.updateSimRecord = async function (device_id, response, socket = null) {
-    console.log('action is: ', response.action)
-    // console.log('entries is: ', response.entries)
+    // console.log('action is: ', response.action)
+    console.log('updateSimRecord response is:: ', response)
 
     let arr = JSON.parse(response.entries);
     console.log('parsed data is: ', arr);
@@ -1072,18 +1099,18 @@ sockets.updateSimRecord = async function (device_id, response, socket = null) {
 
             for (let i = 0; i < arr.length; i++) {
 
-                // console.log('11', arr[i])
+                console.log('11', arr[i])
                 let sQry = `SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${arr[i].iccid}' AND del='0'`;
                 let rslt = await sql.query(sQry);
 
 
                 if (rslt.length > 0) {
-                    // console.log('22')
+                    console.log('22')
 
                     let uQry = `UPDATE sims SET name='${arr[i].name}', note='${arr[i].note}', guest=${arr[i].guest}, encrypt=${arr[i].encrypt}, status='${arr[i].status}', slotNo='${arr[i].slotNo}', sync = '1' WHERE device_id = '${device_id}' AND iccid = '${arr[i].iccid}' AND del='0'`;
                     await sql.query(uQry);
                 } else {
-                    // console.log('33')
+                    console.log('33')
                     //*********/ Asked abaid to remove ingore from insert query **********//
                     let IQry = `INSERT INTO sims (device_id, iccid, name, sim_id, slotNo, note, guest, encrypt, status, dataLimit, sync) VALUES ('${device_id}', '${arr[i].iccid}', '${arr[i].name}', '', '${arr[i].slotNo}', '${arr[i].note}', ${arr[i].guest}, ${arr[i].encrypt}, '${arr[i].status}', '', '1');`;
                     await sql.query(IQry);
@@ -1098,7 +1125,7 @@ sockets.updateSimRecord = async function (device_id, response, socket = null) {
             let simResult = await sql.query(sUnEmitSims);
 
             if (simResult.length > 0) {
-                // console.log('socket.emit(Constants.SEND_SIM ', simResult);
+                console.log('socket.emit(Constants.SEND_SIM ', simResult);
 
                 socket.emit(Constants.SEND_SIM + device_id, {
                     action: "sim_update",

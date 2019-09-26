@@ -3074,25 +3074,7 @@ exports.applySettings = async function (req, res) {
                     let permissions = subExtensions;
 
                     if (isOnline) {
-                        let updateAppliedSettings = `UPDATE device_history SET status=1 WHERE device_id='${device_id}' AND type='${type}'`;
-                        await sql.query(updateAppliedSettings);
-
-                        // var setting_query = `SELECT * FROM device_history WHERE device_id='${device_id}' AND status=1 ORDER BY created_at DESC LIMIT 1`;
-                        // let settingHistory = await sql.query(setting_query);
-
-                        // if (settingHistory.length > 0 && data.device_id != null) {
-
-                        // these method was called so if device is online from here his apps will be updated, but its not correct
-                        // let apps = JSON.parse(app_list);
-                        // let extensions = JSON.parse(subExtensions);
-
-                        // await device_helpers.updateApps(apps, device_id);
-
-                        // await device_helpers.updateExtensions(extensions, device_id);
-
-                        // await device_helpers.insertOrUpdateSettings(controls, device_id);
-                        // }
-
+                    
                         sockets.sendEmit(app_list, passwords, controls, permissions, device_id);
 
                         if (type === "profile") {
