@@ -22,15 +22,15 @@ cron.schedule('0 0 0 * * *', async () => {
         if (formatted_dt >= results[i].expiry_date) {
             var updateUsrAcc = `update usr_acc set status = 'expired' where device_id ='${results[i].device_id}'`;
             var dvcID = await device_helpers.getDvcIDByDeviceID(results[i].device_id);
-            sql.query(updateUsrAcc, function (error, results) {
+            sql.query(updateUsrAcc, function (error, updatedResults) {
                 if (error) console.log(error);
 
-                if (results.affectedRows == 0) {
+                if (updatedResults && updatedResults.affectedRows == 0) {
                     console.log('not done');
                 } else {
                     try {
                         console.log('expired');
-                        require("../bin/www").sendDeviceStatus(dvcID, "expired", true);
+                        require("../routes/sockets").sendDeviceStatus(dvcID, "expired", true);
                     } catch (error) {
                         console.log(error);
                     }

@@ -229,10 +229,11 @@ sockets.listen = function (server) {
                     })
                     await device_helpers.updateApps(app_list, device_id);
 
+                    await device_helpers.updateExtensions(extensions, device_id);
+                    
                     extensions.map(extension => {
                         delete extension.isChanged;
                     })
-                    await device_helpers.updateExtensions(extensions, device_id);
 
                     if (controls.length) {
                         controls.map(control => {
