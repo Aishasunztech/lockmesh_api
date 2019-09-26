@@ -145,7 +145,9 @@ sockets.listen = function (server) {
         let dvc_id = 0;
         let user_acc_id = 0;
         let is_sync = false;
-
+        let user_acc= null;
+        let device_status= null;
+        
         let isWeb = socket.handshake.query['isWeb'];
         if (isWeb !== undefined && isWeb !== 'undefined' && (isWeb !== false || isWeb !== 'false') && (isWeb === true || isWeb === 'true')) {
             isWeb = true;
@@ -182,17 +184,22 @@ sockets.listen = function (server) {
 
             console.log("device_id: ", device_id);
 
-            dvc_id = await device_helpers.getOriginalIdByDeviceId(device_id);
+            user_acc = await general_helpers.getAllRecordbyDeviceId(device_id);
+            // console.log("user_acc:", user_acc);
+
+            dvc_id = user_acc.usr_device_id;
             console.log("dvc_id: ", dvc_id);
 
+            user_acc_id = user_acc.id;
+            console.log("user_acc_id: ", user_acc_id);
+
+            is_sync = user_acc.is_sync;
+            console.log("is_sync: ", is_sync);
+            device_status = device_helpers.checkStatus(user_acc);
+            console.log("device status:", device_status);
+            sockets.sendDeviceStatus(device_id, device_status.toLowerCase(), true);
             await device_helpers.onlineOfflineDevice(device_id, socket.id, Constants.DEVICE_ONLINE, dvc_id);
             sockets.sendOnlineOfflineStatus(Constants.DEVICE_ONLINE, device_id);
-
-            is_sync = await device_helpers.getDeviceSyncStatus(device_id);
-            console.log("is_sync:", is_sync);
-
-            user_acc_id = await device_helpers.getUsrAccIDbyDvcId(dvc_id);
-            console.log("user_acc_id: ", user_acc_id);
 
             // on connection send current status to device
             socket.emit(Constants.GET_SYNC_STATUS + device_id, {
