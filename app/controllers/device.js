@@ -318,55 +318,116 @@ exports.acceptDevice = async function (req, res) {
                     let dealer_credits = (result.length) ? result[0].credits : 0
                     let admin_credits = 0
                     if (dealer_credits > total_price || term === '0') {
-                        if (term !== '0') {
-                            dealer_credits = dealer_credits - total_price
-                            let packagesIds = []
-                            let productIds = []
-                            packages.map((item) => {
-                                packagesIds.push(item.id)
-                            })
-                            products.map((item) => {
-                                productIds.push(item.id)
-                            })
 
-                            if (loggedDealerType === constants.DEALER) {
-                                console.log("PACKAGES AND PRICES", packages, products);
-                                let packagesData = []
-                                let pricesData = []
-                                let adminProfit = 0
-                                if (packagesIds.length) {
-
-                                    packagesData = await sql.query("SELECT * from packages where id IN (" + packagesIds.join(",") + ")")
-                                }
-                                if (productIds.length) {
-                                    pricesData = await sql.query("SELECT * from prices where id IN (" + productIds.join(",") + ")")
-                                }
-                                if (packagesData.length) {
-                                    // console.log(packagesData);
-                                    packagesData.map(async (item) => {
-                                        if (item.dealer_type === 'super_admin') {
-                                            packages.map((pkg) => {
-                                                if (pkg.id === item.id) {
-                                                    adminProfit += pkg.pkg_price - item.pkg_price
-                                                }
-                                            })
-                                        } else if (item.dealer_type === 'admin') {
-
-                                        }
-                                    })
-                                    console.log(adminProfit);
-                                }
-                                if (pricesData.length) {
-
-                                }
-                            } else if (loggedDealerType === constants.SDEALER) {
-                            }
-                        }
-                        return
                         if (!empty(usr_device_id)) {
 
                             if (packages.length || products.length) {
+                                if (term !== '0') {
+                                    dealer_credits = dealer_credits - total_price
+                                    let packagesIds = []
+                                    let productIds = []
+                                    packages.map((item) => {
+                                        packagesIds.push(item.id)
+                                    })
+                                    products.map((item) => {
+                                        productIds.push(item.id)
+                                    })
 
+                                    if (loggedDealerType === constants.DEALER) {
+                                        console.log("PACKAGES AND PRICES", packages, products);
+                                        let packagesData = []
+                                        let pricesData = []
+                                        let admin_profit = 0
+                                        let dealer_profit = 0
+                                        if (packagesIds.length) {
+
+                                            packagesData = await sql.query("SELECT * from packages where id IN (" + packagesIds.join(",") + ")")
+                                        }
+                                        if (productIds.length) {
+                                            pricesData = await sql.query("SELECT * from prices where id IN (" + productIds.join(",") + ")")
+                                        }
+                                        let sa_sim_prices = {}
+                                        let sa_chat_prices = {}
+                                        let sa_vpn_prices = {}
+                                        let sa_pgp_prices = {}
+                                        let sa_product_prices = await sql.query("SELECT * FROM prices where dealer_type = 'super_admin'")
+                                        sa_product_prices.map((item) => {
+                                            if (item.price_for === "sim_id") {
+                                                sa_sim_prices[item.price_term] = Number(item.unit_price)
+                                            }
+                                            else if (item.price_for === "chat_id") {
+                                                sa_chat_prices[item.price_term] = Number(item.unit_price)
+                                            }
+                                            else if (item.price_for === "vpn") {
+                                                sa_vpn_prices[item.price_term] = Number(item.unit_price)
+                                            }
+                                            else if (item.price_for === "pgp_email") {
+                                                sa_pgp_prices[item.price_term] = Number(item.unit_price)
+                                            }
+                                        })
+                                        if (packagesData.length) {
+                                            // console.log(packagesData);
+                                            // return
+                                            packagesData.map(async (item) => {
+                                                if (item.dealer_type === 'super_admin') {
+                                                    packages.map((pkg) => {
+                                                        if (pkg.id === item.id) {
+                                                            admin_profit += pkg.pkg_price - item.pkg_price
+                                                        }
+                                                    })
+                                                } else if (item.dealer_type === 'admin') {
+                                                    let sa_total_price = 0
+                                                    packages.map((pkg) => {
+                                                        if (pkg.id === item.id) {
+                                                            if (pkg.pkg_features.sim_id) {
+                                                                sa_total_price += sa_sim_prices[item.pkg_term]
+                                                            }
+                                                            if (pkg.pkg_features.sim_id2) {
+                                                                sa_total_price += sa_sim_prices[item.pkg_term]
+                                                            }
+                                                            if (pkg.pkg_features.chat_id) {
+                                                                sa_total_price += sa_chat_prices[item.pkg_term]
+                                                            }
+                                                            if (pkg.pkg_features.pgp_email) {
+                                                                sa_total_price += sa_pgp_prices[item.pkg_term]
+                                                            }
+                                                            if (pkg.pkg_features.vpn) {
+                                                                sa_total_price += sa_vpn_prices[item.pkg_term]
+                                                            }
+                                                            admin_profit += Number(pkg.pkg_price) - sa_total_price
+                                                        }
+                                                    })
+                                                }
+                                            })
+                                        }
+                                        if (pricesData.length) {
+                                            var sa_total_product_price = 0
+                                            pricesData.map(async (item) => {
+                                                if (item.price_for === "sim_id") {
+                                                    sa_total_product_price += sa_sim_prices[item.price_term]
+                                                    admin_profit += item.unit_price - sa_sim_prices[item.price_term]
+                                                }
+                                                else if (item.price_for === "chat_id") {
+                                                    sa_total_product_price += sa_chat_prices[item.price_term]
+                                                    admin_profit += item.unit_price - sa_chat_prices[item.price_term]
+                                                }
+                                                else if (item.price_for === "vpn") {
+                                                    sa_total_product_price += sa_vpn_prices[item.price_term]
+                                                    admin_profit += item.unit_price - sa_vpn_prices[item.price_term]
+                                                }
+                                                else if (item.price_for === "pgp_email") {
+                                                    sa_total_product_price += sa_pgp_prices[item.price_term]
+                                                    admin_profit += item.unit_price - sa_pgp_prices[item.price_term]
+                                                }
+                                            })
+                                        }
+                                        console.log(admin_profit);
+                                        return
+                                    } else if (loggedDealerType === constants.SDEALER) {
+
+                                    }
+                                }
+                                return
                                 var checkDevice = `SELECT * FROM devices LEFT JOIN usr_acc ON (usr_acc.device_id = devices.id) WHERE devices.device_id = '${device_id}' `;
 
                                 let checkDealer = "SELECT * FROM dealers where dealer_id =" + dealer_id;
@@ -1211,7 +1272,6 @@ exports.editDevices = async function (req, res) {
                                         true
                                     );
                                     status = "active";
-                                    
                                 }
                             } else {
                                 if (finalStatus === constants.DEVICE_TRIAL) {
