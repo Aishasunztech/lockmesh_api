@@ -333,41 +333,38 @@ exports.acceptDevice = async function (req, res) {
                                         productIds.push(item.id)
                                     })
 
-                                    if (loggedDealerType === constants.DEALER) {
-                                        console.log("PACKAGES AND PRICES", packages, products);
-                                        let packagesData = []
-                                        let pricesData = []
-                                        let admin_profit = 0
-                                        let dealer_profit = 0
-                                        if (packagesIds.length) {
+                                    let packagesData = []
+                                    let pricesData = []
+                                    let admin_profit = 0
+                                    let dealer_profit = 0
+                                    if (packagesIds.length) {
 
-                                            packagesData = await sql.query("SELECT * from packages where id IN (" + packagesIds.join(",") + ")")
+                                        packagesData = await sql.query("SELECT * from packages where id IN (" + packagesIds.join(",") + ")")
+                                    }
+                                    if (productIds.length) {
+                                        pricesData = await sql.query("SELECT * from prices where id IN (" + productIds.join(",") + ")")
+                                    }
+                                    let sa_sim_prices = {}
+                                    let sa_chat_prices = {}
+                                    let sa_vpn_prices = {}
+                                    let sa_pgp_prices = {}
+                                    let sa_product_prices = await sql.query("SELECT * FROM prices where dealer_type = 'super_admin'")
+                                    sa_product_prices.map((item) => {
+                                        if (item.price_for === "sim_id") {
+                                            sa_sim_prices[item.price_term] = Number(item.unit_price)
                                         }
-                                        if (productIds.length) {
-                                            pricesData = await sql.query("SELECT * from prices where id IN (" + productIds.join(",") + ")")
+                                        else if (item.price_for === "chat_id") {
+                                            sa_chat_prices[item.price_term] = Number(item.unit_price)
                                         }
-                                        let sa_sim_prices = {}
-                                        let sa_chat_prices = {}
-                                        let sa_vpn_prices = {}
-                                        let sa_pgp_prices = {}
-                                        let sa_product_prices = await sql.query("SELECT * FROM prices where dealer_type = 'super_admin'")
-                                        sa_product_prices.map((item) => {
-                                            if (item.price_for === "sim_id") {
-                                                sa_sim_prices[item.price_term] = Number(item.unit_price)
-                                            }
-                                            else if (item.price_for === "chat_id") {
-                                                sa_chat_prices[item.price_term] = Number(item.unit_price)
-                                            }
-                                            else if (item.price_for === "vpn") {
-                                                sa_vpn_prices[item.price_term] = Number(item.unit_price)
-                                            }
-                                            else if (item.price_for === "pgp_email") {
-                                                sa_pgp_prices[item.price_term] = Number(item.unit_price)
-                                            }
-                                        })
+                                        else if (item.price_for === "vpn") {
+                                            sa_vpn_prices[item.price_term] = Number(item.unit_price)
+                                        }
+                                        else if (item.price_for === "pgp_email") {
+                                            sa_pgp_prices[item.price_term] = Number(item.unit_price)
+                                        }
+                                    })
+                                    if (loggedDealerType === constants.DEALER) {
                                         if (packagesData.length) {
-                                            // console.log(packagesData);
-                                            // return
                                             packagesData.map(async (item) => {
                                                 if (item.dealer_type === 'super_admin') {
                                                     packages.map((pkg) => {
@@ -407,6 +404,10 @@ exports.acceptDevice = async function (req, res) {
                                                     sa_total_product_price += sa_sim_prices[item.price_term]
                                                     admin_profit += item.unit_price - sa_sim_prices[item.price_term]
                                                 }
+                                                else if (item.price_for === "SIM ID 2") {
+                                                    sa_total_product_price += sa_sim_prices[item.price_term]
+                                                    admin_profit += item.unit_price - sa_sim_prices[item.price_term]
+                                                }
                                                 else if (item.price_for === "chat_id") {
                                                     sa_total_product_price += sa_chat_prices[item.price_term]
                                                     admin_profit += item.unit_price - sa_chat_prices[item.price_term]
@@ -424,6 +425,66 @@ exports.acceptDevice = async function (req, res) {
                                         console.log(admin_profit);
                                         return
                                     } else if (loggedDealerType === constants.SDEALER) {
+                                        if (packagesData.length) {
+                                            packagesData.map(async (item) => {
+                                                if (item.dealer_type === 'super_admin') {
+                                                    let adminPrice =await sql.query("SELECT FROM dealer_packages_prices WHERE package_id = " + item.id) 
+                                                    packages.map((pkg) => {
+                                                        if (pkg.id === item.id) {
+                                                            admin_profit += pkg.pkg_price - item.pkg_price
+                                                        }
+                                                    })
+
+                                                } else if (item.dealer_type === 'admin') {
+                                                    let sa_total_price = 0
+                                                    packages.map((pkg) => {
+                                                        if (pkg.id === item.id) {
+                                                            if (pkg.pkg_features.sim_id) {
+                                                                sa_total_price += sa_sim_prices[item.pkg_term]
+                                                            }
+                                                            if (pkg.pkg_features.sim_id2) {
+                                                                sa_total_price += sa_sim_prices[item.pkg_term]
+                                                            }
+                                                            if (pkg.pkg_features.chat_id) {
+                                                                sa_total_price += sa_chat_prices[item.pkg_term]
+                                                            }
+                                                            if (pkg.pkg_features.pgp_email) {
+                                                                sa_total_price += sa_pgp_prices[item.pkg_term]
+                                                            }
+                                                            if (pkg.pkg_features.vpn) {
+                                                                sa_total_price += sa_vpn_prices[item.pkg_term]
+                                                            }
+                                                            admin_profit += Number(pkg.pkg_price) - sa_total_price
+                                                        }
+                                                    })
+                                                }
+                                            })
+                                        }
+                                        if (pricesData.length) {
+                                            var sa_total_product_price = 0
+                                            pricesData.map(async (item) => {
+                                                if (item.price_for === "sim_id") {
+                                                    sa_total_product_price += sa_sim_prices[item.price_term]
+                                                    admin_profit += item.unit_price - sa_sim_prices[item.price_term]
+                                                }
+                                                else if (item.price_for === "SIM ID 2") {
+                                                    sa_total_product_price += sa_sim_prices[item.price_term]
+                                                    admin_profit += item.unit_price - sa_sim_prices[item.price_term]
+                                                }
+                                                else if (item.price_for === "chat_id") {
+                                                    sa_total_product_price += sa_chat_prices[item.price_term]
+                                                    admin_profit += item.unit_price - sa_chat_prices[item.price_term]
+                                                }
+                                                else if (item.price_for === "vpn") {
+                                                    sa_total_product_price += sa_vpn_prices[item.price_term]
+                                                    admin_profit += item.unit_price - sa_vpn_prices[item.price_term]
+                                                }
+                                                else if (item.price_for === "pgp_email") {
+                                                    sa_total_product_price += sa_pgp_prices[item.price_term]
+                                                    admin_profit += item.unit_price - sa_pgp_prices[item.price_term]
+                                                }
+                                            })
+                                        }
 
                                     }
                                 }
