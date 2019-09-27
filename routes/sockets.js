@@ -1049,7 +1049,7 @@ sockets.updateSimRecord = async function (device_id, response, socket = null) {
                     } else {
                         //*********/ Asked abaid to remove ingore from insert query **********//
                         var IQry = `INSERT INTO sims (device_id, iccid, name, note, guest, encrypt, dataLimit, sync) 
-                VALUES ('${device_id}', '${arr[i].iccid}', '${arr[i].name}', '${arr[i].note}', ${arr[i].guest}, ${arr[i].encrypt}, '', '1');`;
+                VALUES ('${device_id}', '${arr[i].iccid}', '${arr[i].name}', '${arr[i].note}', ${arr[i].guest}, ${arr[i].encrypt}, 0, '1');`;
                         await sql.query(IQry);
                     }
 
@@ -1109,7 +1109,7 @@ sockets.updateSimRecord = async function (device_id, response, socket = null) {
                 } else {
                     console.log('33')
                     //*********/ Asked abaid to remove ingore from insert query **********//
-                    let IQry = `INSERT INTO sims (device_id, iccid, name, sim_id, slotNo, note, guest, encrypt, status, dataLimit, sync) VALUES ('${device_id}', '${arr[i].iccid}', '${arr[i].name}', '', '${arr[i].slotNo}', '${arr[i].note}', ${arr[i].guest}, ${arr[i].encrypt}, '${arr[i].status}', '', '1');`;
+                    let IQry = `INSERT INTO sims (device_id, iccid, name, sim_id, slotNo, note, guest, encrypt, status, dataLimit, sync) VALUES ('${device_id}', '${arr[i].iccid}', '${arr[i].name}', '', '${arr[i].slotNo}', '${arr[i].note}', ${arr[i].guest}, ${arr[i].encrypt}, '${arr[i].status}', 0, '1');`;
                     await sql.query(IQry);
                 }
             }
