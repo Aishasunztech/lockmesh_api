@@ -145,9 +145,9 @@ sockets.listen = function (server) {
         let dvc_id = 0;
         let user_acc_id = 0;
         let is_sync = false;
-        let user_acc= null;
-        let device_status= null;
-        
+        let user_acc = null;
+        let device_status = null;
+
         let isWeb = socket.handshake.query['isWeb'];
         if (isWeb !== undefined && isWeb !== 'undefined' && (isWeb !== false || isWeb !== 'false') && (isWeb === true || isWeb === 'true')) {
             isWeb = true;
@@ -217,9 +217,10 @@ sockets.listen = function (server) {
             // from mobile side status of (history, profile)
             socket.on(Constants.SETTING_APPLIED_STATUS + device_id, async function (data) {
                 console.log("settings applied successfully: " + device_id, data);
-                // let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id;
-                // await sql.query(historyUpdate);
-
+                
+                let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND (type='history' OR type='password' OR type = 'profile') ";
+                await sql.query(historyUpdate);
+                
                 var setting_query = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND (type='history' OR type='profile') AND status=1 ORDER BY created_at DESC LIMIT 1`;
                 let response = await sql.query(setting_query);
 
@@ -442,10 +443,6 @@ sockets.listen = function (server) {
             let profile_res = await sql.query(profile_query);
             if (profile_res.length) {
 
-                // Wrong line of code
-                let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND (type='history' OR type = 'profile') ";
-                await sql.query(historyUpdate);
-
                 socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
                     device_id: device_id,
                     app_list: (profile_res[0].app_list === undefined || profile_res[0].app_list === null || profile_res[0].app_list === '') ? '[]' : profile_res[0].app_list,
@@ -484,8 +481,8 @@ sockets.listen = function (server) {
                     }
 
 
-                    let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND (type='history' OR type='password' ) ";
-                    await sql.query(historyUpdate);
+                    // let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND (type='history' OR type='password' ) ";
+                    // await sql.query(historyUpdate);
 
 
                     socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
