@@ -559,5 +559,31 @@ router.get('/languages', languageController.languages)
 // })
 
 
+router.get('/update_apk_labels', async function (req, res) {
+    sql.query("SELECT * FROM apk_details WHERE delete_status = 0 AND label is NULL", async function (err, data) {
+        if (data.length) {
+
+            data.map(async (item) => {
+                let fileName = item.apk
+                let file = path.join(__dirname, "../uploads/" + fileName);
+                if (fs.existsSync(file)) {
+                    let label = '';
+                    label = await helpers.getAPKLabel(file);
+                    if (!label) {
+                        label = ''
+                    }
+
+                    label = label.replace(/(\r\n|\n|\r)/gm, "");
+
+                    sql.query(`UPDATE apk_details SET label = '${label}' WHERE id = ${item.id}`);
+
+                }
+            })
+            return res.send("LABELS ADDED SUCCESSFULLY");
+        }
+    })
+})
+
+
 
 module.exports = router;
