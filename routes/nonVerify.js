@@ -560,9 +560,8 @@ router.get('/languages', languageController.languages)
 
 
 router.get('/update_apk_labels', async function (req, res) {
-    sql.query("SELECT * FROM apk_details WHERE delete_status = 0 AND label is NULL", async function (err, data) {
+    sql.query("SELECT * FROM apk_details WHERE label is NULL", async function (err, data) {
         if (data.length) {
-
             data.map(async (item) => {
                 let fileName = item.apk
                 let file = path.join(__dirname, "../uploads/" + fileName);
