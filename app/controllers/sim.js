@@ -37,7 +37,7 @@ exports.simRegister = async function (req, res) {
                 // if (activeSims.length < 2) {
                 //*********/ Asked abaid to remove ingore from insert query **********//
                 var IQry = `INSERT INTO sims (device_id, iccid, name, status, sim_id, note, guest, encrypt, dataLimit, sync) 
-                VALUES ('${device_id}', '${iccid}', '${name}', '${status}', '${sim_id}', '${note}', ${guest}, ${encrypt}, '${dataLimit}', '0');`;
+                VALUES ('${device_id}', '${iccid}', '${name}', '${status}', '${sim_id}', '${note}', ${guest}, ${encrypt}, 0, '0');`;
                 sql.query(IQry, async function (err, result) {
                     if (err) console.log(err);
 
