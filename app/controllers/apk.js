@@ -637,7 +637,7 @@ exports.editApk = async function (req, res) {
 
                     let formatByte = helpers.formatBytes(apk_stats.size);
 
-                    sql.query(`UPDATE apk_details SET app_name = '${apk_name}', logo = '${logo}', apk = '${apk}', version_code = '${versionCode}', version_name = '${versionName}', package_name='${packageName}', details='${details}', apk_bytes='${apk_stats.size}',  apk_size='${formatByte}'  WHERE id = ${req.body.apk_id}`, async function (err, rslts) {
+                    sql.query(`UPDATE apk_details SET app_name = '${apk_name}', logo = '${logo}',label = '${label}', apk = '${apk}', version_code = '${versionCode}', version_name = '${versionName}', package_name='${packageName}', details='${details}', apk_bytes='${apk_stats.size}',  apk_size='${formatByte}'  WHERE id = ${req.body.apk_id}`, async function (err, rslts) {
 
                         if (err) {
                             console.log(err)
