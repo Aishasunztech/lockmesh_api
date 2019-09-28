@@ -27,9 +27,9 @@ exports.simRegister = async function (req, res) {
             let status = rSim.status ? rSim.status : null;
 
             let sQry = `SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}' AND delete_status='0'`;
-            console.log(sQry);
+            // console.log(sQry);
             let rslt = await sql.query(sQry);
-            console.log(rslt);
+            // console.log(rslt);
 
             // let activeSims = await sql.query(`SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}' AND delete_status='0' AND (slotNo = '0' OR slotNo = '1')`);
 
@@ -203,7 +203,7 @@ exports.simDelete = async function (req, res) {
 
             if (device_id != undefined && iccid != undefined) {
                 // let dQry = `DELETE FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
-                let dQry = `UPDATE sims SET del='1' WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
+                let dQry = `UPDATE sims SET delete_status='1' WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
 
                 sql.query(dQry, async function (err, result) {
                     if (err) console.log(err);
@@ -251,7 +251,7 @@ exports.getSims = async function (req, res) {
 
         // sockets.sendRegSim(deviceId, "sim_inserted");
 
-        var SQry = `SELECT * FROM sims WHERE device_id= '${deviceId}' AND del = '0'`;
+        var SQry = `SELECT * FROM sims WHERE device_id= '${deviceId}' AND delete_status = '0'`;
         sql.query(SQry, async function (err, result) {
             // console.log("=======================================")
             // console.log('result is :', result)
@@ -308,7 +308,7 @@ exports.simHistory = async function (req, res) {
     if (verify) {
         try {
             if (req.params.device_id) {
-                var IQry = `SELECT * FROM sims WHERE device_id= '${req.params.device_id}' AND del = '1'`;
+                var IQry = `SELECT * FROM sims WHERE device_id= '${req.params.device_id}' AND delete_status = '1'`;
                 sql.query(IQry, async function (err, result) {
                     // console.log("=======================================")
                     // console.log('result is :', result)

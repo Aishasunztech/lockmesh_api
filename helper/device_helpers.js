@@ -102,7 +102,7 @@ module.exports = {
         let deviceData = await this.getDeviceByDeviceId(deviceId);
 
         if (apps && deviceData) {
-            
+
             // this query will delete all apps of device even extension. its working correct because mobile side sent all data again otherwise its wrong
             await sql.query(`DELETE FROM user_apps WHERE device_id = ${deviceData.id}`);
 
@@ -122,7 +122,7 @@ module.exports = {
                     let updateAppQ = `UPDATE apps_info SET extension= ${app.extension}, icon= '${iconName}', label= '${app.label}', visible= ${app.visible}, default_app= ${default_app}, system_app= ${system_app} WHERE id=${checkApp[0].id}`
                     console.log("updateApp: ", updateAppQ);
                     let updateApp = await sql.query(updateAppQ);
-                    
+
                 } else {
                     let insertAppQ = `INSERT INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app, system_app)
                         VALUES ('${app.uniqueName}', '${app.label}', '${app.packageName}', '${iconName}', ${app.extension} , ${app.visible}, ${default_app}, ${system_app})`;
@@ -192,21 +192,21 @@ module.exports = {
 
                     let checkExtQ = `SELECT id FROM apps_info WHERE unique_name='${app.uniqueExtension}' LIMIT 1`;
                     let checkExt = await sql.query(checkExtQ);
-                    if(checkExt && checkExt.length){
+                    if (checkExt && checkExt.length) {
                         id = checkExt[0].id;
                         let updateExtQ = `UPDATE apps_info SET icon= '${iconName}', extension= 1, extension_id = ${extension[0].id}, label = '${app.label}', default_app= 0 WHERE id=${checkExt[0].id}`;
-                         console.log('updateExtQ: ', updateExtQ);
-                        let updateExt= await sql.query(updateExtQ);
+                        console.log('updateExtQ: ', updateExtQ);
+                        let updateExt = await sql.query(updateExtQ);
                     } else {
                         let insertExtQ = `INSERT INTO apps_info (unique_name, label, icon, extension, extension_id) VALUES ('${app.uniqueExtension}', '${app.label}', '${iconName}', 1, ${extension[0].id})`;
                         console.log("insertExtQ: ", insertExtQ);
                         let insertExt = await sql.query(insertExtQ)
-                        if(insertExt){
+                        if (insertExt) {
                             id = insertExt.insertId;
                         }
                     }
 
-                    if(id){
+                    if (id) {
                         console.log("insertId Extensions: ", id)
                         await this.insertOrUpdateExtensions(id, deviceData.id, app.guest, app.encrypted, true);
                     }
@@ -221,11 +221,11 @@ module.exports = {
         try {
             let checkSubExtQ = `SELECT id FROM user_apps WHERE device_id=${deviceId} AND app_id=${appId}`;
             let checkSubExt = await sql.query(checkSubExtQ);
-            if(checkSubExt && checkSubExt.length){
+            if (checkSubExt && checkSubExt.length) {
                 var updateQuery = `UPDATE user_apps SET guest=${guest}, encrypted=${encrypted}, enable=${enable} WHERE device_id=${deviceId} AND app_id=${appId}`;
                 console.log("updateExtensionQuery: ", updateQuery);
                 let updateExtension = await sql.query(updateQuery);
-            }else {
+            } else {
                 var insertQuery = `INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (${deviceId}, ${appId}, ${guest}, ${encrypted}, ${enable})`;
                 let insertExtension = await sql.query(insertQuery);
                 console.log("insertExtension:", insertExtension.insertId);
@@ -242,7 +242,7 @@ module.exports = {
         try {
             let checkSettingQ = `SELECT id FROM user_app_permissions WHERE device_id='${device_id}' LIMIT 1`;
             let checkSetting = await sql.query(checkSettingQ);
-            if(checkSetting.length){
+            if (checkSetting.length) {
                 var updateQuery = `UPDATE user_app_permissions SET permissions ='${controls}' WHERE device_id='${device_id}' `;
                 var updateSetting = await sql.query(updateQuery);
                 console.log("updateSetting:", updateSetting);
@@ -796,6 +796,17 @@ module.exports = {
             console.log("device not found")
         }
         return app_list
+    },
+    compareSim: async function (deviceSim, panelSim, action) {
+        console.log("deviceSim ", deviceSim)
+        console.log("panelSim ", panelSim)
+        console.log("action ", action);
+
+        if (deviceSim.iccid == panelSim.iccid && deviceSim.name == panelSim.name && deviceSim.encrypt == panelSim.encrypt && deviceSim.guest == panelSim.guest && deviceSim.note == panelSim.note) {
+            return true;
+        } else {
+            return false;
+        }
 
     }
 }
