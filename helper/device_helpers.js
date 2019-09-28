@@ -1,6 +1,6 @@
 var express = require('express');
 const { sql } = require('../config/database');
-
+var moment = require("moment-strftime");
 var fs = require("fs");
 var path = require('path');
 
@@ -21,7 +21,7 @@ module.exports = {
         let query = "";
         if (deviceId) {
             console.log("device online")
-            query = `UPDATE devices SET session_id='${sessionId}', online='${status}' WHERE device_id='${deviceId}'`;
+            query = `UPDATE devices SET session_id='${sessionId}', online='${status}' , last_login = '${moment().format("YYYY/MM/DD HH:mm:ss")}' WHERE device_id='${deviceId}'`;
         } else {
             console.log("device offline")
             query = `UPDATE devices SET online = '${status}', session_id=null WHERE session_id='${sessionId.replace(/['"]+/g, '')}'`;
@@ -30,11 +30,13 @@ module.exports = {
         let res = await sql.query(query);
         if (res) {
             if (PK_DeviceID) {
-                query = `SELECT dvc.id, dvc.device_id, dvc.session_id, dvc.ip_address, dvc.mac_address, usr_acc.dealer_id FROM devices AS dvc LEFT JOIN usr_acc ON(usr_acc.device_id = dvc.id) WHERE dvc.id = ${PK_DeviceID}`;
-                let loginDevice = await sql.query(query);
+                // query = `SELECT dvc.id, dvc.device_id, dvc.session_id, dvc.ip_address, dvc.mac_address, usr_acc.dealer_id FROM devices AS dvc LEFT JOIN usr_acc ON(usr_acc.device_id = dvc.id) WHERE dvc.id = ${PK_DeviceID}`;
+                // let loginDevice = await sql.query(query);
 
-                query = `INSERT INTO login_history (device_id, dealer_id, socket_id, ip_address, mac_address, logged_in_client, type) VALUES (${PK_DeviceID}, '${loginDevice[0].dealer_id}', '${loginDevice[0].session_id}', '${loginDevice[0].ip_address}', '${loginDevice[0].mac_address}', 'device', 'socket');`;
-                await sql.query(query);
+                // query = `INSERT INTO login_history (device_id, dealer_id, socket_id, ip_address, mac_address, logged_in_client, type) VALUES (${PK_DeviceID}, '${loginDevice[0].dealer_id}', '${loginDevice[0].session_id}', '${loginDevice[0].ip_address}', '${loginDevice[0].mac_address}', 'device', 'socket');`;
+                // await sql.query(query);
+
+
             }
             return true;
         }
