@@ -26,12 +26,12 @@ exports.simRegister = async function (req, res) {
             let dataLimit = rSim.data_limit;
             let status = rSim.status ? rSim.status : null;
 
-            let sQry = `SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}' AND del='0'`;
+            let sQry = `SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}' AND delete_status='0'`;
             console.log(sQry);
             let rslt = await sql.query(sQry);
             console.log(rslt);
 
-            // let activeSims = await sql.query(`SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}' AND del='0' AND (slotNo = '0' OR slotNo = '1')`);
+            // let activeSims = await sql.query(`SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}' AND delete_status='0' AND (slotNo = '0' OR slotNo = '1')`);
 
             if (rslt.length < 1) {
                 // if (activeSims.length < 2) {
@@ -89,7 +89,7 @@ exports.simUpdate = async function (req, res) {
             let simData = req.body.obj;
 
 
-            console.log('req.body is: ', req.body)
+            console.log('req.body simData is: ', simData)
             // return;
             // console.log('simData is: ', simData)
             // return;
@@ -99,7 +99,25 @@ exports.simUpdate = async function (req, res) {
             console.log('label: ', label);
             console.log('value: ', value);
             if (id == "unrAll") {
-                await sql.query(`UPDATE sims SET unrGuest = ${simData.unrGuest}, unrEncrypt=${simData.unrEncrypt} WHERE device_id= '${simData.device_id}' AND del='0'`);
+
+                //*********************** ur register guest *******************/
+                let checkGuest = await sql.query(`SELECT * FROM device_attributes WHERE device_id = '${simData.device_id}' AND name = 'un_register_guest' AND delete_status = '0'`);
+                if (checkGuest.length) {
+                    await sql.query(`UPDATE device_attributes SET value = '${simData.unrGuest}' WHERE device_id= '${simData.device_id}' AND name='un_register_guest' AND delete_status='0'`);
+                } else {
+                    await sql.query(`INSERT INTO device_attributes (device_id, name, value) VALUES ('${simData.device_id}', 'un_register_guest', '${simData.unrGuest}')`);
+                }
+
+                //*************************** ur register encrypt  *************/
+                let checkEncrypt = await sql.query(`SELECT * FROM device_attributes WHERE device_id = '${simData.device_id}' AND name = 'un_register_encrypt' AND delete_status = '0'`);
+                if (checkEncrypt.length) {
+                    await sql.query(`UPDATE device_attributes SET value = '${simData.unrEncrypt}' WHERE device_id= '${simData.device_id}' AND name='un_register_encrypt' AND delete_status='0'`);
+                } else {
+                    await sql.query(`INSERT INTO device_attributes (device_id, name, value) VALUES ('${simData.device_id}', 'un_register_encrypt', '${simData.unrEncrypt}')`);
+                }
+
+
+                // await sql.query(`UPDATE sims SET unrGuest = ${simData.unrGuest}, unrEncrypt=${simData.unrEncrypt} WHERE device_id= '${simData.device_id}' AND delete_status='0'`);
 
                 sockets.sendRegSim(simData.device_id, "sim_unregister", simData);
                 data = {
@@ -115,16 +133,16 @@ exports.simUpdate = async function (req, res) {
                 if (label != undefined && req.body.value != undefined) {
                     if (id == "all") {
                         console.log('at all')
-                        UQry = `UPDATE sims SET ${label} = ${value} WHERE device_id= '${simData.device_id}' AND del='0'`;
-                        Query = `SELECT * FROM sims WHERE device_id = '${simData.device_id}' AND del='0'`;
+                        UQry = `UPDATE sims SET ${label} = ${value} WHERE device_id= '${simData.device_id}' AND delete_status='0'`;
+                        Query = `SELECT * FROM sims WHERE device_id = '${simData.device_id}' AND delete_status='0'`;
                         console.log('query is: ', Query);
                     } else {
-                        UQry = `UPDATE sims SET ${label} = ${value} WHERE id = ${id} AND del='0'`;
+                        UQry = `UPDATE sims SET ${label} = ${value} WHERE id = ${id} AND delete_status='0'`;
                     }
 
 
                 } else {
-                    UQry = `UPDATE sims SET name='${simData.name}', note='${simData.note}', guest=${simData.guest}, encrypt=${simData.encrypt}, sync = '0' WHERE device_id = '${simData.device_id}' AND iccid = '${simData.iccid}' AND del='0'`;
+                    UQry = `UPDATE sims SET name='${simData.name}', note='${simData.note}', guest=${simData.guest}, encrypt=${simData.encrypt}, sync = '0' WHERE device_id = '${simData.device_id}' AND iccid = '${simData.iccid}' AND delete_status='0'`;
                 }
 
                 if (UQry != undefined) {
@@ -233,21 +251,43 @@ exports.getSims = async function (req, res) {
 
         // sockets.sendRegSim(deviceId, "sim_inserted");
 
-        var IQry = `SELECT * FROM sims WHERE device_id= '${deviceId}' AND del = '0'`;
-        sql.query(IQry, async function (err, result) {
+        var SQry = `SELECT * FROM sims WHERE device_id= '${deviceId}' AND del = '0'`;
+        sql.query(SQry, async function (err, result) {
             // console.log("=======================================")
             // console.log('result is :', result)
             if (err) console.log(err);
 
+            // console.log(`SELECT * FROM device_attributes WHERE device_id= '${deviceId}' AND (name='un_register_guest' OR name='un_register_encrypt') AND delete_status = '0'`);
+
+            var SDeviceAttributes = await sql.query(`SELECT * FROM device_attributes WHERE device_id= '${deviceId}' AND (name='un_register_guest' OR name='un_register_encrypt') AND delete_status = '0'`);
+            let obj = {
+                unRegisterGuest: 1,
+                unRegisterEncrypt: 1
+            }
+
+            SDeviceAttributes.forEach(record => {
+                // console.log('record is; ', record);
+                if (record.name === "un_register_guest") {
+                    obj.unRegisterGuest = JSON.parse(record.value);
+                }
+                else if (record.name === "un_register_encrypt") {
+                    obj.unRegisterEncrypt = JSON.parse(record.value);
+                }
+            });
+
+
+            console.log("SDeviceAttributes ========>obj  ", obj)
             if (result.length > 0) {
                 data = {
                     status: true,
-                    data: result
+                    data: result,
+                    unRegisterSetting: obj
                 }
             } else {
                 data = {
                     status: false,
-                    data: []
+                    data: [],
+                    unRegisterSetting: obj
                 }
             }
             res.send(data);
