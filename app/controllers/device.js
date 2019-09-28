@@ -277,8 +277,7 @@ exports.acceptDevice = async function (req, res) {
         let sim_id = req.body.sim_id == undefined ? "" : req.body.sim_id;
         var sim_id2 = req.body.sim_id2 ? req.body.sim_id2 : '';
         let chat_id = req.body.chat_id == undefined ? "" : req.body.chat_id;
-        let pgp_email =
-            req.body.pgp_email == undefined ? "" : req.body.pgp_email;
+        let pgp_email = req.body.pgp_email == undefined ? "" : req.body.pgp_email;
         var trial_status = 0;
 
         let start_date = moment().format("YYYY/MM/DD");
@@ -302,7 +301,9 @@ exports.acceptDevice = async function (req, res) {
             expiry_date = helpers.getExpDateByMonth(start_date, term)
         }
         let total_price = req.body.total_price;
-
+        let admin_profit = 0
+        let dealer_profit = 0
+        let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
 
         let user_credits = "SELECT * FROM dealer_credits WHERE dealer_id=" + dealer_id
         sql.query(user_credits, async function (err, result) {
@@ -335,10 +336,8 @@ exports.acceptDevice = async function (req, res) {
 
                                     let packagesData = []
                                     let pricesData = []
-                                    let admin_profit = 0
-                                    let dealer_profit = 0
-                                    if (packagesIds.length) {
 
+                                    if (packagesIds.length) {
                                         packagesData = await sql.query("SELECT * from packages where id IN (" + packagesIds.join(",") + ")")
                                     }
                                     if (productIds.length) {
@@ -348,6 +347,7 @@ exports.acceptDevice = async function (req, res) {
                                     let sa_chat_prices = {}
                                     let sa_vpn_prices = {}
                                     let sa_pgp_prices = {}
+
                                     let sa_product_prices = await sql.query("SELECT * FROM prices where dealer_type = 'super_admin'")
                                     sa_product_prices.map((item) => {
                                         if (item.price_for === "sim_id") {
@@ -398,97 +398,148 @@ exports.acceptDevice = async function (req, res) {
                                             })
                                         }
                                         if (pricesData.length) {
-                                            var sa_total_product_price = 0
                                             pricesData.map(async (item) => {
                                                 if (item.price_for === "sim_id") {
-                                                    sa_total_product_price += sa_sim_prices[item.price_term]
                                                     admin_profit += item.unit_price - sa_sim_prices[item.price_term]
                                                 }
                                                 else if (item.price_for === "SIM ID 2") {
-                                                    sa_total_product_price += sa_sim_prices[item.price_term]
                                                     admin_profit += item.unit_price - sa_sim_prices[item.price_term]
                                                 }
                                                 else if (item.price_for === "chat_id") {
-                                                    sa_total_product_price += sa_chat_prices[item.price_term]
                                                     admin_profit += item.unit_price - sa_chat_prices[item.price_term]
                                                 }
                                                 else if (item.price_for === "vpn") {
-                                                    sa_total_product_price += sa_vpn_prices[item.price_term]
                                                     admin_profit += item.unit_price - sa_vpn_prices[item.price_term]
                                                 }
                                                 else if (item.price_for === "pgp_email") {
-                                                    sa_total_product_price += sa_pgp_prices[item.price_term]
                                                     admin_profit += item.unit_price - sa_pgp_prices[item.price_term]
                                                 }
                                             })
                                         }
-                                        console.log(admin_profit);
-                                        return
                                     } else if (loggedDealerType === constants.SDEALER) {
+                                        let admin_sim_prices = {}
+                                        let admin_chat_prices = {}
+                                        let admin_vpn_prices = {}
+                                        let admin_pgp_prices = {}
+
+                                        let sa_product_prices = await sql.query("SELECT * FROM prices where dealer_type = 'admin'")
+                                        sa_product_prices.map((item) => {
+                                            if (item.price_for === "sim_id") {
+                                                admin_sim_prices[item.price_term] = Number(item.unit_price)
+                                            }
+                                            else if (item.price_for === "chat_id") {
+                                                admin_chat_prices[item.price_term] = Number(item.unit_price)
+                                            }
+                                            else if (item.price_for === "vpn") {
+                                                admin_vpn_prices[item.price_term] = Number(item.unit_price)
+                                            }
+                                            else if (item.price_for === "pgp_email") {
+                                                admin_pgp_prices[item.price_term] = Number(item.unit_price)
+                                            }
+                                        })
                                         if (packagesData.length) {
-                                            packagesData.map(async (item) => {
-                                                if (item.dealer_type === 'super_admin') {
-                                                    let adminPrice =await sql.query("SELECT FROM dealer_packages_prices WHERE package_id = " + item.id) 
+                                            for (let i = 0; i < packagesData.length; i++) {
+                                                let adminPackagePrice = await sql.query("SELECT * FROM dealer_packages_prices WHERE package_id = " + packagesData[i].id + " AND created_by = 'admin'")
+                                                let adminPrice = null
+                                                if (adminPackagePrice.length) {
+                                                    adminPrice = adminPackagePrice[0].price
+                                                }
+                                                if (packagesData[i].dealer_type === 'super_admin') {
                                                     packages.map((pkg) => {
-                                                        if (pkg.id === item.id) {
-                                                            admin_profit += pkg.pkg_price - item.pkg_price
+                                                        if (pkg.id === packagesData[i].id) {
+                                                            if (adminPrice) {
+                                                                admin_profit += adminPrice - packagesData[i].pkg_price
+                                                                dealer_profit += pkg.pkg_price - adminPrice
+                                                            } else {
+                                                                dealer_profit += pkg.pkg_price - packagesData[i].pkg_price
+                                                            }
                                                         }
                                                     })
-
-                                                } else if (item.dealer_type === 'admin') {
+                                                }
+                                                else if (packagesData[i].dealer_type === 'admin') {
                                                     let sa_total_price = 0
                                                     packages.map((pkg) => {
-                                                        if (pkg.id === item.id) {
+                                                        if (pkg.id === packagesData[i].id) {
                                                             if (pkg.pkg_features.sim_id) {
-                                                                sa_total_price += sa_sim_prices[item.pkg_term]
+                                                                sa_total_price += sa_sim_prices[packagesData[i].pkg_term]
                                                             }
                                                             if (pkg.pkg_features.sim_id2) {
-                                                                sa_total_price += sa_sim_prices[item.pkg_term]
+                                                                sa_total_price += sa_sim_prices[packagesData[i].pkg_term]
                                                             }
                                                             if (pkg.pkg_features.chat_id) {
-                                                                sa_total_price += sa_chat_prices[item.pkg_term]
+                                                                sa_total_price += sa_chat_prices[packagesData[i].pkg_term]
                                                             }
                                                             if (pkg.pkg_features.pgp_email) {
-                                                                sa_total_price += sa_pgp_prices[item.pkg_term]
+                                                                sa_total_price += sa_pgp_prices[packagesData[i].pkg_term]
                                                             }
                                                             if (pkg.pkg_features.vpn) {
-                                                                sa_total_price += sa_vpn_prices[item.pkg_term]
+                                                                sa_total_price += sa_vpn_prices[packagesData[i].pkg_term]
                                                             }
-                                                            admin_profit += Number(pkg.pkg_price) - sa_total_price
+                                                            admin_profit += adminPrice - sa_total_price
+                                                            dealer_profit += Number(pkg.pkg_price) - adminPrice
                                                         }
                                                     })
                                                 }
-                                            })
+                                                else if (packagesData[i].dealer_type === 'dealer') {
+                                                    let sa_total_price = 0
+                                                    let admin_total_price = 0
+                                                    packages.map((pkg) => {
+                                                        if (pkg.id === packagesData[i].id) {
+                                                            if (pkg.pkg_features.sim_id) {
+                                                                sa_total_price += sa_sim_prices[packagesData[i].pkg_term]
+                                                                admin_total_price += admin_sim_prices[packagesData[i].pkg_term]
+                                                            }
+                                                            if (pkg.pkg_features.sim_id2) {
+                                                                sa_total_price += sa_sim_prices[packagesData[i].pkg_term]
+                                                                admin_total_price += admin_sim_prices[packagesData[i].pkg_term]
+                                                            }
+                                                            if (pkg.pkg_features.chat_id) {
+                                                                sa_total_price += sa_chat_prices[packagesData[i].pkg_term]
+                                                                admin_total_price += admin_chat_prices[packagesData[i].pkg_term]
+
+                                                            }
+                                                            if (pkg.pkg_features.pgp_email) {
+                                                                sa_total_price += sa_pgp_prices[packagesData[i].pkg_term]
+                                                                admin_total_price += admin_pgp_prices[packagesData[i].pkg_term]
+                                                            }
+                                                            if (pkg.pkg_features.vpn) {
+                                                                sa_total_price += sa_vpn_prices[packagesData[i].pkg_term]
+                                                                admin_total_price += admin_vpn_prices[packagesData[i].pkg_term]
+                                                            }
+                                                            admin_profit += admin_total_price - sa_total_price
+                                                            dealer_profit += Number(pkg.pkg_price) - admin_total_price
+                                                        }
+                                                    })
+                                                }
+                                            }
                                         }
                                         if (pricesData.length) {
-                                            var sa_total_product_price = 0
                                             pricesData.map(async (item) => {
                                                 if (item.price_for === "sim_id") {
-                                                    sa_total_product_price += sa_sim_prices[item.price_term]
-                                                    admin_profit += item.unit_price - sa_sim_prices[item.price_term]
+                                                    admin_profit += admin_sim_prices[item.price_term] - sa_sim_prices[item.price_term]
+                                                    dealer_profit += item.unit_price - admin_sim_prices[item.price_term]
                                                 }
                                                 else if (item.price_for === "SIM ID 2") {
-                                                    sa_total_product_price += sa_sim_prices[item.price_term]
-                                                    admin_profit += item.unit_price - sa_sim_prices[item.price_term]
+                                                    admin_profit += admin_sim_prices[item.price_term] - sa_sim_prices[item.price_term]
+                                                    dealer_profit += item.unit_price - admin_sim_prices[item.price_term]
                                                 }
                                                 else if (item.price_for === "chat_id") {
-                                                    sa_total_product_price += sa_chat_prices[item.price_term]
-                                                    admin_profit += item.unit_price - sa_chat_prices[item.price_term]
+                                                    admin_profit += admin_chat_prices[item.price_term] - sa_chat_prices[item.price_term]
+                                                    dealer_profit += item.unit_price - admin_chat_prices[item.price_term]
                                                 }
                                                 else if (item.price_for === "vpn") {
-                                                    sa_total_product_price += sa_vpn_prices[item.price_term]
-                                                    admin_profit += item.unit_price - sa_vpn_prices[item.price_term]
+                                                    admin_profit += admin_vpn_prices[item.price_term] - sa_vpn_prices[item.price_term]
+                                                    dealer_profit += item.unit_price - admin_vpn_prices[item.price_term]
                                                 }
                                                 else if (item.price_for === "pgp_email") {
-                                                    sa_total_product_price += sa_pgp_prices[item.price_term]
-                                                    admin_profit += item.unit_price - sa_pgp_prices[item.price_term]
+                                                    admin_profit += admin_pgp_prices[item.price_term] - sa_pgp_prices[item.price_term]
+                                                    dealer_profit += item.unit_price - admin_pgp_prices[item.price_term]
                                                 }
                                             })
                                         }
 
                                     }
                                 }
-                                return
                                 var checkDevice = `SELECT * FROM devices LEFT JOIN usr_acc ON (usr_acc.device_id = devices.id) WHERE devices.device_id = '${device_id}' `;
 
                                 let checkDealer = "SELECT * FROM dealers where dealer_id =" + dealer_id;
@@ -587,6 +638,46 @@ exports.acceptDevice = async function (req, res) {
 
                                                     let deduct_credits = 'update dealer_credits set credits =' + remaining_credits + ' where dealer_id ="' + dealer_id + '"';
                                                     await sql.query(deduct_credits);
+                                                    if (admin_profit > 0) {
+                                                        let admin_profit_query = `INSERT INTO profit_loss (user_acc_id ,dealer_type ,credits , type) VALUES (${usr_acc_id} ,'admin',${admin_profit} ,'profit')`
+                                                        let profit_result = await sql.query(admin_profit_query);
+                                                        if (profit_result.insertId) {
+                                                            let update_admin_credits = `UPDATE dealer_credits SET credits = credits + ${admin_profit} WHERE dealer_id = ${admin_data[0].dealer_id}`
+                                                            let updateCredits = await sql.query(update_admin_credits)
+                                                            if (updateCredits.affectedRows === 0) {
+                                                                let insert_admin_credits = `INSERT INTO dealer_credits (dealer_id , credits) VALUES(${admin_data[0].dealer_id} , ${admin_profit})`
+                                                                await sql.query(insert_admin_credits)
+                                                            }
+                                                        }
+                                                    } else if (admin_profit < 0) {
+                                                        let admin_loss_query = `INSERT INTO profit_loss (user_acc_id ,dealer_type ,credits , type) VALUES (${usr_acc_id} ,'admin',${admin_profit} ,'loss')`
+                                                        let loss_result = await sql.query(admin_loss_query);
+                                                        if (loss_result.insertId) {
+                                                            let update_admin_credits = `UPDATE dealer_credits SET credits = credits + ${admin_profit} WHERE dealer_id = ${admin_data[0].dealer_id}`
+                                                            let updateCredits = await sql.query(update_admin_credits)
+                                                        }
+                                                    }
+                                                    if (loggedDealerType === constants.SDEALER) {
+                                                        if (dealer_profit > 0) {
+                                                            let dealer_profit_query = `INSERT INTO profit_loss (user_acc_id, dealer_type, dealer_id ,credits, type) VALUES (${usr_acc_id},'admin',${verify.user.connected_dealer},${admin_profit} ,'profit')`
+                                                            let profit_result = await sql.query(dealer_profit_query);
+                                                            if (profit_result.insertId) {
+                                                                let update_dealet_credits = `UPDATE dealer_credits SET credits = credits + ${dealer_profit} WHERE dealer_id = ${verify.user.connected_dealer}`
+                                                                let updateCredits = await sql.query(update_dealet_credits)
+                                                                if (updateCredits.affectedRows === 0) {
+                                                                    let insert_dealer_credits = `INSERT INTO dealer_credits (dealer_id , credits) VALUES(${verify.user.connected_dealer} , ${admin_profit})`
+                                                                    await sql.query(insert_dealer_credits)
+                                                                }
+                                                            }
+                                                        } else if (dealer_profit < 0) {
+                                                            let dealer_loss_query = `INSERT INTO profit_loss (user_acc_id, dealer_type, dealer_id, credits, type) VALUES (${usr_acc_id},'admin',${verify.user.connected_dealer},${admin_profit} ,'loss')`
+                                                            let profit_result = await sql.query(dealer_loss_query);
+                                                            if (profit_result.insertId) {
+                                                                let update_dealet_credits = `UPDATE dealer_credits SET credits = credits + ${dealer_profit} WHERE dealer_id = ${verify.user.connected_dealer}`
+                                                                let updateCredits = await sql.query(update_dealet_credits)
+                                                            }
+                                                        }
+                                                    }
                                                     let updateChatIds = 'update chat_ids set user_acc_id = ' + usr_acc_id + ', used=1 where chat_id ="' + chat_id + '"';
                                                     await sql.query(updateChatIds);
 
@@ -656,20 +747,20 @@ exports.acceptDevice = async function (req, res) {
 
                                                     rsltq[0].finalStatus = device_helpers.checkStatus(rsltq[0])
 
-                                                    // axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
-                                                    //     // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
-                                                    //     if (response.data.status) {
-                                                    //         let data = {
-                                                    //             linkToWL: true,
-                                                    //             SN: rsltq[0].serial_number,
-                                                    //             mac: rsltq[0].mac_address,
-                                                    //             device_id: rsltq[0].device_id
-                                                    //         }
-                                                    //         axios.put(app_constants.UPDATE_DEVICE_SUPERADMIN_URL, data, { headers: { authorization: response.data.user.token } })
-                                                    //     }
-                                                    // }).catch((err) => {
-                                                    //     console.log(err);
-                                                    // })
+                                                    axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
+                                                        // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
+                                                        if (response.data.status) {
+                                                            let data = {
+                                                                linkToWL: true,
+                                                                SN: rsltq[0].serial_number,
+                                                                mac: rsltq[0].mac_address,
+                                                                device_id: rsltq[0].device_id
+                                                            }
+                                                            axios.put(app_constants.UPDATE_DEVICE_SUPERADMIN_URL, data, { headers: { authorization: response.data.user.token } })
+                                                        }
+                                                    }).catch((err) => {
+                                                        console.log(err);
+                                                    })
 
                                                     data = {
                                                         status: true,
@@ -3089,8 +3180,8 @@ exports.getAppsOfDevice = async function (req, res) {
                             let ext = mainExtensions.find(mainExtension => mainExtension.app_id === app.extension_id);
                             if (ext) {
                                 app.uniqueExtension = app.uniqueName,
-                                app.uniqueName = ext.uniqueName,
-                                console.log(app);
+                                    app.uniqueName = ext.uniqueName,
+                                    console.log(app);
                                 extensions.push(app);
                             }
                         }
@@ -3188,7 +3279,7 @@ exports.applySettings = async function (req, res) {
                     let permissions = subExtensions;
 
                     if (isOnline) {
-                    
+
                         sockets.sendEmit(app_list, passwords, controls, permissions, device_id);
 
                         if (type === "profile") {

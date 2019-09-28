@@ -934,7 +934,7 @@ exports.getProductPrices = async function (req, res) {
             }
             else if (verify.user.user_type === SDEALER) {
 
-                let selectQuery = "SELECT * FROM packages WHERE dealer_type='dealer' AND dealer_id= " + verify.user.connected_dealer;
+                let selectQuery = "SELECT * FROM prices WHERE dealer_type='dealer' AND dealer_id= " + verify.user.connected_dealer;
                 sql.query(selectQuery, async (err, reslt) => {
                     if (err) {
                         console.log(err)
@@ -947,8 +947,6 @@ exports.getProductPrices = async function (req, res) {
                             data: reslt
 
                         })
-
-
                     } else {
                         res.send({
                             status: false,
