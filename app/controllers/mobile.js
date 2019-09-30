@@ -285,7 +285,7 @@ exports.systemLogin = async function (req, res) {
 
 exports.linkDevice = async function (req, resp) {
 
-    var reslt = verifyToken(req, resp);
+    var reslt = await verifyToken(req, resp);
     if (reslt.status == true) {
         let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address, type, version } = device_helpers.getDeviceInfo(req);
         // console.log("serial no", serial_number);
@@ -424,12 +424,10 @@ exports.linkDevice = async function (req, resp) {
 }
 
 exports.getStatus = async function (req, resp) {
-    var serial_number = req.body.serial_number;
-    var mac = req.body.mac;
-    var reslt = verifyToken(req, resp);
-
+    var reslt = await verifyToken(req, resp);
     if (reslt.status == true) {
-
+        var serial_number = req.body.serial_number;
+        var mac = req.body.mac;
         if (!empty(serial_number) && !empty(mac)) {
 
             if (serial_number === Constants.PRE_DEFINED_SERIAL_NUMBER && mac === Constants.PRE_DEFINED_MAC_ADDRESS) {
@@ -445,7 +443,7 @@ exports.getStatus = async function (req, resp) {
                 var deviceQ = "SELECT * FROM devices WHERE  mac_address= '" + mac + "' ";
                 var device = await sql.query(deviceQ);
                 if (device.length && device[0].device_status == 0 && device[0].activation_status == null) {
-                    console.log('MAC FOUUND');
+                    console.log('MAC FOUND');
                     data = {
                         "status": false,
                         "msg": "Mac duplicate."
@@ -1261,7 +1259,7 @@ exports.deviceStatus = async function (req, res) {
 
 exports.stopLinking = async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
-    var reslt = verifyToken(req, res);
+    var reslt = await verifyToken(req, res);
     //console.log(req);
     let mac_address = req.params.macAddr;
     let serial_number = req.params.serialNo;
