@@ -9,59 +9,23 @@ var md5 = require('md5');
 var fs = require("fs");
 
 
+// helpers
 const { sql } = require('../../config/database');
 var helpers = require('../../helper/general_helper.js');
-
 const device_helpers = require('../../helper/device_helpers.js');
+
+// constants
 var Constants = require('../../constants/Application');
 var app_constants = require('../../config/constants');
 
+// libraries
 const { sendEmail } = require('../../lib/email');
+
+// middleware
+var verifyToken = require('../../middlewares/mobileAuth');
 
 let usr_acc_query_text = Constants.usr_acc_query_text;
 
-var verifyToken = function (req, res) {
-    // check header or url parameters or post parameters for token
-    var ath;
-    var token = req.headers['authorization'];
-    // console.log("TOken", token);
-
-    if (token) {
-
-        // verifies secret and checks exp
-        jwt.verify(token, app_constants.SECRET, function (err, decoded) {
-            // console.log(err);
-            if (err) {
-                ath = {
-                    status: false,
-                    success: false
-                };
-                return res.json({
-                    success: false,
-                    msg: 'TOKEN_INVALID'
-                });
-            } else {
-                // if everything is good, save to request for use in other routes
-                req.decoded = decoded;
-
-                req.decoded.status = true;
-                req.decoded.success = true;
-                ath = decoded;
-            }
-        });
-    } else {
-        ath = {
-            status: false,
-            success: false
-        };
-        return res.send({
-            success: false,
-            msg: 'TOKEN_NOT_PROVIDED'
-        });
-    }
-
-    return ath;
-}
 
 // without token
 exports.login = async function (req, resp) {
@@ -72,8 +36,8 @@ exports.login = async function (req, resp) {
     var dateNow = new Date()
     var start_date = moment(dateNow).format("YYYY/MM/DD")
 
-    console.log("mac_address", mac_address);
-    console.log("serial_number", serial_number);
+    console.log("mac_address: ", mac_address);
+    console.log("serial_number: ", serial_number);
 
     var data;
     //console.log(linkCode);

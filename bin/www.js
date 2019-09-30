@@ -15,6 +15,7 @@ var events = require('../crons/db_events');
  */
 var server = http.createServer(app);
 
+// app.io.attach(server);
 let io = require("../routes/sockets").listen(server);
 
 
@@ -27,11 +28,13 @@ server.on("error", onError);
 server.on("listening", onListening);
 
 require("../crons/index");
-events.deviceQueue()
-	.then(() => console.log('Waiting for database events...'))
-	.catch(console.error);
+// events.deviceQueue()
+// 	.then(() => console.log('Waiting for database events...'))
+// 	.catch(console.error);
 
-
+/**
+ * Normalizing Port with correct Number.
+ */
 function normalizePort(val) {
 	var port = parseInt(val, 10);
 

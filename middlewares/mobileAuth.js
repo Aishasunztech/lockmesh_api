@@ -1,8 +1,10 @@
-const jwt = require('jsonwebtoken');
-const config = require('./constants');
-const { sql } = require('../config/database');
 
-module.exports = async (req, res, next) => {
+var jwt = require('jsonwebtoken');
+var app_constants = require('../config/constants');
+
+
+module.exports = async (req, res) => {
+    // check header or url parameters or post parameters for token
     var ath;
     var token = req.headers['authorization'];
     // console.log("TOken", token);
@@ -10,7 +12,7 @@ module.exports = async (req, res, next) => {
     if (token) {
 
         // verifies secret and checks exp
-        jwt.verify(token, constants.SECRET, function (err, decoded) {
+        jwt.verify(token, app_constants.SECRET, function (err, decoded) {
             // console.log(err);
             if (err) {
                 ath = {
@@ -42,6 +44,4 @@ module.exports = async (req, res, next) => {
     }
 
     return ath;
-
 }
-
