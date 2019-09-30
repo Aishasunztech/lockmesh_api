@@ -5,6 +5,7 @@ const sockets = require('../../routes/sockets');
 
 const MsgConstants = require('../../constants/MsgConstants');
 const helpers = require('../../helper/general_helper');
+const device_helpers = require('../../helper/device_helpers');
 
 
 
@@ -276,7 +277,7 @@ exports.getSims = async function (req, res) {
             });
 
 
-            console.log("SDeviceAttributes ========>obj  ", obj)
+            // console.log("SDeviceAttributes ========>obj  ", obj)
             if (result.length > 0) {
                 data = {
                     status: true,
@@ -352,11 +353,25 @@ exports.simHistory = async function (req, res) {
 exports.getUnRegisterSims = async function (req, res) {
     var verify = req.decoded;
     let deviceId = req.params.device_id;
-    console.log("getUnRegisterSims device is: ", deviceId);
+    // console.log("getUnRegisterSims device is: ", deviceId);
     if (verify && deviceId) {
 
-        sockets.sendRegSim(deviceId, "sim_inserted");
-        return true;
+        let online = await device_helpers.isDeviceOnline(deviceId);
+        console.log(deviceId, 'check device online ', online);
+
+        if (online) {
+
+            sockets.sendRegSim(deviceId, "sim_inserted");
+            res.send({
+                status: false,
+            })
+            return;
+        } else {
+            res.send({
+                status: true,
+            })
+            return;
+        }
 
     }
 }
