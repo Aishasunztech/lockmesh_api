@@ -305,7 +305,7 @@ exports.acceptDevice = async function (req, res) {
         let dealer_profit = 0
         let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
 
-        let user_credits = "SELECT * FROM dealer_credits WHERE dealer_id=" + dealer_id
+        let user_credits = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
         sql.query(user_credits, async function (err, result) {
             if (err) {
                 res.send({
@@ -325,220 +325,9 @@ exports.acceptDevice = async function (req, res) {
                             if (packages.length || products.length) {
                                 if (term !== '0') {
                                     dealer_credits = dealer_credits - total_price
-                                    let packagesIds = []
-                                    let productIds = []
-                                    packages.map((item) => {
-                                        packagesIds.push(item.id)
-                                    })
-                                    products.map((item) => {
-                                        productIds.push(item.id)
-                                    })
-
-                                    let packagesData = []
-                                    let pricesData = []
-
-                                    if (packagesIds.length) {
-                                        packagesData = await sql.query("SELECT * from packages where id IN (" + packagesIds.join(",") + ")")
-                                    }
-                                    if (productIds.length) {
-                                        pricesData = await sql.query("SELECT * from prices where id IN (" + productIds.join(",") + ")")
-                                    }
-                                    let sa_sim_prices = {}
-                                    let sa_chat_prices = {}
-                                    let sa_vpn_prices = {}
-                                    let sa_pgp_prices = {}
-
-                                    let sa_product_prices = await sql.query("SELECT * FROM prices where dealer_type = 'super_admin'")
-                                    sa_product_prices.map((item) => {
-                                        if (item.price_for === "sim_id") {
-                                            sa_sim_prices[item.price_term] = Number(item.unit_price)
-                                        }
-                                        else if (item.price_for === "chat_id") {
-                                            sa_chat_prices[item.price_term] = Number(item.unit_price)
-                                        }
-                                        else if (item.price_for === "vpn") {
-                                            sa_vpn_prices[item.price_term] = Number(item.unit_price)
-                                        }
-                                        else if (item.price_for === "pgp_email") {
-                                            sa_pgp_prices[item.price_term] = Number(item.unit_price)
-                                        }
-                                    })
-                                    if (loggedDealerType === constants.DEALER) {
-                                        if (packagesData.length) {
-                                            packagesData.map(async (item) => {
-                                                if (item.dealer_type === 'super_admin') {
-                                                    packages.map((pkg) => {
-                                                        if (pkg.id === item.id) {
-                                                            admin_profit += pkg.pkg_price - item.pkg_price
-                                                        }
-                                                    })
-                                                } else if (item.dealer_type === 'admin') {
-                                                    let sa_total_price = 0
-                                                    packages.map((pkg) => {
-                                                        if (pkg.id === item.id) {
-                                                            if (pkg.pkg_features.sim_id) {
-                                                                sa_total_price += sa_sim_prices[item.pkg_term]
-                                                            }
-                                                            if (pkg.pkg_features.sim_id2) {
-                                                                sa_total_price += sa_sim_prices[item.pkg_term]
-                                                            }
-                                                            if (pkg.pkg_features.chat_id) {
-                                                                sa_total_price += sa_chat_prices[item.pkg_term]
-                                                            }
-                                                            if (pkg.pkg_features.pgp_email) {
-                                                                sa_total_price += sa_pgp_prices[item.pkg_term]
-                                                            }
-                                                            if (pkg.pkg_features.vpn) {
-                                                                sa_total_price += sa_vpn_prices[item.pkg_term]
-                                                            }
-                                                            admin_profit += Number(pkg.pkg_price) - sa_total_price
-                                                        }
-                                                    })
-                                                }
-                                            })
-                                        }
-                                        if (pricesData.length) {
-                                            pricesData.map(async (item) => {
-                                                if (item.price_for === "sim_id") {
-                                                    admin_profit += item.unit_price - sa_sim_prices[item.price_term]
-                                                }
-                                                else if (item.price_for === "SIM ID 2") {
-                                                    admin_profit += item.unit_price - sa_sim_prices[item.price_term]
-                                                }
-                                                else if (item.price_for === "chat_id") {
-                                                    admin_profit += item.unit_price - sa_chat_prices[item.price_term]
-                                                }
-                                                else if (item.price_for === "vpn") {
-                                                    admin_profit += item.unit_price - sa_vpn_prices[item.price_term]
-                                                }
-                                                else if (item.price_for === "pgp_email") {
-                                                    admin_profit += item.unit_price - sa_pgp_prices[item.price_term]
-                                                }
-                                            })
-                                        }
-                                    } else if (loggedDealerType === constants.SDEALER) {
-                                        let admin_sim_prices = {}
-                                        let admin_chat_prices = {}
-                                        let admin_vpn_prices = {}
-                                        let admin_pgp_prices = {}
-
-                                        let sa_product_prices = await sql.query("SELECT * FROM prices where dealer_type = 'admin'")
-                                        sa_product_prices.map((item) => {
-                                            if (item.price_for === "sim_id") {
-                                                admin_sim_prices[item.price_term] = Number(item.unit_price)
-                                            }
-                                            else if (item.price_for === "chat_id") {
-                                                admin_chat_prices[item.price_term] = Number(item.unit_price)
-                                            }
-                                            else if (item.price_for === "vpn") {
-                                                admin_vpn_prices[item.price_term] = Number(item.unit_price)
-                                            }
-                                            else if (item.price_for === "pgp_email") {
-                                                admin_pgp_prices[item.price_term] = Number(item.unit_price)
-                                            }
-                                        })
-                                        if (packagesData.length) {
-                                            for (let i = 0; i < packagesData.length; i++) {
-                                                let adminPackagePrice = await sql.query("SELECT * FROM dealer_packages_prices WHERE package_id = " + packagesData[i].id + " AND created_by = 'admin'")
-                                                let adminPrice = null
-                                                if (adminPackagePrice.length) {
-                                                    adminPrice = adminPackagePrice[0].price
-                                                }
-                                                if (packagesData[i].dealer_type === 'super_admin') {
-                                                    packages.map((pkg) => {
-                                                        if (pkg.id === packagesData[i].id) {
-                                                            if (adminPrice) {
-                                                                admin_profit += adminPrice - packagesData[i].pkg_price
-                                                                dealer_profit += pkg.pkg_price - adminPrice
-                                                            } else {
-                                                                dealer_profit += pkg.pkg_price - packagesData[i].pkg_price
-                                                            }
-                                                        }
-                                                    })
-                                                }
-                                                else if (packagesData[i].dealer_type === 'admin') {
-                                                    let sa_total_price = 0
-                                                    packages.map((pkg) => {
-                                                        if (pkg.id === packagesData[i].id) {
-                                                            if (pkg.pkg_features.sim_id) {
-                                                                sa_total_price += sa_sim_prices[packagesData[i].pkg_term]
-                                                            }
-                                                            if (pkg.pkg_features.sim_id2) {
-                                                                sa_total_price += sa_sim_prices[packagesData[i].pkg_term]
-                                                            }
-                                                            if (pkg.pkg_features.chat_id) {
-                                                                sa_total_price += sa_chat_prices[packagesData[i].pkg_term]
-                                                            }
-                                                            if (pkg.pkg_features.pgp_email) {
-                                                                sa_total_price += sa_pgp_prices[packagesData[i].pkg_term]
-                                                            }
-                                                            if (pkg.pkg_features.vpn) {
-                                                                sa_total_price += sa_vpn_prices[packagesData[i].pkg_term]
-                                                            }
-                                                            admin_profit += adminPrice - sa_total_price
-                                                            dealer_profit += Number(pkg.pkg_price) - adminPrice
-                                                        }
-                                                    })
-                                                }
-                                                else if (packagesData[i].dealer_type === 'dealer') {
-                                                    let sa_total_price = 0
-                                                    let admin_total_price = 0
-                                                    packages.map((pkg) => {
-                                                        if (pkg.id === packagesData[i].id) {
-                                                            if (pkg.pkg_features.sim_id) {
-                                                                sa_total_price += sa_sim_prices[packagesData[i].pkg_term]
-                                                                admin_total_price += admin_sim_prices[packagesData[i].pkg_term]
-                                                            }
-                                                            if (pkg.pkg_features.sim_id2) {
-                                                                sa_total_price += sa_sim_prices[packagesData[i].pkg_term]
-                                                                admin_total_price += admin_sim_prices[packagesData[i].pkg_term]
-                                                            }
-                                                            if (pkg.pkg_features.chat_id) {
-                                                                sa_total_price += sa_chat_prices[packagesData[i].pkg_term]
-                                                                admin_total_price += admin_chat_prices[packagesData[i].pkg_term]
-
-                                                            }
-                                                            if (pkg.pkg_features.pgp_email) {
-                                                                sa_total_price += sa_pgp_prices[packagesData[i].pkg_term]
-                                                                admin_total_price += admin_pgp_prices[packagesData[i].pkg_term]
-                                                            }
-                                                            if (pkg.pkg_features.vpn) {
-                                                                sa_total_price += sa_vpn_prices[packagesData[i].pkg_term]
-                                                                admin_total_price += admin_vpn_prices[packagesData[i].pkg_term]
-                                                            }
-                                                            admin_profit += admin_total_price - sa_total_price
-                                                            dealer_profit += Number(pkg.pkg_price) - admin_total_price
-                                                        }
-                                                    })
-                                                }
-                                            }
-                                        }
-                                        if (pricesData.length) {
-                                            pricesData.map(async (item) => {
-                                                if (item.price_for === "sim_id") {
-                                                    admin_profit += admin_sim_prices[item.price_term] - sa_sim_prices[item.price_term]
-                                                    dealer_profit += item.unit_price - admin_sim_prices[item.price_term]
-                                                }
-                                                else if (item.price_for === "SIM ID 2") {
-                                                    admin_profit += admin_sim_prices[item.price_term] - sa_sim_prices[item.price_term]
-                                                    dealer_profit += item.unit_price - admin_sim_prices[item.price_term]
-                                                }
-                                                else if (item.price_for === "chat_id") {
-                                                    admin_profit += admin_chat_prices[item.price_term] - sa_chat_prices[item.price_term]
-                                                    dealer_profit += item.unit_price - admin_chat_prices[item.price_term]
-                                                }
-                                                else if (item.price_for === "vpn") {
-                                                    admin_profit += admin_vpn_prices[item.price_term] - sa_vpn_prices[item.price_term]
-                                                    dealer_profit += item.unit_price - admin_vpn_prices[item.price_term]
-                                                }
-                                                else if (item.price_for === "pgp_email") {
-                                                    admin_profit += admin_pgp_prices[item.price_term] - sa_pgp_prices[item.price_term]
-                                                    dealer_profit += item.unit_price - admin_pgp_prices[item.price_term]
-                                                }
-                                            })
-                                        }
-
-                                    }
+                                    let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedDealerType)
+                                    admin_profit = profitLoss.admin_profit
+                                    dealer_profit = profitLoss.dealer_profit
                                 }
                                 var checkDevice = `SELECT * FROM devices LEFT JOIN usr_acc ON (usr_acc.device_id = devices.id) WHERE devices.device_id = '${device_id}' `;
 
@@ -636,48 +425,16 @@ exports.acceptDevice = async function (req, res) {
                                                     let service_billing = `INSERT INTO services_billing (user_acc_id , dealer_id , products, packages , total_credits) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${total_price})`
                                                     await sql.query(service_billing);
 
-                                                    let deduct_credits = 'update dealer_credits set credits =' + remaining_credits + ' where dealer_id ="' + dealer_id + '"';
+                                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,transection_data, credits ,transection_type , status) VALUES (${dealer_id},'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${total_price} ,'credit' , 'transferred')`
+                                                    await sql.query(transection_credits)
+
+                                                    let deduct_credits = 'update financial_account_balance set credits =' + remaining_credits + ' where dealer_id ="' + dealer_id + '"';
                                                     await sql.query(deduct_credits);
-                                                    if (admin_profit > 0) {
-                                                        let admin_profit_query = `INSERT INTO profit_loss (user_acc_id ,dealer_type ,credits , type) VALUES (${usr_acc_id} ,'admin',${admin_profit} ,'profit')`
-                                                        let profit_result = await sql.query(admin_profit_query);
-                                                        if (profit_result.insertId) {
-                                                            let update_admin_credits = `UPDATE dealer_credits SET credits = credits + ${admin_profit} WHERE dealer_id = ${admin_data[0].dealer_id}`
-                                                            let updateCredits = await sql.query(update_admin_credits)
-                                                            if (updateCredits.affectedRows === 0) {
-                                                                let insert_admin_credits = `INSERT INTO dealer_credits (dealer_id , credits) VALUES(${admin_data[0].dealer_id} , ${admin_profit})`
-                                                                await sql.query(insert_admin_credits)
-                                                            }
-                                                        }
-                                                    } else if (admin_profit < 0) {
-                                                        let admin_loss_query = `INSERT INTO profit_loss (user_acc_id ,dealer_type ,credits , type) VALUES (${usr_acc_id} ,'admin',${admin_profit} ,'loss')`
-                                                        let loss_result = await sql.query(admin_loss_query);
-                                                        if (loss_result.insertId) {
-                                                            let update_admin_credits = `UPDATE dealer_credits SET credits = credits + ${admin_profit} WHERE dealer_id = ${admin_data[0].dealer_id}`
-                                                            let updateCredits = await sql.query(update_admin_credits)
-                                                        }
-                                                    }
-                                                    if (loggedDealerType === constants.SDEALER) {
-                                                        if (dealer_profit > 0) {
-                                                            let dealer_profit_query = `INSERT INTO profit_loss (user_acc_id, dealer_type, dealer_id ,credits, type) VALUES (${usr_acc_id},'admin',${verify.user.connected_dealer},${admin_profit} ,'profit')`
-                                                            let profit_result = await sql.query(dealer_profit_query);
-                                                            if (profit_result.insertId) {
-                                                                let update_dealet_credits = `UPDATE dealer_credits SET credits = credits + ${dealer_profit} WHERE dealer_id = ${verify.user.connected_dealer}`
-                                                                let updateCredits = await sql.query(update_dealet_credits)
-                                                                if (updateCredits.affectedRows === 0) {
-                                                                    let insert_dealer_credits = `INSERT INTO dealer_credits (dealer_id , credits) VALUES(${verify.user.connected_dealer} , ${admin_profit})`
-                                                                    await sql.query(insert_dealer_credits)
-                                                                }
-                                                            }
-                                                        } else if (dealer_profit < 0) {
-                                                            let dealer_loss_query = `INSERT INTO profit_loss (user_acc_id, dealer_type, dealer_id, credits, type) VALUES (${usr_acc_id},'admin',${verify.user.connected_dealer},${admin_profit} ,'loss')`
-                                                            let profit_result = await sql.query(dealer_loss_query);
-                                                            if (profit_result.insertId) {
-                                                                let update_dealet_credits = `UPDATE dealer_credits SET credits = credits + ${dealer_profit} WHERE dealer_id = ${verify.user.connected_dealer}`
-                                                                let updateCredits = await sql.query(update_dealet_credits)
-                                                            }
-                                                        }
-                                                    }
+
+
+
+                                                    await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, usr_acc_id, loggedDealerType)
+
                                                     let updateChatIds = 'update chat_ids set user_acc_id = ' + usr_acc_id + ', used=1 where chat_id ="' + chat_id + '"';
                                                     await sql.query(updateChatIds);
 
@@ -866,15 +623,18 @@ exports.createDeviceProfile = async function (req, res) {
         var sim_id = req.body.sim_id ? req.body.sim_id : '';
         var sim_id2 = req.body.sim_id2 ? req.body.sim_id2 : '';
         var loggedUserId = verify.user.id;
-        var loggedUserType = verify.user.type;
+        var loggedUserType = verify.user.user_type;
         let policy_id = req.body.policy_id ? req.body.policy_id : '';
 
         let products = (req.body.products) ? req.body.products : []
         let packages = (req.body.packages) ? req.body.packages : []
+        let admin_profit = 0
+        let dealer_profit = 0
 
-        console.log("PRODUCT PACKAGES ", products, packages);
         let total_price = req.body.total_price
-        let user_credits = "SELECT * FROM dealer_credits WHERE dealer_id=" + dealer_id
+        let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
+
+        let user_credits = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
         sql.query(user_credits, async function (err, result) {
             if (err) {
                 res.send({
@@ -889,6 +649,9 @@ exports.createDeviceProfile = async function (req, res) {
                     let dealer_credits = result.length ? result[0].credits : 0;
                     if (dealer_credits >= total_price || req.body.term === '0') {
                         if (products.length || packages.length) {
+                            let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedUserType)
+                            admin_profit = profitLoss.admin_profit
+                            dealer_profit = profitLoss.dealer_profit
                             if (duplicate > 0) {
                                 if (dealer_credits > total_price || req.body.term === '0') {
                                     let pgpEmail = "SELECT pgp_email from pgp_emails WHERE used=0";
@@ -977,6 +740,12 @@ exports.createDeviceProfile = async function (req, res) {
                                                     let service_billing = `INSERT INTO services_billing(user_acc_id, dealer_id, products, packages, start_date ,total_credits) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price / duplicate})`
                                                     await sql.query(service_billing);
 
+                                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,transection_data, credits ,transection_type , status) VALUES (${dealer_id},'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price / duplicate} ,'credit' , 'transferred')`
+                                                    await sql.query(transection_credits);
+
+                                                    await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, user_acc_id, loggedUserType)
+
+
                                                     let updateChatIds = 'update chat_ids set used=1, user_acc_id="' + user_acc_id + '" where chat_id ="' + chat_id + '"';
                                                     await sql.query(updateChatIds);
                                                     let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + user_acc_id + '" where sim_id ="' + sim_id + '" OR sim_id = "' + sim_id2 + '"';
@@ -999,9 +768,8 @@ exports.createDeviceProfile = async function (req, res) {
                                     let remaining_credits = dealer_credits
                                     if (req.body.term !== '0') {
                                         remaining_credits = dealer_credits - total_price
-                                        let deduct_credits = 'update dealer_credits set credits =' + remaining_credits + ' where dealer_id ="' + dealer_id + '"';
+                                        let deduct_credits = 'update financial_account_balance set credits =' + remaining_credits + ' where dealer_id ="' + dealer_id + '"';
                                         await sql.query(deduct_credits);
-
                                     }
 
                                     html = 'Amount of activation codes : ' + activationCodes.length + '<br> ' + 'Activation Codes are following : <br>' + activationCodes.join("<br>") + '.<br> ';
@@ -1105,11 +873,8 @@ exports.createDeviceProfile = async function (req, res) {
                                         }
 
                                         if (response.length) {
-                                            if (response[0].connected_dealer != 0) {
-                                                // insertDevice = insertDevice + ", connected_dealer " + values + ",  " + response[0].connected_dealer + ")"
-                                            } else {
-                                                insertDevice = insertDevice + values + ")";
-                                            }
+
+                                            insertDevice = insertDevice + values + ")";
                                             sql.query(insertDevice, async (err, resp) => {
                                                 if (err) {
                                                     console.log(err)
@@ -1151,15 +916,16 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 })
                                                             }
                                                             let remaining_credits = dealer_credits
-                                                            if (req.body.term !== '0') {
 
-                                                                let service_billing = `INSERT INTO services_billing(user_acc_id, dealer_id, products, packages, start_date, total_credits) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price})`
-                                                                await sql.query(service_billing);
-                                                                remaining_credits = dealer_credits - total_price
-                                                                let deduct_credits = 'update dealer_credits set credits =' + remaining_credits + ' where dealer_id ="' + dealer_id + '"';
-                                                                await sql.query(deduct_credits);
-                                                            }
+                                                            let service_billing = `INSERT INTO services_billing(user_acc_id, dealer_id, products, packages, start_date, total_credits) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price})`
+                                                            await sql.query(service_billing);
+                                                            remaining_credits = dealer_credits - total_price
+                                                            let deduct_credits = 'update financial_account_balance set credits =' + remaining_credits + ' where dealer_id ="' + dealer_id + '"';
+                                                            await sql.query(deduct_credits);
 
+                                                            let transection_credits = `INSERT INTO financial_account_transections (user_id,transection_data, credits ,transection_type , status) VALUES (${dealer_id},'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price} ,'credit' , 'transferred')`
+                                                            await sql.query(transection_credits)
+                                                            await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, user_acc_id, loggedUserType)
 
                                                             let updateChatIds = 'update chat_ids set used=1, user_acc_id="' + user_acc_id + '" where chat_id ="' + chat_id + '"';
                                                             await sql.query(updateChatIds);
@@ -3612,7 +3378,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
             let action = req.body.action
             let dealer_credits = 0
             if (action === 'pre-active') {
-                let user_creditsQ = "SELECT * FROM dealer_credits WHERE dealer_id=" + verify.user.dealer_id;
+                let user_creditsQ = "SELECT * FROM financial_account_balance WHERE dealer_id=" + verify.user.dealer_id;
                 let user_creditsRes = await sql.query(user_creditsQ);
                 if (user_creditsRes.length) {
                     dealer_credits = dealer_credits + user_creditsRes[0].credits
@@ -3684,7 +3450,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
                         }
                     }
                     if (refundedCredits !== 0) {
-                        let updateCredits = "UPDATE dealer_credits set credits = " + refundedCredits + " WHERE dealer_id = " + verify.user.dealer_id
+                        let updateCredits = "UPDATE financial_account_balance set credits = " + refundedCredits + " WHERE dealer_id = " + verify.user.dealer_id
                         await sql.query(updateCredits);
                     }
                     if (deleteError === 0) {

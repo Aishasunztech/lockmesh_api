@@ -1151,7 +1151,7 @@ exports.ackCreditRequest = async function (req, res) {
                             return
                         }
                         if (requests.length) {
-                            sql.query("SELECT * from dealer_credits where dealer_id = " + dealer_id, async function (err, result) {
+                            sql.query("SELECT * from financial_account_balance where dealer_id = " + dealer_id, async function (err, result) {
                                 if (err) {
                                     console.log(err)
                                     res.send({
@@ -1162,7 +1162,7 @@ exports.ackCreditRequest = async function (req, res) {
                                 }
                                 if (result.length) {
                                     let newCredit = credits + result[0].credits
-                                    sql.query("update dealer_credits set credits = " + newCredit + " where dealer_id = " + dealer_id, async function (err, reslt) {
+                                    sql.query("update financial_account_balance set credits = " + newCredit + " where dealer_id = " + dealer_id, async function (err, reslt) {
                                         if (err) {
                                             console.log(err)
                                             res.send({
@@ -1192,7 +1192,7 @@ exports.ackCreditRequest = async function (req, res) {
                                     })
                                 }
                                 else {
-                                    let query = `INSERT into dealer_credits (dealer_id,credits) VALUES (${dealer_id}, ${credits})`;
+                                    let query = `INSERT into financial_account_balance (dealer_id,credits) VALUES (${dealer_id}, ${credits})`;
                                     sql.query(query, async function (err, reslt) {
                                         if (err) {
                                             console.log(err);

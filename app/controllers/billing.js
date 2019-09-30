@@ -26,25 +26,25 @@ exports.acceptRequest = async function (req, res) {
                     console.log(err);
                 }
                 if (result.length) {
-                    let logginUserCredits = await sql.query("select credits from dealer_credits where dealer_id = " + verify.user.id)
+                    let logginUserCredits = await sql.query("select credits from financial_account_balance where dealer_id = " + verify.user.id)
                     if (logginUserCredits.length) {
                         if (logginUserCredits[0].credits > result[0].credits) {
                             let dealer_id = result[0].dealer_id
                             let newCredit = result[0].credits
                             let deductedCredits = logginUserCredits[0].credits - result[0].credits
-                            let credits = await sql.query("select * from dealer_credits where dealer_id = " + dealer_id);
+                            let credits = await sql.query("select * from financial_account_balance where dealer_id = " + dealer_id);
                             // console.log(resul);
                             if (credits.length) {
                                 newCredit = credits[0].credits + result[0].credits
                             }
-                            sql.query("update dealer_credits set credits = " + newCredit + " where dealer_id = " + dealer_id, async function (err, reslt) {
+                            sql.query("update financial_account_balance set credits = " + newCredit + " where dealer_id = " + dealer_id, async function (err, reslt) {
                                 if (err) {
                                     console.log(err);
                                 }
                                 if (reslt && reslt.affectedRows > 0) {
                                     let updateQuery = "update credit_requests set status = 1 where id= " + id
                                     await sql.query(updateQuery);
-                                    let userCredits = "update dealer_credits set credits = " + deductedCredits + " where dealer_id = " + verify.user.id;
+                                    let userCredits = "update financial_account_balance set credits = " + deductedCredits + " where dealer_id = " + verify.user.id;
                                     await sql.query(userCredits)
                                     res.send({
                                         status: true,
@@ -54,7 +54,7 @@ exports.acceptRequest = async function (req, res) {
                                     return
                                 }
                                 else {
-                                    let query = `INSERT into dealer_credits (dealer_id,credits) VALUES (${dealer_id}, ${newCredit})`;
+                                    let query = `INSERT into financial_account_balance (dealer_id,credits) VALUES (${dealer_id}, ${newCredit})`;
                                     sql.query(query, async function (err, reslt) {
                                         if (err) {
                                             console.log(err);
@@ -62,7 +62,7 @@ exports.acceptRequest = async function (req, res) {
                                         if (reslt && reslt.affectedRows > 0) {
                                             let updateQuery = "update credit_requests set status = 1 where id= " + id
                                             await sql.query(updateQuery)
-                                            let userCredits = "update dealer_credits set credits = " + deductedCredits + " where dealer_id = " + verify.user.id;
+                                            let userCredits = "update financial_account_balance set credits = " + deductedCredits + " where dealer_id = " + verify.user.id;
                                             await sql.query(userCredits)
                                             res.send({
                                                 status: true,
@@ -1060,7 +1060,7 @@ exports.getUserCredits = async function (req, res) {
     if (verify) {
         try {
             let query = ''
-            query = `SELECT credits from dealer_credits where dealer_id= ${verify.user.id}`
+            query = `SELECT credits from financial_account_balance where dealer_id= ${verify.user.id}`
 
             sql.query(query, async function (err, result) {
                 if (err) {
