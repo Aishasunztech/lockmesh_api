@@ -7,7 +7,6 @@ module.exports = async (req, res) => {
     // check header or url parameters or post parameters for token
     var ath;
     var token = req.headers['authorization'];
-    console.log("Token", token);
 
     if (token) {
 

@@ -62,7 +62,6 @@ const sequelize_conn = new Sequelize(constants.DB_NAME, constants.DB_USERNAME, c
     }
 })
 
-
 sequelize_conn
     .authenticate()
     .then(() => {
