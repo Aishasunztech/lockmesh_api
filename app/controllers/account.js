@@ -88,16 +88,46 @@ exports.saveNewData = async function (req, res) {
     if (verify) {
         var loggedInuid = verify.user.id;
         if (req.body.type == 'sim_id') {
+            let sim_ids = []
+            let all_sim_ids = await sql.query("SELECT sim_id from sim_ids")
+            if (all_sim_ids.length) {
+                all_sim_ids.map((item) => {
+                    sim_ids.push(item.sim_id)
+                })
+            }
+            console.log(sim_ids);
             for (let row of req.body.newData) {
-                let result = await sql.query("INSERT IGNORE sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");
+                if (!sim_ids.includes(row.sim_id)) {
+                    let result = await sql.query("INSERT sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");
+                }
             }
         } else if (req.body.type == 'chat_id') {
+            let chat_ids = []
+            let all_chat_ids = await sql.query("SELECT chat_id from chat_ids")
+            if (all_chat_ids.length) {
+                all_chat_ids.map((item) => {
+                    chat_ids.push(item.sim_id)
+                })
+            }
+            console.log(chat_ids);
             for (let row of req.body.newData) {
-                let result = await sql.query("INSERT IGNORE chat_ids (chat_id) value ('" + row.chat_id + "')");
+                if (!chat_ids.includes(row.chat_id)) {
+                    let result = await sql.query("INSERT chat_ids (chat_id) value ('" + row.chat_id + "')");
+                }
             }
         } else if (req.body.type == 'pgp_email') {
+            let pgp_emails = []
+            let all_pgp_emails = await sql.query("SELECT pgp_email from pgp_emails")
+            if (all_pgp_emails.length) {
+                all_pgp_emails.map((item) => {
+                    pgp_emails.push(item.pgp_email)
+                })
+            }
+            console.log(pgp_emails);
             for (let row of req.body.newData) {
-                let result = await sql.query("INSERT IGNORE pgp_emails (pgp_email) value ('" + row.pgp_email + "')");
+                if (!pgp_emails.includes(row.pgp_email)) {
+                    let result = await sql.query("INSERT pgp_emails (pgp_email) value ('" + row.pgp_email + "')");
+                }
             }
         }
         data = {
@@ -126,11 +156,21 @@ exports.importIDs = async (req, res) => {
         let fieldName = req.params.fieldName;
         let data = req.body.parsedData;
         if (fieldName == 'sim_ids') {
+            let sim_ids = []
+            let all_sim_ids = await sql.query("SELECT sim_id from sim_ids")
+            if (all_sim_ids.length) {
+                all_sim_ids.map((item) => {
+                    sim_ids.push(item.sim_id)
+                })
+            }
+            console.log(sim_ids);
             for (let row of data) {
-                if (row.sim_id && row.start_date && row.expiry_date) {
-                    // let result = await sql.query("INSERT sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");
-                    let insertQ = `INSERT IGNORE INTO sim_ids (sim_id, start_date, expiry_date) value ( '${row.sim_id}','${row.start_date}', '${row.expiry_date}')`;
-                    await sql.query(insertQ);
+                if (!sim_ids.includes(row.sim_id)) {
+                    if (row.sim_id && row.start_date && row.expiry_date) {
+                        // let result = await sql.query("INSERT sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");
+                        let insertQ = `INSERT INTO sim_ids (sim_id, start_date, expiry_date) value ( '${row.sim_id}','${row.start_date}', '${row.expiry_date}')`;
+                        await sql.query(insertQ);
+                    }
                 }
             }
             res.send({
@@ -138,10 +178,20 @@ exports.importIDs = async (req, res) => {
             })
             return
         } else if (fieldName == 'chat_ids') {
+            let chat_ids = []
+            let all_chat_ids = await sql.query("SELECT chat_id from chat_ids")
+            if (all_chat_ids.length) {
+                all_chat_ids.map((item) => {
+                    chat_ids.push(item.sim_id)
+                })
+            }
+            console.log(chat_ids);
             for (let row of data) {
-                if (row.chat_id) {
-                    let insertQ = `INSERT IGNORE INTO chat_ids (chat_id) value ('${row.chat_id}')`;
-                    await sql.query(insertQ);
+                if (!chat_ids.includes(row.chat_id)) {
+                    if (row.chat_id) {
+                        let insertQ = `INSERT INTO chat_ids (chat_id) value ('${row.chat_id}')`;
+                        await sql.query(insertQ);
+                    }
                 }
             }
             res.send({
@@ -149,11 +199,20 @@ exports.importIDs = async (req, res) => {
             })
             return
         } else if (fieldName == 'pgp_emails') {
-
+            let pgp_emails = []
+            let all_pgp_emails = await sql.query("SELECT pgp_email from pgp_emails")
+            if (all_pgp_emails.length) {
+                all_pgp_emails.map((item) => {
+                    pgp_emails.push(item.pgp_email)
+                })
+            }
+            console.log(pgp_emails);
             for (let row of data) {
-                if (row.pgp_email) {
-                    let insertQ = `INSERT IGNORE INTO pgp_emails (pgp_email) value ('${row.pgp_email}')`;
-                    await sql.query(insertQ);
+                if (!pgp_emails.includes(row.pgp_email)) {
+                    if (row.pgp_email) {
+                        let insertQ = `INSERT INTO pgp_emails (pgp_email) value ('${row.pgp_email}')`;
+                        await sql.query(insertQ);
+                    }
                 }
             }
             res.send({
@@ -873,12 +932,12 @@ exports.saveProfile = async function (req, res) {
                             msg: await helpers.convertToLang(req.translation[MsgConstants.PROFILE_SAV_SUCC], "Profile Saved Successfully"), // Profile Saved Successfully
                             data: {
                                 app_list: app_list ? JSON.parse(app_list) : [],
-                                controls: controls ? JSON.parse(controls): [],
+                                controls: controls ? JSON.parse(controls) : [],
                                 passwords: JSON.parse(passwords),
                                 secure_apps: permissions ? JSON.parse(permissions) : [],
                                 profile_name: name,
                                 id: rslts.insertId
-                            } 
+                            }
                         };
                         res.send(data);
                     } else {

@@ -19,7 +19,7 @@ var Policy = require('../app/models/Policy');
 // Helpers and Constants
 const helpers = require('../helper/general_helper');
 const MsgConstants = require('../constants/MsgConstants');
-
+const constants = require('../constants/Application');
 
 /**
  * This function comment is parsed by doctrine
@@ -150,19 +150,164 @@ router.get('/', async function (req, res, next) {
 
 router.get('/refactor_policy_apps', async function (req, res) {
     let policies = await sql.query('SELECT * FROM policy');
+    let policyAppsIds = await sql.query('SELECT * FROM policy_apps');
+    let apk_ids = [];
+    let policy_ids = [];
+    policyAppsIds.map((app) => {
+        apk_ids.push(app.apk_id)
+        policy_ids.push(app.policy_id)
+    })
     policies.forEach(async (policy) => {
         let pushApps = JSON.parse(policy.push_apps);
-        console.log("pushApps: ", pushApps)
         if (pushApps.length) {
             pushApps.forEach(async (app) => {
-                let insertRelQ = `INSERT IGNORE INTO policy_apps (policy_id, apk_id, guest, encrypted, enable) VALUES (${policy.id}, ${app.apk_id}, ${app.guest}, ${app.encrypted}, ${app.enable})`;
-                await sql.query(insertRelQ);
+                console.log(!policy_ids.includes(policy.id), !apk_ids.includes(app.apk_id));
+                if (!policy_ids.includes(policy.id) || !apk_ids.includes(app.apk_id)) {
+                    let insertRelQ = `INSERT INTO policy_apps (policy_id, apk_id, guest, encrypted, enable) VALUES (${policy.id}, ${app.apk_id}, ${app.guest}, ${app.encrypted}, ${app.enable})`;
+                    await sql.query(insertRelQ);
+                }
             })
         }
     });
 
     res.send('test');
 })
+
+router.get('/update_device_columns', async function (req, res) {
+    let data = {};
+
+    sql.query(`UPDATE dealer_dropdown_list SET selected_items='${JSON.stringify(constants.deviceColumns)}' 
+    WHERE type = "devices"`, async function (error, result) {
+
+        if (error) {
+            data = {
+                status: false,
+                msg: "Query error to update devices column dropdown"
+            }
+            res.send(data);
+            return;
+        }
+
+        if (result && result.affectedRows) {
+            data = {
+                status: true,
+                msg: "Devices Dropdown update successfully"
+            }
+            res.send(data);
+            return;
+        } else {
+            data = {
+                status: false,
+                msg: "No affected any record"
+            }
+            res.send(data);
+            return;
+        }
+    });
+
+});
+
+router.get('/update_dealer_columns', async function (req, res) {
+    let data = {};
+
+    sql.query(`UPDATE dealer_dropdown_list SET selected_items='${JSON.stringify(constants.dealerColumns)}' 
+    WHERE type = "dealer"`, async function (error, result) {
+
+        if (error) {
+            data = {
+                status: false,
+                msg: "Query error to update dealer column dropdown"
+            }
+            res.send(data);
+            return;
+        }
+
+        if (result && result.affectedRows) {
+            data = {
+                status: true,
+                msg: "Dealer Dropdown update successfully"
+            }
+            res.send(data);
+            return;
+        } else {
+            data = {
+                status: false,
+                msg: "No affected any record"
+            }
+            res.send(data);
+            return;
+        }
+    });
+
+});
+
+router.get('/update_sdealer_columns', async function (req, res) {
+    let data = {};
+
+    sql.query(`UPDATE dealer_dropdown_list SET selected_items='${JSON.stringify(constants.sdealerColumns)}' 
+    WHERE type = "sdealer"`, async function (error, result) {
+
+        if (error) {
+            data = {
+                status: false,
+                msg: "Query error to update sdealer column dropdown"
+            }
+            res.send(data);
+            return;
+        }
+
+        if (result && result.affectedRows) {
+            data = {
+                status: true,
+                msg: "S-Dealer Dropdown update successfully"
+            }
+            res.send(data);
+            return;
+        } else {
+            data = {
+                status: false,
+                msg: "No affected any record"
+            }
+            res.send(data);
+            return;
+        }
+    });
+
+});
+
+router.get('/update_apk_columns', async function (req, res) {
+    let data = {};
+
+    sql.query(`UPDATE dealer_dropdown_list SET selected_items='${JSON.stringify(constants.apkColumns)}' 
+    WHERE type = "apk"`, async function (error, result) {
+
+        if (error) {
+            data = {
+                status: false,
+                msg: "Query error to update apk column dropdown"
+            }
+            res.send(data);
+            return;
+        }
+
+        if (result && result.affectedRows) {
+            data = {
+                status: true,
+                msg: "apk dropdown update successfully"
+            }
+            res.send(data);
+            return;
+        } else {
+            data = {
+                status: false,
+                msg: "No affected any record"
+            }
+            res.send(data);
+            return;
+        }
+    });
+
+});
 
 router.get('/refactor_policy_sys_permissions', async function (req, res) {
 
@@ -214,7 +359,7 @@ router.get('/refactor_policy_sys_permissions', async function (req, res) {
                         });
                     }
                 }
-                
+
                 policyUpdateQ = `UPDATE policy SET controls='${JSON.stringify(data)}' WHERE id=${policy.id}`;
                 await sql.query(policyUpdateQ);
             }
@@ -229,7 +374,7 @@ router.get('/refactor_policy_sys_permissions', async function (req, res) {
         if (history.controls) {
 
             let sysPermissions = JSON.parse(history.controls);
-            
+
 
             if (sysPermissions instanceof Array) {
                 console.log('new history');
@@ -267,7 +412,7 @@ router.get('/refactor_policy_sys_permissions', async function (req, res) {
     // refactoring previous profiles
     let profiles = await sql.query('SELECt * FROM usr_acc_profile');
     profiles.forEach(async (profile) => {
-        if(profile.controls){
+        if (profile.controls) {
 
             let sysPermissions = JSON.parse(profile.controls);
 
@@ -305,11 +450,11 @@ router.get('/refactor_policy_sys_permissions', async function (req, res) {
 
     // refactoring user_app_permissions
     let user_app_permissions = await sql.query('SELECt * FROM user_app_permissions');
-    
+
     user_app_permissions.forEach(async (user_app_permission) => {
-        
-        if(user_app_permission.permissions && user_app_permission.permissions!=='null'){
-           
+
+        if (user_app_permission.permissions && user_app_permission.permissions !== 'null') {
+
             let sysPermissions = JSON.parse(user_app_permission.permissions);
 
             if (sysPermissions instanceof Array) {
@@ -381,5 +526,63 @@ router.get("/getFile/:file", async function (req, res) {
 });
 
 router.get('/languages', languageController.languages)
+
+// router.get('/create_lng_file', async function (req, res) {
+//     sql.query("SELECT * FROM languages", async function (err, data) {
+//         if (data.length) {
+//             // console.log(data);
+//             if (!fs.existsSync(path.join(__dirname, "../languages"))) {
+//                 fs.mkdirSync(path.join(__dirname, "../languages"));
+//             }
+//             for (var i = 0; i < data.length; i++) {
+//                 let language_data = await sql.query("SELECT key_id,key_value FROM lng_translations WHERE lng_id = " + data[i].id)
+//                 if (language_data.length) {
+//                     let lan_obj = {}
+//                     language_data.forEach((elem) => {
+//                         let key_id = elem.key_id;
+//                         lan_obj[key_id] = elem.key_value
+//                     })
+//                     let jsonData = JSON.stringify(lan_obj)
+//                     fileName = data[i].locale + ".json"
+//                     let target_path = path.join(__dirname, "../languages/" + fileName);
+//                     fs.writeFile(target_path, jsonData, 'utf8', function (err, res) {
+//                         if (err) {
+//                             console.log(err);
+//                         }
+//                     });
+//                 }
+//             }
+
+//             res.send("FILE CREATED")
+//         }
+//     })
+// })
+
+
+router.get('/update_apk_labels', async function (req, res) {
+    sql.query("SELECT * FROM apk_details WHERE label is NULL", async function (err, data) {
+        if (data.length) {
+            data.map(async (item) => {
+                let fileName = item.apk
+                let file = path.join(__dirname, "../uploads/" + fileName);
+                if (fs.existsSync(file)) {
+                    let label = '';
+                    label = await helpers.getAPKLabel(file);
+                    if (!label) {
+                        label = ''
+                    }
+
+                    label = label.replace(/(\r\n|\n|\r)/gm, "");
+
+                    sql.query(`UPDATE apk_details SET label = '${label}' WHERE id = ${item.id}`);
+
+                }
+            })
+            return res.send("LABELS ADDED SUCCESSFULLY");
+        }
+    })
+})
+
+
 
 module.exports = router;

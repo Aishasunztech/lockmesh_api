@@ -638,7 +638,7 @@ exports.editApk = async function (req, res) {
 
                     let formatByte = helpers.formatBytes(apk_stats.size);
 
-                    sql.query(`UPDATE apk_details SET app_name = '${apk_name}', logo = '${logo}', apk = '${apk}', version_code = '${versionCode}', version_name = '${versionName}', package_name='${packageName}', details='${details}', apk_bytes='${apk_stats.size}',  apk_size='${formatByte}'  WHERE id = ${req.body.apk_id}`, async function (err, rslts) {
+                    sql.query(`UPDATE apk_details SET app_name = '${apk_name}', logo = '${logo}',label = '${label}', apk = '${apk}', version_code = '${versionCode}', version_name = '${versionName}', package_name='${packageName}', details='${details}', apk_bytes='${apk_stats.size}',  apk_size='${formatByte}'  WHERE id = ${req.body.apk_id}`, async function (err, rslts) {
 
                         if (err) {
                             console.log(err)
@@ -824,18 +824,30 @@ exports.saveApkPermission = async function (req, res) {
                 let deleteNotIn = "DELETE FROM dealer_apks WHERE dealer_id NOT IN (" + prevParsDealers.join() + ") AND apk_id = " + apkId;
                 // console.log(deleteNotIn);
                 await sql.query(deleteNotIn);
-                let insertQuery = "INSERT IGNORE INTO dealer_apks (dealer_id, apk_id) VALUES ";
+                let dealerids = []
+                let apkIds = []
+                let dealer_apks_data = await sql.query("SELECT * from dealer_apks");
+                if (dealer_apks_data.length) {
+                    dealer_apks_data.map((item) => {
+                        dealerids.push(item.dealer_id)
+                        apkIds.push(item.apk_id)
+                    })
+                }
+                let insertQuery = "INSERT INTO dealer_apks (dealer_id, apk_id) VALUES";
 
                 let insertOrIgnore = ' '
                 for (let i = 0; i < prevParsDealers.length; i++) {
-                    if (i === prevParsDealers.length - 1) {
-                        insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + ")"
-                    } else {
-                        insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + "),"
+                    if (apkIds.indexOf(apkId) !== -1 && dealerids.indexOf(prevParsDealers[i]) !== -1) {
+                        continue
                     }
+                    insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + "),"
                 }
-                await sql.query(insertQuery + insertOrIgnore);
-                // console.log(insertQuery + insertOrIgnore);
+                if (insertOrIgnore.length > 1) {
+                    let query = insertQuery + insertOrIgnore;
+                    query = query.slice(0, query.length - 1)
+                    console.log(query);
+                    await sql.query(query);
+                }
             }
 
             sql.query(updateAPKQ, async (error, result) => {
@@ -905,19 +917,30 @@ exports.saveApkPermission = async function (req, res) {
                 console.log(deleteNotIn);
                 await sql.query(deleteNotIn);
                 if (prevParsDealers.length > 0) {
-                    let insertQuery = "INSERT IGNORE INTO dealer_apks (dealer_id, apk_id) VALUES";
+                    let dealerids = []
+                    let apkIds = []
+                    let dealer_apks_data = await sql.query("SELECT * from dealer_apks");
+                    if (dealer_apks_data.length) {
+                        dealer_apks_data.map((item) => {
+                            dealerids.push(item.dealer_id)
+                            apkIds.push(item.apk_id)
+                        })
+                    }
+                    let insertQuery = "INSERT INTO dealer_apks (dealer_id, apk_id) VALUES";
 
                     let insertOrIgnore = ' '
                     for (let i = 0; i < prevParsDealers.length; i++) {
-                        if (i === prevParsDealers.length - 1) {
-                            insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + ")"
-                        } else {
-                            insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + "),"
+                        if (apkIds.indexOf(apkId) !== -1 && dealerids.indexOf(prevParsDealers[i]) !== -1) {
+                            continue
                         }
+                        insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + "),"
                     }
-                    console.log(insertQuery + insertOrIgnore);
-                    await sql.query(insertQuery + insertOrIgnore);
-
+                    if (insertOrIgnore.length > 1) {
+                        let query = insertQuery + insertOrIgnore;
+                        query = query.slice(0, query.length - 1)
+                        console.log(query);
+                        await sql.query(query);
+                    }
                 }
                 // console.log(insertQuery + insertOrIgnore);
             }
@@ -1006,17 +1029,32 @@ exports.savePolicyPermissions = async function (req, res) {
                 let deleteNotIn = "DELETE FROM dealer_policies WHERE dealer_id NOT IN (" + prevParsDealers.join() + ") AND policy_id = " + policyId;
                 // console.log(deleteNotIn);
                 await sql.query(deleteNotIn);
-                let insertQuery = "INSERT IGNORE INTO dealer_policies (dealer_id, policy_id) VALUES ";
+
+                let dealerids = []
+                let policyids = []
+                let dealer_policies_data = await sql.query("SELECT * from dealer_policies");
+                if (dealer_policies_data.length) {
+                    dealer_policies_data.map((item) => {
+                        dealerids.push(item.dealer_id)
+                        policyids.push(item.policy_id)
+                    })
+                }
+                let insertQuery = "INSERT INTO dealer_policies (dealer_id, policy_id) VALUES";
 
                 let insertOrIgnore = ' '
                 for (let i = 0; i < prevParsDealers.length; i++) {
-                    if (i === prevParsDealers.length - 1) {
-                        insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + policyId + ")"
-                    } else {
-                        insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + policyId + "),"
+                    console.log(policyids.indexOf(policyId) !== -1, dealerids.indexOf(prevParsDealers[i]) !== -1);
+                    if (policyids.indexOf(policyId) !== -1 && dealerids.indexOf(prevParsDealers[i]) !== -1) {
+                        continue
                     }
+                    insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + policyId + "),"
                 }
-                await sql.query(insertQuery + insertOrIgnore);
+                if (insertOrIgnore.length > 1) {
+                    let query = insertQuery + insertOrIgnore;
+                    query = query.slice(0, query.length - 1)
+                    console.log(query);
+                    await sql.query(query);
+                }
             }
 
             sql.query(updateAPKQ, async (error, result) => {
@@ -1090,18 +1128,31 @@ exports.savePolicyPermissions = async function (req, res) {
                 console.log(deleteNotIn);
                 await sql.query(deleteNotIn);
                 if (prevParsDealers.length > 0) {
-                    let insertQuery = "INSERT IGNORE INTO dealer_policies (dealer_id, policy_id) VALUES";
+                    let dealerids = []
+                    let policyids = []
+                    let dealer_policies_data = await sql.query("SELECT * from dealer_policies");
+                    if (dealer_policies_data.length) {
+                        dealer_policies_data.map((item) => {
+                            dealerids.push(item.dealer_id)
+                            policyids.push(item.policy_id)
+                        })
+                    }
+                    let insertQuery = "INSERT INTO dealer_policies (dealer_id, policy_id) VALUES";
 
                     let insertOrIgnore = ' '
                     for (let i = 0; i < prevParsDealers.length; i++) {
-                        if (i === prevParsDealers.length - 1) {
-                            insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + policyId + ")"
-                        } else {
-                            insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + policyId + "),"
+                        console.log(policyids.indexOf(policyId) !== -1, dealerids.indexOf(prevParsDealers[i]) !== -1);
+                        if (policyids.indexOf(policyId) !== -1 && dealerids.indexOf(prevParsDealers[i]) !== -1) {
+                            continue
                         }
+                        insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + policyId + "),"
                     }
-                    console.log(insertQuery + insertOrIgnore);
-                    await sql.query(insertQuery + insertOrIgnore);
+                    if (insertOrIgnore.length > 1) {
+                        let query = insertQuery + insertOrIgnore;
+                        query = query.slice(0, query.length - 1)
+                        console.log(query);
+                        await sql.query(query);
+                    }
 
                 }
                 // console.log(insertQuery + insertOrIgnore);
