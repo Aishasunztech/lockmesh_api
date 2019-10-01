@@ -474,7 +474,7 @@
     "invalid.deviceID.id": "Invalid device id.",
     "invalid.device.id": "Invalid device.",
     "device.not.found.id": "No Device found",
-    "device.deleted.succ.id": "Device deleted successfully.",
+    "device.deleted.succ.id": "Selected devices deleted successfully.",
     "device.not.delete.id": "Device not deleted.",
     "invalid.email.or.name.id": "Invalid email or name",
     "record.not.updated.id": "Record not updated.",
