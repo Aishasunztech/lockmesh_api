@@ -3,11 +3,12 @@ var router = express.Router();
 
 
 const mobileController = require('../app/controllers/mobile');
+const mobileValidator = require('../app/validators/mobile_validators');
 
 
 
 /* Client Login with Link Code MDM without token */
-router.post('/login', mobileController.login);
+router.post('/login', mobileValidator.login, mobileController.login);
 
 // system control login, secure market login
 router.post('/systemlogin', mobileController.systemLogin);

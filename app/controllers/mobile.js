@@ -8,6 +8,8 @@ var path = require('path');
 var md5 = require('md5');
 var fs = require("fs");
 
+// const { check, validationResult } = require('express-validator');
+var validator = require('validator');
 
 // helpers
 const { sql } = require('../../config/database');
@@ -35,7 +37,7 @@ exports.login = async function (req, resp) {
 
     var dateNow = new Date()
     var start_date = moment(dateNow).format("YYYY/MM/DD")
-    
+
 
     var data;
     //console.log(linkCode);
@@ -251,14 +253,15 @@ exports.login = async function (req, resp) {
 // without token
 exports.systemLogin = async function (req, res) {
     let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = device_helpers.getDeviceInfo(req);
-    console.log(imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address);
+    console.log("valid mac address: ", validator.isMACAddress(mac_address))
     const systemInfo = {
         serial_number, ip, mac_address
     };
 
-    jwt.sign({
-        systemInfo
-    },
+    jwt.sign(
+        {
+            systemInfo
+        },
         app_constants.SECRET,
         {
             expiresIn: app_constants.EXPIRES_IN
@@ -686,13 +689,13 @@ exports.deviceStatus = async function (req, res) {
     console.log('dealer pin: ', dealer_pin);
 
     // mac and serial is not provided
-    if (!serial_number && !mac) { 
+    if (!serial_number && !mac) {
         data = {
             status: false,
             msg: "Information not provided"
         }
         return res.send(data);
-    } 
+    }
     // serial or mac address Dummy
     else if (serial_number === Constants.PRE_DEFINED_SERIAL_NUMBER && mac === Constants.PRE_DEFINED_MAC_ADDRESS) {
         data = {
@@ -700,7 +703,7 @@ exports.deviceStatus = async function (req, res) {
             msg: Constants.DUPLICATE_MAC_AND_SERIAL
         }
         return res.send(data);
-    } 
+    }
     // mac address is Dummy and serial number is original
     else if (mac == Constants.PRE_DEFINED_MAC_ADDRESS) {
         var deviceQ = `SELECT * FROM devices WHERE  serial_number= '${serial_number}' `;
@@ -871,7 +874,7 @@ exports.deviceStatus = async function (req, res) {
             }
             return res.send(data);
         }
-    } 
+    }
     // serial number is Dummy and mac address is original
     else if (serial_number == Constants.PRE_DEFINED_SERIAL_NUMBER) {
         var deviceQ = "SELECT * FROM devices WHERE  mac_address= '" + mac + "' ";
@@ -1046,7 +1049,7 @@ exports.deviceStatus = async function (req, res) {
             res.send(data);
             return
         }
-    } 
+    }
     // both are original
     else {
         var deviceQuery = "select * from devices where mac_address = '" + mac + "' AND serial_number = '" + serial_number + "'";
