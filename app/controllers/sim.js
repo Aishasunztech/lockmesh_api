@@ -1,12 +1,16 @@
-
+// libraries
 var empty = require('is-empty');
+
+// custom libraries
 const { sql } = require('../../config/database');
 const sockets = require('../../routes/sockets');
 
-const MsgConstants = require('../../constants/MsgConstants');
+// helpers
 const helpers = require('../../helper/general_helper');
+const socket_helpers = require('../../helper/socket_helper');
 
-
+// constants
+const MsgConstants = require('../../constants/MsgConstants');
 
 
 exports.simRegister = async function (req, res) {
@@ -41,7 +45,7 @@ exports.simRegister = async function (req, res) {
                 sql.query(IQry, async function (err, result) {
                     if (err) console.log(err);
 
-                    sockets.sendRegSim(device_id, "sim_update", [rSim]);
+                    socket_helpers.sendRegSim(sockets.baseIo,device_id, "sim_update", [rSim]);
                     data = {
                         status: true,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.SIM_REGISTERED_SUCCESSFULLY], "Sim Registered Successfully"), // "Sim Registered Successfully"
@@ -101,7 +105,7 @@ exports.simUpdate = async function (req, res) {
             if (id == "unrAll") {
                 await sql.query(`UPDATE sims SET unrGuest = ${simData.unrGuest}, unrEncrypt=${simData.unrEncrypt} WHERE device_id= '${simData.device_id}' AND del='0'`);
 
-                sockets.sendRegSim(simData.device_id, "sim_unregister", simData);
+                socket_helpers.sendRegSim(sockets.baseIo,simData.device_id, "sim_unregister", simData);
                 data = {
                     status: true,
                     msg: await helpers.convertToLang(req.translation[MsgConstants.UPDATE_SUCCESSFULLY], "Updated Successfully"), // "Updated Successfully"
@@ -135,7 +139,7 @@ exports.simUpdate = async function (req, res) {
                         // console.log('sims are: ', sims)
                         if (Query != undefined && Query != '') sims = await sql.query(Query);
 
-                        sockets.sendRegSim(simData.device_id, "sim_update", sims);
+                        socket_helpers.sendRegSim(sockets.baseIo,simData.device_id, "sim_update", sims);
                         data = {
                             status: true,
                             msg: await helpers.convertToLang(req.translation[MsgConstants.UPDATE_SUCCESSFULLY], "Updated Successfully"), // "Updated Successfully"
@@ -191,7 +195,7 @@ exports.simDelete = async function (req, res) {
                     if (err) console.log(err);
 
 
-                    sockets.sendRegSim(device_id, "sim_delete", [simData.iccid]);
+                    socket_helpers.sendRegSim(sockets.baseIo,device_id, "sim_delete", [simData.iccid]);
                     data = {
                         status: true,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.SIM_DELETE_SUCCESSFULLY], "Sim Deleted Successfully"), // "Sim Deleted Successfully"
@@ -231,7 +235,7 @@ exports.getSims = async function (req, res) {
     let deviceId = req.params.device_id;
     if (verify && deviceId) {
 
-        // sockets.sendRegSim(deviceId, "sim_inserted");
+        // socket_helpers.sendRegSim(sockets.baseIo,deviceId, "sim_inserted");
 
         var IQry = `SELECT * FROM sims WHERE device_id= '${deviceId}' AND del = '0'`;
         sql.query(IQry, async function (err, result) {
@@ -315,7 +319,7 @@ exports.getUnRegisterSims = async function (req, res) {
     console.log("getUnRegisterSims device is: ", deviceId);
     if (verify && deviceId) {
 
-        sockets.sendRegSim(deviceId, "sim_inserted");
+        socket_helpers.sendRegSim(sockets.baseIo, deviceId, "sim_inserted");
         return true;
 
     }
