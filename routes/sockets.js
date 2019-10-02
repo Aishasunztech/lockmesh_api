@@ -10,83 +10,12 @@ const general_helpers = require('../helper/general_helper.js');
 // Constants
 const Constants = require('../constants/Application');
 const app_constants = require('../config/constants');
+const socketMiddleware = require('../middlewares/socketAuth');
 
 var sockets = {};
 let io;
 
-// verify token
-const verifyToken = function (socket, token) {
 
-    if (device_helpers.checkNotNull(token)) {
-        // verifies secret and checks exp
-        return jwt.verify(token.replace(/['"]+/g, ''), app_constants.SECRET, function (err, decoded) {
-            if (err) {
-                return false;
-            } else {
-                return true;
-                // if everything is good, save to request for use in other routes
-                // ath = decoded;
-            }
-        });
-    } else {
-        return false;
-    }
-}
-
-const verifySession = async (deviceId, sessionId, isWeb = false, dealerId = null) => {
-    if (device_helpers.checkNotNull(isWeb)) {
-        console.log("web side: ", isWeb);
-        return true;
-
-    } else if (device_helpers.checkNotNull(deviceId)) {
-        console.log("mobile side: ", deviceId);
-        // var query = "SELECT id FROM devices WHERE device_id='" + deviceId + "' AND (online='off' OR session_id='" + sessionId + "')";
-        var query = "SELECT id FROM devices WHERE device_id='" + deviceId + "'";
-        let res = await sql.query(query);
-        if (res.length) {
-            return true;
-        } else {
-            return false;
-        }
-    } else {
-        return false;
-    }
-}
-
-const socketMiddleware = async (socket, next) => {
-    let token = socket.handshake.query.token;
-    // console.log("Token", verifyToken(token));
-    if (verifyToken(socket, token)) {
-
-        let session_id = socket.id;
-
-        var device_id = null;
-        var dealer_id = null;
-
-        let isWeb = socket.handshake.query['isWeb'];
-
-        if (device_helpers.checkNotNull(isWeb)) {
-            isWeb = true;
-            // dealer_id = socket.handshake.query['dealer_id'];
-
-        } else {
-            isWeb = false;
-            device_id = socket.handshake.query['device_id'];
-        }
-
-        let sessionVerify = await verifySession(device_id, session_id, isWeb, dealer_id);
-        console.log("Session", sessionVerify);
-
-        if (sessionVerify) {
-            next();
-        } else {
-            return next(new Error('Unauthorized: token not provided'));
-        }
-
-    } else {
-        return next(new Error('Unauthorized: token not provided'));
-    }
-}
 
 sockets.listen = function (server) {
 
@@ -140,16 +69,16 @@ sockets.listen = function (server) {
 
 
         // get device id on connection
-        let device_id = null;
         let session_id = socket.id;
+        let device_id = null;
         let dvc_id = 0;
         let user_acc_id = 0;
         let is_sync = false;
         let user_acc = null;
         let device_status = null;
-
         let isWeb = socket.handshake.query['isWeb'];
-        if (isWeb !== undefined && isWeb !== 'undefined' && (isWeb !== false || isWeb !== 'false') && (isWeb === true || isWeb === 'true')) {
+
+        if (isWeb && (isWeb === true || isWeb === 'true')) {
             isWeb = true;
         } else {
             isWeb = false;
@@ -159,6 +88,7 @@ sockets.listen = function (server) {
         console.log("connection established on device_id: " + device_id + " and session_id: " + session_id);
 
         // console.log("Number of sockets: ",io.sockets.sockets);
+        
         // check the number of sockets connected to server
         let users = io.engine.clientsCount;
         console.log("connected_users: " + users);
@@ -178,7 +108,7 @@ sockets.listen = function (server) {
         // get socket io client ip
         // console.log("client ip: " + socket.request.connection.remoteAddress);
 
-        if (device_id != undefined && device_id != null && isWeb === false) {
+        if (device_id && !isWeb) {
 
             console.log("on mobile side event");
 
@@ -958,11 +888,11 @@ sockets.listen = function (server) {
 
         } else {
             // socket.join('testRoom');
-            // console.log("on web side");
-            setInterval(function () {
-                // socket.to('testRoom').emit('hello_web', "hello web");
-                // socket.emit('hello_web', "hello web");
-            }, 1000);
+            console.log("on web side");
+            // setInterval(function () {
+            //     // socket.to('testRoom').emit('hello_web', "hello web");
+            //     // socket.emit('hello_web', "hello web");
+            // }, 1000);
             // socket.emit('hello_web', "hello web");
         }
 

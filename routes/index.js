@@ -1,7 +1,7 @@
 
 // middlewares
-var authMiddleware = require('../config/auth');
-var agentAuthMiddleware = require('../config/agentAuth');
+var authMiddleware = require('../middlewares/auth');
+var agentAuthMiddleware = require('../middlewares/agentAuth');
 
 // routes
 // var authRoutes = require('./auth');
