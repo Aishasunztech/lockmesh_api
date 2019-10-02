@@ -8,7 +8,7 @@ const mobileValidator = require('../app/validators/mobile_validators');
 
 
 /* Client Login with Link Code MDM without token */
-router.post('/login', mobileValidator.login, mobileController.login);
+router.post('/login', mobileController.login);
 
 // system control login, secure market login
 router.post('/systemlogin', mobileController.systemLogin);
