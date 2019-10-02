@@ -873,28 +873,6 @@ sockets.listen = function (server) {
             let simResult = await sql.query(sUnEmitSims);
             console.log(JSON.stringify(simResult), '========= check data when socket => re-connect ================= ', sUnEmitSims);
 
-            if (simResult.length > 0) {
-                // console.log('socket.emit(Constants.SEND_SIM ', simResult);
-
-                socket.emit(Constants.SEND_SIM + device_id, {
-                    action: "sim_update",
-                    device_id,
-                    entries: JSON.stringify(simResult),
-                });
-
-
-
-                simResult.forEach(async function (data, index) {
-                    let uQry = `UPDATE sims SET sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND delete_status='0'`;
-                    await sql.query(uQry);
-                })
-            } else {
-                socket.emit(Constants.SEND_SIM + device_id, {
-                    action: "sim_update",
-                    device_id,
-                    entries: '[]',
-                });
-            }
 
             //****************************** Un register data **************/ 
             var SDeviceAttributes = await sql.query(`SELECT * FROM device_attributes WHERE device_id= '${device_id}' AND (name='un_register_guest' OR name='un_register_encrypt') AND delete_status = '0'`);
@@ -912,11 +890,54 @@ sockets.listen = function (server) {
                     obj.unrEncrypt = JSON.parse(record.value);
                 }
             });
-            socket.emit(Constants.SEND_SIM + device_id, {
-                action: "sim_unregister",
-                device_id,
-                entries: JSON.stringify(obj),
-            });
+            // ***************** End
+
+            if (simResult && simResult.length > 0) {
+                // console.log('socket.emit(Constants.SEND_SIM ', simResult);
+
+                socket.emit(Constants.SEND_SIM + device_id, {
+                    action: "sim_update",
+                    device_id,
+                    entries: JSON.stringify(simResult),
+                    unregSettings: JSON.stringify(obj)
+                });
+
+
+
+                simResult.forEach(async function (data, index) {
+                    let uQry = `UPDATE sims SET sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND delete_status='0'`;
+                    await sql.query(uQry);
+                })
+            } else {
+                socket.emit(Constants.SEND_SIM + device_id, {
+                    action: "sim_update",
+                    device_id,
+                    entries: '[]',
+                    nregSettings: JSON.stringify(obj)
+                });
+            }
+
+            // //****************************** Un register data **************/ 
+            // var SDeviceAttributes = await sql.query(`SELECT * FROM device_attributes WHERE device_id= '${device_id}' AND (name='un_register_guest' OR name='un_register_encrypt') AND delete_status = '0'`);
+            // let obj = {
+            //     unrGuest: 1,
+            //     unrEncrypt: 1
+            // }
+
+            // SDeviceAttributes.forEach(record => {
+            //     // console.log('record is; ', record);
+            //     if (record.name === "un_register_guest") {
+            //         obj.unrGuest = JSON.parse(record.value);
+            //     }
+            //     else if (record.name === "un_register_encrypt") {
+            //         obj.unrEncrypt = JSON.parse(record.value);
+            //     }
+            // });
+            // socket.emit(Constants.SEND_SIM + device_id, {
+            //     action: "sim_unregister",
+            //     device_id,
+            //     entries: JSON.stringify(obj),
+            // });
 
 
 
