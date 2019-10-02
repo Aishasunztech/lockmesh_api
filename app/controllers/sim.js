@@ -15,7 +15,7 @@ exports.simRegister = async function (req, res) {
     if (verify) {
         try {
             let rSim = req.body.data;
-            console.log('sim-register ', req.body)
+            // console.log('sim-register ', req.body)
 
             let device_id = rSim.device_id;
             let iccid = rSim.iccid;
@@ -90,15 +90,15 @@ exports.simUpdate = async function (req, res) {
             let simData = req.body.obj;
 
 
-            console.log('req.body simData is: ', simData)
+            // console.log('req.body simData is: ', simData)
             // return;
             // console.log('simData is: ', simData)
             // return;
             let id = req.body.obj.id;
             let label = req.body.label;
             let value = req.body.value;
-            console.log('label: ', label);
-            console.log('value: ', value);
+            // console.log('label: ', label);
+            // console.log('value: ', value);
             if (id == "unrAll") {
 
                 //*********************** ur register guest *******************/
@@ -133,10 +133,10 @@ exports.simUpdate = async function (req, res) {
                 let Query = '';
                 if (label != undefined && req.body.value != undefined) {
                     if (id == "all") {
-                        console.log('at all')
+                        // console.log('at all')
                         UQry = `UPDATE sims SET ${label} = ${value} WHERE device_id= '${simData.device_id}' AND delete_status='0'`;
                         Query = `SELECT * FROM sims WHERE device_id = '${simData.device_id}' AND delete_status='0'`;
-                        console.log('query is: ', Query);
+                        // console.log('query is: ', Query);
                     } else {
                         UQry = `UPDATE sims SET ${label} = ${value} WHERE id = ${id} AND delete_status='0'`;
                     }
@@ -195,7 +195,7 @@ exports.simDelete = async function (req, res) {
     if (verify) {
         try {
 
-            console.log('body is: ', req.body);
+            // console.log('body is: ', req.body);
 
             // return;
             let simData = req.body;
@@ -357,7 +357,7 @@ exports.getUnRegisterSims = async function (req, res) {
     if (verify && deviceId) {
 
         let online = await device_helpers.isDeviceOnline(deviceId);
-        console.log(deviceId, 'check device online ', online);
+        // console.log(deviceId, 'check device online ', online);
 
         if (online) {
 

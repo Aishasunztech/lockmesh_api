@@ -913,7 +913,7 @@ sockets.listen = function (server) {
                     action: "sim_update",
                     device_id,
                     entries: '[]',
-                    nregSettings: JSON.stringify(obj)
+                    unregSettings: JSON.stringify(obj)
                 });
             }
 

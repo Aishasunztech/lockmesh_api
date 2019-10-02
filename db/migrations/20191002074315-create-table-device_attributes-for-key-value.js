@@ -11,17 +11,14 @@ module.exports = {
       },
       device_id: {
         type: Sequelize.STRING,
-        allowNull: false
       },
       name: {
         type: Sequelize.STRING,
-        allowNull: false,
-        defaultValue: false,
+        defaultValue: null,
       },
       value: {
         type: Sequelize.STRING,
-        allowNull: false,
-        defaultValue: false,
+        defaultValue: null,
       },
       delete_status: {
         type: Sequelize.ENUM(
