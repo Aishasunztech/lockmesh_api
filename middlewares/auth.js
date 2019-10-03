@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const config = require('./constants');
+const config = require('../config/constants');
 const { sql } = require('../config/database');
 
 

@@ -17,7 +17,7 @@ const { sendEmail } = require("../../lib/email");
 const { sql } = require("../../config/database");
 const device_helpers = require("../../helper/device_helpers");
 const helpers = require("../../helper/general_helper");
-const verifyToken = require("../../config/auth");
+
 const sockets = require("../../routes/sockets");
 
 // constants
@@ -82,6 +82,7 @@ exports.devices = async function (req, res) {
                     let devices_acc_array = [];
                     let usr_device_ids_array = []
                     for (let i = 0; i < results.length; i++) {
+                        console.log("Devices results[i] ===========> ", results[i].last_login);
                         devices_acc_array.push(results[i].id)
                         usr_device_ids_array.push(results[i].usr_device_id)
                     }
@@ -90,7 +91,7 @@ exports.devices = async function (req, res) {
                     let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
                     let sim_ids = await device_helpers.getSimids(user_acc_ids);
                     let chat_ids = await device_helpers.getChatids(user_acc_ids);
-                    let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
+                    // let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
 
                     for (var i = 0; i < results.length; i++) {
                         let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === results[i].id);
@@ -105,10 +106,10 @@ exports.devices = async function (req, res) {
                         if (chat_id) {
                             results[i].chat_id = chat_id.chat_id
                         }
-                        let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
-                        if (lastOnline) {
-                            results[i].lastOnline = lastOnline.created_at
-                        }
+                        // let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
+                        // if (lastOnline) {
+                            results[i].lastOnline = results[i].last_login ? results[i].last_login : "N/A"
+                        // }
                         results[i].finalStatus = device_helpers.checkStatus(
                             results[i]
                         );
@@ -941,7 +942,7 @@ exports.editDevices = async function (req, res) {
                                 let pgp_emails = await device_helpers.getPgpEmails(rsltq[0].id);
                                 let sim_ids = await device_helpers.getSimids(rsltq[0].id);
                                 let chat_ids = await device_helpers.getChatids(rsltq[0].id);
-                                let loginHistoryData = await device_helpers.getLastLoginDetail(rsltq[0].usr_device_id)
+                                // let loginHistoryData = await device_helpers.getLastLoginDetail(rsltq[0].usr_device_id)
                                 if (rsltq.length) {
                                     rsltq[0].finalStatus = device_helpers.checkStatus(rsltq[0]);
                                     if (pgp_emails[0] && pgp_emails[0].pgp_email) {
@@ -960,12 +961,12 @@ exports.editDevices = async function (req, res) {
                                     else {
                                         rsltq[0].chat_id = "N/A"
                                     }
-                                    if (loginHistoryData[0] && loginHistoryData.created_at) {
-                                        rsltq[0].lastOnline = loginHistoryData[0].created_at
-                                    }
-                                    else {
-                                        rsltq[0].lastOnline = "N/A"
-                                    }
+                                    // if (loginHistoryData[0] && loginHistoryData.created_at) {
+                                        rsltq[0].lastOnline = rsltq[0].last_login ? rsltq[0].last_login : "N/A"
+                                    // }
+                                    // else {
+                                    //     rsltq[0].lastOnline = "N/A"
+                                    // }
                                     if (rsltq[0].expiry_date !== null) {
                                         let startDate = moment(new Date())
                                         let expiray_date = new Date(rsltq[0].expiry_date)
@@ -1723,12 +1724,12 @@ exports.suspendAccountDevices = async function (req, res) {
                                         resquery[0].chat_id = "N/A"
 
                                     }
-                                    let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
-                                    if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                                        resquery[0].lastOnline = loginHistoryData[0].created_at
-                                    } else {
-                                        resquery[0].lastOnline = "N/A"
-                                    }
+                                    // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
+                                    // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
+                                        resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
+                                    // } else {
+                                    //     resquery[0].lastOnline = "N/A"
+                                    // }
                                     let remainTermDays = "N/A"
 
                                     if (resquery[0].expiry_date !== null) {
@@ -1818,12 +1819,12 @@ exports.suspendAccountDevices = async function (req, res) {
                                             resquery[0].chat_id = "N/A"
 
                                         }
-                                        let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
-                                        if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                                            resquery[0].lastOnline = loginHistoryData[0].created_at
-                                        } else {
-                                            resquery[0].lastOnline = "N/A"
-                                        }
+                                        // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
+                                        // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
+                                            resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
+                                        // } else {
+                                        //     resquery[0].lastOnline = "N/A"
+                                        // }
                                         let remainTermDays = "N/A"
 
                                         if (resquery[0].expiry_date !== null) {
@@ -1949,12 +1950,12 @@ exports.activateDevice = async function (req, res) {
                                         resquery[0].chat_id = "N/A"
 
                                     }
-                                    let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
-                                    if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                                        resquery[0].lastOnline = loginHistoryData[0].created_at
-                                    } else {
-                                        resquery[0].lastOnline = "N/A"
-                                    }
+                                    // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
+                                    // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
+                                        resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
+                                    // } else {
+                                    //     resquery[0].lastOnline = "N/A"
+                                    // }
 
                                     let remainTermDays = "N/A"
 
@@ -2047,12 +2048,12 @@ exports.activateDevice = async function (req, res) {
                                             resquery[0].chat_id = "N/A"
 
                                         }
-                                        let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
-                                        if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                                            resquery[0].lastOnline = loginHistoryData[0].created_at
-                                        } else {
-                                            resquery[0].lastOnline = "N/A"
-                                        }
+                                        // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
+                                        // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
+                                            resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
+                                        // } else {
+                                        //     resquery[0].lastOnline = "N/A"
+                                        // }
                                         let remainTermDays = "N/A"
 
                                         if (resquery[0].expiry_date !== null) {
@@ -2282,7 +2283,7 @@ exports.connectDevice = async function (req, res) {
                         let sim_ids = await device_helpers.getSimids(results[0].id);
                         let chat_ids = await device_helpers.getChatids(results[0].id);
                         results[0].finalStatus = device_helpers.checkStatus(results[0]);
-                        let loginHistoryData = await device_helpers.getLastLoginDetail(results[0].usr_device_id)
+                        // let loginHistoryData = await device_helpers.getLastLoginDetail(results[0].usr_device_id)
                         if (pgp_emails[0] && pgp_emails[0].pgp_email) {
                             results[0].pgp_email = pgp_emails[0].pgp_email
                         } else {
@@ -2300,11 +2301,11 @@ exports.connectDevice = async function (req, res) {
                             results[0].chat_id = "N/A"
 
                         }
-                        if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                            results[0].lastOnline = loginHistoryData[0].created_at
-                        } else {
-                            results[0].lastOnline = "N/A"
-                        }
+                        // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
+                            results[0].lastOnline = results[0].last_login ? results[0].last_login : "N/A"
+                        // } else {
+                        //     results[0].lastOnline = "N/A"
+                        // }
                         let device_data = results[0]
                         let startDate = moment(new Date())
                         let expiray_date = new Date(device_data.expiry_date)
@@ -2391,10 +2392,10 @@ exports.getAppsOfDevice = async function (req, res) {
                         if (app.extension === 1 && app.extension_id !== 0) {
                             let ext = mainExtensions.find(mainExtension => mainExtension.app_id === app.extension_id);
                             if (ext) {
-                                app.uniqueName = ext.uniqueName,
-                                    app.uniqueExtension = app.uniqueName,
-
-                                    extensions.push(app);
+                                app.uniqueExtension = app.uniqueName,
+                                    app.uniqueName = ext.uniqueName,
+                                    console.log(app);
+                                extensions.push(app);
                             }
                         }
                     }
