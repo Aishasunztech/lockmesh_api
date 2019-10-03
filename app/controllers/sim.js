@@ -104,17 +104,17 @@ exports.simUpdate = async function (req, res) {
                 //*********************** ur register guest *******************/
                 let checkGuest = await sql.query(`SELECT * FROM device_attributes WHERE device_id = '${simData.device_id}' AND name = 'un_register_guest' AND delete_status = '0'`);
                 if (checkGuest.length) {
-                    await sql.query(`UPDATE device_attributes SET value = '${simData.unrGuest}' WHERE device_id= '${simData.device_id}' AND name='un_register_guest' AND delete_status='0'`);
+                    await sql.query(`UPDATE device_attributes SET value = '${simData.unrGuest ? 1 : 0}' WHERE device_id= '${simData.device_id}' AND name='un_register_guest' AND delete_status='0'`);
                 } else {
-                    await sql.query(`INSERT INTO device_attributes (device_id, name, value) VALUES ('${simData.device_id}', 'un_register_guest', '${simData.unrGuest}')`);
+                    await sql.query(`INSERT INTO device_attributes (device_id, name, value) VALUES ('${simData.device_id}', 'un_register_guest', '${simData.unrGuest ? 1 : 0}')`);
                 }
 
                 //*************************** ur register encrypt  *************/
                 let checkEncrypt = await sql.query(`SELECT * FROM device_attributes WHERE device_id = '${simData.device_id}' AND name = 'un_register_encrypt' AND delete_status = '0'`);
                 if (checkEncrypt.length) {
-                    await sql.query(`UPDATE device_attributes SET value = '${simData.unrEncrypt}' WHERE device_id= '${simData.device_id}' AND name='un_register_encrypt' AND delete_status='0'`);
+                    await sql.query(`UPDATE device_attributes SET value = '${simData.unrEncrypt ? 1 : 0}' WHERE device_id= '${simData.device_id}' AND name='un_register_encrypt' AND delete_status='0'`);
                 } else {
-                    await sql.query(`INSERT INTO device_attributes (device_id, name, value) VALUES ('${simData.device_id}', 'un_register_encrypt', '${simData.unrEncrypt}')`);
+                    await sql.query(`INSERT INTO device_attributes (device_id, name, value) VALUES ('${simData.device_id}', 'un_register_encrypt', '${simData.unrEncrypt ? 1 : 0}')`);
                 }
 
 
