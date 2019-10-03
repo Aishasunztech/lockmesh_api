@@ -37,11 +37,18 @@ exports.simRegister = async function (req, res) {
             if (rslt.length < 1) {
                 // if (activeSims.length < 2) {
                 //*********/ Asked abaid to remove ingore from insert query **********//
-                var IQry = `INSERT INTO sims (device_id, iccid, name, status, sim_id, note, guest, encrypt, dataLimit, sync) 
-                VALUES ('${device_id}', '${iccid}', '${name}', '${status}', '${sim_id}', '${note}', ${guest}, ${encrypt}, 0, '0');`;
+                var IQry = `INSERT INTO sims (device_id, iccid, name, status, sim_id, note, guest, encrypt, dataLimit, sync, is_changed) 
+                VALUES ('${device_id}', '${iccid}', '${name}', '${status}', '${sim_id}', '${note}', ${guest}, ${encrypt}, 0, '0', '1');`;
                 sql.query(IQry, async function (err, result) {
-                    if (err) console.log(err);
-
+                    if (err) {
+                        console.log(err)
+                        res.send({
+                            status: false,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "ERROR"), // "You have already registered this device ID and ICC-ID."
+                        })
+                        return;
+                    };
+                    sql.query(`UPDATE sims SET is_changed = '0' WHERE device_id = '${device_id}' AND iccid = '${iccid}' AND delete_status='1'`)
                     sockets.sendRegSim(device_id, "sim_update", [rSim]);
                     data = {
                         status: true,
@@ -50,13 +57,7 @@ exports.simRegister = async function (req, res) {
                     res.send(data);
                     return;
                 })
-                // } else {
-                //     res.send({
-                //         status: false,
-                //         msg: await helpers.convertToLang(req.translation[MsgConstants.MAXIMUN_2_SIMS_ALLOWED], "Sorry! Maximun 2 registrations are allowed for this device"), // "Sorry! Maximun 2 registrations are allowed for this device."
-                //     })
-                //     return;
-                // }
+
             } else {
                 res.send({
                     status: false,
@@ -134,16 +135,16 @@ exports.simUpdate = async function (req, res) {
                 if (label != undefined && req.body.value != undefined) {
                     if (id == "all") {
                         // console.log('at all')
-                        UQry = `UPDATE sims SET ${label} = ${value} WHERE device_id= '${simData.device_id}' AND delete_status='0'`;
+                        UQry = `UPDATE sims SET ${label} = ${value}, is_changed = '1' WHERE device_id= '${simData.device_id}' AND delete_status='0'`;
                         Query = `SELECT * FROM sims WHERE device_id = '${simData.device_id}' AND delete_status='0'`;
                         // console.log('query is: ', Query);
                     } else {
-                        UQry = `UPDATE sims SET ${label} = ${value} WHERE id = ${id} AND delete_status='0'`;
+                        UQry = `UPDATE sims SET ${label} = ${value}, is_changed = '1' WHERE id = ${id} AND delete_status='0'`;
                     }
 
 
                 } else {
-                    UQry = `UPDATE sims SET name='${simData.name}', note='${simData.note}', guest=${simData.guest}, encrypt=${simData.encrypt}, sync = '0' WHERE device_id = '${simData.device_id}' AND iccid = '${simData.iccid}' AND delete_status='0'`;
+                    UQry = `UPDATE sims SET name='${simData.name}', note='${simData.note}', guest=${simData.guest}, encrypt=${simData.encrypt}, sync = '0', is_changed = '1' WHERE device_id = '${simData.device_id}' AND iccid = '${simData.iccid}' AND delete_status='0'`;
                 }
 
                 if (UQry != undefined) {
@@ -204,7 +205,7 @@ exports.simDelete = async function (req, res) {
 
             if (device_id != undefined && iccid != undefined) {
                 // let dQry = `DELETE FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
-                let dQry = `UPDATE sims SET delete_status='1' WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
+                let dQry = `UPDATE sims SET delete_status='1', is_changed='1' WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
 
                 sql.query(dQry, async function (err, result) {
                     if (err) console.log(err);
