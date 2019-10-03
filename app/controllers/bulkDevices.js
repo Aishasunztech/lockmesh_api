@@ -17,7 +17,7 @@ const { sendEmail } = require("../../lib/email");
 const { sql } = require("../../config/database");
 const device_helpers = require("../../helper/device_helpers");
 const helpers = require("../../helper/general_helper");
-const verifyToken = require("../../config/auth");
+// const verifyToken = require("../../config/auth");
 const sockets = require("../../routes/sockets");
 
 // constants
