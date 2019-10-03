@@ -9,15 +9,16 @@ const { sql } = require("../config/database");
 
 var port = normalizePort(process.env.PORT || "3000");
 app.set("port", port);
-
+var events = require('../crons/db_events');
 /**
  * Create HTTP server.
  */
 var server = http.createServer(app);
 
+// app.io.attach(server);
 let io = require("../routes/sockets").listen(server);
 
-require("../crons/index");
+
 /**
  * Listen on provided port, on all network interfaces.
  */
@@ -26,13 +27,14 @@ server.listen(port);
 server.on("error", onError);
 server.on("listening", onListening);
 
-// servers.listen(port);
-// servers.on('error', onError);
-// servers.on('listening', onListening);
-/**
- * Normalize a port into a number, string, or false.
- */
+require("../crons/index");
+// events.deviceQueue()
+// 	.then(() => console.log('Waiting for database events...'))
+// 	.catch(console.error);
 
+/**
+ * Normalizing Port with correct Number.
+ */
 function normalizePort(val) {
 	var port = parseInt(val, 10);
 
@@ -86,4 +88,3 @@ function onListening() {
 	console.log("Listening on " + bind);
 }
 
-// =======================================Socket======================================= //

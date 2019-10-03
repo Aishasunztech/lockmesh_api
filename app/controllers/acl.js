@@ -11,8 +11,7 @@ const axios = require('axios');
 // const Constants = require('../../constants/application');
 const device_helpers = require('../../helper/device_helpers');
 const general_helpers = require('../../helper/general_helper');
-const moment = require('moment')
-const verifyToken = require('../../config/auth');
+const moment = require('moment');
 
 exports.getAllowedComponents = async function (req, res) {
     // res.setHeader('Content-Type', 'applcation/json');

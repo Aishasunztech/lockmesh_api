@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const config = require('./constants');
+const config = require('../config/constants');
 const { sql } = require('../config/database');
 
 module.exports = (req, res, next) => {
@@ -31,8 +31,7 @@ module.exports = (req, res, next) => {
 
                     var d_lng_id = 1;
 
-                    if (user_id && user_id!=='undefined' && user_id !== 'null') {
-
+                    if (user_id != undefined && user_id != '' && user_id != null) {
                         var sQry = `SELECT dealer_lng_id FROM dealer_language WHERE dealer_id = '${user_id}' LIMIT 1`;
                         var dLang = await sql.query(sQry);
                         if (dLang.length) {
@@ -44,8 +43,11 @@ module.exports = (req, res, next) => {
                         d_lng_id = 1;
                     }
 
-                    var sTranslation = `SELECT * FROM lng_translations WHERE lng_id = '${d_lng_id}'`;
-                    let resp = await sql.query(sTranslation);
+                    if (d_lng_id === 1) {
+                        req.translation = require("../languages/en.json");
+                    } else if (d_lng_id === 2) {
+                        req.translation = require("../languages/fr.json");
+                    }
 
                     if (resp.length) {
                         
