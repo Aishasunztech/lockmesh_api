@@ -308,7 +308,7 @@ exports.upload = async function (req, res) {
                         }
                         console.log("fileName:", fileName);
 
-                        if ((packageName === 'com.armorSec.android' || packageName === 'ca.unlimitedwireless.mailpgp' || packageName === 'com.rim.mobilefusion.client' || packageName === 'com.secure.vpn') && featureApk == null) {
+                        if ((packageName === 'com.armorSec.android' || packageName === 'com.rim.mobilefusion.client' || packageName === 'com.secure.vpn') && featureApk == null) {
                             // console.log(packageName, 'pkg name if')
                             data = {
                                 status: false,
