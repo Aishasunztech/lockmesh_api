@@ -9,59 +9,23 @@ var md5 = require('md5');
 var fs = require("fs");
 
 
+// helpers
 const { sql } = require('../../config/database');
 var helpers = require('../../helper/general_helper.js');
-
 const device_helpers = require('../../helper/device_helpers.js');
+
+// constants
 var Constants = require('../../constants/Application');
 var app_constants = require('../../config/constants');
 
+// libraries
 const { sendEmail } = require('../../lib/email');
+
+// middleware
+var verifyToken = require('../../middlewares/mobileAuth');
 
 let usr_acc_query_text = Constants.usr_acc_query_text;
 
-var verifyToken = function (req, res) {
-    // check header or url parameters or post parameters for token
-    var ath;
-    var token = req.headers['authorization'];
-    // console.log("TOken", token);
-
-    if (token) {
-
-        // verifies secret and checks exp
-        jwt.verify(token, app_constants.SECRET, function (err, decoded) {
-            // console.log(err);
-            if (err) {
-                ath = {
-                    status: false,
-                    success: false
-                };
-                return res.json({
-                    success: false,
-                    msg: 'TOKEN_INVALID'
-                });
-            } else {
-                // if everything is good, save to request for use in other routes
-                req.decoded = decoded;
-
-                req.decoded.status = true;
-                req.decoded.success = true;
-                ath = decoded;
-            }
-        });
-    } else {
-        ath = {
-            status: false,
-            success: false
-        };
-        return res.send({
-            success: false,
-            msg: 'TOKEN_NOT_PROVIDED'
-        });
-    }
-
-    return ath;
-}
 
 // without token
 exports.login = async function (req, resp) {
@@ -72,8 +36,8 @@ exports.login = async function (req, resp) {
     var dateNow = new Date()
     var start_date = moment(dateNow).format("YYYY/MM/DD")
 
-    console.log("mac_address", mac_address);
-    console.log("serial_number", serial_number);
+    console.log("mac_address: ", mac_address);
+    console.log("serial_number: ", serial_number);
 
     var data;
     //console.log(linkCode);
@@ -321,7 +285,7 @@ exports.systemLogin = async function (req, res) {
 
 exports.linkDevice = async function (req, resp) {
 
-    var reslt = verifyToken(req, resp);
+    var reslt = await verifyToken(req, resp);
     if (reslt.status == true) {
         let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address, type, version } = device_helpers.getDeviceInfo(req);
         // console.log("serial no", serial_number);
@@ -460,12 +424,10 @@ exports.linkDevice = async function (req, resp) {
 }
 
 exports.getStatus = async function (req, resp) {
-    var serial_number = req.body.serial_number;
-    var mac = req.body.mac;
-    var reslt = verifyToken(req, resp);
-
+    var reslt = await verifyToken(req, resp);
     if (reslt.status == true) {
-
+        var serial_number = req.body.serial_number;
+        var mac = req.body.mac;
         if (!empty(serial_number) && !empty(mac)) {
 
             if (serial_number === Constants.PRE_DEFINED_SERIAL_NUMBER && mac === Constants.PRE_DEFINED_MAC_ADDRESS) {
@@ -481,7 +443,7 @@ exports.getStatus = async function (req, resp) {
                 var deviceQ = "SELECT * FROM devices WHERE  mac_address= '" + mac + "' ";
                 var device = await sql.query(deviceQ);
                 if (device.length && device[0].device_status == 0 && device[0].activation_status == null) {
-                    console.log('MAC FOUUND');
+                    console.log('MAC FOUND');
                     data = {
                         "status": false,
                         "msg": "Mac duplicate."
@@ -1297,7 +1259,7 @@ exports.deviceStatus = async function (req, res) {
 
 exports.stopLinking = async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
-    var reslt = verifyToken(req, res);
+    var reslt = await verifyToken(req, res);
     //console.log(req);
     let mac_address = req.params.macAddr;
     let serial_number = req.params.serialNo;
