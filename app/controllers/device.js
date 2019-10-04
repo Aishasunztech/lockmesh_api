@@ -91,6 +91,7 @@ exports.devices = async function (req, res) {
                     let sim_ids = await device_helpers.getSimids(user_acc_ids);
                     let chat_ids = await device_helpers.getChatids(user_acc_ids);
                     let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
+                    let servicesData = await device_helpers.getServicesData(user_acc_ids)
 
                     for (var i = 0; i < results.length; i++) {
                         let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === results[i].id);
@@ -105,6 +106,10 @@ exports.devices = async function (req, res) {
                         let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === results[i].id);
                         if (chat_id) {
                             results[i].chat_id = chat_id.chat_id
+                        }
+                        let services = servicesData.find(data => data.user_acc_id === results[i].id);
+                        if (services) {
+                            results[i].services = services
                         }
                         let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
                         if (lastOnline) {
@@ -287,6 +292,10 @@ exports.acceptDevice = async function (req, res) {
 
         let products = (req.body.products) ? req.body.products : []
         let packages = (req.body.packages) ? req.body.packages : []
+        let total_price = req.body.total_price;
+        let admin_profit = 0
+        let dealer_profit = 0
+        let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
 
         if (term === '' || term === null) {
             var status = 'expired';
@@ -300,10 +309,6 @@ exports.acceptDevice = async function (req, res) {
             var status = 'active';
             expiry_date = helpers.getExpDateByMonth(start_date, term)
         }
-        let total_price = req.body.total_price;
-        let admin_profit = 0
-        let dealer_profit = 0
-        let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
 
         let user_credits = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
         sql.query(user_credits, async function (err, result) {
@@ -422,7 +427,7 @@ exports.acceptDevice = async function (req, res) {
                                                         })
                                                     }
                                                     let remaining_credits = dealer_credits
-                                                    let service_billing = `INSERT INTO services_billing (user_acc_id , dealer_id , products, packages , total_credits) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${total_price})`
+                                                    let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages , total_credits, services_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${total_price} , ${expiry_date})`
                                                     await sql.query(service_billing);
 
                                                     let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${total_price} ,'credit' , 'transferred')`
@@ -613,8 +618,6 @@ exports.createDeviceProfile = async function (req, res) {
             expiry_date = helpers.getExpDateByMonth(start_date, exp_month)
         }
 
-
-
         var note = req.body.note;
         var validity = req.body.validity;
         var duplicate = req.body.duplicate ? req.body.duplicate : 0;
@@ -737,8 +740,8 @@ exports.createDeviceProfile = async function (req, res) {
                                                             sql.query(productQuery)
                                                         })
                                                     }
-                                                    let service_billing = `INSERT INTO services_billing(user_acc_id, dealer_id, products, packages, start_date ,total_credits) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price / duplicate})`
-                                                    await sql.query(service_billing);
+                                                    let service_data = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date ,total_credits,service_expiry_date) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price / duplicate} , '${expiry_date}' )`
+                                                    await sql.query(service_data);
 
                                                     let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id transection_data, credits ,transection_type , status) VALUES (${dealer_id},${user_acc_id} , '${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price / duplicate} ,'credit' , 'transferred')`
                                                     await sql.query(transection_credits);
@@ -917,7 +920,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                             }
                                                             let remaining_credits = dealer_credits
 
-                                                            let service_billing = `INSERT INTO services_billing(user_acc_id, dealer_id, products, packages, start_date, total_credits) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price})`
+                                                            let service_billing = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date, total_credits ,service_expiry_date) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price} , '${expiry_date}')`
                                                             await sql.query(service_billing);
                                                             remaining_credits = dealer_credits - total_price
                                                             let deduct_credits = 'update financial_account_balance set credits =' + remaining_credits + ' where dealer_id ="' + dealer_id + '"';
@@ -1057,18 +1060,11 @@ exports.editDevices = async function (req, res) {
 
     if (verify) {
         if (!empty(req.body.usr_device_id)) {
-            // console.log(req.body);
+
             let loggedDealerId = verify.user.id;
             let loggedDealerType = verify.user.user_type;
-
-            var user_id = req.body.user_id;
-
-            let userData = await helpers.getUserDataByUserId(user_id);
-
             let device_id = req.body.device_id;
             let dealer_id = req.body.dealer_id;
-            let device_name = userData[0].user_name;
-            let email = userData[0].email;
             let client_id = req.body.client_id;
             let model = req.body.model;
             let usr_acc_id = req.body.usr_acc_id;
@@ -1081,19 +1077,29 @@ exports.editDevices = async function (req, res) {
             var validity = req.body.validity;
             // let s_dealer_id = req.body.s_dealer;
             let start_date = req.body.start_date;
-            let sim_id = (req.body.sim_id == undefined || req.body.sim_id == '') ? "N/A" : req.body.sim_id;
-            let chat_id = (req.body.chat_id == undefined || req.body.chat_id == '') ? "N/A" : req.body.chat_id;
-            let pgp_email =
-                (req.body.pgp_email == undefined || req.body.pgp_email == '') ? "N/A" : req.body.pgp_email;
+            let sim_id = req.body.sim_id;
+            let chat_id = req.body.chat_id;
+            let pgp_email = req.body.pgp_email;
 
+            let newService = req.body.service;
+            let prevService = req.body.prevService
             // console.log(chat_id, prevChatID);
+            let products = (req.body.products) ? req.body.products : []
+            let packages = (req.body.packages) ? req.body.packages : []
+            let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
+            let total_price = req.body.total_price;
+            let admin_profit = 0
+            let dealer_profit = 0
+            let dealer_credits = 0
+            let remaining_credits = null
+            var expiry_date = req.body.expiry_date
+            let creditsToRefund = 0
+            let prevServicePaidPrice = 0
+            let newServicePrice = 0
 
-
-            var d = new Date(req.body.start_date);
-
-            if (req.body.expiry_date === "" || req.body.expiry_date === null) {
+            if (expiry_date === "" || expiry_date === null) {
                 var status = "expired";
-            } else if (req.body.expiry_date == 0) {
+            } else if (expiry_date == 0) {
                 var status = "trial";
             } else if (finalStatus === constants.DEVICE_PRE_ACTIVATION) {
                 var status = "";
@@ -1127,309 +1133,385 @@ exports.editDevices = async function (req, res) {
                 });
                 return;
             }
-            // console.log(checkDevice);
             sql.query(checkDevice, async function (error, rows) {
                 if (rows.length) {
-                    let checkUniquePgp =
-                        "SELECT * from pgp_emails WHERE pgp_email= '" +
-                        pgp_email +
-                        "' AND user_acc_id != '' AND user_acc_id != '" +
-                        usr_acc_id +
-                        "'";
-                    // let checkUnique = "SELECT usr_acc.* from usr_acc WHERE account_email= '" + device_email + "' AND device_id != '" + device_id + "'"
-                    sql.query(checkUniquePgp, async function (error, success) {
-                        if (success.length) {
+
+                    if (newService) {
+                        let user_credits_q = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
+                        let results = await sql.query(user_credits_q)
+                        if (results && results.length) {
+                            dealer_credits = results[0].credits
+                            if (dealer_credits < total_price) {
+                                res.send({
+                                    status: false,
+                                    msg: "Error: Dealer doesn't have enough credits to make this request. Please purchase credits and try again later."
+                                });
+                                return
+                            } else {
+                                if (pgp_email) {
+                                    let checkUniquePgp =
+                                        "SELECT * from pgp_emails WHERE pgp_email= '" +
+                                        pgp_email +
+                                        "' AND user_acc_id != '' AND user_acc_id != '" +
+                                        usr_acc_id +
+                                        "'";
+                                    // let checkUnique = "SELECT usr_acc.* from usr_acc WHERE account_email= '" + device_email + "' AND device_id != '" + device_id + "'"
+                                    let success = await sql.query(checkUniquePgp)
+                                    if (success.length) {
+                                        res.send({
+                                            status: false,
+                                            msg: await helpers.convertToLang(
+                                                req.translation[
+                                                MsgConstants.PGP_EMAIL_ALRDY_TKN
+                                                ],
+                                                "PGP email already taken"
+                                            ) // PGP email already taken
+                                        });
+                                        return
+                                    }
+                                }
+
+                                start_date = moment(new Date()).format("YYYY/MM/DD");
+                                if (expiry_date == 0) {
+                                    if (
+                                        finalStatus ===
+                                        constants.DEVICE_PRE_ACTIVATION ||
+                                        finalStatus === constants.DEVICE_TRIAL
+                                    ) {
+                                        // var expiry_date = expiry_date;
+                                    } else {
+                                        var trailDate = moment(
+                                            start_date,
+                                            "YYYY/MM/DD"
+                                        ).add(7, "days");
+                                        expiry_date = moment(trailDate).format(
+                                            "YYYY/MM/DD"
+                                        );
+                                    }
+                                } else if (
+                                    expiry_date === 1 ||
+                                    expiry_date === 3 ||
+                                    expiry_date === 6 ||
+                                    expiry_date === 12
+                                ) {
+                                    let exp_month = expiry_date;
+                                    expiry_date = helpers.getExpDateByMonth(
+                                        rows[0].expiry_date,
+                                        exp_month
+                                    );
+                                    // console.log(expiry_date);
+                                    let currentDate = moment(new Date()).format(
+                                        "YYYY/MM/DD"
+                                    );
+                                    // console.log(currentDate, expiry_date);
+                                    if (currentDate < expiry_date && finalStatus === constants.DEVICE_EXPIRED) {
+                                        // console.log(device);
+                                        sockets.sendDeviceStatus(
+                                            device_id,
+                                            "active",
+                                            true
+                                        );
+                                        status = "active";
+                                    }
+                                    let prevServiceData = await sql.query("SELECT * from services_data WHERE id = " + prevService.id)
+
+                                    if (prevServiceData.length) {
+                                        let prevService = prevServiceData[0]
+                                        let preTotalPrice = prevService.total_credits
+                                        let prevServiceExpiryDate = moment(new Date(prevService.service_expiry_date))
+                                        let dateNow = moment(new Date())
+                                        let serviceRemainingDays = prevServiceExpiryDate.diff(dateNow, 'days')
+                                        creditsToRefund = Math.floor((preTotalPrice / prevService.service_term_days) * serviceRemainingDays)
+                                        prevServicePaidPrice = preTotalPrice - creditsToRefund
+                                    }
+
+                                    if (packages && packages.length) {
+                                        packages.map((item) => {
+                                            newServicePrice += Number(item.pkg_price)
+                                        })
+                                    }
+                                    if (products && products.length) {
+                                        products.map((item) => {
+                                            newServicePrice = Number(item.unit_price)
+                                        })
+                                    }
+                                    console.log(newServicePrice, prevServicePaidPrice);
+                                    total_price = newServicePrice - creditsToRefund
+                                    let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedDealerType)
+                                    admin_profit = profitLoss.admin_profit
+                                    dealer_profit = profitLoss.dealer_profit
+                                }
+
+                            }
+                        } else {
                             res.send({
                                 status: false,
-                                msg: await helpers.convertToLang(
-                                    req.translation[
-                                    MsgConstants.PGP_EMAIL_ALRDY_TKN
-                                    ],
-                                    "PGP email already taken"
-                                ) // PGP email already taken
+                                msg: "Error: Dealer doesn't have credits to make this request. Please purchase credits and try again later."
                             });
-                        } else {
-                            if (req.body.expiry_date == 0) {
-                                if (
-                                    finalStatus ===
-                                    constants.DEVICE_PRE_ACTIVATION ||
-                                    finalStatus === constants.DEVICE_TRIAL
-                                ) {
-                                    var expiry_date = req.body.expiry_date;
-                                } else {
-                                    let exp_month = req.body.expiry_date;
-                                    var trailDate = moment(
-                                        start_date,
-                                        "YYYY/MM/DD"
-                                    ).add(7, "days");
-                                    var expiry_date = moment(trailDate).format(
-                                        "YYYY/MM/DD"
-                                    );
-                                }
-                            } else if (
-                                req.body.expiry_date === 1 ||
-                                req.body.expiry_date === 3 ||
-                                req.body.expiry_date === 6 ||
-                                req.body.expiry_date === 12
-                            ) {
-                                let exp_month = req.body.expiry_date;
-                                var expiry_date = helpers.getExpDateByMonth(
-                                    rows[0].expiry_date,
-                                    exp_month
-                                );
-                                // console.log(expiry_date);
-                                let currentDate = moment(new Date()).format(
-                                    "YYYY/MM/DD"
-                                );
-                                // console.log(currentDate, expiry_date);
-                                if (currentDate < expiry_date && finalStatus === constants.DEVICE_EXPIRED) {
-                                    // console.log(device);
-                                    sockets.sendDeviceStatus(
-                                        device_id,
-                                        "active",
-                                        true
-                                    );
-                                    status = "active";
-                                }
-                            } else {
-                                if (finalStatus === constants.DEVICE_TRIAL) {
-                                    status = "trial";
-                                }
-                                var expiry_date = req.body.expiry_date;
-                            }
-
-                            common_Query =
-                                "UPDATE devices set name = '" +
-                                device_name +
-                                "',  model = '" +
-                                req.body.model +
-                                "' WHERE id = '" +
+                            return
+                        }
+                    }
+                    common_Query =
+                        "UPDATE devices set model = '" +
+                        req.body.model +
+                        "' WHERE id = '" +
+                        usr_device_id +
+                        "'";
+                    if (
+                        finalStatus !== constants.DEVICE_PRE_ACTIVATION
+                    ) {
+                        if (expiry_date == 0) {
+                            usr_acc_Query =
+                                "UPDATE usr_acc set status = '" +
+                                status +
+                                "',note = '" +
+                                note +
+                                "' ,client_id = '" +
+                                client_id +
+                                "', device_status = 1, unlink_status=0 ,  start_date = '" +
+                                start_date +
+                                "' WHERE device_id = '" +
                                 usr_device_id +
                                 "'";
-                            if (
-                                finalStatus !== constants.DEVICE_PRE_ACTIVATION
-                            ) {
-                                if (expiry_date == 0) {
-                                    usr_acc_Query =
-                                        "UPDATE usr_acc set user_id = '" +
-                                        user_id +
-                                        "' ,account_email = '" +
-                                        email +
-                                        "',status = '" +
-                                        status +
-                                        "',note = '" +
-                                        note +
-                                        "' ,client_id = '" +
-                                        client_id +
-                                        "', device_status = 1, unlink_status=0 ,  start_date = '" +
-                                        start_date +
-                                        "' WHERE device_id = '" +
-                                        usr_device_id +
-                                        "'";
+                        } else {
+                            usr_acc_Query =
+                                "UPDATE usr_acc set  status = '" +
+                                status +
+                                "',note = '" +
+                                note +
+                                "' ,client_id = '" +
+                                client_id +
+                                "', device_status = 1, unlink_status=0 ,  start_date = '" +
+                                start_date +
+                                "' ,expiry_date = '" +
+                                expiry_date +
+                                "' WHERE device_id = '" +
+                                usr_device_id +
+                                "'";
+                        }
+                    } else {
+                        if (expiry_date == 0) {
+                            usr_acc_Query =
+                                "UPDATE usr_acc set status = '" +
+                                status +
+                                "',validity = '" +
+                                validity +
+                                "' ,note = '" +
+                                note +
+                                "' ,client_id = '" +
+                                client_id +
+                                "', device_status = 0, unlink_status=0 ,start_date = '" +
+                                start_date +
+                                "' WHERE device_id = '" +
+                                usr_device_id +
+                                "'";
+                        } else {
+                            usr_acc_Query =
+                                "UPDATE usr_acc set status = '" +
+                                status +
+                                "',validity = '" +
+                                validity +
+                                "' ,note = '" +
+                                note +
+                                "' ,client_id = '" +
+                                client_id +
+                                "', device_status = 0, unlink_status=0 ,start_date = '" +
+                                start_date +
+                                "', expiry_date = '" +
+                                expiry_date +
+                                "' WHERE device_id = '" +
+                                usr_device_id +
+                                "'";
+                        }
+                    }
+                    sql.query(common_Query, async function (error, row) {
+                        await sql.query(usr_acc_Query);
+                        if (newService) {
+                            if (pgp_email != prevPGP) {
+                                console.log("PGP change");
+                                let updatePgpEmails =
+                                    'update pgp_emails set user_acc_id = "' +
+                                    usr_acc_id +
+                                    '",  used=1 where pgp_email ="' +
+                                    pgp_email +
+                                    '"';
+                                await sql.query(updatePgpEmails);
+
+                                if (
+                                    finalStatus ===
+                                    constants.DEVICE_PRE_ACTIVATION
+                                ) {
+                                    let updatePrevPgp =
+                                        'update pgp_emails set user_acc_id = null,  used=0 where pgp_email ="' +
+                                        prevPGP +
+                                        '"';
+                                    await sql.query(updatePrevPgp);
                                 } else {
-                                    usr_acc_Query =
-                                        "UPDATE usr_acc set user_id = '" +
-                                        user_id +
-                                        "' ,account_email = '" +
-                                        email +
-                                        "', status = '" +
-                                        status +
-                                        "',note = '" +
-                                        note +
-                                        "' ,client_id = '" +
-                                        client_id +
-                                        "', device_status = 1, unlink_status=0 ,  start_date = '" +
-                                        start_date +
-                                        "' ,expiry_date = '" +
-                                        expiry_date +
-                                        "' WHERE device_id = '" +
-                                        usr_device_id +
-                                        "'";
-                                }
-                            } else {
-                                if (expiry_date == 0) {
-                                    usr_acc_Query =
-                                        "UPDATE usr_acc set user_id = '" +
-                                        user_id +
-                                        "' , account_email = '" +
-                                        email +
-                                        "',status = '" +
-                                        status +
-                                        "',validity = '" +
-                                        validity +
-                                        "' ,note = '" +
-                                        note +
-                                        "' ,client_id = '" +
-                                        client_id +
-                                        "', device_status = 0, unlink_status=0 ,start_date = '" +
-                                        start_date +
-                                        "' WHERE device_id = '" +
-                                        usr_device_id +
-                                        "'";
-                                } else {
-                                    usr_acc_Query =
-                                        "UPDATE usr_acc set user_id = '" +
-                                        user_id +
-                                        "' , account_email = '" +
-                                        email +
-                                        "',status = '" +
-                                        status +
-                                        "',validity = '" +
-                                        validity +
-                                        "' ,note = '" +
-                                        note +
-                                        "' ,client_id = '" +
-                                        client_id +
-                                        "', device_status = 0, unlink_status=0 ,start_date = '" +
-                                        start_date +
-                                        "', expiry_date = '" +
-                                        expiry_date +
-                                        "' WHERE device_id = '" +
-                                        usr_device_id +
-                                        "'";
+                                    let updatePrevPgp =
+                                        'update pgp_emails set user_acc_id = null,  used=1 where pgp_email ="' +
+                                        prevPGP +
+                                        '"';
+                                    await sql.query(updatePrevPgp);
                                 }
                             }
-                            sql.query(common_Query, async function (error, row) {
-                                await sql.query(usr_acc_Query);
-                                if (pgp_email != prevPGP) {
-                                    console.log("PGP change");
-                                    let updatePgpEmails =
-                                        'update pgp_emails set user_acc_id = "' +
-                                        usr_acc_id +
-                                        '",  used=1 where pgp_email ="' +
-                                        pgp_email +
+                            if (chat_id != prevChatID) {
+                                console.log("Chat change");
+                                let updateChatIds =
+                                    'update chat_ids set user_acc_id = "' +
+                                    usr_acc_id +
+                                    '", used=1 where chat_id ="' +
+                                    chat_id +
+                                    '"';
+                                await sql.query(updateChatIds);
+                                if (
+                                    finalStatus ===
+                                    constants.DEVICE_PRE_ACTIVATION
+                                ) {
+                                    let updatePrevChat =
+                                        'update chat_ids set user_acc_id = null,  used=0 where chat_id ="' +
+                                        prevChatID +
                                         '"';
-                                    await sql.query(updatePgpEmails);
-
-                                    if (
-                                        finalStatus ===
-                                        constants.DEVICE_PRE_ACTIVATION
-                                    ) {
-                                        let updatePrevPgp =
-                                            'update pgp_emails set user_acc_id = null,  used=0 where pgp_email ="' +
-                                            prevPGP +
-                                            '"';
-                                        await sql.query(updatePrevPgp);
-                                    } else {
-                                        let updatePrevPgp =
-                                            'update pgp_emails set user_acc_id = null,  used=1 where pgp_email ="' +
-                                            prevPGP +
-                                            '"';
-                                        await sql.query(updatePrevPgp);
-                                    }
-                                }
-                                if (chat_id != prevChatID) {
-                                    console.log("Chat change");
-                                    let updateChatIds =
-                                        'update chat_ids set user_acc_id = "' +
-                                        usr_acc_id +
-                                        '", used=1 where chat_id ="' +
-                                        chat_id +
+                                    await sql.query(updatePrevChat);
+                                } else {
+                                    let updatePrevChat =
+                                        'update chat_ids set user_acc_id = null,  used=1 where chat_id ="' +
+                                        prevChatID +
                                         '"';
-                                    await sql.query(updateChatIds);
-                                    if (
-                                        finalStatus ===
-                                        constants.DEVICE_PRE_ACTIVATION
-                                    ) {
-                                        let updatePrevChat =
-                                            'update pgp_emails set user_acc_id = null,  used=0 where chat_id ="' +
-                                            prevChatID +
-                                            '"';
-                                        await sql.query(updatePrevChat);
-                                    } else {
-                                        let updatePrevChat =
-                                            'update chat_ids set user_acc_id = null,  used=1 where chat_id ="' +
-                                            prevChatID +
-                                            '"';
-                                        await sql.query(updatePrevChat);
-                                    }
+                                    await sql.query(updatePrevChat);
                                 }
-                                if (sim_id != prevSimId) {
-                                    console.log("sim change", prevSimId, sim_id);
-                                    let updateSimIds =
-                                        'update sim_ids set user_acc_id = "' +
-                                        usr_acc_id +
-                                        '",  used=1 where sim_id ="' +
-                                        sim_id +
+                            }
+                            if (sim_id != prevSimId) {
+                                console.log("sim change", prevSimId, sim_id);
+                                let updateSimIds =
+                                    'update sim_ids set user_acc_id = "' +
+                                    usr_acc_id +
+                                    '",  used=1 where sim_id ="' +
+                                    sim_id +
+                                    '"';
+                                await sql.query(updateSimIds);
+                                if (
+                                    finalStatus ===
+                                    constants.DEVICE_PRE_ACTIVATION
+                                ) {
+                                    let updatePrevSim =
+                                        'update sim_ids set user_acc_id = null,  used=0 where sim_id ="' +
+                                        prevSimId +
                                         '"';
-                                    await sql.query(updateSimIds);
-                                    if (
-                                        finalStatus ===
-                                        constants.DEVICE_PRE_ACTIVATION
-                                    ) {
-                                        let updatePrevSim =
-                                            'update sim_ids set user_acc_id = null,  used=0 where sim_id ="' +
-                                            prevSimId +
-                                            '"';
-                                        await sql.query(updatePrevSim);
-                                    } else {
-                                        let updatePrevSim =
-                                            'update sim_ids set user_acc_id = null,  used=1 where sim_id ="' +
-                                            prevSimId +
-                                            '"';
-                                        await sql.query(updatePrevSim);
-                                    }
+                                    await sql.query(updatePrevSim);
+                                } else {
+                                    let updatePrevSim =
+                                        'update sim_ids set user_acc_id = null,  used=1 where sim_id ="' +
+                                        prevSimId +
+                                        '"';
+                                    await sql.query(updatePrevSim);
                                 }
+                            }
 
-                                var slctquery =
-                                    "select devices.*  ," +
-                                    usr_acc_query_text +
-                                    ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id where devices.id = '" +
-                                    usr_device_id +
-                                    "'";
-                                // console.log(slctquery);
-                                rsltq = await sql.query(slctquery);
+                            let servicesQuery = "INSERT into services (user_acc_id,service_id,service_type) VALUES ('" + usr_acc_id + "',"
+                            if (packages.length) {
+                                packages.map((item) => {
+                                    let pkgQuery = servicesQuery + "'" + item.id + "','package')"
+                                    sql.query(pkgQuery)
+                                })
+                            }
+                            if (products.length) {
+                                products.map((item) => {
+                                    let productQuery = servicesQuery + "'" + item.id + "','product')"
+                                    sql.query(productQuery)
+                                })
+                            }
 
-                                let pgp_emails = await device_helpers.getPgpEmails(rsltq[0].id);
-                                let sim_ids = await device_helpers.getSimids(rsltq[0].id);
-                                let chat_ids = await device_helpers.getChatids(rsltq[0].id);
-                                let loginHistoryData = await device_helpers.getLastLoginDetail(rsltq[0].usr_device_id)
-                                if (rsltq.length) {
-                                    rsltq[0].finalStatus = device_helpers.checkStatus(rsltq[0]);
-                                    if (pgp_emails[0] && pgp_emails[0].pgp_email) {
-                                        rsltq[0].pgp_email = pgp_emails[0].pgp_email
-                                    } else {
-                                        rsltq[0].pgp_email = "N/A"
-                                    }
-                                    if (sim_ids && sim_ids.length) {
-                                        rsltq[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
-                                        rsltq[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
-                                    }
-                                    if (chat_ids[0] && chat_ids[0].chat_id) {
-                                        rsltq[0].chat_id = chat_ids[0].chat_id
-                                    }
-                                    else {
-                                        rsltq[0].chat_id = "N/A"
-                                    }
-                                    if (loginHistoryData[0] && loginHistoryData.created_at) {
-                                        rsltq[0].lastOnline = loginHistoryData[0].created_at
-                                    }
-                                    else {
-                                        rsltq[0].lastOnline = "N/A"
-                                    }
-                                    if (rsltq[0].expiry_date !== null) {
-                                        let startDate = moment(new Date())
-                                        let expiray_date = new Date(rsltq[0].expiry_date)
-                                        let endDate = moment(expiray_date)
-                                        remainTermDays = endDate.diff(startDate, 'days')
-                                        rsltq[0].remainTermDays = remainTermDays
-                                    }
-                                }
-                                data = {
-                                    status: true,
-                                    msg: await helpers.convertToLang(
-                                        req.translation[
-                                        MsgConstants.RECORD_UPD_SUCC
-                                        ],
-                                        "Record updated successfully"
-                                    ), // Record updated successfully.
-                                    data: rsltq
-                                };
-                                res.send(data);
-                                return;
-                            });
+                            remaining_credits = dealer_credits - total_price
+
+                            let update_prev_service_billing = `UPDATE services_data set del_status = 1,paid_credits = ${prevServicePaidPrice}, end_date = '${start_date}' WHERE id = ${prevService.id} `
+                            await sql.query(update_prev_service_billing);
+
+                            let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice} ,'${start_date}' ,'${expiry_date}')`
+                            await sql.query(service_billing);
+
+                            let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${total_price} ,'credit' , 'transferred')`
+                            await sql.query(transection_credits)
+
+                            transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, details: "REFUND SERVICES CREITS" })}' ,${total_price} ,'credit' , 'transferred')`
+                            await sql.query(transection_credits)
+
+                            let deduct_credits = 'update financial_account_balance set credits = ' + remaining_credits + ' where dealer_id ="' + dealer_id + '"';
+                            await sql.query(deduct_credits);
+
+
+
+                            await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, usr_acc_id, loggedDealerType)
+
+                            let updateChatIds = 'update chat_ids set user_acc_id = ' + usr_acc_id + ', used=1 where chat_id ="' + chat_id + '"';
+                            await sql.query(updateChatIds);
+
+
+
                         }
+                        var slctquery =
+                            "select devices.*  ," +
+                            usr_acc_query_text +
+                            ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id where devices.id = '" +
+                            usr_device_id +
+                            "'";
+                        // console.log(slctquery);
+                        rsltq = await sql.query(slctquery);
+
+                        let pgp_emails = await device_helpers.getPgpEmails(rsltq[0].id);
+                        let sim_ids = await device_helpers.getSimids(rsltq[0].id);
+                        let chat_ids = await device_helpers.getChatids(rsltq[0].id);
+                        let servicesData = await device_helpers.getServicesData(rsltq[0].id);
+                        let loginHistoryData = await device_helpers.getLastLoginDetail(rsltq[0].usr_device_id)
+                        if (rsltq.length) {
+                            rsltq[0].finalStatus = device_helpers.checkStatus(rsltq[0]);
+                            if (pgp_emails[0] && pgp_emails[0].pgp_email) {
+                                rsltq[0].pgp_email = pgp_emails[0].pgp_email
+                            } else {
+                                rsltq[0].pgp_email = "N/A"
+                            }
+                            if (sim_ids && sim_ids.length) {
+                                rsltq[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
+                                rsltq[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
+                            }
+                            if (chat_ids[0] && chat_ids[0].chat_id) {
+                                rsltq[0].chat_id = chat_ids[0].chat_id
+                            }
+                            else {
+                                rsltq[0].chat_id = "N/A"
+                            }
+
+                            if (servicesData[0]) {
+                                rsltq[0].services = servicesData[0]
+                            }
+                            if (loginHistoryData[0] && loginHistoryData.created_at) {
+                                rsltq[0].lastOnline = loginHistoryData[0].created_at
+                            }
+                            else {
+                                rsltq[0].lastOnline = "N/A"
+                            }
+                            if (rsltq[0].expiry_date !== null) {
+                                let startDate = moment(new Date())
+                                let expiray_date = new Date(rsltq[0].expiry_date)
+                                let endDate = moment(expiray_date)
+                                remainTermDays = endDate.diff(startDate, 'days')
+                                rsltq[0].remainTermDays = remainTermDays
+                            }
+                        }
+                        data = {
+                            status: true,
+                            msg: await helpers.convertToLang(
+                                req.translation[
+                                MsgConstants.RECORD_UPD_SUCC
+                                ],
+                                "Record updated successfully"
+                            ), // Record updated successfully.
+                            data: rsltq,
+                            credits: remaining_credits,
+                        };
+                        res.send(data);
+                        return;
                     });
+
                 } else {
                     res.send({
                         status: false,
@@ -1440,6 +1522,54 @@ exports.editDevices = async function (req, res) {
                     });
                 }
             });
+        } else {
+            res.send({
+                status: false,
+                msg: ""
+            });
+        }
+    }
+};
+exports.getServiceRefund = async function (req, res) {
+    res.setHeader("Content-Type", "application/json");
+    var verify = req.decoded; // await verifyToken(req, res);
+
+    if (verify) {
+        let service_id = req.body.service_id
+        console.log(service_id);
+        if (service_id) {
+            sql.query("SELECT * from services_data WHERE id = " + service_id, function (err, result) {
+                if (err) {
+                    res.send({
+                        status: false,
+                        msg: "Service Not Found."
+                    })
+                    return
+                }
+                if (result.length) {
+                    let prevService = result[0]
+                    let preTotalPrice = prevService.total_credits
+                    let prevServiceExpiryDate = moment(new Date(prevService.service_expiry_date))
+                    let prevServiceStartDate = moment(new Date(prevService.start_date))
+                    let dateNow = moment(new Date())
+                    let serviceRemainingDays = prevServiceExpiryDate.diff(dateNow, 'days') + 1
+
+                    let totalDays = prevServiceExpiryDate.diff(prevServiceStartDate, 'days')
+                    let creditsToRefund = Math.floor((preTotalPrice / totalDays) * serviceRemainingDays)
+                    console.log(creditsToRefund);
+                    res.send({
+                        status: true,
+                        creditsToRefund: creditsToRefund,
+                        serviceRemainingDays: serviceRemainingDays
+                    })
+                    return
+
+                }
+
+            })
+
+
+
         } else {
             res.send({
                 status: false,
@@ -3422,7 +3552,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
                     for (let device of req.body.devices) {
                         if (action == 'pre-active') {
                             let user_acc_id = device.id
-                            let getBillingPkgs = "select * from services_billing where user_acc_id = " + user_acc_id + " AND del_status = 0"
+                            let getBillingPkgs = "select * from services_data where user_acc_id = " + user_acc_id + " AND del_status = 0"
                             let bills = await sql.query(getBillingPkgs);
                             let packages = []
                             let products = []
@@ -3432,7 +3562,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                 products = JSON.parse(bills[0].products)
                                 refundedCredits = refundedCredits + bills[0].total_credits;
                                 let currentDate = moment().format("YYYY/MM/DD");
-                                let updateBilling = "UPDATE services_billing set del_status = '1' ,paid_credits = 0 , end_date = '" + currentDate + "' WHERE user_acc_id = " + user_acc_id;
+                                let updateBilling = "UPDATE services_data set del_status = '1' ,paid_credits = 0 , end_date = '" + currentDate + "' WHERE user_acc_id = " + user_acc_id;
                                 await sql.query(updateBilling);
                                 let dealer_profit_query = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data ,credits , transection_type) VALUES (${verify.user.id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}', ${bills[0].total_credits} ,'debit')`
                                 await sql.query(dealer_profit_query);

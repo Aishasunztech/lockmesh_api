@@ -297,7 +297,7 @@ exports.systemLogin = async function (req, res) {
     jwt.sign({
         systemInfo
     },
-    app_constants.SECRET,
+        app_constants.SECRET,
         {
             expiresIn: app_constants.EXPIRES_IN
         },
@@ -1522,7 +1522,7 @@ exports.SMAppList = async function (req, res) {
             if (err) {
                 console.log(err);
             };
-            
+
             if (results.length) {
                 for (var i = 0; i < results.length; i++) {
                     dta = {
