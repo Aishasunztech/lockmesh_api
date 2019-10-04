@@ -1156,6 +1156,43 @@ exports.getInfo = async function (req, res) {
 
 
 
+exports.getDealerForSA = async function (req, res) {
+    var verify = req.decoded;
+    // if (verify.status !== undefined && verify.status == true) {
+    if (verify) {
+        sql.query(`SELECT * FROM dealers WHERE type = 2 OR type = 3`, async function (error, results) {
+            if (error) {
+                console.log(error);
+                res.send({
+                    status: false,
+                    msg: error
+                });
+                return;
+            }
+            console.log(results);
+            if (results.length) {
+
+                res.send({
+                    status: true,
+                    msg: "DATA FOUND",
+                    data: results
+
+                });
+            }
+            else {
+                res.send({
+                    status: false,
+                    msg: "DATA NOT FOUND"
+                });
+                return;
+            }
+            return;
+        });
+    }
+}
+
+
+
 /**
  * Update Dealer PINs
  * Update Dealer PINs of all existing dealers

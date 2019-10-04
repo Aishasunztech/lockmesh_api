@@ -9,6 +9,7 @@ var XLSX = require('xlsx');
 var path = require('path');
 var fs = require("fs");
 var axios = require("axios")
+const stripe = require("stripe")("sk_test_zJjguM8s6HqyvOrhtPGDk0lV007cDt8U25");
 // constants
 const ADMIN = "admin";
 const DEALER = "dealer";
@@ -16,6 +17,7 @@ const SDEALER = "sdealer";
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
 // let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
 let usr_acc_query_text = constants.usr_acc_query_text;
+
 
 exports.getProfiles = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
@@ -770,103 +772,108 @@ exports.purchaseCredits_CC = async function (req, res) {
                 if (promo_code != '') {
 
                 } else {
-                    let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
-                    // console.log(query);
-                    sql.query(query, async function (err, result) {
-                        if (err) {
-                            console.log(err);
+                    // console.log(result);
+                    stripe.tokens.create({
+                        card: {
+                            number: cardNumber,
+                            exp_month: cardExpiryMonth,
+                            exp_year: cardExpiryYear,
+                            cvc: cvc
                         }
-                        // console.log(result);
-                        if (result.affectedRows > 0) {
-                            stripe.tokens.create({
-                                card: {
-                                    number: cardNumber,
-                                    exp_month: cardExpiryMonth,
-                                    exp_year: cardExpiryYear,
-                                    cvc: cvc
-                                }
-                            }, async function (err, token) {
-                                if (err) {
-                                    console.log(err.type);
-                                    switch (err.type) {
-                                        case 'StripeCardError':
-                                            // A declined card error
-                                            console.log(err.message);
-                                            err.message; // => e.g. "Your card's expiration year is invalid."
-                                            break;
-                                        case 'RateLimitError':
-                                            // Too many requests made to the API too quickly
-                                            break;
-                                        case 'StripeInvalidRequestError':
-                                            // Invalid parameters were supplied to Stripe's API
-                                            break;
-                                        case 'StripeAPIError':
-                                            // An error occurred internally with Stripe's API
-                                            break;
-                                        case 'StripeConnectionError':
-                                            // Some kind of error occurred during the HTTPS communication
-                                            break;
-                                        case 'StripeAuthenticationError':
-                                            // You probably used an incorrect API key
-                                            break;
-                                        default:
-                                            // Handle any other types of unexpected errors
-                                            break;
+                    }, async function (err, token) {
+                        if (err) {
+                            console.log(err.type);
+                            switch (err.type) {
+                                case 'StripeCardError':
+                                    // A declined card error
+                                    console.log(err.message);
+                                    err.message; // => e.g. "Your card's expiration year is invalid."
+                                    break;
+                                case 'RateLimitError':
+                                    // Too many requests made to the API too quickly
+                                    break;
+                                case 'StripeInvalidRequestError':
+                                    // Invalid parameters were supplied to Stripe's API
+                                    break;
+                                case 'StripeAPIError':
+                                    // An error occurred internally with Stripe's API
+                                    break;
+                                case 'StripeConnectionError':
+                                    // Some kind of error occurred during the HTTPS communication
+                                    break;
+                                case 'StripeAuthenticationError':
+                                    // You probably used an incorrect API key
+                                    break;
+                                default:
+                                    // Handle any other types of unexpected errors
+                                    break;
+                            }
+                            res.send({
+                                status: false,
+                                msg: err.message
+                            })
+                            return
+                        } else {
+                            stripeToken = token
+                            // console.log(token);
+                            stripe.charges.create({
+                                amount: total_price,
+                                currency: "usd",
+                                source: stripeToken.id, // obtained with Stripe.js
+                                metadata: { 'order_id': '6735' }
+                            }).then(async function (response) {
+                                if (response.status == 'succeeded') {
+                                    let checkBalanceAccout = "SELECT * from financial_account_balance WHERE dealer_id = " + dealerId
+                                    let dealerBalanceData = await sql.query(checkBalanceAccout);
+                                    let addCreditsQ = ""
+                                    let totalCredits = 0
+                                    if (dealerBalanceData.length) {
+                                        totalCredits = dealerBalanceData[0].credits + credits
+                                        addCreditsQ = `UPDATE financial_account_balance SET credits = credits + ${credits} WHERE dealer_id = ${dealerId}`
+                                    } else {
+                                        totalCredits = credits
+                                        addCreditsQ = `INSERT INTO financial_account_balance (dealer_id,credits) VALUES(${dealerId} , ${credits})`
                                     }
-                                    res.send({
-                                        status: false,
-                                        msg: err.message
-                                    })
-                                    return
-                                } else {
-                                    stripeToken = token
-                                    // console.log(token);
-                                    stripe.charges.create({
-                                        amount: total_price,
-                                        currency: "usd",
-                                        source: stripeToken.id, // obtained with Stripe.js
-                                        metadata: { 'order_id': '6735' }
-                                    }).then(async function (response) {
-                                        if (response.status == 'succeeded') {
+
+                                    sql.query(addCreditsQ, function (err, result) {
+                                        if (err) {
+                                            console.log(err);
                                             res.send({
-                                                status: true,
-                                                msg: await helpers.convertToLang(req.translation[MsgConstants.PAYMENT_HAS_BEEN_DONE], "Payment has been done"), // "Payment has been done.",
+                                                status: false,
+                                                msg: ""
                                             })
                                             return
-                                        };
-                                    });
-                                }
+                                        }
+                                        if (result.affectedRows) {
+
+                                            let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
+                                            sql.query(query, async function (err, result) {
+                                                if (err) {
+                                                    console.log(err);
+                                                    res.send({
+                                                        status: false,
+                                                        msg: ""
+                                                    })
+                                                    return
+                                                }
+                                                if (result.affectedRows > 0) {
+                                                    res.send({
+                                                        status: true,
+                                                        msg: await helpers.convertToLang(req.translation[MsgConstants.PAYMENT_HAS_BEEN_DONE], "Payment has been done"), // "Payment has been done.",
+                                                        credits: totalCredits
+                                                    })
+                                                    return
+                                                }
+                                            })
+                                        }
+
+                                    })
+                                };
                             });
-                            if (verify.user.user_type === ADMIN) {
-
-
-
-                            } else {
-                                // console.log(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`);
-                                sql.query(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`, async function (err, result) {
-                                    if (err) {
-                                        console.log(err)
-                                    }
-                                    if (result && result.affectedRows > 0) {
-                                        res.send({
-                                            status: true,
-                                            msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_SUBMITTED_SUCCESSFULLY], "Request submitted successfully"), // "Request submitted successfully.",
-                                        })
-                                        return
-                                    }
-                                    else {
-                                        res.send({
-                                            status: false,
-                                            msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_NOT_SUBMITTED_SUCCESSFULLY], "Request not submitted please try again"), // "Request not submitted please try again.",
-                                        })
-                                    }
-                                })
-
-                            }
-                        } else {
-                            res.send()
                         }
-                    })
+                    });
+
+
                 }
             }
         } catch (error) {

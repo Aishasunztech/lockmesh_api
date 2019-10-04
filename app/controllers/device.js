@@ -413,19 +413,19 @@ exports.acceptDevice = async function (req, res) {
 
                                                     await sql.query(usr_acc_Query)
 
-                                                    let servicesQuery = "INSERT into services (user_acc_id,service_id,service_type) VALUES ('" + usr_acc_id + "',"
-                                                    if (packages.length) {
-                                                        packages.map((item) => {
-                                                            let pkgQuery = servicesQuery + "'" + item.id + "','package')"
-                                                            sql.query(pkgQuery)
-                                                        })
-                                                    }
-                                                    if (products.length) {
-                                                        products.map((item) => {
-                                                            let productQuery = servicesQuery + "'" + item.id + "','product')"
-                                                            sql.query(productQuery)
-                                                        })
-                                                    }
+                                                    // let servicesQuery = "INSERT into services (user_acc_id,service_id,service_type) VALUES ('" + usr_acc_id + "',"
+                                                    // if (packages.length) {
+                                                    //     packages.map((item) => {
+                                                    //         let pkgQuery = servicesQuery + "'" + item.id + "','package')"
+                                                    //         sql.query(pkgQuery)
+                                                    //     })
+                                                    // }
+                                                    // if (products.length) {
+                                                    //     products.map((item) => {
+                                                    //         let productQuery = servicesQuery + "'" + item.id + "','product')"
+                                                    //         sql.query(productQuery)
+                                                    //     })
+                                                    // }
                                                     let remaining_credits = dealer_credits
                                                     let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages , total_credits, services_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${total_price} , ${expiry_date})`
                                                     await sql.query(service_billing);
@@ -727,19 +727,19 @@ exports.createDeviceProfile = async function (req, res) {
                                                 // console.log("affectedRows", resps.affectedRows);
                                                 if (resps.affectedRows) {
 
-                                                    let servicesQuery = "INSERT into services (user_acc_id,service_id,service_type) VALUES ('" + user_acc_id + "',"
-                                                    if (packages.length) {
-                                                        packages.map((item) => {
-                                                            let pkgQuery = servicesQuery + "'" + item.id + "','package')"
-                                                            sql.query(pkgQuery)
-                                                        })
-                                                    }
-                                                    if (products.length) {
-                                                        products.map((item) => {
-                                                            let productQuery = servicesQuery + "'" + item.id + "','product')"
-                                                            sql.query(productQuery)
-                                                        })
-                                                    }
+                                                    // let servicesQuery = "INSERT into services (user_acc_id,service_id,service_type) VALUES ('" + user_acc_id + "',"
+                                                    // if (packages.length) {
+                                                    //     packages.map((item) => {
+                                                    //         let pkgQuery = servicesQuery + "'" + item.id + "','package')"
+                                                    //         sql.query(pkgQuery)
+                                                    //     })
+                                                    // }
+                                                    // if (products.length) {
+                                                    //     products.map((item) => {
+                                                    //         let productQuery = servicesQuery + "'" + item.id + "','product')"
+                                                    //         sql.query(productQuery)
+                                                    //     })
+                                                    // }
                                                     let service_data = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date ,total_credits,service_expiry_date) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price / duplicate} , '${expiry_date}' )`
                                                     await sql.query(service_data);
 
@@ -905,19 +905,19 @@ exports.createDeviceProfile = async function (req, res) {
                                                         console.log("affectedRows", resp.affectedRows);
                                                         if (resp && resp.affectedRows) {
 
-                                                            let servicesQuery = "INSERT into services (user_acc_id,service_id,service_type) VALUES ('" + user_acc_id + "',"
-                                                            if (packages.length) {
-                                                                packages.map((item) => {
-                                                                    let pkgQuery = servicesQuery + "'" + item.id + "','package')"
-                                                                    sql.query(pkgQuery)
-                                                                })
-                                                            }
-                                                            if (products.length) {
-                                                                products.map((item) => {
-                                                                    let productQuery = servicesQuery + "'" + item.id + "','product')"
-                                                                    sql.query(productQuery)
-                                                                })
-                                                            }
+                                                            // let servicesQuery = "INSERT into services (user_acc_id,service_id,service_type) VALUES ('" + user_acc_id + "',"
+                                                            // if (packages.length) {
+                                                            //     packages.map((item) => {
+                                                            //         let pkgQuery = servicesQuery + "'" + item.id + "','package')"
+                                                            //         sql.query(pkgQuery)
+                                                            //     })
+                                                            // }
+                                                            // if (products.length) {
+                                                            //     products.map((item) => {
+                                                            //         let productQuery = servicesQuery + "'" + item.id + "','product')"
+                                                            //         sql.query(productQuery)
+                                                            //     })
+                                                            // }
                                                             let remaining_credits = dealer_credits
 
                                                             let service_billing = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date, total_credits ,service_expiry_date) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price} , '${expiry_date}')`
@@ -1093,11 +1093,13 @@ exports.editDevices = async function (req, res) {
             let dealer_credits = 0
             let remaining_credits = null
             var expiry_date = req.body.expiry_date
+            var date_now = moment(new Date()).format('YYYY/MM/DD')
             let creditsToRefund = 0
             let prevServicePaidPrice = 0
             let newServicePrice = 0
 
-            if (expiry_date === "" || expiry_date === null) {
+
+            if (expiry_date == "" || expiry_date === null) {
                 var status = "expired";
             } else if (expiry_date == 0) {
                 var status = "trial";
@@ -1171,7 +1173,6 @@ exports.editDevices = async function (req, res) {
                                     }
                                 }
 
-                                start_date = moment(new Date()).format("YYYY/MM/DD");
                                 if (expiry_date == 0) {
                                     if (
                                         finalStatus ===
@@ -1189,17 +1190,16 @@ exports.editDevices = async function (req, res) {
                                         );
                                     }
                                 } else if (
-                                    expiry_date === 1 ||
-                                    expiry_date === 3 ||
-                                    expiry_date === 6 ||
-                                    expiry_date === 12
+                                    expiry_date == 1 ||
+                                    expiry_date == 3 ||
+                                    expiry_date == 6 ||
+                                    expiry_date == 12
                                 ) {
-                                    let exp_month = expiry_date;
-                                    expiry_date = helpers.getExpDateByMonth(
-                                        rows[0].expiry_date,
-                                        exp_month
-                                    );
-                                    // console.log(expiry_date);
+                                    expiry_date = moment(
+                                        date_now,
+                                        "YYYY/MM/DD"
+                                    ).add(expiry_date, "M").format('YYYY/MM/DD');
+
                                     let currentDate = moment(new Date()).format(
                                         "YYYY/MM/DD"
                                     );
@@ -1219,12 +1219,16 @@ exports.editDevices = async function (req, res) {
                                         let prevService = prevServiceData[0]
                                         let preTotalPrice = prevService.total_credits
                                         let prevServiceExpiryDate = moment(new Date(prevService.service_expiry_date))
+                                        let prevServiceStartDate = moment(new Date(prevService.start_date))
                                         let dateNow = moment(new Date())
-                                        let serviceRemainingDays = prevServiceExpiryDate.diff(dateNow, 'days')
-                                        creditsToRefund = Math.floor((preTotalPrice / prevService.service_term_days) * serviceRemainingDays)
+                                        let serviceRemainingDays = prevServiceExpiryDate.diff(dateNow, 'days') + 1
+                                        let totalDays = prevServiceExpiryDate.diff(prevServiceStartDate, 'days')
+                                        console.log(serviceRemainingDays, totalDays, preTotalPrice);
+                                        creditsToRefund = Math.floor((preTotalPrice / totalDays) * serviceRemainingDays)
+                                        // console.log(creditsToRefund);
                                         prevServicePaidPrice = preTotalPrice - creditsToRefund
                                     }
-
+                                    console.log(products);
                                     if (packages && packages.length) {
                                         packages.map((item) => {
                                             newServicePrice += Number(item.pkg_price)
@@ -1232,10 +1236,10 @@ exports.editDevices = async function (req, res) {
                                     }
                                     if (products && products.length) {
                                         products.map((item) => {
-                                            newServicePrice = Number(item.unit_price)
+                                            newServicePrice += Number(item.unit_price)
                                         })
                                     }
-                                    console.log(newServicePrice, prevServicePaidPrice);
+                                    console.log(newServicePrice, prevServicePaidPrice, newServicePrice, creditsToRefund);
                                     total_price = newServicePrice - creditsToRefund
                                     let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedDealerType)
                                     admin_profit = profitLoss.admin_profit
@@ -1381,7 +1385,7 @@ exports.editDevices = async function (req, res) {
                                 }
                             }
                             if (sim_id != prevSimId) {
-                                console.log("sim change", prevSimId, sim_id);
+                                console.log("sim change");
                                 let updateSimIds =
                                     'update sim_ids set user_acc_id = "' +
                                     usr_acc_id +
@@ -1406,48 +1410,46 @@ exports.editDevices = async function (req, res) {
                                     await sql.query(updatePrevSim);
                                 }
                             }
-
-                            let servicesQuery = "INSERT into services (user_acc_id,service_id,service_type) VALUES ('" + usr_acc_id + "',"
-                            if (packages.length) {
-                                packages.map((item) => {
-                                    let pkgQuery = servicesQuery + "'" + item.id + "','package')"
-                                    sql.query(pkgQuery)
-                                })
-                            }
-                            if (products.length) {
-                                products.map((item) => {
-                                    let productQuery = servicesQuery + "'" + item.id + "','product')"
-                                    sql.query(productQuery)
-                                })
-                            }
-
+                            console.log(total_price);
                             remaining_credits = dealer_credits - total_price
 
-                            let update_prev_service_billing = `UPDATE services_data set del_status = 1,paid_credits = ${prevServicePaidPrice}, end_date = '${start_date}' WHERE id = ${prevService.id} `
+                            // let servicesQuery = "INSERT into services (user_acc_id,service_id,service_type) VALUES ('" + usr_acc_id + "',"
+                            // if (packages.length) {
+                            //     packages.map((item) => {
+                            //         let pkgQuery = servicesQuery + "'" + item.id + "','package')"
+                            //         sql.query(pkgQuery)
+                            //     })
+                            // }
+                            // if (products.length) {
+                            //     products.map((item) => {
+                            //         let productQuery = servicesQuery + "'" + item.id + "','product')"
+                            //         sql.query(productQuery)
+                            //     })
+                            // }
+
+                            let update_prev_service_billing = `UPDATE services_data set del_status = 1,paid_credits = ${prevServicePaidPrice}, end_date = '${date_now}' WHERE id = ${prevService.id} `
                             await sql.query(update_prev_service_billing);
 
-                            let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice} ,'${start_date}' ,'${expiry_date}')`
+                            let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice} ,'${date_now}' ,'${expiry_date}')`
                             await sql.query(service_billing);
 
-                            let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${total_price} ,'credit' , 'transferred')`
+                            let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${newServicePrice} ,'credit' , 'transferred')`
                             await sql.query(transection_credits)
 
-                            transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, details: "REFUND SERVICES CREITS" })}' ,${total_price} ,'credit' , 'transferred')`
+                            transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, details: "REFUND SERVICES CREITS" })}' ,${creditsToRefund} ,'debit' , 'transferred')`
                             await sql.query(transection_credits)
 
-                            let deduct_credits = 'update financial_account_balance set credits = ' + remaining_credits + ' where dealer_id ="' + dealer_id + '"';
+                            let deduct_credits = 'update financial_account_balance set credits = credits - ' + total_price + ' where dealer_id ="' + dealer_id + '"';
                             await sql.query(deduct_credits);
-
-
 
                             await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, usr_acc_id, loggedDealerType)
 
                             let updateChatIds = 'update chat_ids set user_acc_id = ' + usr_acc_id + ', used=1 where chat_id ="' + chat_id + '"';
                             await sql.query(updateChatIds);
-
-
-
                         }
+
+
+
                         var slctquery =
                             "select devices.*  ," +
                             usr_acc_query_text +

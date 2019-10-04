@@ -356,6 +356,10 @@ router.get("/dealers", dealerController.getAllDealers);
 
 router.get('/user_dealers', dealerController.getUserDealers);
 
+/*Get All Dealers FOR SUPERADMIN*/
+
+router.get('/get_dealer_list', dealerController.getDealerForSA);
+
 /**
  * This function comment is parsed by doctrine
  * @route GET /users/dealers/{pageName}
