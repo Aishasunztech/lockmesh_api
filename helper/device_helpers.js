@@ -799,18 +799,18 @@ module.exports = {
         }
         return app_list
     },
-    compareSim: async function (deviceSim, panelSim, action) {
-        console.log("deviceSim ", deviceSim)
-        console.log("panelSim ", panelSim)
-        console.log("action ", action);
+    // compareSim: async function (deviceSim, panelSim, action) {
+    //     console.log("deviceSim ", deviceSim)
+    //     console.log("panelSim ", panelSim)
+    //     console.log("action ", action);
 
-        if (deviceSim.iccid == panelSim.iccid && deviceSim.name == panelSim.name && deviceSim.encrypt == panelSim.encrypt && deviceSim.guest == panelSim.guest && deviceSim.note == panelSim.note) {
-            return true;
-        } else {
-            return false;
-        }
+    //     if (deviceSim.iccid == panelSim.iccid && deviceSim.name == panelSim.name && deviceSim.encrypt == panelSim.encrypt && deviceSim.guest == panelSim.guest && deviceSim.note == panelSim.note) {
+    //         return true;
+    //     } else {
+    //         return false;
+    //     }
 
-    }
+    // }
 }
 
 async function installApps(apps, i, deviceData, iconName, getApp) {
