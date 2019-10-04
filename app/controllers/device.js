@@ -82,7 +82,7 @@ exports.devices = async function (req, res) {
                     let devices_acc_array = [];
                     let usr_device_ids_array = []
                     for (let i = 0; i < results.length; i++) {
-                        console.log("Devices results[i] ===========> ", results[i].last_login);
+                        // console.log("Devices results[i] ===========> ", results[i].last_login);
                         devices_acc_array.push(results[i].id)
                         usr_device_ids_array.push(results[i].usr_device_id)
                     }
@@ -1117,11 +1117,7 @@ exports.unlinkDevice = async function (req, res) {
                         device_id
                     );
 
-                    device_helpers.saveActionHistory(
-                        req.body.device,
-                        constants.DEVICE_UNLINKED
-                    );
-                    sockets.sendDeviceStatus(dvcId, "unlinked", true);
+                   
 
                     try {
                         axios
@@ -1162,13 +1158,19 @@ exports.unlinkDevice = async function (req, res) {
                     // // Delete unlinked & Transferred device 
                     let getUnlinDeviceResult = await sql.query(`SELECT * FROM usr_acc WHERE id=${userAccId} AND device_id='${device_id}'`);
                     console.log("getUnlinDeviceResult ", getUnlinDeviceResult);
-                    if (getUnlinDeviceResult[0].transfer_status == 1) {
+                    if (getUnlinDeviceResult[0].transfer_status) {
                         let response = await sql.query(`DELETE FROM usr_acc WHERE id=${userAccId}`);
                         console.log("response ", response)
                         if (response.affectedRows > 0) {
-                            await sql.query(`DELETE FROM devices WHERE id=${device_id}`);
+                            sql.query(`DELETE FROM devices WHERE id=${device_id}`);
                         }
                     }
+
+                    device_helpers.saveActionHistory(
+                        req.body.device,
+                        constants.DEVICE_UNLINKED
+                    );
+                    sockets.sendDeviceStatus(dvcId, "unlinked", true);
 
                     data = {
                         status: true,
@@ -3829,7 +3831,7 @@ exports.transferDeviceProfile = async function (req, res) {
                                     }
                                     device_helpers.saveActionHistory(resquery[0], "Device Transfered");
                                     // console.log(resquery[0]);
-                                    sockets.sendDeviceStatus(resquery[0].device_id, "Transfered");
+                                    sockets.sendDeviceStatus(resquery[0].device_id, "transfered");
 
 
                                     data = {
