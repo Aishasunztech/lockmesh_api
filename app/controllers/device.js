@@ -82,7 +82,6 @@ exports.devices = async function (req, res) {
                     let devices_acc_array = [];
                     let usr_device_ids_array = []
                     for (let i = 0; i < results.length; i++) {
-                        console.log("Devices results[i] ===========> ", results[i].last_login);
                         devices_acc_array.push(results[i].id)
                         usr_device_ids_array.push(results[i].usr_device_id)
                     }
