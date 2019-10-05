@@ -108,7 +108,7 @@ exports.devices = async function (req, res) {
                         }
                         // let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
                         // if (lastOnline) {
-                            results[i].lastOnline = results[i].last_login ? results[i].last_login : "N/A"
+                        results[i].lastOnline = results[i].last_login ? results[i].last_login : "N/A"
                         // }
                         results[i].finalStatus = device_helpers.checkStatus(
                             results[i]
@@ -962,7 +962,7 @@ exports.editDevices = async function (req, res) {
                                         rsltq[0].chat_id = "N/A"
                                     }
                                     // if (loginHistoryData[0] && loginHistoryData.created_at) {
-                                        rsltq[0].lastOnline = rsltq[0].last_login ? rsltq[0].last_login : "N/A"
+                                    rsltq[0].lastOnline = rsltq[0].last_login ? rsltq[0].last_login : "N/A"
                                     // }
                                     // else {
                                     //     rsltq[0].lastOnline = "N/A"
@@ -1117,7 +1117,7 @@ exports.unlinkDevice = async function (req, res) {
                         device_id
                     );
 
-                   
+
 
                     try {
                         axios
@@ -1156,19 +1156,25 @@ exports.unlinkDevice = async function (req, res) {
 
 
                     // // Delete unlinked & Transferred device 
-                    let getUnlinDeviceResult = await sql.query(`SELECT * FROM usr_acc WHERE id=${userAccId} AND device_id='${device_id}'`);
-                    console.log("getUnlinDeviceResult ", getUnlinDeviceResult);
+                    let unlinkDeviceQ = `SELECT * FROM usr_acc WHERE id=${userAccId} AND device_id='${device_id}'`;
+                    let getUnlinDeviceResult = await sql.query(unlinkDeviceQ);
+                    // console.log("getUnlinDeviceResult ", getUnlinDeviceResult);
                     if (getUnlinDeviceResult[0].transfer_status) {
-                        let response = await sql.query(`DELETE FROM usr_acc WHERE id=${userAccId}`);
-                        console.log("response ", response)
+                        let deleteUserQ = `DELETE FROM usr_acc WHERE id=${userAccId}`;
+                        // console.log("deleteUserQ ", deleteUserQ);
+                        let response = await sql.query(deleteUserQ);
+                        // console.log("response ", response)
                         if (response.affectedRows > 0) {
-                            sql.query(`DELETE FROM devices WHERE id=${device_id}`);
+                            let deleteDevice = `DELETE FROM devices WHERE id=${device_id}`;
+                            // console.log("deleteDevice ", deleteDevice)
+                            sql.query(deleteDevice);
                         }
                     }
 
+                    // console.log("req.body.device ====> ", req.body.device);
                     device_helpers.saveActionHistory(
                         req.body.device,
-                        constants.DEVICE_UNLINKED
+                        "UNLINKED"
                     );
                     sockets.sendDeviceStatus(dvcId, "unlinked", true);
 
@@ -1728,7 +1734,7 @@ exports.suspendAccountDevices = async function (req, res) {
                                     }
                                     // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
                                     // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                                        resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
+                                    resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
                                     // } else {
                                     //     resquery[0].lastOnline = "N/A"
                                     // }
@@ -1823,7 +1829,7 @@ exports.suspendAccountDevices = async function (req, res) {
                                         }
                                         // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
                                         // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                                            resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
+                                        resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
                                         // } else {
                                         //     resquery[0].lastOnline = "N/A"
                                         // }
@@ -1954,7 +1960,7 @@ exports.activateDevice = async function (req, res) {
                                     }
                                     // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
                                     // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                                        resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
+                                    resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
                                     // } else {
                                     //     resquery[0].lastOnline = "N/A"
                                     // }
@@ -2052,7 +2058,7 @@ exports.activateDevice = async function (req, res) {
                                         }
                                         // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
                                         // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                                            resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
+                                        resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
                                         // } else {
                                         //     resquery[0].lastOnline = "N/A"
                                         // }
@@ -2304,7 +2310,7 @@ exports.connectDevice = async function (req, res) {
 
                         }
                         // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                            results[0].lastOnline = results[0].last_login ? results[0].last_login : "N/A"
+                        results[0].lastOnline = results[0].last_login ? results[0].last_login : "N/A"
                         // } else {
                         //     results[0].lastOnline = "N/A"
                         // }
