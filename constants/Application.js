@@ -166,7 +166,7 @@ module.exports = {
     { "key": "device_id", "value": "tableHeadings.DEVICEID" },
     { "key": "user_id", "value": "tableHeadings.USERID" },
     { "key": "validity", "value": "tableHeadings.REMAININGDAYS" },
-    // { "key": "transfered_to", "value": "tableHeadings.TRANSFERED" },
+    { "key": "transfered_to", "value": "tableHeadings.TRANSFERED" },
     { "key": "status", "value": "tableHeadings.STATUS" },
     { "key": "lastOnline", "value": "tableHeadings.lastOnline" },
     { "key": "online", "value": "tableHeadings.MODE" },
