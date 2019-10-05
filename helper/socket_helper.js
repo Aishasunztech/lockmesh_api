@@ -31,15 +31,10 @@ module.exports = {
         console.log('updateSimRecord response is:: ', response)
 
         let arr = JSON.parse(response.entries);
-        console.log('parsed data is: ', arr);
+        // console.log('parsed data is: ', arr);
 
         let dataIs = [];
         if (response && arr && device_id) {
-
-
-            // let selectSims = `SELECT * FROM sims WHERE device_id='${device_id}' AND delete_status='0'`;
-            // let getSims = await sql.query(selectSims);
-
 
             if (response.action === "sim_new_device") {
 
@@ -52,30 +47,30 @@ module.exports = {
                         // arr.map(async function (data, index) {
 
                         // let uQry = `UPDATE sims SET name='${data.name}', note='${data.note}', guest=${data.guest}, encrypt=${data.encrypt}, status='${data.status}', slotNo='${data.slotNo}', sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND delete_status='0'`;
-                        let uQry = `UPDATE sims SET name='${arr[i].name}', note='${arr[i].note}', guest=${arr[i].guest}, encrypt=${arr[i].encrypt}, status='${arr[i].status}', slotNo='${arr[i].slotNo}', sync = '1' WHERE device_id = '${device_id}' AND iccid = '${arr[i].iccid}' AND delete_status='0'`;
+                        let uQry = `UPDATE sims SET name='${arr[i].name}', note='${arr[i].note}', guest=${arr[i].guest}, encrypt=${arr[i].encrypt}, status='${arr[i].status}', slotNo='${arr[i].slotNo}', sync = '1', is_changed = '0' WHERE device_id = '${device_id}' AND iccid = '${arr[i].iccid}' AND delete_status='0'`;
                         let result = await sql.query(uQry);
 
                         if (result.affectedRows > 0) {
                             iccids.push(`"${arr[i].iccid}"`);
                         } else {
                             //*********/ Asked abaid to remove ingore from insert query **********//
-                            var IQry = `INSERT INTO sims (device_id, iccid, name, note, guest, encrypt, dataLimit, sync) 
-        VALUES ('${device_id}', '${arr[i].iccid}', '${arr[i].name}', '${arr[i].note}', ${arr[i].guest}, ${arr[i].encrypt}, 0, '1');`;
+                            var IQry = `INSERT INTO sims (device_id, iccid, name, note, guest, encrypt, dataLimit, sync, is_changed) 
+                VALUES ('${device_id}', '${arr[i].iccid}', '${arr[i].name}', '${arr[i].note}', ${arr[i].guest}, ${arr[i].encrypt}, 0, '1', '0');`;
                             await sql.query(IQry);
                         }
 
                         // })
                     }
 
-                    console.log('iccids: ', iccids);
+                    // console.log('iccids: ', iccids);
                     if (iccids.length) {
                         // delete sims which are not on device
-                        let dQry = `UPDATE sims SET delete_status='1' WHERE device_id = '${device_id}' AND iccid NOT IN (${iccid})`;
+                        let dQry = `UPDATE sims SET delete_status='1', is_changed='0' WHERE device_id = '${device_id}' AND iccid NOT IN (${iccid})`;
                         await sql.query(dQry);
                     }
                 } else {
                     // delete sims which are not on device
-                    let dQry = `UPDATE sims SET delete_status='1' WHERE device_id = '${device_id}'`;
+                    let dQry = `UPDATE sims SET delete_status='1', is_changed='0' WHERE device_id = '${device_id}'`;
                     await sql.query(dQry);
                 }
 
@@ -93,20 +88,20 @@ module.exports = {
             } else if (response.action === "sim_unregister") {
                 // console.log('you are at unReg Section');
 
-                //********************** ur register guest ******************/
+                //*********************** ur register guest *******************/
                 let checkGuest = await sql.query(`SELECT * FROM device_attributes WHERE device_id = '${device_id}' AND name = 'un_register_guest' AND delete_status = '0'`);
                 if (checkGuest.length) {
-                    await sql.query(`UPDATE device_attributes SET value = '${arr.unrGuest}' WHERE device_id= '${device_id}' AND name='un_register_guest' AND delete_status='0'`);
+                    await sql.query(`UPDATE device_attributes SET value = '${arr.unrGuest ? 1 : 0}' WHERE device_id= '${device_id}' AND name='un_register_guest' AND delete_status='0'`);
                 } else {
-                    await sql.query(`INSERT INTO device_attributes (device_id, name, value) VALUES ('${device_id}', 'un_register_guest', '${arr.unrGuest}')`);
+                    await sql.query(`INSERT INTO device_attributes (device_id, name, value) VALUES ('${device_id}', 'un_register_guest', '${arr.unrGuest ? 1 : 0}')`);
                 }
 
-                //************************** ur register encrypt ************/
+                //*************************** ur register encrypt  *************/
                 let checkEncrypt = await sql.query(`SELECT * FROM device_attributes WHERE device_id = '${device_id}' AND name = 'un_register_encrypt' AND delete_status = '0'`);
                 if (checkEncrypt.length) {
-                    await sql.query(`UPDATE device_attributes SET value = '${arr.unrEncrypt}' WHERE device_id= '${device_id}' AND name='un_register_encrypt' AND delete_status='0'`);
+                    await sql.query(`UPDATE device_attributes SET value = '${arr.unrEncrypt ? 1 : 0}' WHERE device_id= '${device_id}' AND name='un_register_encrypt' AND delete_status='0'`);
                 } else {
-                    await sql.query(`INSERT INTO device_attributes (device_id, name, value) VALUES ('${device_id}', 'un_register_encrypt', '${arr.unrEncrypt}')`);
+                    await sql.query(`INSERT INTO device_attributes (device_id, name, value) VALUES ('${device_id}', 'un_register_encrypt', '${arr.unrEncrypt ? 1 : 0}')`);
                 }
 
 
@@ -116,44 +111,29 @@ module.exports = {
             } else if (response.action === 'sim_delete') {
                 arr.map(async function (iccid, index) {
 
-
-                    // console.log("getSims.findIndex(arr[i]) index is: ", getSims.findIndex(arr[i]))
-
-                    // let updateFromPanel = await device_helpers.compareSim(arr[i], panelSim, response.action);
-                    // console.log("updateFromPanel ", updateFromPanel)
-
-
                     // let dQry = `DELETE FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
-                    let dQry = `UPDATE sims SET delete_status='1' WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
+                    let dQry = `UPDATE sims SET delete_status='1', is_changed='0' WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
 
                     await sql.query(dQry);
                 })
             } else {
 
-
-                // console.log('this code for update================')
-
                 for (let i = 0; i < arr.length; i++) {
 
-                    // let index = getSims.findIndex(e => e.iccid===arr[i].iccid);
-                    // console.log("getSims.findIndex(arr[i]) index is: ", index)
-                    // let updateFromPanel = await device_helpers.compareSim(arr[i], getSims[index], response.action);
-                    // console.log("updateFromPanel ", updateFromPanel)
-
-                    console.log('11', arr[i])
+                    // console.log('11', arr[i])
                     let sQry = `SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${arr[i].iccid}' AND delete_status='0'`;
                     let rslt = await sql.query(sQry);
 
 
                     if (rslt.length > 0) {
-                        console.log('22')
+                        // console.log('22')
 
-                        let uQry = `UPDATE sims SET name='${arr[i].name}', note='${arr[i].note}', guest=${arr[i].guest}, encrypt=${arr[i].encrypt}, status='${arr[i].status}', slotNo='${arr[i].slotNo}', sync = '1' WHERE device_id = '${device_id}' AND iccid = '${arr[i].iccid}' AND delete_status='0'`;
+                        let uQry = `UPDATE sims SET name='${arr[i].name}', note='${arr[i].note}', guest=${arr[i].guest}, encrypt=${arr[i].encrypt}, status='${arr[i].status}', slotNo='${arr[i].slotNo}', sync = '1', is_changed = '0' WHERE device_id = '${device_id}' AND iccid = '${arr[i].iccid}' AND delete_status='0'`;
                         await sql.query(uQry);
                     } else {
-                        console.log('33')
+                        // console.log('33')
                         //*********/ Asked abaid to remove ingore from insert query **********//
-                        let IQry = `INSERT INTO sims (device_id, iccid, name, sim_id, slotNo, note, guest, encrypt, status, dataLimit, sync) VALUES ('${device_id}', '${arr[i].iccid}', '${arr[i].name}', '', '${arr[i].slotNo}', '${arr[i].note}', ${arr[i].guest}, ${arr[i].encrypt}, '${arr[i].status}', 0, '1');`;
+                        let IQry = `INSERT INTO sims (device_id, iccid, name, sim_id, slotNo, note, guest, encrypt, status, dataLimit, sync, is_changed) VALUES ('${device_id}', '${arr[i].iccid}', '${arr[i].name}', '', '${arr[i].slotNo}', '${arr[i].note}', ${arr[i].guest}, ${arr[i].encrypt}, '${arr[i].status}', 0, '1', '0');`;
                         await sql.query(IQry);
                     }
                 }
@@ -163,29 +143,6 @@ module.exports = {
 
             }
 
-            // //******************************* send to device start / 
-            // // if (response.action == 'sim_update_OnSocket') {
-            // let sUnEmitSims = `SELECT * FROM sims WHERE delete_status='0' AND device_id= '${device_id}'`;
-            // // console.log('========= check data when socket => re-connect ================= ', sUnEmitSims);
-            // let simResult = await sql.query(sUnEmitSims);
-
-            // if (simResult.length > 0) {
-            // console.log('socket.emit(Constants.SEND_SIM ', simResult);
-
-            // socket.emit(Constants.SEND_SIM + device_id, {
-            // action: "sim_update",
-            // device_id,
-            // entries: JSON.stringify(simResult),
-            // });
-
-            // simResult.forEach(async function (data, index) {
-            // let uQry = `UPDATE sims SET sync = '1' WHERE device_id = '${device_id}' AND iccid = '${data.iccid}' AND delete_status='0'`;
-            // await sql.query(uQry);
-            // })
-            // }
-            // // }
-            // // ***************************** send to device end **************** 
-
 
             io.emit(Constants.RECV_SIM_DATA + device_id, {
                 status: true,
@@ -194,7 +151,7 @@ module.exports = {
         }
 
     },
-    
+
     sendOnlineOfflineStatus: async (io, status, deviceId) => {
         console.log(status, ":", deviceId);
         io.emit(Constants.SEND_ONLINE_OFFLINE_STATUS + deviceId, {
