@@ -1145,7 +1145,6 @@ module.exports = {
 		controls.forEach(control => {
 			control.setting_status = (control.setting_status) ? true : false;
 		})
-		console.log('controls', controls);
 		// copy refactored
 		policy[0].app_list = JSON.stringify(appList);
 		policy[0].permissions = JSON.stringify(permissions);

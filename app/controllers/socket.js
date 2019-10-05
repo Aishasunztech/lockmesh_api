@@ -164,27 +164,12 @@ exports.baseSocket = async function (instance, socket) {
                     is_sync: false,
                     // is_sync: device_helpers.checkNotNull(is_sync) ? true : false,
                 });
-                // let appsQ = `SELECT user_apps.id, 
-                // user_apps.device_id, 
-                // user_apps.app_id, 
-                // user_apps.guest, 
-                // user_apps.encrypted, 
-                // user_apps.enable,
-                // apps_info.label, 
-                // apps_info.default_app, 
-                // apps_info.system_app, 
-                // apps_info.package_name, 
-                // apps_info.visible, 
-                // apps_info.unique_name as uniqueName, 
-                // apps_info.icon as icon, 
-                // apps_info.extension, 
-                // apps_info.extension_id
-                // FROM user_apps
-                // LEFT JOIN apps_info ON (user_apps.app_id = apps_info.id)
-                // WHERE user_apps.device_id = '${dvc_id}' AND apps_info.extension = 0`;
-                // let appList = await sql.query(appsQ);
-                // console.log("testing:", appsQ);
-                // socket_helpers.ackSettingApplied(device_id, appList, null, null)
+                console.log("apps id:", dvc_id);
+                let appsQ = `SELECT user_apps.id, user_apps.device_id, user_apps.app_id, user_apps.guest, user_apps.encrypted, user_apps.enable, apps_info.label, apps_info.default_app, apps_info.system_app, apps_info.package_name, apps_info.visible, apps_info.unique_name as uniqueName, apps_info.icon as icon, apps_info.extension, apps_info.extension_id FROM user_apps LEFT JOIN apps_info ON (user_apps.app_id = apps_info.id) WHERE user_apps.device_id = '${dvc_id}'`;
+                console.log("apps Q: ", appsQ)
+                let appList = await sql.query(appsQ);
+                console.log("testing:", appList);
+                socket_helpers.ackSettingApplied(instance, device_id, appList, null, null)
             } catch (error) {
                 console.log(error);
             }
@@ -209,29 +194,34 @@ exports.baseSocket = async function (instance, socket) {
                 // is_sync: device_helpers.checkNotNull(is_sync) ? true : false,
             });
 
-            // Send Extensions back to LM
+            // Send Extensions back to LM and this is wrong method to send extensions on LM totally wrong
+            let newExtension = []
+            let appsQ = `SELECT user_apps.id, user_apps.device_id, user_apps.app_id, user_apps.guest, user_apps.encrypted, user_apps.enable, apps_info.label, apps_info.default_app, apps_info.system_app, apps_info.package_name, apps_info.visible, apps_info.unique_name as uniqueName, apps_info.icon as icon, apps_info.extension, apps_info.extension_id FROM user_apps LEFT JOIN apps_info ON (user_apps.app_id = apps_info.id) WHERE user_apps.device_id = '${dvc_id}' AND (apps_info.extension=1 OR apps_info.extension_id!=0)`;
+            console.log(appsQ);
+            let extensionList = await sql.query(appsQ);
+            let mainExtensions = [];
 
-            // let appsQ = `SELECT user_apps.id, 
-            //     user_apps.device_id, 
-            //     user_apps.app_id, 
-            //     user_apps.guest, 
-            //     user_apps.encrypted, 
-            //     user_apps.enable,
-            //     apps_info.label, 
-            //     apps_info.default_app, 
-            //     apps_info.system_app, 
-            //     apps_info.package_name, 
-            //     apps_info.visible, 
-            //     apps_info.unique_name as uniqueName, 
-            //     apps_info.icon as icon, 
-            //     apps_info.extension, 
-            //     apps_info.extension_id
-            //     FROM user_apps
-            //     LEFT JOIN apps_info ON (user_apps.app_id = apps_info.id)
-            //     WHERE user_apps.device_id = '${dvc_id}' AND apps_info.extension AND apps_info.extension_id!=0`;
-            //     let extensionList = await sql.query(appsQ);
-            //     console.log(appsQ);
-            //     socket_helpers.ackSettingApplied(device_id, null, extensionList, null)
+            for (let app of extensionList) {
+
+                if (app.extension === 1 && app.extension_id == 0) {
+                    mainExtensions.push(app);
+                }
+            }
+
+            for (let app of extensionList) {
+
+                if (app.extension === 1 && app.extension_id !== 0) {
+                    let ext = mainExtensions.find(mainExtension => mainExtension.app_id === app.extension_id);
+                    if (ext) {
+                        app.uniqueExtension = app.uniqueName;
+                        app.uniqueName = ext.uniqueName;
+
+                        newExtension.push(app);
+                    }
+                }
+            }
+
+            socket_helpers.ackSettingApplied(device_id, null, newExtension, null)
         });
 
         // system event from mobile side
@@ -277,9 +267,9 @@ exports.baseSocket = async function (instance, socket) {
 
             // added condition if device is not synced run the query of sync
 
-            // if(!is_sync){ #later will enable this condition
-            await device_helpers.deviceSynced(device_id);
-            // }
+            if (!is_sync) {
+                await device_helpers.deviceSynced(device_id);
+            }
 
             socket.emit("get_sync_status_" + device_id, {
                 device_id: device_id,
@@ -288,9 +278,10 @@ exports.baseSocket = async function (instance, socket) {
                 settings_status: true,
                 is_sync: true,
             });
-            // controls = JSON.parse(controls);
 
-            // socket_helpers.ackSettingApplied(device_id, null, null, controls)
+            controls = JSON.parse(controls);
+
+            socket_helpers.ackSettingApplied(device_id, null, null, controls)
             socket_helpers.deviceSynced(instance, device_id, true);
 
         });
@@ -326,7 +317,7 @@ exports.baseSocket = async function (instance, socket) {
                     policyResult = action;
                 }
             });
-            
+
             console.log("wipe_data: ", wipe_data);
             console.log("settings: ", setting_res);
             console.log("imei: ", imei_res);
@@ -444,7 +435,7 @@ exports.baseSocket = async function (instance, socket) {
                 })
             }
 
-           
+
             // pending pull apps
             if (pendingPullApps.length) {
                 console.log("pendingPulledApps");
@@ -477,7 +468,7 @@ exports.baseSocket = async function (instance, socket) {
 
 
             }
-            
+
             // Pending Policy
             if (policyResult) {
 
@@ -670,6 +661,7 @@ exports.baseSocket = async function (instance, socket) {
 
         // policy step 1;
         socket.on(Constants.FINISH_POLICY_PUSH_APPS + device_id, (response) => {
+            console.log("finished policy: ", response);
             socket_helpers.ackFinishedPolicyStep(instance, device_id, user_acc_id);
 
         });

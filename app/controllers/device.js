@@ -730,7 +730,7 @@ exports.editDevices = async function (req, res) {
                                 // console.log(currentDate, expiry_date);
                                 if (currentDate < expiry_date && finalStatus === constants.DEVICE_EXPIRED) {
                                     // console.log(device);
-                                    socket_helpers.sendDeviceStatus(sockets.baseIo, 
+                                    socket_helpers.sendDeviceStatus(sockets.baseIo,
                                         device_id,
                                         "active",
                                         true
@@ -1764,10 +1764,6 @@ exports.transferHistory = async function (req, res) {
 
 // ******************************************** End Transfer Module
 
-
-
-
-
 exports.createDeviceProfile = async function (req, res) {
     res.setHeader("Content-Type", "application/json");
     var verify = req.decoded; // await verifyToken(req, res);
@@ -2327,7 +2323,7 @@ exports.suspendAccountDevices = async function (req, res) {
                                         resquery[0],
                                         constants.DEVICE_SUSPENDED
                                     );
-                                    socket_helpers.sendDeviceStatus(sockets.baseIo, 
+                                    socket_helpers.sendDeviceStatus(sockets.baseIo,
                                         resquery[0].device_id,
                                         "suspended"
                                     );
@@ -2422,7 +2418,7 @@ exports.suspendAccountDevices = async function (req, res) {
                                             resquery[0],
                                             constants.DEVICE_SUSPENDED
                                         );
-                                        socket_helpers.sendDeviceStatus(sockets.baseIo, 
+                                        socket_helpers.sendDeviceStatus(sockets.baseIo,
                                             resquery[0].device_id,
                                             "suspended"
                                         );
@@ -2540,7 +2536,7 @@ exports.activateDevice = async function (req, res) {
                                     }
                                     resquery[0].remainTermDays = remainTermDays
 
-                                    socket_helpers.sendDeviceStatus(sockets.baseIo, 
+                                    socket_helpers.sendDeviceStatus(sockets.baseIo,
                                         resquery[0].device_id,
                                         "active",
                                         true
@@ -2637,7 +2633,7 @@ exports.activateDevice = async function (req, res) {
                                         }
                                         resquery[0].remainTermDays = remainTermDays
                                         // dealerData = await getDealerdata(res[i]);
-                                        socket_helpers.sendDeviceStatus(sockets.baseIo, 
+                                        socket_helpers.sendDeviceStatus(sockets.baseIo,
                                             resquery[0].device_id,
                                             "active",
                                             true
@@ -2725,7 +2721,7 @@ exports.wipeDevice = async function (req, res) {
                     await sql.query(historyUpdate);
 
                     if (resquery[0].online === constants.DEVICE_ONLINE) {
-                        socket_helpers.sendDeviceStatus(sockets.baseIo, 
+                        socket_helpers.sendDeviceStatus(sockets.baseIo,
                             resquery[0].device_id,
                             constants.DEVICE_WIPE
                         );
@@ -2965,9 +2961,9 @@ exports.getAppsOfDevice = async function (req, res) {
                         if (app.extension === 1 && app.extension_id !== 0) {
                             let ext = mainExtensions.find(mainExtension => mainExtension.app_id === app.extension_id);
                             if (ext) {
-                                app.uniqueExtension = app.uniqueName,
-                                    app.uniqueName = ext.uniqueName,
-                                    console.log(app);
+                                app.uniqueExtension = app.uniqueName;
+                                app.uniqueName = ext.uniqueName;
+
                                 extensions.push(app);
                             }
                         }
