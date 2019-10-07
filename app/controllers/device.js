@@ -746,7 +746,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                     let service_data = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date ,total_credits,service_expiry_date) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price / duplicate} , '${expiry_date}' )`
                                                     await sql.query(service_data);
 
-                                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id transection_data, credits ,transection_type , status) VALUES (${dealer_id},${user_acc_id} , '${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price / duplicate} ,'credit' , 'transferred')`
+                                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id ,transection_data, credits ,transection_type , status) VALUES (${dealer_id},${user_acc_id} , '${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price / duplicate} ,'credit', 'transferred')`
                                                     await sql.query(transection_credits);
 
                                                     await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, user_acc_id, loggedUserType)
@@ -932,8 +932,8 @@ exports.createDeviceProfile = async function (req, res) {
                                                             let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id,transection_data, credits ,transection_type , status) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price} ,'credit' , 'transferred')`
                                                             console.log(transection_credits);
                                                             await sql.query(transection_credits)
-                                                            
-                                                             helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, user_acc_id, loggedUserType)
+
+                                                            helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, user_acc_id, loggedUserType)
 
                                                             let updateChatIds = 'update chat_ids set used=1, user_acc_id="' + user_acc_id + '" where chat_id ="' + chat_id + '"';
                                                             await sql.query(updateChatIds);
@@ -1246,6 +1246,7 @@ exports.editDevices = async function (req, res) {
                                     }
                                     console.log(newServicePrice, prevServicePaidPrice, newServicePrice, creditsToRefund);
                                     total_price = newServicePrice - creditsToRefund
+
                                     let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedDealerType)
                                     admin_profit = profitLoss.admin_profit
                                     dealer_profit = profitLoss.dealer_profit
@@ -3575,10 +3576,11 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                 await sql.query(updateBilling);
                                 let dealer_profit_query = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data ,credits , transection_type) VALUES (${verify.user.id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}', ${bills[0].total_credits} ,'debit')`
                                 await sql.query(dealer_profit_query);
-                                
-                                let profits = await helpers.calculateProfitLoss(packages, products, verify.user.user_type)
-                                dealer_profit = profits.dealer_profit
-                                admin_profit = profits.admin_profit
+                                if (device.expiry_months != 0) {
+                                    let profits = await helpers.calculateProfitLoss(packages, products, verify.user.user_type)
+                                    dealer_profit = profits.dealer_profit
+                                    admin_profit = profits.admin_profit
+                                }
                             }
                             let deleteServices = "DELETE FROM services WHERE user_acc_id = " + user_acc_id
                             await sql.query(deleteServices);
