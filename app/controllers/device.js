@@ -652,9 +652,15 @@ exports.createDeviceProfile = async function (req, res) {
                     let dealer_credits = result.length ? result[0].credits : 0;
                     if (dealer_credits >= total_price || req.body.term === '0') {
                         if (products.length || packages.length) {
-                            let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedUserType)
-                            admin_profit = profitLoss.admin_profit
-                            dealer_profit = profitLoss.dealer_profit
+                            if (exp_month !== '0') {
+                                dealer_credits = dealer_credits - total_price
+                                let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedUserType)
+                                admin_profit = profitLoss.admin_profit
+                                dealer_profit = profitLoss.dealer_profit
+                            }
+                            // let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedUserType)
+                            // admin_profit = profitLoss.admin_profit
+                            // dealer_profit = profitLoss.dealer_profit
                             if (duplicate > 0) {
                                 if (dealer_credits > total_price || req.body.term === '0') {
                                     let pgpEmail = "SELECT pgp_email from pgp_emails WHERE used=0";
@@ -1213,20 +1219,21 @@ exports.editDevices = async function (req, res) {
                                         );
                                         status = "active";
                                     }
-                                    let prevServiceData = await sql.query("SELECT * from services_data WHERE id = " + prevService.id)
-
-                                    if (prevServiceData.length) {
-                                        let prevService = prevServiceData[0]
-                                        let preTotalPrice = prevService.total_credits
-                                        let prevServiceExpiryDate = moment(new Date(prevService.service_expiry_date))
-                                        let prevServiceStartDate = moment(new Date(prevService.start_date))
-                                        let dateNow = moment(new Date())
-                                        let serviceRemainingDays = prevServiceExpiryDate.diff(dateNow, 'days') + 1
-                                        let totalDays = prevServiceExpiryDate.diff(prevServiceStartDate, 'days')
-                                        console.log(serviceRemainingDays, totalDays, preTotalPrice);
-                                        creditsToRefund = Math.floor((preTotalPrice / totalDays) * serviceRemainingDays)
-                                        // console.log(creditsToRefund);
-                                        prevServicePaidPrice = preTotalPrice - creditsToRefund
+                                    if (prevService) {
+                                        let prevServiceData = await sql.query("SELECT * from services_data WHERE id = " + prevService.id)
+                                        if (prevServiceData.length) {
+                                            let prevService = prevServiceData[0]
+                                            let preTotalPrice = prevService.total_credits
+                                            let prevServiceExpiryDate = moment(new Date(prevService.service_expiry_date))
+                                            let prevServiceStartDate = moment(new Date(prevService.start_date))
+                                            let dateNow = moment(new Date())
+                                            let serviceRemainingDays = prevServiceExpiryDate.diff(dateNow, 'days') + 1
+                                            let totalDays = prevServiceExpiryDate.diff(prevServiceStartDate, 'days')
+                                            console.log(serviceRemainingDays, totalDays, preTotalPrice);
+                                            creditsToRefund = Math.floor((preTotalPrice / totalDays) * serviceRemainingDays)
+                                            // console.log(creditsToRefund);
+                                            prevServicePaidPrice = preTotalPrice - creditsToRefund
+                                        }
                                     }
                                     console.log(products);
                                     if (packages && packages.length) {
@@ -1426,9 +1433,10 @@ exports.editDevices = async function (req, res) {
                             //         sql.query(productQuery)
                             //     })
                             // }
-
-                            let update_prev_service_billing = `UPDATE services_data set del_status = 1,paid_credits = ${prevServicePaidPrice}, end_date = '${date_now}' WHERE id = ${prevService.id} `
-                            await sql.query(update_prev_service_billing);
+                            if (prevService) {
+                                let update_prev_service_billing = `UPDATE services_data set del_status = 1,paid_credits = ${prevServicePaidPrice}, end_date = '${date_now}' WHERE id = ${prevService.id} `
+                                await sql.query(update_prev_service_billing);
+                            }
 
                             let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice} ,'${date_now}' ,'${expiry_date}')`
                             await sql.query(service_billing);
@@ -1485,12 +1493,12 @@ exports.editDevices = async function (req, res) {
                             if (servicesData[0]) {
                                 rsltq[0].services = servicesData[0]
                             }
-                            if (loginHistoryData[0] && loginHistoryData.created_at) {
-                                rsltq[0].lastOnline = loginHistoryData[0].created_at
-                            }
-                            else {
-                                rsltq[0].lastOnline = "N/A"
-                            }
+                            // if (loginHistoryData[0] && loginHistoryData.created_at) {
+                            //     rsltq[0].lastOnline = loginHistoryData[0].created_at
+                            // }
+                            // else {
+                            //     rsltq[0].lastOnline = "N/A"
+                            // }
                             if (rsltq[0].expiry_date !== null) {
                                 let startDate = moment(new Date())
                                 let expiray_date = new Date(rsltq[0].expiry_date)
@@ -3550,6 +3558,8 @@ exports.deleteUnlinkDevice = async function (req, res) {
                         return
                     }
                 } else {
+                    let dealer_profit = 0
+                    let admin_profit = 0
                     let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
                     for (let device of req.body.devices) {
                         if (action == 'pre-active') {
@@ -3568,6 +3578,9 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                 await sql.query(updateBilling);
                                 let dealer_profit_query = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data ,credits , transection_type) VALUES (${verify.user.id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}', ${bills[0].total_credits} ,'debit')`
                                 await sql.query(dealer_profit_query);
+                                let profits = await helpers.calculateProfitLoss(packages, products, verify.user.user_type)
+                                dealer_profit = profits.dealer_profit
+                                admin_profit = profits.admin_profit
                             }
                             let deleteServices = "DELETE FROM services WHERE user_acc_id = " + user_acc_id
                             await sql.query(deleteServices);
@@ -3581,9 +3594,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                 await sql.query(deleteHistoryQuery)
                                 deletedDevices.push(device.id);
                             }
-                            let profits = await helpers.calculateProfitLoss(packages, products, verify.user.user_type)
-                            let dealer_profit = profits.dealer_profit
-                            let admin_profit = profits.admin_profit
+
 
                             if (admin_profit !== 0) {
                                 let type = ""
