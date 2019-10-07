@@ -268,15 +268,14 @@ exports.getSims = async function (req, res) {
             var SDeviceAttributes = await sql.query(`SELECT * FROM device_attributes WHERE device_id= '${deviceId}' AND (name='un_register_guest' OR name='un_register_encrypt') AND delete_status = '0'`);
             let obj = {
                 unRegisterGuest: 1,
-                unRegisterEncrypt: 0
+                unRegisterEncrypt: 1
             }
 
             SDeviceAttributes.forEach(record => {
                 // console.log('record is; ', record);
                 if (record.name === "un_register_guest") {
                     obj.unRegisterGuest = JSON.parse(record.value);
-                }
-                else if (record.name === "un_register_encrypt") {
+                } else if (record.name === "un_register_encrypt") {
                     obj.unRegisterEncrypt = JSON.parse(record.value);
                 }
             });

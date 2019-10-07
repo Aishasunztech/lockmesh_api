@@ -4,7 +4,7 @@ module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.changeColumn('sims', 'guest', {
       type: Sequelize.BOOLEAN,
-      defaultValue: false,
+      defaultValue: true,
       allowNull:false
 
     },
