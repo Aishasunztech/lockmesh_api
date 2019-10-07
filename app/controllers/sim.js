@@ -1,12 +1,17 @@
-
+// libraries
 var empty = require('is-empty');
+
+// custom libraries
 const { sql } = require('../../config/database');
 const sockets = require('../../routes/sockets');
 
-const MsgConstants = require('../../constants/MsgConstants');
+// helpers
 const helpers = require('../../helper/general_helper');
+const device_helpers = require('../../helper/device_helpers');
+const socket_helpers = require('../../helper/socket_helper');
 
-
+// constants
+const MsgConstants = require('../../constants/MsgConstants')
 
 
 exports.simRegister = async function (req, res) {
@@ -14,7 +19,7 @@ exports.simRegister = async function (req, res) {
     if (verify) {
         try {
             let rSim = req.body.data;
-            console.log('sim-register ', req.body)
+            // console.log('sim-register ', req.body)
 
             let device_id = rSim.device_id;
             let iccid = rSim.iccid;
@@ -26,22 +31,30 @@ exports.simRegister = async function (req, res) {
             let dataLimit = rSim.data_limit;
             let status = rSim.status ? rSim.status : null;
 
-            let sQry = `SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}' AND del='0'`;
-            console.log(sQry);
+            let sQry = `SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}' AND delete_status='0'`;
+            // console.log(sQry);
             let rslt = await sql.query(sQry);
-            console.log(rslt);
+            // console.log(rslt);
 
-            // let activeSims = await sql.query(`SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}' AND del='0' AND (slotNo = '0' OR slotNo = '1')`);
+            // let activeSims = await sql.query(`SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}' AND delete_status='0' AND (slotNo = '0' OR slotNo = '1')`);
 
             if (rslt.length < 1) {
                 // if (activeSims.length < 2) {
                 //*********/ Asked abaid to remove ingore from insert query **********//
-                var IQry = `INSERT INTO sims (device_id, iccid, name, status, sim_id, note, guest, encrypt, dataLimit, sync) 
-                VALUES ('${device_id}', '${iccid}', '${name}', '${status}', '${sim_id}', '${note}', ${guest}, ${encrypt}, 0, '0');`;
+                var IQry = `INSERT INTO sims (device_id, iccid, name, status, sim_id, note, guest, encrypt, dataLimit, sync, is_changed) 
+                VALUES ('${device_id}', '${iccid}', '${name}', '${status}', '${sim_id}', '${note}', ${guest}, ${encrypt}, 0, '0', '1');`;
                 sql.query(IQry, async function (err, result) {
-                    if (err) console.log(err);
-
-                    sockets.sendRegSim(device_id, "sim_update", [rSim]);
+                    if (err) {
+                        console.log(err)
+                        res.send({
+                            status: false,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "ERROR"), // "You have already registered this device ID and ICC-ID."
+                        })
+                        return;
+                    };
+                    sql.query(`UPDATE sims SET is_changed = '0' WHERE device_id = '${device_id}' AND iccid = '${iccid}' AND delete_status='1'`)
+                    socket_helpers.sendRegSim(sockets.baseIo, device_id, "sim_update", [rSim]);
+                    device_helpers.saveSimActionHistory(device_id, "NEW_REGISTERED_SIM", [rSim]);
                     data = {
                         status: true,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.SIM_REGISTERED_SUCCESSFULLY], "Sim Registered Successfully"), // "Sim Registered Successfully"
@@ -49,13 +62,7 @@ exports.simRegister = async function (req, res) {
                     res.send(data);
                     return;
                 })
-                // } else {
-                //     res.send({
-                //         status: false,
-                //         msg: await helpers.convertToLang(req.translation[MsgConstants.MAXIMUN_2_SIMS_ALLOWED], "Sorry! Maximun 2 registrations are allowed for this device"), // "Sorry! Maximun 2 registrations are allowed for this device."
-                //     })
-                //     return;
-                // }
+
             } else {
                 res.send({
                     status: false,
@@ -89,19 +96,38 @@ exports.simUpdate = async function (req, res) {
             let simData = req.body.obj;
 
 
-            console.log('req.body is: ', req.body)
+            // console.log('req.body simData is: ', simData)
             // return;
             // console.log('simData is: ', simData)
             // return;
             let id = req.body.obj.id;
             let label = req.body.label;
             let value = req.body.value;
-            console.log('label: ', label);
-            console.log('value: ', value);
+            // console.log('label: ', label);
+            // console.log('value: ', value);
             if (id == "unrAll") {
-                await sql.query(`UPDATE sims SET unrGuest = ${simData.unrGuest}, unrEncrypt=${simData.unrEncrypt} WHERE device_id= '${simData.device_id}' AND del='0'`);
 
-                sockets.sendRegSim(simData.device_id, "sim_unregister", simData);
+                //*********************** ur register guest *******************/
+                let checkGuest = await sql.query(`SELECT * FROM device_attributes WHERE device_id = '${simData.device_id}' AND name = 'un_register_guest' AND delete_status = '0'`);
+                if (checkGuest.length) {
+                    await sql.query(`UPDATE device_attributes SET value = '${simData.unrGuest ? 1 : 0}' WHERE device_id= '${simData.device_id}' AND name='un_register_guest' AND delete_status='0'`);
+                } else {
+                    await sql.query(`INSERT INTO device_attributes (device_id, name, value) VALUES ('${simData.device_id}', 'un_register_guest', '${simData.unrGuest ? 1 : 0}')`);
+                }
+
+                //*************************** ur register encrypt  *************/
+                let checkEncrypt = await sql.query(`SELECT * FROM device_attributes WHERE device_id = '${simData.device_id}' AND name = 'un_register_encrypt' AND delete_status = '0'`);
+                if (checkEncrypt.length) {
+                    await sql.query(`UPDATE device_attributes SET value = '${simData.unrEncrypt ? 1 : 0}' WHERE device_id= '${simData.device_id}' AND name='un_register_encrypt' AND delete_status='0'`);
+                } else {
+                    await sql.query(`INSERT INTO device_attributes (device_id, name, value) VALUES ('${simData.device_id}', 'un_register_encrypt', '${simData.unrEncrypt ? 1 : 0}')`);
+                }
+
+
+                // await sql.query(`UPDATE sims SET unrGuest = ${simData.unrGuest}, unrEncrypt=${simData.unrEncrypt} WHERE device_id= '${simData.device_id}' AND delete_status='0'`);
+
+                socket_helpers.sendRegSim(sockets.baseIo, simData.device_id, "sim_unregister", simData);
+                device_helpers.saveSimActionHistory(simData.device_id, "UN_REGISTER", simData);
                 data = {
                     status: true,
                     msg: await helpers.convertToLang(req.translation[MsgConstants.UPDATE_SUCCESSFULLY], "Updated Successfully"), // "Updated Successfully"
@@ -114,17 +140,17 @@ exports.simUpdate = async function (req, res) {
                 let Query = '';
                 if (label != undefined && req.body.value != undefined) {
                     if (id == "all") {
-                        console.log('at all')
-                        UQry = `UPDATE sims SET ${label} = ${value} WHERE device_id= '${simData.device_id}' AND del='0'`;
-                        Query = `SELECT * FROM sims WHERE device_id = '${simData.device_id}' AND del='0'`;
-                        console.log('query is: ', Query);
+                        // console.log('at all')
+                        UQry = `UPDATE sims SET ${label} = ${value}, is_changed = '1' WHERE device_id= '${simData.device_id}' AND delete_status='0'`;
+                        Query = `SELECT * FROM sims WHERE device_id = '${simData.device_id}' AND delete_status='0'`;
+                        // console.log('query is: ', Query);
                     } else {
-                        UQry = `UPDATE sims SET ${label} = ${value} WHERE id = ${id} AND del='0'`;
+                        UQry = `UPDATE sims SET ${label} = ${value}, is_changed = '1' WHERE id = ${id} AND delete_status='0'`;
                     }
 
 
                 } else {
-                    UQry = `UPDATE sims SET name='${simData.name}', note='${simData.note}', guest=${simData.guest}, encrypt=${simData.encrypt}, sync = '0' WHERE device_id = '${simData.device_id}' AND iccid = '${simData.iccid}' AND del='0'`;
+                    UQry = `UPDATE sims SET name='${simData.name}', note='${simData.note}', guest=${simData.guest}, encrypt=${simData.encrypt}, sync = '0', is_changed = '1' WHERE device_id = '${simData.device_id}' AND iccid = '${simData.iccid}' AND delete_status='0'`;
                 }
 
                 if (UQry != undefined) {
@@ -135,7 +161,8 @@ exports.simUpdate = async function (req, res) {
                         // console.log('sims are: ', sims)
                         if (Query != undefined && Query != '') sims = await sql.query(Query);
 
-                        sockets.sendRegSim(simData.device_id, "sim_update", sims);
+                        socket_helpers.sendRegSim(sockets.baseIo, simData.device_id, "sim_update", sims);
+                        device_helpers.saveSimActionHistory(simData.device_id, "UPDATE", sims);
                         data = {
                             status: true,
                             msg: await helpers.convertToLang(req.translation[MsgConstants.UPDATE_SUCCESSFULLY], "Updated Successfully"), // "Updated Successfully"
@@ -176,7 +203,7 @@ exports.simDelete = async function (req, res) {
     if (verify) {
         try {
 
-            console.log('body is: ', req.body);
+            // console.log('body is: ', req.body);
 
             // return;
             let simData = req.body;
@@ -185,13 +212,14 @@ exports.simDelete = async function (req, res) {
 
             if (device_id != undefined && iccid != undefined) {
                 // let dQry = `DELETE FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
-                let dQry = `UPDATE sims SET del='1' WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
+                let dQry = `UPDATE sims SET delete_status='1', is_changed='1' WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
 
                 sql.query(dQry, async function (err, result) {
                     if (err) console.log(err);
 
 
-                    sockets.sendRegSim(device_id, "sim_delete", [simData.iccid]);
+                    socket_helpers.sendRegSim(sockets.baseIo, device_id, "sim_delete", [simData.iccid]);
+                    device_helpers.saveSimActionHistory(device_id, "DELETE", [simData.iccid]);
                     data = {
                         status: true,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.SIM_DELETE_SUCCESSFULLY], "Sim Deleted Successfully"), // "Sim Deleted Successfully"
@@ -231,23 +259,44 @@ exports.getSims = async function (req, res) {
     let deviceId = req.params.device_id;
     if (verify && deviceId) {
 
-        // sockets.sendRegSim(deviceId, "sim_inserted");
+        // socket_helpers.sendRegSim(sockets.baseIo,deviceId, "sim_inserted");
 
-        var IQry = `SELECT * FROM sims WHERE device_id= '${deviceId}' AND del = '0'`;
-        sql.query(IQry, async function (err, result) {
+        var SQry = `SELECT * FROM sims WHERE device_id= '${deviceId}' AND delete_status = '0'`;
+        sql.query(SQry, async function (err, result) {
             // console.log("=======================================")
             // console.log('result is :', result)
             if (err) console.log(err);
 
+            // console.log(`SELECT * FROM device_attributes WHERE device_id= '${deviceId}' AND (name='un_register_guest' OR name='un_register_encrypt') AND delete_status = '0'`);
+
+            var SDeviceAttributes = await sql.query(`SELECT * FROM device_attributes WHERE device_id= '${deviceId}' AND (name='un_register_guest' OR name='un_register_encrypt') AND delete_status = '0'`);
+            let obj = {
+                unRegisterGuest: 1,
+                unRegisterEncrypt: 1
+            }
+
+            SDeviceAttributes.forEach(record => {
+                // console.log('record is; ', record);
+                if (record.name === "un_register_guest") {
+                    obj.unRegisterGuest = JSON.parse(record.value);
+                } else if (record.name === "un_register_encrypt") {
+                    obj.unRegisterEncrypt = JSON.parse(record.value);
+                }
+            });
+
+
+            // console.log("SDeviceAttributes ========>obj  ", obj)
             if (result.length > 0) {
                 data = {
                     status: true,
-                    data: result
+                    data: result,
+                    unRegisterSetting: obj
                 }
             } else {
                 data = {
                     status: false,
-                    data: []
+                    data: [],
+                    unRegisterSetting: obj
                 }
             }
             res.send(data);
@@ -268,7 +317,7 @@ exports.simHistory = async function (req, res) {
     if (verify) {
         try {
             if (req.params.device_id) {
-                var IQry = `SELECT * FROM sims WHERE device_id= '${req.params.device_id}' AND del = '1'`;
+                var IQry = `SELECT * FROM sims WHERE device_id= '${req.params.device_id}' AND delete_status = '1'`;
                 sql.query(IQry, async function (err, result) {
                     // console.log("=======================================")
                     // console.log('result is :', result)
@@ -312,11 +361,25 @@ exports.simHistory = async function (req, res) {
 exports.getUnRegisterSims = async function (req, res) {
     var verify = req.decoded;
     let deviceId = req.params.device_id;
-    console.log("getUnRegisterSims device is: ", deviceId);
+    // console.log("getUnRegisterSims device is: ", deviceId);
     if (verify && deviceId) {
 
-        sockets.sendRegSim(deviceId, "sim_inserted");
-        return true;
+        let online = await device_helpers.isDeviceOnline(deviceId);
+        // console.log(deviceId, 'check device online ', online);
+
+        if (online) {
+
+            socket_helpers.sendRegSim(sockets.baseIo, deviceId, "sim_inserted");
+            res.send({
+                status: false,
+            })
+            return;
+        } else {
+            res.send({
+                status: true,
+            })
+            return;
+        }
 
     }
 }

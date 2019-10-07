@@ -14,12 +14,14 @@ const bcrypt = require('bcrypt');
 
 // custom Libraries
 const { sendEmail } = require('../../lib/email');
+const sockets = require('../../routes/sockets');
 
 // helpers
 const { sql } = require('../../config/database');
 const device_helpers = require('../../helper/device_helpers');
 const helpers = require('../../helper/general_helper');
-const sockets = require('../../routes/sockets');
+const socket_helpers = require('../../helper/socket_helper');
+
 
 // constants
 const constants = require('../../constants/Application');
@@ -77,7 +79,7 @@ exports.devices = async function (req, res) {
                 let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
                 let sim_ids = await device_helpers.getSimids(user_acc_ids);
                 let chat_ids = await device_helpers.getChatids(user_acc_ids);
-                let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
+                // let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
 
                 for (var i = 0; i < results.length; i++) {
                     let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === results[i].id);
@@ -93,10 +95,10 @@ exports.devices = async function (req, res) {
                     if (chat_id) {
                         results[i].chat_id = chat_id.chat_id
                     }
-                    let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
-                    if (lastOnline) {
-                        results[i].lastOnline = lastOnline.created_at
-                    }
+                    // let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
+                    // if (lastOnline) {
+                        results[i].lastOnline = results[i].last_login ? results[i].last_login : "N/A"
+                    // }
                     results[i].finalStatus = device_helpers.checkStatus(
                         results[i]
                     );
@@ -577,7 +579,7 @@ exports.editDevices = async function (req, res) {
                                 // console.log(currentDate, expiry_date);
                                 if (currentDate < expiry_date) {
                                     // console.log(device);
-                                    sockets.sendDeviceStatus(device_id, "active", true);
+                                    socket_helpers.sendDeviceStatus(sockets.baseIo, device_id, "active", true);
                                     status = 'active'
                                 }
                             }
@@ -724,7 +726,7 @@ exports.unlinkDevice = async function (req, res) {
                     await sql.query(sqlDevice);
 
                     device_helpers.saveActionHistory(req.body.device, constants.DEVICE_UNLINKED)
-                    sockets.sendDeviceStatus(dvcId, "unlinked", true);
+                    socket_helpers.sendDeviceStatus(sockets.baseIo, dvcId, "unlinked", true);
                     data = {
                         status: true,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_UNLNK_SUCC], "Device unlinked successfully"), // Device unlinked successfully.
@@ -801,7 +803,7 @@ exports.suspendDevice = async function (req, res) {
                 //                         msg: await helpers.convertToLang(req.translation[MsgConstants.ACC_SUSP_SUCC], "Account suspended successfully"), // Account suspended successfully.
                 //                     }
                 //                     device_helpers.saveActionHistory(resquery[0], constants.DEVICE_SUSPENDED)
-                //                     sockets.sendDeviceStatus(resquery[0].device_id, "suspended");
+                //                     socket_helpers.sendDeviceStatus(sockets.baseIo, resquery[0].device_id, "suspended");
 
 
                 //                     res.send(data);
@@ -872,7 +874,7 @@ exports.suspendDevice = async function (req, res) {
                                         msg: "Device suspended successfully", // Account suspended successfully."
                                     }
                                     device_helpers.saveActionHistory(resquery[0], constants.DEVICE_SUSPENDED)
-                                    sockets.sendDeviceStatus(resquery[0].device_id, "suspended");
+                                    socket_helpers.sendDeviceStatus(sockets.baseIo, resquery[0].device_id, "suspended");
                                     return res.send(data);
                                 }
                             })
@@ -949,7 +951,7 @@ exports.activateDevice = async function (req, res) {
                 //                     resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
                 //                     resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
                 //                     // dealerData = await getDealerdata(res[i]);
-                //                     sockets.sendDeviceStatus(resquery[0].device_id, "active", true);
+                //                     socket_helpers.sendDeviceStatus(sockets.baseIo, resquery[0].device_id, "active", true);
                 //                     data = {
                 //                         "data": resquery[0],
                 //                         status: true,
@@ -1012,7 +1014,7 @@ exports.activateDevice = async function (req, res) {
 
                                     }
                                     // dealerData = await getDealerdata(res[i]);
-                                    sockets.sendDeviceStatus(resquery[0].device_id, "active", true);
+                                    socket_helpers.sendDeviceStatus(sockets.baseIo, resquery[0].device_id, "active", true);
                                     data = {
                                         data: resquery[0],
                                         status: true,

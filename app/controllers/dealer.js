@@ -6,7 +6,6 @@ var empty = require('is-empty');
 var Constants = require('../../constants/Application');
 const { sql } = require('../../config/database');
 const { sendEmail } = require('../../lib/email');
-const verifyToken = require('../../config/auth');
 
 // 
 const general_helpers = require('../../helper/general_helper');

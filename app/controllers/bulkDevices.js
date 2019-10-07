@@ -18,7 +18,7 @@ const { sql } = require("../../config/database");
 const device_helpers = require("../../helper/device_helpers");
 const helpers = require("../../helper/general_helper");
 const verifyToken = require("../../config/auth");
-const sockets = require("../../routes/sockets");
+// const sockets = require("../../routes/sockets");
 
 // constants
 const constants = require("../../constants/Application");
@@ -122,7 +122,7 @@ exports.getFilteredBulkDevices = async function (req, res) {
                         let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
                         let sim_ids = await device_helpers.getSimids(user_acc_ids);
                         let chat_ids = await device_helpers.getChatids(user_acc_ids);
-                        let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
+                        // let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
 
                         for (var i = 0; i < results.length; i++) {
                             let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === results[i].id);
@@ -138,10 +138,10 @@ exports.getFilteredBulkDevices = async function (req, res) {
                             if (chat_id) {
                                 results[i].chat_id = chat_id.chat_id
                             }
-                            let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
-                            if (lastOnline) {
-                                results[i].lastOnline = lastOnline.created_at
-                            }
+                            // let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
+                            // if (lastOnline) {
+                                results[i].lastOnline = results[i].last_login
+                            // }
                             results[i].finalStatus = device_helpers.checkStatus(
                                 results[i]
                             );
@@ -328,10 +328,10 @@ exports.suspendBulkAccountDevices = async function (req, res) {
                             resquery[0],
                             constants.DEVICE_SUSPENDED
                         );
-                        sockets.sendDeviceStatus(
-                            resquery[0].device_id,
-                            "suspended"
-                        );
+                        // sockets.sendDeviceStatus(
+                        //     resquery[0].device_id,
+                        //     "suspended"
+                        // );
                     }
                 }
             } else {
@@ -442,11 +442,11 @@ exports.activateBulkDevices = async function (req, res) {
                             resquery[0].chat_id = "N/A"
 
                         }
-                        sockets.sendDeviceStatus(
-                            resquery[0].device_id,
-                            "active",
-                            true
-                        );
+                        // sockets.sendDeviceStatus(
+                        //     resquery[0].device_id,
+                        //     "active",
+                        //     true
+                        // );
 
                         ActivateDevices.push(resquery[0]);
 
