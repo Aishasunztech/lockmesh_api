@@ -2,7 +2,7 @@ const HOST_NAME = process.env.HOST_NAME;
 let APP_TITLE = "LockMesh";
 let URL = "http://localhost:3000";
 let SUPERADMIN_URL = "http://localhost:8042";
-var SUPERADMIN_URL_API = "http://localhost:8042";
+let SUPERADMIN_URL_API = "http://localhost:8042";
 
 // Database
 let DB_HOST = "localhost";
@@ -87,6 +87,7 @@ if (HOST_NAME) {
 // }
 
 (module.exports.SUPERADMIN_URL = SUPERADMIN_URL),
+(module.exports.SUPERADMIN_URL_API = SUPERADMIN_URL_API),
 (module.exports = {
 	APP_TITLE: APP_TITLE,
 	HOST: URL,
