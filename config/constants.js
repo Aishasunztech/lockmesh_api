@@ -2,6 +2,7 @@ const HOST_NAME = process.env.HOST_NAME;
 let APP_TITLE = "LockMesh";
 let URL = "http://localhost:3000";
 let SUPERADMIN_URL = "http://localhost:8042";
+var SUPERADMIN_URL_API = "http://localhost:8042";
 
 // Database
 let DB_HOST = "localhost";
@@ -32,6 +33,7 @@ if (HOST_NAME) {
 		case "LockMesh":
 			URL = "https://lockmesh.com";
 			SUPERADMIN_URL = "https://meshguard.co";
+			SUPERADMIN_URL_API =  "https://api.meshguard.co"
 
 			// Database
 			// DB_HOST = "localhost";
@@ -46,6 +48,7 @@ if (HOST_NAME) {
 		case "TitanLocker":
 			URL = "https://titansecureserver.com";
 			SUPERADMIN_URL = "https://meshguard.co";
+			SUPERADMIN_URL_API =  "https://api.meshguard.co"
 
 			// DB_HOST = "localhost";
 			// DB_NAME = 'lockmesh_db'
@@ -64,6 +67,7 @@ if (HOST_NAME) {
 		case "LockMesh Dev":
 			URL = "https://dev.lockmesh.com";
 			SUPERADMIN_URL = "https://dev.meshguard.co";
+			SUPERADMIN_URL_API =  "https://devapi.meshguard.co"
 
 			// DB_HOST = "localhost";
 			// DB_NAME = 'lockmesh_db'
@@ -125,17 +129,17 @@ if (HOST_NAME) {
 
 	// SUPERADMIN URLs
 	SUPERADMIN_LOGIN_URL: `${
-		this.SUPERADMIN_URL
+		this.SUPERADMIN_URL_API
 		}/api/v1/auth/white_label_login`,
 	UPDATE_DEVICE_SUPERADMIN_URL: `${
-		this.SUPERADMIN_URL
+		this.SUPERADMIN_URL_API
 		}/api/v1/users/update_device_details`,
 	REQUEST_FOR_CREDITS: `${
-		this.SUPERADMIN_URL
+		this.SUPERADMIN_URL_API
 		}/api/v1/users/request_for_credits`,
 
 	RESYNC_IDS: `${
-		this.SUPERADMIN_URL
+		this.SUPERADMIN_URL_API
 		}/api/v1/users/resync_ids`,
 
 	SUPERADMIN_USER_CREDENTIALS: {
