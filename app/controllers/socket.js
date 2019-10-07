@@ -703,21 +703,21 @@ exports.baseSocket = async function (instance, socket) {
             if (response != undefined) {
                 // let uQry = `UPDATE sims SET sync = '1', is_changed = '0' WHERE device_id = '${response.device_id}' AND iccid = '${response.iccid}'`;
                 // await sql.query(uQry);
-                let updateSimQ = `UPDATE sims SET sync = '1', is_changed='0' WHERE delete_status='1' AND device_id='${response.device_id}'`; 
-                console.log("update SIM: ", updateSimQ);
+                let updateSimQ = `UPDATE sims SET sync = '1', is_changed='0' WHERE delete_status='1' AND device_id='${response.device_id}'`;
+                // console.log("update SIM: ", updateSimQ);
                 await sql.query(updateSimQ);
             }
         })
 
         socket.on(Constants.RECV_SIM + device_id, async function (response) {
-         
+
             socket_helpers.updateSimRecord(instance, device_id, response, socket);
 
         })
 
         // *********** Send Delete sims
         let getDeleteSims = await sql.query(`SELECT iccid FROM sims WHERE device_id='${device_id}' AND delete_status='1' AND is_changed='1'`);
-        console.log("getDeleteSims :::: ", getDeleteSims);
+        // console.log("getDeleteSims :::: ", getDeleteSims);
 
         if (getDeleteSims && getDeleteSims.length) {
             let deleteICCIds = [];
@@ -725,7 +725,7 @@ exports.baseSocket = async function (instance, socket) {
             getDeleteSims.forEach((item) => {
                 deleteICCIds.push(item.iccid)
             })
-            console.log("deleteICCIds :::: ", JSON.stringify(deleteICCIds));
+            // console.log("deleteICCIds :::: ", JSON.stringify(deleteICCIds));
 
             socket.emit(Constants.SEND_SIM + device_id, {
                 action: "sim_delete",
@@ -737,7 +737,7 @@ exports.baseSocket = async function (instance, socket) {
         //*************** Send updated(changed) sims */
         let sUnEmitSims = `SELECT * FROM sims WHERE delete_status ='0' AND is_changed='1' AND device_id= '${device_id}'`; // AND sync = '0'
         let simResult = await sql.query(sUnEmitSims);
-        console.log(JSON.stringify(simResult), '========= check data when socket => re-connect ================= ', sUnEmitSims);
+        // console.log(JSON.stringify(simResult), '========= check data when socket => re-connect ================= ', sUnEmitSims);
 
 
 
