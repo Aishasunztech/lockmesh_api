@@ -54,6 +54,7 @@ exports.simRegister = async function (req, res) {
                     };
                     sql.query(`UPDATE sims SET is_changed = '0' WHERE device_id = '${device_id}' AND iccid = '${iccid}' AND delete_status='1'`)
                     socket_helpers.sendRegSim(sockets.baseIo, device_id, "sim_update", [rSim]);
+                    device_helpers.saveSimActionHistory(device_id, "NEW_REGISTERED_SIM", [rSim]);
                     data = {
                         status: true,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.SIM_REGISTERED_SUCCESSFULLY], "Sim Registered Successfully"), // "Sim Registered Successfully"
@@ -126,6 +127,7 @@ exports.simUpdate = async function (req, res) {
                 // await sql.query(`UPDATE sims SET unrGuest = ${simData.unrGuest}, unrEncrypt=${simData.unrEncrypt} WHERE device_id= '${simData.device_id}' AND delete_status='0'`);
 
                 socket_helpers.sendRegSim(sockets.baseIo, simData.device_id, "sim_unregister", simData);
+                device_helpers.saveSimActionHistory(simData.device_id, "UN_REGISTER", simData);
                 data = {
                     status: true,
                     msg: await helpers.convertToLang(req.translation[MsgConstants.UPDATE_SUCCESSFULLY], "Updated Successfully"), // "Updated Successfully"
@@ -160,6 +162,7 @@ exports.simUpdate = async function (req, res) {
                         if (Query != undefined && Query != '') sims = await sql.query(Query);
 
                         socket_helpers.sendRegSim(sockets.baseIo, simData.device_id, "sim_update", sims);
+                        device_helpers.saveSimActionHistory(simData.device_id, "UPDATE", sims);
                         data = {
                             status: true,
                             msg: await helpers.convertToLang(req.translation[MsgConstants.UPDATE_SUCCESSFULLY], "Updated Successfully"), // "Updated Successfully"
@@ -216,6 +219,7 @@ exports.simDelete = async function (req, res) {
 
 
                     socket_helpers.sendRegSim(sockets.baseIo, device_id, "sim_delete", [simData.iccid]);
+                    device_helpers.saveSimActionHistory(device_id, "DELETE", [simData.iccid]);
                     data = {
                         status: true,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.SIM_DELETE_SUCCESSFULLY], "Sim Deleted Successfully"), // "Sim Deleted Successfully"
