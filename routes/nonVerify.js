@@ -5,7 +5,7 @@ var path = require('path');
 var fs = require("fs");
 var mime = require('mime');
 var CryptoJS = require("crypto-js");
-
+// const { check, validationResult } = require('express-validator');
 // Custom Libraries
 const { sql } = require('../config/database');
 
@@ -32,10 +32,10 @@ const constants = require('../constants/Application');
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
 
-    // let policies = await Policy.findAll();
-    // // console.log(policies)
-    // let policyApps = await policies.getPolicyApps();
-    // res.send(policyApps);
+    // const errors = validationResult(req);
+    // if (!errors.isEmpty()) {
+    //     return res.json({ errors: errors.array() });
+    // }
 
     return res.send("test");
     // let data = {
