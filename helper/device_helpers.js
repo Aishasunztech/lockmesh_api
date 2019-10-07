@@ -107,7 +107,7 @@ module.exports = {
 
             // this query will delete all apps of device even extension. its working correct because mobile side sent all data again otherwise its wrong
             await sql.query(`DELETE FROM user_apps WHERE device_id = ${deviceData.id}`);
-            for(let app of apps){
+            for (let app of apps) {
                 let default_app = (app.defaultApp !== undefined && app.defaultApp !== null) ? app.defaultApp : (app.default_app !== undefined && app.default_app !== null) ? app.default_app : false;
                 let system_app = (app.systemApp !== undefined && app.systemApp !== null) ? app.systemApp : (app.system_app !== undefined && app.system_app !== null) ? app.system_app : false;
                 let id = 0;
@@ -176,7 +176,7 @@ module.exports = {
         if (extensions && extensions.length && deviceData) {
 
             // delete extension settings before insert
-            for(let app of extensions){
+            for (let app of extensions) {
                 let getPrntExt = `SELECT id FROM apps_info WHERE (unique_name='${app.uniqueName}' AND (extension=1 OR extension=true) AND extension_id=0) `;
 
                 // console.log("extension query: ", getPrntExt);
@@ -793,6 +793,11 @@ module.exports = {
             console.log("device not found")
         }
         return app_list
+    },
+    saveSimActionHistory: async function (device_id, action, setting) {
+        let InsertQ = `INSERT INTO sim_action_history (device_id, action, settings) VALUES ('${device_id}', '${action}', '${JSON.stringify(setting)}')`;
+        console.log("saveSimActionHistory InsertQ ", InsertQ);
+        await sql.query(InsertQ);
     },
     // compareSim: async function (deviceSim, panelSim, action) {
     //     console.log("deviceSim ", deviceSim)
