@@ -745,7 +745,7 @@ exports.baseSocket = async function (instance, socket) {
         var SDeviceAttributes = await sql.query(`SELECT * FROM device_attributes WHERE device_id= '${device_id}' AND (name='un_register_guest' OR name='un_register_encrypt') AND delete_status = '0'`);
         let obj = {
             unrGuest: 1,
-            unrEncrypt: 1
+            unrEncrypt: 0
         }
 
         SDeviceAttributes.forEach(record => {
@@ -784,7 +784,7 @@ exports.baseSocket = async function (instance, socket) {
             });
         }
 
-        
+
         // socket.on(Constants.GET_INSTALLED_APPS + device_id, socket_helpers.installedApps)
 
         // socket.on(Constants.GET_UNINSTALLED_APPS + device_id, socket_helpers.uninstalledApps)
