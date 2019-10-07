@@ -15,7 +15,7 @@ const socketMiddleware = require('../middlewares/socketAuth');
 const Constants = require('../constants/Application');
 const app_constants = require('../config/constants');
 
-let io;
+let io = null;
 
 
 module.exports = {
