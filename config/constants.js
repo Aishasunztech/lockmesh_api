@@ -1,7 +1,7 @@
 const HOST_NAME = process.env.HOST_NAME;
 let APP_TITLE = "LockMesh";
 let URL = "http://localhost:3000";
-let SUPERADMIN_URL = "http://localhsot:8042";
+let SUPERADMIN_URL = "http://localhost:8042";
 
 // Database
 let DB_HOST = "localhost";

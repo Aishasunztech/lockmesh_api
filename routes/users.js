@@ -196,6 +196,9 @@ router.get("/transfer/history/:device_id", deviceController.transferHistory);
 /**UPDATE Device details**/
 router.put("/edit/devices", deviceController.editDevices);
 
+/**UPDATE Device details**/
+router.post('/check-service-refund-credits', deviceController.getServiceRefund);
+
 /**Devices record delete**/
 router.put("/delete/:device_id", deviceController.deleteDevice);
 
@@ -350,6 +353,12 @@ router.post("/resetpwd", dealerController.resetPwd);
  */
 /*Get All Dealers */
 router.get("/dealers", dealerController.getAllDealers);
+
+router.get('/user_dealers', dealerController.getUserDealers);
+
+/*Get All Dealers FOR SUPERADMIN*/
+
+router.get('/get_dealer_list', dealerController.getDealerForSA);
 
 /**
  * This function comment is parsed by doctrine
@@ -874,7 +883,7 @@ router.post("/checkApkName", apkController.checkApkName);
  */
 // add apk. endpoints name should be changed
 router.post("/addApk", apkController.addApk);
- 
+
 /**
  * @route POST /users/edit/apk
  * @group APK - All Operations on  apks
@@ -957,6 +966,10 @@ router.post("/purchase_credits_CC", accountController.purchaseCredits_CC);
  */
 /** Save Policy Permission **/
 router.post('/save_policy_permissions', apkController.savePolicyPermissions);
+
+
+router.post('/save_package_permissions', accountController.savePackagePermissions);
+
 
 /**
  * @route get /users/login_history
@@ -1177,7 +1190,15 @@ router.post("/authenticate_update_user", async function (req, res) {
 // *****************************  SET AND GET => PRICES & PAKAGES   **************************
 router.patch("/save-prices", billingController.savePrices);
 
+router.patch("/save-sa-prices", billingController.saveSaPrices);
+
 router.post("/save-package", billingController.savePackage);
+
+router.delete("/delete_package/:id", billingController.deletePackage);
+
+router.put("/edit_package/:id", billingController.editPackage);
+
+router.post("/save-sa-package", billingController.saveSaPackage);
 
 router.get("/get-language", languageController.getLanguage);
 
@@ -1191,7 +1212,11 @@ router.get("/get-parent-packages", billingController.getParentPackages);
 
 router.patch("/check-package-name", billingController.checkPackageName);
 
-router.post("/update_credit", billingController.updateCredit);
+router.get('/get-parent-product-prices', billingController.getProductPrices);
+
+router.patch('/check-package-name', billingController.checkPackageName);
+
+router.post("/credit-request-ack", accountController.ackCreditRequest);
 
 router.get("/newRequests", billingController.newRequests);
 
