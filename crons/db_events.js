@@ -1,7 +1,7 @@
 var { DBEvents } = require('../config/database');
 const MySQLEvents = require('@rodrigogs/mysql-events');
 const constants = require('../config/constants');
-const sockets = require('../routes/sockets');
+// const sockets = require('../routes/sockets');
 
 exports.deviceQueue = async function () {
     await DBEvents.start();
@@ -12,7 +12,7 @@ exports.deviceQueue = async function () {
         statement: MySQLEvents.STATEMENTS.ALL,
         onEvent: (event) => { // You will receive the events here
             // console.log('queue: ', event.affectedRows);
-            console.log('socket:', sockets);
+            // console.log('socket:', sockets);
 
         },
     });
@@ -24,7 +24,7 @@ exports.deviceQueue = async function () {
         // type: 'UPDATE',
         onEvent: (event) => {
             if(event.type === 'UPDATE' && event.affectedColumns.includes('online')){
-                console.log(sockets);
+                // console.log(sockets);
             }
         }
     });

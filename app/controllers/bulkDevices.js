@@ -18,7 +18,7 @@ const { sql } = require("../../config/database");
 const device_helpers = require("../../helper/device_helpers");
 const helpers = require("../../helper/general_helper");
 const verifyToken = require("../../config/auth");
-const sockets = require("../../routes/sockets");
+// const sockets = require("../../routes/sockets");
 
 // constants
 const constants = require("../../constants/Application");
@@ -328,10 +328,10 @@ exports.suspendBulkAccountDevices = async function (req, res) {
                             resquery[0],
                             constants.DEVICE_SUSPENDED
                         );
-                        sockets.sendDeviceStatus(
-                            resquery[0].device_id,
-                            "suspended"
-                        );
+                        // sockets.sendDeviceStatus(
+                        //     resquery[0].device_id,
+                        //     "suspended"
+                        // );
                     }
                 }
             } else {
@@ -443,11 +443,11 @@ exports.activateBulkDevices = async function (req, res) {
                             resquery[0].chat_id = "N/A"
 
                         }
-                        sockets.sendDeviceStatus(
-                            resquery[0].device_id,
-                            "active",
-                            true
-                        );
+                        // sockets.sendDeviceStatus(
+                        //     resquery[0].device_id,
+                        //     "active",
+                        //     true
+                        // );
 
                         ActivateDevices.push(resquery[0]);
 
