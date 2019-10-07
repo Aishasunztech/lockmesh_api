@@ -2,38 +2,19 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('financial_account_transections', {
+    return queryInterface.createTable('acc_vpn', {
       id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true
       },
-      user_id: {
+      vpn_id: {
         type: Sequelize.INTEGER,
-        allowNull: false
+        allowNull:false
       },
-      user_dvc_acc_id: {
+      user_acc_id: {
         type: Sequelize.INTEGER,
-      },
-      transection_data: {
-        type: Sequelize.STRING,
-        allowNull: false
-      },
-      transection_type: {
-        type: Sequelize.ENUM(
-          'credit', 'debit'
-        ),
-        defaultValue: 'debit'
-      },
-      credits: {
-        type: Sequelize.INTEGER,
-        allowNull: false
-      },
-      status: {
-        type: Sequelize.ENUM(
-          'holding', 'transferred'
-        ),
-        defaultValue: 'transferred'
+        allowNull:false
       },
       created_at: {
         type: 'TIMESTAMP',

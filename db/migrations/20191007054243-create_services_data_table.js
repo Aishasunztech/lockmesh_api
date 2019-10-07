@@ -32,7 +32,8 @@ module.exports = {
       },
       paid_credits: {
         type: Sequelize.INTEGER,
-        allowNull: false
+        allowNull: false,
+        defaultValue: 0
       },
       start_date: {
         type: Sequelize.STRING,
@@ -51,7 +52,8 @@ module.exports = {
       },
       del_status: {
         type: Sequelize.INTEGER,
-        allowNull: false
+        allowNull: false,
+        defaultValue: 0
       },
       created_at: {
         type: 'TIMESTAMP',
