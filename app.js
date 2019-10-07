@@ -17,8 +17,10 @@ const expressSwagger = require('express-swagger-generator')(app);
 const swaggerOptions = require('./config/swaggerOptions');
 const constants = require('./config/constants');
 
+let io = require('socket.io')();
 
-// app.io = io;
+app.io = io;
+
 app.disable("etag");
 
 
@@ -105,7 +107,6 @@ app.get("/itest", function(req, res) {
 });
 
 // app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-
 require("./routes/index.js")(app);
 
 module.exports = app;

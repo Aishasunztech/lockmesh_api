@@ -17,7 +17,8 @@ const { sendEmail } = require("../../lib/email");
 const { sql } = require("../../config/database");
 const device_helpers = require("../../helper/device_helpers");
 const helpers = require("../../helper/general_helper");
-// const verifyToken = require("../../config/auth");
+const socket_helpers = require('../../helper/socket_helper');
+
 const sockets = require("../../routes/sockets");
 
 // constants
@@ -328,10 +329,10 @@ exports.suspendBulkAccountDevices = async function (req, res) {
                             resquery[0],
                             constants.DEVICE_SUSPENDED
                         );
-                        sockets.sendDeviceStatus(
-                            resquery[0].device_id,
-                            "suspended"
-                        );
+                        // sockets.sendDeviceStatus(
+                        //     resquery[0].device_id,
+                        //     "suspended"
+                        // );
                     }
                 }
             } else {
@@ -443,11 +444,11 @@ exports.activateBulkDevices = async function (req, res) {
                             resquery[0].chat_id = "N/A"
 
                         }
-                        sockets.sendDeviceStatus(
-                            resquery[0].device_id,
-                            "active",
-                            true
-                        );
+                        // sockets.sendDeviceStatus(
+                        //     resquery[0].device_id,
+                        //     "active",
+                        //     true
+                        // );
 
                         ActivateDevices.push(resquery[0]);
 
@@ -759,7 +760,7 @@ exports.applyBulkPushApps = async function (req, res) {
                     await sql.query(loadDeviceQ);
 
                     if (isOnline) {
-                        sockets.applyPushApps(apps, device_id);
+                        // sockets.applyPushApps(apps, device_id);
                         data = {
                             status: true,
                             online: true,
@@ -773,7 +774,7 @@ exports.applyBulkPushApps = async function (req, res) {
                             content: ""
                         };
                     } else {
-                        sockets.applyPushApps(apps, device_id);
+                        // sockets.applyPushApps(apps, device_id);
                         data = {
                             status: true,
                             noOfApps: noOfApps,
@@ -849,7 +850,7 @@ exports.applyBulkPullApps = async function (req, res) {
                             msg: await helpers.convertToLang(req.translation[MsgConstants.APPS_ARE_BEING_PULLED], "Apps are Being pulled"),
                             content: ""
                         };
-                        sockets.getPullApps(apps, device_id);
+                        // sockets.getPullApps(apps, device_id);
                     } else {
                         data = {
                             status: true,

@@ -1,14 +1,14 @@
 // libraries
-// var express = require('express');
-// var router = express.Router();
-var md5 = require('md5');
-var empty = require('is-empty');
 var datetime = require('node-datetime');
 var cron = require('node-cron');
 
-// helpers
+// custom libraries
 const { sql } = require('../config/database');
+const sockets = require('../routes/sockets');
+
+// helpers
 const device_helpers = require('../helper/device_helpers.js');
+const socket_helpers = require('../helper/socket_helper');
 
 /** Cron for device expiry date **/
 cron.schedule('0 0 0 * * *', async () => {
@@ -30,7 +30,7 @@ cron.schedule('0 0 0 * * *', async () => {
                 } else {
                     try {
                         console.log('expired');
-                        require("../routes/sockets").sendDeviceStatus(dvcID, "expired", true);
+                        socket_helpers.sendDeviceStatus(sockets.baseIo, dvcID, "expired", true);
                     } catch (error) {
                         console.log(error);
                     }

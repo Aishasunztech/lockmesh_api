@@ -732,10 +732,7 @@ module.exports = {
 	},
 	getAPKLabelScript: async function (filePath) {
 		try {
-			let label =
-				"aapt dump badging " +
-				filePath +
-				' | grep "application" | sed -e "s/.*label=\'//" -e "s/\' .*//"';
+			let label = `aapt dump badging ${filePath} | grep "application" | sed -e "s/.*label=\'//" -e "s/\' .*//"`;
 			const { stdout, stderr, error } = await exec(label);
 			// console.log('stdout:', stdout);
 			// console.log('stderr:', stderr);
@@ -750,7 +747,7 @@ module.exports = {
 				let array = stdout.split(/\r?\n/);
 				console.log("stdout linux: ", array);
 				let label = array[0].split(":");
-
+				
 				return label[1] ? label[1].replace(/\'/g, "") : false;
 			}
 			return false;
@@ -1145,7 +1142,6 @@ module.exports = {
 		controls.forEach(control => {
 			control.setting_status = (control.setting_status) ? true : false;
 		})
-		console.log('controls', controls);
 		// copy refactored
 		policy[0].app_list = JSON.stringify(appList);
 		policy[0].permissions = JSON.stringify(permissions);

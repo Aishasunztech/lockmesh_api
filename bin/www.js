@@ -15,8 +15,15 @@ var events = require('../crons/db_events');
  */
 var server = http.createServer(app);
 
-// app.io.attach(server);
-let io = require("../routes/sockets").listen(server);
+// io.attach(server, {
+//     // pingInterval: 60000,
+//     // pingTimeout: 120000,
+//     // cookie: false
+// });
+
+// we can have multiple instances based on path in sockets file
+app.io.attach(server);
+require("../routes/sockets").baseSocket(app.io);
 
 
 /**

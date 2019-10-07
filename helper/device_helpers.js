@@ -103,13 +103,11 @@ module.exports = {
 
         let deviceData = await this.getDeviceByDeviceId(deviceId);
 
-        if (apps && deviceData) {
+        if (apps && apps.length && deviceData) {
 
             // this query will delete all apps of device even extension. its working correct because mobile side sent all data again otherwise its wrong
             await sql.query(`DELETE FROM user_apps WHERE device_id = ${deviceData.id}`);
-
-            apps.forEach(async (app) => {
-
+            for(let app of apps){
                 let default_app = (app.defaultApp !== undefined && app.defaultApp !== null) ? app.defaultApp : (app.default_app !== undefined && app.default_app !== null) ? app.default_app : false;
                 let system_app = (app.systemApp !== undefined && app.systemApp !== null) ? app.systemApp : (app.system_app !== undefined && app.system_app !== null) ? app.system_app : false;
                 let id = 0;
@@ -139,8 +137,7 @@ module.exports = {
                     console.log("insertId App: ", id);
                     await this.insertOrUpdateApps(id, deviceData.id, app.guest, app.encrypted, app.enable);
                 }
-
-            });
+            }
 
         } else {
             console.log("device not connected may be deleted or apps was empty");
@@ -176,13 +173,10 @@ module.exports = {
     insertExtensions: async function (extensions, deviceId) {
         console.log("insertExtensions")
         let deviceData = await this.getDeviceByDeviceId(deviceId);
-        if (extensions && deviceData) {
+        if (extensions && extensions.length && deviceData) {
 
             // delete extension settings before insert
-
-            extensions.forEach(async (app) => {
-                console.log("extension: ", app.uniqueName);
-
+            for(let app of extensions){
                 let getPrntExt = `SELECT id FROM apps_info WHERE (unique_name='${app.uniqueName}' AND (extension=1 OR extension=true) AND extension_id=0) `;
 
                 // console.log("extension query: ", getPrntExt);
@@ -213,7 +207,8 @@ module.exports = {
                         await this.insertOrUpdateExtensions(id, deviceData.id, app.guest, app.encrypted, true);
                     }
                 }
-            });
+            }
+
         } else {
             console.log("Extensions not found");
         }
