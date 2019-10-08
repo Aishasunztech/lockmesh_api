@@ -176,7 +176,7 @@ exports.savePrices = async function (req, res) {
                                     if (result) {
                                         // console.log('outerKey', outerKey)
                                         if (!result.affectedRows) {
-                                            let insertQuery = "INSERT INTO prices (price_for, unit_price, price_term, price_expiry, dealer_id) VALUES('" + outerKey + "', '" + innerObject[f_key] + "', '" + unit_price + "', '" + days + "', '" + dealer_id + "')";
+                                            let insertQuery = "INSERT INTO prices (price_for, unit_price, price_term, price_expiry, dealer_id , dealer_type) VALUES('" + outerKey + "', '" + innerObject[f_key] + "', '" + unit_price + "', '" + days + "', '" + dealer_id + "' , '" + verify.user.user_type + "')";
                                             // console.log('Billing query', insertQuery)
                                             let rslt = await sql.query(insertQuery);
                                             if (rslt) {
@@ -184,7 +184,6 @@ exports.savePrices = async function (req, res) {
                                                     error++;
                                                 }
                                             }
-                                            // console.log(rslt, 'inner rslt')
                                         }
                                     }
                                 })
@@ -726,7 +725,7 @@ exports.getPackages = async function (req, res) {
         if (dealer_id) {
             let selectQuery = '';
             if (verify.user.user_type === ADMIN) {
-                selectQuery = "SELECT * FROM packages WHERE delete_status != 1 OR  delete_status IS NULL  AND (dealer_id='" + dealer_id + "' OR dealer_type = 'super_admin')";
+                selectQuery = "SELECT * FROM packages WHERE (delete_status != 1 OR  delete_status IS NULL)  AND (dealer_id='" + dealer_id + "' OR dealer_type = 'super_admin')";
             }
             else if (verify.user.user_type === DEALER) {
                 selectQuery = "select dealer_packages_prices.price as pkg_price ,  packages.* from dealer_packages_prices join packages on packages.id = dealer_packages_prices.package_id where dealer_packages_prices.dealer_id = '" + dealer_id + "' OR  dealer_packages_prices.created_by = 'admin' AND packages.delete_status != 1";
