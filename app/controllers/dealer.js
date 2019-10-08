@@ -256,7 +256,8 @@ exports.getDealers = async function (req, res) {
                         created: results[i].created,
                         modified: results[i].modified,
                         connected_devices: get_connected_devices,
-                        devicesList: await general_helpers.getAllRecordByDealerID(results[i].dealer_id)
+                        devicesList: await general_helpers.getAllRecordByDealerID(results[i].dealer_id),
+                        dealer_token: 'N/A'
                     };
 
                     if (get_parent_dealer != undefined && get_parent_dealer.length > 0) {
@@ -390,6 +391,7 @@ exports.addDealer = async function (req, res) {
                             dealer[0].connected_devices = [{ total: '0' }];
 
                             dealer[0].devicesList = [];
+                            dealer[0].dealer_token = 'N/A';
 
                             if (pageType == constants.SDEALER && (sdealerDealerId != undefined && !empty(sdealerDealerId) && sdealerDealerId != null && sdealerDealerId != 0)) {
                                 let prnt_dealer = await general_helpers.getDealerByDealerId(sdealerDealerId);
