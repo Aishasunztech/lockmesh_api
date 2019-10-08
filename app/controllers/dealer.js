@@ -256,7 +256,8 @@ exports.getDealers = async function (req, res) {
                         created: results[i].created,
                         modified: results[i].modified,
                         connected_devices: get_connected_devices,
-                        devicesList: await general_helpers.getAllRecordByDealerID(results[i].dealer_id)
+                        devicesList: await general_helpers.getAllRecordByDealerID(results[i].dealer_id),
+                        dealer_token: 'N/A'
                     };
 
                     if (get_parent_dealer != undefined && get_parent_dealer.length > 0) {
