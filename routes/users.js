@@ -1037,6 +1037,9 @@ router.get("/get_imei_history/:device_id", deviceController.getIMEI_History);
 /*Get All users */
 router.get("/userList", userController.getAllUsers);
 
+//GET User List against device dealer
+router.post("/userListOfDevice", userController.getDealerUsers);
+
 /*Transfer Apps to secure market */
 router.post("/transferApps", appController.trasnferApps);
 

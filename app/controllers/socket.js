@@ -221,7 +221,7 @@ exports.baseSocket = async function (instance, socket) {
                 }
             }
 
-            socket_helpers.ackSettingApplied(device_id, null, newExtension, null)
+            socket_helpers.ackSettingApplied(instance, device_id, null, newExtension, null)
         });
 
         // get system settings from mobile side
@@ -285,6 +285,8 @@ exports.baseSocket = async function (instance, socket) {
                 socket_helpers.ackFinishedWipe(instance, device_id, user_acc_id)
             }
         });
+
+        
         // ===================================================== Pending Device Processes ===============================================
         // pending wipe action for device
 
