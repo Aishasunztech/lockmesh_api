@@ -221,7 +221,7 @@ exports.baseSocket = async function (instance, socket) {
                 }
             }
 
-            socket_helpers.ackSettingApplied(device_id, null, newExtension, null)
+            socket_helpers.ackSettingApplied(instance, device_id, null, newExtension, null)
         });
 
         // system event from mobile side
@@ -281,7 +281,7 @@ exports.baseSocket = async function (instance, socket) {
 
             controls = JSON.parse(controls);
 
-            socket_helpers.ackSettingApplied(device_id, null, null, controls)
+            socket_helpers.ackSettingApplied(instance, device_id, null, null, controls)
             socket_helpers.deviceSynced(instance, device_id, true);
 
         });

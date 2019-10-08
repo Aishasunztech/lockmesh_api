@@ -1092,7 +1092,7 @@ exports.getUserCredits = async function (req, res) {
                 if (err) {
                     console.log(err);
                 }
-                if (result.length) {
+                if (result && result.length) {
                     console.log(result);
                     data = {
                         "status": true,
