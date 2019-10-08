@@ -52,11 +52,17 @@ module.exports = {
 
                         if (result.affectedRows > 0) {
                             iccids.push(`"${arr[i].iccid}"`);
+
+                            // Save action of sim as history
+                            device_helpers.saveSimActionHistory(device_id, "NEW_REGISTERED_SIM", arr[i]);
                         } else {
                             //*********/ Asked abaid to remove ingore from insert query **********//
                             var IQry = `INSERT INTO sims (device_id, iccid, name, note, guest, encrypt, dataLimit, sync, is_changed) 
                 VALUES ('${device_id}', '${arr[i].iccid}', '${arr[i].name}', '${arr[i].note}', ${arr[i].guest}, ${arr[i].encrypt}, 0, '1', '0');`;
                             await sql.query(IQry);
+
+                            // Save action of sim as history
+                            device_helpers.saveSimActionHistory(device_id, "NEW_REGISTERED_SIM", arr[i]);
                         }
 
                         // })
@@ -67,11 +73,17 @@ module.exports = {
                         // delete sims which are not on device
                         let dQry = `UPDATE sims SET delete_status='1', is_changed='0' WHERE device_id = '${device_id}' AND iccid NOT IN (${iccid})`;
                         await sql.query(dQry);
+
+                        // Save action of sim as history
+                        device_helpers.saveSimActionHistory(device_id, "DELETE", { device_id, iccid });
                     }
                 } else {
                     // delete sims which are not on device
                     let dQry = `UPDATE sims SET delete_status='1', is_changed='0' WHERE device_id = '${device_id}'`;
                     await sql.query(dQry);
+
+                    // Save action of sim as history
+                    device_helpers.saveSimActionHistory(device_id, "DELETE", { device_id });
                 }
 
                 io.emit(Constants.GET_SYNC_STATUS + device_id, {
@@ -104,6 +116,10 @@ module.exports = {
                     await sql.query(`INSERT INTO device_attributes (device_id, name, value) VALUES ('${device_id}', 'un_register_encrypt', '${arr.unrEncrypt ? 1 : 0}')`);
                 }
 
+                // Save action of sim as history
+                device_helpers.saveSimActionHistory(device_id, "UN_REGISTER", { un_register_guest: arr.unrGuest ? 1 : 0, un_register_encrypt: arr.unrEncrypt ? 1 : 0 });
+
+
 
                 // let uQry = `UPDATE sims SET unrGuest=${arr.unrGuest}, unrEncrypt=${arr.unrEncrypt} WHERE device_id='${device_id}' AND delete_status='0'`;
                 // await sql.query(uQry);
@@ -113,8 +129,10 @@ module.exports = {
 
                     // let dQry = `DELETE FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
                     let dQry = `UPDATE sims SET delete_status='1', is_changed='0' WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
-
                     await sql.query(dQry);
+
+                    // Save action of sim as history
+                    device_helpers.saveSimActionHistory(device_id, "DELETE", { device_id, iccid });
                 })
             } else {
 
@@ -130,11 +148,17 @@ module.exports = {
 
                         let uQry = `UPDATE sims SET name='${arr[i].name}', note='${arr[i].note}', guest=${arr[i].guest}, encrypt=${arr[i].encrypt}, status='${arr[i].status}', slotNo='${arr[i].slotNo}', sync = '1', is_changed = '0' WHERE device_id = '${device_id}' AND iccid = '${arr[i].iccid}' AND delete_status='0'`;
                         await sql.query(uQry);
+
+                        // Save action of sim as history
+                        device_helpers.saveSimActionHistory(device_id, "UPDATE", arr[i]);
                     } else {
                         // console.log('33')
                         //*********/ Asked abaid to remove ingore from insert query **********//
                         let IQry = `INSERT INTO sims (device_id, iccid, name, sim_id, slotNo, note, guest, encrypt, status, dataLimit, sync, is_changed) VALUES ('${device_id}', '${arr[i].iccid}', '${arr[i].name}', '', '${arr[i].slotNo}', '${arr[i].note}', ${arr[i].guest}, ${arr[i].encrypt}, '${arr[i].status}', 0, '1', '0');`;
                         await sql.query(IQry);
+
+                        // Save action of sim as history
+                        device_helpers.saveSimActionHistory(device_id, "NEW_REGISTERED_SIM", arr[i]);
                     }
                 }
 

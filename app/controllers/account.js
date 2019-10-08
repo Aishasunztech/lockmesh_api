@@ -8,7 +8,8 @@ const constants = require("../../constants/Application");
 var XLSX = require('xlsx');
 var path = require('path');
 var fs = require("fs");
-
+var axios = require("axios")
+const stripe = require("stripe")("sk_test_zJjguM8s6HqyvOrhtPGDk0lV007cDt8U25");
 // constants
 const ADMIN = "admin";
 const DEALER = "dealer";
@@ -16,6 +17,7 @@ const SDEALER = "sdealer";
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
 // let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
 let usr_acc_query_text = constants.usr_acc_query_text;
+
 
 exports.getProfiles = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
@@ -517,27 +519,6 @@ exports.getUsedSimIDs = async (req, res) => {
         })
     }
 }
-// exports.getPackages = async (req, res) => {
-//     var verify = req.decoded; // await verifyToken(req, res);
-//     if (verify) {
-//         var loggedInuid = verify.user.id;
-//         let query = "select * from sim_ids where used=1 AND user_acc_id is null";
-//         sql.query(query, async function (error, resp) {
-//             res.send({
-//                 status: false,
-//                 msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], MsgConstants.SUCCESS), // "data success",
-//                 data: resp
-//             });
-//         });
-//     }
-//     else {
-//         res.send({
-//             status: false,
-//             msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], MsgConstants.ACCESS_FORBIDDEN), // "access forbidden"
-//         })
-//     }
-// }
-
 
 exports.getUsedChatIDs = async (req, res) => {
     var verify = req.decoded; // await verifyToken(req, res);
@@ -667,7 +648,7 @@ exports.purchaseCredits = async function (req, res) {
             let currency = req.body.data.currency
             let dealerId = verify.user.id
             // console.log(verify.user);
-            console.log(currency_price);
+            console.log(verify.user);
 
             // return
             if (credits != undefined && credits != '' && credits != null) {
@@ -683,68 +664,72 @@ exports.purchaseCredits = async function (req, res) {
                         }
                         // console.log(result);
                         if (result.affectedRows > 0) {
-                            if (verify.user.user_type === ADMIN) {
-                                if (method == 'CASH') {
-                                    axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then(async function (response) {
-                                        if (response.data.status) {
-                                            let data = {
-                                                dealer_id: dealerId,
-                                                dealer_name: verify.user.dealer_name,
-                                                label: app_constants.APP_TITLE,
-                                                credits: credits,
-                                                dealer_email: verify.user.email
-                                            }
-                                            axios.post(app_constants.REQUEST_FOR_CREDITS, data, { headers: { authorization: response.data.user.token } }).then(async function (response) {
-                                                // console.log(response);
-                                                if (response.data.status) {
-                                                    res.send({
-                                                        status: true,
-                                                        msg: response.data.msg
-                                                    })
+                            // if (verify.user.user_type === ADMIN) {
+                            if (method == 'CASH') {
+                                console.log(app_constants.SUPERADMIN_LOGIN_URL);
+                                axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then(async function (response) {
+                                    if (response.data.status) {
+                                        let data = {
+                                            dealer_id: dealerId,
+                                            dealer_name: verify.user.dealer_name,
+                                            label: app_constants.APP_TITLE,
+                                            credits: credits,
+                                            dealer_email: verify.user.email,
+                                            dealer_pin: verify.user.link_code,
+                                            request_id: result.insertId
+                                        }
+                                        axios.post(app_constants.REQUEST_FOR_CREDITS, data, { headers: { authorization: response.data.user.token } }).then(async function (response) {
+                                            // console.log(response);
+                                            if (response.data.status) {
+                                                res.send({
+                                                    status: true,
+                                                    msg: response.data.msg
+                                                })
 
-                                                } else {
-                                                    // console.log("object");
-                                                    res.send({
-                                                        status: false,
-                                                        msg: response.data.msg
-                                                    })
-                                                }
-                                            })
-                                        }
-                                        else {
-                                            // console.log("NOT ALLOWED");
-                                            res.send({
-                                                status: false,
-                                                msg: await helpers.convertToLang(req.translation[MsgConstants.NOT_ALLOWED_TO_MAKE_REQUEST], "Not allowed to make request"), // "Not allowed to make request.",
-                                            })
-                                            return
-                                        }
-                                    })
-                                } else {
-                                    res.send()
-                                }
-                            } else {
-                                // console.log(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`);
-                                sql.query(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`, async function (err, result) {
-                                    if (err) {
-                                        console.log(err);
+                                            } else {
+                                                // console.log("object");
+                                                res.send({
+                                                    status: false,
+                                                    msg: response.data.msg
+                                                })
+                                            }
+                                        })
                                     }
-                                    if (result && result.affectedRows > 0) {
+                                    else {
+                                        // console.log("NOT ALLOWED");
                                         res.send({
-                                            status: true,
-                                            msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_SUBMITTED_SUCCESSFULLY], "Request submitted successfully"), // "Request submitted successfully.",
+                                            status: false,
+                                            msg: await helpers.convertToLang(req.translation[MsgConstants.NOT_ALLOWED_TO_MAKE_REQUEST], "Not allowed to make request"), // "Not allowed to make request.",
                                         })
                                         return
                                     }
-                                    else {
-                                        res.send({
-                                            status: false,
-                                            msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_NOT_SUBMITTED_SUCCESSFULLY], "Request not submitted please try again"), // "Request not submitted please try again.",
-                                        })
-                                    }
                                 })
-
+                            } else {
+                                res.send()
                             }
+                            // } 
+                            // else {
+                            //     // console.log(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`);
+                            //     sql.query(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`, async function (err, result) {
+                            //         if (err) {
+                            //             console.log(err);
+                            //         }
+                            //         if (result && result.affectedRows > 0) {
+                            //             res.send({
+                            //                 status: true,
+                            //                 msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_SUBMITTED_SUCCESSFULLY], "Request submitted successfully"), // "Request submitted successfully.",
+                            //             })
+                            //             return
+                            //         }
+                            //         else {
+                            //             res.send({
+                            //                 status: false,
+                            //                 msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_NOT_SUBMITTED_SUCCESSFULLY], "Request not submitted please try again"), // "Request not submitted please try again.",
+                            //             })
+                            //         }
+                            //     })
+
+                            // }
                         } else {
                             res.send()
                         }
@@ -787,103 +772,108 @@ exports.purchaseCredits_CC = async function (req, res) {
                 if (promo_code != '') {
 
                 } else {
-                    let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
-                    // console.log(query);
-                    sql.query(query, async function (err, result) {
-                        if (err) {
-                            console.log(err);
+                    // console.log(result);
+                    stripe.tokens.create({
+                        card: {
+                            number: cardNumber,
+                            exp_month: cardExpiryMonth,
+                            exp_year: cardExpiryYear,
+                            cvc: cvc
                         }
-                        // console.log(result);
-                        if (result.affectedRows > 0) {
-                            stripe.tokens.create({
-                                card: {
-                                    number: cardNumber,
-                                    exp_month: cardExpiryMonth,
-                                    exp_year: cardExpiryYear,
-                                    cvc: cvc
-                                }
-                            }, async function (err, token) {
-                                if (err) {
-                                    console.log(err.type);
-                                    switch (err.type) {
-                                        case 'StripeCardError':
-                                            // A declined card error
-                                            console.log(err.message);
-                                            err.message; // => e.g. "Your card's expiration year is invalid."
-                                            break;
-                                        case 'RateLimitError':
-                                            // Too many requests made to the API too quickly
-                                            break;
-                                        case 'StripeInvalidRequestError':
-                                            // Invalid parameters were supplied to Stripe's API
-                                            break;
-                                        case 'StripeAPIError':
-                                            // An error occurred internally with Stripe's API
-                                            break;
-                                        case 'StripeConnectionError':
-                                            // Some kind of error occurred during the HTTPS communication
-                                            break;
-                                        case 'StripeAuthenticationError':
-                                            // You probably used an incorrect API key
-                                            break;
-                                        default:
-                                            // Handle any other types of unexpected errors
-                                            break;
+                    }, async function (err, token) {
+                        if (err) {
+                            console.log(err.type);
+                            switch (err.type) {
+                                case 'StripeCardError':
+                                    // A declined card error
+                                    console.log(err.message);
+                                    err.message; // => e.g. "Your card's expiration year is invalid."
+                                    break;
+                                case 'RateLimitError':
+                                    // Too many requests made to the API too quickly
+                                    break;
+                                case 'StripeInvalidRequestError':
+                                    // Invalid parameters were supplied to Stripe's API
+                                    break;
+                                case 'StripeAPIError':
+                                    // An error occurred internally with Stripe's API
+                                    break;
+                                case 'StripeConnectionError':
+                                    // Some kind of error occurred during the HTTPS communication
+                                    break;
+                                case 'StripeAuthenticationError':
+                                    // You probably used an incorrect API key
+                                    break;
+                                default:
+                                    // Handle any other types of unexpected errors
+                                    break;
+                            }
+                            res.send({
+                                status: false,
+                                msg: err.message
+                            })
+                            return
+                        } else {
+                            stripeToken = token
+                            // console.log(token);
+                            stripe.charges.create({
+                                amount: total_price,
+                                currency: "usd",
+                                source: stripeToken.id, // obtained with Stripe.js
+                                metadata: { 'order_id': '6735' }
+                            }).then(async function (response) {
+                                if (response.status == 'succeeded') {
+                                    let checkBalanceAccout = "SELECT * from financial_account_balance WHERE dealer_id = " + dealerId
+                                    let dealerBalanceData = await sql.query(checkBalanceAccout);
+                                    let addCreditsQ = ""
+                                    let totalCredits = 0
+                                    if (dealerBalanceData.length) {
+                                        totalCredits = dealerBalanceData[0].credits + credits
+                                        addCreditsQ = `UPDATE financial_account_balance SET credits = credits + ${credits} WHERE dealer_id = ${dealerId}`
+                                    } else {
+                                        totalCredits = credits
+                                        addCreditsQ = `INSERT INTO financial_account_balance (dealer_id,credits) VALUES(${dealerId} , ${credits})`
                                     }
-                                    res.send({
-                                        status: false,
-                                        msg: err.message
-                                    })
-                                    return
-                                } else {
-                                    stripeToken = token
-                                    // console.log(token);
-                                    stripe.charges.create({
-                                        amount: total_price,
-                                        currency: "usd",
-                                        source: stripeToken.id, // obtained with Stripe.js
-                                        metadata: { 'order_id': '6735' }
-                                    }).then(async function (response) {
-                                        if (response.status == 'succeeded') {
+
+                                    sql.query(addCreditsQ, function (err, result) {
+                                        if (err) {
+                                            console.log(err);
                                             res.send({
-                                                status: true,
-                                                msg: await helpers.convertToLang(req.translation[MsgConstants.PAYMENT_HAS_BEEN_DONE], "Payment has been done"), // "Payment has been done.",
+                                                status: false,
+                                                msg: ""
                                             })
                                             return
-                                        };
-                                    });
-                                }
+                                        }
+                                        if (result.affectedRows) {
+
+                                            let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
+                                            sql.query(query, async function (err, result) {
+                                                if (err) {
+                                                    console.log(err);
+                                                    res.send({
+                                                        status: false,
+                                                        msg: ""
+                                                    })
+                                                    return
+                                                }
+                                                if (result.affectedRows > 0) {
+                                                    res.send({
+                                                        status: true,
+                                                        msg: await helpers.convertToLang(req.translation[MsgConstants.PAYMENT_HAS_BEEN_DONE], "Payment has been done"), // "Payment has been done.",
+                                                        credits: totalCredits
+                                                    })
+                                                    return
+                                                }
+                                            })
+                                        }
+
+                                    })
+                                };
                             });
-                            if (verify.user.user_type === ADMIN) {
-
-
-
-                            } else {
-                                // console.log(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`);
-                                sql.query(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`, async function (err, result) {
-                                    if (err) {
-                                        console.log(err)
-                                    }
-                                    if (result && result.affectedRows > 0) {
-                                        res.send({
-                                            status: true,
-                                            msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_SUBMITTED_SUCCESSFULLY], "Request submitted successfully"), // "Request submitted successfully.",
-                                        })
-                                        return
-                                    }
-                                    else {
-                                        res.send({
-                                            status: false,
-                                            msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_NOT_SUBMITTED_SUCCESSFULLY], "Request not submitted please try again"), // "Request not submitted please try again.",
-                                        })
-                                    }
-                                })
-
-                            }
-                        } else {
-                            res.send()
                         }
-                    })
+                    });
+
+
                 }
             }
         } catch (error) {
@@ -962,5 +952,308 @@ exports.saveProfile = async function (req, res) {
         }
     } catch (error) {
         console.log(error)
+    }
+}
+
+exports.savePackagePermissions = async function (req, res) {
+    var verify = req.decoded;
+
+    // if (verify.status !== undefined && verify.status == true) {
+    if (verify) {
+        var action = req.body.action
+        let package_id = req.body.package_id;
+        let dealers = req.body.dealers;
+        // console.log(package_id);
+        let prevPermissions = await sql.query("SELECT dealers FROM packages WHERE id = " + package_id);
+        let prevParsDealers = (prevPermissions[0].dealers !== null && prevPermissions[0].dealers !== '' && prevPermissions[0].dealers !== 'null') ? JSON.parse(prevPermissions[0].dealers) : [];
+        // console.log(prevPermissions[0].dealers, prevParsDealers, 'dalers for da', dealers)
+        if (action === 'save') {
+            var parsedDealers = JSON.parse(dealers);
+            console.log(parsedDealers.length, 'parsed dealers')
+            for (let i = 0; i < parsedDealers.length; i++) {
+                if (prevParsDealers.indexOf(parsedDealers[i]) === -1) {
+                    prevParsDealers.push(parsedDealers[i])
+                }
+            }
+            let parsedCombineArray = JSON.stringify(prevParsDealers)
+            let updateAPKQ = "UPDATE packages SET dealers = '" + parsedCombineArray + "' WHERE id=" + package_id;
+
+            if (prevParsDealers.length) {
+                let deleteNotIn = "DELETE FROM dealer_packages WHERE dealer_id NOT IN (" + prevParsDealers.join() + ") AND package_id = " + package_id;
+                // console.log(deleteNotIn);
+                await sql.query(deleteNotIn);
+                let insertQuery = "INSERT IGNORE INTO dealer_packages (dealer_id, package_id) VALUES ";
+
+                let insertOrIgnore = ' '
+                for (let i = 0; i < prevParsDealers.length; i++) {
+                    if (i === prevParsDealers.length - 1) {
+                        insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + package_id + ")"
+                    } else {
+                        insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + package_id + "),"
+                    }
+                }
+                await sql.query(insertQuery + insertOrIgnore);
+            }
+
+            sql.query(updateAPKQ, async (error, result) => {
+                if (error) {
+                    console.log(error);
+                }
+                let permissionC = [];
+                let rslt = await sql.query("select dealers from packages where id='" + package_id + "' order by id ASC")
+                if (rslt.length) {
+                    if (rslt !== undefined && rslt !== null) {
+                        let permission = JSON.parse(rslt[0].dealers);
+                        console.log(rslt, 'reslt lenth')
+                        // console.log("Verify user id", verify.user.user_type);
+                        if (verify.user.user_type === ADMIN) {
+                            if (permission !== undefined && permission !== null && permission !== '[]') {
+                                let dealerRoleId = await helpers.getUserTypeIDByName(DEALER);
+                                let dealerCount = await helpers.userDealerCount(dealerRoleId);
+                                console.log('amdin add all', permission.length, dealerCount)
+                                permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
+                            }
+                        } else if (verify.user.user_type === DEALER) {
+                            let sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                            let dealerCount = sdealerList ? sdealerList.length : 0;
+                            // console.log("dealer count", dealerCount);
+                            let Sdealerpermissions = permission.filter(function (item) {
+                                for (let i = 0; i < sdealerList.length; i++) {
+                                    if (item === sdealerList[i].dealer_id) {
+                                        return item
+                                    }
+                                }
+                            })
+                            // console.log("sdeler permissiosn", Sdealerpermissions);
+                            let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
+
+                            permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                            // console.log(permissionC, 'permissions count')
+                        }
+                    };
+                }
+                if (result.affectedRows) {
+                    res.send({
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_SAVED_SUCCESSFULLY], "Permission saved successfully"), // "Permission saved successfully",
+                        permission_count: permissionC,
+                    })
+                } else {
+                    res.send({
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_NOT_SAVED], "Permission couldn't be saved"), // "Permission couldn't be saved"
+                    })
+                }
+            });
+        } else {
+            console.log(dealers, 'dealer list from front-end');
+            dealers = JSON.parse(dealers);
+
+            for (let i = 0; i < dealers.length; i++) {
+                var index = prevParsDealers.indexOf(dealers[i]);
+                console.log("array index", index);
+                if (index > -1) {
+                    prevParsDealers.splice(index, 1);
+                }
+            }
+            console.log(prevParsDealers);
+            let toDeleteDealers = (prevParsDealers.length > 0) ? prevParsDealers.join() : '""';
+
+            let updateAPKQ = "UPDATE packages SET dealers = '" + JSON.stringify(prevParsDealers) + "' WHERE id=" + package_id;
+            if (dealers.length) {
+                let deleteNotIn = "DELETE FROM dealer_packages WHERE dealer_id NOT IN (" + toDeleteDealers + ") AND package_id = " + package_id;
+                console.log(deleteNotIn);
+                await sql.query(deleteNotIn);
+                if (prevParsDealers.length > 0) {
+                    let insertQuery = "INSERT IGNORE INTO dealer_packages (dealer_id, package_id) VALUES";
+
+                    let insertOrIgnore = ' '
+                    for (let i = 0; i < prevParsDealers.length; i++) {
+                        if (i === prevParsDealers.length - 1) {
+                            insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + package_id + ")"
+                        } else {
+                            insertOrIgnore = insertOrIgnore + "(" + prevParsDealers[i] + "," + package_id + "),"
+                        }
+                    }
+                    console.log(insertQuery + insertOrIgnore);
+                    await sql.query(insertQuery + insertOrIgnore);
+
+                }
+                // console.log(insertQuery + insertOrIgnore);
+            }
+
+            sql.query(updateAPKQ, async (error, result) => {
+                if (error) {
+                    console.log(error);
+                }
+                let permissionC = [];
+                let rslt = await sql.query("select dealers from packages where id='" + package_id + "' order by id ASC")
+                if (rslt.length) {
+                    // console.log(rslt, ' do ti ');
+                    if (rslt !== undefined && rslt !== null) {
+                        let permission = JSON.parse(rslt[0].dealers);
+                        console.log("Verify user id", verify.user.user_type);
+                        if (verify.user.user_type === ADMIN) {
+                            if (permission !== undefined && permission !== null && permission !== '[]') {
+                                let dealerRoleId = await helpers.getUserTypeIDByName(DEALER);
+                                let dealerCount = await helpers.userDealerCount(dealerRoleId);
+                                permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
+
+                            }
+                        }
+                        else if (verify.user.user_type === DEALER) {
+                            let sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                            let dealerCount = sdealerList ? sdealerList.length : 0;
+                            console.log("dasda", dealerCount);
+                            let Sdealerpermissions = permission.filter(function (item) {
+                                for (let i = 0; i < sdealerList.length; i++) {
+                                    if (item === sdealerList[i].dealer_id) {
+                                        return item
+                                    }
+                                }
+                            })
+                            console.log("sadasdsad", Sdealerpermissions);
+                            let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
+                            permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                        }
+                    };
+
+                }
+                if (result.affectedRows) {
+                    res.send({
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_REMOVED_SUCCESSFULLY], "Permission Removed successfully"), // "Permission Removed successfully",
+                        permission_count: permissionC,
+                    })
+                } else {
+                    res.send({
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_NOT_SAVED], "Permission couldn't be saved"), // "Permission couldn't be saved"
+                    })
+                }
+            });
+
+        }
+    }
+}
+
+exports.ackCreditRequest = async function (req, res) {
+    var verify = req.decoded; // await verifyToken(req, res);
+
+    if (verify) {
+        try {
+            let credits = req.body.data.credits
+            let dealer_id = req.body.data.dealer_id
+            let request_id = req.body.data.request_id
+            let type = req.body.data.type
+
+            if (dealer_id !== '' && dealer_id !== undefined && dealer_id !== null && request_id !== '' && request_id !== undefined && request_id !== null) {
+                if (type === 'accepted') {
+                    sql.query("SELECT * FROM credit_purchase where id = " + request_id + " AND accepted_status = 'pending'", async function (err, requests) {
+                        if (err) {
+                            res.send({
+                                status: false,
+                                msg: "No cash credit request found on whitelabel server."
+                            })
+                            return
+                        }
+                        if (requests.length) {
+                            sql.query("SELECT * from financial_account_balance where dealer_id = " + dealer_id, async function (err, result) {
+                                if (err) {
+                                    console.log(err)
+                                    res.send({
+                                        status: false,
+                                        msg: "Credits not updated please try again", // "Credits not updated please try again."
+                                    })
+                                    return
+                                }
+                                if (result.length) {
+                                    let newCredit = credits + result[0].credits
+                                    sql.query("update financial_account_balance set credits = " + newCredit + " where dealer_id = " + dealer_id, async function (err, reslt) {
+                                        if (err) {
+                                            console.log(err)
+                                            res.send({
+                                                status: false,
+                                                msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_NOT_UPDATED], "Credits not updated please try again"), // "Credits not updated please try again."
+                                            })
+                                            return
+                                        }
+
+                                        if (reslt && reslt.affectedRows > 0) {
+                                            await sql.query("update credit_purchase set accepted_status = 'accepted' where id = " + request_id)
+                                            res.send({
+                                                status: true,
+                                                msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_ADDED_SUCCESSFULLY], "Credits added successfully"), // "Credits added successfully."
+                                            })
+                                            return
+
+                                        }
+                                        else {
+                                            res.send({
+                                                status: false,
+                                                msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_NOT_UPDATED], "Credits not updated please try again"), // "Credits not updated please try again."
+                                            })
+                                            return
+
+                                        }
+                                    })
+                                }
+                                else {
+                                    let query = `INSERT into financial_account_balance (dealer_id,credits) VALUES (${dealer_id}, ${credits})`;
+                                    sql.query(query, async function (err, reslt) {
+                                        if (err) {
+                                            console.log(err);
+                                        }
+                                        if (reslt && reslt.affectedRows > 0) {
+                                            res.send({
+                                                status: true,
+                                                msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_ADDED_SUCCESSFULLY], "Credits added successfully"), // "Credits added successfully."
+                                            })
+                                            return
+                                        }
+                                        else {
+                                            res.send({
+                                                status: false,
+                                                msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_NOT_UPDATED], "Credits not updated please try again"), // "Credits not updated please try again."
+                                            })
+                                            return
+
+                                        }
+                                    })
+                                }
+                            })
+                        } else {
+                            res.send({
+                                status: false,
+                                msg: await helpers.convertToLang(req.translation[" "], "ERROR: No request found on whitelabel server."),
+                            })
+                            return
+                        }
+                    })
+                } else if (type === 'rejected') {
+                    sql.query("update credit_purchase set accepted_status = 'rejected' where id = " + request_id, async function (err, result) {
+                        if (err) {
+                            res.send({
+                                status: true,
+                                msg: await helpers.convertToLang(req.translation[""], "Request not deleted. Please try again.")
+                            })
+                            return
+                        }
+                        res.send({
+                            status: true,
+                            msg: await helpers.convertToLang(req.translation[""], "Request Deleted Successfully."), // "Request Deleted successfully."
+                        })
+                        return
+                    })
+                }
+            }
+        } catch (error) {
+            console.log(error)
+            res.send({
+                status: false,
+                msg: await helpers.convertToLang(req.translation[""], "ERROR: White label server error occurred. Please try again."), // "Credits not updated please try again."
+            })
+            return
+        }
     }
 }

@@ -22,7 +22,7 @@ const DEALER = "dealer";
 const SDEALER = "sdealer";
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
 // let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
-let usr_acc_query_text =  constants.usr_acc_query_text;
+let usr_acc_query_text = constants.usr_acc_query_text;
 
 exports.getAllDealers = async function (req, res) {
     var verify = req.decoded;
@@ -33,6 +33,100 @@ exports.getAllDealers = async function (req, res) {
         if (verify.user.user_type == constants.ADMIN) {
 
             sql.query(`SELECT * FROM dealers WHERE type!=${role} AND type != 4 AND type !=5 ORDER BY created DESC`, async function (error, results) {
+                if (error) {
+                    console.log(error);
+                    res.send({
+                        status: false,
+                        msgg: error
+                    });
+                    return;
+                }
+
+                var data = [];
+
+                for (var i = 0; i < results.length; i++) {
+                    if (results[i].connected_dealer != 0 && results[i].connected_dealer != '' && results[i].connected_dealer != '0') {
+                        var get_parent_dealer = await sql.query("select dealer_id, dealer_name from dealers where dealer_id=" + results[i].connected_dealer + " limit 1");
+                        console.log(get_parent_dealer);
+                    }
+                    var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + results[i].dealer_id + "'");
+
+                    dt = {
+                        status: true,
+                        dealer_id: results[i].dealer_id,
+                        dealer_name: results[i].dealer_name,
+                        dealer_email: results[i].dealer_email,
+                        link_code: results[i].link_code,
+                        account_status: results[i].account_status,
+                        unlink_status: results[i].unlink_status,
+                        connected_dealer: results[i].connected_dealer,
+                        created: results[i].created,
+                        modified: results[i].modified,
+                        connected_devices: get_connected_devices
+                    };
+
+                    if (get_parent_dealer != undefined && get_parent_dealer.length > 0) {
+                        dt.parent_dealer = get_parent_dealer[0].dealer_name;
+                        dt.parent_dealer_id = get_parent_dealer[0].dealer_id;
+                    } else {
+                        dt.parent_dealer = "";
+                        dt.parent_dealer_id = "";
+                    }
+
+                    data.push(dt);
+                }
+                res.send(data);
+                return;
+            });
+        } else {
+
+            sql.query(`SELECT * FROM dealers WHERE connected_dealer = '${verify.user.id}' AND  type = 3 ORDER BY created DESC`, async function (error, results) {
+                if (error) {
+                    res.send({
+                        status: false,
+                        msgg: error
+                    });
+                    return;
+                }
+
+                var data = [];
+
+                for (var i = 0; i < results.length; i++) {
+
+                    var get_connected_devices = await sql.query(`SELECT count(*) AS total FROM usr_acc WHERE dealer_id='${results[i].id}'`);
+
+                    dt = {
+                        status: true,
+                        dealer_id: results[i].dealer_id,
+                        dealer_name: results[i].dealer_name,
+                        dealer_email: results[i].dealer_email,
+                        link_code: results[i].link_code,
+                        account_status: results[i].account_status,
+                        unlink_status: results[i].unlink_status,
+                        created: results[i].created,
+                        modified: results[i].modified,
+                        connected_devices: get_connected_devices,
+                        connected_dealer: results[i].connected_dealer,
+                    };
+                    data.push(dt);
+
+                }
+                res.send(data);
+                return;
+            });
+        }
+
+    }
+}
+exports.getUserDealers = async function (req, res) {
+    var verify = req.decoded;
+    // if (verify.status !== undefined && verify.status == true) {
+    if (verify) {
+
+        var role = await general_helpers.getUserTypeIDByName(verify.user.user_type)
+        if (verify.user.user_type == constants.ADMIN) {
+
+            sql.query(`SELECT * FROM dealers WHERE type = 2 ORDER BY created DESC`, async function (error, results) {
                 if (error) {
                     console.log(error);
                     res.send({
@@ -1061,6 +1155,43 @@ exports.getInfo = async function (req, res) {
 
 
 
+exports.getDealerForSA = async function (req, res) {
+    var verify = req.decoded;
+    // if (verify.status !== undefined && verify.status == true) {
+    if (verify) {
+        sql.query(`SELECT * FROM dealers WHERE type = 2 OR type = 3`, async function (error, results) {
+            if (error) {
+                console.log(error);
+                res.send({
+                    status: false,
+                    msg: error
+                });
+                return;
+            }
+            console.log(results);
+            if (results.length) {
+
+                res.send({
+                    status: true,
+                    msg: "DATA FOUND",
+                    data: results
+
+                });
+            }
+            else {
+                res.send({
+                    status: false,
+                    msg: "DATA NOT FOUND"
+                });
+                return;
+            }
+            return;
+        });
+    }
+}
+
+
+
 /**
  * Update Dealer PINs
  * Update Dealer PINs of all existing dealers
@@ -1141,47 +1272,47 @@ exports.updateDealerPins = async function (req, res) {
  * 
  */
 exports.twoFactorAuth = async function (req, res) {
-	var verify = req.decoded;
-	// if (verify['status'] !== undefined && verify.status === true) {
-	if (verify) {
-		let loggedDealerId = verify.user.id;
-		isEnable = req.body.isEnable;
-		let updateDealerQ =
-			"UPDATE dealers SET is_two_factor_auth=" +
-			isEnable +
-			" WHERE dealer_id=" +
-			loggedDealerId;
-		let updatedDealer = await sql.query(updateDealerQ);
-		if (updatedDealer.affectedRows) {
-			if (isEnable) {
-				data = {
-					status: true,
-					msg: await general_helpers.convertToLang(
-						req.translation[MsgConstants.DUAL_AUTH_SUCC_ENBL],
-						"Dual Authentication is Successfully enabled"
-					), // Dual Authentication is Successfully enabled
-					isEnable: isEnable
-				};
-			} else {
-				data = {
-					status: true,
-					msg: await general_helpers.convertToLang(
-						req.translation[MsgConstants.DUAL_AUTH_SUCC_DISABL],
-						"Dual Authentication is Successfully disabled"
-					), // Dual Authentication is Successfully disabled
-					isEnable: isEnable
-				};
-			}
-			return res.send(data);
-		} else {
-			data = {
-				status: false,
-				msg: await general_helpers.convertToLang(
-					req.translation[MsgConstants.DUAL_AUTH_NOT_ENBL],
-					"Dual Authentication could not be enabled"
-				) // Dual Authentication could not be enabled
-			};
-			return res.send(data);
-		}
-	}
+    var verify = req.decoded;
+    // if (verify['status'] !== undefined && verify.status === true) {
+    if (verify) {
+        let loggedDealerId = verify.user.id;
+        isEnable = req.body.isEnable;
+        let updateDealerQ =
+            "UPDATE dealers SET is_two_factor_auth=" +
+            isEnable +
+            " WHERE dealer_id=" +
+            loggedDealerId;
+        let updatedDealer = await sql.query(updateDealerQ);
+        if (updatedDealer.affectedRows) {
+            if (isEnable) {
+                data = {
+                    status: true,
+                    msg: await general_helpers.convertToLang(
+                        req.translation[MsgConstants.DUAL_AUTH_SUCC_ENBL],
+                        "Dual Authentication is Successfully enabled"
+                    ), // Dual Authentication is Successfully enabled
+                    isEnable: isEnable
+                };
+            } else {
+                data = {
+                    status: true,
+                    msg: await general_helpers.convertToLang(
+                        req.translation[MsgConstants.DUAL_AUTH_SUCC_DISABL],
+                        "Dual Authentication is Successfully disabled"
+                    ), // Dual Authentication is Successfully disabled
+                    isEnable: isEnable
+                };
+            }
+            return res.send(data);
+        } else {
+            data = {
+                status: false,
+                msg: await general_helpers.convertToLang(
+                    req.translation[MsgConstants.DUAL_AUTH_NOT_ENBL],
+                    "Dual Authentication could not be enabled"
+                ) // Dual Authentication could not be enabled
+            };
+            return res.send(data);
+        }
+    }
 }
