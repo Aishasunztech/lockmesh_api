@@ -425,7 +425,7 @@ exports.acceptDevice = async function (req, res) {
                                                     //     })
                                                     // }
                                                     let remaining_credits = dealer_credits
-                                                    let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages , total_credits, service_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${total_price} , '${expiry_date}')`
+                                                    let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages , total_credits, start_date, service_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${total_price} ,'${start_date}',  '${expiry_date}')`
                                                     await sql.query(service_billing);
 
                                                     let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${total_price} ,'credit' , 'transferred')`
