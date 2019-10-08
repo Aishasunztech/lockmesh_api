@@ -281,7 +281,7 @@ exports.baseSocket = async function (instance, socket) {
 
             controls = JSON.parse(controls);
 
-            socket_helpers.ackSettingApplied(device_id, null, null, controls)
+            socket_helpers.ackSettingApplied(instance, device_id, null, null, controls)
             socket_helpers.deviceSynced(instance, device_id, true);
 
         });
