@@ -391,6 +391,7 @@ exports.addDealer = async function (req, res) {
                             dealer[0].connected_devices = [{ total: '0' }];
 
                             dealer[0].devicesList = [];
+                            dealer[0].dealer_token = 'N/A';
 
                             if (pageType == constants.SDEALER && (sdealerDealerId != undefined && !empty(sdealerDealerId) && sdealerDealerId != null && sdealerDealerId != 0)) {
                                 let prnt_dealer = await general_helpers.getDealerByDealerId(sdealerDealerId);
