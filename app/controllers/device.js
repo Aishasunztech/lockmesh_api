@@ -424,7 +424,7 @@ exports.acceptDevice = async function (req, res) {
                                                     //     })
                                                     // }
                                                     let remaining_credits = dealer_credits
-                                                    let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages , total_credits, services_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${total_price} , ${expiry_date})`
+                                                    let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages , total_credits, service_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${total_price} , '${expiry_date}')`
                                                     await sql.query(service_billing);
 
                                                     let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${total_price} ,'credit' , 'transferred')`
@@ -773,7 +773,6 @@ exports.createDeviceProfile = async function (req, res) {
                                     await addDuplicateActivations();
                                     let remaining_credits = dealer_credits
                                     if (req.body.term !== '0') {
-                                        remaining_credits = dealer_credits - total_price
                                         let deduct_credits = 'update financial_account_balance set credits =' + remaining_credits + ' where dealer_id ="' + dealer_id + '"';
                                         await sql.query(deduct_credits);
                                     }
@@ -925,12 +924,11 @@ exports.createDeviceProfile = async function (req, res) {
 
                                                             let service_billing = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date, total_credits ,service_expiry_date) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price} , '${expiry_date}')`
                                                             await sql.query(service_billing);
-                                                            remaining_credits = dealer_credits - total_price
                                                             let deduct_credits = 'update financial_account_balance set credits =' + remaining_credits + ' where dealer_id ="' + dealer_id + '"';
                                                             await sql.query(deduct_credits);
 
                                                             let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id,transection_data, credits ,transection_type , status) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price} ,'credit' , 'transferred')`
-                                                            console.log(transection_credits);
+                                                            // console.log(transection_credits);
                                                             await sql.query(transection_credits)
 
                                                             helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, user_acc_id, loggedUserType)
