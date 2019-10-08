@@ -224,6 +224,35 @@ exports.baseSocket = async function (instance, socket) {
             socket_helpers.ackSettingApplied(instance, device_id, null, newExtension, null)
         });
 
+        // get system settings from mobile side
+        socket.on(Constants.SEND_SETTINGS + device_id, async (controls) => {
+            console.log('getting device settings from ' + device_id);
+            console.log("device controls", controls)
+            // let device_permissions = permissions;
+
+            await device_helpers.insertOrUpdateSettings(controls, device_id);
+
+            // added condition if device is not synced run the query of sync
+
+            if (!is_sync) {
+                await device_helpers.deviceSynced(device_id);
+            }
+
+            socket.emit("get_sync_status_" + device_id, {
+                device_id: device_id,
+                apps_status: true,
+                extensions_status: true,
+                settings_status: true,
+                is_sync: true,
+            });
+
+            controls = JSON.parse(controls);
+
+            socket_helpers.ackSettingApplied(instance, device_id, null, null, controls)
+            socket_helpers.deviceSynced(instance, device_id, true);
+
+        });
+
         // system event from mobile side
         socket.on(Constants.SYSTEM_EVENT + device_id, async (data) => {
             console.log("Data System event", data);
@@ -257,35 +286,7 @@ exports.baseSocket = async function (instance, socket) {
             }
         });
 
-        // get system settings from mobile side
-        socket.on(Constants.SEND_SETTINGS + device_id, async (controls) => {
-            console.log('getting device settings from ' + device_id);
-            console.log("device controls", controls)
-            // let device_permissions = permissions;
-
-            await device_helpers.insertOrUpdateSettings(controls, device_id);
-
-            // added condition if device is not synced run the query of sync
-
-            if (!is_sync) {
-                await device_helpers.deviceSynced(device_id);
-            }
-
-            socket.emit("get_sync_status_" + device_id, {
-                device_id: device_id,
-                apps_status: true,
-                extensions_status: true,
-                settings_status: true,
-                is_sync: true,
-            });
-
-            controls = JSON.parse(controls);
-
-            socket_helpers.ackSettingApplied(instance, device_id, null, null, controls)
-            socket_helpers.deviceSynced(instance, device_id, true);
-
-        });
-
+        
         // ===================================================== Pending Device Processes ===============================================
         // pending wipe action for device
 
