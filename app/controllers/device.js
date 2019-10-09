@@ -1484,7 +1484,6 @@ exports.editDevices = async function (req, res) {
                         let chat_ids = await device_helpers.getChatids(rsltq[0].id);
                         let servicesData = await device_helpers.getServicesData(rsltq[0].id);
                         let loginHistoryData = await device_helpers.getLastLoginDetail(rsltq[0].usr_device_id)
-                        let servicesData = await device_helpers.getServicesData(rsltq[0].id)
 
                         if (rsltq.length) {
                             rsltq[0].finalStatus = device_helpers.checkStatus(rsltq[0]);
