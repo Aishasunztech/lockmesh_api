@@ -529,10 +529,11 @@ module.exports = {
 			device_id +
 			'"'
 		);
-		let pgp_emails = await device_helpers.getPgpEmails(results[0].id);
-		let sim_ids = await device_helpers.getSimids(results[0].id);
-		let chat_ids = await device_helpers.getChatids(results[0].id);
 		if (results.length) {
+			let pgp_emails = await device_helpers.getPgpEmails(results[0].id);
+			let sim_ids = await device_helpers.getSimids(results[0].id);
+			let chat_ids = await device_helpers.getChatids(results[0].id);
+
 			results[0].finalStatus = device_helpers.checkStatus(results[0]);
 			if (pgp_emails[0] && pgp_emails[0].pgp_email) {
 				results[0].pgp_email = pgp_emails[0].pgp_email
@@ -757,7 +758,7 @@ module.exports = {
 				let array = stdout.split(/\r?\n/);
 				console.log("stdout linux: ", array);
 				let label = array[0].split(":");
-				
+
 				return label[1] ? label[1].replace(/\'/g, "") : false;
 			}
 			return false;
