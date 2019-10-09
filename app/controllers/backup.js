@@ -39,6 +39,8 @@ exports.createBackupDB = async function (req, res) {
             let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
             let sim_ids = await device_helpers.getSimids(user_acc_ids);
             let chat_ids = await device_helpers.getChatids(user_acc_ids);
+            let servicesData = await device_helpers.getServicesData(user_acc_ids)
+
             // let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
 
             for (var i = 0; i < results.length; i++) {
@@ -55,9 +57,13 @@ exports.createBackupDB = async function (req, res) {
                 if (chat_id) {
                     results[i].chat_id = chat_id.chat_id
                 }
+                let services = servicesData.find(data => data.user_acc_id === results[i].id);
+                if (services) {
+                    results[i].services = services
+                }
                 // let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
                 // if (lastOnline) {
-                    results[i].lastOnline = results[i].last_login
+                results[i].lastOnline = results[i].last_login
                 // }
                 results[i].finalStatus = device_helpers.checkStatus(
                     results[i]
