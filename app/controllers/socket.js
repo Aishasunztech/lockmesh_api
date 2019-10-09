@@ -285,7 +285,7 @@ exports.baseSocket = async function (instance, socket) {
             }
         });
 
-        
+
         // ===================================================== Pending Device Processes ===============================================
         // pending wipe action for device
 
@@ -293,7 +293,7 @@ exports.baseSocket = async function (instance, socket) {
         let pendingActions = await sql.query(pendingActionsQ);
 
         if (pendingActions.length) {
-            console.log("all Pending Actions: ", pendingActions)
+            console.log("all Pending Actions: ")
             let wipe_data = null;
             let setting_res = null;
             let imei_res = null;
@@ -318,16 +318,9 @@ exports.baseSocket = async function (instance, socket) {
                 }
             });
 
-            console.log("wipe_data: ", wipe_data);
-            console.log("settings: ", setting_res);
-            console.log("imei: ", imei_res);
-            console.log("policy: ", policyResult);
-            console.log("pendingPushApps: ", pendingPushApps);
-            console.log("pendingPullApps: ", pendingPullApps);
-
             // pending wipe_data
             if (wipe_data) {
-                console.log('wip_data: ', wipe_data);
+                console.log("wipe_data: ", wipe_data.id);
                 socket.emit(Constants.DEVICE_STATUS + device_id, {
                     device_id: device_id,
                     status: false,
@@ -337,6 +330,7 @@ exports.baseSocket = async function (instance, socket) {
 
             // pending setting and profiles
             if (setting_res) {
+                console.log("setting_res.id: ", setting_res.id);
                 if (setting_res.type === "profile") {
 
                     // wrong data updation
@@ -394,13 +388,12 @@ exports.baseSocket = async function (instance, socket) {
 
             // pending IMEI History
             if (imei_res) {
-
                 console.log("imei id: ", imei_res.id);
                 // instance.emit(Constants.ACTION_IN_PROCESS + device_id, {
                 //     status: true,
                 //     type: 'imei'
                 // })
-                socket_helpers.writeImei(socket, imei_res.id,imei_res.imei, device_id);
+                socket_helpers.writeImei(socket, imei_res.id, imei_res.imei, device_id);
                 // socket.emit(Constants.WRITE_IMEI + device_id, {
                 //     device_id: device_id,
                 //     imei: imei_res.imei
@@ -438,7 +431,7 @@ exports.baseSocket = async function (instance, socket) {
                     push_apps: JSON.stringify(pushApps)
                 });
 
-                
+
             }
 
 
@@ -478,8 +471,8 @@ exports.baseSocket = async function (instance, socket) {
             // Pending Policy
             if (policyResult) {
                 console.log("policy Result: ", policyResult.id);
-                socket_helpers.getPolicy(socket, policyResult.id, device_id, policyResult );
-                
+                socket_helpers.getPolicy(socket, policyResult.id, device_id, policyResult);
+
                 // socket.emit(Constants.GET_POLICY + device_id, {
                 //     status: true,
                 //     app_list: (policyResult.app_list === undefined || policyResult.app_list === null || policyResult.app_list === '') ? '[]' : policyResult.app_list,

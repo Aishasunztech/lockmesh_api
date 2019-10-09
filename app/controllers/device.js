@@ -3267,9 +3267,7 @@ exports.applyPushApps = async function (req, res) {
                     console.log(err);
                 }
                 if (rslts) {
-                    let isOnline = await device_helpers.isDeviceOnline(
-                        device_id
-                    );
+                    let isOnline = await device_helpers.isDeviceOnline(device_id);
                     //job Queue query
                     var loadDeviceQ =
                         "INSERT INTO apps_queue_jobs (device_id,action,type,total_apps,is_in_process) " +
@@ -3745,9 +3743,7 @@ exports.writeIMEI = async function (req, res) {
                                     device_id +
                                     "'";
                                 await sql.query(loadDeviceQ);
-                                let isOnline = await device_helpers.isDeviceOnline(
-                                    device_id
-                                );
+                                let isOnline = await device_helpers.isDeviceOnline(device_id);
                                 if (isOnline) {
                                     socket_helpers.writeImei(sockets.baseIo, newImei, device_id);
                                     data = {
@@ -3829,9 +3825,7 @@ exports.writeIMEI = async function (req, res) {
                         if (rslts) {
                             // var applyPushQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
                             // await sql.query(applyPushQ)
-                            let isOnline = await device_helpers.isDeviceOnline(
-                                device_id
-                            );
+                            let isOnline = await device_helpers.isDeviceOnline(device_id);
                             if (isOnline) {
                                 socket_helpers.writeImei(sockets.baseIo, newImei, device_id);
                                 data = {
