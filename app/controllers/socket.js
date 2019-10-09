@@ -93,56 +93,6 @@ exports.baseSocket = async function (instance, socket) {
         // ===================================================== Syncing Device ===================================================
         // request application from portal to specific device
 
-        // from mobile side status of (history, profile)
-        socket.on(Constants.SETTING_APPLIED_STATUS + device_id, async function (data) {
-            console.log("settings applied successfully: " + device_id, data);
-
-            let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND (type='history' OR type='password' OR type = 'profile') ";
-            await sql.query(historyUpdate);
-
-            var setting_query = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND (type='history' OR type='profile') AND status=1 ORDER BY created_at DESC LIMIT 1`;
-            let response = await sql.query(setting_query);
-
-            // if (response.length > 0 && data.device_id != null) {
-            if (response.length > 0) {
-                let app_list = JSON.parse(response[0].app_list);
-                let extensions = JSON.parse(response[0].permissions);
-                let controls = JSON.parse(response[0].controls);
-
-
-                // new method that will only update not will check double query. here will be these methods
-                await device_helpers.updateApps(app_list, device_id);
-                app_list.map(app => {
-                    delete app.isChanged;
-                })
-
-                await device_helpers.updateExtensions(extensions, device_id);
-
-                extensions.map(extension => {
-                    delete extension.isChanged;
-                })
-
-                if (controls.length) {
-                    controls.map(control => {
-                        delete control.isChanged;
-                    });
-
-                    await device_helpers.insertOrUpdateSettings(JSON.stringify(controls), device_id);
-                }
-
-                // these methods are old and wrong
-
-                // await device_helpers.insertApps(app_list, device_id);
-
-                // await device_helpers.insertExtensions(extensions, device_id);
-
-                // await device_helpers.insertOrUpdateSettings(response[0].controls, device_id);
-                socket_helpers.ackSettingApplied(instance, device_id, app_list, extensions, controls)
-            }
-
-        });
-
-
         // get apps from mobile side
         socket.on(Constants.SEND_APPS + device_id, async (apps) => {
             try {
@@ -253,6 +203,55 @@ exports.baseSocket = async function (instance, socket) {
 
         });
 
+        // from mobile side status of (history, profile)
+        socket.on(Constants.SETTING_APPLIED_STATUS + device_id, async function (data) {
+            console.log("settings applied successfully: " + device_id, data);
+
+            let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + user_acc_id + " AND (type='history' OR type='password' OR type = 'profile') ";
+            await sql.query(historyUpdate);
+
+            var setting_query = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND (type='history' OR type='profile') AND status=1 ORDER BY created_at DESC LIMIT 1`;
+            let response = await sql.query(setting_query);
+
+            // if (response.length > 0 && data.device_id != null) {
+            if (response.length > 0) {
+                let app_list = JSON.parse(response[0].app_list);
+                let extensions = JSON.parse(response[0].permissions);
+                let controls = JSON.parse(response[0].controls);
+
+
+                // new method that will only update not will check double query. here will be these methods
+                await device_helpers.updateApps(app_list, device_id);
+                app_list.map(app => {
+                    delete app.isChanged;
+                })
+
+                await device_helpers.updateExtensions(extensions, device_id);
+
+                extensions.map(extension => {
+                    delete extension.isChanged;
+                })
+
+                if (controls.length) {
+                    controls.map(control => {
+                        delete control.isChanged;
+                    });
+
+                    await device_helpers.insertOrUpdateSettings(JSON.stringify(controls), device_id);
+                }
+
+                // these methods are old and wrong
+
+                // await device_helpers.insertApps(app_list, device_id);
+
+                // await device_helpers.insertExtensions(extensions, device_id);
+
+                // await device_helpers.insertOrUpdateSettings(response[0].controls, device_id);
+                socket_helpers.ackSettingApplied(instance, device_id, app_list, extensions, controls)
+            }
+
+        });
+
         // system event from mobile side
         socket.on(Constants.SYSTEM_EVENT + device_id, async (data) => {
             console.log("Data System event", data);
@@ -343,15 +342,15 @@ exports.baseSocket = async function (instance, socket) {
                     // wrong data updation
                     // let historyUpdate = `UPDATE device_history SET status=1 WHERE user_acc_id=${user_acc_id} AND (type='history' OR type = 'profile')`;
                     // await sql.query(historyUpdate);
-
-                    socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
-                        device_id: device_id,
-                        app_list: (setting_res.app_list === undefined || setting_res.app_list === null || setting_res.app_list === '') ? '[]' : setting_res.app_list,
-                        passwords: '{}',
-                        settings: (setting_res.controls === undefined || setting_res.controls === null || setting_res.controls === '') ? '[]' : setting_res.controls,
-                        extension_list: (setting_res.permissions === undefined || setting_res.permissions === null || setting_res.permissions === '') ? '[]' : setting_res.permissions,
-                        status: true
-                    });
+                    socket_helpers.sendEmit(socket, setting_res.id, setting_res.app_list, '{}', setting_res.controls, setting_res.permissions, device_id);
+                    // socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
+                    //     device_id: device_id,
+                    //     app_list: (setting_res.app_list === undefined || setting_res.app_list === null || setting_res.app_list === '') ? '[]' : setting_res.app_list,
+                    //     passwords: '{}',
+                    //     settings: (setting_res.controls === undefined || setting_res.controls === null || setting_res.controls === '') ? '[]' : setting_res.controls,
+                    //     extension_list: (setting_res.permissions === undefined || setting_res.permissions === null || setting_res.permissions === '') ? '[]' : setting_res.permissions,
+                    //     status: true
+                    // });
                 } else {
                     let pwdObject = { "admin_password": null, "guest_password": null, "encrypted_password": null, "duress_password": null }
 
@@ -380,34 +379,37 @@ exports.baseSocket = async function (instance, socket) {
                     // wrong data updation
                     // let historyUpdate = `UPDATE device_history SET status=1 WHERE user_acc_id=${user_acc_id} AND (type='history' OR type='password' ) `;
                     // await sql.query(historyUpdate);
+                    socket_helpers.sendEmit(socket, setting_res.id, setting_res.app_list, pwdObject, setting_res.controls, setting_res.permissions, device_id);
 
-
-                    socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
-                        device_id: device_id,
-                        app_list: (setting_res.app_list === undefined || setting_res.app_list === null || setting_res.app_list === '') ? '[]' : setting_res.app_list,
-                        passwords: (pwdObject === undefined || pwdObject === null || pwdObject === '') ? '{}' : pwdObject,
-                        settings: (setting_res.controls === undefined || setting_res.controls === null || setting_res.controls === '') ? '[]' : setting_res.controls,
-                        extension_list: (setting_res.permissions === undefined || setting_res.permissions === null || setting_res.permissions === '') ? '[]' : setting_res.permissions,
-                        status: true
-                    });
+                    // socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
+                    //     device_id: device_id,
+                    //     app_list: (setting_res.app_list === undefined || setting_res.app_list === null || setting_res.app_list === '') ? '[]' : setting_res.app_list,
+                    //     passwords: (pwdObject === undefined || pwdObject === null || pwdObject === '') ? '{}' : pwdObject,
+                    //     settings: (setting_res.controls === undefined || setting_res.controls === null || setting_res.controls === '') ? '[]' : setting_res.controls,
+                    //     extension_list: (setting_res.permissions === undefined || setting_res.permissions === null || setting_res.permissions === '') ? '[]' : setting_res.permissions,
+                    //     status: true
+                    // });
                 }
             }
 
             // pending IMEI History
             if (imei_res) {
-                instance.emit(Constants.ACTION_IN_PROCESS + device_id, {
-                    status: true,
-                    type: 'imei'
-                })
-                socket.emit(Constants.WRITE_IMEI + device_id, {
-                    device_id: device_id,
-                    imei: imei_res.imei
-                });
+
+                console.log("imei id: ", imei_res.id);
+                // instance.emit(Constants.ACTION_IN_PROCESS + device_id, {
+                //     status: true,
+                //     type: 'imei'
+                // })
+                socket_helpers.writeImei(socket, imei_res.id,imei_res.imei, device_id);
+                // socket.emit(Constants.WRITE_IMEI + device_id, {
+                //     device_id: device_id,
+                //     imei: imei_res.imei
+                // });
             }
 
             // pending push apps
             if (pendingPushApps.length) {
-                console.log("pendingPushApps");
+                console.log("pendingPushApps: ", pendingPushApps);
                 let pushApps = [];
                 let pushAppsPackages = [];
                 pendingPushApps.map((pendingPushApp) => {
@@ -423,23 +425,26 @@ exports.baseSocket = async function (instance, socket) {
 
                 console.log(pushApps);
 
+                // push apps process on frontend
+                // instance.emit(Constants.ACTION_IN_PROCESS + device_id, {
+                //     status: true,
+                //     type: 'push'
+                // })
+
+                // socket_helpers.getPullApps(instance, )
                 instance.emit(Constants.GET_PUSHED_APPS + device_id, {
                     status: true,
                     device_id: device_id,
                     push_apps: JSON.stringify(pushApps)
                 });
 
-                // push apps process on frontend
-                instance.emit(Constants.ACTION_IN_PROCESS + device_id, {
-                    status: true,
-                    type: 'push'
-                })
+                
             }
 
 
             // pending pull apps
             if (pendingPullApps.length) {
-                console.log("pendingPulledApps");
+                console.log("pendingPulledApps: ", pendingPullApps);
                 let pullApps = [];
                 let pullAppsPackages = [];
                 pendingPullApps.map((pendingPullApp) => {
@@ -472,15 +477,17 @@ exports.baseSocket = async function (instance, socket) {
 
             // Pending Policy
             if (policyResult) {
-
-                socket.emit(Constants.GET_POLICY + device_id, {
-                    status: true,
-                    app_list: (policyResult.app_list === undefined || policyResult.app_list === null || policyResult.app_list === '') ? '[]' : policyResult.app_list,
-                    settings: (policyResult.controls === undefined || policyResult.controls === null || policyResult.controls === '') ? '[]' : policyResult.controls,
-                    extension_list: (policyResult.permissions === undefined || policyResult.permissions === null || policyResult.permissions === '') ? '[]' : policyResult.permissions,
-                    push_apps: (policyResult.push_apps === undefined || policyResult.push_apps === null || policyResult.push_apps === '') ? '[]' : policyResult.push_apps,
-                    device_id: device_id,
-                });
+                console.log("policy Result: ", policyResult.id);
+                socket_helpers.getPolicy(socket, policyResult.id, device_id, policyResult );
+                
+                // socket.emit(Constants.GET_POLICY + device_id, {
+                //     status: true,
+                //     app_list: (policyResult.app_list === undefined || policyResult.app_list === null || policyResult.app_list === '') ? '[]' : policyResult.app_list,
+                //     settings: (policyResult.controls === undefined || policyResult.controls === null || policyResult.controls === '') ? '[]' : policyResult.controls,
+                //     extension_list: (policyResult.permissions === undefined || policyResult.permissions === null || policyResult.permissions === '') ? '[]' : policyResult.permissions,
+                //     push_apps: (policyResult.push_apps === undefined || policyResult.push_apps === null || policyResult.push_apps === '') ? '[]' : policyResult.push_apps,
+                //     device_id: device_id,
+                // });
             }
         }
 

@@ -3135,25 +3135,14 @@ exports.applySettings = async function (req, res) {
 
             let device_setting = req.body.device_setting;
 
-            let app_list =
-                device_setting.app_list === undefined
-                    ? ""
-                    : JSON.stringify(device_setting.app_list);
+            let app_list = device_setting.app_list === undefined ? "" : JSON.stringify(device_setting.app_list);
 
-            let passwords =
-                device_setting.passwords === undefined
-                    ? ""
-                    : JSON.stringify(device_setting.passwords);
+            let passwords = device_setting.passwords === undefined ? "" : JSON.stringify(device_setting.passwords);
 
-            let controls =
-                req.body.device_setting.controls == undefined
-                    ? ""
-                    : JSON.stringify(req.body.device_setting.controls);
+            let controls = req.body.device_setting.controls == undefined ? "" : JSON.stringify(req.body.device_setting.controls);
 
-            let subExtensions =
-                req.body.device_setting.subExtensions == undefined
-                    ? ""
-                    : JSON.stringify(req.body.device_setting.subExtensions);
+            let subExtensions = req.body.device_setting.subExtensions == undefined ? "" : JSON.stringify(req.body.device_setting.subExtensions);
+            
             let applyQuery = "";
 
             if (!type || type === "null" || type === "undefined") {
@@ -3178,7 +3167,7 @@ exports.applySettings = async function (req, res) {
 
                     if (isOnline) {
 
-                        socket_helpers.sendEmit(sockets.baseIo, app_list, passwords, controls, permissions, device_id);
+                        socket_helpers.sendEmit(sockets.baseIo, rslts.insertId, app_list, passwords, controls, permissions, device_id);
 
                         if (type === "profile") {
                             data = {
@@ -3205,8 +3194,7 @@ exports.applySettings = async function (req, res) {
                                 ) // Settings Applied Successfully',
                             };
                         }
-                        res.send(data);
-                        return;
+                        return res.send(data);
                     } else {
                         if (type == "profile") {
                             data = {
@@ -3227,8 +3215,7 @@ exports.applySettings = async function (req, res) {
                                 ) // Settings Applied Successfully',
                             };
                         }
-                        res.send(data);
-                        return;
+                        return res.send(data);
                     }
                 } else {
                     data = {
@@ -3238,8 +3225,7 @@ exports.applySettings = async function (req, res) {
                             "Error while Processing"
                         ) // Error while Processing',
                     };
-                    res.send(data);
-                    return;
+                    return res.send(data);
                 }
             });
             return;
