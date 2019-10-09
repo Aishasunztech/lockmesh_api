@@ -3457,25 +3457,14 @@ exports.applySettings = async function (req, res) {
 
             let device_setting = req.body.device_setting;
 
-            let app_list =
-                device_setting.app_list === undefined
-                    ? ""
-                    : JSON.stringify(device_setting.app_list);
+            let app_list = device_setting.app_list === undefined ? "" : JSON.stringify(device_setting.app_list);
 
-            let passwords =
-                device_setting.passwords === undefined
-                    ? ""
-                    : JSON.stringify(device_setting.passwords);
+            let passwords = device_setting.passwords === undefined ? "" : JSON.stringify(device_setting.passwords);
 
-            let controls =
-                req.body.device_setting.controls == undefined
-                    ? ""
-                    : JSON.stringify(req.body.device_setting.controls);
+            let controls = req.body.device_setting.controls == undefined ? "" : JSON.stringify(req.body.device_setting.controls);
 
-            let subExtensions =
-                req.body.device_setting.subExtensions == undefined
-                    ? ""
-                    : JSON.stringify(req.body.device_setting.subExtensions);
+            let subExtensions = req.body.device_setting.subExtensions == undefined ? "" : JSON.stringify(req.body.device_setting.subExtensions);
+            
             let applyQuery = "";
 
             if (!type || type === "null" || type === "undefined") {
@@ -3500,7 +3489,7 @@ exports.applySettings = async function (req, res) {
 
                     if (isOnline) {
 
-                        socket_helpers.sendEmit(sockets.baseIo, app_list, passwords, controls, permissions, device_id);
+                        socket_helpers.sendEmit(sockets.baseIo, rslts.insertId, app_list, passwords, controls, permissions, device_id);
 
                         if (type === "profile") {
                             data = {
@@ -3527,8 +3516,7 @@ exports.applySettings = async function (req, res) {
                                 ) // Settings Applied Successfully',
                             };
                         }
-                        res.send(data);
-                        return;
+                        return res.send(data);
                     } else {
                         if (type == "profile") {
                             data = {
@@ -3549,8 +3537,7 @@ exports.applySettings = async function (req, res) {
                                 ) // Settings Applied Successfully',
                             };
                         }
-                        res.send(data);
-                        return;
+                        return res.send(data);
                     }
                 } else {
                     data = {
@@ -3560,8 +3547,7 @@ exports.applySettings = async function (req, res) {
                             "Error while Processing"
                         ) // Error while Processing',
                     };
-                    res.send(data);
-                    return;
+                    return res.send(data);
                 }
             });
             return;
@@ -3603,9 +3589,7 @@ exports.applyPushApps = async function (req, res) {
                     console.log(err);
                 }
                 if (rslts) {
-                    let isOnline = await device_helpers.isDeviceOnline(
-                        device_id
-                    );
+                    let isOnline = await device_helpers.isDeviceOnline(device_id);
                     //job Queue query
                     var loadDeviceQ =
                         "INSERT INTO apps_queue_jobs (device_id,action,type,total_apps,is_in_process) " +
@@ -4081,9 +4065,7 @@ exports.writeIMEI = async function (req, res) {
                                     device_id +
                                     "'";
                                 await sql.query(loadDeviceQ);
-                                let isOnline = await device_helpers.isDeviceOnline(
-                                    device_id
-                                );
+                                let isOnline = await device_helpers.isDeviceOnline(device_id);
                                 if (isOnline) {
                                     socket_helpers.writeImei(sockets.baseIo, newImei, device_id);
                                     data = {
@@ -4165,9 +4147,7 @@ exports.writeIMEI = async function (req, res) {
                         if (rslts) {
                             // var applyPushQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
                             // await sql.query(applyPushQ)
-                            let isOnline = await device_helpers.isDeviceOnline(
-                                device_id
-                            );
+                            let isOnline = await device_helpers.isDeviceOnline(device_id);
                             if (isOnline) {
                                 socket_helpers.writeImei(sockets.baseIo, newImei, device_id);
                                 data = {
@@ -4275,7 +4255,7 @@ exports.submitDevicePassword = async function (req, res) {
                         let updateAppliedSettings = `UPDATE device_history SET status=1 WHERE device_id='${device_id}' AND type='password'`;
                         await sql.query(updateAppliedSettings);
 
-                        socket_helpers.sendEmit(sockets.baseIo, '', pwdObject, '', '', device_id);
+                        socket_helpers.sendEmit(sockets.baseIo, null ,'', pwdObject, '', '', device_id);
                         // socket_helpers.sendEmit(sockets.baseIo, app_list, passwords, controls, permissions, device_id);
 
                         data = {
