@@ -535,11 +535,13 @@ module.exports = {
 			device_id +
 			'"'
 		);
-		let pgp_emails = await device_helpers.getPgpEmails(results[0].id);
-		let sim_ids = await device_helpers.getSimids(results[0].id);
-		let chat_ids = await device_helpers.getChatids(results[0].id);
-		let servicesData = await device_helpers.getServicesData(results[0].id);
+
 		if (results.length) {
+			let pgp_emails = await device_helpers.getPgpEmails(results[0].id);
+			let sim_ids = await device_helpers.getSimids(results[0].id);
+			let chat_ids = await device_helpers.getChatids(results[0].id);
+			let servicesData = await device_helpers.getServicesData(results[0].id);
+
 			results[0].finalStatus = device_helpers.checkStatus(results[0]);
 			if (pgp_emails[0] && pgp_emails[0].pgp_email) {
 				results[0].pgp_email = pgp_emails[0].pgp_email
