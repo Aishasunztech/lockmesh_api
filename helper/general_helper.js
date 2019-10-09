@@ -451,7 +451,7 @@ module.exports = {
 	},
 	getExpDateByMonth: function (currentDate, expiryMonth) {
 		return moment(currentDate, "YYYY-MM-DD")
-			.add(expiryMonth, "M")
+			.add(Number(expiryMonth), "M")
 			.strftime("%Y/%m/%d");
 	},
 	// checkDeviceId: async function (device_id, sn, mac) {
