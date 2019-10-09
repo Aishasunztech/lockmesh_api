@@ -99,7 +99,7 @@ module.exports = {
 
     // applications
     insertApps: async function (apps, deviceId) {
-        console.log('insertApps');
+        // console.log('insertApps');
 
         let deviceData = await this.getDeviceByDeviceId(deviceId);
 
@@ -191,7 +191,7 @@ module.exports = {
                     if (checkExt && checkExt.length) {
                         id = checkExt[0].id;
                         let updateExtQ = `UPDATE apps_info SET icon= '${iconName}', extension= 1, extension_id = ${extension[0].id}, label = '${app.label}', default_app= 0 WHERE id=${checkExt[0].id}`;
-                        console.log('updateExtQ: ', updateExtQ);
+                        // console.log('updateExtQ: ', updateExtQ);
                         let updateExt = await sql.query(updateExtQ);
                     } else {
                         let insertExtQ = `INSERT INTO apps_info (unique_name, label, icon, extension, extension_id) VALUES ('${app.uniqueExtension}', '${app.label}', '${iconName}', 1, ${extension[0].id})`;
@@ -203,7 +203,7 @@ module.exports = {
                     }
 
                     if (id) {
-                        console.log("insertId Extensions: ", id)
+                        // console.log("insertId Extensions: ", id)
                         await this.insertOrUpdateExtensions(id, deviceData.id, app.guest, app.encrypted, true);
                     }
                 }
@@ -225,7 +225,7 @@ module.exports = {
             } else {
                 var insertQuery = `INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (${deviceId}, ${appId}, ${guest}, ${encrypted}, ${enable})`;
                 let insertExtension = await sql.query(insertQuery);
-                console.log("insertExtension:", insertExtension.insertId);
+                // console.log("insertExtension:", insertExtension.insertId);
             }
 
         } catch (error) {
@@ -360,7 +360,7 @@ module.exports = {
         if (app.icon) {
 
             if (typeof app.icon !== 'string' && typeof app.icon !== 'String' && typeof app.icon !== String) {
-                console.log("logo uploading: ", packageName);
+                // console.log("logo uploading: ", packageName);
                 var base64Data = Buffer.from(app.icon).toString("base64");
 
                 let icon = `../uploads/icon_${packageName}_${iconName}.png`;
@@ -753,7 +753,7 @@ module.exports = {
                     WHERE devices.device_id = '${deviceId}' AND apps_info.package_name='${apps[i].packageName}'`;
                     console.log("getAppsQ: ", getAppsQ);
                     let app = await sql.query(getAppsQ);
-                    console.log("getapplication: ", app);
+                    // console.log("getapplication: ", app);
                     if (app.length) {
                         app_list.push(app[0]);
                     }

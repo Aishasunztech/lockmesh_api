@@ -149,7 +149,7 @@ exports.baseSocket = async function (instance, socket) {
                 console.log("get applications event: ", device_id);
                 // console.log(apps);
                 let applications = JSON.parse(apps);
-                console.log("get application settings from device and send to panel also:", applications);
+                console.log("get application settings from device and send to panel also:");
                 await device_helpers.insertApps(applications, device_id);
                 // console.log("device synced");
                 socket.emit(Constants.GET_SYNC_STATUS + device_id, {
@@ -319,12 +319,12 @@ exports.baseSocket = async function (instance, socket) {
                 }
             });
 
-            console.log("wipe_data: ", wipe_data);
-            console.log("settings: ", setting_res);
-            console.log("imei: ", imei_res);
-            console.log("policy: ", policyResult);
-            console.log("pendingPushApps: ", pendingPushApps);
-            console.log("pendingPullApps: ", pendingPullApps);
+            // console.log("wipe_data: ", wipe_data);
+            // console.log("settings: ", setting_res);
+            // console.log("imei: ", imei_res);
+            // console.log("policy: ", policyResult);
+            // console.log("pendingPushApps: ", pendingPushApps);
+            // console.log("pendingPullApps: ", pendingPullApps);
 
             // pending wipe_data
             if (wipe_data) {
