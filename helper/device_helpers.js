@@ -99,7 +99,7 @@ module.exports = {
 
     // applications
     insertApps: async function (apps, deviceId) {
-        console.log('insertApps');
+        // console.log('insertApps');
 
         let deviceData = await this.getDeviceByDeviceId(deviceId);
 
@@ -191,7 +191,7 @@ module.exports = {
                     if (checkExt && checkExt.length) {
                         id = checkExt[0].id;
                         let updateExtQ = `UPDATE apps_info SET icon= '${iconName}', extension= 1, extension_id = ${extension[0].id}, label = '${app.label}', default_app= 0 WHERE id=${checkExt[0].id}`;
-                        console.log('updateExtQ: ', updateExtQ);
+                        // console.log('updateExtQ: ', updateExtQ);
                         let updateExt = await sql.query(updateExtQ);
                     } else {
                         let insertExtQ = `INSERT INTO apps_info (unique_name, label, icon, extension, extension_id) VALUES ('${app.uniqueExtension}', '${app.label}', '${iconName}', 1, ${extension[0].id})`;
@@ -203,7 +203,7 @@ module.exports = {
                     }
 
                     if (id) {
-                        console.log("insertId Extensions: ", id)
+                        // console.log("insertId Extensions: ", id)
                         await this.insertOrUpdateExtensions(id, deviceData.id, app.guest, app.encrypted, true);
                     }
                 }
@@ -225,7 +225,7 @@ module.exports = {
             } else {
                 var insertQuery = `INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (${deviceId}, ${appId}, ${guest}, ${encrypted}, ${enable})`;
                 let insertExtension = await sql.query(insertQuery);
-                console.log("insertExtension:", insertExtension.insertId);
+                // console.log("insertExtension:", insertExtension.insertId);
             }
 
         } catch (error) {
@@ -360,7 +360,7 @@ module.exports = {
         if (app.icon) {
 
             if (typeof app.icon !== 'string' && typeof app.icon !== 'String' && typeof app.icon !== String) {
-                console.log("logo uploading: ", packageName);
+                // console.log("logo uploading: ", packageName);
                 var base64Data = Buffer.from(app.icon).toString("base64");
 
                 let icon = `../uploads/icon_${packageName}_${iconName}.png`;
@@ -783,22 +783,22 @@ module.exports = {
         //                     system_app= ${system_app} 
         //                     `;
         // await sql.query(query);
-    
+
         let default_app = (app.defaultApp !== undefined && app.defaultApp !== null) ? app.defaultApp : (app.default_app !== undefined && app.default_app !== null) ? app.default_app : false;
         let system_app = (app.systemApp !== undefined && app.systemApp !== null) ? app.systemApp : (app.system_app !== undefined && app.system_app !== null) ? app.system_app : false;
         let id = 0;
-    
+
         let checkAppQ = `SELECT id FROM apps_info WHERE unique_name='${app.uniqueName}' LIMIT 1`;
         let checkApp = await sql.query(checkAppQ);
         let iconName = this.uploadIconFile(app, app.label, app.packageName);
-    
+
         if (checkApp && checkApp.length) {
             id = checkApp[0].id;
-    
+
             let updateAppQ = `UPDATE apps_info SET extension= ${app.extension}, icon= '${iconName}', label= '${app.label}', visible= ${app.visible}, default_app= ${default_app}, system_app= ${system_app} WHERE id=${checkApp[0].id}`
             console.log("updateApp: ", updateAppQ);
             let updateApp = await sql.query(updateAppQ);
-    
+
         } else {
             let insertAppQ = `INSERT INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app, system_app)
                             VALUES ('${app.uniqueName}', '${app.label}', '${app.packageName}', '${iconName}', ${app.extension} , ${app.visible}, ${default_app}, ${system_app})`;
@@ -808,12 +808,12 @@ module.exports = {
                 id = insertedApp.insertId;
             }
         }
-    
+
         if (id) {
             console.log("insertId App: ", id);
             await this.insertOrUpdateApps(id, deviceData.id, app.guest, app.encrypted, app.enable);
         }
-    
+
     }
     // compareSim: async function (deviceSim, panelSim, action) {
     //     console.log("deviceSim ", deviceSim)

@@ -382,6 +382,8 @@ module.exports = {
 			let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
 			let sim_ids = await device_helpers.getSimids(user_acc_ids);
 			let chat_ids = await device_helpers.getChatids(user_acc_ids);
+			let servicesData = await device_helpers.getServicesData(user_acc_ids)
+
 			for (let device of results) {
 				device.finalStatus = device_helpers.checkStatus(device);
 				let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === device.id);
@@ -396,6 +398,10 @@ module.exports = {
 				let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === device.id);
 				if (chat_id) {
 					device.chat_id = chat_id.chat_id
+				}
+				let services = servicesData.find(data => data.user_acc_id === device.id);
+				if (services) {
+					device.services = services
 				}
 			}
 
@@ -529,10 +535,13 @@ module.exports = {
 			device_id +
 			'"'
 		);
-		let pgp_emails = await device_helpers.getPgpEmails(results[0].id);
-		let sim_ids = await device_helpers.getSimids(results[0].id);
-		let chat_ids = await device_helpers.getChatids(results[0].id);
+
 		if (results.length) {
+			let pgp_emails = await device_helpers.getPgpEmails(results[0].id);
+			let sim_ids = await device_helpers.getSimids(results[0].id);
+			let chat_ids = await device_helpers.getChatids(results[0].id);
+			let servicesData = await device_helpers.getServicesData(results[0].id);
+
 			results[0].finalStatus = device_helpers.checkStatus(results[0]);
 			if (pgp_emails[0] && pgp_emails[0].pgp_email) {
 				results[0].pgp_email = pgp_emails[0].pgp_email
@@ -549,6 +558,9 @@ module.exports = {
 			else {
 				results[0].chat_id = "N/A"
 
+			}
+			if (servicesData[0]) {
+				results[0].services = servicesData[0]
 			}
 			return results[0];
 		} else {
@@ -757,7 +769,7 @@ module.exports = {
 				let array = stdout.split(/\r?\n/);
 				console.log("stdout linux: ", array);
 				let label = array[0].split(":");
-				
+
 				return label[1] ? label[1].replace(/\'/g, "") : false;
 			}
 			return false;
@@ -939,6 +951,7 @@ module.exports = {
 			let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
 			let sim_ids = await device_helpers.getSimids(user_acc_ids);
 			let chat_ids = await device_helpers.getChatids(user_acc_ids);
+			let servicesData = await device_helpers.getServicesData(user_acc_ids)
 			for (var i = 0; i < results.length; i++) {
 				results[i].finalStatus = device_helpers.checkStatus(results[i]);
 				let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === results[i].id);
@@ -953,6 +966,10 @@ module.exports = {
 				let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === results[i].id);
 				if (chat_id) {
 					results[i].chat_id = chat_id.chat_id
+				}
+				let services = servicesData.find(data => data.user_acc_id === results[i].id);
+				if (services) {
+					results[i].services = services
 				}
 			}
 			return results;

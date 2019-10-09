@@ -99,7 +99,7 @@ exports.baseSocket = async function (instance, socket) {
                 console.log("get applications event: ", device_id);
                 // console.log(apps);
                 let applications = JSON.parse(apps);
-                console.log("get application settings from device and send to panel also:", applications);
+                console.log("get application settings from device and send to panel also:");
                 await device_helpers.insertApps(applications, device_id);
                 // console.log("device synced");
                 socket.emit(Constants.GET_SYNC_STATUS + device_id, {
@@ -114,11 +114,11 @@ exports.baseSocket = async function (instance, socket) {
                     is_sync: false,
                     // is_sync: device_helpers.checkNotNull(is_sync) ? true : false,
                 });
-                console.log("apps id:", dvc_id);
+                // console.log("apps id:", dvc_id);
                 let appsQ = `SELECT user_apps.id, user_apps.device_id, user_apps.app_id, user_apps.guest, user_apps.encrypted, user_apps.enable, apps_info.label, apps_info.default_app, apps_info.system_app, apps_info.package_name, apps_info.visible, apps_info.unique_name as uniqueName, apps_info.icon as icon, apps_info.extension, apps_info.extension_id FROM user_apps LEFT JOIN apps_info ON (user_apps.app_id = apps_info.id) WHERE user_apps.device_id = '${dvc_id}'`;
-                console.log("apps Q: ", appsQ)
+                // console.log("apps Q: ", appsQ)
                 let appList = await sql.query(appsQ);
-                console.log("testing:", appList);
+                // console.log("testing:", appList);
                 socket_helpers.ackSettingApplied(instance, device_id, appList, null, null)
             } catch (error) {
                 console.log(error);
