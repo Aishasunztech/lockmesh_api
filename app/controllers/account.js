@@ -675,8 +675,9 @@ exports.purchaseCredits = async function (req, res) {
                                             label: app_constants.APP_TITLE,
                                             credits: credits,
                                             dealer_email: verify.user.email,
-                                            dealer_pin: verify.user.link_code,
-                                            request_id: result.insertId
+                                            dealer_pin: (verify.user.user_type === ADMIN) ? 'N/A' : verify.user.link_code,
+                                            request_id: result.insertId,
+                                            account_type: verify.user.user_type
                                         }
                                         axios.post(app_constants.REQUEST_FOR_CREDITS, data, { headers: { authorization: response.data.user.token } }).then(async function (response) {
                                             // console.log(response);
@@ -761,12 +762,7 @@ exports.purchaseCredits_CC = async function (req, res) {
             let stripeToken = null
             let cardExpiryMonth = expiryCard.slice(0, 2)
             let cardExpiryYear = 20 + expiryCard.slice(5)
-            // console.log(cardExpiryMonth);
-            // console.log(cardExpiryYear);
-            // console.log(total_price.toFixed(2));
 
-
-            // return
             if (credits != undefined && credits != '' && credits != null) {
 
                 if (promo_code != '') {
@@ -823,50 +819,92 @@ exports.purchaseCredits_CC = async function (req, res) {
                                 metadata: { 'order_id': '6735' }
                             }).then(async function (response) {
                                 if (response.status == 'succeeded') {
-                                    let checkBalanceAccout = "SELECT * from financial_account_balance WHERE dealer_id = " + dealerId
-                                    let dealerBalanceData = await sql.query(checkBalanceAccout);
-                                    let addCreditsQ = ""
-                                    let totalCredits = 0
-                                    if (dealerBalanceData.length) {
-                                        totalCredits = dealerBalanceData[0].credits + credits
-                                        addCreditsQ = `UPDATE financial_account_balance SET credits = credits + ${credits} WHERE dealer_id = ${dealerId}`
-                                    } else {
-                                        totalCredits = credits
-                                        addCreditsQ = `INSERT INTO financial_account_balance (dealer_id,credits) VALUES(${dealerId} , ${credits})`
-                                    }
+                                    axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
+                                        if (response.data.status) {
+                                            let data = {
+                                                credits: credits,
+                                                payment_type: "CC",
+                                                dealer_id: dealerId,
+                                                dealer_pin: (verify.user.user_type === ADMIN) ? 'N/A' : verify.user.link_code,
+                                                dealer_type: verify.user.user_type,
+                                                dealer_name: verify.user.dealer_name,
+                                                label: app_constants.APP_TITLE,
+                                                dealer_email: verify.user.email
+                                            }
+                                            axios.post(app_constants.ADD_CREDITS_SALE_RECORD, data, { headers: { authorization: response.data.user.token } }).then(async function (response) {
+                                                if (response.data.status) {
+                                                    let checkBalanceAccout = "SELECT * from financial_account_balance WHERE dealer_id = " + dealerId
+                                                    let dealerBalanceData = await sql.query(checkBalanceAccout);
+                                                    let addCreditsQ = ""
+                                                    let totalCredits = 0
+                                                    if (dealerBalanceData.length) {
+                                                        totalCredits = dealerBalanceData[0].credits + credits
+                                                        addCreditsQ = `UPDATE financial_account_balance SET credits = credits + ${credits} WHERE dealer_id = ${dealerId}`
+                                                    } else {
+                                                        totalCredits = credits
+                                                        addCreditsQ = `INSERT INTO financial_account_balance (dealer_id,credits) VALUES(${dealerId} , ${credits})`
+                                                    }
 
-                                    sql.query(addCreditsQ, function (err, result) {
-                                        if (err) {
-                                            console.log(err);
-                                            res.send({
-                                                status: false,
-                                                msg: ""
-                                            })
-                                            return
-                                        }
-                                        if (result.affectedRows) {
+                                                    sql.query(addCreditsQ, async function (err, result) {
+                                                        if (err) {
+                                                            console.log(err);
+                                                            res.send({
+                                                                status: false,
+                                                                msg: ""
+                                                            })
+                                                            return
+                                                        }
+                                                        if (result.affectedRows) {
 
-                                            let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
-                                            sql.query(query, async function (err, result) {
-                                                if (err) {
+                                                            let transection_credits = `INSERT INTO financial_account_transections (user_id,transection_data, credits ,transection_type , status) VALUES (${dealerId},'${JSON.stringify({ request_type: "Creedit Card request" })}' ,${credits} ,'debit' , 'transferred')`
+                                                            await sql.query(transection_credits)
+
+                                                            let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
+                                                            sql.query(query, async function (err, result) {
+                                                                if (err) {
+                                                                    console.log(err);
+                                                                    res.send({
+                                                                        status: false,
+                                                                        msg: ""
+                                                                    })
+                                                                    return
+                                                                }
+                                                                if (result.affectedRows > 0) {
+                                                                    res.send({
+                                                                        status: true,
+                                                                        msg: await helpers.convertToLang(req.translation[MsgConstants.PAYMENT_HAS_BEEN_DONE], "Payment has been done"), // "Payment has been done.",
+                                                                        credits: totalCredits
+                                                                    })
+                                                                    return
+                                                                }
+                                                            })
+                                                        }
+
+                                                    })
+                                                } else {
                                                     console.log(err);
                                                     res.send({
                                                         status: false,
-                                                        msg: ""
+                                                        msg: "ERROR: Superadmin server not responding please try again later."
                                                     })
                                                     return
                                                 }
-                                                if (result.affectedRows > 0) {
-                                                    res.send({
-                                                        status: true,
-                                                        msg: await helpers.convertToLang(req.translation[MsgConstants.PAYMENT_HAS_BEEN_DONE], "Payment has been done"), // "Payment has been done.",
-                                                        credits: totalCredits
-                                                    })
-                                                    return
-                                                }
+                                            }).catch((err) => {
+                                                console.log(err);
+                                                res.send({
+                                                    status: false,
+                                                    msg: "ERROR: Superadmin server not responding please try again later."
+                                                })
+                                                return
                                             })
                                         }
-
+                                    }).catch((err) => {
+                                        console.log(err);
+                                        res.send({
+                                            status: false,
+                                            msg: "ERROR: Superadmin server not responding please try again later."
+                                        })
+                                        return
                                     })
                                 };
                             });
