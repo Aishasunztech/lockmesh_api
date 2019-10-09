@@ -21,7 +21,7 @@ deploy_DevLM_API:
     - echo "Deploy to dev server"
     - ssh-add <(echo "$PRIVATE_KEY")
     - rm -rf .git
-    - ssh -o StrictHostKeyChecking=no web@104.248.19.72 "cd /var/www/html/${WORK_DIR}; git reset --hard; git pull origin ${BRANCH}; npm install; sequelize-cli db:migrate --env dev_lockmesh; pm2 reload all; exit"
+    - ssh -o StrictHostKeyChecking=no web@178.128.192.244 "cd /var/www/html/${WORK_DIR}; git reset --hard; git pull origin ${BRANCH}; npm install; sequelize-cli db:migrate --env dev_lockmesh; pm2 reload all; exit"
   only:
     - development
 
