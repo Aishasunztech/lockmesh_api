@@ -1672,6 +1672,8 @@ exports.unlinkDevice = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
     var device_id = req.params.id;
 
+    console.log("unlinkDevice device_id ", device_id)
+
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
         if (!empty(device_id)) {
@@ -1838,7 +1840,7 @@ exports.unflagDevice = async function (req, res) {
                         if (error) {
                             console.log(error);
                         }
-                        console.log('resquery ==> ', resquery[0])
+                        // console.log('resquery ==> ', resquery[0])
 
                         if (resquery.length) {
                             let pgp_emails = await device_helpers.getPgpEmails(resquery[0].id);
@@ -2042,15 +2044,22 @@ exports.transferUser = async function (req, res) {
 
             var userResult = await sql.query(`SELECT * from users WHERE user_id='${NewUser}'`);
             let updateUsrAcc = `UPDATE usr_acc SET user_id='${userResult[0].user_id}',account_email='${userResult[0].email}', transfer_user_status='1', user_transfered_from='${OldUser}', user_transfered_to='${NewUser}'  WHERE user_id = '${OldUser}' AND device_id=${usr_device_id};`;
-            await sql.query(updateUsrAcc, async function (err, resp) {
-                if (err) throw Error('Query Error');
+            sql.query(updateUsrAcc, async function (err, resp) {
+                if (err) {
+                    console.log(err);
+                    data = {
+                        status: false,
+                        msg: "Query Error"
+                    }
+                    res.send(data);
+                }
 
                 if (resp.affectedRows > 0) {
 
 
                     // Updae device name
                     var getDeviceName = await sql.query(`SELECT user_name from users WHERE user_id='${NewUser}'`);
-                    await sql.query(`UPDATE devices SET name= '${getDeviceName[0].user_name}' WHERE id=${usr_device_id}`);
+                    sql.query(`UPDATE devices SET name= '${getDeviceName[0].user_name}' WHERE id=${usr_device_id}`);
 
                     // Save History into "acc_action_history"
                     let resquery = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE devices.reject_status = 0 AND devices.id= "' + usr_device_id + '"')
@@ -2113,14 +2122,21 @@ exports.transferDeviceProfile = async function (req, res) {
             // Get data of Flagged Device
             var SelectFlaggedDeviceDetail = `SELECT ${usr_acc_query_text} FROM usr_acc WHERE device_id = ${flagged_device.usr_device_id} AND id = ${flagged_device.id}`;
             sql.query(SelectFlaggedDeviceDetail, async function (err, rsltq) {
-                if (err) throw Error("Query Expection");
+                if (err) {
+                    console.log(err);
+                    data = {
+                        status: false,
+                        msg: "Query Error"
+                    }
+                    res.send(data);
+                }
 
                 if (rsltq.length > 0) {
 
                     // Update New usr_acc
                     let Update_UsrAcc_Query = `UPDATE usr_acc SET user_id='${rsltq[0].user_id}', account_email='${rsltq[0].account_email}',account_name='${rsltq[0].account_name}',dealer_id='${rsltq[0].dealer_id}',prnt_dlr_id='${rsltq[0].prnt_dlr_id}',link_code='${rsltq[0].link_code}',client_id='${rsltq[0].client_id}',start_date='${rsltq[0].start_date}',expiry_months='${rsltq[0].expiry_months}',expiry_date='${rsltq[0].expiry_date}',status='${rsltq[0].status}',device_status='${rsltq[0].device_status}',activation_status='${rsltq[0].activation_status}',account_status='${rsltq[0].account_status}',unlink_status='0',transfer_status='0', transfered_from='${flagged_device.device_id}', transfered_to='${reqDevice.device_id}',dealer_name='${rsltq[0].dealer_name}',prnt_dlr_name='${rsltq[0].prnt_dlr_name}',del_status='0',note='${rsltq[0].note}',validity='${rsltq[0].validity}', batch_no='${rsltq[0].batch_no}'  WHERE device_id=${reqDevice.usr_device_id};`;
                     console.log("Update_UsrAcc_Query", Update_UsrAcc_Query);
-                    
+
                     sql.query(Update_UsrAcc_Query, async function (err, resp) {
                         if (err) {
                             console.log(err);
@@ -2131,7 +2147,14 @@ exports.transferDeviceProfile = async function (req, res) {
                             // Update flagged device acc
                             let UpdateQueryTransfer = `UPDATE usr_acc SET transfer_status = '1',transfered_from='${flagged_device.device_id}', transfered_to='${reqDevice.device_id}' WHERE id=${flagged_device.id};`;
                             sql.query(UpdateQueryTransfer, async function (err, resp) {
-                                if (err) throw Error("Query Expection");
+                                if (err) {
+                                    console.log(err);
+                                    data = {
+                                        status: false,
+                                        msg: "Query Error"
+                                    }
+                                    res.send(data);
+                                }
 
                                 if (resp.affectedRows > 0) {
 
@@ -2309,7 +2332,14 @@ exports.transferHistory = async function (req, res) {
 
                 // console.log('getHistory ', getHistory)
                 await sql.query(getHistory, async function (err, resp) {
-                    if (err) throw Error('Query Error');
+                    if (err) {
+                        console.log(err);
+                        data = {
+                            status: false,
+                            msg: "Query Error"
+                        }
+                        res.send(data);
+                    }
 
                     // console.log('resp: ', resp)
                     if (resp.length > 0) {
