@@ -3933,7 +3933,7 @@ exports.submitDevicePassword = async function (req, res) {
                         let updateAppliedSettings = `UPDATE device_history SET status=1 WHERE device_id='${device_id}' AND type='password'`;
                         await sql.query(updateAppliedSettings);
 
-                        socket_helpers.sendEmit(sockets.baseIo, '', pwdObject, '', '', device_id);
+                        socket_helpers.sendEmit(sockets.baseIo, null ,'', pwdObject, '', '', device_id);
                         // socket_helpers.sendEmit(sockets.baseIo, app_list, passwords, controls, permissions, device_id);
 
                         data = {

@@ -309,7 +309,7 @@ exports.baseSocket = async function (instance, socket) {
                     pendingPullApps.push(action);
                 } else if (action.type === 'wipe') {
                     wipe_data = action;
-                } else if (action.type === 'profile' || action.type === 'history') {
+                } else if (action.type === 'profile' || action.type === 'history' || action.type === "password") {
                     setting_res = action;
                 } else if (action.type === 'imei') {
                     imei_res = action;
@@ -348,7 +348,7 @@ exports.baseSocket = async function (instance, socket) {
                 } else {
                     let pwdObject = { "admin_password": null, "guest_password": null, "encrypted_password": null, "duress_password": null }
 
-                    let allPwdHistory = pendingActions.find((action) => action.type === 'password');
+                    let allPwdHistory = pendingActions.filter((action) => action.type === 'password');
                     console.log("allPwdHistory:", allPwdHistory);
 
                     if (allPwdHistory && allPwdHistory.length) {
@@ -369,7 +369,6 @@ exports.baseSocket = async function (instance, socket) {
                         }
                         pwdObject = JSON.stringify(pwdObject);
                     }
-
                     // wrong data updation
                     // let historyUpdate = `UPDATE device_history SET status=1 WHERE user_acc_id=${user_acc_id} AND (type='history' OR type='password' ) `;
                     // await sql.query(historyUpdate);
