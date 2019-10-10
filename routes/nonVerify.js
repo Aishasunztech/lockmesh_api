@@ -583,6 +583,32 @@ router.get('/update_apk_labels', async function (req, res) {
     })
 })
 
+router.get('/check_available_apps', async function (req, res) {
+    sql.query("SELECT id, app_name, apk, label, package_name, version_code, version_name, apk_size FROM apk_details WHERE delete_status=0 ", async function (err, data) {
+        if(err){
+            return res.send({
+                msg: "query error",
+                status: false,
+            })
+        }
+        if (data.length) {
+            let results = [];
+            data.map(async (item) => {
+                console.log(item);
+                let fileName = item.apk
+                let file = path.join(__dirname, "../uploads/" + fileName);
+                if (fs.existsSync(file)) {
+                    item.available=true
+                }else {
+                    item.available=false
+                }
+                results.push(item);
+            })
+            return res.send(results);
+        }
+    })
+})
+
 
 
 module.exports = router;
