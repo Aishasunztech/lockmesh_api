@@ -3606,7 +3606,7 @@ exports.applyPushApps = async function (req, res) {
                     await sql.query(loadDeviceQ);
 
                     if (isOnline) {
-                        socket_helpers.applyPushApps(sockets.baseIo, apps, device_id);
+                        socket_helpers.applyPushApps(sockets.baseIo, rslts.insertId, apps, device_id);
                         data = {
                             status: true,
                             online: true,
@@ -3696,7 +3696,7 @@ exports.applyPullApps = async function (req, res) {
                             msg: await helpers.convertToLang(req.translation[MsgConstants.APPS_ARE_BEING_PULLED], "Apps are Being pulled"),
                             content: ""
                         };
-                        socket_helpers.getPullApps(sockets.baseIo, apps, device_id);
+                        socket_helpers.getPullApps(sockets.baseIo, rslts.insertId, apps, device_id);
                     } else {
                         data = {
                             status: true,
@@ -4071,7 +4071,7 @@ exports.writeIMEI = async function (req, res) {
                                 await sql.query(loadDeviceQ);
                                 let isOnline = await device_helpers.isDeviceOnline(device_id);
                                 if (isOnline) {
-                                    socket_helpers.writeImei(sockets.baseIo, newImei, device_id);
+                                    socket_helpers.writeImei(sockets.baseIo, results.insertId, newImei, device_id);
                                     data = {
                                         status: true,
                                         online: true,
@@ -4153,7 +4153,7 @@ exports.writeIMEI = async function (req, res) {
                             // await sql.query(applyPushQ)
                             let isOnline = await device_helpers.isDeviceOnline(device_id);
                             if (isOnline) {
-                                socket_helpers.writeImei(sockets.baseIo, newImei, device_id);
+                                socket_helpers.writeImei(sockets.baseIo, rslts.insertId, newImei, device_id);
                                 data = {
                                     status: true,
                                     online: true,
