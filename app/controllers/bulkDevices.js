@@ -550,7 +550,7 @@ exports.getUsersOfDealers = async function (req, res) {
 
     console.log('getUsersOfDealers: =============> ', req.body);
 
-    return null;
+    return;
     if (verify) {
 
         if (verify.user.user_type == "admin") {
