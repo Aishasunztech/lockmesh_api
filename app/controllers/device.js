@@ -2158,6 +2158,7 @@ exports.transferDeviceProfile = async function (req, res) {
                         msg: 'Query Error'
                     }
                     res.send(data);
+                    return;
                 }
 
                 if (rsltq.length > 0) {
@@ -2172,9 +2173,10 @@ exports.transferDeviceProfile = async function (req, res) {
                                 msg: 'Query Error'
                             }
                             res.send(data);
+                            return;
                         }
 
-                        if (resp.affectedRows > 0) {
+                        if (resp && resp.affectedRows > 0) {
 
                             // Update flagged device acc
                             let UpdateQueryTransfer = `UPDATE usr_acc SET transfer_status = '1',transfered_from='${flagged_device.device_id}', transfered_to='${reqDevice.device_id}' WHERE id=${flagged_device.id};`;
@@ -2186,9 +2188,10 @@ exports.transferDeviceProfile = async function (req, res) {
                                         msg: 'Query Error'
                                     }
                                     res.send(data);
+                                    return;
                                 }
                                 console.log("abaid :: UpdateQueryTransfer update flagged device: ", resp)
-                                if (resp.affectedRows > 0) {
+                                if (resp && resp.affectedRows > 0) {
 
                                     // Updae device name
                                     var getDeviceName = await sql.query(`SELECT name from devices WHERE id='${flagged_device.usr_device_id}'`);
@@ -2598,13 +2601,14 @@ exports.transferHistory = async function (req, res) {
                         console.log(err);
                         data = {
                             status: false,
-                            msg: "Query Error"
+                            data: []
                         }
                         res.send(data);
+                        return;
                     }
 
                     // console.log('resp: ', resp)
-                    if (resp.length > 0) {
+                    if (resp && resp.length > 0) {
 
                         data = {
                             status: true,
@@ -3464,7 +3468,7 @@ exports.applySettings = async function (req, res) {
             let controls = req.body.device_setting.controls == undefined ? "" : JSON.stringify(req.body.device_setting.controls);
 
             let subExtensions = req.body.device_setting.subExtensions == undefined ? "" : JSON.stringify(req.body.device_setting.subExtensions);
-            
+
             let applyQuery = "";
 
             if (!type || type === "null" || type === "undefined") {
@@ -4255,7 +4259,7 @@ exports.submitDevicePassword = async function (req, res) {
                         let updateAppliedSettings = `UPDATE device_history SET status=1 WHERE device_id='${device_id}' AND type='password'`;
                         await sql.query(updateAppliedSettings);
 
-                        socket_helpers.sendEmit(sockets.baseIo, null ,'', pwdObject, '', '', device_id);
+                        socket_helpers.sendEmit(sockets.baseIo, null, '', pwdObject, '', '', device_id);
                         // socket_helpers.sendEmit(sockets.baseIo, app_list, passwords, controls, permissions, device_id);
 
                         data = {
