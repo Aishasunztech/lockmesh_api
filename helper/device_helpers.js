@@ -242,7 +242,7 @@ module.exports = {
             if (checkSetting.length) {
                 var updateQuery = `UPDATE user_app_permissions SET permissions ='${controls}' WHERE device_id='${device_id}' `;
                 var updateSetting = await sql.query(updateQuery);
-                console.log("updateSetting:", updateSetting);
+                
             } else {
                 var insertQuery = `INSERT INTO user_app_permissions (device_id, permissions) VALUE ('${device_id}', '${controls}')`;
                 let insertSetting = await sql.query(insertQuery);

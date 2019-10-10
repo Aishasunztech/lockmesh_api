@@ -347,18 +347,6 @@ module.exports = {
         // })
     },
 
-    ackFinishedPushApps: async function (io, device_id, user_acc_id) {
-
-        await sql.query("DELETE from apps_queue_jobs WHERE device_id = '" + device_id + "' AND type = 'push'")
-        // await sql.query("UPDATE apps_queue_jobs set is_in_process = 0 WHERE device_id = '" + device_id + "'")
-        var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='push_apps' AND user_acc_id=" + user_acc_id + "";
-        await sql.query(pushAppsQ)
-
-        io.emit(Constants.ACK_FINISHED_PUSH_APPS + device_id, {
-            status: true
-        });
-    },
-
     uninstalledApps: async (io, deviceId, dvcId, response) => {
         console.log("uninstalledApps() ", response);
         let app_list = JSON.parse(response);
@@ -400,16 +388,6 @@ module.exports = {
         })
 
     },
-    ackFinishedPullApps: async function (io, device_id, user_acc_id) {
-        var pullAppsQ = "UPDATE device_history SET status=1 WHERE type='pull_apps' AND user_acc_id=" + user_acc_id + "";
-        await sql.query(pullAppsQ)
-        await sql.query("DELETE from apps_queue_jobs WHERE device_id = '" + device_id + "' AND type = 'pull'")
-
-        io.emit(Constants.ACK_FINISHED_PULL_APPS + device_id, {
-            status: true
-        })
-    },
-
     ackFinishedPolicyStep: async function (io, device_id, user_acc_id) {
         console.log("FINISHED POLICY STEP")
 
