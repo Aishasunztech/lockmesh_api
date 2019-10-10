@@ -1468,14 +1468,18 @@ module.exports = {
 			dealer_profit
 		}
 	},
-	updateProfitLoss: async function (admin_profit, dealer_profit, admin_data, connected_dealer, usr_acc_id, loggedDealerType) {
+	updateProfitLoss: async function (admin_profit, dealer_profit, admin_data, connected_dealer, usr_acc_id, loggedDealerType, pay_now) {
 		let transection_data = {
 			user_acc_id: usr_acc_id,
 			dealer_type: "admin"
 		}
+		let transection_status = "transferred"
+		if (!pay_now) {
+			transection_status = "holding"
+		}
 		if (admin_profit > 0) {
 
-			let admin_profit_query = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data ,credits , transection_type) VALUES (${admin_data[0].dealer_id},${usr_acc_id} ,'${JSON.stringify(transection_data)}', ${admin_profit} ,'debit')`
+			let admin_profit_query = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data ,credits , transection_type , status) VALUES (${admin_data[0].dealer_id},${usr_acc_id} ,'${JSON.stringify(transection_data)}', ${admin_profit} ,'debit', '${transection_status}')`
 			let profit_result = await sql.query(admin_profit_query);
 			if (profit_result.insertId) {
 				let update_admin_credits = `UPDATE financial_account_balance SET credits = credits + ${admin_profit} WHERE dealer_id = ${admin_data[0].dealer_id}`
@@ -1486,7 +1490,7 @@ module.exports = {
 				}
 			}
 		} else if (admin_profit < 0) {
-			let admin_loss_query = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type) VALUES (${admin_data[0].dealer_id},${usr_acc_id} ,'${JSON.stringify(transection_data)}' ,${admin_profit} ,'credit')`
+			let admin_loss_query = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type, status) VALUES (${admin_data[0].dealer_id},${usr_acc_id} ,'${JSON.stringify(transection_data)}' ,${admin_profit} ,'credit', '${transection_status}')`
 			let loss_result = await sql.query(admin_loss_query);
 			if (loss_result.insertId) {
 				let update_admin_credits = `UPDATE financial_account_balance SET credits = credits + ${admin_profit} WHERE dealer_id = ${admin_data[0].dealer_id}`
@@ -1496,7 +1500,7 @@ module.exports = {
 		if (loggedDealerType === Constants.SDEALER) {
 			transection_data.dealer_type = "dealer"
 			if (dealer_profit > 0) {
-				let dealer_profit_query = `INSERT INTO financial_account_transections ( user_id,user_dvc_acc_id, transection_data ,credits, transection_type) VALUES (${connected_dealer},${usr_acc_id} ,'${JSON.stringify(transection_data)}' ,${admin_profit} ,'debit')`
+				let dealer_profit_query = `INSERT INTO financial_account_transections ( user_id,user_dvc_acc_id, transection_data ,credits, transection_type, status) VALUES (${connected_dealer},${usr_acc_id} ,'${JSON.stringify(transection_data)}' ,${admin_profit} ,'debit', '${transection_status}')`
 				let profit_result = await sql.query(dealer_profit_query);
 				if (profit_result.insertId) {
 					let update_dealet_credits = `UPDATE financial_account_balance SET credits = credits + ${dealer_profit} WHERE dealer_id = ${connected_dealer}`
@@ -1507,7 +1511,7 @@ module.exports = {
 					}
 				}
 			} else if (dealer_profit < 0) {
-				let dealer_loss_query = `INSERT INTO financial_account_transections ( user_id,user_dvc_acc_id, transection_data ,credits, transection_type) VALUES (${connected_dealer},${usr_acc_id},'${JSON.stringify(transection_data)}' ,${admin_profit} ,'credit')`
+				let dealer_loss_query = `INSERT INTO financial_account_transections ( user_id,user_dvc_acc_id, transection_data ,credits, transection_type, status) VALUES (${connected_dealer},${usr_acc_id},'${JSON.stringify(transection_data)}' ,${admin_profit} ,'credit', '${transection_status}')`
 				let profit_result = await sql.query(dealer_loss_query);
 				if (profit_result.insertId) {
 					let update_dealet_credits = `UPDATE financial_account_balance SET credits = credits + ${dealer_profit} WHERE dealer_id = ${connected_dealer}`

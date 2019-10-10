@@ -261,6 +261,7 @@ exports.acceptDevice = async function (req, res) {
         let loggedDealerType = verify.user.user_type;
         let user_id = req.body.user_id;
 
+        let pay_now = req.body.pay_now
         let userData = await helpers.getUserDataByUserId(user_id);
 
         let device_id = req.body.device_id;
@@ -291,6 +292,9 @@ exports.acceptDevice = async function (req, res) {
         let products = (req.body.products) ? req.body.products : []
         let packages = (req.body.packages) ? req.body.packages : []
         let total_price = req.body.total_price;
+        if (pay_now) {
+            total_price = total_price - (total_price * 5 / 100);
+        }
         let admin_profit = 0
         let dealer_profit = 0
         let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
@@ -318,19 +322,24 @@ exports.acceptDevice = async function (req, res) {
                 return
             }
             else {
-                if (result.length || term === '0') {
+                if (result.length || term === '0' || !pay_now) {
                     let dealer_credits = (result.length) ? result[0].credits : 0
                     let admin_credits = 0
-                    if (dealer_credits > total_price || term === '0') {
+                    if (dealer_credits > total_price || term === '0' || !pay_now) {
 
                         if (!empty(usr_device_id)) {
 
                             if (packages.length || products.length) {
                                 if (term !== '0') {
-                                    dealer_credits = dealer_credits - total_price
                                     let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedDealerType)
-                                    admin_profit = profitLoss.admin_profit
-                                    dealer_profit = profitLoss.dealer_profit
+                                    if (pay_now) {
+                                        dealer_credits = dealer_credits - total_price
+                                        admin_profit = profitLoss.admin_profit - (profitLoss.admin_profit * 5 / 100)
+                                        dealer_profit = profitLoss.dealer_profit - (profitLoss.dealer_profit * 5 / 100)
+                                    } else {
+                                        admin_profit = profitLoss.admin_profit
+                                        dealer_profit = profitLoss.dealer_profit
+                                    }
                                 }
                                 var checkDevice = `SELECT * FROM devices LEFT JOIN usr_acc ON (usr_acc.device_id = devices.id) WHERE devices.device_id = '${device_id}' `;
 
@@ -411,32 +420,23 @@ exports.acceptDevice = async function (req, res) {
 
                                                     await sql.query(usr_acc_Query)
 
-                                                    // let servicesQuery = "INSERT into services (user_acc_id,service_id,service_type) VALUES ('" + usr_acc_id + "',"
-                                                    // if (packages.length) {
-                                                    //     packages.map((item) => {
-                                                    //         let pkgQuery = servicesQuery + "'" + item.id + "','package')"
-                                                    //         sql.query(pkgQuery)
-                                                    //     })
-                                                    // }
-                                                    // if (products.length) {
-                                                    //     products.map((item) => {
-                                                    //         let productQuery = servicesQuery + "'" + item.id + "','product')"
-                                                    //         sql.query(productQuery)
-                                                    //     })
-                                                    // }
                                                     let remaining_credits = dealer_credits
                                                     let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages , total_credits, start_date, service_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${total_price} ,'${start_date}',  '${expiry_date}')`
                                                     await sql.query(service_billing);
-
-                                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${total_price} ,'credit' , 'transferred')`
+                                                    var transection_status = 'transferred'
+                                                    if (!pay_now) {
+                                                        transection_status = 'pending'
+                                                    }
+                                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${total_price} ,'credit' , '${transection_status}')`
                                                     await sql.query(transection_credits)
-
-                                                    let deduct_credits = 'update financial_account_balance set credits =' + remaining_credits + ' where dealer_id ="' + dealer_id + '"';
-                                                    await sql.query(deduct_credits);
-
-
-
-                                                    await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, usr_acc_id, loggedDealerType)
+                                                    let update_credits_query = '';
+                                                    if (pay_now) {
+                                                        update_credits_query = 'update financial_account_balance set credits =' + remaining_credits + ' where dealer_id ="' + dealer_id + '"';
+                                                    } else {
+                                                        update_credits_query = 'update financial_account_balance set due_credits = due_credits + ' + total_price + ' where dealer_id ="' + dealer_id + '"';
+                                                    }
+                                                    await sql.query(update_credits_query);
+                                                    await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, usr_acc_id, loggedDealerType, pay_now)
 
                                                     let updateChatIds = 'update chat_ids set user_acc_id = ' + usr_acc_id + ', used=1 where chat_id ="' + chat_id + '"';
                                                     await sql.query(updateChatIds);
@@ -461,8 +461,6 @@ exports.acceptDevice = async function (req, res) {
                                                         let chat_ids = await device_helpers.getChatids(rsltq[0].id);
                                                         let servicesData = await device_helpers.getServicesData(rsltq[0].id);
                                                         rsltq[0].finalStatus = device_helpers.checkStatus(rsltq[0]);
-
-
 
                                                         let loginHistoryData = await device_helpers.getLastLoginDetail(rsltq[0].usr_device_id);
                                                         if (loginHistoryData[0] && loginHistoryData[0].created_at) {
@@ -636,8 +634,14 @@ exports.createDeviceProfile = async function (req, res) {
         let packages = (req.body.packages) ? req.body.packages : []
         let admin_profit = 0
         let dealer_profit = 0
+        let pay_now = req.body.pay_now
 
         let total_price = req.body.total_price
+
+        if (pay_now) {
+            total_price = total_price - (total_price * 5 / 100);
+        }
+
         let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
 
         let user_credits = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
@@ -650,16 +654,20 @@ exports.createDeviceProfile = async function (req, res) {
                 return
             }
             else {
-                if (result.length || req.body.term === '0') {
-
+                if (result.length || req.body.term === '0' || !pay_now) {
                     let dealer_credits = result.length ? result[0].credits : 0;
-                    if (dealer_credits >= total_price || req.body.term === '0') {
+                    if (dealer_credits >= total_price || req.body.term === '0' || !pay_now) {
                         if (products.length || packages.length) {
                             if (exp_month !== '0') {
-                                dealer_credits = dealer_credits - total_price
                                 let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedUserType)
-                                admin_profit = profitLoss.admin_profit
-                                dealer_profit = profitLoss.dealer_profit
+                                if (pay_now) {
+                                    dealer_credits = dealer_credits - total_price
+                                    admin_profit = profitLoss.admin_profit - (profitLoss.admin_profit * 5 / 100)
+                                    dealer_profit = profitLoss.dealer_profit - (profitLoss.dealer_profit * 5 / 100)
+                                } else {
+                                    admin_profit = profitLoss.admin_profit
+                                    dealer_profit = profitLoss.dealer_profit
+                                }
                             }
                             // let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedUserType)
                             // admin_profit = profitLoss.admin_profit
@@ -752,10 +760,14 @@ exports.createDeviceProfile = async function (req, res) {
                                                     let service_data = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date ,total_credits,service_expiry_date) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price / duplicate} , '${expiry_date}' )`
                                                     await sql.query(service_data);
 
-                                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id ,transection_data, credits ,transection_type , status) VALUES (${dealer_id},${user_acc_id} , '${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price / duplicate} ,'credit', 'transferred')`
-                                                    await sql.query(transection_credits);
+                                                    var transection_status = 'transferred'
+                                                    if (!pay_now) {
+                                                        transection_status = 'pending'
+                                                    }
+                                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price} ,'credit' , '${transection_status}')`
+                                                    await sql.query(transection_credits)
 
-                                                    await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, user_acc_id, loggedUserType)
+                                                    await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, user_acc_id, loggedUserType, pay_now)
 
 
                                                     let updateChatIds = 'update chat_ids set used=1, user_acc_id="' + user_acc_id + '" where chat_id ="' + chat_id + '"';
@@ -779,8 +791,14 @@ exports.createDeviceProfile = async function (req, res) {
                                     await addDuplicateActivations();
                                     let remaining_credits = dealer_credits
                                     if (req.body.term !== '0') {
-                                        let deduct_credits = 'update financial_account_balance set credits =' + remaining_credits + ' where dealer_id ="' + dealer_id + '"';
-                                        await sql.query(deduct_credits);
+
+                                        let update_credits_query = '';
+                                        if (pay_now) {
+                                            update_credits_query = 'update financial_account_balance set credits =' + remaining_credits + ' where dealer_id ="' + dealer_id + '"';
+                                        } else {
+                                            update_credits_query = 'update financial_account_balance set due_credits = due_credits + ' + total_price + ' where dealer_id ="' + dealer_id + '"';
+                                        }
+                                        await sql.query(update_credits_query);
                                     }
 
                                     html = 'Amount of activation codes : ' + activationCodes.length + '<br> ' + 'Activation Codes are following : <br>' + activationCodes.join("<br>") + '.<br> ';
@@ -936,14 +954,23 @@ exports.createDeviceProfile = async function (req, res) {
 
                                                             let service_billing = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date, total_credits ,service_expiry_date) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price} , '${expiry_date}')`
                                                             await sql.query(service_billing);
-                                                            let deduct_credits = 'update financial_account_balance set credits =' + remaining_credits + ' where dealer_id ="' + dealer_id + '"';
-                                                            await sql.query(deduct_credits);
 
-                                                            let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id,transection_data, credits ,transection_type , status) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price} ,'credit' , 'transferred')`
-                                                            // console.log(transection_credits);
+                                                            let update_credits_query = '';
+                                                            if (pay_now) {
+                                                                update_credits_query = 'update financial_account_balance set credits =' + remaining_credits + ' where dealer_id ="' + dealer_id + '"';
+                                                            } else {
+                                                                update_credits_query = 'update financial_account_balance set due_credits = due_credits + ' + total_price + ' where dealer_id ="' + dealer_id + '"';
+                                                            }
+                                                            await sql.query(update_credits_query);
+
+                                                            var transection_status = 'transferred'
+                                                            if (!pay_now) {
+                                                                transection_status = 'pending'
+                                                            }
+                                                            let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price} ,'credit' , '${transection_status}')`
                                                             await sql.query(transection_credits)
 
-                                                            helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, user_acc_id, loggedUserType)
+                                                            helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, user_acc_id, loggedUserType, pay_now)
 
                                                             let updateChatIds = 'update chat_ids set used=1, user_acc_id="' + user_acc_id + '" where chat_id ="' + chat_id + '"';
                                                             await sql.query(updateChatIds);
@@ -3669,8 +3696,6 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                     admin_profit = profits.admin_profit
                                 }
                             }
-                            let deleteServices = "DELETE FROM services WHERE user_acc_id = " + user_acc_id
-                            await sql.query(deleteServices);
                             let statusChangeQuery = "UPDATE usr_acc SET del_status='" + 1 + "' WHERE device_id='" + device.usr_device_id + "'";
                             let resp = await sql.query(statusChangeQuery)
                             if (resp.affectedRows) {
