@@ -168,6 +168,7 @@ module.exports = {
     { "key": "activation_code", "value": "tableHeadings.ACTIVATIONCODE" },
     { "key": "pgp_email", "value": "tableHeadings.PGPEMAIL" },
     { "key": "sim_id", "value": "tableHeadings.SIMID" },
+    { "key": "sim_id2", "value": "SIM ID 2" },
     { "key": "chat_id", "value": "tableHeadings.CHATID" },
     { "key": "dealer_id", "value": "tableHeadings.DEALERID" },
     { "key": "dealer_name", "value": "tableHeadings.DEALERNAME" },
