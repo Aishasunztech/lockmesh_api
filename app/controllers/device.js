@@ -3602,7 +3602,7 @@ exports.applyPushApps = async function (req, res) {
                     await sql.query(loadDeviceQ);
 
                     if (isOnline) {
-                        socket_helpers.applyPushApps(sockets.baseIo, apps, device_id);
+                        socket_helpers.applyPushApps(sockets.baseIo, rslts.insertId, apps, device_id);
                         data = {
                             status: true,
                             online: true,
