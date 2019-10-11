@@ -1085,7 +1085,7 @@ exports.getUserCredits = async function (req, res) {
     if (verify) {
         try {
             let query = ''
-            query = `SELECT credits from financial_account_balance where dealer_id= ${verify.user.id}`
+            query = `SELECT * from financial_account_balance where dealer_id= ${verify.user.id}`
 
             sql.query(query, async function (err, result) {
                 if (err) {
@@ -1095,14 +1095,17 @@ exports.getUserCredits = async function (req, res) {
                     console.log(result);
                     data = {
                         "status": true,
-                        "credits": result[0].credits
+                        "credits": result[0].credits,
+                        "due_credits": result[0].due_credits
+
                     };
                     res.send(data);
                     return
                 } else {
                     data = {
                         "status": true,
-                        "credits": 0
+                        "credits": 0,
+                        "due_credits": 0
                     };
                     res.send(data);
                     return
