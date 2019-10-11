@@ -252,7 +252,7 @@ exports.baseSocket = async function (instance, socket) {
                 }
 
                 // updating process and then select that record to sync device again and send on frontend
-                let historyUpdate = `UPDATE device_history SET status=1 WHERE user_acc_id=${user_acc_id} AND (type='history' OR type='password' OR type = 'profile') `;
+                let historyUpdate = `UPDATE device_history SET status='completed_successfully' WHERE user_acc_id=${user_acc_id} AND (type='history' OR type='password' OR type = 'profile') `;
                 await sql.query(historyUpdate);
 
                 var setting_query = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND (type='history' OR type='profile') AND status=1 ORDER BY created_at DESC LIMIT 1`;
@@ -303,7 +303,7 @@ exports.baseSocket = async function (instance, socket) {
                 console.log("imei_applied: " + device_id, data);
                 socket_helpers.ackImeiChanged(instance, device_id);
                 if (data.status) {
-                    var imei_query = "UPDATE device_history SET status = 1 WHERE user_acc_id='" + user_acc_id + "' AND type = 'imei'";
+                    var imei_query = `UPDATE device_history SET status = 'completed_successfully' WHERE user_acc_id='${user_acc_id}' AND type = 'imei'`;
                     let response = await sql.query(imei_query);
                 }
             });
@@ -340,7 +340,7 @@ exports.baseSocket = async function (instance, socket) {
                 }
 
                 await sql.query("DELETE from apps_queue_jobs WHERE device_id = '" + device_id + "' AND type = 'push'")
-                var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='push_apps' AND user_acc_id=" + user_acc_id + "";
+                var pushAppsQ = `UPDATE device_history SET status='completed_successfully' WHERE type='push_apps' AND user_acc_id=${user_acc_id}`;
                 await sql.query(pushAppsQ)
 
                 instance.emit(Constants.ACK_FINISHED_PUSH_APPS + device_id, {
@@ -358,10 +358,10 @@ exports.baseSocket = async function (instance, socket) {
 
             socket.on(Constants.FINISHED_PULL_APPS + device_id, async (data) => {
                 console.log("FINISHED PULL_APPS", data);
-                if(data.setting_id && data.msg){
+                if (data.setting_id && data.msg) {
 
                 }
-                var pullAppsQ = "UPDATE device_history SET status=1 WHERE type='pull_apps' AND user_acc_id=" + user_acc_id + "";
+                var pullAppsQ = "UPDATE device_history SET status='completed_successfully' WHERE type='pull_apps' AND user_acc_id=" + user_acc_id + "";
                 await sql.query(pullAppsQ)
                 await sql.query("DELETE from apps_queue_jobs WHERE device_id = '" + device_id + "' AND type = 'pull'")
 
@@ -510,11 +510,20 @@ exports.baseSocket = async function (instance, socket) {
             });
 
             // policy finished;
-            socket.on(Constants.FINISH_POLICY + device_id, (data) => {
+            socket.on(Constants.FINISH_POLICY + device_id, async (data) => {
                 console.log("policy finished: ", data)
-                if(data.setting_id && data.msg){
-                    
+                if (data.setting_id && data.msg) {
+
                 }
+
+                var pushAppsQ = "UPDATE device_history SET status='completed_successfully' WHERE type='policy' AND user_acc_id=" + user_acc_id + "";
+                await sql.query(pushAppsQ)
+                await sql.query("DELETE from policy_queue_jobs WHERE device_id = '" + device_id + "'")
+
+                instance.emit(Constants.FINISH_POLICY + device_id, {
+                    status: true
+                });
+                
                 socket.emit(Constants.GET_SYNC_STATUS + device_id, {
                     device_id: device_id,
                     apps_status: false,
@@ -523,18 +532,16 @@ exports.baseSocket = async function (instance, socket) {
                     // is_sync: (is_sync === 1 || is_sync === true || is_sync === 'true' || is_sync === '1') ? true : false,
                     is_sync: false,
                 });
-
-                socket_helpers.ackFinishedPolicy(instance, device_id, user_acc_id);
             })
 
             // ===================================================== Pending Device Processes ===============================================
             // pending wipe action for device
 
-            var pendingActionsQ = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status=0 `;
+            var pendingActionsQ = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND status='pending' `;
             let pendingActions = await sql.query(pendingActionsQ);
 
             if (pendingActions.length) {
-                console.log("all Pending Actions: ")
+                console.log("all Pending Actions:")
                 let wipe_data = null;
                 let setting_res = null;
                 let imei_res = null;
@@ -575,7 +582,7 @@ exports.baseSocket = async function (instance, socket) {
                     if (setting_res.type === "profile") {
 
                         // wrong data updation
-                        // let historyUpdate = `UPDATE device_history SET status=1 WHERE user_acc_id=${user_acc_id} AND (type='history' OR type = 'profile')`;
+                        // let historyUpdate = `UPDATE device_history SET status='completed_successfully' WHERE user_acc_id=${user_acc_id} AND (type='history' OR type = 'profile')`;
                         // await sql.query(historyUpdate);
                         socket_helpers.sendEmit(socket, setting_res.id, setting_res.app_list, '{}', setting_res.controls, setting_res.permissions, device_id);
                         // socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
@@ -611,7 +618,7 @@ exports.baseSocket = async function (instance, socket) {
                             pwdObject = JSON.stringify(pwdObject);
                         }
                         // wrong data updation
-                        // let historyUpdate = `UPDATE device_history SET status=1 WHERE user_acc_id=${user_acc_id} AND (type='history' OR type='password' ) `;
+                        // let historyUpdate = `UPDATE device_history SET status='completed_successfully' WHERE user_acc_id=${user_acc_id} AND (type='history' OR type='password' ) `;
                         // await sql.query(historyUpdate);
                         socket_helpers.sendEmit(socket, setting_res.id, setting_res.app_list, pwdObject, setting_res.controls, setting_res.permissions, device_id);
 

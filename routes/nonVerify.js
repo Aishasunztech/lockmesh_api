@@ -493,6 +493,16 @@ router.get('/refactor_policy_sys_permissions', async function (req, res) {
 
     res.send("refactor policies system permissions");
 })
+
+router.get('/refactor_pending_histories', async function(req, res){
+    sql.query(`UPDATE device_history SET status='completed_successfully' WHERE status='pending'`, async function (error, result) {
+        if(error){
+            console.log(error)
+        }
+        res.send("action completed")
+    });
+})
+
 /** Get back up DB File **/
 router.get("/getBackupFile/:file", backupController.getBackupFiles);
 
