@@ -2066,7 +2066,7 @@ exports.transferUser = async function (req, res) {
             // console.log('usr_device_id is: ', usr_device_id)
 
             var userResult = await sql.query(`SELECT * from users WHERE user_id='${NewUser}'`);
-            let updateUsrAcc = `UPDATE usr_acc SET user_id='${userResult[0].user_id}',account_email='${userResult[0].email}', transfer_user_status='1', user_transfered_from='${OldUser}', user_transfered_to='${NewUser}'  WHERE user_id = '${OldUser}' AND device_id=${usr_device_id};`;
+            let updateUsrAcc = `UPDATE usr_acc SET user_id='${userResult[0].user_id}',account_email='${userResult[0].email}', transfer_user_status=1, user_transfered_from='${OldUser}', user_transfered_to='${NewUser}'  WHERE user_id = '${OldUser}' AND device_id=${usr_device_id};`;
             sql.query(updateUsrAcc, async function (err, resp) {
                 if (err) {
                     console.log(err);
@@ -2075,9 +2075,10 @@ exports.transferUser = async function (req, res) {
                         msg: "Query Error"
                     }
                     res.send(data);
+                    return;
                 }
 
-                if (resp.affectedRows > 0) {
+                if (resp && resp.affectedRows > 0) {
 
 
                     // Updae device name
@@ -2163,8 +2164,11 @@ exports.transferDeviceProfile = async function (req, res) {
 
                 if (rsltq.length > 0) {
 
+
+                    
+
                     // Update New usr_acc
-                    let Update_UsrAcc_Query = `UPDATE usr_acc SET user_id='${rsltq[0].user_id}', account_email='${rsltq[0].account_email}',account_name='${rsltq[0].account_name}',dealer_id='${rsltq[0].dealer_id}',prnt_dlr_id='${rsltq[0].prnt_dlr_id}',link_code='${rsltq[0].link_code}',client_id='${rsltq[0].client_id}',start_date='${rsltq[0].start_date}',expiry_months='${rsltq[0].expiry_months}',expiry_date='${rsltq[0].expiry_date}',status='${rsltq[0].status}',device_status='${rsltq[0].device_status}',activation_status=${rsltq[0].activation_status},account_status='${rsltq[0].account_status}',unlink_status='0',transfer_status='0', transfered_from='${flagged_device.device_id}', transfered_to='${reqDevice.device_id}',dealer_name='${rsltq[0].dealer_name}',prnt_dlr_name='${rsltq[0].prnt_dlr_name}',del_status='0',note='${rsltq[0].note}',validity='${rsltq[0].validity}', batch_no='${rsltq[0].batch_no}'  WHERE device_id=${reqDevice.usr_device_id};`;
+                    let Update_UsrAcc_Query = `UPDATE usr_acc SET user_id='${rsltq[0].user_id}', account_email='${rsltq[0].account_email}',account_name='${rsltq[0].account_name}',dealer_id=${rsltq[0].dealer_id},prnt_dlr_id=${rsltq[0].prnt_dlr_id},link_code='${rsltq[0].link_code}',client_id='${rsltq[0].client_id}',start_date='${rsltq[0].start_date}',expiry_months='${rsltq[0].expiry_months}',expiry_date='${rsltq[0].expiry_date}',status='${rsltq[0].status}',device_status=${rsltq[0].device_status},activation_status=${rsltq[0].activation_status},account_status='${rsltq[0].account_status}',unlink_status=0,transfer_status=0, transfered_from='${flagged_device.device_id}', transfered_to='${reqDevice.device_id}',dealer_name='${rsltq[0].dealer_name}',prnt_dlr_name='${rsltq[0].prnt_dlr_name}',del_status='0',note='${rsltq[0].note}',validity=${rsltq[0].validity}, batch_no='${rsltq[0].batch_no}'  WHERE device_id=${reqDevice.usr_device_id};`;
                     await sql.query(Update_UsrAcc_Query, async function (err, resp) {
                         if (err) {
                             console.log(err);
