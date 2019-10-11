@@ -3129,7 +3129,7 @@ exports.wipeDevice = async function (req, res) {
     if (verify) {
         var deviceQuery = "select devices.*  ," +
             usr_acc_query_text +
-            ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
+            ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE devices.reject_status = 0 AND devices.id= "' +
             device_id +
             '"';
         var resquery = await sql.query(deviceQuery);
