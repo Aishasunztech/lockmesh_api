@@ -1343,4 +1343,9 @@ router.delete('/agents/:agentID', agentController.deleteAgent);
  */
 router.get('/dashboard-data', dashboardController.getDashboardData);
 
+
+router.get('/getInvoiceId', userController.getInvoiceId);
+
+
+
 module.exports = router;
