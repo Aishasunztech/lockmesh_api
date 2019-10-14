@@ -8,7 +8,7 @@ var path = require('path');
 var md5 = require('md5');
 var fs = require("fs");
 
-// const { check, validationResult } = require('express-validator');
+const { validationResult } = require('express-validator');
 var validator = require('validator');
 
 // helpers
@@ -102,7 +102,7 @@ exports.login = async function (req, resp) {
                     });
                 }
             }
-            
+
         } else if (linkCode.length >= 7) {
             // there should be and operator in condition currently its not ok
             console.log("mac_address: ", mac_address);
@@ -1081,7 +1081,7 @@ exports.deviceStatus = async function (req, res) {
 
                     var dealerQuery = "select * from dealers where dealer_id = '" + user_acc[0].dealer_id + "'";
                     var dealer = await sql.query(dealerQuery);
-                     
+
                     if (dealer.length > 0) {
 
                         const dvc = {
@@ -1144,7 +1144,7 @@ exports.deviceStatus = async function (req, res) {
                                 return;
                             }
                         });
-                    } 
+                    }
 
                     // dealer not found
                     else {
@@ -1251,7 +1251,7 @@ exports.deviceStatus = async function (req, res) {
                         device_id: device[0].device_id
                     }
                 }
-               
+
             } else {
                 data = {
                     status: false,
@@ -1265,50 +1265,62 @@ exports.deviceStatus = async function (req, res) {
 }
 
 exports.stopLinking = async function (req, res) {
-    res.setHeader('Content-Type', 'application/json');
+    console.log("stopLinking");
     var reslt = await verifyToken(req, res);
-    //console.log(req);
-    let mac_address = req.params.macAddr;
-    let serial_number = req.params.serialNo;
-    // console.log("mac_address", mac_address);
-    // console.log("serialNo", serial_number);
     if (reslt.status == true) {
-        if (!empty(mac_address) && !empty(serial_number)) {
-            let deviceQ = "SELECT id ,device_id FROM devices WHERE mac_address='" + mac_address + "' AND serial_number='" + serial_number + "'";
-            sql.query(deviceQ, async function (error, resp) {
-                if (error) throw (error);
-                if (resp.length) {
-                    let device_record = await helpers.getAllRecordbyDeviceId(resp[0].device_id)
-                    // console.log(device_record);
-                    device_helpers.saveActionHistory(device_record, Constants.DEVICE_UNLINKED)
-                    var query = "DELETE from usr_acc WHERE device_id = " + resp[0].id;
-                    console.log(query);
-                    await sql.query(query);
-                    var sqlDevice = "DELETE from devices where device_id = '" + resp[0].device_id + "'";
-                    sql.query(sqlDevice);
-                    console.log(sqlDevice);
-                    data = {
-                        "status": true,
-                        "msg": "Device Unlinked successfully"
-                    };
-                    res.send(data);
-                } else {
-                    data = {
-                        "status": false,
-                        "msg": "Invalid device"
-                    };
-                    res.send(data);
-                    return;
-                }
-            });
-
-        } else {
-            data = {
-                "status": false,
-                "msg": "Invalid device"
-            };
-            res.send(data);
+        
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.send({ errors: errors.array(), status: false, msg: "information is not provided" });
         }
+
+        let mac_address = req.params.macAddr;
+        let serial_number = req.params.serialNo;
+        console.log("mac_address: ", mac_address);
+        console.log("serial_number: ", serial_number);
+
+        let deviceQ = `SELECT id, device_id FROM devices WHERE mac_address='${mac_address}' AND serial_number='${serial_number}'`;
+        sql.query(deviceQ, async function (error, resp) {
+            if (error) {
+                console.log('query exception')
+                return res.send({
+                    status: false,
+                    msg: ''
+                })
+            };
+
+            if (resp.length) {
+                
+                // get all records by device id and store in acc_action_history table
+                let device_record = await helpers.getAllRecordbyDeviceId(resp[0].device_id)
+                
+                // console.log(device_record);
+                // save action history with device in pending, not in unlinked
+                // device_helpers.saveActionHistory(device_record, Constants.DEVICE_UNLINKED)
+                
+                var query = `UPDATE  usr_acc SET del_status=1 WHERE device_id = ${resp[0].id}`;
+                console.log(query);
+                await sql.query(query);
+
+                // delete device is not good for health
+                // var query = "DELETE from usr_acc WHERE device_id = " + resp[0].id;
+                // await sql.query(query);
+                
+                // var sqlDevice = "DELETE from devices where device_id = '" + resp[0].device_id + "'";
+                // sql.query(sqlDevice);
+                
+                data = {
+                    status: true,
+                    msg: "Device Unlinked successfully"
+                };
+            } else {
+                data = {
+                    status: false,
+                    msg: "Invalid device"
+                };
+            }
+            return res.send(data);
+        });
     }
 }
 

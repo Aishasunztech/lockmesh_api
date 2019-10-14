@@ -200,7 +200,7 @@ router.put("/edit/devices", deviceController.editDevices);
 router.post('/check-service-refund-credits', deviceController.getServiceRefund);
 
 /**Devices record delete**/
-router.put("/delete/:device_id", deviceController.deleteDevice);
+router.put("/delete/:device_id", deviceController.stopLinking);
 
 /** Unlink Device  **/
 router.post("/unlink/:id", deviceController.unlinkDevice);

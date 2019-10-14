@@ -1602,7 +1602,7 @@ exports.getServiceRefund = async function (req, res) {
     }
 };
 
-exports.deleteDevice = async function (req, res) {
+exports.stopLinking = async function (req, res) {
     // console.log(req.body);
     var verify = req.decoded; // await verifyToken(req, res);
 
@@ -1612,25 +1612,30 @@ exports.deleteDevice = async function (req, res) {
             let userType = verify.user.user_type;
             let loggedUserId = verify.user.id;
             let where = "";
-            if (userType === constants.DEALER) {
-                where =
-                    " AND (dealer_id=" +
-                    loggedUserId +
-                    " OR prnt_dlr_id = " +
-                    loggedUserId +
-                    ")";
-            } else if (userType === constants.SDEALER) {
-                where = " AND (dealer_id=" + loggedUserId;
-            }
-            // console.log("delete where ", 'DELETE FROM devices WHERE device_id ="' + [req.params.device_id])
-            if (
-                req.body.dealer_id === loggedUserId ||
-                req.body.prnt_dlr_id === loggedUserId ||
-                userType === constants.ADMIN
-            ) {
-                let usr_device_id = await device_helpers.getOriginalIdByDeviceId(
-                    req.params.device_id
-                );
+
+            // not using this piece of code
+            // if (userType === constants.DEALER) {
+            //     where = ` AND (dealer_id=${loggedUserId} OR prnt_dlr_id = ${loggedUserId})`;
+            // } else if (userType === constants.SDEALER) {
+            //     where = " AND (dealer_id=" + loggedUserId;
+            // }
+            // admin can't decline the request
+            // if (
+            //     req.body.dealer_id === loggedUserId ||
+            //     req.body.prnt_dlr_id === loggedUserId ||
+            //     userType === constants.ADMIN
+            // ) {
+
+            let device_record = await helpers.getAllRecordbyDeviceId(req.params.device_id)
+            
+            if (device_record.dealer_id === loggedUserId || req.body.prnt_dlr_id === loggedUserId ) {
+
+                let usr_device_id = await device_helpers.getOriginalIdByDeviceId(req.params.device_id);
+               
+                // var query = `UPDATE  usr_acc SET del_status=1 WHERE device_id = ${resp[0].id}`;
+                // console.log(query);
+                // await sql.query(query);
+
                 sql.query(
                     "DELETE from usr_acc  where device_id = " + usr_device_id + " AND unlink_status = 0",
                     async function (error, results, fields) {
@@ -1827,7 +1832,6 @@ exports.unlinkDevice = async function (req, res) {
         }
     }
 };
-
 
 
 // ******************************************* Transfer Module
@@ -3122,6 +3126,7 @@ exports.activateDevice = async function (req, res) {
         }
     }
 };
+
 exports.wipeDevice = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
     var device_id = req.params.id;

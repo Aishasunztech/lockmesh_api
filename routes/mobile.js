@@ -21,7 +21,7 @@ router.post('/getstatus', mobileController.getStatus);
 
 /** Stop linking Device / Delete device MDM **/
 
-router.delete('/unlink/:macAddr/:serialNo', mobileController.stopLinking);
+router.delete('/unlink/:macAddr/:serialNo', mobileValidator.stopLinking, mobileController.stopLinking);
 
 
 /* Screen Lock Get Status of Apk  */
