@@ -1136,13 +1136,22 @@ exports.editDevices = async function (req, res) {
             let total_price = req.body.total_price;
             let admin_profit = 0
             let dealer_profit = 0
+            let prev_service_admin_profit = 0
+            let prev_service_dealer_profit = 0
+            let refund_prev_service_admin_profit = 0
+            let refund_prev_service_dealer_profit = 0
             let dealer_credits = 0
+            let refund_due_credits = 0
             let remaining_credits = null
             var expiry_date = req.body.expiry_date
             var date_now = moment(new Date()).format('YYYY/MM/DD')
             let creditsToRefund = 0
             let prevServicePaidPrice = 0
             let newServicePrice = 0
+            let pay_now = req.body.pay_now
+            if (pay_now) {
+                total_price = total_price - (total_price * 5 / 100);
+            }
 
 
             if (expiry_date == "" || expiry_date === null) {
@@ -1187,9 +1196,9 @@ exports.editDevices = async function (req, res) {
                     if (newService) {
                         let user_credits_q = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
                         let results = await sql.query(user_credits_q)
-                        if (results && results.length || expiry_date == 0) {
+                        if (results && results.length || expiry_date == 0 || !pay_now) {
                             dealer_credits = results[0] ? results[0].credits : 0
-                            if (dealer_credits < total_price) {
+                            if (dealer_credits < total_price && pay_now) {
                                 res.send({
                                     status: false,
                                     msg: "Error: Dealer doesn't have enough credits to make this request. Please purchase credits and try again later."
@@ -1261,19 +1270,27 @@ exports.editDevices = async function (req, res) {
                                         let prevServiceData = await sql.query("SELECT * from services_data WHERE id = " + prevService.id)
                                         if (prevServiceData.length) {
                                             let prevService = prevServiceData[0]
+                                            let prevServicePackages = JSON.parse(prevService.packages)
+                                            let prevServiceProducts = JSON.parse(prevService.products)
                                             let preTotalPrice = prevService.total_credits
                                             let prevServiceExpiryDate = moment(new Date(prevService.service_expiry_date))
                                             let prevServiceStartDate = moment(new Date(prevService.start_date))
                                             let dateNow = moment(new Date())
                                             let serviceRemainingDays = prevServiceExpiryDate.diff(dateNow, 'days') + 1
                                             let totalDays = prevServiceExpiryDate.diff(prevServiceStartDate, 'days')
-                                            console.log(serviceRemainingDays, totalDays, preTotalPrice);
+                                            // console.log(serviceRemainingDays, totalDays, preTotalPrice);
                                             creditsToRefund = Math.floor((preTotalPrice / totalDays) * serviceRemainingDays)
                                             // console.log(creditsToRefund);
                                             prevServicePaidPrice = preTotalPrice - creditsToRefund
+
+                                            let profitLoss = await helpers.calculateProfitLoss(prevServicePackages, prevServiceProducts, loggedDealerType)
+                                            prev_service_admin_profit = profitLoss.admin_profit
+                                            prev_service_dealer_profit = profitLoss.dealer_profit
+                                            refund_prev_service_admin_profit = (prev_service_admin_profit / totalDays) * serviceRemainingDays
+                                            refund_prev_service_dealer_profit = (prev_service_dealer_profit / totalDays) * serviceRemainingDays
                                         }
                                     }
-                                    console.log(products);
+                                    // console.log(products);
                                     if (packages && packages.length) {
                                         packages.map((item) => {
                                             newServicePrice += Number(item.pkg_price)
@@ -1284,7 +1301,7 @@ exports.editDevices = async function (req, res) {
                                             newServicePrice += Number(item.unit_price)
                                         })
                                     }
-                                    console.log(newServicePrice, prevServicePaidPrice, newServicePrice, creditsToRefund);
+                                    // console.log(newServicePrice, prevServicePaidPrice, newServicePrice, creditsToRefund);
                                     total_price = newServicePrice - creditsToRefund
 
                                     let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedDealerType)
@@ -1456,46 +1473,82 @@ exports.editDevices = async function (req, res) {
                                     await sql.query(updatePrevSim);
                                 }
                             }
-                            console.log(total_price);
-                            remaining_credits = dealer_credits - total_price
+                            remaining_credits = dealer_credits
+                            let update_credits_query = '';
 
-                            // let servicesQuery = "INSERT into services (user_acc_id,service_id,service_type) VALUES ('" + usr_acc_id + "',"
-                            // if (packages.length) {
-                            //     packages.map((item) => {
-                            //         let pkgQuery = servicesQuery + "'" + item.id + "','package')"
-                            //         sql.query(pkgQuery)
-                            //     })
-                            // }
-                            // if (products.length) {
-                            //     products.map((item) => {
-                            //         let productQuery = servicesQuery + "'" + item.id + "','product')"
-                            //         sql.query(productQuery)
-                            //     })
-                            // }
                             if (prevService) {
                                 let update_prev_service_billing = `UPDATE services_data set del_status = 1,paid_credits = ${prevServicePaidPrice}, end_date = '${date_now}' WHERE id = ${prevService.id} `
                                 await sql.query(update_prev_service_billing);
+
+                                let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice} ,'${date_now}' ,'${expiry_date}')`
+                                await sql.query(service_billing);
+
+                                let transection_record = "SELECT * from financial_account_transections where user_dvc_acc_id = " + usr_acc_id + " AND user_id = '" + verify.user.id + "' ORDER BY id DESC LIMIT 1"
+                                let transection_record_data = await sql.query(transection_record)
+
+                                if (transection_record_data[0].status === 'pending') {
+                                    let update_transection = "UPDATE financial_account_transections SET status = 'cancelled' WHERE id = " + transection_record_data[0].id
+                                    await sql.query(update_transection)
+
+                                    update_credits_query = 'update financial_account_balance set due_credits = due_credits - ' + transection_record_data[0].credits + ' where dealer_id ="' + dealer_id + '"';
+                                    await sql.query(update_credits_query);
+
+
+                                    let update_profits_transections = "UPDATE financial_account_transections SET status = 'cancelled' WHERE user_dvc_acc_id = " + usr_acc_id + " AND status = 'holding'"
+                                    await sql.query(update_profits_transections)
+
+                                    if (prevServicePaidPrice > 0) {
+                                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service charges" })}',${prevServicePaidPrice} ,'credit','pending')`
+                                        await sql.query(transection_credits)
+
+                                        update_credits_query = 'update financial_account_balance set due_credits = due_credits + ' + prevServicePaidPrice + ' where dealer_id ="' + dealer_id + '"';
+                                        await sql.query(update_credits_query);
+
+                                        let admin_holding_profit = prev_service_admin_profit - refund_prev_service_admin_profit
+                                        let dealer_holding_profit = prev_service_dealer_profit - refund_prev_service_dealer_profit
+
+                                        if (admin_holding_profit > 0) {
+                                            let admin_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status) VALUES (${admin_data[0].dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service holding profit" })}',${admin_holding_profit} ,'debit','holding')`
+                                            await sql.query(admin_profit_transection)
+                                        }
+
+                                        if (dealer_holding_profit > 0) {
+                                            let dealer_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status) VALUES (${verify.user.connected_dealer},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service holding profit" })}',${dealer_holding_profit} ,'debit','holding')`
+                                            await sql.query(dealer_profit_transection)
+                                        }
+                                    }
+
+                                } else {
+                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, details: "REFUND SERVICES CREITS" })}' ,${creditsToRefund} ,'debit' , 'transferred')`
+                                    await sql.query(transection_credits)
+                                    update_credits_query = 'update financial_account_balance set credits = credits + ' + creditsToRefund + ' where dealer_id ="' + dealer_id + '"';
+                                    await sql.query(update_credits_query);
+
+                                }
                             }
 
-                            let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice} ,'${date_now}' ,'${expiry_date}')`
-                            await sql.query(service_billing);
+                            let transection_status = 'transferred'
 
-                            let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${newServicePrice} ,'credit' , 'transferred')`
+                            if (!pay_now) {
+                                transection_status = 'pending'
+                            }
+                            let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${newServicePrice} ,'credit' , '${transection_status}')`
                             await sql.query(transection_credits)
+                            if (transection_status === 'pending') {
+                                update_credits_query = 'update financial_account_balance set due_credits = due_credits + ' + newServicePrice + ' where dealer_id ="' + dealer_id + '"';
+                            } else {
+                                update_credits_query = 'update financial_account_balance set credits = credits - ' + newServicePrice + ' where dealer_id ="' + dealer_id + '"';
+                            }
+                            await sql.query(update_credits_query);
+                            // if (pay_now) {
+                            //     update_credits_query = 'update financial_account_balance set credits =' + remaining_credits + ' ,due_credits = due_credits - ' + refund_due_credits + '  where dealer_id ="' + dealer_id + '"';
+                            // } else {
+                            //     total_price = total_price - refund_due_credits
+                            // }
 
-                            transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, details: "REFUND SERVICES CREITS" })}' ,${creditsToRefund} ,'debit' , 'transferred')`
-                            await sql.query(transection_credits)
+                            await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, usr_acc_id, loggedDealerType, pay_now)
 
-                            let deduct_credits = 'update financial_account_balance set credits = credits - ' + total_price + ' where dealer_id ="' + dealer_id + '"';
-                            await sql.query(deduct_credits);
-
-                            await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, usr_acc_id, loggedDealerType)
-
-                            let updateChatIds = 'update chat_ids set user_acc_id = ' + usr_acc_id + ', used=1 where chat_id ="' + chat_id + '"';
-                            await sql.query(updateChatIds);
                         }
-
-
 
                         var slctquery =
                             "select devices.*  ," +
@@ -1510,7 +1563,6 @@ exports.editDevices = async function (req, res) {
                         let sim_ids = await device_helpers.getSimids(rsltq[0].id);
                         let chat_ids = await device_helpers.getChatids(rsltq[0].id);
                         let servicesData = await device_helpers.getServicesData(rsltq[0].id);
-                        let loginHistoryData = await device_helpers.getLastLoginDetail(rsltq[0].usr_device_id)
 
                         if (rsltq.length) {
                             rsltq[0].finalStatus = device_helpers.checkStatus(rsltq[0]);
@@ -1533,12 +1585,7 @@ exports.editDevices = async function (req, res) {
                             if (servicesData[0]) {
                                 rsltq[0].services = servicesData[0]
                             }
-                            // if (loginHistoryData[0] && loginHistoryData.created_at) {
-                            //     rsltq[0].lastOnline = loginHistoryData[0].created_at
-                            // }
-                            // else {
-                            //     rsltq[0].lastOnline = "N/A"
-                            // }
+
                             if (rsltq[0].expiry_date !== null) {
                                 let startDate = moment(new Date())
                                 let expiray_date = new Date(rsltq[0].expiry_date)
@@ -3684,16 +3731,29 @@ exports.deleteUnlinkDevice = async function (req, res) {
                             if (bills.length) {
                                 packages = JSON.parse(bills[0].packages)
                                 products = JSON.parse(bills[0].products)
-                                refundedCredits = refundedCredits + bills[0].total_credits;
                                 let currentDate = moment().format("YYYY/MM/DD");
                                 let updateBilling = "UPDATE services_data set del_status = '1' ,paid_credits = 0 , end_date = '" + currentDate + "' WHERE user_acc_id = " + user_acc_id;
                                 await sql.query(updateBilling);
-                                let dealer_profit_query = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data ,credits , transection_type) VALUES (${verify.user.id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}', ${bills[0].total_credits} ,'debit')`
-                                await sql.query(dealer_profit_query);
-                                if (device.expiry_months != 0) {
-                                    let profits = await helpers.calculateProfitLoss(packages, products, verify.user.user_type)
-                                    dealer_profit = profits.dealer_profit
-                                    admin_profit = profits.admin_profit
+
+                                let transection_record = "SELECT * from financial_account_transections where user_dvc_acc_id = " + user_acc_id + " AND user_id = '" + verify.user.id + "' ORDER BY id DESC LIMIT 1"
+                                let transection_record_data = await sql.query(transection_record)
+
+                                if (transection_record_data[0].status === 'pending') {
+                                    let update_transection = "UPDATE financial_account_transections SET status = 'cancelled' WHERE id = " + transection_record_data[0].id
+                                    await sql.query(update_transection)
+                                    let update_profits_transections = "UPDATE financial_account_transections SET status = 'cancelled' WHERE user_dvc_acc_id = " + user_acc_id + " AND status = 'holding'"
+                                    await sql.query(update_profits_transections)
+                                    let updateCredits = "UPDATE financial_account_balance set due_credits = due_credits - " + bills[0].total_credits + " WHERE dealer_id = " + verify.user.dealer_id
+                                    await sql.query(updateCredits);
+                                } else {
+                                    refundedCredits = refundedCredits + bills[0].total_credits;
+                                    let dealer_profit_query = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data ,credits , transection_type) VALUES (${verify.user.id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}', ${bills[0].total_credits} ,'debit')`
+                                    await sql.query(dealer_profit_query);
+                                    if (device.expiry_months != 0) {
+                                        let profits = await helpers.calculateProfitLoss(packages, products, verify.user.user_type)
+                                        dealer_profit = profits.dealer_profit
+                                        admin_profit = profits.admin_profit
+                                    }
                                 }
                             }
                             let statusChangeQuery = "UPDATE usr_acc SET del_status='" + 1 + "' WHERE device_id='" + device.usr_device_id + "'";
