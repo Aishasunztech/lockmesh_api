@@ -242,7 +242,7 @@ module.exports = {
             if (checkSetting.length) {
                 var updateQuery = `UPDATE user_app_permissions SET permissions ='${controls}' WHERE device_id='${device_id}' `;
                 var updateSetting = await sql.query(updateQuery);
-                
+
             } else {
                 var insertQuery = `INSERT INTO user_app_permissions (device_id, permissions) VALUE ('${device_id}', '${controls}')`;
                 let insertSetting = await sql.query(insertQuery);
@@ -814,19 +814,17 @@ module.exports = {
             await this.insertOrUpdateApps(id, deviceData.id, app.guest, app.encrypted, app.enable);
         }
 
-    }
-    // compareSim: async function (deviceSim, panelSim, action) {
-    //     console.log("deviceSim ", deviceSim)
-    //     console.log("panelSim ", panelSim)
-    //     console.log("action ", action);
+    },
 
-    //     if (deviceSim.iccid == panelSim.iccid && deviceSim.name == panelSim.name && deviceSim.encrypt == panelSim.encrypt && deviceSim.guest == panelSim.guest && deviceSim.note == panelSim.note) {
-    //         return true;
-    //     } else {
-    //         return false;
-    //     }
+    // Bulk History
+    saveBuklActionHistory: async (data, action) => {
+        console.log('saveBuklActionHistory ', action, data);
 
-    // }
+        let InsertQuery = `INSERT INTO bulk_device_history (action, dealer_ids, user_ids, device_ids, action_by) VALUES ('${action}', '${JSON.stringify(data.dealer_ids)}', '${JSON.stringify(data.user_ids)}', '${JSON.stringify(data.device_ids)}', '${data.action_by}');`;
+        console.log(InsertQuery);
+        await sql.query(InsertQuery);
+    },
+
 }
 
 
