@@ -338,17 +338,43 @@ exports.getSimIDs = async (req, res) => {
 }
 
 exports.getAllSimIDs = async (req, res) => {
-    var verify = req.decoded; // await verifyToken(req, res);
+    var verify = req.decoded;
     if (verify) {
-        var loggedInuid = verify.user.id;
-        let query = "select * from sim_ids";
+        let query = "";
+        if (verify.user.user_type === "dealer") {
+            let userIDs = await helpers.getUserAccID(verify.user.dealer_id);
+            query = `SELECT * FROM sim_ids WHERE used = '1' AND delete_status = '0' AND user_acc_id IN (${userIDs})`;
+        } else {
+            query = "SELECT * FROM sim_ids";
+        }
+
         sql.query(query, async function (error, resp) {
-            data = {
-                status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
-                data: resp
+
+            if (error) {
+                console.log(error)
+                res.send({
+                    status: false,
+                    msg: "Error",
+                    data: []
+                });
+                return;
             }
-            res.send(data);
+
+            if (resp && resp.length) {
+                data = {
+                    status: true,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
+                    data: resp
+                }
+                res.send(data);
+            } else {
+                data = {
+                    status: false,
+                    msg: "Error",
+                    data: []
+                }
+                res.send(data);
+            }
         });
     } else {
         data = {
@@ -413,16 +439,42 @@ exports.getChatIDs = async (req, res) => {
 
 
 exports.getAllChatIDs = async (req, res) => {
-    var verify = req.decoded; // await verifyToken(req, res);
+    var verify = req.decoded;
     if (verify) {
-        var loggedInuid = verify.user.id;
-        let query = "select * from chat_ids";
+        if (verify.user.user_type === "dealer") {
+            let userIDs = await helpers.getUserAccID(verify.user.dealer_id);
+            query = `SELECT * FROM chat_ids WHERE used = '1' AND delete_status = '0' AND user_acc_id IN (${userIDs})`;
+        } else {
+            query = "SELECT * FROM chat_ids";
+        }
+
         sql.query(query, async function (error, resp) {
-            res.send({
-                status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
-                data: resp
-            });
+            if (error) {
+                console.log(error)
+                res.send({
+                    status: false,
+                    msg: "Error",
+                    data: []
+                });
+                return;
+            }
+
+            if (resp && resp.length) {
+                data = {
+                    status: true,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
+                    data: resp
+                }
+                res.send(data);
+            } else {
+                data = {
+                    status: false,
+                    msg: "Error",
+                    data: []
+                }
+                res.send(data);
+            }
+            return;
         });
     } else {
         res.send({
@@ -458,16 +510,40 @@ exports.getPGPEmails = async (req, res) => {
 
 
 exports.getAllPGPEmails = async (req, res) => {
-    var verify = req.decoded; // await verifyToken(req, res);
+    var verify = req.decoded;
     if (verify) {
-        var loggedInuid = verify.user.id;
-        let query = "select * from pgp_emails";
+        if (verify.user.user_type === "dealer") {
+            let userIDs = await helpers.getUserAccID(verify.user.dealer_id);
+            query = `SELECT * FROM pgp_emails WHERE used = '1' AND delete_status = '0' AND user_acc_id IN (${userIDs})`;
+        } else {
+            query = "SELECT * FROM pgp_emails";
+        }
         sql.query(query, async function (error, resp) {
-            res.send({
-                status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
-                data: resp
-            });
+            if (error) {
+                console.log(error)
+                res.send({
+                    status: false,
+                    msg: "Error",
+                    data: []
+                });
+                return;
+            }
+
+            if (resp && resp.length) {
+                data = {
+                    status: true,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
+                    data: resp
+                }
+                res.send(data);
+            } else {
+                data = {
+                    status: false,
+                    msg: "Error",
+                    data: []
+                }
+                res.send(data);
+            }
         });
     }
     else {
