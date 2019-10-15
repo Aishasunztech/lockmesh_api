@@ -187,10 +187,11 @@ module.exports = {
         io.emit('device_synced_' + deviceId, status);
     },
 
-    sendEmit: async (io, app_list, passwords, controls, permissions, device_id) => {
-        // console.log('password socket')
+    sendEmit: async (io, setting_id, app_list, passwords, controls, permissions, device_id) => {
+        console.log("applied history ID:", setting_id);
 
         io.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
+            setting_id: setting_id,
             device_id: device_id,
             app_list: (app_list === undefined || app_list === null || app_list === '') ? '[]' : app_list,
             passwords: (passwords === undefined || passwords === null || passwords === '') ? '{}' : passwords,
@@ -200,22 +201,27 @@ module.exports = {
         });
     },
 
-    applyPushApps: (io, push_apps, device_id) => {
-        console.log(Constants.GET_PUSHED_APPS + device_id);
+    applyPushApps: (io, setting_id, push_apps, device_id) => {
+        console.log("applied pushApps ID:", setting_id);
 
-        io.emit(Constants.ACTION_IN_PROCESS + device_id, {
-            status: true,
-            type: 'push'
-        })
+        // console.log(Constants.GET_PUSHED_APPS + device_id);
+
+        // yeh loading k liye tha
+        // io.emit(Constants.ACTION_IN_PROCESS + device_id, {
+        //     status: true,
+        //     type: 'push'
+        // })
 
         io.emit(Constants.GET_PUSHED_APPS + device_id, {
+            setting_id: setting_id,
             status: true,
             device_id: device_id,
             push_apps: push_apps
         });
     },
 
-    getPullApps: (io, pull_apps, device_id) => {
+    getPullApps: (io, setting_id, pull_apps, device_id) => {
+        console.log("applied pullApps ID:", setting_id);
 
         // yeh loading k liye tha
         // io.emit(Constants.ACTION_IN_PROCESS + device_id, {
@@ -224,19 +230,24 @@ module.exports = {
         // })
 
         io.emit(Constants.GET_PULLED_APPS + device_id, {
+            setting_id: setting_id,
             status: true,
             device_id: device_id,
             pull_apps: pull_apps
         });
     },
 
-    writeImei: (io, imei, device_id) => {
+    writeImei: (io, setting_id, imei, device_id) => {
         console.log("write_imei_" + device_id);
-        io.emit(Constants.ACTION_IN_PROCESS + device_id, {
-            status: true,
-            type: 'imei'
-        })
+
+        // yeh loading k liye tha
+        // io.emit(Constants.ACTION_IN_PROCESS + device_id, {
+        //     status: true,
+        //     type: 'imei'
+        // })
+
         io.emit(Constants.WRITE_IMEI + device_id, {
+            setting_id: setting_id,
             status: true,
             device_id: device_id,
             imei: imei
@@ -336,18 +347,6 @@ module.exports = {
         // })
     },
 
-    ackFinishedPushApps: async function (io, device_id, user_acc_id) {
-
-        await sql.query("DELETE from apps_queue_jobs WHERE device_id = '" + device_id + "' AND type = 'push'")
-        // await sql.query("UPDATE apps_queue_jobs set is_in_process = 0 WHERE device_id = '" + device_id + "'")
-        var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='push_apps' AND user_acc_id=" + user_acc_id + "";
-        await sql.query(pushAppsQ)
-
-        io.emit(Constants.ACK_FINISHED_PUSH_APPS + device_id, {
-            status: true
-        });
-    },
-
     uninstalledApps: async (io, deviceId, dvcId, response) => {
         console.log("uninstalledApps() ", response);
         let app_list = JSON.parse(response);
@@ -389,16 +388,6 @@ module.exports = {
         })
 
     },
-    ackFinishedPullApps: async function (io, device_id, user_acc_id) {
-        var pullAppsQ = "UPDATE device_history SET status=1 WHERE type='pull_apps' AND user_acc_id=" + user_acc_id + "";
-        await sql.query(pullAppsQ)
-        await sql.query("DELETE from apps_queue_jobs WHERE device_id = '" + device_id + "' AND type = 'pull'")
-
-        io.emit(Constants.ACK_FINISHED_PULL_APPS + device_id, {
-            status: true
-        })
-    },
-
     ackFinishedPolicyStep: async function (io, device_id, user_acc_id) {
         console.log("FINISHED POLICY STEP")
 
@@ -414,23 +403,11 @@ module.exports = {
             });
         }
     },
-
-    ackFinishedPolicy: async function (io, device_id, user_acc_id) {
-        console.log("FINISHED POLICY")
-
-        var pushAppsQ = "UPDATE device_history SET status=1 WHERE type='policy' AND user_acc_id=" + user_acc_id + "";
-        await sql.query(pushAppsQ)
-        await sql.query("DELETE from policy_queue_jobs WHERE device_id = '" + device_id + "'")
-
-        io.emit(Constants.FINISH_POLICY + device_id, {
-            status: true
-        });
-    },
-    ackFinishedWipe: function (io, device_id, user_acc_id) {
+    ackFinishedWipe: async function (io, device_id, user_acc_id) {
         console.log("DEVICE WIPED SUCCESSFULLY")
 
-        var clearWipeDevice = "UPDATE device_history SET status=1 WHERE type='wipe' AND user_acc_id=" + user_acc_id + "";
-        sql.query(clearWipeDevice)
+        var clearWipeDevice = `UPDATE device_history SET status='completed_successfully' WHERE type='wipe' AND user_acc_id=${user_acc_id}`;
+        await sql.query(clearWipeDevice)
 
         io.emit(Constants.FINISH_WIPE + device_id, {
             status: true
@@ -447,12 +424,16 @@ module.exports = {
     },
 
 
-    getPolicy: (io, device_id, policy) => {
-        io.emit(Constants.ACTION_IN_PROCESS + device_id, {
-            status: true,
-            type: 'policy'
-        })
+    getPolicy: (io, setting_id, device_id, policy) => {
+        
+        // to send acknowledgement on frontend
+        // io.emit(Constants.ACTION_IN_PROCESS + device_id, {
+        //     status: true,
+        //     type: 'policy'
+        // })
+
         io.emit(Constants.GET_POLICY + device_id, {
+            setting_id: setting_id,
             status: true,
             app_list: (policy.app_list === undefined || policy.app_list === null || policy.app_list === '') ? '[]' : policy.app_list,
             settings: (policy.controls === undefined || policy.controls === null || policy.controls === '') ? '[]' : policy.controls,

@@ -552,15 +552,15 @@ exports.applyPolicy = async function (req, res) {
                             console.log("apply policy error: ", err)
                         }
 
-                        if (policyApplied && policyApplied.affectedRows) {
+                        if (policyApplied && policyApplied.insertId) {
 
-                            let isOnline = await device_helpers.isDeviceOnline(device_id, policy[0]);
+                            let isOnline = await device_helpers.isDeviceOnline(device_id);
 
                             var loadDeviceQ = "INSERT INTO policy_queue_jobs (policy_id,device_id,is_in_process) " + " VALUES ('" + policy_id + "','" + device_id + "',1)"
 
                             await sql.query(loadDeviceQ)
                             if (isOnline) {
-                                socket_helpers.getPolicy(sockets.baseIo, device_id, policy[0]);
+                                socket_helpers.getPolicy(sockets.baseIo, policyApplied.insertId, device_id,  policy[0]);
 
                                 data = {
                                     status: true,

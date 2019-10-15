@@ -120,11 +120,6 @@ exports.getDealerUsers = async function (req, res) {
             }
         }
         res.send(data);
-
-    }
-    else {
-        data = { status: false }
-        res.send(data)
     }
 }
 

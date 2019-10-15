@@ -451,7 +451,7 @@ module.exports = {
 	},
 	getExpDateByMonth: function (currentDate, expiryMonth) {
 		return moment(currentDate, "YYYY-MM-DD")
-			.add(expiryMonth, "M")
+			.add(Number(expiryMonth), "M")
 			.strftime("%Y/%m/%d");
 	},
 	// checkDeviceId: async function (device_id, sn, mac) {
@@ -1533,4 +1533,15 @@ module.exports = {
 		}
 		return 'PI' + invoiceId;
 	},
+	getUserAccID: async function (dealerId) {
+		let getUserAccId = await sql.query(`SELECT id FROM usr_acc WHERE dealer_id=${dealerId}`);
+		console.log("getUserAccId ", getUserAccId);
+		let user_acc_ids = [];
+
+
+		getUserAccId.forEach((item) => {
+			user_acc_ids.push(item.id);
+		})
+		return user_acc_ids;
+	}
 }
