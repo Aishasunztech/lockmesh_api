@@ -10,11 +10,46 @@ const SDEALER = "sdealer";
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
 // let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
 let usr_acc_query_text = Constants.usr_acc_query_text;
+
+exports.removeSMApps = async function (req, res) {
+    var verify = req.decoded;;
+    let ids = req.body.data;
+
+    let result = '';
+    if (ids.length > 1) {
+        result = await sql.query(`DELETE FROM secure_market_apps WHERE dealer_id =${verify.user.dealer_id}`)
+    } else {
+        result = await sql.query(`DELETE FROM secure_market_apps WHERE apk_id IN (${ids})`)
+    }
+
+    console.log(`DELETE FROM secure_market_apps WHERE apk_id IN (${ids})`);
+    console.log(req.body.data, result, verify.user.dealer_id)
+
+    if (result.affectedRows) {
+        data = {
+            status: true,
+            msg: "Remove Secure Market App Successfully"
+        }
+
+    } else {
+        data = {
+            status: false,
+            msg: "Secure Market App Not Remove"
+        }
+    }
+
+    res.send(data);
+    return;
+}
+
 exports.trasnferApps = async function (req, res) {
 
     let appKeys = req.body.data
     var verify = req.decoded;
+    let space_type = req.body.spaceType;
 
+    console.log('appKeys ==> ', appKeys, "space_type ==> ", space_type);
+    // return;
     let toDelete = (appKeys.length === 0) ? "''" : appKeys.join(',')
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
@@ -45,13 +80,13 @@ exports.trasnferApps = async function (req, res) {
             sm_apps.map((item) => sm_app_ids.push(item.apk_id))
         }
         if (appKeys.length) {
-            let insertQuery = "INSERT INTO secure_market_apps (dealer_type,dealer_id, apk_id) VALUES ";
+            let insertQuery = "INSERT INTO secure_market_apps (dealer_type,dealer_id, apk_id, space_type) VALUES ";
             let insertValues = ' '
             for (let i = 0; i < appKeys.length; i++) {
                 if (sm_app_ids.indexOf(appKeys[i]) !== -1) {
                     continue
                 }
-                insertValues = insertValues + "('" + dealer_type + "' ," + dealer_id + " , " + appKeys[i] + "),"
+                insertValues = insertValues + "('" + dealer_type + "' ," + dealer_id + " , " + appKeys[i] + " , '" + space_type + "'),"
             }
             if (insertValues.length > 1) {
                 let query = insertQuery + insertValues;
@@ -70,7 +105,7 @@ exports.trasnferApps = async function (req, res) {
             apklist = await sql.query("select * from apk_details where delete_status=0 AND apk_type != 'permanent'")
         }
 
-        sql.query("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id, secure_market_apps.is_restrict_uninstall  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'" + where + " ORDER BY created_at desc", async function (err, results) {
+        sql.query("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'" + where + " ORDER BY created_at desc", async function (err, results) {
             if (err) {
                 console.log(err);
             }
@@ -86,6 +121,9 @@ exports.trasnferApps = async function (req, res) {
             } else {
                 results = [];
             }
+
+            console.log("results ", results)
+            console.log("apklist ", apklist)
 
             data = {
                 status: true,
