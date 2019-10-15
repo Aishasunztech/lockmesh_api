@@ -26,6 +26,8 @@ const constants = require("../../constants/Application");
 var MsgConstants = require("../../constants/MsgConstants");
 const app_constants = require("../../config/constants");
 
+const { createInvoice } = require('../../helper/CreateInvoice')
+
 // constants
 
 let usr_acc_query_text = constants.usr_acc_query_text; //"usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status, usr_acc.transfer_user_status, usr_acc.transfered_from,usr_acc.transfered_to, usr_acc.user_transfered_from, usr_acc.user_transfered_to,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
@@ -637,9 +639,11 @@ exports.createDeviceProfile = async function (req, res) {
         let pay_now = req.body.pay_now
 
         let total_price = req.body.total_price
-
+        let discount = 0
+        let discounted_price = total_price
         if (pay_now) {
-            total_price = total_price - (total_price * 5 / 100);
+            discount = (total_price * 5 / 100);
+            discounted_price = total_price - discount
         }
 
         let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
@@ -656,12 +660,12 @@ exports.createDeviceProfile = async function (req, res) {
             else {
                 if (result.length || req.body.term === '0' || !pay_now) {
                     let dealer_credits = result.length ? result[0].credits : 0;
-                    if (dealer_credits >= total_price || req.body.term === '0' || !pay_now) {
+                    if (dealer_credits >= discounted_price || req.body.term === '0' || !pay_now) {
                         if (products.length || packages.length) {
                             if (exp_month !== '0') {
                                 let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedUserType)
                                 if (pay_now) {
-                                    dealer_credits = dealer_credits - total_price
+                                    dealer_credits = dealer_credits - discounted_price
                                     admin_profit = profitLoss.admin_profit - (profitLoss.admin_profit * 5 / 100)
                                     dealer_profit = profitLoss.dealer_profit - (profitLoss.dealer_profit * 5 / 100)
                                 } else {
@@ -673,7 +677,7 @@ exports.createDeviceProfile = async function (req, res) {
                             // admin_profit = profitLoss.admin_profit
                             // dealer_profit = profitLoss.dealer_profit
                             if (duplicate > 0) {
-                                if (dealer_credits > total_price || req.body.term === '0') {
+                                if (dealer_credits > discounted_price || req.body.term === '0') {
                                     let pgpEmail = "SELECT pgp_email from pgp_emails WHERE used=0";
                                     let pgp_emails = await sql.query(pgpEmail);
                                     let chatIds = "SELECT chat_id from chat_ids WHERE used=0";
@@ -683,6 +687,7 @@ exports.createDeviceProfile = async function (req, res) {
                                     let activationCodes = []
                                     let deviceIds = []
                                     let batch_no = new Date().valueOf();
+                                    let user_acc_ids = []
                                     const addDuplicateActivations = async () => {
                                         for (let i = 0; i < duplicate; i++) {
                                             let code = randomize('0', 7);
@@ -741,6 +746,7 @@ exports.createDeviceProfile = async function (req, res) {
                                             if (resp.insertId) {
                                                 let resps = await sql.query(insertUser_acc)
                                                 let user_acc_id = resps.insertId;
+                                                user_acc_ids.push(user_acc_id)
                                                 // console.log("affectedRows", resps.affectedRows);
                                                 if (resps.affectedRows) {
 
@@ -800,6 +806,29 @@ exports.createDeviceProfile = async function (req, res) {
                                         }
                                         await sql.query(update_credits_query);
                                     }
+
+                                    let inv_no = await helpers.getInvoiceId()
+                                    const invoice = {
+                                        shipping: {
+                                            name: verify.user.dealer_name,
+                                            device_id: duplicate + "Pre-activaions",
+                                            dealer_pin: verify.user.link_code,
+                                        },
+                                        products: products,
+                                        packages: packages,
+                                        pay_now: pay_now,
+                                        discount: discount,
+                                        discountPercent: "5%",
+                                        quantity: duplicate,
+                                        subtotal: total_price,
+                                        paid: discounted_price,
+                                        invoice_nr: inv_no
+                                    };
+
+                                    let fileName = "invoice-" + Date.now() + verify.user.dealer_name + dealer_id + ".pdf"
+                                    let filePath = path.join(__dirname, "../../uploads/" + fileName)
+                                    createInvoice(invoice, filePath)
+                                    sql.query(`INSERT INTO invoices (inv_no,user_acc_id,dealer_id,file_name) VALUES('${inv_no}',${JSON.stringify(user_acc_ids)},${dealer_id}, '${fileName}')`)
 
                                     html = 'Amount of activation codes : ' + activationCodes.length + '<br> ' + 'Activation Codes are following : <br>' + activationCodes.join("<br>") + '.<br> ';
 
@@ -919,13 +948,11 @@ exports.createDeviceProfile = async function (req, res) {
                                                     });
                                                     return
                                                 }
-                                                console.log("inserted id", resp.insertId);
                                                 let dvc_id = resp.insertId;
                                                 var insertUser_acc = "INSERT INTO usr_acc (device_id, user_id, activation_code, client_id , account_email,expiry_months, dealer_id, link_code ,device_status, activation_status, expiry_date , note,validity  "
                                                 // var insertDevice = "INSERT INTO devices ( activation_code, name, client_id, chat_id, model, email, pgp_email, expiry_months, dealer_id, device_status, activation_status ";
                                                 var User_acc_values = ") VALUES ('" + dvc_id + "','" + user_id + "', '" + activation_code + "', '" + client_id + "', '" + email + "'," + exp_month + ", " + dealer_id + ",'" + link_code + "' ,  0, 0 ,'" + expiry_date + "','" + note + "','" + validity + "')";
                                                 insertUser_acc = insertUser_acc + User_acc_values;
-                                                console.log(insertUser_acc);
                                                 if (resp.affectedRows) {
                                                     sql.query(insertUser_acc, async (err, respData) => {
 
@@ -934,7 +961,6 @@ exports.createDeviceProfile = async function (req, res) {
                                                         }
                                                         let user_acc_id = respData.insertId;
 
-                                                        console.log("affectedRows", respData.affectedRows);
                                                         if (respData && respData.affectedRows) {
 
                                                             // let servicesQuery = "INSERT into services (user_acc_id,service_id,service_type) VALUES ('" + user_acc_id + "',"
@@ -992,7 +1018,28 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 var applyQuery = "INSERT INTO device_history (dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES (" + dealer_id + "," + user_acc_id + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
                                                                 sql.query(applyQuery)
                                                             }
+                                                            let inv_no = await helpers.getInvoiceId()
+                                                            const invoice = {
+                                                                shipping: {
+                                                                    name: verify.user.dealer_name,
+                                                                    device_id: "Pre-activaion",
+                                                                    dealer_pin: verify.user.link_code,
+                                                                },
+                                                                products: products,
+                                                                packages: packages,
+                                                                pay_now: pay_now,
+                                                                discount: discount,
+                                                                discountPercent: "5%",
+                                                                quantity: 1,
+                                                                subtotal: total_price,
+                                                                paid: discounted_price,
+                                                                invoice_nr: inv_no
+                                                            };
 
+                                                            let fileName = "invoice-" + Date.now() + verify.user.dealer_name + dealer_id + ".pdf"
+                                                            let filePath = path.join(__dirname, "../../uploads/" + fileName)
+                                                            createInvoice(invoice, filePath)
+                                                            sql.query(`INSERT INTO invoices (inv_no,user_acc_id,dealer_id,file_name) VALUES('${inv_no}',${user_acc_id},${dealer_id}, '${fileName}')`)
                                                             sql.query("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name, dealers.connected_dealer from devices left join usr_acc on devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 and devices.id='" + dvc_id + "'", async function (error, results, fields) {
 
                                                                 if (error) {
@@ -2095,6 +2142,8 @@ exports.flagDevice = async function (req, res) {
                         // dealerData = await getDealerdata(res[i]);
                         resquery[0]["transfered_from"] = null;
                         resquery[0]["transfered_to"] = null;
+
+
                         device_helpers.saveActionHistory(resquery[0], constants.DEVICE_FLAGGED)
                         console.log(resquery[0]);
                         data = {

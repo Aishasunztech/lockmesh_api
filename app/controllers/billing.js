@@ -448,8 +448,8 @@ exports.saveSaPackage = async function (req, res) {
                 if (err) {
                     console.log(err)
                     res.send({
-                        status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.PACKAGE_SAVED_SUCCESSFULLY], "Package Saved Successfully"), // 'Package Saved Successfully',
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[""], "Package Not Saved. Whitelabel Server Error"), // 'Package Saved Successfully',
                     })
                     return
                 }
@@ -461,6 +461,50 @@ exports.saveSaPackage = async function (req, res) {
                         res.send({
                             status: true,
                             msg: await helpers.convertToLang(req.translation[MsgConstants.PACKAGE_SAVED_SUCCESSFULLY], "Package Saved Successfully"), // 'Package Saved Successfully',
+                        })
+                        return
+                    }
+                }
+            })
+
+        } else {
+            res.send({
+                status: false,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DATA], "Invalid Data"), // 'Invalid Data'
+            })
+            return
+        }
+    }
+}
+
+exports.saveSaHardware = async function (req, res) {
+
+    var verify = req.decoded; // await verifyToken(req, res);
+
+    if (verify) {
+
+        let data = req.body.data;
+        if (data) {
+            let insertQuery = "INSERT INTO hardwares (dealer_id , dealer_type , hardware_name, hardware_price) VALUES('" + verify.user[0].dealer_id + "' ,'super_admin' , '" + data.hardwareName + "', '" + data.hardwarePrice + "')";
+            console.log(insertQuery);
+
+            sql.query(insertQuery, async (err, rslt) => {
+                if (err) {
+                    console.log(err)
+                    res.send({
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.PACKAGE_SAVED_SUCCESSFULLY], "Hardware Not Saved. Whitelabel Server Error."), // 'Package Saved Successfully',
+                    })
+                    return
+                }
+                if (rslt) {
+                    if (rslt.affectedRows) {
+                        let insertQ = "INSERT INTO dealer_hardwares_prices ( hardware_id,dealer_id , created_by , price) VALUES(" + rslt.insertId + ",'" + verify.user[0].dealer_id + "' ,'super_admin' , '" + data.hardwarePrice + "')";
+                        console.log(insertQ);
+                        sql.query(insertQ)
+                        res.send({
+                            status: true,
+                            msg: await helpers.convertToLang(req.translation[""], "Hardware Saved Successfully"), // 'Package Saved Successfully',
                         })
                         return
                     }

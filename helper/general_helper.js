@@ -1519,5 +1519,18 @@ module.exports = {
 				}
 			}
 		}
-	}
+	},
+	getInvoiceId: async function () {
+		let invoiceId = ""
+		var max = "000000"
+		let lastInvoice = "SELECT id from invoices ORDER BY id DESC LIMIT 1"
+		let result = await sql.query(lastInvoice)
+		if (result && result.length) {
+			invoiceId = (result[0].id + 1).toString()
+			invoiceId = max.substring(0, max.length - invoiceId.length) + invoiceId
+		} else {
+			invoiceId = "000001"
+		}
+		return 'PI' + invoiceId;
+	},
 }

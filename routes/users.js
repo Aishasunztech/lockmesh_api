@@ -1203,6 +1203,8 @@ router.put("/edit_package/:id", billingController.editPackage);
 
 router.post("/save-sa-package", billingController.saveSaPackage);
 
+router.post("/save-sa-hardware", billingController.saveSaHardware);
+
 router.get("/get-language", languageController.getLanguage);
 
 router.patch("/save-language", languageController.saveLanguage);
