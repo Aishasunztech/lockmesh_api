@@ -1627,53 +1627,54 @@ exports.stopLinking = async function (req, res) {
             // ) {
 
             let device_record = await helpers.getAllRecordbyDeviceId(req.params.device_id)
+            console.log(device_record);
             
             if (device_record.dealer_id === loggedUserId || req.body.prnt_dlr_id === loggedUserId ) {
 
                 let usr_device_id = await device_helpers.getOriginalIdByDeviceId(req.params.device_id);
-               
+                console.log('user_device_id', usr_device_id);
                 // var query = `UPDATE  usr_acc SET del_status=1 WHERE device_id = ${resp[0].id}`;
                 // console.log(query);
                 // await sql.query(query);
 
-                sql.query(
-                    "DELETE from usr_acc  where device_id = " + usr_device_id + " AND unlink_status = 0",
-                    async function (error, results, fields) {
+                // sql.query(
+                //     "DELETE from usr_acc  where device_id = " + usr_device_id + " AND unlink_status = 0",
+                //     async function (error, results, fields) {
 
-                        if (error) {
-                            console.log(error);
-                        }
-                        if (results.affectedRows !== 0) {
-                            var sqlDevice =
-                                "DELETE from devices where device_id = '" +
-                                req.params.device_id +
-                                "' ";
-                            sql.query(sqlDevice);
-                            data = {
-                                status: true,
-                                msg: await helpers.convertToLang(
-                                    req.translation[
-                                    MsgConstants.DEVICE_DEL_SUCC
-                                    ],
-                                    "Device deleted successfully"
-                                ) // Device deleted successfully.
-                            };
-                        } else {
-                            data = {
-                                status: false,
-                                msg: await helpers.convertToLang(
-                                    req.translation[
-                                    MsgConstants.DEVICE_NOT_DEL
-                                    ],
-                                    "Device not deleted"
-                                ), // Device not deleted.
-                                fld: fields,
-                                rdlt: results
-                            };
-                        }
-                        res.send(data);
-                    }
-                );
+                //         if (error) {
+                //             console.log(error);
+                //         }
+                //         if (results.affectedRows !== 0) {
+                //             var sqlDevice =
+                //                 "DELETE from devices where device_id = '" +
+                //                 req.params.device_id +
+                //                 "' ";
+                //             sql.query(sqlDevice);
+                //             data = {
+                //                 status: true,
+                //                 msg: await helpers.convertToLang(
+                //                     req.translation[
+                //                     MsgConstants.DEVICE_DEL_SUCC
+                //                     ],
+                //                     "Device deleted successfully"
+                //                 ) // Device deleted successfully.
+                //             };
+                //         } else {
+                //             data = {
+                //                 status: false,
+                //                 msg: await helpers.convertToLang(
+                //                     req.translation[
+                //                     MsgConstants.DEVICE_NOT_DEL
+                //                     ],
+                //                     "Device not deleted"
+                //                 ), // Device not deleted.
+                //                 fld: fields,
+                //                 rdlt: results
+                //             };
+                //         }
+                //         res.send(data);
+                //     }
+                // );
             } else {
                 data = {
                     status: false,

@@ -528,13 +528,7 @@ module.exports = {
 	},
 	getAllRecordbyDeviceId: async function (device_id) {
 		// console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.id = ' + device_id)
-		let results = await sql.query(
-			"select devices.*  ," +
-			usr_acc_query_text +
-			', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE devices.device_id = "' +
-			device_id +
-			'"'
-		);
+		let results = await sql.query(`select devices.*, ${ usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  devices.id = usr_acc.device_id LEFT JOIN dealers ON usr_acc.dealer_id = dealers.dealer_id WHERE devices.device_id = '${device_id}'`);
 
 		if (results.length) {
 			let pgp_emails = await device_helpers.getPgpEmails(results[0].id);

@@ -418,7 +418,7 @@ module.exports = {
         }
 
         // console.log('checkStatus : ', device)
-
+        
         if ((device.unlink_status === '1' || device.unlink_status === 1) && (device.device_status === 0 || device.device_status === '0')) {
             // status = 'Unlinked';
             status = Constants.DEVICE_UNLINKED;
@@ -449,7 +449,13 @@ module.exports = {
         else if (device.account_status === 'suspended') {
             // status = 'Suspended';
             status = Constants.DEVICE_SUSPENDED;
-        }
+        } 
+
+        // else if (!device.activation_status && (device.del_status || device.del_status === '1')) {
+        //     // status = 'Unlinked';
+        //     status = Constants.NEW_DEVICE;
+        // }
+        
         else {
             status = 'N/A';
         }

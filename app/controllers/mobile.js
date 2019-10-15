@@ -712,10 +712,10 @@ exports.deviceStatus = async function (req, res) {
     // mac address is Dummy and serial number is original
     else if (mac == Constants.PRE_DEFINED_MAC_ADDRESS) {
         console.log("predefined mac:")
-        var deviceQ = `SELECT * FROM devices WHERE  serial_number= '${serial_number}' `;
+        var deviceQ = `SELECT * FROM devices WHERE  serial_number= '${serial_number}' AND del_status!=1`;
         var device = await sql.query(deviceQ);
         if (device.length) {
-            var user_acc = await sql.query("SELECT * FROM usr_acc where device_id = " + device[0].id);
+            var user_acc = await sql.query(`SELECT * FROM usr_acc where device_id = ${device[0].id} AND del_status!=1`);
             if (user_acc.length > 0) {
 
                 // get user account device status
@@ -885,21 +885,19 @@ exports.deviceStatus = async function (req, res) {
     // serial number is Dummy and mac address is original
     else if (serial_number == Constants.PRE_DEFINED_SERIAL_NUMBER) {
         console.log("predefined serial:")
-        var deviceQ = "SELECT * FROM devices WHERE  mac_address= '" + mac + "' ";
+        var deviceQ = `SELECT * FROM devices WHERE  mac_address= '${mac}' `;
         var device = await sql.query(deviceQ);
         if (device.length) {
-            var user_acc = await sql.query("SELECT * FROM usr_acc where device_id = " + device[0].id);
+            var user_acc = await sql.query(`SELECT * FROM usr_acc WHERE device_id = ${device[0].id} AND del_status!=1`);
             if (user_acc.length > 0) {
 
-                // console.log('user_acc[0] ', user_acc[0].transfer_status, user_acc[0].status)
-                // get user account device status
                 user_acc[0]["flagged"] = device[0].flagged;
                 let deviceStatus = device_helpers.checkStatus(user_acc[0]);
-                console.log("device_status", deviceStatus);
+                console.log("device_status: ", deviceStatus);
 
-                if (user_acc[0].dealer_id !== 0 && user_acc[0].dealer_id !== null) {
+                if (user_acc[0].dealer_id && user_acc[0].dealer_id !== 0 ) {
 
-                    var dealerQuery = "select * from dealers where dealer_id = '" + user_acc[0].dealer_id + "'";
+                    var dealerQuery = `SELECT * FROM dealers WHERE dealer_id = '${user_acc[0].dealer_id}'`;
                     var dealer = await sql.query(dealerQuery);
                     // reslts2 
                     if (dealer.length > 0) {
@@ -921,10 +919,9 @@ exports.deviceStatus = async function (req, res) {
                         }, (err, token) => {
 
                             if (err) {
-                                res.json({
+                                return res.json({
                                     'err': err
                                 });
-                                return;
                             }
                             if (deviceStatus === Constants.DEVICE_ACTIVATED || deviceStatus === Constants.DEVICE_TRIAL || deviceStatus === Constants.DEVICE_SUSPENDED || deviceStatus === Constants.DEVICE_EXPIRED) {
                                 var d = new Date(user_acc[0].expiry_date);
@@ -967,8 +964,7 @@ exports.deviceStatus = async function (req, res) {
                                 return;
                             }
                         });
-                    }
-                    else {
+                    } else {
                         data = {
                             status: false,
                             msg: Constants.DEALER_NOT_FOUND,
@@ -1049,7 +1045,7 @@ exports.deviceStatus = async function (req, res) {
                     status: false,
                     msg: Constants.NEW_DEVICE,
                 }
-                res.send(data);
+                return res.send(data);
             }
         } else {
             data = {
@@ -1063,12 +1059,12 @@ exports.deviceStatus = async function (req, res) {
     // both are original
     else {
         console.log("serial and mac original");
-        var deviceQuery = "SELECT * FROM devices WHERE mac_address = '" + mac + "' AND serial_number = '" + serial_number + "'";
+        var deviceQuery = `SELECT * FROM devices WHERE mac_address = '${mac}' AND serial_number = '${serial_number}'`;
 
         var device = await sql.query(deviceQuery);
 
         if (device.length > 0) {
-            var user_acc = await sql.query(`SELECT * FROM usr_acc WHERE device_id = ${device[0].id}`);
+            var user_acc = await sql.query(`SELECT * FROM usr_acc WHERE device_id = ${device[0].id} AND del_status!=1`);
             if (user_acc.length > 0) {
                 // get user account device status
                 console.log('status is: ', device[0].device_id)
@@ -1232,7 +1228,7 @@ exports.deviceStatus = async function (req, res) {
                 res.send(data);
             }
         } else {
-            var deviceQuery = "SELECT * FROM devices WHERE mac_address = '" + mac + "' OR serial_number = '" + serial_number + "'";
+            var deviceQuery = `SELECT * FROM devices WHERE mac_address = '${mac}' OR serial_number = '${serial_number}'`;
             // 
             var device = await sql.query(deviceQuery);
 
