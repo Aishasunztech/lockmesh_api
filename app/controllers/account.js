@@ -341,7 +341,8 @@ exports.getAllSimIDs = async (req, res) => {
     var verify = req.decoded;
     if (verify) {
         let query = "";
-        if (verify.user.user_type === "dealer") {
+        let type = verify.user.user_type;
+        if (type === DEALER || type === SDEALER) {
             let userIDs = await helpers.getUserAccID(verify.user.dealer_id);
             query = `SELECT * FROM sim_ids WHERE used = '1' AND delete_status = '0' AND user_acc_id IN (${userIDs})`;
         } else {
@@ -441,7 +442,8 @@ exports.getChatIDs = async (req, res) => {
 exports.getAllChatIDs = async (req, res) => {
     var verify = req.decoded;
     if (verify) {
-        if (verify.user.user_type === "dealer") {
+        let type = verify.user.user_type;
+        if (type === DEALER || type === SDEALER) {
             let userIDs = await helpers.getUserAccID(verify.user.dealer_id);
             query = `SELECT * FROM chat_ids WHERE used = '1' AND delete_status = '0' AND user_acc_id IN (${userIDs})`;
         } else {
@@ -512,7 +514,8 @@ exports.getPGPEmails = async (req, res) => {
 exports.getAllPGPEmails = async (req, res) => {
     var verify = req.decoded;
     if (verify) {
-        if (verify.user.user_type === "dealer") {
+        let type = verify.user.user_type;
+        if (type === DEALER || type === SDEALER) {
             let userIDs = await helpers.getUserAccID(verify.user.dealer_id);
             query = `SELECT * FROM pgp_emails WHERE used = '1' AND delete_status = '0' AND user_acc_id IN (${userIDs})`;
         } else {
