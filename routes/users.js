@@ -1227,6 +1227,10 @@ router.get("/get_user_credits", billingController.getUserCredits);
 
 router.put("/delete_request/:id", billingController.deleteRequest);
 
+//***  pagination testing api
+
+router.get("/get-devices-paginated", billingController.getDevicesTest);
+
 router.put("/accept_request/:id", billingController.acceptRequest);
 
 /*** Create Backup ***/

@@ -850,6 +850,38 @@ exports.getPackages = async function (req, res) {
     }
 }
 
+exports.getDevicesTest = async function (req, res) {
+    var verify = req.decoded;
+    if (verify) {
+
+        let start = req.query.limit == 'all' ? 0 : parseInt(req.query.start) || 0;
+        let limit = req.query.limit == 'all' ? 10^34 : parseInt(req.query.limit) || 10;
+        let filter = req.query.filter && req.query.filter !== '' ? "where online="+`${req.query.filter}`+" " : '';
+
+        let query = "Select * from devices "+filter+" limit " + start +", " +limit;
+        console.log(query)
+        sql.query(query, (err, result) => {
+            if (err) throw err;
+            else if (result && result.length) {
+                console.log(result.length, 'result is')
+                res.send({
+                    status: true,
+                    msg: 'success',
+                    data: result
+
+                })
+            } else {
+                res.send({
+                    status: false,
+                    msg: 'Data not found',
+                    data: []
+
+                })
+            }
+        })
+    }
+}
+
 
 exports.getParentPackages = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
