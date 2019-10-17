@@ -75,7 +75,7 @@ exports.trasnferApps = async function (req, res) {
         }
 
         // get all secure markete apps
-        let sm_apps = await sql.query(`SELECT apk_id FROM secure_market_apps WHERE space_type = '${spaceType}'`);
+        let sm_apps = await sql.query(`SELECT * FROM secure_market_apps WHERE space_type = '${spaceType}'`);
         let sm_app_ids = []
         if (sm_apps.length) {
             sm_apps.map((item) => sm_app_ids.push(item.apk_id))
@@ -91,9 +91,19 @@ exports.trasnferApps = async function (req, res) {
             //     insertValues = insertValues + "('" + dealer_type + "' ," + dealer_id + " , " + appKeys[i] + " , '" + spaceType + "'),"
             // }
 
+            // for (let i = 0; i < appKeys.length; i++) {
+            //     if (sm_app_ids.includes(appKeys[i])) {
+            //         continue
+            //     }
+            //     insertValues = insertValues + "('" + dealer_type + "' ," + dealer_id + " , " + appKeys[i] + " , '" + spaceType + "'),"
+            // }
+
             for (let i = 0; i < appKeys.length; i++) {
-                if (sm_app_ids.includes(appKeys[i])) {
-                    continue
+                if (sm_apps.length) {
+                    let check = sm_apps.filter((item) => item.apk_id == appKeys[i] && item.dealer_id === verify.user.dealer_id)
+                    if (check && check.length) {
+                        continue
+                    }
                 }
                 insertValues = insertValues + "('" + dealer_type + "' ," + dealer_id + " , " + appKeys[i] + " , '" + spaceType + "'),"
             }
@@ -122,13 +132,13 @@ exports.trasnferApps = async function (req, res) {
             }
 
             if (results.length) {
-                apklist.forEach((item, index) => {
-                    for (let i = 0; i < results.length; i++) {
-                        if (item.apk_id === results[i].id) {
-                            apklist.splice(index, 1)
-                        }
-                    }
-                })
+                // apklist.forEach((item, index) => {
+                //     for (let i = 0; i < results.length; i++) {
+                //         if (item.apk_id === results[i].id) {
+                //             apklist.splice(index, 1)
+                //         }
+                //     }
+                // })
             } else {
                 results = [];
             }
@@ -167,7 +177,7 @@ exports.marketApplist = async function (req, res) {
     if (verify) {
         where = '';
         if (verify.user.user_type !== ADMIN) {
-            apklist = await sql.query("select dealer_apks.* ,apk_details.* from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'")
+            apklist = await sql.query("SELECT dealer_apks.* ,apk_details.* FROM dealer_apks JOIN apk_details ON (apk_details.id = dealer_apks.apk_id) WHERE dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'")
         }
         else {
             apklist = await sql.query("select * from apk_details where delete_status=0 AND apk_type != 'permanent'")
@@ -181,14 +191,47 @@ exports.marketApplist = async function (req, res) {
                 console.log(err);
             }
 
+
+            console.log("==============================")
+            // console.log(results.length, "secure apklist ", results);
+
+
+
             if (results.length) {
-                apklist.forEach((item, index) => {
-                    for (let i = 0; i < results.length; i++) {
-                        if (item.apk_id === results[i].id) {
-                            apklist.splice(index, 1)
+                // apklist.forEach((item, index) => {
+                //     for (let i = 0; i < results.length; i++) {
+                //         if (item.apk_id === results[i].id) {
+                //             apklist.splice(index, 1)
+                //         }
+                //     }
+                // })
+
+
+
+
+
+
+
+                // console.log(results.length, "=================== available apklist 2.0  admin", results.filter((app) => app.dealer_type === ADMIN));
+                // console.log(results.length, "=================== available apklist 2.0  dealer", results.filter((app) => app.dealer_type === DEALER));
+
+
+                let adminIds = results.filter((app) => app.dealer_type === ADMIN);
+                // let dealerIds = results.filter((app) => app.dealer_type === DEALER);
+
+                results.forEach((item, index) => {
+                    for (let i = 0; i < adminIds.length; i++) {
+                        console.log(item.id, adminIds[i].id, item.id == adminIds[i], item.dealer_type !== ADMIN)
+
+                        if (item.id == adminIds[i].id && item.dealer_type !== ADMIN) {
+                            console.log('hi')
+                            results.splice(index, 1)
                         }
                     }
                 })
+
+                console.log('final result is: ', results);
+
                 data = {
                     status: true,
                     data: {
