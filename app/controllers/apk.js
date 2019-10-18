@@ -1215,15 +1215,23 @@ exports.savePolicyPermissions = async function (req, res) {
 exports.handleUninstallApk = async function (req, res) {
     try {
         var verify = req.decoded;
+        let spaceType = req.body.spaceType;
+        console.log('spaceType ====> ', spaceType)
 
         // if (verify.status !== undefined && verify.status == true) {
         if (verify) {
             let is_restricted = (req.body.value) ? 0 : 1;
             let apk_id = req.params.apk_id;
             // console.log("UPDATE secure_market_apps SET is_restrict_uninstall = " + is_restricted + " WHERE apk_id ='" + apk_id + "'");
-            sql.query("UPDATE secure_market_apps SET is_restrict_uninstall = " + is_restricted + " WHERE apk_id ='" + apk_id + "'", async function (err, results) {
+            sql.query(`UPDATE secure_market_apps SET is_restrict_uninstall = ${is_restricted} WHERE apk_id = '${apk_id}' AND space_type = '${spaceType}'`, async function (err, results) {
                 if (err) {
-                    console.log(err)
+                    console.log(err);
+                    data = {
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.UNINSTALL_PERMISSION_NOT_CHANGED], "Uninstall permission not changed. Please try again later"), // "Uninstall permission not changed. Please try again later."
+                    }
+                    res.send(data);
+                    return;
                 }
                 if (results.affectedRows) {
                     data = {
