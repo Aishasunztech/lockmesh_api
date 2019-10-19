@@ -1209,6 +1209,65 @@ exports.getProductPrices = async function (req, res) {
     }
 }
 
+
+exports.getHardwarePrices = async function (req, res) {
+    var verify = req.decoded; // await verifyToken(req, res);
+    if (verify) {
+        let selectQuery = ""
+        // console.log(verify.user);
+        let dealer_id = verify.user.dealer_id;
+        if (dealer_id) {
+            selectQuery = "select * FROM hardwares WHERE delete_status != 1";
+            sql.query(selectQuery, async (err, reslt) => {
+                if (err) {
+                    console.log(err)
+                }
+                if (reslt.length) {
+                    for (let i = 0; i < reslt.length; i++) {
+                        if (verify.user.user_type === DEALER) {
+                            let result = await sql.query("SELECT * from dealer_hardwares_prices WHERE created_by = 'admin' AND hardware_id = " + reslt[i].id);
+                            if (result && result.length) {
+                                reslt[i].hardware_price = result[0].price
+                            }
+                        }
+                        else if (verify.user.user_type === SDEALER) {
+                            let result = await sql.query("SELECT * from dealer_hardwares_prices WHERE created_by = 'dealer' AND hardware_id = " + reslt[i].id);
+                            if (result && result.length) {
+                                reslt[i].hardware_price = result[0].price
+                            } else {
+                                let result = await sql.query("SELECT * from dealer_hardwares_prices WHERE created_by = 'admin' AND hardware_id = " + reslt[i].id);
+                                if (result && result.length) {
+                                    reslt[i].hardware_price = result[0].price
+                                }
+                            }
+                        }
+                    }
+                    res.send({
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
+                        data: reslt
+                    })
+                }
+                else {
+                    res.send({
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "Data not found"), // "Data found",
+                        data: []
+                    })
+                }
+            })
+        } else {
+
+            res.send({
+                status: false,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DEALER_ID], "Invalid dealer id"), // 'Invalid dealer_id',
+                data: []
+
+            })
+        }
+    }
+}
+
 exports.checkPackageName = async function (req, res) {
 
     try {

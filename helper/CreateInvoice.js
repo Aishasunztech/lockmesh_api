@@ -45,7 +45,7 @@ function generateCustomerInformation(doc, invoice) {
         .text(formatDate(new Date()), 150, customerInformationTop + 15)
         .text("Balance Due:", 50, customerInformationTop + 30)
         .text(
-            invoice.subtotal - invoice.discount + " Credits",
+            invoice.paid + " Credits",
             150,
             customerInformationTop + 30
         )
@@ -85,6 +85,24 @@ function generateInvoiceTable(doc, invoice) {
     generateHr(doc, invoiceTableTop + 25);
     doc.font("Helvetica");
     let counter = 0
+
+    for (i = 0; i < invoice.hardwares.length; i++) {
+        const item = invoice.hardwares[i];
+        const position = invoiceTableTop + (counter + 1) * 40;
+        counter++
+        generateTableRow(
+            doc,
+            position,
+            "Hardware",
+            item.hardware_name,
+            "---",
+            item.hardware_price,
+            invoice.quantity,
+            item.hardware_price * invoice.quantity
+        );
+        generateHr(doc, position + 25);
+    }
+
     for (i = 0; i < invoice.packages.length; i++) {
         const item = invoice.packages[i];
         const position = invoiceTableTop + (counter + 1) * 40;
@@ -117,8 +135,8 @@ function generateInvoiceTable(doc, invoice) {
             item.unit_price * invoice.quantity
         );
         generateHr(doc, position + 25);
-
     }
+
 
     const subtotalPosition = invoiceTableTop + (counter + 1) * 40;
     generateTableRow(
@@ -183,7 +201,7 @@ function generateInvoiceTable(doc, invoice) {
         "",
         "Balance Due:",
         "",
-        invoice.subtotal - invoice.discount + " Credits"
+        invoice.paid + " Credits"
     );
     doc.font("Helvetica");
 }

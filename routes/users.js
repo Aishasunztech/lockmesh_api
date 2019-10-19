@@ -1223,6 +1223,8 @@ router.patch("/check-package-name", billingController.checkPackageName);
 
 router.get('/get-parent-product-prices', billingController.getProductPrices);
 
+router.get('/get-parent-hardware-prices', billingController.getHardwarePrices);
+
 router.patch('/check-package-name', billingController.checkPackageName);
 
 router.post("/credit-request-ack", accountController.ackCreditRequest);
