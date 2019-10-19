@@ -40,7 +40,7 @@ const appController = require('../app/controllers/app');
 const languageController = require('../app/controllers/language');
 const simController = require('../app/controllers/sim');
 const agentController = require('../app/controllers/agent');
-const reportingController = require('../app/controllers/reporting');
+const reportingController = require('../app/controllers/reports');
 
 
 const dashboardController = require('../app/controllers/dashboard');
@@ -1353,6 +1353,8 @@ router.get('/getInvoiceId', userController.getInvoiceId);
 
 //reporting routes
 router.post('/reporting/product', reportingController.generateProductReport);
+router.post('/reports/invoice', reportingController.generateInvoiceReport);
+router.post('/reports/payment-history', reportingController.generatePaymentHistoryReport);
 
 
 module.exports = router;
