@@ -1223,7 +1223,7 @@ exports.handleUninstallApk = async function (req, res) {
             let is_restricted = (req.body.value) ? 0 : 1;
             let apk_id = req.params.apk_id;
             // console.log("UPDATE secure_market_apps SET is_restrict_uninstall = " + is_restricted + " WHERE apk_id ='" + apk_id + "'");
-            sql.query(`UPDATE secure_market_apps SET is_restrict_uninstall = ${is_restricted} WHERE apk_id = '${apk_id}' AND space_type = '${spaceType}'`, async function (err, results) {
+            sql.query(`UPDATE secure_market_apps SET is_restrict_uninstall = ${is_restricted} WHERE apk_id = '${apk_id}' AND space_type = '${spaceType}' AND dealer_id = ${verify.user.dealer_id}`, async function (err, results) {
                 if (err) {
                     console.log(err);
                     data = {
