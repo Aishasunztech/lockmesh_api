@@ -57,13 +57,14 @@ exports.devices = async function (req, res) {
         } else {
             query = `SELECT * From acc_action_history WHERE action = 'UNLINKED' AND del_status IS NULL `;
         }
-        newArray = await sql.query(query);
+        // newArray = await sql.query(query);
 
 
         // console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 ' + where_con + ' order by devices.id DESC');
         // sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id where usr_acc.transfer_status = 0 ' + where_con + ' order by devices.id DESC', function (error, results, fields) {
         // console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 ' + where_con + ' order by devices.id DESC');
-        let deviceQuery = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) WHERE devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0  ${where_con} ORDER BY devices.id DESC`;
+        // let deviceQuery = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) WHERE devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0  ${where_con} ORDER BY devices.id DESC`;
+        let deviceQuery = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) WHERE devices.reject_status = 0 AND usr_acc.del_status = 0  ${where_con} ORDER BY devices.id DESC`;
 
         sql.query(deviceQuery, async function (error, results, fields) {
             data = {
@@ -123,7 +124,8 @@ exports.devices = async function (req, res) {
                     );
                 }
 
-                let finalResult = [...results, ...newArray];
+                // let finalResult = [...results, ...newArray];
+                let finalResult = [...results];
 
                 let checkValue = helpers.checkValue;
                 for (let device of finalResult) {
@@ -224,7 +226,7 @@ exports.newDevices = async function (req, res) {
             }
 
             sql.query(
-                `select devices.*, ${usr_acc_query_text} FROM devices LEFT JOIN usr_acc ON  (devices.id = usr_acc.device_id) WHERE ((usr_acc.device_status=0 OR usr_acc.device_status="0") AND (usr_acc.unlink_status=0 OR usr_acc.unlink_status="0") AND (usr_acc.activation_status IS NULL)) AND devices.reject_status = 0 ${where_con} ORDER BY devices.id DESC`,
+                `select devices.*, ${usr_acc_query_text} FROM devices LEFT JOIN usr_acc ON  (devices.id = usr_acc.device_id) WHERE ((usr_acc.device_status=0 OR usr_acc.device_status="0") AND (usr_acc.unlink_status=0 OR usr_acc.unlink_status="0") AND (usr_acc.activation_status IS NULL)) AND (usr_acc.del_status=0 OR usr_acc.del_status='0') AND devices.reject_status = 0 ${where_con} ORDER BY devices.id DESC`,
                 function (error, results, fields) {
                     if (error) {
                         console.log(error);
@@ -1628,15 +1630,38 @@ exports.stopLinking = async function (req, res) {
 
             let device_record = await helpers.getAllRecordbyDeviceId(req.params.device_id)
             console.log(device_record);
-            
-            if (device_record.dealer_id === loggedUserId || req.body.prnt_dlr_id === loggedUserId ) {
+
+            if (device_record.dealer_id === loggedUserId || req.body.prnt_dlr_id === loggedUserId) {
 
                 let usr_device_id = await device_helpers.getOriginalIdByDeviceId(req.params.device_id);
                 console.log('user_device_id', usr_device_id);
-                // var query = `UPDATE  usr_acc SET del_status=1 WHERE device_id = ${resp[0].id}`;
-                // console.log(query);
-                // await sql.query(query);
+                var updateUserAccQ = `UPDATE  usr_acc SET del_status=1 WHERE device_id = ${usr_device_id}`;
+                let updateUserAcc = await sql.query(updateUserAccQ);
+                if (updateUserAcc && updateUserAcc.affectedRows) {
 
+                    data = {
+                        status: true,
+                        msg: await helpers.convertToLang(
+                            req.translation[
+                            MsgConstants.DEVICE_DEL_SUCC
+                            ],
+                            "Device deleted successfully"
+                        ) // Device deleted successfully.
+                    };
+                } else {
+                    data = {
+                        status: false,
+                        msg: await helpers.convertToLang(
+                            req.translation[
+                            MsgConstants.DEVICE_NOT_DEL
+                            ],
+                            "Device not deleted"
+                        ), // Device not deleted.
+                        fld: fields,
+                        rdlt: results
+                    };
+                }
+                return res.send(data);
                 // sql.query(
                 //     "DELETE from usr_acc  where device_id = " + usr_device_id + " AND unlink_status = 0",
                 //     async function (error, results, fields) {
@@ -1650,27 +1675,9 @@ exports.stopLinking = async function (req, res) {
                 //                 req.params.device_id +
                 //                 "' ";
                 //             sql.query(sqlDevice);
-                //             data = {
-                //                 status: true,
-                //                 msg: await helpers.convertToLang(
-                //                     req.translation[
-                //                     MsgConstants.DEVICE_DEL_SUCC
-                //                     ],
-                //                     "Device deleted successfully"
-                //                 ) // Device deleted successfully.
-                //             };
+
                 //         } else {
-                //             data = {
-                //                 status: false,
-                //                 msg: await helpers.convertToLang(
-                //                     req.translation[
-                //                     MsgConstants.DEVICE_NOT_DEL
-                //                     ],
-                //                     "Device not deleted"
-                //                 ), // Device not deleted.
-                //                 fld: fields,
-                //                 rdlt: results
-                //             };
+
                 //         }
                 //         res.send(data);
                 //     }
@@ -2170,7 +2177,7 @@ exports.transferDeviceProfile = async function (req, res) {
                 if (rsltq.length > 0) {
 
 
-                    
+
 
                     // Update New usr_acc
                     let Update_UsrAcc_Query = `UPDATE usr_acc SET user_id='${rsltq[0].user_id}', account_email='${rsltq[0].account_email}',account_name='${rsltq[0].account_name}',dealer_id=${rsltq[0].dealer_id},prnt_dlr_id=${rsltq[0].prnt_dlr_id},link_code='${rsltq[0].link_code}',client_id='${rsltq[0].client_id}',start_date='${rsltq[0].start_date}',expiry_months='${rsltq[0].expiry_months}',expiry_date='${rsltq[0].expiry_date}',status='${rsltq[0].status}',device_status=${rsltq[0].device_status},activation_status=${rsltq[0].activation_status},account_status='${rsltq[0].account_status}',unlink_status=0,transfer_status=0, transfered_from='${flagged_device.device_id}', transfered_to='${reqDevice.device_id}',dealer_name='${rsltq[0].dealer_name}',prnt_dlr_name='${rsltq[0].prnt_dlr_name}',del_status='0',note='${rsltq[0].note}',validity=${rsltq[0].validity}, batch_no='${rsltq[0].batch_no}'  WHERE device_id=${reqDevice.usr_device_id};`;
