@@ -121,7 +121,7 @@ exports.trasnferApps = async function (req, res) {
             // console.log(deleteNotIn);
             await sql.query(deleteNotIn);
         } else {
-            let deleteNotIn = "DELETE FROM secure_market_apps WHERE apk_id NOT IN ('" + toDelete + "') AND space_type= '" + spaceType + "' AND dealer_id = '" + verify.user.id + " '"
+            let deleteNotIn = "DELETE FROM secure_market_apps WHERE apk_id NOT IN ('" + toDelete + "') AND space_type= '" + spaceType + "' AND dealer_id = '" + dealer_id + " '"
             // console.log(deleteNotIn);
             await sql.query(deleteNotIn);
 
@@ -133,6 +133,19 @@ exports.trasnferApps = async function (req, res) {
                 }
             })
         }
+
+        // let existingApps = await sql.query(`SELECT * FROM secure_market_apps WHERE dealer_id = ${dealer_id} AND space_type = '${spaceType}'`);
+
+        // let copyKeys = appKeys;
+        // let deleteIds = [];
+        // existingApps.forEach((item) => {
+        //     let index = copyKeys.indexOf(item.apk_id)
+        //     if (index !== -1) {
+        //         deleteIds.push(index);
+        //     }
+        // })
+        // appKeys = copyKeys.filter((app, index) => !deleteIds.includes(index));
+        // console.log("copyKeys appKeys ", appKeys)
 
         // get all secure markete apps
         let sm_apps = await sql.query(`SELECT * FROM secure_market_apps WHERE space_type = '${spaceType}'`);
