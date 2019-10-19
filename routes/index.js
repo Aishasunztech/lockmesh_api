@@ -7,6 +7,7 @@ var agentAuthMiddleware = require('../middlewares/agentAuth');
 // var authRoutes = require('./auth');
 var userRoutes = require('./users');
 var mobileRoutes = require('./mobile');
+var mobileV2Routes = require('./mobile_v2');
 var authRoutes = require('./auth');
 var nonVerifyRoutes = require('./nonVerify');
 var agentRoutes = require('./agents');
@@ -32,7 +33,7 @@ module.exports = function (app) {
 	});
 
 	app.group('/api/v2', function (router) {
-		router.use('/mobile', mobileRoutes);
+		router.use('/mobile', mobileV2Routes);
 		
 		router.use('/agent', agentAuth);
 		router.use('/agent', agentAuthMiddleware, agentRoutes);
