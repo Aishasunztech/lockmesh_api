@@ -1201,7 +1201,7 @@ router.post("/save-package", billingController.savePackage);
 
 router.delete("/delete_package/:id", billingController.deletePackage);
 
-router.put("/edit_package/:id", billingController.editPackage);
+router.put("/modify_item_price/:id", billingController.modifyItemPrice);
 
 router.post("/save-sa-package", billingController.saveSaPackage);
 
@@ -1215,11 +1215,15 @@ router.get("/get-prices", billingController.getPrices);
 
 router.get("/get-packages", billingController.getPackages);
 
+router.get("/get-hardwares", billingController.getHardwares);
+
 router.get("/get-parent-packages", billingController.getParentPackages);
 
 router.patch("/check-package-name", billingController.checkPackageName);
 
 router.get('/get-parent-product-prices', billingController.getProductPrices);
+
+router.get('/get-parent-hardware-prices', billingController.getHardwarePrices);
 
 router.patch('/check-package-name', billingController.checkPackageName);
 

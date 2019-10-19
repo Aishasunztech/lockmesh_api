@@ -935,7 +935,7 @@ exports.purchaseCredits_CC = async function (req, res) {
                                                         }
                                                         if (result.affectedRows) {
 
-                                                            let transection_credits = `INSERT INTO financial_account_transections (user_id,transection_data, credits ,transection_type , status) VALUES (${dealerId},'${JSON.stringify({ request_type: "Creedit Card request" })}' ,${credits} ,'debit' , 'transferred')`
+                                                            let transection_credits = `INSERT INTO financial_account_transections (user_id,transection_data, credits ,transection_type , status , type) VALUES (${dealerId},'${JSON.stringify({ request_type: "Creedit Card request" })}' ,${credits} ,'debit' , 'transferred', 'credits')`
                                                             await sql.query(transection_credits)
 
                                                             let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
