@@ -495,9 +495,14 @@ exports.acceptDevice = async function (req, res) {
                                                                 await sql.query(update_dealer_credits)
                                                             }
                                                         }
-
-                                                        let hardware_data = `INSERT INTO hardwares_data(user_acc_id, dealer_id, hardwares,total_credits ) VALUES(${usr_acc_id}, ${dealer_id}, '${JSON.stringify(hardwares)}', ${hardwarePrice} )`
-                                                        await sql.query(hardware_data);
+                                                        for (let i = 0; i < hardwares.length; i++) {
+                                                            let price = hardwares[i].hardware_price
+                                                            if (pay_now) {
+                                                                price = price - (price * 5 / 100)
+                                                            }
+                                                            let hardware_data = `INSERT INTO hardwares_data(user_acc_id, dealer_id, hardware_name , hardware_data,total_credits ) VALUES(${usr_acc_id}, ${dealer_id}, '${hardwares[i].hardware_name}', '${JSON.stringify(hardwares[i])}' ,${price} )`
+                                                            await sql.query(hardware_data);
+                                                        }
 
                                                         let hardware_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${hardwarePrice} , 'credit' , '${transection_status}' , 'hardwares')`
                                                         await sql.query(hardware_transection)
@@ -761,16 +766,15 @@ exports.createDeviceProfile = async function (req, res) {
 
                             if (pay_now) {
                                 dealer_credits = dealer_credits - discounted_price
-                                if (hardwares.length) {
-                                    hardwarePrice = hardwarePrice - (hardwarePrice * 5 / 100)
-                                }
+                                // if (hardwares.length) {
+                                //     hardwarePrice = hardwarePrice - (hardwarePrice * 5 / 100)
+                                // }
                             }
 
                             if (exp_month !== '0') {
                                 let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedUserType)
                                 if (pay_now) {
-                                    total_price = total_price - (total_price * 5 / 100)
-
+                                    // total_price = total_price - (total_price * 5 / 100)
                                     admin_profit = profitLoss.admin_profit - (profitLoss.admin_profit * 5 / 100)
                                     dealer_profit = profitLoss.dealer_profit - (profitLoss.dealer_profit * 5 / 100)
                                 } else {
@@ -896,8 +900,14 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 await sql.query(update_dealer_credits)
                                                             }
                                                         }
-                                                        let hardware_data = `INSERT INTO hardwares_data(user_acc_id, dealer_id, hardwares,total_credits ) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(hardwares)}', ${hardwarePrice / duplicate} )`
-                                                        await sql.query(hardware_data);
+                                                        for (let i = 0; i < hardwares.length; i++) {
+                                                            let price = hardwares[i].hardware_price
+                                                            if (pay_now) {
+                                                                price = price - (price * 5 / 100)
+                                                            }
+                                                            let hardware_data = `INSERT INTO hardwares_data(user_acc_id, dealer_id, hardware_name, hardware_data,total_credits ) VALUES(${user_acc_id}, ${dealer_id}, '${hardwares[i].hardware_name}', '${JSON.stringify(hardwares[i])}', ${price} )`
+                                                            await sql.query(hardware_data);
+                                                        }
 
                                                         let hardware_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${hardwarePrice / duplicate} , 'credit' , '${transection_status}' , 'hardwares')`
                                                         await sql.query(hardware_transection)
@@ -1152,8 +1162,14 @@ exports.createDeviceProfile = async function (req, res) {
                                                                         await sql.query(update_dealer_credits)
                                                                     }
                                                                 }
-                                                                let hardware_data = `INSERT INTO hardwares_data(user_acc_id, dealer_id, hardwares,total_credits ) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(hardwares)}', ${hardwarePrice} )`
-                                                                await sql.query(hardware_data);
+                                                                for (let i = 0; i < hardwares.length; i++) {
+                                                                    let price = hardwares[i].hardware_price
+                                                                    if (pay_now) {
+                                                                        price = price - (price * 5 / 100)
+                                                                    }
+                                                                    let hardware_data = `INSERT INTO hardwares_data(user_acc_id, dealer_id, hardware , hardware_data,total_credits ) VALUES(${user_acc_id}, ${dealer_id}, '${hardwares[i].hardware_name}', '${JSON.stringify(hardwares[i])}', ${price} )`
+                                                                    await sql.query(hardware_data);
+                                                                }
 
                                                                 let hardware_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${hardwarePrice} , 'credit' , '${transection_status}' , 'hardwares')`
                                                                 await sql.query(hardware_transection)
@@ -4200,9 +4216,16 @@ exports.deleteUnlinkDevice = async function (req, res) {
                             }
 
                             if (hardwaresData.length) {
-                                hardwares = JSON.parse(hardwaresData[0].hardwares)
-                                let updateHardwareData = "UPDATE hardwares_data set del_status = '1' ,paid_credits = 0 WHERE user_acc_id = " + user_acc_id;
+                                let updateHardwareData = "UPDATE hardwares_data set del_status = '1' WHERE user_acc_id = " + user_acc_id;
                                 await sql.query(updateHardwareData);
+                                hardwares = hardwaresData[0].hardwares
+                                let total_hardware_credits = 0
+                                hardwares = []
+                                hardwaresData.map((hardware) => {
+                                    hardwares.push(JSON.parse(hardware.hardware_data))
+                                    total_hardware_credits += hardware.total_credits
+                                })
+
                                 let hardware_transection_record = "SELECT * from financial_account_transections where user_dvc_acc_id = " + user_acc_id + " AND user_id = '" + verify.user.id + "' AND type = 'hardwares' ORDER BY id DESC LIMIT 1"
                                 let hardware_transection_record_data = await sql.query(hardware_transection_record)
 
@@ -4211,17 +4234,17 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                     await sql.query(update_transection)
                                     let update_profits_transections = "UPDATE financial_account_transections SET status = 'cancelled' WHERE user_dvc_acc_id = " + user_acc_id + " AND status = 'holding' AND type = 'hardwares'"
                                     await sql.query(update_profits_transections)
-                                    let updateCredits = "UPDATE financial_account_balance set due_credits = due_credits - " + hardwaresData[0].total_credits + " WHERE dealer_id = " + verify.user.dealer_id
+                                    let updateCredits = "UPDATE financial_account_balance set due_credits = due_credits - " + total_hardware_credits + " WHERE dealer_id = " + verify.user.dealer_id
                                     await sql.query(updateCredits);
                                 } else {
-                                    refundedCredits = refundedCredits + hardwaresData[0].total_credits;
-                                    let dealer_profit_query = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data ,credits , transection_type , type) VALUES (${verify.user.id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}', ${hardwaresData[0].total_credits} ,'debit' , 'hardwares')`
+                                    refundedCredits = refundedCredits + total_hardware_credits;
+                                    let dealer_profit_query = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data ,credits , transection_type , type) VALUES (${verify.user.id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}', ${total_hardware_credits} ,'debit' , 'hardwares')`
                                     await sql.query(dealer_profit_query);
-                                    if (device.expiry_months != 0) {
-                                        let profits = await helpers.calculateHardwareProfitLoss(hardwares, verify.user.user_type)
-                                        dealer_hardware_profit = profits.dealer_profit - (profits.dealer_profit * 5 / 100)
-                                        admin_hardware_profit = profits.admin_profit - (profits.admin_profit * 5 / 100)
-                                    }
+
+                                    let profits = await helpers.calculateHardwareProfitLoss(hardwares, verify.user.user_type)
+                                    dealer_hardware_profit = profits.dealer_profit - (profits.dealer_profit * 5 / 100)
+                                    admin_hardware_profit = profits.admin_profit - (profits.admin_profit * 5 / 100)
+
                                 }
                             }
 
