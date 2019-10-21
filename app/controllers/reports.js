@@ -77,11 +77,12 @@ exports.generateInvoiceReport = async function (req, res) {
 
     if (verify){
 
-        let dealer      = req.body.dealer;
-        let from        = req.body.from;
-        let to          = req.body.to;
-
-        let condition   = '';
+        let dealer          = req.body.dealer;
+        let from            = req.body.from;
+        let to              = req.body.to;
+        let payment_status  = req.body.payment_status;
+        let condition       = '';
+        
 
         let response = {
             status: false,
@@ -97,6 +98,10 @@ exports.generateInvoiceReport = async function (req, res) {
 
         if (to){
             condition += ' AND DATE(i.created_at) >= '+moment(to).format('YYYY-MM-DD')
+        }
+
+        if (payment_status) {
+            condition += ' AND i.end_user_payment_status = "' + payment_status +'"'
         }
 
         invoiceData = await sql.query(`SELECT i.*, d.device_id as device_id FROM invoices as i 
@@ -143,6 +148,49 @@ exports.generatePaymentHistoryReport = async function (req, res) {
         }
 
         paymentHistoryData = await sql.query(`SELECT fat.*, d.device_id as device_id FROM financial_account_transections as fat 
+        JOIN usr_acc as ua on ua.id = fat.user_dvc_acc_id 
+        JOIN devices as d on ua.device_id = d.id 
+        WHERE fat.id IS NOT NULL ${condition} ORDER BY fat.id DESC`);
+
+        response = {
+            status: true,
+            data: paymentHistoryData,
+        };
+
+        return res.send(response);
+    }
+
+};
+
+exports.generateHardwareReport = async function (req, res) {
+
+    let verify = req.decoded;
+
+    if (verify) {
+
+        let dealer  = req.body.dealer;
+        let from    = req.body.from;
+        let to      = req.body.to;
+
+        let condition = '';
+
+        let response = {
+            status: false,
+        };
+
+        if (dealer) {
+            condition += ' AND fat.user_id = ' + dealer
+        }
+
+        if (from) {
+            condition += ' AND DATE(fat.created_at) >= ' + moment(from).format('YYYY-MM-DD')
+        }
+
+        if (to) {
+            condition += ' AND DATE(fat.created_at) >= ' + moment(to).format('YYYY-MM-DD')
+        }
+
+        paymentHistoryData = await sql.query(`SELECT fat.*, d.device_id as device_id FROM hardware_data as fat 
         JOIN usr_acc as ua on ua.id = fat.user_dvc_acc_id 
         JOIN devices as d on ua.device_id = d.id 
         WHERE fat.id IS NOT NULL ${condition} ORDER BY fat.id DESC`);
