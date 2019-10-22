@@ -2,11 +2,11 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.changeColumn('financial_account_transactions', 'status', {
+    return queryInterface.changeColumn('financial_account_transections', 'status', {
       type: Sequelize.ENUM,
       values: ['holding','transferred','pending','cancelled'],
     }).then(function(){
-      return queryInterface.addColumn('financial_account_transactions', 'type', {
+      return queryInterface.addColumn('financial_account_transections', 'type', {
         type: Sequelize.ENUM,
         values: ['credits','services','hardwares'],
       })
