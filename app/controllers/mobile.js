@@ -327,7 +327,7 @@ exports.linkDevice = async function (req, resp) {
                                 var updateUserAccQ = `UPDATE  usr_acc SET unlink_status = 0, device_status = 0, del_status=0 where device_id=${deviceCheckResponse[0].usr_device_id}`;
                                 await sql.query(updateUserAccQ)
                                 data = {
-                                    status: false,
+                                    status: true,
                                     device_id: deviceId,
                                     msg: "Device Linked.",
                                     dealer_pin: dealer[0].link_code
@@ -343,7 +343,7 @@ exports.linkDevice = async function (req, resp) {
                                 var updateUserAccQ = `UPDATE  usr_acc SET unlink_status = 0, device_status = 0, del_status=0 where device_id=${deviceCheckResponse[0].usr_device_id}`;
                                 await sql.query(updateUserAccQ)
                                 data = {
-                                    status: false,
+                                    status: true,
                                     device_id: deviceId,
                                     msg: "Device Linked.",
                                     dealer_pin: dealer[0].link_code
@@ -362,7 +362,7 @@ exports.linkDevice = async function (req, resp) {
                             // await sql.query(sqlDevice);
                             await sql.query(updateUserAccQ)
                             data = {
-                                status: false,
+                                status: true,
                                 device_id: deviceId,
                                 msg: "Device Linked.",
                                 dealer_pin: dealer[0].link_code
