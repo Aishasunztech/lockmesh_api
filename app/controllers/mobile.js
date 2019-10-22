@@ -102,7 +102,7 @@ exports.login = async function (req, resp) {
                     });
                 }
             }
-            
+
         } else if (linkCode.length >= 7) {
             // there should be and operator in condition currently its not ok
             console.log("mac_address: ", mac_address);
@@ -171,6 +171,10 @@ exports.login = async function (req, resp) {
 
                                 var updateAccount = "UPDATE usr_acc set activation_status=1, type = '" + type + "', version = '" + version + "', status='" + status + "', expiry_date='" + expiry_date + "', start_date='" + start_date + "', device_status=1, unlink_status = 0 WHERE id = " + usrAcc[0].id;
                                 await sql.query(updateAccount);
+
+                                // var updateAccount = "UPDATE usr_acc set activation_status=1, type = '" + type + "', version = '" + version + "', status='" + status + "', expiry_date='" + expiry_date + "', start_date='" + start_date + "', device_status=1, unlink_status = 0 WHERE id = " + usrAcc[0].id;
+                                // await sql.query(updateAccount);
+
                                 device_helpers.saveImeiHistory(checkedDeviceId, serial_number, mac_address, imei1, imei2)
                                 let device_id = await device_helpers.getDvcIDByDeviceID(usrAcc[0].device_id)
 
@@ -1081,7 +1085,7 @@ exports.deviceStatus = async function (req, res) {
 
                     var dealerQuery = "select * from dealers where dealer_id = '" + user_acc[0].dealer_id + "'";
                     var dealer = await sql.query(dealerQuery);
-                     
+
                     if (dealer.length > 0) {
 
                         const dvc = {
@@ -1144,7 +1148,7 @@ exports.deviceStatus = async function (req, res) {
                                 return;
                             }
                         });
-                    } 
+                    }
 
                     // dealer not found
                     else {
@@ -1251,7 +1255,7 @@ exports.deviceStatus = async function (req, res) {
                         device_id: device[0].device_id
                     }
                 }
-               
+
             } else {
                 data = {
                     status: false,

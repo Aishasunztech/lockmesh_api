@@ -1,16 +1,25 @@
 const fs = require("fs");
 const PDFDocument = require("pdfkit");
 
-function createInvoice(invoice, path) {
+function createInvoice(invoice, path, type = null) {
+
+    console.log(type, invoice);
+
+
     let doc = new PDFDocument({ size: "A4", margin: 50 });
 
     generateHeader(doc);
     generateCustomerInformation(doc, invoice);
-    generateInvoiceTable(doc, invoice);
+    if (type) {
+        generateEditInvoiceTable(doc, invoice, type);
+    } else {
+        generateInvoiceTable(doc, invoice);
+    }
     generateFooter(doc);
 
     doc.end();
     doc.pipe(fs.createWriteStream(path));
+
 }
 
 function generateHeader(doc) {
@@ -59,12 +68,16 @@ function generateCustomerInformation(doc, invoice) {
         .font("Helvetica-Bold")
         .text(invoice.shipping.device_id, 425, customerInformationTop + 15)
         .font("Helvetica")
-        .text("Dealer PIN:", 325, customerInformationTop + 30)
+        .text("User ID:", 325, customerInformationTop + 30)
+        .font("Helvetica")
+        .text(invoice.shipping.user_id, 425, customerInformationTop + 30)
+        .font("Helvetica")
+        .text("Dealer PIN:", 325, customerInformationTop + 45)
         .font("Helvetica-Bold")
-        .text(invoice.shipping.dealer_pin, 425, customerInformationTop + 30)
+        .text(invoice.shipping.dealer_pin, 425, customerInformationTop + 45)
         .moveDown();
 
-    generateHr(doc, 252);
+    generateHr(doc, 267);
 }
 
 function generateInvoiceTable(doc, invoice) {
@@ -188,10 +201,243 @@ function generateInvoiceTable(doc, invoice) {
         "",
         "Paid To Date : ",
         "",
-        invoice.paid + " Credits"
+        (invoice.pay_now) ? invoice.paid : 0 + " Credits"
     );
 
     const duePosition = paidToDatePosition + 25;
+    doc.font("Helvetica-Bold");
+    generateTableRow(
+        doc,
+        duePosition,
+        "",
+        "",
+        "",
+        "Balance Due:",
+        "",
+        invoice.paid + " Credits"
+    );
+    doc.font("Helvetica");
+}
+
+function generateEditInvoiceTable(doc, invoice, type) {
+    let invoiceTableTop = 290
+    if (invoice.prevService.prevServicePackages.length || invoice.prevService.prevServiceProducts.length) {
+        doc
+            .fillColor("#444444")
+            .fontSize(15)
+            .font("Helvetica-Bold")
+            .text("CURRENT SERVICES", 220, 290);
+
+        invoiceTableTop = 320;
+        doc.font("Helvetica-Bold");
+        generateTableRow(
+            doc,
+            invoiceTableTop,
+            "Item",
+            "Description",
+            "Term",
+            "Unit price (Credits)",
+            "Quantity",
+            "Total  (Credits)"
+        );
+        generateHr(doc, invoiceTableTop + 15);
+
+        doc.font("Helvetica");
+
+        let counter = 0
+
+        for (i = 0; i < invoice.prevService.prevServicePackages.length; i++) {
+            const item = invoice.prevService.prevServicePackages[i];
+            const position = invoiceTableTop + (counter + 1) * 30;
+            counter++
+            generateTableRow(
+                doc,
+                position,
+                "Package",
+                item.pkg_name,
+                item.pkg_term,
+                item.pkg_price,
+                invoice.quantity,
+                item.pkg_price * invoice.quantity
+            );
+
+            generateHr(doc, position + 15);
+        }
+        for (i = 0; i < invoice.prevService.prevServiceProducts.length; i++) {
+            const item = invoice.prevService.prevServiceProducts[i];
+            const position = invoiceTableTop + (counter + 1) * 30;
+            counter++
+            generateTableRow(
+                doc,
+                position,
+                "Product",
+                item.price_for,
+                item.price_term,
+                item.unit_price,
+                invoice.quantity,
+                item.unit_price * invoice.quantity
+            );
+            generateHr(doc, position + 15);
+        }
+
+        const preServiceRemainingDaysPosition = invoiceTableTop + (counter + 1) * 30
+        generateTableRow(
+            doc,
+            preServiceRemainingDaysPosition,
+            "",
+            "",
+            "",
+            "Remaining Days :",
+            "",
+            invoice.prevService.serviceRemainingDays
+        );
+
+        let creditsToRefund = preServiceRemainingDaysPosition + 20
+        generateTableRow(
+            doc,
+            creditsToRefund,
+            "",
+            "",
+            "",
+            "Credits To Refund :",
+            "",
+            invoice.prevService.creditsToRefund + " Credits"
+        );
+
+
+        let newServicesPosition = creditsToRefund + 20
+        doc
+            .fillColor("#444444")
+            .fontSize(15)
+            .font("Helvetica-Bold")
+            .text("NEW SERVICES", 227, newServicesPosition + 15);
+
+        invoiceTableTop = newServicesPosition + 40
+    }
+
+    doc.font("Helvetica-Bold");
+    generateTableRow(
+        doc,
+        invoiceTableTop,
+        "Item",
+        "Description",
+        "Term",
+        "Unit price (Credits)",
+        "Quantity",
+        "Total  (Credits)"
+    );
+    generateHr(doc, invoiceTableTop + 15);
+    doc.font("Helvetica");
+    let counter = 0
+
+    for (i = 0; i < invoice.packages.length; i++) {
+        const item = invoice.packages[i];
+        const position = invoiceTableTop + (counter + 1) * 30;
+        counter++
+        generateTableRow(
+            doc,
+            position,
+            "Package",
+            item.pkg_name,
+            item.pkg_term,
+            item.pkg_price,
+            invoice.quantity,
+            item.pkg_price * invoice.quantity
+        );
+        generateHr(doc, position + 15);
+    }
+
+    for (i = 0; i < invoice.products.length; i++) {
+        const item = invoice.products[i];
+        const position = invoiceTableTop + (counter + 1) * 30;
+        counter++
+        generateTableRow(
+            doc,
+            position,
+            "Product",
+            item.price_for,
+            item.price_term,
+            item.unit_price,
+            invoice.quantity,
+            item.unit_price * invoice.quantity
+        );
+
+        generateHr(doc, position + 15);
+    }
+
+
+    const subtotalPosition = invoiceTableTop + (counter + 1) * 30;
+    generateTableRow(
+        doc,
+        subtotalPosition,
+        "",
+        "",
+        "",
+        "Subtotal :",
+        "",
+        invoice.subtotal + " Credits"
+    );
+    let discountPricePosition = 0
+    if (invoice.pay_now) {
+        const discountPosition = subtotalPosition + 20;
+        generateTableRow(
+            doc,
+            discountPosition,
+            "",
+            "",
+            "",
+            "Discount :",
+            "",
+            invoice.discountPercent + " Credits"
+        );
+        discountPricePosition = discountPosition + 20;
+        generateTableRow(
+            doc,
+            discountPricePosition,
+            "",
+            "",
+            "",
+            "Discount Price : ",
+            "",
+            invoice.discount + " Credits"
+        );
+    }
+    let refundPricePosition = 0
+    if (invoice.pay_now) {
+        refundPricePosition = discountPricePosition + 20;
+    }
+    else {
+        refundPricePosition = subtotalPosition + 20
+    }
+    generateTableRow(
+        doc,
+        refundPricePosition,
+        "",
+        "",
+        "",
+        "Credits To Refund : ",
+        "",
+        invoice.prevService.creditsToRefund + " Credits"
+    );
+
+    let paidToDatePosition = 0
+    if (invoice.pay_now) {
+        paidToDatePosition = refundPricePosition + 20;
+    } else {
+        paidToDatePosition = refundPricePosition + 20;
+    }
+    generateTableRow(
+        doc,
+        paidToDatePosition,
+        "",
+        "",
+        "",
+        "Paid To Date : ",
+        "",
+        ((invoice.pay_now) ? invoice.paid : 0) + " Credits"
+    );
+
+    const duePosition = paidToDatePosition + 15;
     doc.font("Helvetica-Bold");
     generateTableRow(
         doc,
@@ -232,8 +478,8 @@ function generateTableRow(
         .text(item, 50, y)
         .text(description, 100, y, { width: 150, align: "center" })
         .text(term, 250, y)
-        .text(unitCost, 315, y, { width: 85, align: "center" })
-        .text(quantity, 390, y, { width: 65, align: "center" })
+        .text(unitCost, 300, y, { width: 120, align: "center" })
+        .text(quantity, 400, y, { width: 65, align: "center" })
         .text(lineTotal, 0, y, { align: "right" });
 }
 

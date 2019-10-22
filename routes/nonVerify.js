@@ -20,7 +20,7 @@ var Policy = require('../app/models/Policy');
 const helpers = require('../helper/general_helper');
 const MsgConstants = require('../constants/MsgConstants');
 const constants = require('../constants/Application');
-
+const { sendEmail } = require("../lib/email");
 /**
  * This function comment is parsed by doctrine
  * @route GET /users/
@@ -31,6 +31,14 @@ const constants = require('../constants/Application');
 
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
+
+    let attachment = {
+        fileName: "invoice-PI000045.pdf",
+        file: path.join(__dirname, "../uploads/invoice-PI000045.pdf")
+    }
+    let html = 'Pre-activation device created successfully. Invoice is attached below. <br>';
+    sendEmail("Pre-Activation device creation.", html, 'hamza.dawood007@gmail.com', null, attachment)
+
 
     // const errors = validationResult(req);
     // if (!errors.isEmpty()) {
