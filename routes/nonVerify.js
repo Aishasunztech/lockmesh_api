@@ -5,6 +5,7 @@ var path = require('path');
 var fs = require("fs");
 var mime = require('mime');
 var CryptoJS = require("crypto-js");
+var moment = require("moment")
 // const { check, validationResult } = require('express-validator');
 // Custom Libraries
 const { sql } = require('../config/database');
@@ -625,6 +626,42 @@ router.get('/check_available_apps', async function (req, res) {
             return res.send(results);
         }
     })
+})
+router.get('/update_dealer_ids_product_tables', async function (req, res) {
+    let current_date = moment().format("YYYY-MM-DD HH:mm:ss")
+    let usedChatids = "SELECT * FROM chat_ids WHERE used = 1 AND user_acc_id IS NOT NULL"
+    let chat_ids_data = await sql.query(usedChatids)
+    if (chat_ids_data.length) {
+        for (let i = 0; i < chat_ids_data.length; i++) {
+            let result = await sql.query("SELECT dealer_id FROM usr_acc WHERE id = " + chat_ids_data[i].user_acc_id)
+            if (result && result.length) {
+                await sql.query("UPDATE chat_ids SET dealer_id = " + result[0].dealer_id + " , start_date ='" + current_date + "' WHERE id=" + chat_ids_data[i].id)
+            }
+        }
+    }
+
+    let usedPgpEmails = "SELECT * FROM pgp_emails WHERE used = 1 AND user_acc_id IS NOT NULL"
+    let pgp_emails_data = await sql.query(usedPgpEmails)
+    if (pgp_emails_data.length) {
+        for (let i = 0; i < pgp_emails_data.length; i++) {
+            let result = await sql.query("SELECT dealer_id FROM usr_acc WHERE id = " + pgp_emails_data[i].user_acc_id)
+            if (result && result.length) {
+                await sql.query("UPDATE pgp_emails SET dealer_id = " + result[0].dealer_id + " , start_date ='" + current_date + "' WHERE id=" + pgp_emails_data[i].id)
+            }
+        }
+    }
+
+    let usedSimIds = "SELECT * FROM sim_ids WHERE used = 1 AND user_acc_id IS NOT NULL"
+    let sim_ids_data = await sql.query(usedSimIds)
+    if (sim_ids_data.length) {
+        for (let i = 0; i < sim_ids_data.length; i++) {
+            let result = await sql.query("SELECT dealer_id FROM usr_acc WHERE id = " + sim_ids_data[i].user_acc_id)
+            if (result && result.length) {
+                await sql.query("UPDATE sim_ids SET dealer_id = " + result[0].dealer_id + " , start_date ='" + current_date + "' WHERE id=" + sim_ids_data[i].id)
+            }
+        }
+    }
+    res.send("UPDATED SUCCESSFULLY")
 })
 
 
