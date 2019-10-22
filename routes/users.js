@@ -42,6 +42,7 @@ const simController = require('../app/controllers/sim');
 const agentController = require('../app/controllers/agent');
 
 const dashboardController = require('../app/controllers/dashboard');
+const NotificationController = require('../app/controllers/notification');
 
 
 // constants
@@ -1345,5 +1346,7 @@ router.delete('/agents/:agentID', agentController.deleteAgent);
  * @security JWT
  */
 router.get('/dashboard-data', dashboardController.getDashboardData);
+
+router.get('/queJobs', NotificationController.getQueJobs);
 
 module.exports = router;
