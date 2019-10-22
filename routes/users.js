@@ -1207,6 +1207,12 @@ router.post("/save-sa-package", billingController.saveSaPackage);
 
 router.post("/save-sa-hardware", billingController.saveSaHardware);
 
+router.post("/edit-sa-hardware", billingController.editSaHardware);
+
+router.post("/delete-sa-package", billingController.deleteSaPackage);
+
+router.post("/delete-sa-hardware", billingController.deleteSaHardware);
+
 router.get("/get-language", languageController.getLanguage);
 
 router.patch("/save-language", languageController.saveLanguage);

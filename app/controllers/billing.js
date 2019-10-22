@@ -1441,3 +1441,77 @@ exports.deleteRequest = async function (req, res) {
         }
     }
 }
+
+exports.deleteSaPackage = async function (req, res) {
+    var verify = req.decoded;
+
+    if (verify) {
+
+        let data = req.body.data;
+        if (data) {
+            console.log('data is: delteSaPackage ', data);
+            let deletePkgQ = `UPDATE packages SET delete_status = 1 WHERE pkg_name = '${data.pkg_name}'`
+            console.log("deletePkgQ ", deletePkgQ);
+            let result = await sql.query(deletePkgQ);
+
+            if (result && result.affectedRows) {
+                res.send({ status: true })
+            } else {
+                res.send({ status: false });
+            }
+        } else {
+            res.send({
+                status: false,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DATA], "Invalid Data"), // 'Invalid Data'
+            })
+            return
+        }
+    }
+}
+
+exports.deleteSaHardware = async function (req, res) {
+    var verify = req.decoded;
+
+    if (verify) {
+
+        let data = req.body.data;
+        if (data) {
+            console.log('data is: deleteSaHardware ', data);
+            let deleteHdwQ = `UPDATE hardwares SET delete_status = 1 WHERE hardware_name = '${data.name}'`
+            console.log("deleteHdwQ ", deleteHdwQ);
+            let result = await sql.query(deleteHdwQ);
+
+            if (result && result.affectedRows) {
+                res.send({ status: true })
+            } else {
+                res.send({ status: false });
+            }
+        } else {
+            res.send({ status: false });
+        }
+    }
+}
+
+exports.editSaHardware = async function (req, res) {
+    var verify = req.decoded;
+
+    if (verify) {
+
+        let data = req.body.data;
+        if (data) {
+            console.log('data is: editSaHardware ', data);
+            let editHdwQ = `UPDATE hardwares SET hardware_name = '${data.new_name}', hardware_price = ${data.new_price} WHERE hardware_name = '${data.name}'`
+            console.log("editHdwQ ", editHdwQ);
+            let result = await sql.query(editHdwQ);
+
+            if (result && result.affectedRows) {
+                res.send({ status: true })
+            } else {
+                res.send({ status: false });
+            }
+
+        } else {
+            res.send({ status: false });
+        }
+    }
+}
