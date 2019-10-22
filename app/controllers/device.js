@@ -1379,7 +1379,6 @@ exports.editDevices = async function (req, res) {
             let finalStatus = req.body.finalStatus;
             var note = req.body.note;
             var validity = req.body.validity;
-            // let s_dealer_id = req.body.s_dealer;
             let start_date = req.body.start_date;
             let sim_id = req.body.sim_id;
             let chat_id = req.body.chat_id;
@@ -1387,8 +1386,7 @@ exports.editDevices = async function (req, res) {
 
             let newService = req.body.service;
             let prevService = req.body.prevService
-            let endUser_pay_status = req.body.paid_by_user
-            // console.log(chat_id, prevChatID);
+            let endUser_pay_status = req.body.paid_by_user ? req.body.paid_by_user : "PAID"
             let products = (req.body.products) ? req.body.products : []
             let packages = (req.body.packages) ? req.body.packages : []
             let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")

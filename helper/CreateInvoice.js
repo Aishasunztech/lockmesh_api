@@ -216,6 +216,18 @@ function generateInvoiceTable(doc, invoice) {
         "",
         invoice.paid + " Credits"
     );
+
+    doc.font("Helvetica-Bold");
+    generateTableRow(
+        doc,
+        duePosition + 15,
+        "",
+        "",
+        "",
+        "Equivalent USD Price:",
+        "",
+        "$" + invoice.paid + ".00"
+    );
     doc.font("Helvetica");
 }
 
@@ -448,6 +460,17 @@ function generateEditInvoiceTable(doc, invoice, type) {
         "Balance Due:",
         "",
         invoice.paid + " Credits"
+    );
+    doc.font("Helvetica-Bold");
+    generateTableRow(
+        doc,
+        duePosition + 15,
+        "",
+        "",
+        "",
+        "Equivalent USD Price:",
+        "",
+        "$" + invoice.paid + ".00"
     );
     doc.font("Helvetica");
 }
