@@ -786,11 +786,10 @@ exports.getStatus = async function (req, resp) {
 exports.deviceStatus = async function (req, res) {
     var serial_number = req.body.serial_no;
     var mac = req.body.mac_address;
-    var dealer_pin = req.body.dealer_pin
+    // var dealer_pin = req.body.dealer_pin
     var data;
     console.log('serial number: ', serial_number);
     console.log('mac address: ', mac);
-    console.log('dealer pin: ', dealer_pin);
 
     // mac and serial is not provided
     if (!serial_number && !mac) {
@@ -811,7 +810,7 @@ exports.deviceStatus = async function (req, res) {
     // mac address is Dummy and serial number is original
     else if (mac == Constants.PRE_DEFINED_MAC_ADDRESS) {
         console.log("predefined mac:")
-        var deviceQ = `SELECT * FROM devices WHERE  serial_number= '${serial_number}' AND del_status!=1`;
+        var deviceQ = `SELECT * FROM devices WHERE serial_number= '${serial_number}' AND del_status!=1`;
         var device = await sql.query(deviceQ);
         if (device.length) {
             var user_acc = await sql.query(`SELECT * FROM usr_acc where device_id = ${device[0].id} AND del_status!=1`);
@@ -1093,7 +1092,7 @@ exports.deviceStatus = async function (req, res) {
                             });
                             return;
                         }
-                        //when devcie have no dealer id 
+                        //when device have no dealer id 
                         if (deviceStatus === Constants.DEVICE_ACTIVATED || deviceStatus === Constants.DEVICE_TRIAL || deviceStatus === Constants.DEVICE_SUSPENDED || deviceStatus === Constants.DEVICE_EXPIRED) {
                             var d = new Date(user_acc[0].expiry_date);
                             var n = d.valueOf()
@@ -1554,7 +1553,7 @@ exports.IMEIChanged = async function (req, res) {
 
 exports.adminSMAppList = async function (req, res) {
     let data = [];
-    sql.query("SELECT apk_details.*, secure_market_apps.is_restrict_uninstall FROM apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id WHERE apk_details.delete_status = 0 AND secure_market_apps.dealer_type = 'admin'", function (err, results) {
+    sql.query("SELECT apk_details.*, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type FROM apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id WHERE apk_details.delete_status = 0 AND secure_market_apps.dealer_type = 'admin'", function (err, results) {
         if (err) {
             console.log(err);
         };
@@ -1565,6 +1564,7 @@ exports.adminSMAppList = async function (req, res) {
                     logo: results[i].logo,
                     apk: results[i].apk,
                     apk_status: results[i].status,
+                    space_type: results[i].space_type,
                     package_name: results[i].package_name,
                     is_restrict_uninstall: results[i].is_restrict_uninstall,
                     apk_size: results[i].apk_size,
@@ -1594,7 +1594,7 @@ exports.SMAppList = async function (req, res) {
     let dealer_id = await helpers.getDealerIDByLinkOrActivation(req.params.linkCode)
 
     if (dealer_id) {
-        sql.query("SELECT apk_details.*, secure_market_apps.is_restrict_uninstall from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id WHERE apk_details.delete_status = 0 AND (secure_market_apps.dealer_id = '" + dealer_id + "' OR dealer_type = 'admin')", function (err, results) {
+        sql.query("SELECT apk_details.*, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id WHERE apk_details.delete_status = 0 AND (secure_market_apps.dealer_id = '" + dealer_id + "' OR dealer_type = 'admin')", function (err, results) {
             if (err) {
                 console.log(err);
             };
@@ -1606,6 +1606,100 @@ exports.SMAppList = async function (req, res) {
                         logo: results[i].logo,
                         apk: results[i].apk,
                         apk_status: results[i].status,
+                        space_type: results[i].space_type,
+                        package_name: results[i].package_name,
+                        is_restrict_uninstall: results[i].is_restrict_uninstall,
+                        apk_size: results[i].apk_size,
+                        version_code: results[i].version_code
+                    }
+                    data.push(dta);
+                }
+                //   console.log(data);
+                //res.json("status" : true , result : data);
+                return res.json({
+                    success: true,
+                    list: data
+                });
+            } else {
+                data = {
+                    status: false,
+                    msg: "No result found"
+                }
+                return res.send(data);
+            }
+        })
+    } else {
+        data = {
+            status: false,
+            msg: "No result found"
+        }
+        return res.send(data);
+    }
+}
+
+exports.adminSMAppList_V2 = async function (req, res) {
+
+    let spaceType = req.params.spaceType;
+
+    console.log('space type is  ', spaceType);
+    // res.send({ status: true, spaceType: spaceType }); 
+    // return;
+
+    let data = [];
+    sql.query(`SELECT apk_details.*, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type FROM apk_details JOIN secure_market_apps ON (secure_market_apps.apk_id = apk_details.id) WHERE apk_details.delete_status = 0 AND secure_market_apps.dealer_type = 'admin' AND secure_market_apps.space_type = '${spaceType}'`, function (err, results) {
+        if (err) {
+            console.log(err);
+        };
+        if (results.length) {
+            for (var i = 0; i < results.length; i++) {
+                dta = {
+                    apk_name: results[i].app_name,
+                    logo: results[i].logo,
+                    apk: results[i].apk,
+                    apk_status: results[i].status,
+                    space_type: results[i].space_type,
+                    package_name: results[i].package_name,
+                    is_restrict_uninstall: results[i].is_restrict_uninstall,
+                    apk_size: results[i].apk_size,
+                    version_code: results[i].version_code
+                }
+                data.push(dta);
+            }
+            //   console.log(data);
+            //res.json("status" : true , result : data);
+            return res.json({
+                success: true,
+                list: data
+            });
+        } else {
+            data = {
+                status: false,
+                msg: "No result found"
+            }
+            return res.send(data);
+        }
+    })
+}
+
+exports.SMAppList_V2 = async function (req, res) {
+    let data = [];
+    let spaceType = req.params.spaceType;
+    let dealer_id = await helpers.getDealerIDByLinkOrActivation(req.params.linkCode)
+
+    if (dealer_id) {
+        sql.query(`SELECT apk_details.*, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id WHERE apk_details.delete_status = 0 AND secure_market_apps.space_type = '${spaceType}' AND (secure_market_apps.dealer_id = '${dealer_id}' OR dealer_type = 'admin')`, function (err, results) {
+            if (err) {
+                console.log(err);
+            };
+
+            if (results.length) {
+                for (var i = 0; i < results.length; i++) {
+                    dta = {
+                        apk_name: results[i].app_name,
+                        logo: results[i].logo,
+                        apk: results[i].apk,
+                        apk_status: results[i].status,
+                        space_type: results[i].space_type,
                         package_name: results[i].package_name,
                         is_restrict_uninstall: results[i].is_restrict_uninstall,
                         apk_size: results[i].apk_size,

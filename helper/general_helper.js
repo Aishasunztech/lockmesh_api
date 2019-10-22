@@ -1509,5 +1509,19 @@ module.exports = {
 				}
 			}
 		}
+	},
+	getUserAccID: async function (dealerId) {
+		let getUserAccId = await sql.query(`SELECT id FROM usr_acc WHERE dealer_id=${dealerId}`);
+		console.log("getUserAccId ", getUserAccId);
+		let user_acc_ids = [];
+
+
+// getUserAccId.forEach((item) => {
+
+// })
+		getUserAccId.forEach((item) => {
+			user_acc_ids.push(item.id);
+		})
+		return user_acc_ids;
 	}
 }
