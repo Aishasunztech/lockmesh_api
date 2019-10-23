@@ -1045,6 +1045,9 @@ router.post("/userListOfDevice", userController.getDealerUsers);
 /*Transfer Apps to secure market */
 router.post("/transferApps", appController.trasnferApps);
 
+/*Remove Apps to secure market */
+router.post("/remove_sm_apps", appController.removeSMApps);
+
 /** Get Market app List **/
 
 router.get("/marketApplist", appController.marketApplist);
