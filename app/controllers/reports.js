@@ -2,10 +2,10 @@ const Constants = require('../../constants/application');
 const moment = require('moment');
 const { sql } = require("../../config/database");
 
-var productData = {};
-var invoiceData = {};
-var hardwareData = {};
-var paymentHistoryData = {};
+var productData         = {};
+var invoiceData         = {};
+var hardwareData        = {};
+var paymentHistoryData  = {};
 exports.generateProductReport = async function (req, res) {
     let verify = req.decoded;
 
@@ -35,11 +35,11 @@ exports.generateProductReport = async function (req, res) {
         }
 
         if (from) {
-            condition += ' AND DATE(created_at) >= ' + moment(from).format('YYYY-MM-DD')
+            condition += ' AND DATE(created_at) >= "' + moment(from).format('YYYY-MM-DD') + '"'
         }
 
         if (to) {
-            condition += ' AND DATE(created_at) >= ' + moment(to).format('YYYY-MM-DD')
+            condition += ' AND DATE(created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
         }
 
         if (product === 'CHAT' || product === 'ALL') {
@@ -94,11 +94,11 @@ exports.generateInvoiceReport = async function (req, res) {
         }
 
         if (from) {
-            condition += ' AND DATE(i.created_at) >= ' + moment(from).format('YYYY-MM-DD')
+            condition += ' AND DATE(i.created_at) >= "' + moment(from).format('YYYY-MM-DD') + '"'
         }
 
         if (to) {
-            condition += ' AND DATE(i.created_at) >= ' + moment(to).format('YYYY-MM-DD')
+            condition += ' AND DATE(i.created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
         }
 
         if (payment_status) {
@@ -131,9 +131,11 @@ exports.generatePaymentHistoryReport = async function (req, res) {
 
     if (verify) {
 
-        let dealer = req.body.dealer;
-        let from = req.body.from;
-        let to = req.body.to;
+        let dealer              = req.body.dealer;
+        let from                = req.body.from;
+        let to                  = req.body.to;
+        let type                = req.body.type;
+        let transaction_type    = req.body.transaction_type;
 
         let condition = '';
 
@@ -146,16 +148,24 @@ exports.generatePaymentHistoryReport = async function (req, res) {
         }
 
         if (from) {
-            condition += ' AND DATE(fat.created_at) >= ' + moment(from).format('YYYY-MM-DD')
+            condition += ' AND DATE(fat.created_at) >= "' + moment(from).format('YYYY-MM-DD') + '"'
         }
 
         if (to) {
-            condition += ' AND DATE(fat.created_at) >= ' + moment(to).format('YYYY-MM-DD')
+            condition += ' AND DATE(fat.created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
+        }
+
+        if (type) {
+            condition += ' AND fat.type = "' + type + '"'
+        }
+
+        if (transaction_type) {
+            condition += ' AND fat.transection_type = "' + transaction_type + '"'
         }
 
         paymentHistoryData = await sql.query(`SELECT fat.*, d.device_id as device_id FROM financial_account_transections as fat 
         JOIN usr_acc as ua on ua.id = fat.user_dvc_acc_id 
-        JOIN devices as d on ua.device_id = d.id 
+        JOIN devices as d on ua.device_id = d.id
         WHERE fat.id IS NOT NULL ${condition} ORDER BY fat.id DESC`);
 
         response = {
