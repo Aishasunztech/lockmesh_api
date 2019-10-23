@@ -125,7 +125,7 @@ exports.saveNewData = async function (req, res) {
                     pgp_emails.push(item.pgp_email)
                 })
             }
-            console.log(pgp_emails);
+            // console.log(pgp_emails.length, "check pgp_emails==> ", pgp_emails);
             for (let row of req.body.newData) {
                 if (!pgp_emails.includes(row.pgp_email)) {
                     let result = await sql.query("INSERT pgp_emails (pgp_email) value ('" + row.pgp_email + "')");
@@ -208,7 +208,7 @@ exports.importIDs = async (req, res) => {
                     pgp_emails.push(item.pgp_email)
                 })
             }
-            console.log(pgp_emails);
+
             for (let row of data) {
                 if (!pgp_emails.includes(row.pgp_email)) {
                     if (row.pgp_email) {
@@ -217,6 +217,30 @@ exports.importIDs = async (req, res) => {
                     }
                 }
             }
+
+            // *********************** Add Domains
+            let domains = []
+            let all_domains = await sql.query("SELECT name from domains")
+            if (all_domains.length) {
+                all_domains.map((item) => {
+                    domains.push(item.name)
+                })
+            }
+
+            // console.log('domains===> ', domains);
+
+            let checkDuplicateDomains = [];
+            for (let row of data) {
+                let domainName = row.pgp_email.split('@').pop();
+                if (!domains.includes(domainName) && !checkDuplicateDomains.includes(domainName)) {
+                    if (domainName) {
+                        checkDuplicateDomains.push(domainName);
+                        let insertQ = `INSERT INTO domains (name) value ('${domainName}')`;
+                        await sql.query(insertQ);
+                    }
+                }
+            }
+
             res.send({
                 status: true
             })
@@ -1333,6 +1357,27 @@ exports.ackCreditRequest = async function (req, res) {
                 msg: await helpers.convertToLang(req.translation[""], "ERROR: White label server error occurred. Please try again."), // "Credits not updated please try again."
             })
             return
+        }
+    }
+}
+
+exports.getDomains = async function (req, res) {
+    var verify = req.decoded;
+
+    if (verify) {
+        let selectDomains = await sql.query(`SELECT * FROM domains`);
+        console.log('get domains:: ', selectDomains);
+
+        if (selectDomains.length) {
+            res.send({
+                status: true,
+                domains: selectDomains
+            })
+        } else {
+            res.send({
+                status: true,
+                domains: []
+            })
         }
     }
 }
