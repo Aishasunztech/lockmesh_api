@@ -1,7 +1,7 @@
 
 const { sql } = require('../../config/database');
 
-const Constants = require('../../constants/application');
+const Constants = require('../../constants/Application');
 const device_helpers = require('../../helpers/device_helpers');
 const general_helpers = require('../../helpers/general_helpers');
 
