@@ -431,3 +431,17 @@ exports.checkPrevPass = async function (req, res) {
     }
     res.send(data);
 }
+
+exports.getInvoiceId = async function (req, res) {
+    var verify = req.decoded;
+    let data;
+    if (verify) {
+        let invoiceId = await helpers.getInvoiceId()
+        data = {
+            status: true,
+            data: invoiceId
+        }
+        res.send(data);
+        return;
+    }
+}

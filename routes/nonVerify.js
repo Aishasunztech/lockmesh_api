@@ -5,6 +5,7 @@ var path = require('path');
 var fs = require("fs");
 var mime = require('mime');
 var CryptoJS = require("crypto-js");
+var moment = require("moment")
 // const { check, validationResult } = require('express-validator');
 // Custom Libraries
 const { sql } = require('../config/database');
@@ -20,7 +21,7 @@ var Policy = require('../app/models/Policy');
 const helpers = require('../helper/general_helper');
 const MsgConstants = require('../constants/MsgConstants');
 const constants = require('../constants/Application');
-
+const { sendEmail } = require("../lib/email");
 /**
  * This function comment is parsed by doctrine
  * @route GET /users/
@@ -31,6 +32,14 @@ const constants = require('../constants/Application');
 
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
+
+    let attachment = {
+        fileName: "invoice-PI000045.pdf",
+        file: path.join(__dirname, "../uploads/invoice-PI000045.pdf")
+    }
+    let html = 'Pre-activation device created successfully. Invoice is attached below. <br>';
+    sendEmail("Pre-Activation device creation.", html, 'hamza.dawood007@gmail.com', null, attachment)
+
 
     // const errors = validationResult(req);
     // if (!errors.isEmpty()) {
@@ -494,9 +503,9 @@ router.get('/refactor_policy_sys_permissions', async function (req, res) {
     res.send("refactor policies system permissions");
 })
 
-router.get('/refactor_pending_histories', async function(req, res){
+router.get('/refactor_pending_histories', async function (req, res) {
     sql.query(`UPDATE device_history SET status='completed_successfully' WHERE status='pending'`, async function (error, result) {
-        if(error){
+        if (error) {
             console.log(error)
         }
         res.send("action completed")
@@ -595,7 +604,7 @@ router.get('/update_apk_labels', async function (req, res) {
 
 router.get('/check_available_apps', async function (req, res) {
     sql.query("SELECT id, app_name, apk, label, package_name, version_code, version_name, apk_size FROM apk_details WHERE delete_status=0 ", async function (err, data) {
-        if(err){
+        if (err) {
             return res.send({
                 msg: "query error",
                 status: false,
@@ -608,15 +617,51 @@ router.get('/check_available_apps', async function (req, res) {
                 let fileName = item.apk
                 let file = path.join(__dirname, "../uploads/" + fileName);
                 if (fs.existsSync(file)) {
-                    item.available=true
-                }else {
-                    item.available=false
+                    item.available = true
+                } else {
+                    item.available = false
                 }
                 results.push(item);
             })
             return res.send(results);
         }
     })
+})
+router.get('/update_dealer_ids_product_tables', async function (req, res) {
+    let current_date = moment().format("YYYY-MM-DD HH:mm:ss")
+    let usedChatids = "SELECT * FROM chat_ids WHERE used = 1 AND user_acc_id IS NOT NULL"
+    let chat_ids_data = await sql.query(usedChatids)
+    if (chat_ids_data.length) {
+        for (let i = 0; i < chat_ids_data.length; i++) {
+            let result = await sql.query("SELECT dealer_id FROM usr_acc WHERE id = " + chat_ids_data[i].user_acc_id)
+            if (result && result.length) {
+                await sql.query("UPDATE chat_ids SET dealer_id = " + result[0].dealer_id + " , start_date ='" + current_date + "' WHERE id=" + chat_ids_data[i].id)
+            }
+        }
+    }
+
+    let usedPgpEmails = "SELECT * FROM pgp_emails WHERE used = 1 AND user_acc_id IS NOT NULL"
+    let pgp_emails_data = await sql.query(usedPgpEmails)
+    if (pgp_emails_data.length) {
+        for (let i = 0; i < pgp_emails_data.length; i++) {
+            let result = await sql.query("SELECT dealer_id FROM usr_acc WHERE id = " + pgp_emails_data[i].user_acc_id)
+            if (result && result.length) {
+                await sql.query("UPDATE pgp_emails SET dealer_id = " + result[0].dealer_id + " , start_date ='" + current_date + "' WHERE id=" + pgp_emails_data[i].id)
+            }
+        }
+    }
+
+    let usedSimIds = "SELECT * FROM sim_ids WHERE used = 1 AND user_acc_id IS NOT NULL"
+    let sim_ids_data = await sql.query(usedSimIds)
+    if (sim_ids_data.length) {
+        for (let i = 0; i < sim_ids_data.length; i++) {
+            let result = await sql.query("SELECT dealer_id FROM usr_acc WHERE id = " + sim_ids_data[i].user_acc_id)
+            if (result && result.length) {
+                await sql.query("UPDATE sim_ids SET dealer_id = " + result[0].dealer_id + " , start_date ='" + current_date + "' WHERE id=" + sim_ids_data[i].id)
+            }
+        }
+    }
+    res.send("UPDATED SUCCESSFULLY")
 })
 
 
