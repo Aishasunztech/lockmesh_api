@@ -460,6 +460,7 @@ router.get(
 	"/dealer/gtdropdown/:dropdownType",
 	dealerController.getDropdownSelectedItems
 );
+
 /**
  * This function comment is parsed by doctrine
  * @route POST /users/dealer/dropdown
@@ -471,7 +472,7 @@ router.get(
  * @security JWT
  */
 /** post Dealer Dropdown Selected Items **/
-router.post("/dealer/dropdown", dealerController.dropDown);
+router.post("/dealer/dropdown", dealerController.postDropDown);
 /**
  * This function comment is parsed by doctrine
  * @route GET /users/dealer/getPagination/{dropdownType}
@@ -519,6 +520,22 @@ router.get("/getinfo", dealerController.getInfo);
 /** Get logged in Dealer permitted apps  **/
 
 router.get('/get_dealer_apps', dealerController.getLoggedDealerApps);
+
+/**
+ * @route POST /users/save_apk_permissions
+ * @group APK - All Operations on apks
+ * @param {string} permissionType.path.required - 
+ * @param {string} action.formData.required - action ('save')
+ * @param {string} permissionId.formData.required - apk id
+ * @param {Array} dealers.formData.required - dealers list 
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+
+/** Save apk Permissions**/
+router.post("/dealer-permissions/:permissionType", dealerController.saveDealerPermissions);
+
 /**
  * This function comment is parsed by doctrine
  * @route GET /users/get_usr_acc_id/{device_id}
@@ -931,6 +948,7 @@ router.post("/toggle", apkController.toggle);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
+
 /** Save apk Permissions**/
 router.post("/save_apk_permissions", apkController.saveApkPermission);
 /**
@@ -964,6 +982,7 @@ router.post("/purchase_credits_CC", accountController.purchaseCredits_CC);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
+
 /** Save Policy Permission **/
 router.post('/save_policy_permissions', apkController.savePolicyPermissions);
 

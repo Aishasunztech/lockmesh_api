@@ -18,7 +18,11 @@ module.exports = {
       },
       permission_type: {
         type: Sequelize.ENUM,
-        values: ['apk','policy', 'domain']
+        values: ['apk','policy', 'domain'],
+        allowNull: false
+      },
+      permission_by: {
+        type: Sequelize.INTEGER,
       },
       created_at: {
         type: 'TIMESTAMP',
