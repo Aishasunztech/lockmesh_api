@@ -526,6 +526,8 @@ exports.acceptDevice = async function (req, res) {
                                                     let updatePgpEmails = 'update pgp_emails set user_acc_id = ' + usr_acc_id + ', used=1 where pgp_email ="' + pgp_email + '"';
                                                     await sql.query(updatePgpEmails);
 
+
+
                                                     var slctquery = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) WHERE devices.device_id = '${device_id}'`;
                                                     // console.log(slctquery);
                                                     rsltq = await sql.query(slctquery);
@@ -619,6 +621,9 @@ exports.acceptDevice = async function (req, res) {
 
                                                     rsltq[0].finalStatus = device_helpers.checkStatus(rsltq[0])
 
+                                                    let user_credits = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
+                                                    let account_balance = await sql.query(user_credits)
+
                                                     axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
                                                         // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
                                                         if (response.data.status) {
@@ -638,7 +643,7 @@ exports.acceptDevice = async function (req, res) {
                                                         status: true,
                                                         msg: await helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record updated successfully"), // 'Record updated successfully.',
                                                         data: rsltq,
-                                                        credits: remaining_credits,
+                                                        credits: account_balance[0].credits,
                                                     };
                                                     res.send(data);
                                                     return;
@@ -994,6 +999,10 @@ exports.createDeviceProfile = async function (req, res) {
 
                                     sendEmail("Activation codes successfuly generated.", html, verify.user.dealer_email, null, attachment);
                                     // console.log("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name, dealers.connected_dealer from devices left join usr_acc on devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 and devices.device_id IN (" + deviceIds.join() + ")");
+
+                                    let user_credits = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
+                                    let account_balance = await sql.query(user_credits)
+
                                     var slctquery = "select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id where devices.id IN (" + deviceIds.join() + ")";
                                     // console.log(slctquery);
                                     rsltq = await sql.query(slctquery);
@@ -1051,7 +1060,7 @@ exports.createDeviceProfile = async function (req, res) {
                                         status: true,
                                         msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], "Pre-activations added succcessfully.Email sends to your account"), // Pre-activations added succcessfully.Email sends to your account.
                                         "data": rsltq,
-                                        credits: remaining_credits
+                                        credits: account_balance[0].credits
                                     };
                                     res.send({
                                         status: true,
@@ -1249,6 +1258,8 @@ exports.createDeviceProfile = async function (req, res) {
                                                             let html = 'Pre-activation device created successfully. Invoice is attached below. <br>';
                                                             sendEmail("Pre-Activation device creation.", html, verify.user.dealer_email, null, attachment)
 
+                                                            let user_credits = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
+                                                            let account_balance = await sql.query(user_credits)
 
                                                             sql.query(`INSERT INTO invoices (inv_no,user_acc_id,dealer_id,file_name ,end_user_payment_status) VALUES('${inv_no}',${user_acc_id},${dealer_id}, '${fileName}' , '${endUser_pay_status}')`)
                                                             sql.query("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name, dealers.connected_dealer from devices left join usr_acc on devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 and devices.id='" + dvc_id + "'", async function (error, results, fields) {
@@ -1293,7 +1304,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                                     status: true,
                                                                     msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC], "Pre-activation added succcessfully."), // Pre-activation added succcessfully.
                                                                     data: results,
-                                                                    credits: remaining_credits
+                                                                    credits: account_balance[0].credits
                                                                 };
 
                                                                 res.send({
@@ -1409,9 +1420,9 @@ exports.editDevices = async function (req, res) {
             let serviceRemainingDays = 0
             let newServicePrice = 0
             let pay_now = req.body.pay_now
-            if (pay_now) {
-                total_price = total_price - (total_price * 5 / 100);
-            }
+            // if (pay_now) {
+            //     total_price = total_price - (total_price * 5 / 100);
+            // }
 
 
             if (expiry_date == "" || expiry_date === null) {
@@ -1562,6 +1573,9 @@ exports.editDevices = async function (req, res) {
                                         })
                                     }
                                     // console.log(newServicePrice, prevServicePaidPrice, newServicePrice, creditsToRefund);
+                                    if (pay_now) {
+                                        newServicePrice = newServicePrice - (newServicePrice * 5 / 100)
+                                    }
                                     total_price = newServicePrice - creditsToRefund
 
                                     let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedDealerType)
@@ -1733,15 +1747,14 @@ exports.editDevices = async function (req, res) {
                                     await sql.query(updatePrevSim);
                                 }
                             }
-                            remaining_credits = dealer_credits
                             let update_credits_query = '';
+
+
 
                             if (prevService) {
                                 let update_prev_service_billing = `UPDATE services_data set del_status = 1,paid_credits = ${prevServicePaidPrice}, end_date = '${date_now}' WHERE id = ${prevService.id} `
                                 await sql.query(update_prev_service_billing);
 
-                                let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice} ,'${date_now}' ,'${expiry_date}')`
-                                await sql.query(service_billing);
 
                                 let transection_record = "SELECT * from financial_account_transections where user_dvc_acc_id = " + usr_acc_id + " AND user_id = '" + verify.user.id + "' AND type = 'services' ORDER BY id DESC LIMIT 1"
                                 let transection_record_data = await sql.query(transection_record)
@@ -1787,6 +1800,9 @@ exports.editDevices = async function (req, res) {
                                 }
                             }
 
+                            let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice} ,'${date_now}' ,'${expiry_date}')`
+                            await sql.query(service_billing);
+
                             let transection_status = 'transferred'
 
                             if (!pay_now) {
@@ -1808,6 +1824,7 @@ exports.editDevices = async function (req, res) {
 
                             await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, usr_acc_id, loggedDealerType, pay_now)
 
+
                             let inv_no = await helpers.getInvoiceId()
                             const invoice = {
                                 shipping: {
@@ -1827,7 +1844,7 @@ exports.editDevices = async function (req, res) {
                                 discount: (pay_now) ? newServicePrice * 5 / 100 : 0,
                                 discountPercent: "5%",
                                 quantity: 1,
-                                subtotal: newServicePrice,
+                                subtotal: newServicePrice + (newServicePrice * 5 / 100),
                                 paid: total_price,
                                 invoice_nr: inv_no
                             };
@@ -1848,6 +1865,9 @@ exports.editDevices = async function (req, res) {
                             sendEmail("DEVICE SERVICE HAS BEEN CHANGED.", html, verify.user.dealer_email, null, attachment);
 
                         }
+
+                        let user_credits_q = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
+                        let results = await sql.query(user_credits_q)
 
                         var slctquery =
                             "select devices.*  ," +
@@ -1902,7 +1922,7 @@ exports.editDevices = async function (req, res) {
                                 "Record updated successfully"
                             ), // Record updated successfully.
                             data: rsltq,
-                            credits: remaining_credits,
+                            credits: results[0].credits,
                         };
                         res.send(data);
                         return;
