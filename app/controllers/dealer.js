@@ -1327,11 +1327,11 @@ exports.twoFactorAuth = async function (req, res) {
  * @author Usman Hafeez
  * 
  */
-exports.saveDealerPermissions = async function (req, res) {
+exports.dealerPermissions = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
         let permissionType = req.params.permissionType;
-        console.log(req.body, "permissionType ", permissionType)
+        // console.log(req.body, "permissionType ", permissionType)
         let action = req.body.action // save, delete, 
         let permissionId = req.body.permissionId;
         let dealers = req.body.dealers;
@@ -1357,12 +1357,12 @@ exports.saveDealerPermissions = async function (req, res) {
         }
 
         prevPermissionsQ = `SELECT dealers FROM ${tableName} WHERE id = ${permissionId}`;
-        console.log("prevPermissionsQ ", prevPermissionsQ)
+        // console.log("prevPermissionsQ ", prevPermissionsQ)
         let prevPermissions = await sql.query(prevPermissionsQ);
-        console.log('prevPermissions ', prevPermissions)
+        // console.log('prevPermissions ', prevPermissions)
 
         prevParsDealers = prevPermissions[0].dealers ? JSON.parse(prevPermissions[0].dealers) : [];
-        console.log("prevParsDelaer", prevParsDealers);
+        // console.log("prevParsDelaer", prevParsDealers);
 
         if (action === 'save') {
             // if selected all dealers
@@ -1393,13 +1393,14 @@ exports.saveDealerPermissions = async function (req, res) {
                         let dealers_data = await sql.query(`SELECT dealer_id FROM dealer_permissions WHERE permission_type='${permissionType}' AND permission_id=${permissionId}`);
 
                         let insertQuery = "INSERT INTO dealer_permissions (permission_id, dealer_id, permission_type, permission_by) VALUES ";
-
                         let insertOrIgnore = ''
                         for (let i = 0; i < prevParsDealers.length; i++) {
+                            // console.log(i, "prevParsDealers.length ", prevParsDealers.length);
                             let index = dealers_data.findIndex((dealer) => dealer.dealer_id == prevParsDealers[i]);
                             if (index !== -1) {
                                 continue
                             }
+
                             if (i == (prevParsDealers.length - 1)) {
                                 insertOrIgnore = insertOrIgnore + `(${permissionId}, ${prevParsDealers[i]}, '${permissionType}', '${verify.user.dealer_id}')`
                             } else {
@@ -1407,9 +1408,10 @@ exports.saveDealerPermissions = async function (req, res) {
                             }
                         }
 
+                        // console.log("insertOrIgnore ", insertOrIgnore)
                         if (insertOrIgnore) {
                             let insertDealerPermissionsQ = insertQuery + insertOrIgnore;
-                            console.log(insertDealerPermissionsQ);
+                            // console.log("insertDealerPermissionsQ ",insertDealerPermissionsQ);
                             let insertDealers = await sql.query(insertDealerPermissionsQ);
 
                             if (insertDealers.affectedRows) {
@@ -1545,7 +1547,7 @@ exports.saveDealerPermissions = async function (req, res) {
 
                     for (let i = 0; i < dealers.length; i++) {
                         var index = prevParsDealers.indexOf(dealers[i]);
-                        console.log("array index", index);
+                        // console.log("array index", index);
                         if (index > -1) {
                             prevParsDealers.splice(index, 1);
                         }
@@ -1558,9 +1560,9 @@ exports.saveDealerPermissions = async function (req, res) {
                     } else {
                         deleteNotIn = `DELETE FROM dealer_permissions WHERE dealer_id IN (${dealers}) AND permission_id = ${permissionId} AND permission_type='${permissionType}'`;
                     }
-                    console.log("deleteNotIn: ", deleteNotIn);
+                    // console.log("deleteNotIn: ", deleteNotIn);
                     let deleteDealers = await sql.query(deleteNotIn);
-                    console.log("deleteDealers: ", deleteDealers);
+                    // console.log("deleteDealers: ", deleteDealers);
 
 
 

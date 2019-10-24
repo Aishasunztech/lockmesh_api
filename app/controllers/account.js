@@ -201,22 +201,6 @@ exports.importIDs = async (req, res) => {
             })
             return
         } else if (fieldName == 'pgp_emails') {
-            let pgp_emails = []
-            let all_pgp_emails = await sql.query("SELECT pgp_email from pgp_emails")
-            if (all_pgp_emails.length) {
-                all_pgp_emails.map((item) => {
-                    pgp_emails.push(item.pgp_email)
-                })
-            }
-
-            for (let row of data) {
-                if (!pgp_emails.includes(row.pgp_email)) {
-                    if (row.pgp_email) {
-                        let insertQ = `INSERT INTO pgp_emails (pgp_email) value ('${row.pgp_email}')`;
-                        await sql.query(insertQ);
-                    }
-                }
-            }
 
             // *********************** Add Domains
             let domains = []
@@ -236,6 +220,30 @@ exports.importIDs = async (req, res) => {
                     if (domainName) {
                         checkDuplicateDomains.push(domainName);
                         let insertQ = `INSERT INTO domains (name) value ('${domainName}')`;
+                        await sql.query(insertQ);
+                    }
+                }
+            }
+
+            // ******* Add pgp emails
+            let pgp_emails = []
+            let all_pgp_emails = await sql.query("SELECT pgp_email from pgp_emails")
+            if (all_pgp_emails.length) {
+                all_pgp_emails.map((item) => {
+                    pgp_emails.push(item.pgp_email)
+                })
+            }
+
+            // get latest domains
+            all_domains = await sql.query("SELECT * FROM domains");
+
+            for (let row of data) {
+                if (!pgp_emails.includes(row.pgp_email)) {
+                    if (row.pgp_email) {
+                        let indexDomain = all_domains.findIndex((dm) => dm.name == row.pgp_email.split('@').pop());
+                        let domain_id = (indexDomain > -1) ? all_domains[indexDomain].id : null;
+
+                        let insertQ = `INSERT INTO pgp_emails (pgp_email, domain_id) value ('${row.pgp_email}', ${domain_id})`;
                         await sql.query(insertQ);
                     }
                 }
@@ -516,20 +524,37 @@ exports.getAllChatIDs = async (req, res) => {
 exports.getPGPEmails = async (req, res) => {
     var verify = req.decoded; // await verifyToken(req, res);
     if (verify) {
-        var loggedInuid = verify.user.id;
-        let query = "select * from pgp_emails where used=0";
-        sql.query(query, async function (error, resp) {
+        let dealer_id = verify.user.dealer_id;
+
+        let dealerDomainPermissions = await sql.query(`SELECT * FROM dealer_permissions WHERE dealer_id = ${Number(dealer_id)} AND permission_type = 'domain'`);
+        let permission_ids = dealerDomainPermissions.map((prm) => prm.permission_id);
+
+        let query = '';
+        if (permission_ids.length) {
+            query = `SELECT * FROM pgp_emails WHERE used=0 AND domain_id IN (${permission_ids.join()})`;
+        }
+        // query = `SELECT * FROM pgp_emails WHERE used=0`;
+
+        if (query !== '') {
+            let resp = await sql.query(query);
             res.send({
-                status: false,
+                status: true,
                 msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
                 data: resp
             });
-        });
+        } else {
+            res.send({
+                status: false,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
+                data: []
+            })
+        }
     }
     else {
         res.send({
             status: false,
             msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
+            data: []
         })
     }
 }
@@ -539,8 +564,9 @@ exports.getAllPGPEmails = async (req, res) => {
     var verify = req.decoded;
     if (verify) {
         let type = verify.user.user_type;
+        let dealer_id = verify.user.dealer_id;
         if (type === DEALER || type === SDEALER) {
-            let userIDs = await helpers.getUserAccID(verify.user.dealer_id);
+            let userIDs = await helpers.getUserAccID(dealer_id);
             query = `SELECT * FROM pgp_emails WHERE used = '1' AND delete_status = '0' AND user_acc_id IN (${userIDs})`;
         } else {
             query = "SELECT * FROM pgp_emails";
@@ -1366,7 +1392,7 @@ exports.getDomains = async function (req, res) {
 
     if (verify) {
         let selectDomains = await sql.query(`SELECT * FROM domains`);
-        console.log('get domains:: ', selectDomains);
+        // console.log('get domains:: ', selectDomains);
 
         if (selectDomains.length) {
             res.send({
