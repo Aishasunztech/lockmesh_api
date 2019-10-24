@@ -44,6 +44,7 @@ const reportingController = require('../app/controllers/reports');
 
 
 const dashboardController = require('../app/controllers/dashboard');
+const NotificationController = require('../app/controllers/notification');
 
 
 // constants
@@ -1373,5 +1374,6 @@ router.post('/reports/payment-history', reportingController.generatePaymentHisto
 //PDF generator
 router.post('/reports/pdf-generator', reportingController.generatePDFReport);
 
+router.get('/get-processes', NotificationController.getQueJobs);
 
 module.exports = router;
