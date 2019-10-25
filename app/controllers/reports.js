@@ -3,10 +3,11 @@ const generalHelper = require('../../helper/general_helper');
 const moment = require('moment');
 const { sql } = require("../../config/database");
 
-var productData         = {};
-var invoiceData         = {};
-var hardwareData        = {};
-var paymentHistoryData  = {};
+var productData = {};
+var invoiceData = {};
+var hardwareData = {};
+var paymentHistoryData = {};
+
 exports.generateProductReport = async function (req, res) {
     let verify = req.decoded;
 
@@ -89,13 +90,13 @@ exports.generateInvoiceReport = async function (req, res) {
         let payment_status = req.body.payment_status;
         let condition = '';
 
-        
+
         if (dealer === '' && user_type === Constants.DEALER) {
             let sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
-            condition += ' AND i.dealer_id IN (' + verify.user.id +','+  sDealerIds.join(',') +')'
+            condition += ' AND i.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
         } else if (dealer) {
             condition += ' AND i.dealer_id = ' + dealer
-        } 
+        }
 
 
         if (from) {
@@ -134,12 +135,12 @@ exports.generatePaymentHistoryReport = async function (req, res) {
 
     if (verify) {
 
-        let user_type           = verify.user.user_type;
-        let dealer              = req.body.dealer;
-        let from                = req.body.from;
-        let to                  = req.body.to;
-        let type                = req.body.type;
-        let transaction_type    = req.body.transaction_type;
+        let user_type = verify.user.user_type;
+        let dealer = req.body.dealer;
+        let from = req.body.from;
+        let to = req.body.to;
+        let type = req.body.type;
+        let transaction_type = req.body.transaction_type;
 
         let condition = '';
 
@@ -194,10 +195,10 @@ exports.generateHardwareReport = async function (req, res) {
 
     if (verify) {
 
-        let user_type   = verify.user.user_type;
-        let dealer      = req.body.dealer;
-        let from        = req.body.from;
-        let to          = req.body.to;
+        let user_type = verify.user.user_type;
+        let dealer = req.body.dealer;
+        let from = req.body.from;
+        let to = req.body.to;
 
         let condition = '';
 

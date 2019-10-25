@@ -297,11 +297,11 @@ exports.acceptDevice = async function (req, res) {
         let invoice_subtotal = total_price + hardwarePrice
 
         if (pay_now) {
-            discount = ((total_price + hardwarePrice) * 5 / 100);
+            discount = ((total_price + hardwarePrice) * 0.03);
             discounted_price = (total_price + hardwarePrice) - discount
         }
         // if (pay_now) {
-        //     total_price = total_price - (total_price * 5 / 100);
+        //     total_price = total_price - (total_price * 0.03);
         // }
         let admin_profit = 0
         let dealer_profit = 0
@@ -343,7 +343,7 @@ exports.acceptDevice = async function (req, res) {
                                 if (pay_now) {
                                     dealer_credits = dealer_credits - discounted_price
                                     // if (hardwares.length) {
-                                    //     hardwarePrice = hardwarePrice - (hardwarePrice * 5 / 100)
+                                    //     hardwarePrice = hardwarePrice - (hardwarePrice * 0.03)
                                     // }
                                 }
 
@@ -351,8 +351,8 @@ exports.acceptDevice = async function (req, res) {
                                 if (term !== '0') {
                                     let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedDealerType)
                                     if (pay_now) {
-                                        admin_profit = profitLoss.admin_profit - (profitLoss.admin_profit * 5 / 100)
-                                        dealer_profit = profitLoss.dealer_profit - (profitLoss.dealer_profit * 5 / 100)
+                                        admin_profit = profitLoss.admin_profit - (profitLoss.admin_profit * 0.03)
+                                        dealer_profit = profitLoss.dealer_profit - (profitLoss.dealer_profit * 0.03)
                                     } else {
                                         admin_profit = profitLoss.admin_profit
                                         dealer_profit = profitLoss.dealer_profit
@@ -444,8 +444,8 @@ exports.acceptDevice = async function (req, res) {
                                                     if (!pay_now) {
                                                         transection_status = 'pending'
                                                     } else {
-                                                        total_price = total_price - (total_price * 5 / 100)
-                                                        hardwarePrice = hardwarePrice - (hardwarePrice * 5 / 100)
+                                                        total_price = total_price - (total_price * 0.03)
+                                                        hardwarePrice = hardwarePrice - (hardwarePrice * 0.03)
                                                     }
 
                                                     let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages , total_credits, start_date, service_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${total_price} ,'${start_date}',  '${expiry_date}')`
@@ -469,8 +469,8 @@ exports.acceptDevice = async function (req, res) {
                                                         let hardwareProfits = await helpers.calculateHardwareProfitLoss(hardwares, loggedDealerType)
                                                         // console.log(hardwareProfits);
                                                         if (pay_now) {
-                                                            admin_hardware_profit = hardwareProfits.admin_profit - (hardwareProfits.admin_profit * 5 / 100)
-                                                            dealer_hardware_profit = hardwareProfits.dealer_profit - (hardwareProfits.dealer_profit * 5 / 100)
+                                                            admin_hardware_profit = hardwareProfits.admin_profit - (hardwareProfits.admin_profit * 0.03)
+                                                            dealer_hardware_profit = hardwareProfits.dealer_profit - (hardwareProfits.dealer_profit * 0.03)
                                                         } else {
                                                             admin_hardware_profit = hardwareProfits.admin_profit
                                                             dealer_hardware_profit = hardwareProfits.dealer_profit
@@ -498,7 +498,7 @@ exports.acceptDevice = async function (req, res) {
                                                         for (let i = 0; i < hardwares.length; i++) {
                                                             let price = hardwares[i].hardware_price
                                                             if (pay_now) {
-                                                                price = price - (price * 5 / 100)
+                                                                price = price - (price * 0.03)
                                                             }
                                                             let hardware_data = `INSERT INTO hardwares_data(user_acc_id, dealer_id, hardware_name , hardware_data,total_credits ) VALUES(${usr_acc_id}, ${dealer_id}, '${hardwares[i].hardware_name}', '${JSON.stringify(hardwares[i])}' ,${price} )`
                                                             await sql.query(hardware_data);
@@ -759,7 +759,7 @@ exports.createDeviceProfile = async function (req, res) {
         // let services_discounted_price = 0
         // let hardwares_discounted_price = 0
         if (pay_now) {
-            discount = ((total_price + hardwarePrice) * 5 / 100);
+            discount = ((total_price + hardwarePrice) * 0.03);
             discounted_price = (total_price + hardwarePrice) - discount
         }
         let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
@@ -782,16 +782,15 @@ exports.createDeviceProfile = async function (req, res) {
                             if (pay_now) {
                                 dealer_credits = dealer_credits - discounted_price
                                 // if (hardwares.length) {
-                                //     hardwarePrice = hardwarePrice - (hardwarePrice * 5 / 100)
+                                //     hardwarePrice = hardwarePrice - (hardwarePrice * 0.03)
                                 // }
                             }
 
                             if (exp_month !== '0') {
                                 let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedUserType)
                                 if (pay_now) {
-                                    // total_price = total_price - (total_price * 5 / 100)
-                                    admin_profit = profitLoss.admin_profit - (profitLoss.admin_profit * 5 / 100)
-                                    dealer_profit = profitLoss.dealer_profit - (profitLoss.dealer_profit * 5 / 100)
+                                    admin_profit = profitLoss.admin_profit - (profitLoss.admin_profit * 0.03)
+                                    dealer_profit = profitLoss.dealer_profit - (profitLoss.dealer_profit * 0.03)
                                 } else {
                                     admin_profit = profitLoss.admin_profit
                                     dealer_profit = profitLoss.dealer_profit
@@ -875,6 +874,9 @@ exports.createDeviceProfile = async function (req, res) {
                                                 // console.log("affectedRows", resps.affectedRows);
                                                 if (resps.affectedRows) {
 
+
+
+
                                                     let service_data = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date ,total_credits,service_expiry_date) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price / duplicate} , '${expiry_date}' )`
                                                     await sql.query(service_data);
 
@@ -890,8 +892,8 @@ exports.createDeviceProfile = async function (req, res) {
                                                         let hardwareProfits = await helpers.calculateHardwareProfitLoss(hardwares, loggedUserType)
                                                         // console.log(hardwareProfits);
                                                         if (pay_now) {
-                                                            admin_hardware_profit = hardwareProfits.admin_profit - (hardwareProfits.admin_profit * 5 / 100)
-                                                            dealer_hardware_profit = hardwareProfits.dealer_profit - (hardwareProfits.dealer_profit * 5 / 100)
+                                                            admin_hardware_profit = hardwareProfits.admin_profit - (hardwareProfits.admin_profit * 0.03)
+                                                            dealer_hardware_profit = hardwareProfits.dealer_profit - (hardwareProfits.dealer_profit * 0.03)
                                                         } else {
                                                             admin_hardware_profit = hardwareProfits.admin_profit
                                                             dealer_hardware_profit = hardwareProfits.dealer_profit
@@ -918,7 +920,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                         for (let i = 0; i < hardwares.length; i++) {
                                                             let price = hardwares[i].hardware_price
                                                             if (pay_now) {
-                                                                price = price - (price * 5 / 100)
+                                                                price = price - (price * 0.03)
                                                             }
                                                             let hardware_data = `INSERT INTO hardwares_data(user_acc_id, dealer_id, hardware_name, hardware_data,total_credits ) VALUES(${user_acc_id}, ${dealer_id}, '${hardwares[i].hardware_name}', '${JSON.stringify(hardwares[i])}', ${price} )`
                                                             await sql.query(hardware_data);
@@ -1150,8 +1152,8 @@ exports.createDeviceProfile = async function (req, res) {
                                                             if (!pay_now) {
                                                                 transection_status = 'pending'
                                                             } else {
-                                                                total_price = total_price - (total_price * 5 / 100)
-                                                                hardwarePrice = hardwarePrice - (hardwarePrice * 5 / 100)
+                                                                total_price = total_price - (total_price * 0.03)
+                                                                hardwarePrice = hardwarePrice - (hardwarePrice * 0.03)
                                                             }
 
                                                             let service_data = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date, total_credits ,service_expiry_date) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price} , '${expiry_date}')`
@@ -1163,8 +1165,8 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 let hardwareProfits = await helpers.calculateHardwareProfitLoss(hardwares, loggedUserType)
                                                                 // console.log(hardwareProfits);
                                                                 if (pay_now) {
-                                                                    admin_hardware_profit = hardwareProfits.admin_profit - (hardwareProfits.admin_profit * 5 / 100)
-                                                                    dealer_hardware_profit = hardwareProfits.dealer_profit - (hardwareProfits.dealer_profit * 5 / 100)
+                                                                    admin_hardware_profit = hardwareProfits.admin_profit - (hardwareProfits.admin_profit * 0.03)
+                                                                    dealer_hardware_profit = hardwareProfits.dealer_profit - (hardwareProfits.dealer_profit * 0.03)
                                                                 } else {
                                                                     admin_hardware_profit = hardwareProfits.admin_profit
                                                                     dealer_hardware_profit = hardwareProfits.dealer_profit
@@ -1190,7 +1192,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 for (let i = 0; i < hardwares.length; i++) {
                                                                     let price = hardwares[i].hardware_price
                                                                     if (pay_now) {
-                                                                        price = price - (price * 5 / 100)
+                                                                        price = price - (price * 0.03)
                                                                     }
                                                                     let hardware_data = `INSERT INTO hardwares_data(user_acc_id, dealer_id, hardware_name , hardware_data,total_credits ) VALUES(${user_acc_id}, ${dealer_id}, '${hardwares[i].hardware_name}', '${JSON.stringify(hardwares[i])}', ${price} )`
                                                                     await sql.query(hardware_data);
@@ -1421,7 +1423,7 @@ exports.editDevices = async function (req, res) {
             let newServicePrice = 0
             let pay_now = req.body.pay_now
             // if (pay_now) {
-            //     total_price = total_price - (total_price * 5 / 100);
+            //     total_price = total_price - (total_price * 0.03);
             // }
 
 
@@ -1574,13 +1576,18 @@ exports.editDevices = async function (req, res) {
                                     }
                                     // console.log(newServicePrice, prevServicePaidPrice, newServicePrice, creditsToRefund);
                                     if (pay_now) {
-                                        newServicePrice = newServicePrice - (newServicePrice * 5 / 100)
+                                        newServicePrice = newServicePrice - (newServicePrice * 0.03)
                                     }
                                     total_price = newServicePrice - creditsToRefund
 
                                     let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedDealerType)
-                                    admin_profit = profitLoss.admin_profit
-                                    dealer_profit = profitLoss.dealer_profit
+                                    if (pay_now) {
+                                        admin_profit = profitLoss.admin_profit - (profitLoss.admin_profit * 0.03)
+                                        dealer_profit = profitLoss.dealer_profit - (profitLoss.dealer_profit * 0.03)
+                                    } else {
+                                        admin_profit = profitLoss.admin_profit
+                                        dealer_profit = profitLoss.dealer_profit
+                                    }
                                 }
 
                             }
@@ -1759,7 +1766,7 @@ exports.editDevices = async function (req, res) {
                                 let transection_record = "SELECT * from financial_account_transections where user_dvc_acc_id = " + usr_acc_id + " AND user_id = '" + verify.user.id + "' AND type = 'services' ORDER BY id DESC LIMIT 1"
                                 let transection_record_data = await sql.query(transection_record)
 
-                                if (transection_record_data[0].status === 'pending') {
+                                if (transection_record_data[0] && transection_record_data[0].status === 'pending') {
                                     let update_transection = "UPDATE financial_account_transections SET status = 'cancelled' WHERE id = " + transection_record_data[0].id
                                     await sql.query(update_transection)
 
@@ -1796,6 +1803,34 @@ exports.editDevices = async function (req, res) {
                                     await sql.query(transection_credits)
                                     update_credits_query = 'update financial_account_balance set credits = credits + ' + creditsToRefund + ' where dealer_id ="' + dealer_id + '"';
                                     await sql.query(update_credits_query);
+                                    refund_prev_service_admin_profit = refund_prev_service_admin_profit - refund_prev_service_admin_profit * 0.03
+                                    refund_prev_service_dealer_profit = refund_prev_service_dealer_profit - refund_prev_service_dealer_profit * 0.03
+
+                                    if (prevServicePaidPrice > 0) {
+
+                                        let admin_prev_service_profit = prev_service_admin_profit - refund_prev_service_admin_profit
+                                        let dealer_prev_service_profit = prev_service_dealer_profit - refund_prev_service_dealer_profit
+
+                                        if (admin_prev_service_profit > 0) {
+
+                                            let admin_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${admin_data[0].dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service refund profit" })}',${admin_prev_service_profit} ,'credit','transferred' , 'services')`
+                                            await sql.query(admin_profit_transection)
+                                        }
+                                        if (dealer_prev_service_profit > 0) {
+                                            let dealer_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${verify.user.connected_dealer},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service refund profit" })}',${dealer_prev_service_profit} ,'credit','transferred' , 'services')`
+                                            await sql.query(dealer_profit_transection)
+                                        }
+                                    }
+                                    // console.log("", refund_prev_service_admin_profit);
+                                    if (refund_prev_service_admin_profit) {
+                                        updateAdminProfit = 'update financial_account_balance set credits = credits - ' + refund_prev_service_admin_profit + ' where dealer_id ="' + admin_data[0].dealer_id + '"';
+                                        await sql.query(updateAdminProfit);
+                                    }
+                                    if (refund_prev_service_dealer_profit) {
+                                        updateAdminProfit = 'update financial_account_balance set credits = credits - ' + refund_prev_service_dealer_profit + ' where dealer_id ="' + verify.user.connected_dealer + '"';
+                                        await sql.query(updateAdminProfit);
+                                    }
+
 
                                 }
                             }
@@ -1808,8 +1843,10 @@ exports.editDevices = async function (req, res) {
                             if (!pay_now) {
                                 transection_status = 'pending'
                             }
+
                             let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${newServicePrice} ,'credit' , '${transection_status}' , 'services')`
                             await sql.query(transection_credits)
+
                             if (transection_status === 'pending') {
                                 update_credits_query = 'update financial_account_balance set due_credits = due_credits + ' + newServicePrice + ' where dealer_id ="' + dealer_id + '"';
                             } else {
@@ -1831,6 +1868,7 @@ exports.editDevices = async function (req, res) {
                                     name: verify.user.dealer_name,
                                     device_id: device_id,
                                     dealer_pin: verify.user.link_code,
+                                    user_id: ""
                                 },
                                 products: products,
                                 packages: packages,
@@ -1841,10 +1879,10 @@ exports.editDevices = async function (req, res) {
                                     serviceRemainingDays: serviceRemainingDays
                                 },
                                 pay_now: pay_now,
-                                discount: (pay_now) ? newServicePrice * 5 / 100 : 0,
+                                discount: (pay_now) ? Math.ceil(newServicePrice * 0.03) : 0,
                                 discountPercent: "5%",
                                 quantity: 1,
-                                subtotal: newServicePrice + (newServicePrice * 5 / 100),
+                                subtotal: newServicePrice + Math.ceil(newServicePrice * 0.03),
                                 paid: total_price,
                                 invoice_nr: inv_no
                             };
@@ -1976,7 +2014,8 @@ exports.getServiceRefund = async function (req, res) {
                     res.send({
                         status: true,
                         creditsToRefund: creditsToRefund,
-                        serviceRemainingDays: serviceRemainingDays
+                        serviceRemainingDays: serviceRemainingDays,
+                        totalDays: totalDays
                     })
                     return
 
@@ -4297,8 +4336,8 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                     await sql.query(dealer_profit_query);
                                     if (device.expiry_months != 0) {
                                         let profits = await helpers.calculateProfitLoss(packages, products, verify.user.user_type)
-                                        dealer_profit = profits.dealer_profit - (profits.dealer_profit * 5 / 100)
-                                        admin_profit = profits.admin_profit - (profits.admin_profit * 5 / 100)
+                                        dealer_profit = profits.dealer_profit - (profits.dealer_profit * 0.03)
+                                        admin_profit = profits.admin_profit - (profits.admin_profit * 0.03)
                                     }
                                 }
                             }
@@ -4330,8 +4369,8 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                     await sql.query(dealer_profit_query);
 
                                     let profits = await helpers.calculateHardwareProfitLoss(hardwares, verify.user.user_type)
-                                    dealer_hardware_profit = profits.dealer_profit - (profits.dealer_profit * 5 / 100)
-                                    admin_hardware_profit = profits.admin_profit - (profits.admin_profit * 5 / 100)
+                                    dealer_hardware_profit = profits.dealer_profit - (profits.dealer_profit * 0.03)
+                                    admin_hardware_profit = profits.admin_profit - (profits.admin_profit * 0.03)
 
                                 }
                             }
