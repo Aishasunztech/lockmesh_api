@@ -1,5 +1,5 @@
 {
-    "apps" : [
+    "apps": [
         {
             "name": "lockmesh",
             "script": "./bin/www.js",
@@ -15,7 +15,13 @@
             },
             "env_titanlocker": {
                 "HOST_NAME": "TitanLocker"
+            },
+            "env_cpc": {
+                "HOST_NAME": "CryptPhoneC"
+            },
+            "env_cpk": {
+                "HOST_NAME": "CryptPhoneK"
             }
         }
     ]
-  }
+}

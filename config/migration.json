@@ -1,30 +1,44 @@
 {
-  "development": {
-      "host": "localhost",
-      "username": "root",
-      "password": "",
-      "database": "lockmesh_db",
-      "dialect": "mysql"
-  },
-  "lockmesh": {
-      "host": "localhost",
-      "username": "web",
-      "password": "Alibaba@40C#",
-      "database": "lockmesh_db",
-      "dialect": "mysql"
-  },
-  "dev_lockmesh": {
-      "host": "localhost",
-      "username": "web",
-      "password": "Alibaba@40C#",
-      "database": "lockmesh_db",
-      "dialect": "mysql"
-  },
-  "titanlocker": {
-      "host": "localhost",
-      "username": "web",
-      "password": "Alibaba@40C#",
-      "database": "lockmesh_db",
-      "dialect": "mysql"
-  }
+	"development": {
+		"host": "localhost",
+		"username": "root",
+		"password": "",
+		"database": "lockmesh_db",
+		"dialect": "mysql"
+	},
+	"lockmesh": {
+		"host": "localhost",
+		"username": "web",
+		"password": "Alibaba@40C#",
+		"database": "lockmesh_db",
+		"dialect": "mysql"
+	},
+	"dev_lockmesh": {
+		"host": "localhost",
+		"username": "web",
+		"password": "Alibaba@40C#",
+		"database": "lockmesh_db",
+		"dialect": "mysql"
+	},
+	"titanlocker": {
+		"host": "localhost",
+		"username": "web",
+		"password": "Alibaba@40C#",
+		"database": "lockmesh_db",
+		"dialect": "mysql"
+	},
+	"CryptPhoneC": {
+		"host": "localhost",
+		"username": "web",
+		"password": "Alibaba@40C#",
+		"database": "lockmesh_db",
+		"dialect": "mysql"
+	},
+	"CryptPhoneK": {
+		"host": "localhost",
+		"username": "web",
+		"password": "Alibaba@40C#",
+		"database": "lockmesh_db",
+		"dialect": "mysql"
+	}
 }
