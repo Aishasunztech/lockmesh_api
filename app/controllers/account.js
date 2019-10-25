@@ -526,7 +526,7 @@ exports.getPGPEmails = async (req, res) => {
     if (verify) {
         let dealer_id = verify.user.dealer_id;
 
-        let dealerDomainPermissions = await sql.query(`SELECT * FROM dealer_permissions WHERE dealer_id = ${Number(dealer_id)} AND permission_type = 'domain'`);
+        let dealerDomainPermissions = await sql.query(`SELECT * FROM dealer_permissions WHERE (dealer_id = '${dealer_id}' OR dealer_id = 0) AND permission_type = 'domain'`);
         let permission_ids = dealerDomainPermissions.map((prm) => prm.permission_id);
 
         let query = '';
@@ -1387,14 +1387,55 @@ exports.ackCreditRequest = async function (req, res) {
     }
 }
 
+// exports.getDomains = async function (req, res) {
+//     var verify = req.decoded;
+
+//     if (verify) {
+//         let dealer_id = verify.user.dealer_id;
+//         let selectDomains = await sql.query(`SELECT * FROM domains`);
+//         // console.log(verify, 'get domains:: ', selectDomains);
+
+//         if (selectDomains.length) {
+//             if (verify.user.user_type !== ADMIN) {
+//                 let selectPermisions = await sql.query(`SELECT * FROM dealer_permissions WHERE dealer_id = ${dealer_id} AND permission_type = 'domain'`);
+//                 // console.log("selectPermisions ", selectPermisions)
+
+//                 let prmIds = selectPermisions.map((p) => p.permission_id);
+//                 // console.log("prmIds ", prmIds)
+//                 selectDomains = selectDomains.filter((prm) => prmIds.includes(prm.id));
+//             }
+
+//             // console.log("selectDomains final:: ", selectDomains);
+//             res.send({
+//                 status: true,
+//                 domains: selectDomains
+//             })
+//         } else {
+//             res.send({
+//                 status: true,
+//                 domains: []
+//             })
+//         }
+//     }
+// }
+
 exports.getDomains = async function (req, res) {
     var verify = req.decoded;
 
     if (verify) {
-        let selectDomains = await sql.query(`SELECT * FROM domains`);
-        // console.log('get domains:: ', selectDomains);
+        let dealer_id = verify.user.dealer_id;
+        let selectQ = '';
+       
 
-        if (selectDomains.length) {
+        if (verify.user.user_type !== ADMIN) {
+            selectQ = `SELECT domains.*, dealer_permissions.permission_id, dealer_permissions.dealer_id FROM domains JOIN dealer_permissions ON (dealer_permissions.permission_id = domains.id) WHERE (dealer_permissions.dealer_id = ${dealer_id} OR dealer_permissions.dealer_id = 0) AND permission_type = 'domain'`;
+        } else {
+            selectQ = `SELECT * FROM domains`;
+        }
+        let selectDomains = await sql.query(selectQ);
+
+         console.log('get domains:: ', selectDomains);
+        if (selectDomains && selectDomains.length) {
             res.send({
                 status: true,
                 domains: selectDomains

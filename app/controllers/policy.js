@@ -92,13 +92,13 @@ exports.getPolicies = async function (req, res) {
                     return;
                 });
             } else {
-                let myquery = `SELECT policy_id FROM dealer_policies WHERE dealer_id='${verify.user.id}'`;
+                let myquery = `SELECT permission_id FROM dealer_permissions WHERE (dealer_id='${userId}' OR dealer_id=0) AND permission_type='policy';`;
 
                 let permittedids = await sql.query(myquery);
                 let prrr = [];
                 if (permittedids && permittedids.length) {
                     for (let item of permittedids) {
-                        prrr.push(item.policy_id)
+                        prrr.push(item.permission_id)
                     }
                 }
                 // console.log(prrr, 'permited ids');

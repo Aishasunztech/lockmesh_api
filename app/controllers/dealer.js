@@ -896,21 +896,19 @@ exports.resetPwd = async function (req, res) {
 
 
 exports.getLoggedDealerApps = async function (req, res) {
-    // console.log('apoi recivedx')
     var verify = req.decoded;
-    // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
         let loggedUserId = verify.user.id;
         let loggedUserType = verify.user.user_type;
 
         let getAppsQ = "SELECT apk_details.* FROM apk_details ";
         if (loggedUserType !== ADMIN) {
-            getAppsQ = getAppsQ + " JOIN dealer_apks on dealer_apks.apk_id = apk_details.id WHERE dealer_apks.dealer_id =" + loggedUserId + " AND delete_status=0 AND apk_type != 'permanent'";
+            getAppsQ = `${getAppsQ} JOIN dealer_permissions ON (dealer_permissions.permission_id = apk_details.id) WHERE (dealer_permissions.dealer_id =${loggedUserId} OR dealer_permissions.dealer_id=0) AND apk_details.delete_status=0 AND apk_details.apk_type != 'permanent' AND dealer_permissions.permission_type = 'apk';`;
         } else {
-            getAppsQ = getAppsQ + " WHERE delete_status=0 AND apk_type != 'permanent'";
+            getAppsQ = `${getAppsQ} WHERE delete_status=0 AND apk_type != 'permanent';`;
 
         }
-        // console.log(getAppsQ);
+        console.log("getAppsQ ", getAppsQ);
         let apps = await sql.query(getAppsQ);
 
         if (apps.length > 0) {
@@ -1331,7 +1329,7 @@ exports.dealerPermissions = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
         let permissionType = req.params.permissionType;
-        // console.log(req.body, "permissionType ", permissionType)
+        console.log(req.body, "permissionType ", permissionType)
         let action = req.body.action // save, delete, 
         let permissionId = req.body.permissionId;
         let dealers = req.body.dealers;
@@ -1357,9 +1355,9 @@ exports.dealerPermissions = async function (req, res) {
         }
 
         prevPermissionsQ = `SELECT dealers FROM ${tableName} WHERE id = ${permissionId}`;
-        // console.log("prevPermissionsQ ", prevPermissionsQ)
+        console.log("prevPermissionsQ ", prevPermissionsQ)
         let prevPermissions = await sql.query(prevPermissionsQ);
-        // console.log('prevPermissions ', prevPermissions)
+        console.log('prevPermissions ', prevPermissions)
 
         prevParsDealers = prevPermissions[0].dealers ? JSON.parse(prevPermissions[0].dealers) : [];
         // console.log("prevParsDelaer", prevParsDealers);
