@@ -1468,6 +1468,234 @@ module.exports = {
 			dealer_profit
 		}
 	},
+	saveServiceSalesDetails: async function (packages, products, loggedDealerType, user_acc_id, service_id) {
+		console.log(service_id);
+		let packagesIds = []
+		let productIds = []
+		var dealer_profit = 0
+		var admin_profit = 0
+		packages.map((item) => {
+			packagesIds.push(item.id)
+		})
+		products.map((item) => {
+			productIds.push(item.id)
+		})
+
+		let packagesData = []
+		let pricesData = []
+
+		if (packagesIds.length) {
+			packagesData = await sql.query("SELECT * from packages where id IN (" + packagesIds.join(",") + ")")
+		}
+		if (productIds.length) {
+			pricesData = await sql.query("SELECT * from prices where id IN (" + productIds.join(",") + ")")
+		}
+		let sa_sim_prices = {}
+		let sa_chat_prices = {}
+		let sa_vpn_prices = {}
+		let sa_pgp_prices = {}
+
+		let sa_product_prices = await sql.query("SELECT * FROM prices where dealer_type = 'super_admin'")
+		sa_product_prices.map((item) => {
+			if (item.price_for === "sim_id") {
+				sa_sim_prices[item.price_term] = Number(item.unit_price)
+			}
+			else if (item.price_for === "chat_id") {
+				sa_chat_prices[item.price_term] = Number(item.unit_price)
+			}
+			else if (item.price_for === "vpn") {
+				sa_vpn_prices[item.price_term] = Number(item.unit_price)
+			}
+			else if (item.price_for === "pgp_email") {
+				sa_pgp_prices[item.price_term] = Number(item.unit_price)
+			}
+		})
+		if (loggedDealerType === Constants.DEALER) {
+			if (packagesData.length) {
+				packagesData.map(async (item) => {
+					if (item.dealer_type === 'super_admin') {
+						packages.map((pkg) => {
+							if (pkg.id === item.id) {
+								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_data, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id},'${JSON.stringify(pkg)}', 'package', ${pkg.pkg_price} , ${item.pkg_price} , 'delivered')`)
+							}
+						})
+					} else if (item.dealer_type === 'admin') {
+						let sa_total_price = 0
+						packages.map((pkg) => {
+							if (pkg.id === item.id) {
+								if (pkg.pkg_features.sim_id) {
+									sa_total_price += sa_sim_prices[item.pkg_term]
+								}
+								if (pkg.pkg_features.sim_id2) {
+									sa_total_price += sa_sim_prices[item.pkg_term]
+								}
+								if (pkg.pkg_features.chat_id) {
+									sa_total_price += sa_chat_prices[item.pkg_term]
+								}
+								if (pkg.pkg_features.pgp_email) {
+									sa_total_price += sa_pgp_prices[item.pkg_term]
+								}
+								if (pkg.pkg_features.vpn) {
+									sa_total_price += sa_vpn_prices[item.pkg_term]
+								}
+								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id},'${JSON.stringify(pkg)}','${item.pkg_term}' ,'package', ${pkg.pkg_price} , ${sa_total_price} , 'delivered')`)
+							}
+						})
+					}
+				})
+			}
+			if (pricesData.length) {
+				pricesData.map(async (item) => {
+					if (item.price_for === "sim_id") {
+						// admin_profit += item.unit_price - sa_sim_prices[item.price_term]
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${sa_sim_prices[item.price_term]} , 'delivered')`)
+					}
+					else if (item.price_for === "SIM ID 2") {
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${sa_sim_prices[item.price_term]} , 'delivered')`)
+					}
+					else if (item.price_for === "chat_id") {
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${sa_chat_prices[item.price_term]} , 'delivered')`)
+					}
+					else if (item.price_for === "vpn") {
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${sa_vpn_prices[item.price_term]} , 'delivered')`)
+					}
+					else if (item.price_for === "pgp_email") {
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id},'${JSON.stringify(item)}','${item.price_term}','product', ${item.unit_price} , ${sa_pgp_prices[item.price_term]} , 'delivered')`)
+					}
+				})
+			}
+		} else if (loggedDealerType === Constants.SDEALER) {
+			let admin_sim_prices = {}
+			let admin_chat_prices = {}
+			let admin_vpn_prices = {}
+			let admin_pgp_prices = {}
+
+			let sa_product_prices = await sql.query("SELECT * FROM prices where dealer_type = 'admin'")
+			sa_product_prices.map((item) => {
+				if (item.price_for === "sim_id") {
+					admin_sim_prices[item.price_term] = Number(item.unit_price)
+				}
+				else if (item.price_for === "chat_id") {
+					admin_chat_prices[item.price_term] = Number(item.unit_price)
+				}
+				else if (item.price_for === "vpn") {
+					admin_vpn_prices[item.price_term] = Number(item.unit_price)
+				}
+				else if (item.price_for === "pgp_email") {
+					admin_pgp_prices[item.price_term] = Number(item.unit_price)
+				}
+			})
+			if (packagesData.length) {
+				for (let i = 0; i < packagesData.length; i++) {
+					let adminPackagePrice = await sql.query("SELECT * FROM dealer_packages_prices WHERE package_id = " + packagesData[i].id + " AND created_by = 'admin'")
+					let adminPrice = null
+					if (adminPackagePrice.length) {
+						adminPrice = adminPackagePrice[0].price
+					}
+					if (packagesData[i].dealer_type === 'super_admin') {
+						packages.map((pkg) => {
+							if (pkg.id === packagesData[i].id) {
+								if (adminPrice) {
+									admin_profit += adminPrice - packagesData[i].pkg_price
+									dealer_profit += pkg.pkg_price - adminPrice
+									sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_data, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id},'${JSON.stringify(pkg)}', 'package', ${packagesData[i].pkg_price} , ${adminPrice} , 'delivered')`)
+								} else {
+									dealer_profit += pkg.pkg_price - packagesData[i].pkg_price
+									sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_data, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id},'${JSON.stringify(pkg)}', 'package', ${packagesData[i].pkg_price} , ${packagesData[i].pkg_price} , 'delivered')`)
+								}
+							}
+						})
+					}
+					else if (packagesData[i].dealer_type === 'admin') {
+						let sa_total_price = 0
+						packages.map((pkg) => {
+							if (pkg.id === packagesData[i].id) {
+								if (pkg.pkg_features.sim_id) {
+									sa_total_price += sa_sim_prices[packagesData[i].pkg_term]
+								}
+								if (pkg.pkg_features.sim_id2) {
+									sa_total_price += sa_sim_prices[packagesData[i].pkg_term]
+								}
+								if (pkg.pkg_features.chat_id) {
+									sa_total_price += sa_chat_prices[packagesData[i].pkg_term]
+								}
+								if (pkg.pkg_features.pgp_email) {
+									sa_total_price += sa_pgp_prices[packagesData[i].pkg_term]
+								}
+								if (pkg.pkg_features.vpn) {
+									sa_total_price += sa_vpn_prices[packagesData[i].pkg_term]
+								}
+								admin_profit += adminPrice - sa_total_price
+								dealer_profit += Number(pkg.pkg_price) - adminPrice
+								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_data, item_type, item_sale_price, item_admin_cost, item_dealer_cost, status) VALUES(${user_acc_id} , ${service_id},'${JSON.stringify(pkg)}', 'package', ${Number(pkg.pkg_price)} , ${Number(sa_total_price)} , ${adminPrice} , 'delivered')`)
+							}
+						})
+					}
+					else if (packagesData[i].dealer_type === 'dealer') {
+						let sa_total_price = 0
+						let admin_total_price = 0
+						packages.map((pkg) => {
+							if (pkg.id === packagesData[i].id) {
+								if (pkg.pkg_features.sim_id) {
+									sa_total_price += sa_sim_prices[packagesData[i].pkg_term]
+									admin_total_price += admin_sim_prices[packagesData[i].pkg_term]
+								}
+								if (pkg.pkg_features.sim_id2) {
+									sa_total_price += sa_sim_prices[packagesData[i].pkg_term]
+									admin_total_price += admin_sim_prices[packagesData[i].pkg_term]
+								}
+								if (pkg.pkg_features.chat_id) {
+									sa_total_price += sa_chat_prices[packagesData[i].pkg_term]
+									admin_total_price += admin_chat_prices[packagesData[i].pkg_term]
+
+								}
+								if (pkg.pkg_features.pgp_email) {
+									sa_total_price += sa_pgp_prices[packagesData[i].pkg_term]
+									admin_total_price += admin_pgp_prices[packagesData[i].pkg_term]
+								}
+								if (pkg.pkg_features.vpn) {
+									sa_total_price += sa_vpn_prices[packagesData[i].pkg_term]
+									admin_total_price += admin_vpn_prices[packagesData[i].pkg_term]
+								}
+								admin_profit += admin_total_price - sa_total_price
+								dealer_profit += Number(pkg.pkg_price) - admin_total_price
+								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_data, item_type, item_sale_price, item_admin_cost, item_dealer_cost, status) VALUES(${user_acc_id} , ${service_id},'${JSON.stringify(pkg)}', 'package', ${Number(pkg.pkg_price)} , ${Number(sa_total_price)} , ${adminPrice} , 'delivered')`)
+							}
+						})
+					}
+				}
+			}
+			if (pricesData.length) {
+				pricesData.map(async (item) => {
+					if (item.price_for === "sim_id") {
+						admin_profit += admin_sim_prices[item.price_term] - sa_sim_prices[item.price_term]
+						dealer_profit += item.unit_price - admin_sim_prices[item.price_term]
+					}
+					else if (item.price_for === "SIM ID 2") {
+						admin_profit += admin_sim_prices[item.price_term] - sa_sim_prices[item.price_term]
+						dealer_profit += item.unit_price - admin_sim_prices[item.price_term]
+					}
+					else if (item.price_for === "chat_id") {
+						admin_profit += admin_chat_prices[item.price_term] - sa_chat_prices[item.price_term]
+						dealer_profit += item.unit_price - admin_chat_prices[item.price_term]
+					}
+					else if (item.price_for === "vpn") {
+						admin_profit += admin_vpn_prices[item.price_term] - sa_vpn_prices[item.price_term]
+						dealer_profit += item.unit_price - admin_vpn_prices[item.price_term]
+					}
+					else if (item.price_for === "pgp_email") {
+						admin_profit += admin_pgp_prices[item.price_term] - sa_pgp_prices[item.price_term]
+						dealer_profit += item.unit_price - admin_pgp_prices[item.price_term]
+					}
+				})
+			}
+
+		}
+		return {
+			admin_profit,
+			dealer_profit
+		}
+	},
 
 	calculateHardwareProfitLoss: async function (hardwares, loggedDealerType) {
 		let hardwareIds = []

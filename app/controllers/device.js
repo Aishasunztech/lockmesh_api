@@ -500,7 +500,27 @@ exports.acceptDevice = async function (req, res) {
                                                             if (pay_now) {
                                                                 price = price - (price * 0.03)
                                                             }
-                                                            let hardware_data = `INSERT INTO hardwares_data(user_acc_id, dealer_id, hardware_name , hardware_data,total_credits ) VALUES(${usr_acc_id}, ${dealer_id}, '${hardwares[i].hardware_name}', '${JSON.stringify(hardwares[i])}' ,${price} )`
+
+                                                            let admin_cost = 0
+                                                            let dealer_cost = 0
+                                                            let result = await sql.query("SELECT * FROM dealer_hardwares_prices WHERE hardware_id =" + hardwares[i].id + " AND created_by = 'super_admin'")
+                                                            // console.log(result);
+                                                            if (result.length) {
+                                                                admin_cost = result[0].price
+                                                            }
+                                                            if (loggedUserType === constants.SDEALER) {
+                                                                let result = await sql.query("SELECT * FROM dealer_hardwares_prices WHERE hardware_id =" + hardwares[i].id + " AND created_by = 'admin'")
+                                                                if (result.length) {
+                                                                    dealer_cost = result[0].price
+                                                                }
+                                                            }
+
+                                                            if (pay_now) {
+                                                                admin_cost = admin_cost - (admin_cost * 0.03)
+                                                                dealer_cost = dealer_cost - (dealer_cost * 0.03)
+                                                            }
+
+                                                            let hardware_data = `INSERT INTO hardwares_data(user_acc_id, dealer_id, hardware_name , hardware_data,total_credits , admin_cost_credits , dealer_cost_credits ) VALUES(${usr_acc_id}, ${dealer_id}, '${hardwares[i].hardware_name}', '${JSON.stringify(hardwares[i])}' ,${price} ,${admin_cost}, ${dealer_cost})`
                                                             await sql.query(hardware_data);
                                                         }
 
@@ -874,12 +894,12 @@ exports.createDeviceProfile = async function (req, res) {
                                                 // console.log("affectedRows", resps.affectedRows);
                                                 if (resps.affectedRows) {
 
-
-
-
                                                     let service_data = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date ,total_credits,service_expiry_date) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price / duplicate} , '${expiry_date}' )`
-                                                    await sql.query(service_data);
-
+                                                    let service_data_result = await sql.query(service_data);
+                                                    console.log(service_data_result);
+                                                    if (service_data_result.affectedRows) {
+                                                        helpers.saveServiceSalesDetails(packages, products, loggedUserType, user_acc_id, service_data_result.insertId)
+                                                    }
                                                     var transection_status = 'transferred'
                                                     if (!pay_now) {
                                                         transection_status = 'pending'
@@ -922,7 +942,24 @@ exports.createDeviceProfile = async function (req, res) {
                                                             if (pay_now) {
                                                                 price = price - (price * 0.03)
                                                             }
-                                                            let hardware_data = `INSERT INTO hardwares_data(user_acc_id, dealer_id, hardware_name, hardware_data,total_credits ) VALUES(${user_acc_id}, ${dealer_id}, '${hardwares[i].hardware_name}', '${JSON.stringify(hardwares[i])}', ${price} )`
+                                                            let admin_cost = 0
+                                                            let dealer_cost = 0
+                                                            let result = await sql.query("SELECT * FROM dealer_hardwares_prices WHERE hardware_id =" + hardwares[i].id + " AND created_by = 'super_admin'")
+                                                            // console.log(result);
+                                                            if (result.length) {
+                                                                admin_cost = result[0].price
+                                                            }
+                                                            if (loggedUserType === constants.SDEALER) {
+                                                                let result = await sql.query("SELECT * FROM dealer_hardwares_prices WHERE hardware_id =" + hardwares[i].id + " AND created_by = 'admin'")
+                                                                if (result.length) {
+                                                                    dealer_cost = result[0].price
+                                                                }
+                                                            }
+                                                            if (pay_now) {
+                                                                admin_cost = admin_cost - (admin_cost * 0.03)
+                                                                dealer_cost = dealer_cost - (dealer_cost * 0.03)
+                                                            }
+                                                            let hardware_data = `INSERT INTO hardwares_data(user_acc_id, dealer_id, hardware_name, hardware_data,total_credits, admin_cost_credits, dealer_cost_credits) VALUES(${user_acc_id}, ${dealer_id}, '${hardwares[i].hardware_name}', '${JSON.stringify(hardwares[i])}', ${price} , ${admin_cost} , ${dealer_cost})`
                                                             await sql.query(hardware_data);
                                                         }
 
@@ -934,7 +971,6 @@ exports.createDeviceProfile = async function (req, res) {
                                                     await sql.query(transection_credits)
 
                                                     await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, user_acc_id, loggedUserType, pay_now)
-
 
                                                     let updateChatIds = 'update chat_ids set used=1, user_acc_id="' + user_acc_id + '" where chat_id ="' + chat_id + '"';
                                                     await sql.query(updateChatIds);
@@ -1157,7 +1193,11 @@ exports.createDeviceProfile = async function (req, res) {
                                                             }
 
                                                             let service_data = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date, total_credits ,service_expiry_date) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price} , '${expiry_date}')`
-                                                            await sql.query(service_data);
+                                                            let service_data_result = await sql.query(service_data);
+                                                            if (service_data_result.affectedRows) {
+                                                                helpers.saveServiceSalesDetails(packages, products, loggedUserType, user_acc_id, service_data_result.insertId)
+                                                            }
+
                                                             if (hardwares.length) {
                                                                 let dealer_hardware_profit = 0
                                                                 let admin_hardware_profit = 0
@@ -1194,7 +1234,26 @@ exports.createDeviceProfile = async function (req, res) {
                                                                     if (pay_now) {
                                                                         price = price - (price * 0.03)
                                                                     }
-                                                                    let hardware_data = `INSERT INTO hardwares_data(user_acc_id, dealer_id, hardware_name , hardware_data,total_credits ) VALUES(${user_acc_id}, ${dealer_id}, '${hardwares[i].hardware_name}', '${JSON.stringify(hardwares[i])}', ${price} )`
+                                                                    let admin_cost = 0
+                                                                    let dealer_cost = 0
+                                                                    let result = await sql.query("SELECT * FROM dealer_hardwares_prices WHERE hardware_id =" + hardwares[i].id + " AND created_by = 'super_admin'")
+                                                                    // console.log(result);
+                                                                    if (result.length) {
+                                                                        admin_cost = result[0].price
+                                                                    }
+                                                                    if (loggedUserType === constants.SDEALER) {
+                                                                        let result = await sql.query("SELECT * FROM dealer_hardwares_prices WHERE hardware_id =" + hardwares[i].id + " AND created_by = 'admin'")
+                                                                        if (result.length) {
+                                                                            dealer_cost = result[0].price
+                                                                        }
+                                                                    }
+
+                                                                    if (pay_now) {
+                                                                        admin_cost = admin_cost - (admin_cost * 0.03)
+                                                                        dealer_cost = dealer_cost - (dealer_cost * 0.03)
+                                                                    }
+
+                                                                    let hardware_data = `INSERT INTO hardwares_data(user_acc_id, dealer_id, hardware_name , hardware_data,total_credits , admin_cost_credits , dealer_cost_credits ) VALUES(${user_acc_id}, ${dealer_id}, '${hardwares[i].hardware_name}', '${JSON.stringify(hardwares[i])}', ${price} , ${admin_cost} , ${dealer_cost})`
                                                                     await sql.query(hardware_data);
                                                                 }
 
@@ -4308,7 +4367,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
                             let user_acc_id = device.id
                             let getBillingPkgs = "select * from services_data where user_acc_id = " + user_acc_id + " AND del_status = 0"
                             let bills = await sql.query(getBillingPkgs);
-                            let getHardwares = "select * from hardwares_data where user_acc_id = " + user_acc_id + " AND del_status = 0"
+                            let getHardwares = "select * from hardwares_data where user_acc_id = " + user_acc_id + " AND status = 'delivered'"
                             let hardwaresData = await sql.query(getHardwares);
                             let packages = []
                             let products = []
@@ -4343,7 +4402,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
                             }
 
                             if (hardwaresData.length) {
-                                let updateHardwareData = "UPDATE hardwares_data set del_status = '1' WHERE user_acc_id = " + user_acc_id;
+                                let updateHardwareData = "UPDATE hardwares_data set status = 'returned' WHERE user_acc_id = " + user_acc_id;
                                 await sql.query(updateHardwareData);
                                 hardwares = hardwaresData[0].hardwares
                                 let total_hardware_credits = 0
