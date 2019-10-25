@@ -44,8 +44,8 @@ module.exports = {
   DUPLICATE_MAC_AND_SERIAL: "duplicate_mac_and_serial",
   DEALER_NOT_FOUND: "dealer_not_found",
 
-
-
+  PRE_DEFINED_SERIAL_NUMBER: "0123456789ABCDEF",
+  PRE_DEFINED_MAC_ADDRESS: "02:00:00:00:00:00",
 
   // Device History Enumerables
   DEVICE_HISTORY_PUSH_APPS: 'push_apps',
@@ -126,11 +126,8 @@ module.exports = {
   GET_UNINSTALLED_APPS: 'send_uninstalled_apps_',
   ACK_UNINSTALLED_APPS: 'ack_uninstalled_apps_',
 
-  PRE_DEFINED_SERIAL_NUMBER: "0123456789ABCDEF",
-  PRE_DEFINED_MAC_ADDRESS: "02:00:00:00:00:00",
-
-
-
+  SEND_JOB_TO_PANEL: 'SEND_JOB_TO_PANEL',
+  
   // force update
   FORCE_UPDATE_CHECK: 'force_update_check_',
 

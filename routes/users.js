@@ -1374,6 +1374,6 @@ router.post('/reports/payment-history', reportingController.generatePaymentHisto
 //PDF generator
 router.post('/reports/pdf-generator', reportingController.generatePDFReport);
 
-router.get('/get-processes', NotificationController.getQueJobs);
+router.get('/get-processes', NotificationController.getSocketProcesses);
 
 module.exports = router;

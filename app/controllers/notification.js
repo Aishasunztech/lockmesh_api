@@ -7,57 +7,58 @@ const ADMIN = "admin";
 const DEALER = "dealer";
 const SDEALER = "sdealer";
 
+let data;
 
-exports.getQueJobs = async function (req, res) {
-    try {
-        var verify = req.decoded;
-        if (verify) {
-            let where = '';
-            let dealer_id = verify.user.dealer_id;
-            console.log(req.query.limit, req.query.start)
-            let start = req.query.limit == 'all' ? 0 : parseInt(req.query.start) || 0;
-            let limit = req.query.limit == 'all' ? 10 ^ 99 : parseInt(req.query.limit) || 10;
-            let status = req.query.status;
-            let filter = req.query.filter;
-            let completedTasks = [];
-            let pendingTasks = [];
-            console.log('status',status, 'limit:', limit, 'start:', start, 'filter',filter )
-            if (filter && filter !== '' && filter !== undefined && filter !== 'undefined') {
-                where = " WHERE dealer_id=" + `${dealer_id}` + " AND type=" + `${req.query.filter} `;
-            } else {
-                where = " WHERE dealer_id=" + `${dealer_id}`;
-            }
-           
-            if (status === 'completed' || status === '' || status === undefined || status === 'undefined') {
-                completedTasks = await sql.query("SELECT * FROM device_history " + where + " AND status='completed_successfully' ORDER BY created_at DESC limit " + start + ", " + limit);
-            } 
-            if (status === 'pending' || status === '' || status === undefined || status === 'undefined') {
-                pendingTasks = await sql.query("SELECT * FROM device_history " + where + " AND status='pending' ORDER BY created_at DESC limit " + start + ", " + limit);
-            }
+exports.getSocketProcesses = async function (req, res) {
+    var verify = req.decoded;
+    if (verify) {
+        let dealer_id = verify.user.dealer_id;
 
-            console.log(pendingTasks.length, 'comppleted tasks are', completedTasks.length)
+        let start = (req.query.start) ? req.query.start : 0;
+        let limit = (req.query.limit) ? req.query.limit : false;
+        let status = (req.query.status) ? req.query.status : false;
+        let filter = (req.query.filter) ? req.query.filter : false;
+        
+        let allTasks = [];
+        console.log('status', status, 'limit:', limit, 'start:', start, 'filter', filter);
 
-            if(Array.isArray(completedTasks) && Array.isArray(pendingTasks)){
-                res.send({
-                    status: true,
-                    msg: 'success',
-                    data: {
-                        completedTasks: completedTasks,
-                        pendingTasks: pendingTasks
-                    }
-                })
-            }else{
-                res.send({
-                    status: false,
-                    msg: 'Error',
-                    data: {
-                        completedTasks: [],
-                        pendingTasks: []
-                    }
-                })
+        let where = ` WHERE dealer_id='${dealer_id}'`;
+
+        if (filter && filter !== 'undefined') {
+            where = where + ` AND type= ${req.query.filter} `;
+        }
+        
+        let query = `SELECT * FROM device_history`;
+        let limitQ = '';
+        
+        if(limit){
+            limitQ = ` LIMIT ${start}, ${limit}`
+        } else {
+            limitQ = ` LIMIT 10`
+        }
+
+        if(status){
+            
+            query = `${query} ${where} AND status='${status}' ORDER BY created_at DESC ${limitQ}`
+
+        } else {
+            query = `${query} ${where} ORDER BY created_at DESC ${limitQ}`
+        }
+
+        allTasks = await sql.query(query);
+        // console.log(allTasks);
+        data = {
+            status: false,
+            tasks: []
+        }
+
+        if (allTasks.length) {
+            data = {
+                status: true,
+                tasks: allTasks
             }
         }
-    } catch (error) {
-        console.log(error)
+        return res.send(data);
     }
+
 }
