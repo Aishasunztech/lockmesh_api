@@ -16,13 +16,12 @@ const Constants = require('../constants/Application');
 const app_constants = require('../config/constants');
 
 let io;
-
+// let dealerIo;
 
 module.exports = {
     baseIo:io,
     baseSocket : function (socketIo) {
-        io = socketIo;
-        this.baseIo = io;
+        this.baseIo = socketIo;
         // socket configuration options
         // io.path('/api')
     
@@ -60,15 +59,26 @@ module.exports = {
     
     
         // middleware for socket incoming and outgoing requests
-        io.use(socketMiddleware);
+        socketIo.use(socketMiddleware);
     
     
-        io.sockets.on('connection', async function(socket){
-            await socketController.baseSocket(io, socket)
+        socketIo.sockets.on('connection', async function(socket){
+            await socketController.baseSocket(socketIo, socket)
         });
-    
-        return io;
-    }
+        
+    },
+
+    // dealerIo: dealerIo,
+    // dealerSocket: function (socketIo){
+    //     // console.log(socketIo);
+
+    //     this.dealerIo = dealerIo;
+
+    //     socketIo.on('connection', function (socket){
+    //         console.log('socket connected on dealer route');
+    //         socketIo.emit('test', "message");
+    //     })
+    // }
 }
 
 

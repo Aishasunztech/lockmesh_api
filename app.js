@@ -17,9 +17,7 @@ const expressSwagger = require('express-swagger-generator')(app);
 const swaggerOptions = require('./config/swaggerOptions');
 const constants = require('./config/constants');
 
-let io = require('socket.io')();
 
-app.io = io;
 
 app.disable("etag");
 
