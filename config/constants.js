@@ -29,6 +29,7 @@ if (HOST_NAME) {
 		case "":
 		case "localhost":
 			break;
+
 		case "LockMesh":
 			URL = "https://lockmesh.com";
 			SUPERADMIN_URL = "https://meshguard.co";
@@ -43,6 +44,7 @@ if (HOST_NAME) {
 			SMTP_FROM_EMAIL = "admin@lockmesh.com";
 			SMTP_FROM_NAME = "Admin";
 			break;
+
 		case "TitanLocker":
 			URL = "https://titansecureserver.com";
 			SUPERADMIN_URL = "https://meshguard.co";
@@ -59,8 +61,44 @@ if (HOST_NAME) {
 			DEVICE_ID_SYSTEM_LETTER = "T";
 			DEALER_PIN_SYSTEM_LETTER = "5";
 			STAFF_ID_SYSTEM_LETTER = '2';
-
 			break;
+
+		case "CryptPhoneC":
+			URL = "https://cryptc.lockmesh.com";
+			SUPERADMIN_URL = "https://meshguard.co";
+
+			// DB_HOST = "localhost";
+			// DB_NAME = 'lockmesh_db'
+			DB_USERNAME = "web";
+			DB_PASSWORD = "Alibaba@40C#";
+
+			// Email
+			SMTP_FROM_EMAIL = "admin@lockmesh.com";
+			SMTP_FROM_NAME = "Admin";
+
+			DEVICE_ID_SYSTEM_LETTER = "C";
+			DEALER_PIN_SYSTEM_LETTER = "4";
+			STAFF_ID_SYSTEM_LETTER = '3';
+			break;
+
+		case "CryptPhoneK":
+			URL = "https://cryptk.lockmesh.com";
+			SUPERADMIN_URL = "https://meshguard.co";
+
+			// DB_HOST = "localhost";
+			// DB_NAME = 'lockmesh_db'
+			DB_USERNAME = "web";
+			DB_PASSWORD = "Alibaba@40C#";
+
+			// Email
+			SMTP_FROM_EMAIL = "admin@lockmesh.com";
+			SMTP_FROM_NAME = "Admin";
+
+			DEVICE_ID_SYSTEM_LETTER = "K";
+			DEALER_PIN_SYSTEM_LETTER = "3";
+			STAFF_ID_SYSTEM_LETTER = '4';
+			break;
+
 		case "LockMesh Dev":
 			URL = "https://dev.lockmesh.com";
 			SUPERADMIN_URL = "https://dev.meshguard.co";
@@ -74,6 +112,7 @@ if (HOST_NAME) {
 			SMTP_FROM_EMAIL = "admin@lockmesh.com";
 			SMTP_FROM_NAME = "Admin";
 			break;
+
 		default:
 			break;
 	}
@@ -83,63 +122,63 @@ if (HOST_NAME) {
 // }
 
 (module.exports.SUPERADMIN_URL = SUPERADMIN_URL),
-(module.exports = {
-	APP_TITLE: APP_TITLE,
-	HOST: URL,
-	PORT: "",
-	SECRET: "kepitsecretwithauth!@#",
-	EXPIRES_IN: "86400s", // 24 Hours
-	DASHBOARD_EXPIRES_IN:'10800s', //3 Hours
-	MOBILE_EXPIRES_IN:'10800s', //3 Hours
-	BASIC_AUTH_USER:"web",
-	BASIC_AUTH_PASSWORD:"Google!@#1",
+	(module.exports = {
+		APP_TITLE: APP_TITLE,
+		HOST: URL,
+		PORT: "",
+		SECRET: "kepitsecretwithauth!@#",
+		EXPIRES_IN: "86400s", // 24 Hours
+		DASHBOARD_EXPIRES_IN: '10800s', //3 Hours
+		MOBILE_EXPIRES_IN: '10800s', //3 Hours
+		BASIC_AUTH_USER: "web",
+		BASIC_AUTH_PASSWORD: "Google!@#1",
 
-	// SMTP Constants
-	SMTP_HOST: "smtp.office365.com",
-	SMTP_PORT: 587,
-	SMTP_USERNAME: "admin@lockmesh.com",
-	SMTP_PASSWORD: "34e@2!2xder",
+		// SMTP Constants
+		SMTP_HOST: "smtp.office365.com",
+		SMTP_PORT: 587,
+		SMTP_USERNAME: "admin@lockmesh.com",
+		SMTP_PASSWORD: "34e@2!2xder",
 
-	SMTP_FROM_EMAIL: SMTP_FROM_EMAIL,
-	SMTP_FROM_NAME: SMTP_FROM_NAME,
-	SMTP_COMMON_SUBJECT: `${APP_TITLE} -`,
+		SMTP_FROM_EMAIL: SMTP_FROM_EMAIL,
+		SMTP_FROM_NAME: SMTP_FROM_NAME,
+		SMTP_COMMON_SUBJECT: `${APP_TITLE} -`,
 
-	// Database Constants
-	DB_HOST: DB_HOST,
-	DB_NAME: DB_NAME,
-	DB_USERNAME: DB_USERNAME,
-	DB_PASSWORD: DB_PASSWORD,
+		// Database Constants
+		DB_HOST: DB_HOST,
+		DB_NAME: DB_NAME,
+		DB_USERNAME: DB_USERNAME,
+		DB_PASSWORD: DB_PASSWORD,
 
-	DEVICE_ID_SYSTEM_LETTER,
-	DEVICE_ID_SYSTEM_LETTER_INDEX,
+		DEVICE_ID_SYSTEM_LETTER,
+		DEVICE_ID_SYSTEM_LETTER_INDEX,
 
-	DEALER_PIN_SYSTEM_LETTER,
-	DEALER_PIN_SYSTEM_LETTER_INDEX,
+		DEALER_PIN_SYSTEM_LETTER,
+		DEALER_PIN_SYSTEM_LETTER_INDEX,
 
-	STAFF_ID_SYSTEM_LETTER,
-	STAFF_ID_SYSTEM_LETTER_INDEX,
+		STAFF_ID_SYSTEM_LETTER,
+		STAFF_ID_SYSTEM_LETTER_INDEX,
 
-	// Fixer API key
-	FIXER_API_KEY: "96035c5c5b46baea5a96b84930eaed79",
-	BASE_CURRENCY: "USD",
+		// Fixer API key
+		FIXER_API_KEY: "96035c5c5b46baea5a96b84930eaed79",
+		BASE_CURRENCY: "USD",
 
-	// SUPERADMIN URLs
-	SUPERADMIN_LOGIN_URL: `${
-		this.SUPERADMIN_URL
-		}/api/v1/auth/white_label_login`,
-	UPDATE_DEVICE_SUPERADMIN_URL: `${
-		this.SUPERADMIN_URL
-		}/api/v1/users/update_device_details`,
-	REQUEST_FOR_CREDITS: `${
-		this.SUPERADMIN_URL
-		}/api/v1/users/request_for_credits`,
+		// SUPERADMIN URLs
+		SUPERADMIN_LOGIN_URL: `${
+			this.SUPERADMIN_URL
+			}/api/v1/auth/white_label_login`,
+		UPDATE_DEVICE_SUPERADMIN_URL: `${
+			this.SUPERADMIN_URL
+			}/api/v1/users/update_device_details`,
+		REQUEST_FOR_CREDITS: `${
+			this.SUPERADMIN_URL
+			}/api/v1/users/request_for_credits`,
 
-	RESYNC_IDS: `${
-		this.SUPERADMIN_URL
-		}/api/v1/users/resync_ids`,
+		RESYNC_IDS: `${
+			this.SUPERADMIN_URL
+			}/api/v1/users/resync_ids`,
 
-	SUPERADMIN_USER_CREDENTIALS: {
-		email: "whiteLabelAdmin!786@gmial.com",
-		password: "whiteLabel@Admin!786"
-	}
-});
+		SUPERADMIN_USER_CREDENTIALS: {
+			email: "whiteLabelAdmin!786@gmial.com",
+			password: "whiteLabel@Admin!786"
+		}
+	});
