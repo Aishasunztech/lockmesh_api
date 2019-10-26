@@ -990,6 +990,7 @@ exports.createDeviceProfile = async function (req, res) {
 
                                                             let service_data = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date, total_credits ,service_expiry_date) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price} , '${expiry_date}')`
                                                             await sql.query(service_data);
+
                                                             if (hardwares.length) {
                                                                 let dealer_hardware_profit = 0
                                                                 let admin_hardware_profit = 0

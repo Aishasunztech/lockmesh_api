@@ -1356,13 +1356,11 @@ router.get('/getInvoiceId', userController.getInvoiceId);
 
 
 //reporting routes
-router.post('/reporting/product', reportingController.generateProductReport);
+router.post('/reports/product', reportingController.generateProductReport);
 router.post('/reports/hardware', reportingController.generateHardwareReport);
 router.post('/reports/invoice', reportingController.generateInvoiceReport);
 router.post('/reports/payment-history', reportingController.generatePaymentHistoryReport);
-
-//PDF generator
-router.post('/reports/pdf-generator', reportingController.generatePDFReport);
+router.post('/reports/sales', reportingController.generateSalesReport);
 
 
 module.exports = router;
