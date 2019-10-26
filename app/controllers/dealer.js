@@ -1345,6 +1345,8 @@ exports.dealerPermissions = async function (req, res) {
             tableName = 'policy'
         } else if (permissionType === 'domain') {
             tableName = 'domains'
+        } else if (permissionType === 'package') {
+            tableName = 'packages'
         }
         // if type not provided then send error message
         else {
@@ -1582,7 +1584,7 @@ exports.dealerPermissions = async function (req, res) {
                 } else {
                     return res.send({
                         status: false,
-                        msg: 'Permission not found'
+                        msg: 'Permission not available to remove'
                     })
                 }
             } else {

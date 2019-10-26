@@ -1423,18 +1423,46 @@ exports.getDomains = async function (req, res) {
     var verify = req.decoded;
 
     if (verify) {
-        let dealer_id = verify.user.dealer_id;
+        let loggedUserId = verify.user.dealer_id;
+        let loggedUserType = verify.user.user_type;
         let selectQ = '';
-       
 
         if (verify.user.user_type !== ADMIN) {
-            selectQ = `SELECT domains.*, dealer_permissions.permission_id, dealer_permissions.dealer_id FROM domains JOIN dealer_permissions ON (dealer_permissions.permission_id = domains.id) WHERE (dealer_permissions.dealer_id = ${dealer_id} OR dealer_permissions.dealer_id = 0) AND permission_type = 'domain'`;
+            selectQ = `SELECT domains.*, dealer_permissions.permission_id, dealer_permissions.dealer_id FROM domains JOIN dealer_permissions ON (dealer_permissions.permission_id = domains.id) WHERE (dealer_permissions.dealer_id = ${loggedUserId} OR dealer_permissions.dealer_id = 0) AND permission_type = 'domain'`;
         } else {
             selectQ = `SELECT * FROM domains`;
         }
         let selectDomains = await sql.query(selectQ);
 
-         console.log('get domains:: ', selectDomains);
+        if (loggedUserType === constants.ADMIN) {
+            let adminRoleId = await helpers.getUserTypeIDByName(loggedUserType);
+            dealerCount = await helpers.dealerCount(adminRoleId);
+        }
+        else if (loggedUserType === constants.DEALER) {
+            sdealerList = await sql.query(`SELECT dealer_id FROM dealers WHERE connected_dealer ='${loggedUserId}'`)
+            dealerCount = sdealerList ? sdealerList.length : 0;
+        }
+
+        let results = selectDomains;
+        for (var i = 0; i < results.length; i++) {
+            // console.log('result is: ', results[i])
+            let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
+
+            if (loggedUserType === constants.DEALER) {
+                permissions = permissions.filter(function (item) {
+                    for (let i = 0; i < sdealerList.length; i++) {
+                        if (item === sdealerList[i].dealer_id) {
+                            return item
+                        }
+                    }
+                })
+            }
+            let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
+            let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+            results[i].permission_count = permissionC;
+        }
+
+        console.log('get domains:: ', selectDomains);
         if (selectDomains && selectDomains.length) {
             res.send({
                 status: true,
