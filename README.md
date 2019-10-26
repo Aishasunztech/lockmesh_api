@@ -6,3 +6,9 @@ To start pm2 process on Live Lockmesh server
 
 To start pm2 process on Live Titan server
 `pm2 start start.json --env titanlocker`
+
+To start pm2 process on Live CryptPhoneC server
+`pm2 start start.json --env cpc`
+
+To start pm2 process on Live CryptPhoneK server
+`pm2 start start.json --env cpk`
