@@ -449,8 +449,12 @@ exports.acceptDevice = async function (req, res) {
                                                     }
 
                                                     let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages , total_credits, start_date, service_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${total_price} ,'${start_date}',  '${expiry_date}')`
-                                                    await sql.query(service_billing);
 
+                                                    let service_data_result = await sql.query(service_billing);
+
+                                                    if (service_data_result.affectedRows) {
+                                                        helpers.saveServiceSalesDetails(packages, products, loggedDealerType, usr_acc_id, service_data_result.insertId, pay_now)
+                                                    }
                                                     let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status, type) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${total_price} ,'credit' , '${transection_status}' , 'services')`
                                                     await sql.query(transection_credits)
 
@@ -604,40 +608,42 @@ exports.acceptDevice = async function (req, res) {
                                                         sql.query(applyQuery)
                                                     }
 
-                                                    let inv_no = await helpers.getInvoiceId()
-                                                    const invoice = {
-                                                        shipping: {
-                                                            name: verify.user.dealer_name,
-                                                            device_id: device_id,
-                                                            dealer_pin: verify.user.link_code,
-                                                            user_id: user_id
-                                                        },
-                                                        products: products,
-                                                        packages: packages,
-                                                        hardwares: hardwares,
-                                                        pay_now: pay_now,
-                                                        discount: discount,
-                                                        discountPercent: "5%",
-                                                        quantity: 1,
-                                                        subtotal: invoice_subtotal,
-                                                        paid: discounted_price,
-                                                        invoice_nr: inv_no
-                                                    };
+                                                    if (term !== '0') {
+                                                        let inv_no = await helpers.getInvoiceId()
+                                                        const invoice = {
+                                                            shipping: {
+                                                                name: verify.user.dealer_name,
+                                                                device_id: device_id,
+                                                                dealer_pin: verify.user.link_code,
+                                                                user_id: user_id
+                                                            },
+                                                            products: products,
+                                                            packages: packages,
+                                                            hardwares: hardwares,
+                                                            pay_now: pay_now,
+                                                            discount: discount,
+                                                            discountPercent: "5%",
+                                                            quantity: 1,
+                                                            subtotal: invoice_subtotal,
+                                                            paid: discounted_price,
+                                                            invoice_nr: inv_no
+                                                        };
 
-                                                    let fileName = "invoice-" + inv_no + ".pdf"
-                                                    let filePath = path.join(__dirname, "../../uploads/" + fileName)
-                                                    await createInvoice(invoice, filePath)
+                                                        let fileName = "invoice-" + inv_no + ".pdf"
+                                                        let filePath = path.join(__dirname, "../../uploads/" + fileName)
+                                                        await createInvoice(invoice, filePath)
 
-                                                    let attachment = {
-                                                        fileName: fileName,
-                                                        file: filePath
+                                                        let attachment = {
+                                                            fileName: fileName,
+                                                            file: filePath
+                                                        }
+
+                                                        sql.query(`INSERT INTO invoices (inv_no,user_acc_id,dealer_id,file_name ,end_user_payment_status) VALUES('${inv_no}',${usr_acc_id},${dealer_id}, '${fileName}' , '${endUser_pay_status}')`)
+
+                                                        html = 'You have accepted the link device request of ' + device_id + '.<br>Your Invoice is attached below. <br>';
+
+                                                        sendEmail("LINK DEVICE ACCEPTED.", html, verify.user.dealer_email, null, attachment);
                                                     }
-
-                                                    sql.query(`INSERT INTO invoices (inv_no,user_acc_id,dealer_id,file_name ,end_user_payment_status) VALUES('${inv_no}',${usr_acc_id},${dealer_id}, '${fileName}' , '${endUser_pay_status}')`)
-
-                                                    html = 'You have accepted the link device request of ' + device_id + '.<br>Your Invoice is attached below. <br>';
-
-                                                    sendEmail("LINK DEVICE ACCEPTED.", html, verify.user.dealer_email, null, attachment);
 
                                                     rsltq[0].finalStatus = device_helpers.checkStatus(rsltq[0])
 
@@ -663,7 +669,7 @@ exports.acceptDevice = async function (req, res) {
                                                         status: true,
                                                         msg: await helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record updated successfully"), // 'Record updated successfully.',
                                                         data: rsltq,
-                                                        credits: account_balance[0].credits,
+                                                        credits: account_balance[0] ? account_balance[0].credits : 0,
                                                     };
                                                     res.send(data);
                                                     return;
@@ -898,7 +904,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                     let service_data_result = await sql.query(service_data);
                                                     console.log(service_data_result);
                                                     if (service_data_result.affectedRows) {
-                                                        helpers.saveServiceSalesDetails(packages, products, loggedUserType, user_acc_id, service_data_result.insertId)
+                                                        helpers.saveServiceSalesDetails(packages, products, loggedUserType, user_acc_id, service_data_result.insertId, pay_now)
                                                     }
                                                     var transection_status = 'transferred'
                                                     if (!pay_now) {
@@ -1001,42 +1007,45 @@ exports.createDeviceProfile = async function (req, res) {
                                         update_credits_query = 'UPDATE financial_account_balance set due_credits = due_credits + ' + (total_price + hardwarePrice) + ' where dealer_id ="' + dealer_id + '"';
                                     }
                                     await sql.query(update_credits_query);
+                                    if (exp_month !== '0') {
+                                        let inv_no = await helpers.getInvoiceId()
+                                        const invoice = {
+                                            shipping: {
+                                                name: verify.user.dealer_name,
+                                                device_id: duplicate + " Pre-activaions",
+                                                dealer_pin: verify.user.link_code,
+                                                user_id: user_id
+                                            },
+                                            products: products,
+                                            packages: packages,
+                                            hardwares: hardwares,
+                                            pay_now: pay_now,
+                                            discount: discount,
+                                            discountPercent: "5%",
+                                            quantity: duplicate,
+                                            subtotal: invoice_subtotal,
+                                            paid: discounted_price,
+                                            invoice_nr: inv_no
+                                        };
 
-                                    let inv_no = await helpers.getInvoiceId()
-                                    const invoice = {
-                                        shipping: {
-                                            name: verify.user.dealer_name,
-                                            device_id: duplicate + " Pre-activaions",
-                                            dealer_pin: verify.user.link_code,
-                                            user_id: user_id
-                                        },
-                                        products: products,
-                                        packages: packages,
-                                        hardwares: hardwares,
-                                        pay_now: pay_now,
-                                        discount: discount,
-                                        discountPercent: "5%",
-                                        quantity: duplicate,
-                                        subtotal: invoice_subtotal,
-                                        paid: discounted_price,
-                                        invoice_nr: inv_no
-                                    };
+                                        let fileName = "invoice-" + inv_no + ".pdf"
+                                        let filePath = path.join(__dirname, "../../uploads/" + fileName)
+                                        await createInvoice(invoice, filePath)
 
-                                    let fileName = "invoice-" + inv_no + ".pdf"
-                                    let filePath = path.join(__dirname, "../../uploads/" + fileName)
-                                    await createInvoice(invoice, filePath)
+                                        let attachment = {
+                                            fileName: fileName,
+                                            file: filePath
+                                        }
 
-                                    let attachment = {
-                                        fileName: fileName,
-                                        file: filePath
+                                        sql.query(`INSERT INTO invoices (inv_no,user_acc_id,dealer_id,file_name , end_user_payment_status) VALUES('${inv_no}',${JSON.stringify(user_acc_ids)},${dealer_id}, '${fileName}' , '${endUser_pay_status}')`)
+
+                                        html = 'Amount of activation codes : ' + activationCodes.length + '<br> ' + 'Activation Codes are following : <br>' + activationCodes.join("<br>") + '.<br> Invoice is attached below. <br>';
+
+                                        sendEmail("Activation codes successfuly generated.", html, verify.user.dealer_email, null, attachment);
+                                    } else {
+                                        html = 'Amount of activation codes : ' + activationCodes.length + '<br> ' + 'Activation Codes are following : <br>' + activationCodes.join("<br>");
+                                        sendEmail("Activation codes successfuly generated.", html, verify.user.dealer_email, null, null);
                                     }
-
-                                    sql.query(`INSERT INTO invoices (inv_no,user_acc_id,dealer_id,file_name , end_user_payment_status) VALUES('${inv_no}',${JSON.stringify(user_acc_ids)},${dealer_id}, '${fileName}' , '${endUser_pay_status}')`)
-
-                                    html = 'Amount of activation codes : ' + activationCodes.length + '<br> ' + 'Activation Codes are following : <br>' + activationCodes.join("<br>") + '.<br> Invoice is attached below. <br>';
-
-                                    sendEmail("Activation codes successfuly generated.", html, verify.user.dealer_email, null, attachment);
-                                    // console.log("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name, dealers.connected_dealer from devices left join usr_acc on devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 and devices.device_id IN (" + deviceIds.join() + ")");
 
                                     let user_credits = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
                                     let account_balance = await sql.query(user_credits)
@@ -1098,7 +1107,7 @@ exports.createDeviceProfile = async function (req, res) {
                                         status: true,
                                         msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC_EMAIL_SEND], "Pre-activations added succcessfully.Email sends to your account"), // Pre-activations added succcessfully.Email sends to your account.
                                         "data": rsltq,
-                                        credits: account_balance[0].credits
+                                        credits: account_balance[0] ? account_balance[0].credits : 0
                                     };
                                     res.send({
                                         status: true,
@@ -1172,8 +1181,6 @@ exports.createDeviceProfile = async function (req, res) {
 
                                                             let remaining_credits = dealer_credits
 
-
-
                                                             let update_credits_query = '';
 
                                                             if (pay_now) {
@@ -1195,7 +1202,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                             let service_data = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date, total_credits ,service_expiry_date) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price} , '${expiry_date}')`
                                                             let service_data_result = await sql.query(service_data);
                                                             if (service_data_result.affectedRows) {
-                                                                helpers.saveServiceSalesDetails(packages, products, loggedUserType, user_acc_id, service_data_result.insertId)
+                                                                helpers.saveServiceSalesDetails(packages, products, loggedUserType, user_acc_id, service_data_result.insertId, pay_now)
                                                             }
 
                                                             if (hardwares.length) {
@@ -1287,42 +1294,45 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 var applyQuery = "INSERT INTO device_history (dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES (" + dealer_id + "," + user_acc_id + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
                                                                 sql.query(applyQuery)
                                                             }
-                                                            let inv_no = await helpers.getInvoiceId()
-                                                            const invoice = {
-                                                                shipping: {
-                                                                    name: verify.user.dealer_name,
-                                                                    device_id: "Pre-activaion",
-                                                                    dealer_pin: verify.user.link_code,
-                                                                    user_id: user_id
-                                                                },
-                                                                products: products,
-                                                                packages: packages,
-                                                                hardwares: hardwares,
-                                                                pay_now: pay_now,
-                                                                discount: discount,
-                                                                discountPercent: "5%",
-                                                                quantity: 1,
-                                                                subtotal: invoice_subtotal,
-                                                                paid: discounted_price,
-                                                                invoice_nr: inv_no
-                                                            };
+                                                            if (exp_month !== '0') {
+                                                                let inv_no = await helpers.getInvoiceId()
+                                                                const invoice = {
+                                                                    shipping: {
+                                                                        name: verify.user.dealer_name,
+                                                                        device_id: "Pre-activaion",
+                                                                        dealer_pin: verify.user.link_code,
+                                                                        user_id: user_id
+                                                                    },
+                                                                    products: products,
+                                                                    packages: packages,
+                                                                    hardwares: hardwares,
+                                                                    pay_now: pay_now,
+                                                                    discount: discount,
+                                                                    discountPercent: "5%",
+                                                                    quantity: 1,
+                                                                    subtotal: invoice_subtotal,
+                                                                    paid: discounted_price,
+                                                                    invoice_nr: inv_no
+                                                                };
 
-                                                            let fileName = "invoice-" + inv_no + ".pdf"
-                                                            let filePath = path.join(__dirname, "../../uploads/" + fileName)
-                                                            await createInvoice(invoice, filePath)
+                                                                let fileName = "invoice-" + inv_no + ".pdf"
+                                                                let filePath = path.join(__dirname, "../../uploads/" + fileName)
+                                                                await createInvoice(invoice, filePath)
 
-                                                            let attachment = {
-                                                                fileName: fileName,
-                                                                file: filePath
+                                                                let attachment = {
+                                                                    fileName: fileName,
+                                                                    file: filePath
+                                                                }
+
+                                                                let html = 'Pre-activation device created successfully. Invoice is attached below. <br>';
+                                                                sendEmail("Pre-Activation device creation.", html, verify.user.dealer_email, null, attachment)
+
+                                                                sql.query(`INSERT INTO invoices (inv_no,user_acc_id,dealer_id,file_name ,end_user_payment_status) VALUES('${inv_no}',${user_acc_id},${dealer_id}, '${fileName}' , '${endUser_pay_status}')`)
                                                             }
-
-                                                            let html = 'Pre-activation device created successfully. Invoice is attached below. <br>';
-                                                            sendEmail("Pre-Activation device creation.", html, verify.user.dealer_email, null, attachment)
 
                                                             let user_credits = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
                                                             let account_balance = await sql.query(user_credits)
 
-                                                            sql.query(`INSERT INTO invoices (inv_no,user_acc_id,dealer_id,file_name ,end_user_payment_status) VALUES('${inv_no}',${user_acc_id},${dealer_id}, '${fileName}' , '${endUser_pay_status}')`)
                                                             sql.query("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name, dealers.connected_dealer from devices left join usr_acc on devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 and devices.id='" + dvc_id + "'", async function (error, results, fields) {
 
                                                                 if (error) {
@@ -1365,7 +1375,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                                     status: true,
                                                                     msg: await helpers.convertToLang(req.translation[MsgConstants.PRE_ACTIV_ADD_SUCC], "Pre-activation added succcessfully."), // Pre-activation added succcessfully.
                                                                     data: results,
-                                                                    credits: account_balance[0].credits
+                                                                    credits: account_balance[0] ? account_balance[0].credits : 0
                                                                 };
 
                                                                 res.send({
@@ -1480,6 +1490,7 @@ exports.editDevices = async function (req, res) {
             let prevServiceProducts = []
             let serviceRemainingDays = 0
             let newServicePrice = 0
+            let prevServiceTotalDays = 0
             let pay_now = req.body.pay_now
             // if (pay_now) {
             //     total_price = total_price - (total_price * 0.03);
@@ -1609,17 +1620,18 @@ exports.editDevices = async function (req, res) {
                                             let prevServiceStartDate = moment(new Date(prevService.start_date))
                                             let dateNow = moment(new Date())
                                             serviceRemainingDays = prevServiceExpiryDate.diff(dateNow, 'days') + 1
-                                            let totalDays = prevServiceExpiryDate.diff(prevServiceStartDate, 'days')
-                                            // console.log(serviceRemainingDays, totalDays, preTotalPrice);
-                                            creditsToRefund = Math.floor((preTotalPrice / totalDays) * serviceRemainingDays)
-                                            // console.log(creditsToRefund);
+                                            prevServiceTotalDays = prevServiceExpiryDate.diff(prevServiceStartDate, 'days')
+                                            // console.log(serviceRemainingDays, prevServiceTotalDays, preTotalPrice);
+                                            creditsToRefund = ((preTotalPrice / prevServiceTotalDays) * serviceRemainingDays).toFixed(2)
+                                            console.log(creditsToRefund);
+                                            // return
                                             prevServicePaidPrice = preTotalPrice - creditsToRefund
 
                                             let profitLoss = await helpers.calculateProfitLoss(prevServicePackages, prevServiceProducts, loggedDealerType)
                                             prev_service_admin_profit = profitLoss.admin_profit
                                             prev_service_dealer_profit = profitLoss.dealer_profit
-                                            refund_prev_service_admin_profit = (prev_service_admin_profit / totalDays) * serviceRemainingDays
-                                            refund_prev_service_dealer_profit = (prev_service_dealer_profit / totalDays) * serviceRemainingDays
+                                            refund_prev_service_admin_profit = (prev_service_admin_profit / prevServiceTotalDays) * serviceRemainingDays
+                                            refund_prev_service_dealer_profit = (prev_service_dealer_profit / prevServiceTotalDays) * serviceRemainingDays
                                         }
                                     }
                                     // console.log(products);
@@ -1821,6 +1833,7 @@ exports.editDevices = async function (req, res) {
                                 let update_prev_service_billing = `UPDATE services_data set del_status = 1,paid_credits = ${prevServicePaidPrice}, end_date = '${date_now}' WHERE id = ${prevService.id} `
                                 await sql.query(update_prev_service_billing);
 
+                                helpers.updateRefundSaleDetails(usr_acc_id, prevService.id, serviceRemainingDays, prevServiceTotalDays)
 
                                 let transection_record = "SELECT * from financial_account_transections where user_dvc_acc_id = " + usr_acc_id + " AND user_id = '" + verify.user.id + "' AND type = 'services' ORDER BY id DESC LIMIT 1"
                                 let transection_record_data = await sql.query(transection_record)
@@ -1895,7 +1908,11 @@ exports.editDevices = async function (req, res) {
                             }
 
                             let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice} ,'${date_now}' ,'${expiry_date}')`
-                            await sql.query(service_billing);
+                            let service_data_result = await sql.query(service_billing);
+
+                            if (service_data_result.affectedRows) {
+                                helpers.saveServiceSalesDetails(packages, products, loggedDealerType, usr_acc_id, service_data_result.insertId, pay_now)
+                            }
 
                             let transection_status = 'transferred'
 
@@ -1935,7 +1952,8 @@ exports.editDevices = async function (req, res) {
                                     prevServicePackages: prevServicePackages,
                                     prevServiceProducts: prevServiceProducts,
                                     creditsToRefund: creditsToRefund,
-                                    serviceRemainingDays: serviceRemainingDays
+                                    serviceRemainingDays: serviceRemainingDays,
+                                    prevServiceTotalDays: prevServiceTotalDays
                                 },
                                 pay_now: pay_now,
                                 discount: (pay_now) ? Math.ceil(newServicePrice * 0.03) : 0,
@@ -2019,7 +2037,7 @@ exports.editDevices = async function (req, res) {
                                 "Record updated successfully"
                             ), // Record updated successfully.
                             data: rsltq,
-                            credits: results[0].credits,
+                            credits: results[0] ? results[0].credits : 0,
                         };
                         res.send(data);
                         return;
@@ -4323,12 +4341,12 @@ exports.deleteUnlinkDevice = async function (req, res) {
                     dealer_credits = dealer_credits + user_creditsRes[0].credits
                 }
             }
-            let refundedCredits = dealer_credits;
+            let refundedCredits = Number(dealer_credits);
 
             if (req.body.devices.length) {
                 if (action === 'unlink') {
                     for (let device of req.body.devices) {
-                        console.log(req.body.devices.length);
+                        // console.log(req.body.devices.length);
                         let deleteq = "UPDATE acc_action_history SET del_status='1' WHERE id='" + device.id + "' AND dealer_id = '" + verify.user.id + "' AND action = 'UNLINKED'";
                         // console.log('query is ', deleteq)
                         let resp = await sql.query(deleteq)
@@ -4375,9 +4393,13 @@ exports.deleteUnlinkDevice = async function (req, res) {
                             if (bills.length) {
                                 packages = JSON.parse(bills[0].packages)
                                 products = JSON.parse(bills[0].products)
+
                                 let currentDate = moment().format("YYYY/MM/DD");
                                 let updateBilling = "UPDATE services_data set del_status = '1' ,paid_credits = 0 , end_date = '" + currentDate + "' WHERE user_acc_id = " + user_acc_id;
+
                                 await sql.query(updateBilling);
+                                let updateSeviceSaleQuery = `UPDATE services_sale SET status = 'cancelled' WHERE user_acc_id = ${user_acc_id} AND service_data_id = ${bills[0].id}`
+                                sql.query(updateSeviceSaleQuery)
 
                                 let services_transection_record = "SELECT * from financial_account_transections where user_dvc_acc_id = " + user_acc_id + " AND user_id = '" + verify.user.id + "' AND type = 'services' ORDER BY id DESC LIMIT 1"
                                 let services_transection_record_data = await sql.query(services_transection_record)
@@ -4387,10 +4409,11 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                     await sql.query(update_transection)
                                     let update_profits_transections = "UPDATE financial_account_transections SET status = 'cancelled' WHERE user_dvc_acc_id = " + user_acc_id + " AND status = 'holding' AND type = 'services'"
                                     await sql.query(update_profits_transections)
-                                    let updateCredits = "UPDATE financial_account_balance set due_credits = due_credits - " + bills[0].total_credits + " WHERE dealer_id = " + verify.user.dealer_id
+                                    let updateCredits = "UPDATE financial_account_balance set due_credits = due_credits - " + Number(bills[0].total_credits) + " WHERE dealer_id = " + verify.user.dealer_id
                                     await sql.query(updateCredits);
-                                } else {
-                                    refundedCredits = refundedCredits + bills[0].total_credits;
+                                }
+                                else {
+                                    refundedCredits = refundedCredits + Number(bills[0].total_credits);
                                     let dealer_profit_query = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data ,credits , transection_type , type) VALUES (${verify.user.id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}', ${bills[0].total_credits} ,'debit' , 'services')`
                                     await sql.query(dealer_profit_query);
                                     if (device.expiry_months != 0) {
@@ -4409,7 +4432,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                 hardwares = []
                                 hardwaresData.map((hardware) => {
                                     hardwares.push(JSON.parse(hardware.hardware_data))
-                                    total_hardware_credits += hardware.total_credits
+                                    total_hardware_credits += Number(hardware.total_credits)
                                 })
 
                                 let hardware_transection_record = "SELECT * from financial_account_transections where user_dvc_acc_id = " + user_acc_id + " AND user_id = '" + verify.user.id + "' AND type = 'hardwares' ORDER BY id DESC LIMIT 1"
@@ -4420,10 +4443,10 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                     await sql.query(update_transection)
                                     let update_profits_transections = "UPDATE financial_account_transections SET status = 'cancelled' WHERE user_dvc_acc_id = " + user_acc_id + " AND status = 'holding' AND type = 'hardwares'"
                                     await sql.query(update_profits_transections)
-                                    let updateCredits = "UPDATE financial_account_balance set due_credits = due_credits - " + total_hardware_credits + " WHERE dealer_id = " + verify.user.dealer_id
+                                    let updateCredits = "UPDATE financial_account_balance set due_credits = due_credits - " + Number(total_hardware_credits) + " WHERE dealer_id = " + verify.user.dealer_id
                                     await sql.query(updateCredits);
                                 } else {
-                                    refundedCredits = refundedCredits + total_hardware_credits;
+                                    refundedCredits = refundedCredits + Number(total_hardware_credits);
                                     let dealer_profit_query = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data ,credits , transection_type , type) VALUES (${verify.user.id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}', ${total_hardware_credits} ,'debit' , 'hardwares')`
                                     await sql.query(dealer_profit_query);
 
@@ -4455,7 +4478,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                 let admin_profit_query = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data ,credits , transection_type , type) VALUES (${admin_data[0].dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}', ${admin_profit} ,'${type}' , 'services')`
                                 let profit_result = await sql.query(admin_profit_query);
                                 if (profit_result.insertId) {
-                                    await sql.query(`UPDATE financial_account_balance SET credits = credits - ${admin_profit} WHERE dealer_id = ${admin_data[0].dealer_id}`)
+                                    await sql.query(`UPDATE financial_account_balance SET credits = credits - ${Number(admin_profit)} WHERE dealer_id = ${admin_data[0].dealer_id}`)
                                 }
                             }
                             if (verify.user.user_type === constants.SDEALER && dealer_profit !== 0) {
@@ -4469,7 +4492,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                 let dealer_profit_query = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data ,credits , transection_type , type) VALUES (${admin_data[0].dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}', ${dealer_profit} ,'${type}' , 'services')`
                                 let profit_result = await sql.query(dealer_profit_query);
                                 if (profit_result.insertId) {
-                                    await sql.query(`UPDATE financial_account_balance SET credits = credits - ${dealer_profit} WHERE dealer_id = ${verify.user.connected_dealer}`)
+                                    await sql.query(`UPDATE financial_account_balance SET credits = credits - ${Number(dealer_profit)} WHERE dealer_id = ${verify.user.connected_dealer}`)
                                 }
                             }
                             if (admin_hardware_profit !== 0) {
@@ -4483,7 +4506,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                 let admin_profit_query = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data ,credits , transection_type , type) VALUES (${admin_data[0].dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}', ${admin_hardware_profit} ,'${type}' , 'services')`
                                 let profit_result = await sql.query(admin_profit_query);
                                 if (profit_result.insertId) {
-                                    await sql.query(`UPDATE financial_account_balance SET credits = credits - ${admin_hardware_profit} WHERE dealer_id = ${admin_data[0].dealer_id}`)
+                                    await sql.query(`UPDATE financial_account_balance SET credits = credits - ${Number(admin_hardware_profit)} WHERE dealer_id = ${admin_data[0].dealer_id}`)
                                 }
                             }
                             if (verify.user.user_type === constants.SDEALER && dealer_hardware_profit !== 0) {
@@ -4497,7 +4520,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                 let dealer_profit_query = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data ,credits , transection_type , type) VALUES (${admin_data[0].dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}', ${dealer_profit} ,'${type}' , 'services')`
                                 let profit_result = await sql.query(dealer_profit_query);
                                 if (profit_result.insertId) {
-                                    await sql.query(`UPDATE financial_account_balance SET credits = credits - ${dealer_hardware_profit} WHERE dealer_id = ${verify.user.connected_dealer}`)
+                                    await sql.query(`UPDATE financial_account_balance SET credits = credits - ${Number(dealer_hardware_profit)} WHERE dealer_id = ${verify.user.connected_dealer}`)
                                 }
                             }
                         }
@@ -4507,7 +4530,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
                         }
                     }
                     if (refundedCredits !== 0) {
-                        let updateCredits = "UPDATE financial_account_balance set credits = " + refundedCredits + " WHERE dealer_id = " + verify.user.dealer_id
+                        let updateCredits = "UPDATE financial_account_balance set credits = " + Number(refundedCredits) + " WHERE dealer_id = " + verify.user.dealer_id
                         await sql.query(updateCredits);
                     }
                     if (deleteError === 0) {

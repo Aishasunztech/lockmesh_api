@@ -1468,12 +1468,12 @@ module.exports = {
 			dealer_profit
 		}
 	},
-	saveServiceSalesDetails: async function (packages, products, loggedDealerType, user_acc_id, service_id) {
-		console.log(service_id);
+	saveServiceSalesDetails: async function (packages, products, loggedDealerType, user_acc_id, service_id, pay_now) {
 		let packagesIds = []
 		let productIds = []
 		var dealer_profit = 0
 		var admin_profit = 0
+		let discount = 0.03
 		packages.map((item) => {
 			packagesIds.push(item.id)
 		})
@@ -1512,11 +1512,15 @@ module.exports = {
 		})
 		if (loggedDealerType === Constants.DEALER) {
 			if (packagesData.length) {
-				packagesData.map(async (item) => {
+				packagesData.map((item) => {
 					if (item.dealer_type === 'super_admin') {
 						packages.map((pkg) => {
 							if (pkg.id === item.id) {
-								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_data, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id},'${JSON.stringify(pkg)}', 'package', ${pkg.pkg_price} , ${item.pkg_price} , 'delivered')`)
+								if (pay_now) {
+									pkg.pkg_price = pkg.pkg_price - (pkg.pkg_price * discount)
+									item.pkg_price = item.pkg_price - (item.pkg_price * discount)
+								}
+								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id ,item_id,item_data, item_type, item_term, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package','${pkg.pkg_term}' ,${pkg.pkg_price} , ${item.pkg_price} , 'delivered')`)
 							}
 						})
 					} else if (item.dealer_type === 'admin') {
@@ -1538,7 +1542,11 @@ module.exports = {
 								if (pkg.pkg_features.vpn) {
 									sa_total_price += sa_vpn_prices[item.pkg_term]
 								}
-								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id},'${JSON.stringify(pkg)}','${item.pkg_term}' ,'package', ${pkg.pkg_price} , ${sa_total_price} , 'delivered')`)
+								if (pay_now) {
+									pkg.pkg_price = pkg.pkg_price - (pkg.pkg_price * discount)
+									sa_total_price = sa_total_price - (sa_total_price * discount)
+								}
+								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id ,item_id ,  item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id}, '${JSON.stringify(pkg)}','${item.pkg_term}' ,'package', ${pkg.pkg_price} , ${sa_total_price} , 'delivered')`)
 							}
 						})
 					}
@@ -1548,19 +1556,44 @@ module.exports = {
 				pricesData.map(async (item) => {
 					if (item.price_for === "sim_id") {
 						// admin_profit += item.unit_price - sa_sim_prices[item.price_term]
-						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${sa_sim_prices[item.price_term]} , 'delivered')`)
+						let adminCostPrice = sa_sim_prices[item.price_term]
+						if (pay_now) {
+							item.unit_price = item.unit_price - (item.unit_price * discount)
+							adminCostPrice = sa_sim_prices[item.price_term] - (sa_sim_prices[item.price_term] * discount)
+						}
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id ,item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${adminCostPrice} , 'delivered')`)
 					}
 					else if (item.price_for === "SIM ID 2") {
-						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${sa_sim_prices[item.price_term]} , 'delivered')`)
+						let adminCostPrice = sa_sim_prices[item.price_term]
+						if (pay_now) {
+							item.unit_price = item.unit_price - (item.unit_price * discount)
+							adminCostPrice = sa_sim_prices[item.price_term] - (sa_sim_prices[item.price_term] * discount)
+						}
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id ,item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${adminCostPrice} , 'delivered')`)
 					}
 					else if (item.price_for === "chat_id") {
-						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${sa_chat_prices[item.price_term]} , 'delivered')`)
+						let adminCostPrice = sa_chat_prices[item.price_term]
+						if (pay_now) {
+							item.unit_price = item.unit_price - (item.unit_price * discount)
+							adminCostPrice = sa_chat_prices[item.price_term] - (sa_chat_prices[item.price_term] * discount)
+						}
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id ,item_id , item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${adminCostPrice} , 'delivered')`)
 					}
 					else if (item.price_for === "vpn") {
-						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${sa_vpn_prices[item.price_term]} , 'delivered')`)
+						let adminCostPrice = sa_vpn_prices[item.price_term]
+						if (pay_now) {
+							item.unit_price = item.unit_price - (item.unit_price * discount)
+							adminCostPrice = sa_vpn_prices[item.price_term] - (sa_vpn_prices[item.price_term] * discount)
+						}
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id ,item_id , item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${adminCostPrice} , 'delivered')`)
 					}
 					else if (item.price_for === "pgp_email") {
-						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id},'${JSON.stringify(item)}','${item.price_term}','product', ${item.unit_price} , ${sa_pgp_prices[item.price_term]} , 'delivered')`)
+						let adminCostPrice = sa_pgp_prices[item.price_term]
+						if (pay_now) {
+							item.unit_price = item.unit_price - (item.unit_price * discount)
+							adminCostPrice = sa_pgp_prices[item.price_term] - (sa_pgp_prices[item.price_term] * discount)
+						}
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id , item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}','${item.price_term}','product', ${item.unit_price} , ${adminCostPrice} , 'delivered')`)
 					}
 				})
 			}
@@ -1597,11 +1630,18 @@ module.exports = {
 							if (pkg.id === packagesData[i].id) {
 								if (adminPrice) {
 									admin_profit += adminPrice - packagesData[i].pkg_price
-									dealer_profit += pkg.pkg_price - adminPrice
-									sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_data, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id},'${JSON.stringify(pkg)}', 'package', ${packagesData[i].pkg_price} , ${adminPrice} , 'delivered')`)
+									if (pay_now) {
+										pkg.pkg_price = pkg.pkg_price - (pkg.pkg_price * discount)
+										packagesData[i].pkg_price = packagesData[i].pkg_price - (packagesData[i].pkg_price * discount)
+										adminPrice = adminPrice - (adminPrice * discount)
+									}
+									sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term,item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package', ${pkg.pkg_term}, ${pkg.pkg_price} ,${packagesData[i].pkg_price} , ${adminPrice} , 'delivered')`)
 								} else {
-									dealer_profit += pkg.pkg_price - packagesData[i].pkg_price
-									sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_data, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id},'${JSON.stringify(pkg)}', 'package', ${packagesData[i].pkg_price} , ${packagesData[i].pkg_price} , 'delivered')`)
+									if (pay_now) {
+										pkg.pkg_price = pkg.pkg_price - (pkg.pkg_price * discount)
+										packagesData[i].pkg_price = packagesData[i].pkg_price - (packagesData[i].pkg_price * discount)
+									}
+									sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package', ${pkg.pkg_term}, ${pkg.pkg_price} ,${packagesData[i].pkg_price} , ${packagesData[i].pkg_price} , 'delivered')`)
 								}
 							}
 						})
@@ -1625,9 +1665,12 @@ module.exports = {
 								if (pkg.pkg_features.vpn) {
 									sa_total_price += sa_vpn_prices[packagesData[i].pkg_term]
 								}
-								admin_profit += adminPrice - sa_total_price
-								dealer_profit += Number(pkg.pkg_price) - adminPrice
-								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_data, item_type, item_sale_price, item_admin_cost, item_dealer_cost, status) VALUES(${user_acc_id} , ${service_id},'${JSON.stringify(pkg)}', 'package', ${Number(pkg.pkg_price)} , ${Number(sa_total_price)} , ${adminPrice} , 'delivered')`)
+								if (pay_now) {
+									pkg.pkg_price = pkg.pkg_price - (pkg.pkg_price * discount)
+									sa_total_price = sa_total_price - (sa_total_price * discount)
+									adminPrice = adminPrice - (adminPrice * discount)
+								}
+								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package', ${pkg.pkg_term}, ${pkg.pkg_price} ,${sa_total_price} , ${adminPrice} , 'delivered')`)
 							}
 						})
 					}
@@ -1657,9 +1700,12 @@ module.exports = {
 									sa_total_price += sa_vpn_prices[packagesData[i].pkg_term]
 									admin_total_price += admin_vpn_prices[packagesData[i].pkg_term]
 								}
-								admin_profit += admin_total_price - sa_total_price
-								dealer_profit += Number(pkg.pkg_price) - admin_total_price
-								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_data, item_type, item_sale_price, item_admin_cost, item_dealer_cost, status) VALUES(${user_acc_id} , ${service_id},'${JSON.stringify(pkg)}', 'package', ${Number(pkg.pkg_price)} , ${Number(sa_total_price)} , ${adminPrice} , 'delivered')`)
+								if (pay_now) {
+									pkg.pkg_price = pkg.pkg_price - (pkg.pkg_price * discount)
+									sa_total_price = sa_total_price - (sa_total_price * discount)
+									admin_total_price = admin_total_price - (admin_total_price * discount)
+								}
+								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package', ${pkg.pkg_term}, ${pkg.pkg_price} ,${sa_total_price} , ${admin_total_price} , 'delivered')`)
 							}
 						})
 					}
@@ -1668,24 +1714,57 @@ module.exports = {
 			if (pricesData.length) {
 				pricesData.map(async (item) => {
 					if (item.price_for === "sim_id") {
-						admin_profit += admin_sim_prices[item.price_term] - sa_sim_prices[item.price_term]
-						dealer_profit += item.unit_price - admin_sim_prices[item.price_term]
+						let adminCostPrice = sa_sim_prices[item.price_term]
+						let dealerCostPrice = admin_sim_prices[item.price_term]
+						if (pay_now) {
+							item.unit_price = item.unit_price - (item.unit_price * discount)
+							adminCostPrice = sa_sim_prices[item.price_term] - (sa_sim_prices[item.price_term] * discount)
+							dealerCostPrice = admin_sim_prices[item.price_term] - (admin_sim_prices[item.price_term] * discount)
+						}
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}', 'product', ${item.price_term}, ${item.unit_price} ,${adminCostPrice} , ${dealerCostPrice} , 'delivered')`)
 					}
 					else if (item.price_for === "SIM ID 2") {
-						admin_profit += admin_sim_prices[item.price_term] - sa_sim_prices[item.price_term]
-						dealer_profit += item.unit_price - admin_sim_prices[item.price_term]
+						let adminCostPrice = sa_sim_prices[item.price_term]
+						let dealerCostPrice = admin_sim_prices[item.price_term]
+						if (pay_now) {
+							item.unit_price = item.unit_price - (item.unit_price * discount)
+							adminCostPrice = sa_sim_prices[item.price_term] - (sa_sim_prices[item.price_term] * discount)
+							dealerCostPrice = admin_sim_prices[item.price_term] - (admin_sim_prices[item.price_term] * discount)
+						}
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}', 'product', ${item.price_term}, ${item.unit_price} ,${adminCostPrice} , ${dealerCostPrice} , 'delivered')`)
+
 					}
 					else if (item.price_for === "chat_id") {
-						admin_profit += admin_chat_prices[item.price_term] - sa_chat_prices[item.price_term]
-						dealer_profit += item.unit_price - admin_chat_prices[item.price_term]
+						let adminCostPrice = sa_chat_prices[item.price_term]
+						let dealerCostPrice = admin_chat_prices[item.price_term]
+						if (pay_now) {
+							item.unit_price = item.unit_price - (item.unit_price * discount)
+							adminCostPrice = sa_chat_prices[item.price_term] - (sa_chat_prices[item.price_term] * discount)
+							dealerCostPrice = admin_chat_prices[item.price_term] - (admin_chat_prices[item.price_term] * discount)
+						}
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}', 'product', ${item.price_term}, ${item.unit_price} ,${adminCostPrice} , ${dealerCostPrice} , 'delivered')`)
+
 					}
 					else if (item.price_for === "vpn") {
-						admin_profit += admin_vpn_prices[item.price_term] - sa_vpn_prices[item.price_term]
-						dealer_profit += item.unit_price - admin_vpn_prices[item.price_term]
+						let adminCostPrice = sa_vpn_prices[item.price_term]
+						let dealerCostPrice = admin_vpn_prices[item.price_term]
+						if (pay_now) {
+							item.unit_price = item.unit_price - (item.unit_price * discount)
+							adminCostPrice = sa_vpn_prices[item.price_term] - (sa_vpn_prices[item.price_term] * discount)
+							dealerCostPrice = admin_vpn_prices[item.price_term] - (admin_vpn_prices[item.price_term] * discount)
+						}
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}', 'product', ${item.price_term}, ${item.unit_price} ,${adminCostPrice} , ${dealerCostPrice} , 'delivered')`)
+
 					}
 					else if (item.price_for === "pgp_email") {
-						admin_profit += admin_pgp_prices[item.price_term] - sa_pgp_prices[item.price_term]
-						dealer_profit += item.unit_price - admin_pgp_prices[item.price_term]
+						let adminCostPrice = sa_pgp_prices[item.price_term]
+						let dealerCostPrice = admin_pgp_prices[item.price_term]
+						if (pay_now) {
+							item.unit_price = item.unit_price - (item.unit_price * discount)
+							adminCostPrice = sa_pgp_prices[item.price_term] - (sa_pgp_prices[item.price_term] * discount)
+							dealerCostPrice = admin_pgp_prices[item.price_term] - (admin_pgp_prices[item.price_term] * discount)
+						}
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}', 'product', ${item.price_term}, ${item.unit_price} ,${adminCostPrice} , ${dealerCostPrice} , 'delivered')`)
 					}
 				})
 			}
@@ -1695,6 +1774,27 @@ module.exports = {
 			admin_profit,
 			dealer_profit
 		}
+	},
+
+	updateRefundSaleDetails: async function (user_acc_id, service_id, serviceRemainingDays, prevServiceTotalDays) {
+		let serviceSalesQuery = `SELECT * FROM services_sale WHERE service_data_id = ${service_id} AND user_acc_id = ${user_acc_id}`
+		sql.query(serviceSalesQuery, function (err, result) {
+			if (err) {
+				return
+			}
+			if (result.length) {
+				result.map((item) => {
+					let paid_sale_price = item.item_sale_price - ((item.item_sale_price / prevServiceTotalDays) * serviceRemainingDays).toFixed(2);
+					let paid_admin_cost = item.item_admin_cost - (item.item_admin_cost / prevServiceTotalDays * serviceRemainingDays).toFixed(2);
+					let paid_dealer_cost = item.item_dealer_cost - (item.item_dealer_cost / prevServiceTotalDays * serviceRemainingDays).toFixed(2);
+					let dateNow = moment().format("YYYY-MM-DD HH:mm:ss")
+					let updateSaleDetails = `UPDATE services_sale SET paid_sale_price = ${paid_sale_price}, paid_admin_cost = ${paid_admin_cost} , paid_dealer_cost = ${paid_dealer_cost} , status = 'returned' , end_date = '${dateNow}' WHERE user_acc_id = ${user_acc_id} AND service_data_id = ${service_id}`
+					sql.query(updateSaleDetails)
+				})
+			}
+		});
+
+
 	},
 
 	calculateHardwareProfitLoss: async function (hardwares, loggedDealerType) {
