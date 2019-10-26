@@ -197,6 +197,12 @@ exports.devices = async function (req, res) {
                     };
                     res.send(data);
                     return;
+                } else {
+                    data = {
+                        status: false,
+                        data: []
+                    };
+                    return res.send(data)
                 }
             }
         );
