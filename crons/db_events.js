@@ -1,7 +1,14 @@
 var { DBEvents } = require('../config/database');
 const MySQLEvents = require('@rodrigogs/mysql-events');
+
 const constants = require('../config/constants');
-// const sockets = require('../routes/sockets');
+
+const sockets = require("../routes/sockets");
+
+// helpers
+const { sql } = require("../config/database");
+const socket_helpers = require("../helper/socket_helper");
+
 
 exports.deviceQueue = async function () {
     await DBEvents.start();
@@ -10,24 +17,27 @@ exports.deviceQueue = async function () {
         name: 'device_queue',
         expression: `${constants.DB_NAME}.device_history`,
         statement: MySQLEvents.STATEMENTS.ALL,
-        onEvent: (event) => { // You will receive the events here
-            // console.log('queue: ', event.affectedRows);
-            // console.log('socket:', sockets);
+        onEvent: (event) => { 
+            if(event.type === 'INSERT'){
+                socket_helpers.sendJobToPanel(sockets.baseIo, event.affectedRows[0].after);
+            } else if (event.type === 'UPDATE'){
 
+            }
+            
         },
     });
 
-    DBEvents.addTrigger({
-        name: 'check_device_online',
-        expression: `${constants.DB_NAME}.devices`,
-        statement: MySQLEvents.STATEMENTS.UPDATE,
-        // type: 'UPDATE',
-        onEvent: (event) => {
-            if(event.type === 'UPDATE' && event.affectedColumns.includes('online')){
-                // console.log(sockets);
-            }
-        }
-    });
+    // DBEvents.addTrigger({
+    //     name: 'check_device_online',
+    //     expression: `${constants.DB_NAME}.devices`,
+    //     statement: MySQLEvents.STATEMENTS.UPDATE,
+    //     // type: 'UPDATE',
+    //     onEvent: (event) => {
+    //         if(event.type === 'UPDATE' && event.affectedColumns.includes('online')){
+    //             // console.log(sockets);
+    //         }
+    //     }
+    // });
     DBEvents.on(MySQLEvents.EVENTS.CONNECTION_ERROR, console.error);
     DBEvents.on(MySQLEvents.EVENTS.ZONGJI_ERROR, console.error);
 }

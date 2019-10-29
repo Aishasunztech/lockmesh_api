@@ -33,6 +33,7 @@ socketRoutes.baseSocket(io);
 // dealerIo.attach(server);
 // socketRoutes.dealerSocket(dealerIo);
 
+events.deviceQueue()
 /**
  * Listen on provided port, on all network interfaces.
  */
