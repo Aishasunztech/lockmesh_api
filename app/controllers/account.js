@@ -1428,35 +1428,56 @@ exports.getDomains = async function (req, res) {
         let selectQ = '';
 
         if (verify.user.user_type !== ADMIN) {
-            selectQ = `SELECT domains.*, dealer_permissions.permission_id, dealer_permissions.dealer_id FROM domains JOIN dealer_permissions ON (dealer_permissions.permission_id = domains.id) WHERE (dealer_permissions.dealer_id = ${loggedUserId} OR dealer_permissions.dealer_id = 0) AND permission_type = 'domain'`;
+            selectQ = `SELECT domains.*, dealer_permissions.permission_id, dealer_permissions.dealer_id, dealer_permissions.permission_by FROM domains JOIN dealer_permissions ON (dealer_permissions.permission_id = domains.id) WHERE (dealer_permissions.dealer_id = ${loggedUserId} OR (dealer_permissions.dealer_id = 0 AND permission_by != ${loggedUserId})) AND permission_type = 'domain'`;
         } else {
             selectQ = `SELECT * FROM domains`;
         }
+        console.log("selectDomains selectQ ", selectQ)
         let selectDomains = await sql.query(selectQ);
 
-        if (loggedUserType === constants.ADMIN) {
-            let adminRoleId = await helpers.getUserTypeIDByName(loggedUserType);
-            dealerCount = await helpers.dealerCount(adminRoleId);
-        }
-        else if (loggedUserType === constants.DEALER) {
-            sdealerList = await sql.query(`SELECT dealer_id FROM dealers WHERE connected_dealer ='${loggedUserId}'`)
-            dealerCount = sdealerList ? sdealerList.length : 0;
-        }
+        // get all dealers under admin or sdealers under dealer
+        let userDealers = await helpers.getUserDealers(loggedUserType, loggedUserId);
+        console.log("userDealers ", userDealers);
+        sdealerList = userDealers.dealerList;
+        dealerCount = userDealers.dealerCount;
+
+        // if (loggedUserType === constants.ADMIN) {
+        //     let adminRoleId = await helpers.getUserTypeIDByName(loggedUserType);
+        //     dealerCount = await helpers.dealerCount(adminRoleId);
+        // }
+        // else if (loggedUserType === constants.DEALER) {
+        //     dealerCount = sdealerList ? sdealerList.length : 0;
+        // }
+        // console.log("dealerCount ", dealerCount);
 
         let results = selectDomains;
         for (var i = 0; i < results.length; i++) {
-            // console.log('result is: ', results[i])
+            let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'domain', loggedUserId);
+
+            if (permissionDealers == '0') {
+                // console.log("sdealerList ", sdealerList)
+                // results[i].dealers = JSON.stringify(sdealerList.map((sd) => sd.dealer_id));
+                results[i].dealers = JSON.stringify(sdealerList);
+            } else {
+                results[i].dealers = permissionDealers;
+            }
             let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
+            // console.log("permissionDealers ==> ", permissions);
 
             if (loggedUserType === constants.DEALER) {
-                permissions = permissions.filter(function (item) {
-                    for (let i = 0; i < sdealerList.length; i++) {
-                        if (item === sdealerList[i].dealer_id) {
-                            return item
-                        }
-                    }
-                })
+                permissions = permissions.filter((item) => sdealerList.includes(item))
             }
+            // if (permissions.length) {
+            // if (loggedUserType === constants.DEALER) {
+            //     permissions = permissions.filter(function (item) {
+            //         for (let i = 0; i < sdealerList.length; i++) {
+            //             if (item === sdealerList[i].dealer_id) {
+            //                 return item
+            //             }
+            //         }
+            //     })
+            // }
+            // }
             let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
             let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
             results[i].permission_count = permissionC;
