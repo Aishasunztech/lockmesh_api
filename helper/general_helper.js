@@ -1610,7 +1610,7 @@ module.exports = {
 		}
 		else if (loggedUserType === "dealer") {
 			dealerList = await sql.query(`SELECT dealer_id FROM dealers WHERE connected_dealer ='${loggedUserId}'`)
-			dealerCount = sdealerList ? sdealerList.length : 0;
+			dealerCount = dealerList ? dealerList.length : 0;
 		}
 
 		dealerList = dealerList.map((dealer) => dealer.dealer_id);

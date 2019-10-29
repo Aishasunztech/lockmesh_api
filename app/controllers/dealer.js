@@ -1342,64 +1342,61 @@ exports.dealerPermissions = async function (req, res) {
         let allDealers = [];
 
         prevPermissionsQ = `SELECT dealer_id FROM dealer_permissions WHERE permission_id = ${permissionId} AND permission_type ='${permissionType}' AND permission_by = ${loggedUserId}`;
-        console.log("prevPermissionsQ ", prevPermissionsQ)
+        // console.log("prevPermissionsQ ", prevPermissionsQ)
 
         let getPermissionDealers = await sql.query(prevPermissionsQ);
-        console.log("getPermissionDealers ", getPermissionDealers)
+        // console.log("getPermissionDealers ", getPermissionDealers)
 
         if (getPermissionDealers.length > 0) {
             if (getPermissionDealers[0].dealer_id == 0) {
                 prevParsDealers = 0;
-                allDealers = await general_helpers.getUserDealers(loggedUserType, loggedUserId);
+                let dealerData = await general_helpers.getUserDealers(loggedUserType, loggedUserId);
+                allDealers = dealerData.dealerList;
             } else {
                 prevParsDealers = getPermissionDealers.map((prm) => prm.dealer_id);
             }
         }
-        console.log("prevParsDelaer", prevParsDealers);
+        // console.log("prevParsDelaer", prevParsDealers);
 
-        console.log("selected", dealers);
+        // console.log("selected", dealers);
         let newDealers = JSON.parse(dealers); // dealers from client side to permit
 
         if (newDealers.length) {
 
             if (prevParsDealers === 0) {
                 if (action === 'delete') {
-                    let sdealerList = [];
-                    console.log('prev data is Zero:: del func');
-                    console.log('new dealers are: ', newDealers);
 
-                    // if (loggedUserType === constants.ADMIN) {
-                    //     let adminRoleId = await general_helpers.getUserTypeIDByName(loggedUserType);
-                    //     sdealerList = await sql.query(`SELECT * FROM dealers WHERE type!=${adminRoleId} AND type != 4 AND type !=5 ORDER BY created DESC`)
-                    // }
-                    // else if (loggedUserType === constants.DEALER) {
-                    //     sdealerList = await sql.query(`SELECT dealer_id FROM dealers WHERE connected_dealer ='${loggedUserId}'`)
-                    // }
-
-                    // let allDealers = sdealerList.map((sd) => sd.dealer_id);
-                    prevParsDealers = allDealers.filter((dealerId) => !newDealers.includes(dealerId))
-                    console.log("prevParsDelaer delete func for all dealers: ", prevParsDealers);
-
-                    console.log("prevParsDealers, permissionType, permissionId, loggedUserId ::", getPermissionDealers, prevParsDealers, permissionType, permissionId, loggedUserId)
+                    // console.log("prevParsDealers, permissionType, permissionId, loggedUserId ::", getPermissionDealers, prevParsDealers, permissionType, permissionId, loggedUserId)
                     // let responseData = await general_helpers.savePermission(prevParsDealers, permissionType, permissionId, loggedUserId)
 
                     let deleteNotIn = `DELETE FROM dealer_permissions WHERE permission_id = ${permissionId} AND permission_type='${permissionType}' AND permission_by=${loggedUserId}`;
-                    console.log("deleteNotIn: ", deleteNotIn);
+                    // console.log("deleteNotIn: ", deleteNotIn);
                     let deleteDealers = await sql.query(deleteNotIn);
 
                     if (deleteDealers.affectedRows) {
+                        // console.log("allDealers ", allDealers);
+                        prevParsDealers = allDealers.filter((dealerId) => !newDealers.includes(dealerId))
+                        // console.log("prevParsDelaer delete func for all dealers: ", prevParsDealers);
 
-                        let responseData = await general_helpers.savePermission(getPermissionDealers, prevParsDealers, permissionType, permissionId, loggedUserId)
-                        console.log("responseData ", responseData);
-                        if (responseData.status) {
+                        if (prevParsDealers.length) {
+
+                            let responseData = await general_helpers.savePermission(getPermissionDealers, prevParsDealers, permissionType, permissionId, loggedUserId)
+                            console.log("responseData ", responseData);
+                            if (responseData.status) {
+                                return res.send({
+                                    status: true,
+                                    msg: 'Permission remove successfully'
+                                })
+                            } else {
+                                return res.send({
+                                    status: false,
+                                    msg: 'Failed to remove permission'
+                                })
+                            }
+                        } else {
                             return res.send({
                                 status: true,
                                 msg: 'Permission remove successfully'
-                            })
-                        } else {
-                            return res.send({
-                                status: false,
-                                msg: 'Failed to remove permission'
                             })
                         }
                     } else {
@@ -1408,6 +1405,7 @@ exports.dealerPermissions = async function (req, res) {
                             msg: 'Permission not found'
                         })
                     }
+
 
                 } else {
                     return res.send({

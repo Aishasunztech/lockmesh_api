@@ -23,6 +23,7 @@ exports.apkList = async function (req, res) {
 
     if (verify) {
         let loggedUserType = verify.user.user_type;
+        let loggedUserId = verify.user.dealer_id;
 
         if (loggedUserType === Constants.ADMIN) {
             selectQ = `SELECT * FROM apk_details WHERE delete_status=0 AND apk_type != 'permanent' ORDER BY id ASC`
@@ -58,14 +59,19 @@ exports.apkList = async function (req, res) {
                     let sdealerList = [];
 
                     if (loggedUserType !== Constants.AUTO_UPDATE_ADMIN) {
-                        if (loggedUserType === Constants.ADMIN) {
-                            let adminRoleId = await helpers.getUserTypeIDByName(loggedUserType);
-                            dealerCount = await helpers.dealerCount(adminRoleId);
-                        }
-                        else if (loggedUserType === Constants.DEALER) {
-                            sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
-                            dealerCount = sdealerList ? sdealerList.length : 0;
-                        }
+                        // if (loggedUserType === Constants.ADMIN) {
+                        //     let adminRoleId = await helpers.getUserTypeIDByName(loggedUserType);
+                        //     dealerCount = await helpers.dealerCount(adminRoleId);
+                        // }
+                        // else if (loggedUserType === Constants.DEALER) {
+                        //     sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                        //     dealerCount = sdealerList ? sdealerList.length : 0;
+                        // }
+                        // get all dealers under admin or sdealers under dealer
+                        let userDealers = await helpers.getUserDealers(loggedUserType, loggedUserId);
+                        // console.log("userDealers ", userDealers);
+                        sdealerList = userDealers.dealerList;
+                        dealerCount = userDealers.dealerCount;
                     }
                     for (var i = 0; i < results.length; i++) {
                         let permissions = [];
@@ -73,17 +79,25 @@ exports.apkList = async function (req, res) {
                         let permissionC = 0;
 
                         if (loggedUserType !== Constants.AUTO_UPDATE_ADMIN) {
+                            let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'apk', loggedUserId);
+                            if (permissionDealers == '0') {
+                                results[i].dealers = JSON.stringify(sdealerList);
+                            } else {
+                                results[i].dealers = permissionDealers;
+                            }
+
                             policies = await sql.query(`SELECT * FROM policy LEFT JOIN policy_apps on (policy.id = policy_apps.policy_id) WHERE policy_apps.apk_id=${results[i].id} AND policy.delete_status=0`)
                             permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
 
                             if (loggedUserType === Constants.DEALER) {
-                                permissions = permissions.filter(function (item) {
-                                    for (let i = 0; i < sdealerList.length; i++) {
-                                        if (item === sdealerList[i].dealer_id) {
-                                            return item
-                                        }
-                                    }
-                                })
+                                permissions = permissions.filter((item) => sdealerList.includes(item))
+                                // permissions = permissions.filter(function (item) {
+                                //     for (let i = 0; i < sdealerList.length; i++) {
+                                //         if (item === sdealerList[i].dealer_id) {
+                                //             return item
+                                //         }
+                                //     }
+                                // })
                             }
 
                             let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
