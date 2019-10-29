@@ -1492,6 +1492,9 @@ exports.editDevices = async function (req, res) {
             let newServicePrice = 0
             let prevServiceTotalDays = 0
             let pay_now = req.body.pay_now
+            let cancelService = req.body.cancelService ? req.body.cancelService : false
+
+            console.log("Cancel Services", cancelService);
             // if (pay_now) {
             //     total_price = total_price - (total_price * 0.03);
             // }
@@ -1830,7 +1833,7 @@ exports.editDevices = async function (req, res) {
 
 
                             if (prevService) {
-                                let update_prev_service_billing = `UPDATE services_data set del_status = 1,paid_credits = ${prevServicePaidPrice}, end_date = '${date_now}' WHERE id = ${prevService.id} `
+                                let update_prev_service_billing = `UPDATE services_data set status = 'returned',paid_credits = ${prevServicePaidPrice}, end_date = '${date_now}' WHERE id = ${prevService.id} `
                                 await sql.query(update_prev_service_billing);
 
                                 helpers.updateRefundSaleDetails(usr_acc_id, prevService.id, serviceRemainingDays, prevServiceTotalDays)
@@ -1981,6 +1984,11 @@ exports.editDevices = async function (req, res) {
 
                         }
 
+                        if (cancelService) {
+                            let query = "UPDATE services_data SET status = 'request_for_cancel' WHERE user_acc_id = " + usr_acc_id + " AND  status = 'active'"
+                            await sql.query(query);
+                        }
+
                         let user_credits_q = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
                         let results = await sql.query(user_credits_q)
 
@@ -2030,7 +2038,7 @@ exports.editDevices = async function (req, res) {
                         }
                         data = {
                             status: true,
-                            msg: await helpers.convertToLang(
+                            msg: cancelService ? "Request has been submitted to cancel your services." : await helpers.convertToLang(
                                 req.translation[
                                 MsgConstants.RECORD_UPD_SUCC
                                 ],
@@ -4383,7 +4391,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
                     for (let device of req.body.devices) {
                         if (action == 'pre-active') {
                             let user_acc_id = device.id
-                            let getBillingPkgs = "select * from services_data where user_acc_id = " + user_acc_id + " AND del_status = 0"
+                            let getBillingPkgs = "select * from services_data where user_acc_id = " + user_acc_id + " AND status = 'active'"
                             let bills = await sql.query(getBillingPkgs);
                             let getHardwares = "select * from hardwares_data where user_acc_id = " + user_acc_id + " AND status = 'delivered'"
                             let hardwaresData = await sql.query(getHardwares);
@@ -4395,7 +4403,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                 products = JSON.parse(bills[0].products)
 
                                 let currentDate = moment().format("YYYY/MM/DD");
-                                let updateBilling = "UPDATE services_data set del_status = '1' ,paid_credits = 0 , end_date = '" + currentDate + "' WHERE user_acc_id = " + user_acc_id;
+                                let updateBilling = "UPDATE services_data set status = 'deleted' ,paid_credits = 0 , end_date = '" + currentDate + "' WHERE user_acc_id = " + user_acc_id;
 
                                 await sql.query(updateBilling);
                                 let updateSeviceSaleQuery = `UPDATE services_sale SET status = 'cancelled' WHERE user_acc_id = ${user_acc_id} AND service_data_id = ${bills[0].id}`

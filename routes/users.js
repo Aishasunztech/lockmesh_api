@@ -1246,6 +1246,13 @@ router.put("/delete_request/:id", billingController.deleteRequest);
 
 router.put("/accept_request/:id", billingController.acceptRequest);
 
+router.put("/delete_service_request/:id", billingController.deleteServiceRequest);
+
+router.put("/accept_service_request/:id", billingController.acceptServiceRequest);
+
+router.get("/get-cancel-service-requests", billingController.getCancelServiceRequests);
+
+
 /*** Create Backup ***/
 router.post("/create_backup_DB", backupController.createBackupDB);
 

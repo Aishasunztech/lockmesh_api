@@ -5,6 +5,7 @@ const { sql } = require('../../config/database');
 const MsgConstants = require('../../constants/MsgConstants');
 const helpers = require('../../helper/general_helper');
 const constants = require('../../constants/Application');
+const moment = require('moment');
 // constants
 const ADMIN = "admin";
 const DEALER = "dealer";
@@ -108,6 +109,106 @@ exports.acceptRequest = async function (req, res) {
             })
         } catch (error) {
             console.log(error);
+        }
+    }
+}
+exports.acceptServiceRequest = async function (req, res) {
+    var verify = req.decoded; // await verifyToken(req, res);
+
+    if (verify) {
+        try {
+            let id = req.params.id
+            let query = "SELECT * from services_data where id = " + id + " and  status = 'request_for_cancel'"
+            // console.log(query);
+            sql.query(query, async function (err, result) {
+                if (err) {
+                    console.log(err);
+                }
+                if (result.length) {
+                    sql.query("update services_data set status = 'cancelled' where id = " + id, async function (err, reslt) {
+                        if (err) {
+                            data = {
+                                "status": false,
+                                msg: await helpers.convertToLang(req.translation[""], "Internal Server Error. Please try again"), // "Request is already deleted"
+                            };
+                            res.send(data);
+                            return
+                        }
+                        if (reslt && reslt.affectedRows > 0) {
+                            res.send({
+                                status: true,
+                                msg: await helpers.convertToLang(req.translation[""], "Services has been cancalled successfully from device."), // "Credits added successfully.",
+                            })
+                            return
+                        }
+                    })
+                } else {
+                    data = {
+                        "status": false,
+                        msg: await helpers.convertToLang(req.translation[""], "Request not found on server. Please try again"), // "Request is already deleted"
+                    };
+                    res.send(data);
+                    return
+                }
+            })
+        } catch (error) {
+            console.log(error);
+        }
+    }
+}
+
+exports.deleteServiceRequest = async function (req, res) {
+    var verify = req.decoded; // await verifyToken(req, res);
+
+    if (verify) {
+        try {
+            let id = req.params.id
+            let query = "SELECT * from services_data where id = " + id + " and  status = 'request_for_cancel'"
+            console.log(query);
+            sql.query(query, async function (err, result) {
+                if (err) {
+                    data = {
+                        "status": false,
+                        msg: await helpers.convertToLang(req.translation[""], "Internal server error. Please Try again"), // "Request is already deleted"
+                    };
+                    res.send(data);
+                    return
+                }
+                if (result.length) {
+
+                    let updateQuery = "update services_data set status = 'active' where id= " + id
+                    sql.query(updateQuery, async function (err, result) {
+                        if (err) {
+                            console.log(err);
+                        }
+                        if (result && result.affectedRows > 0) {
+                            data = {
+                                "status": true,
+                                "msg": await helpers.convertToLang(req.translation[""], "Request rejected successfully"), // Request deleted successfully."
+                            };
+                            res.send(data);
+                            return
+                        } else {
+                            data = {
+                                "status": false,
+                                "msg": await helpers.convertToLang(req.translation[""], "Request not rejected please try again"), // Request not deleted please try again."
+                            };
+                            res.send(data);
+                            return
+                        }
+                    })
+
+                } else {
+                    data = {
+                        "status": false,
+                        msg: await helpers.convertToLang(req.translation[""], "Request Not found. Please try again later."), // "Request is already deleted"
+                    };
+                    res.send(data);
+                    return
+                }
+            })
+        } catch (error) {
+            console.log(error)
         }
     }
 }
@@ -1513,5 +1614,59 @@ exports.editSaHardware = async function (req, res) {
         } else {
             res.send({ status: false });
         }
+    }
+}
+exports.getCancelServiceRequests = async function (req, res) {
+    var verify = req.decoded;
+
+    if (verify) {
+
+
+
+        let requestsQuery = `SELECT s.*,
+        d.device_id AS device_id , ua.link_code as dealer_pin
+           FROM services_data AS s
+           JOIN usr_acc AS ua
+               ON ua.id = s.user_acc_id
+           JOIN devices AS d
+               ON ua.device_id = d.id
+           WHERE s.status = 'request_for_cancel' ORDER BY  s.id DESC`
+
+        sql.query(requestsQuery, function (err, results) {
+            if (err) {
+                console.log(err);
+                return res.send({
+                    status: false,
+                    data: []
+                })
+            }
+            if (results.length) {
+                console.log(results);
+                // let currentDate = moment()                let service_term = moment(request.service_expiry_date).diff(moment(request.start_date), 'month', true)
+
+                results.map((request) => {
+                    let preTotalPrice = request.total_credits
+                    let requestExpiryDate = moment(new Date(request.service_expiry_date))
+                    let requestStartDate = moment(new Date(request.start_date))
+                    let dateNow = moment(new Date())
+                    let serviceRemainingDays = requestExpiryDate.diff(dateNow, 'days') + 1
+                    let totalDays = requestExpiryDate.diff(requestStartDate, 'days')
+                    let creditsToRefund = Math.floor((preTotalPrice / totalDays) * serviceRemainingDays)
+                    let service_term = requestExpiryDate.diff(requestStartDate, 'month', true)
+                    request.service_remaining_days = serviceRemainingDays
+                    request.credits_to_refund = creditsToRefund
+                    request.service_term = service_term
+                })
+                return res.send({
+                    status: true,
+                    data: results
+                })
+            } else {
+                return res.send({
+                    status: true,
+                    data: []
+                })
+            }
+        });
     }
 }
