@@ -23,8 +23,8 @@ exports.validate_chat_id = async function (req, res) {
     WHERE cid.chat_id = '${chat_id}'`
     let chat_detail_row = await sql.query(chat_detail);
 
-    if (!chat_detail_row || chat_detail_row.length <= 0) {
-        console.log('*********************** chat_detail_row: ', chat_detail_row);
+    if (chat_detail_row && chat_detail_row.length > 0) {
+        console.log('*********************** chat_detail_row: ', chat_detail_row[0]);
         if (chat_detail_row[0].device_id == device_id) {
             res.status(200).send({
                 status: true,
@@ -35,7 +35,7 @@ exports.validate_chat_id = async function (req, res) {
     }
     res.status(400).send({
         status: false,
-        msg: "Bad Request: not success"
+        msg: "Bad Request: no record found"
     });
     return false;
 
