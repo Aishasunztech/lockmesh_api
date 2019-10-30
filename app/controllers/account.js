@@ -1455,14 +1455,11 @@ exports.getDomains = async function (req, res) {
             let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'domain', loggedUserId);
 
             if (permissionDealers == '0') {
-                // console.log("sdealerList ", sdealerList)
-                // results[i].dealers = JSON.stringify(sdealerList.map((sd) => sd.dealer_id));
                 results[i].dealers = JSON.stringify(sdealerList);
             } else {
                 results[i].dealers = permissionDealers;
             }
             let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
-            // console.log("permissionDealers ==> ", permissions);
 
             if (loggedUserType === constants.DEALER) {
                 permissions = permissions.filter((item) => sdealerList.includes(item))

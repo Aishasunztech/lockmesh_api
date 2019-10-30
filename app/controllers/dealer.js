@@ -1350,8 +1350,19 @@ exports.dealerPermissions = async function (req, res) {
         if (getPermissionDealers.length > 0) {
             if (getPermissionDealers[0].dealer_id == 0) {
                 prevParsDealers = 0;
-                let dealerData = await general_helpers.getUserDealers(loggedUserType, loggedUserId);
+                // if (permissionType == "package") {
+                //     if (loggedUserType === ADMIN) {
+                //         let getDealers = await sql.query(`SELECT * FROM dealers WHERE type = 2 ORDER BY created DESC`);
+                //         allDealers = getDealers.map((dlr) => dlr.dealer_id);
+                //     }
+                //     else if (loggedUserType === DEALER) {
+                //         let getDealers = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                //         allDealers = getDealers.map((dlr) => dlr.dealer_id);
+                //     }
+                // } else {
+                let dealerData = await general_helpers.getUserDealers(loggedUserType, loggedUserId, permissionType);
                 allDealers = dealerData.dealerList;
+                // }
             } else {
                 prevParsDealers = getPermissionDealers.map((prm) => prm.dealer_id);
             }
@@ -1381,7 +1392,7 @@ exports.dealerPermissions = async function (req, res) {
                         if (prevParsDealers.length) {
 
                             let responseData = await general_helpers.savePermission(getPermissionDealers, prevParsDealers, permissionType, permissionId, loggedUserId)
-                            console.log("responseData ", responseData);
+                            // console.log("responseData ", responseData);
                             if (responseData.status) {
                                 return res.send({
                                     status: true,
@@ -1414,7 +1425,6 @@ exports.dealerPermissions = async function (req, res) {
                     })
                 }
             } else {
-
 
                 if (action === 'save') {
                     console.log('save action')
@@ -1494,7 +1504,7 @@ exports.dealerPermissions = async function (req, res) {
                             }
 
 
-                            console.log("prevParsDealers ", prevParsDealers);
+                            // console.log("prevParsDealers ", prevParsDealers);
 
                             // delete dealers that are not in new permissions
                             let deleteNotIn = '';

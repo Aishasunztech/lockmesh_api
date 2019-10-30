@@ -773,11 +773,13 @@ exports.getPackages = async function (req, res) {
                             if (verify.user.user_type === ADMIN) {
                                 let dealerRoleId = await helpers.getUserTypeIDByName(DEALER);
                                 dealerCount = await helpers.userDealerCount(dealerRoleId);
+                                sdealerList = await sql.query(`SELECT * FROM dealers WHERE type!=${dealerRoleId} AND type != 4 AND type !=5 ORDER BY created DESC`);
                             }
                             else if (verify.user.user_type === DEALER) {
                                 sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
                                 dealerCount = sdealerList.length;
                             }
+                            sdealerList = sdealerList.map((dealer) => dealer.dealer_id);
                             for (var i = 0; i < reslt.length; i++) {
                                 if (verify.user.user_type === ADMIN) {
                                     if (reslt[i].dealer_type === 'super_admin') {
@@ -807,17 +809,29 @@ exports.getPackages = async function (req, res) {
                                     }
                                 }
                                 // console.log('push apps', reslt[i].push_apps)
+
+                                let permissionDealers = await helpers.getDealersAgainstPermissions(reslt[i].id, 'package', dealer_id);
+                                console.log("permissionDealers ", permissionDealers);
+                                if (permissionDealers == '0') {
+                                    reslt[i].dealers = JSON.stringify(sdealerList);
+                                } else {
+                                    reslt[i].dealers = permissionDealers;
+                                }
+
                                 let permissions = (reslt[i].dealers !== undefined && reslt[i].dealers !== null) ? JSON.parse(reslt[i].dealers) : [];
                                 let permissionCount = 0
-                                if (verify.user.user_type === DEALER) {
-                                    permissions = permissions.filter(function (item) {
-                                        for (let i = 0; i < sdealerList.length; i++) {
-                                            if (item === sdealerList[i].dealer_id) {
-                                                return item
-                                            }
-                                        }
-                                    })
+                                if (verify.user.user_type === constants.DEALER) {
+                                    permissions = permissions.filter((item) => sdealerList.includes(item))
                                 }
+                                // if (verify.user.user_type === DEALER) {
+                                //     permissions = permissions.filter(function (item) {
+                                //         for (let i = 0; i < sdealerList.length; i++) {
+                                //             if (item === sdealerList[i].dealer_id) {
+                                //                 return item
+                                //             }
+                                //         }
+                                //     })
+                                // }
                                 permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
                                 let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
                                 // console.log(permissionC);

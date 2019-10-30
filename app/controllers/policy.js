@@ -20,11 +20,12 @@ exports.getPolicies = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
         let userId = verify.user.id;
+        let loggedUserType = verify.user.user_type;
         // let userType = await helpers.getUserType(userId);
-        
+
         // let user_acc_id = await device_helpers.getUserAccountId(req.body.device_id);
         // console.log('user id si', user_acc_id);
-        
+
         // let where = "";
         // let isValid = true;
         let policies = [];
@@ -36,164 +37,171 @@ exports.getPolicies = async function (req, res) {
         //     isValid = false;
         // }
         // if (isValid) {
-            if (verify.user.user_type === app_Constants.ADMIN) {
-                let query = "SELECT * FROM policy where delete_status=0";
-                sql.query(query, async (error, results) => {
-                    if (results.length) {
-                        let adminRoleId = await helpers.getUserTypeIDByName(app_Constants.ADMIN);
-                        let dealerCount = await helpers.dealerCount(adminRoleId);
+        // get all dealers under admin or sdealers under dealer
+        let userDealers = await helpers.getUserDealers(loggedUserType, userId);
+        // console.log("userDealers ", userDealers);
+        sdealerList = userDealers.dealerList;
+        dealerCount = userDealers.dealerCount;
 
-                        for (var i = 0; i < results.length; i++) {
-                            // console.log('push apps', results[i].push_apps)
-                            let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : [];
-                            let controls = (results[i].controls !== undefined && results[i].controls !== null) ? JSON.parse(results[i].controls) : [];
-                            let push_apps = (results[i].push_apps !== undefined && results[i].push_apps !== null) ? JSON.parse(results[i].push_apps) : [];
-                            let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== null) ? JSON.parse(results[i].app_list) : [];
-                            let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : [];
-                            let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
-                            let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
-                            let dealer = await helpers.getDealerByDealerId(results[i].dealer_id)
-                            let created_by = '';
-                            if(dealer.length){
-                                created_by = results[i].dealer_type === app_Constants.ADMIN ? "ADMIN" : dealer[0].dealer_name + " (" + dealer[0].link_code + ")";
-                            } else {
-                                created_by = 'N/A';
-                            }
-                            // console.log(created_by);
-                            dta = {
-                                id: results[i].id,
-                                policy_name: results[i].policy_name,
-                                policy_note: results[i].policy_note,
-                                status: results[i].status,
-                                dealer_permission: permissions,
-                                permission_count: permissionC,
-                                command_name: results[i].command_name,
-                                controls: controls,
-                                secure_apps: secure_apps,
-                                push_apps: push_apps,
-                                app_list: app_list2,
-                                dealer_id: results[i].dealer_id,
-                                object_size: results[i].object_size ? results[i].object_size : 'N/A',
-                                policy_size: results[i].policy_size ? results[i].policy_size : 'N/A',
-                                created_by: created_by,
-                                created_date: results[i].created_at,
-                                last_edited: results[i].updated_at,
-                            }
-                            policies.push(dta);
+        if (loggedUserType === app_Constants.ADMIN) {
+            let query = "SELECT * FROM policy where delete_status=0";
+            sql.query(query, async (error, results) => {
+                if (results.length) {
+                    // let adminRoleId = await helpers.getUserTypeIDByName(app_Constants.ADMIN);
+                    // let dealerCount = await helpers.dealerCount(adminRoleId);
+
+                    for (var i = 0; i < results.length; i++) {
+                        // console.log('push apps', results[i].push_apps)
+                        let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'policy', userId);
+                        if (permissionDealers == '0') {
+                            results[i].dealers = JSON.stringify(sdealerList);
+                        } else {
+                            results[i].dealers = permissionDealers;
                         }
+                        let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : [];
+                        let controls = (results[i].controls !== undefined && results[i].controls !== null) ? JSON.parse(results[i].controls) : [];
+                        let push_apps = (results[i].push_apps !== undefined && results[i].push_apps !== null) ? JSON.parse(results[i].push_apps) : [];
+                        let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== null) ? JSON.parse(results[i].app_list) : [];
+                        let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : [];
+                        let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
+                        let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                        let dealer = await helpers.getDealerByDealerId(results[i].dealer_id)
+                        let created_by = '';
+                        if (dealer.length) {
+                            created_by = results[i].dealer_type === app_Constants.ADMIN ? "ADMIN" : dealer[0].dealer_name + " (" + dealer[0].link_code + ")";
+                        } else {
+                            created_by = 'N/A';
+                        }
+                        // console.log(created_by);
+                        dta = {
+                            id: results[i].id,
+                            policy_name: results[i].policy_name,
+                            policy_note: results[i].policy_note,
+                            status: results[i].status,
+                            dealer_permission: permissions,
+                            permission_count: permissionC,
+                            command_name: results[i].command_name,
+                            controls: controls,
+                            secure_apps: secure_apps,
+                            push_apps: push_apps,
+                            app_list: app_list2,
+                            dealer_id: results[i].dealer_id,
+                            object_size: results[i].object_size ? results[i].object_size : 'N/A',
+                            policy_size: results[i].policy_size ? results[i].policy_size : 'N/A',
+                            created_by: created_by,
+                            created_date: results[i].created_at,
+                            last_edited: results[i].updated_at,
+                        }
+                        policies.push(dta);
                     }
+                }
+                data = {
+                    status: true,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "successful"), // successful',
+                    policies: policies
+                };
+                // console.log(data);
+                res.send(data);
+                return;
+            });
+        } else {
+            let myquery = `SELECT permission_id FROM dealer_permissions WHERE (dealer_id='${userId}' OR dealer_id=0) AND permission_type='policy';`;
+
+            let permittedids = await sql.query(myquery);
+            let prrr = [];
+            if (permittedids && permittedids.length) {
+                for (let item of permittedids) {
+                    prrr.push(item.permission_id)
+                }
+            }
+            // console.log(prrr, 'permited ids');
+            // console.log('2 query',"select * from policy where (dealer_id='" + verify.user.id + "' OR id IN ("+prrr+")) AND delete_status=0")
+            let query = ''
+            if (prrr.length) {
+                query = "select * from policy where (dealer_id='" + verify.user.id + "' OR id IN (" + prrr + ")) AND delete_status=0"
+            }
+            else {
+                query = "select * from policy where dealer_id='" + verify.user.id + "' AND delete_status=0"
+            }
+            sql.query(query, async function (error, results) {
+
+                if (error) {
+                    console.log(error)
+                }
+                if (results.length > 0) {
+                    // console.log(results);
+                    let dealerRole = await helpers.getUserTypeIDByName(app_Constants.DEALER);
+                    let default_policy = await sql.query("SELECT * from default_policies WHERE dealer_id = '" + userId + "'")
+                    let default_policy_id = (default_policy.length) ? default_policy[0].policy_id : null
+
+                    for (var i = 0; i < results.length; i++) {
+                        let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'policy', userId);
+                        if (permissionDealers == '0') {
+                            results[i].dealers = JSON.stringify(sdealerList);
+                        } else {
+                            results[i].dealers = permissionDealers;
+                        }
+
+                        let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : [];
+                        let Sdealerpermissions = permissions.filter((item) => sdealerList.includes(item))
+
+                        let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
+                        // console.log(permissions, 'permissions',Sdealerpermissions, 'sealerpermissions', permissionCount, 'permision count', )
+                        let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                        let controls = (results[i].controls !== undefined && results[i].controls !== 'undefined' && results[i].controls !== null) ? JSON.parse(results[i].controls) : [];
+                        let push_apps = (results[i].push_apps !== undefined && results[i].push_apps !== 'undefined' && results[i].push_apps !== null) ? JSON.parse(results[i].push_apps) : [];
+                        let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== 'undefined' && results[i].app_list !== null) ? JSON.parse(results[i].app_list) : [];
+                        let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== 'undefined' && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : [];
+                        let is_default = (results[i].id === default_policy_id) ? true : false
+                        let dealer = await helpers.getDealerByDealerId(results[i].dealer_id)
+                        let created_by = '';
+                        if (dealer.length) {
+                            created_by = results[i].dealer_type === app_Constants.ADMIN ? "ADMIN" : dealer[0].dealer_name;
+                        } else {
+                            created_by = 'N/A';
+                        }
+                        // console.log(created_by);
+                        dta = {
+                            id: results[i].id,
+                            policy_name: results[i].policy_name,
+                            policy_note: results[i].policy_note,
+                            status: results[i].status,
+                            dealer_permission: permissions,
+                            permission_count: permissionC,
+                            command_name: results[i].command_name,
+                            controls: controls,
+                            secure_apps: secure_apps,
+                            push_apps: push_apps,
+                            app_list: app_list2,
+                            is_default: is_default,
+                            dealer_id: results[i].dealer_id,
+                            object_size: results[i].object_size ? results[i].object_size : 'N/A',
+                            policy_size: results[i].policy_size ? results[i].policy_size : 'N/A',
+                            created_by: created_by,
+                            created_date: results[i].created_at,
+                            last_edited: results[i].updated_at,
+                        }
+                        policies.push(dta);
+                    }
+
                     data = {
                         status: true,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "successful"), // successful',
                         policies: policies
-                    };
-                    // console.log(data);
+                    }
+                    return res.json(data);
+
+                } else {
+                    data = {
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // No result found",
+                        policies: []
+                    }
                     res.send(data);
                     return;
-                });
-            } else {
-                let myquery = `SELECT permission_id FROM dealer_permissions WHERE (dealer_id='${userId}' OR dealer_id=0) AND permission_type='policy';`;
-
-                let permittedids = await sql.query(myquery);
-                let prrr = [];
-                if (permittedids && permittedids.length) {
-                    for (let item of permittedids) {
-                        prrr.push(item.permission_id)
-                    }
                 }
-                // console.log(prrr, 'permited ids');
-                // console.log('2 query',"select * from policy where (dealer_id='" + verify.user.id + "' OR id IN ("+prrr+")) AND delete_status=0")
-                let query = ''
-                if (prrr.length) {
-                    query = "select * from policy where (dealer_id='" + verify.user.id + "' OR id IN (" + prrr + ")) AND delete_status=0"
-                }
-                else {
-                    query = "select * from policy where dealer_id='" + verify.user.id + "' AND delete_status=0"
-                }
-                sql.query(query, async function (error, results) {
-
-                    if (error) {
-                        console.log(error)
-                    }
-                    if (results.length > 0) {
-                        // console.log(results);
-                        let dealerRole = await helpers.getUserTypeIDByName(app_Constants.DEALER);
-                        let default_policy = await sql.query("SELECT * from default_policies WHERE dealer_id = '" + userId + "'")
-                        let default_policy_id = (default_policy.length) ? default_policy[0].policy_id : null
-
-                        let sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
-                        let dealerCount = sdealerList.length;
-                        for (var i = 0; i < results.length; i++) {
-                            let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : [];
-                            let Sdealerpermissions = permissions.filter(function (item) {
-
-                                for (let i = 0; i < sdealerList.length; i++) {
-                                    if (
-                                        item === sdealerList[i].dealer_id
-                                    ) {
-                                        return item
-                                    }
-                                }
-                            })
-
-
-                            let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
-                            // console.log(permissions, 'permissions',Sdealerpermissions, 'sealerpermissions', permissionCount, 'permision count', )
-                            let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
-                            let controls = (results[i].controls !== undefined && results[i].controls !== 'undefined' && results[i].controls !== null) ? JSON.parse(results[i].controls) : [];
-                            let push_apps = (results[i].push_apps !== undefined && results[i].push_apps !== 'undefined' && results[i].push_apps !== null) ? JSON.parse(results[i].push_apps) : [];
-                            let app_list2 = (results[i].app_list !== undefined && results[i].app_list !== 'undefined' && results[i].app_list !== null) ? JSON.parse(results[i].app_list) : [];
-                            let secure_apps = (results[i].permissions !== undefined && results[i].permissions !== 'undefined' && results[i].permissions !== null) ? JSON.parse(results[i].permissions) : [];
-                            let is_default = (results[i].id === default_policy_id) ? true : false
-                            let dealer = await helpers.getDealerByDealerId(results[i].dealer_id)
-                            let created_by = '';
-                            if(dealer.length){
-                                created_by = results[i].dealer_type === app_Constants.ADMIN ? "ADMIN" : dealer[0].dealer_name;
-                            } else {
-                                created_by = 'N/A';
-                            }
-                            // console.log(created_by);
-                            dta = {
-                                id: results[i].id,
-                                policy_name: results[i].policy_name,
-                                policy_note: results[i].policy_note,
-                                status: results[i].status,
-                                dealer_permission: permissions,
-                                permission_count: permissionC,
-                                command_name: results[i].command_name,
-                                controls: controls,
-                                secure_apps: secure_apps,
-                                push_apps: push_apps,
-                                app_list: app_list2,
-                                is_default: is_default,
-                                dealer_id: results[i].dealer_id,
-                                object_size: results[i].object_size ? results[i].object_size : 'N/A',
-                                policy_size: results[i].policy_size ? results[i].policy_size : 'N/A',
-                                created_by: created_by,
-                                created_date: results[i].created_at,
-                                last_edited: results[i].updated_at,
-                            }
-                            policies.push(dta);
-                        }
-
-                        data = {
-                            status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "successful"), // successful',
-                            policies: policies
-                        }
-                        return res.json(data);
-
-                    } else {
-                        data = {
-                            status: false,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // No result found",
-                            policies: []
-                        }
-                        res.send(data);
-                        return;
-                    }
-                });
-            }
+            });
+        }
         // } else {
         //     data = {
         //         status: false,
@@ -395,10 +403,10 @@ exports.savePolicy = async function (req, res) {
                 }
 
                 // system permission
-                if(policy.system_permissions && policy.system_permissions !== 'null' && policy.system_permissions !=='undefined'){
-                    policy.system_permissions.forEach(sysPermission=>{
-                            sysPermission.setting_status = (sysPermission.setting_status)? true: false 
-                        
+                if (policy.system_permissions && policy.system_permissions !== 'null' && policy.system_permissions !== 'undefined') {
+                    policy.system_permissions.forEach(sysPermission => {
+                        sysPermission.setting_status = (sysPermission.setting_status) ? true : false
+
                     })
                     system_permissions = JSON.stringify(policy.system_permissions);
                 }
@@ -560,7 +568,7 @@ exports.applyPolicy = async function (req, res) {
 
                             await sql.query(loadDeviceQ)
                             if (isOnline) {
-                                socket_helpers.getPolicy(sockets.baseIo, policyApplied.insertId, device_id,  policy[0]);
+                                socket_helpers.getPolicy(sockets.baseIo, policyApplied.insertId, device_id, policy[0]);
 
                                 data = {
                                     status: true,

@@ -1534,10 +1534,10 @@ module.exports = {
 		let finalDealers = [];
 
 		let selectDealerQ = `SELECT dealer_id FROM dealer_permissions WHERE permission_id= ${permission_id} AND permission_type ='${permission_type}' AND permission_by = ${loggedUserId}`;
-		console.log("selectDealerQ ", selectDealerQ)
+		// console.log("selectDealerQ ", selectDealerQ)
 		let permittedDealers = await sql.query(selectDealerQ);
 
-		console.log("permittedDealers results:: ", permittedDealers);
+		// console.log("permittedDealers results:: ", permittedDealers);
 
 		if (permittedDealers.length > 0) {
 			if (permittedDealers[0].dealer_id == 0) {
@@ -1546,7 +1546,7 @@ module.exports = {
 				finalDealers = permittedDealers.map((prm) => prm.dealer_id)
 			}
 		}
-		console.log("finalDealers", finalDealers);
+		// console.log("finalDealers", finalDealers);
 
 		return JSON.stringify(finalDealers)
 	},
@@ -1598,21 +1598,26 @@ module.exports = {
 			}
 		}
 	},
-	getUserDealers: async function (loggedUserType, loggedUserId) {
+	getUserDealers: async function (loggedUserType, loggedUserId, permissionType = '') {
 		let dealerList = [];
 		let dealerCount = 0;
 
 		if (loggedUserType === "admin") {
-			let adminRoleId = await this.getUserTypeIDByName(loggedUserType);
-			let selectQ = `SELECT * FROM dealers WHERE type!=${adminRoleId} AND type != 4 AND type !=5 ORDER BY created DESC`;
-			dealerList = await sql.query(selectQ);
-			dealerCount = await this.dealerCount(adminRoleId);
+			if (permissionType == "package") {
+				dealerList = await sql.query(`SELECT * FROM dealers WHERE type = 2 ORDER BY created DESC`);
+				dealerCount = dealerList ? dealerList.length : 0;
+			} else {
+				let adminRoleId = await this.getUserTypeIDByName(loggedUserType);
+				let selectQ = `SELECT * FROM dealers WHERE type!=${adminRoleId} AND type != 4 AND type !=5 ORDER BY created DESC`;
+				dealerList = await sql.query(selectQ);
+				dealerCount = await this.dealerCount(adminRoleId);
+			}
+
 		}
 		else if (loggedUserType === "dealer") {
 			dealerList = await sql.query(`SELECT dealer_id FROM dealers WHERE connected_dealer ='${loggedUserId}'`)
 			dealerCount = dealerList ? dealerList.length : 0;
 		}
-
 		dealerList = dealerList.map((dealer) => dealer.dealer_id);
 
 		return {
