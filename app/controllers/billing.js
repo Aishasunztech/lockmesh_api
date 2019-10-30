@@ -770,16 +770,22 @@ exports.getPackages = async function (req, res) {
                         let dealerCount = 0;
                         let sdealerList = []
                         if (verify.user.user_type !== SDEALER) {
-                            if (verify.user.user_type === ADMIN) {
-                                let dealerRoleId = await helpers.getUserTypeIDByName(DEALER);
-                                dealerCount = await helpers.userDealerCount(dealerRoleId);
-                                sdealerList = await sql.query(`SELECT * FROM dealers WHERE type!=${dealerRoleId} AND type != 4 AND type !=5 ORDER BY created DESC`);
-                            }
-                            else if (verify.user.user_type === DEALER) {
-                                sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
-                                dealerCount = sdealerList.length;
-                            }
-                            sdealerList = sdealerList.map((dealer) => dealer.dealer_id);
+                            // if (verify.user.user_type === ADMIN) {
+                            //     let dealerRoleId = await helpers.getUserTypeIDByName(DEALER);
+                            //     dealerCount = await helpers.userDealerCount(dealerRoleId);
+                            //     sdealerList = await sql.query(`SELECT * FROM dealers WHERE type!=${dealerRoleId} AND type != 4 AND type !=5 ORDER BY created DESC`);
+                            // }
+                            // else if (verify.user.user_type === DEALER) {
+                            //     sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                            //     dealerCount = sdealerList.length;
+                            // }
+                            // sdealerList = sdealerList.map((dealer) => dealer.dealer_id);
+                            // get all dealers under admin or sdealers under dealer
+                            let userDealers = await helpers.getUserDealers(verify.user.user_type, dealer_id, 'package');
+                            // console.log("userDealers ", userDealers);
+                            sdealerList = userDealers.dealerList;
+                            dealerCount = userDealers.dealerCount;
+
                             for (var i = 0; i < reslt.length; i++) {
                                 if (verify.user.user_type === ADMIN) {
                                     if (reslt[i].dealer_type === 'super_admin') {
