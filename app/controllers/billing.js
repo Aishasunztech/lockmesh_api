@@ -821,7 +821,7 @@ exports.getPackages = async function (req, res) {
                                 if (permissionDealers == '0') {
                                     reslt[i].dealers = JSON.stringify(sdealerList);
                                 } else {
-                                    reslt[i].dealers = permissionDealers;
+                                    reslt[i].dealers = JSON.stringify(permissionDealers);
                                 }
 
                                 let permissions = (reslt[i].dealers !== undefined && reslt[i].dealers !== null) ? JSON.parse(reslt[i].dealers) : [];

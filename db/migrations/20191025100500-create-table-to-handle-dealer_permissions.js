@@ -29,6 +29,14 @@ module.exports = {
         type: Sequelize.INTEGER,
         defaultValue: null,
       },
+      dealer_type: {
+        type: Sequelize.ENUM(
+          'admin',
+          'dealer',
+          'sdealer'
+        ),
+        defaultValue: null,
+      },
       created_at: {
         type: 'TIMESTAMP',
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
@@ -40,7 +48,7 @@ module.exports = {
     }).then(() => {
       return queryInterface.sequelize.query('ALTER TABLE `dealer_permissions`');
     }).then(() => {
-      return queryInterface.addConstraint('dealer_permissions', ['permission_id', 'dealer_id', 'permission_by'], {
+      return queryInterface.addConstraint('dealer_permissions', ['permission_id', 'dealer_id', 'permission_by', 'permission_type'], {
         type: 'unique',
         name: 'unique_permission_to_dealer'
       })

@@ -1427,8 +1427,15 @@ exports.getDomains = async function (req, res) {
         let loggedUserType = verify.user.user_type;
         let selectQ = '';
 
-        if (verify.user.user_type !== ADMIN) {
-            selectQ = `SELECT domains.*, dealer_permissions.permission_id, dealer_permissions.dealer_id, dealer_permissions.permission_by FROM domains JOIN dealer_permissions ON (dealer_permissions.permission_id = domains.id) WHERE (dealer_permissions.dealer_id = ${loggedUserId} OR (dealer_permissions.dealer_id = 0 AND permission_by != ${loggedUserId})) AND permission_type = 'domain'`;
+        if (loggedUserType !== ADMIN) {
+            let condition = '';
+            if (loggedUserType === DEALER) {
+                condition = `AND dealer_type = 'admin'`
+            }
+            else if (loggedUserType === SDEALER) {
+                condition = `AND (dealer_type = 'admin' OR dealer_type == 'dealer')`
+            }
+            selectQ = `SELECT domains.*, dealer_permissions.permission_id, dealer_permissions.dealer_id, dealer_permissions.permission_by, dealer_permissions.dealer_type FROM domains JOIN dealer_permissions ON (dealer_permissions.permission_id = domains.id) WHERE (dealer_permissions.dealer_id = ${loggedUserId} OR (dealer_permissions.dealer_id = 0 ${condition})) AND permission_type = 'domain'`;
         } else {
             selectQ = `SELECT * FROM domains`;
         }
@@ -1437,7 +1444,7 @@ exports.getDomains = async function (req, res) {
 
         // get all dealers under admin or sdealers under dealer
         let userDealers = await helpers.getUserDealers(loggedUserType, loggedUserId);
-        console.log("userDealers ", userDealers);
+        console.log("userDealers ========> ", userDealers);
         sdealerList = userDealers.dealerList;
         dealerCount = userDealers.dealerCount;
 
@@ -1452,39 +1459,60 @@ exports.getDomains = async function (req, res) {
 
         let results = selectDomains;
         for (var i = 0; i < results.length; i++) {
-            let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'domain', loggedUserId);
+            let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'domain', loggedUserId, sdealerList);
 
-            if (permissionDealers == '0') {
+            if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
+                console.log('set permisin for all dealers ')
+
+                sdealerList = sdealerList.map((dealer) => {
+                    // console.log("dealer  ", dealer);
+                    return {
+                        dealer_id: dealer,
+                        dealer_type: permissionDealers[0].dealer_type,
+                        permission_by: permissionDealers[0].permission_by
+                    }
+                })
+                sdealerList = sdealerList.filter((item) => item.dealer_id !== loggedUserId)
                 results[i].dealers = JSON.stringify(sdealerList);
+                results[i].statusAll = true
             } else {
-                results[i].dealers = permissionDealers;
+                if (permissionDealers.length) {
+                    permissionDealers = permissionDealers.filter((item) => item.dealer_id !== loggedUserId)
+                }
+                results[i].dealers = JSON.stringify(permissionDealers);
+                results[i].statusAll = false
             }
             let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
 
-            if (loggedUserType === constants.DEALER) {
-                permissions = permissions.filter((item) => sdealerList.includes(item))
-            }
+            console.log('permissions are: ', permissions);
+
+            // if (loggedUserType === constants.DEALER) {
+            //     sdealerList = sdealerList.map((dealer) => dealer.dealer_id);
+            //     permissions = permissions.filter((item) => sdealerList.includes(item))
+            // }
             // if (permissions.length) {
             // if (loggedUserType === constants.DEALER) {
             //     permissions = permissions.filter(function (item) {
             //         for (let i = 0; i < sdealerList.length; i++) {
-            //             if (item === sdealerList[i].dealer_id) {
+            //             if (item.dealer_id === sdealerList[i].dealer_id) {
             //                 return item
             //             }
             //         }
             //     })
             // }
             // }
-            let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
+            console.log('permissions to check counter are: ', permissions);
+            let permissionCount = (permissions && permissions.length) ? permissions.length : 0;
+            console.log("dealerCount == permissionCount ", dealerCount == permissionCount, dealerCount, permissionCount)
             let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
             results[i].permission_count = permissionC;
         }
 
-        console.log('get domains:: ', selectDomains);
-        if (selectDomains && selectDomains.length) {
+        console.log('get domains:: ', results);
+        if (results && results.length) {
             res.send({
                 status: true,
-                domains: selectDomains
+                domains: results
             })
         } else {
             res.send({

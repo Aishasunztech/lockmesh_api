@@ -1371,6 +1371,7 @@ exports.dealerPermissions = async function (req, res) {
 
         // console.log("selected", dealers);
         let newDealers = JSON.parse(dealers); // dealers from client side to permit
+        let condition = '';
 
         if (newDealers.length) {
 
@@ -1391,7 +1392,7 @@ exports.dealerPermissions = async function (req, res) {
 
                         if (prevParsDealers.length) {
 
-                            let responseData = await general_helpers.savePermission(getPermissionDealers, prevParsDealers, permissionType, permissionId, loggedUserId)
+                            let responseData = await general_helpers.savePermission(getPermissionDealers, prevParsDealers, permissionType, permissionId, loggedUserId, loggedUserType)
                             // console.log("responseData ", responseData);
                             if (responseData.status) {
                                 return res.send({
@@ -1455,7 +1456,7 @@ exports.dealerPermissions = async function (req, res) {
                             // console.log("deleteDealers: ", deleteDealers);
                         }
 
-                        let responseData = await general_helpers.savePermission(getPermissionDealers, prevParsDealers, permissionType, permissionId, loggedUserId)
+                        let responseData = await general_helpers.savePermission(getPermissionDealers, prevParsDealers, permissionType, permissionId, loggedUserId, loggedUserType)
                         // console.log("responseData ", responseData);
                         return res.send(responseData);
                         // }
@@ -1477,14 +1478,21 @@ exports.dealerPermissions = async function (req, res) {
                         let deleteAllDealers = await sql.query(deleteAllDealersQ);
                         // console.log("deleteAllDealers: ", deleteAllDealers);
 
-                        let insertAllDealersQ = `INSERT INTO dealer_permissions (permission_id, dealer_id, permission_type, permission_by) VALUE (${permissionId}, '0', '${permissionType}', ${loggedUserId})`;
-                        // console.log("insertAllDealersQ: ", insertAllDealersQ);
-                        let insertAllDealers = await sql.query(insertAllDealersQ);
+                        let insertAllDealersQ = `INSERT INTO dealer_permissions (permission_id, dealer_id, permission_type, permission_by, dealer_type) VALUE (${permissionId}, '0', '${permissionType}', ${loggedUserId}, '${loggedUserType}')`;
+                        console.log("insertAllDealersQ: ", insertAllDealersQ);
+                        let insertAllDealers = await sql.query(insertAllDealersQ, async function (error, result) {
+                            if (error) {
+                                return res.send({
+                                    status: false,
+                                    msg: 'Permission duplicate problem'
+                                })
+                            }
 
-                        return res.send({
-                            status: true,
-                            msg: 'permission saved successfully'
-                        })
+                            return res.send({
+                                status: true,
+                                msg: 'Permission saved successfully'
+                            })
+                        });
 
                     }
 
@@ -1504,7 +1512,7 @@ exports.dealerPermissions = async function (req, res) {
                             }
 
 
-                            // console.log("prevParsDealers ", prevParsDealers);
+                            console.log("prevParsDealers ", prevParsDealers);
 
                             // delete dealers that are not in new permissions
                             let deleteNotIn = '';
@@ -1518,6 +1526,8 @@ exports.dealerPermissions = async function (req, res) {
                             // console.log("deleteDealers: ", deleteDealers);
 
                             if (deleteDealers.affectedRows) {
+                                await sql.query(`DELETE FROM dealer_permissions WHERE permission_id = ${permissionId} AND permission_type='${permissionType}' AND permission_by IN (${dealers})`);
+
                                 return res.send({
                                     status: true,
                                     msg: 'Permission remove successfully'
@@ -1534,8 +1544,10 @@ exports.dealerPermissions = async function (req, res) {
 
                     } else {
 
-
-                        let deleteNotIn = `DELETE FROM dealer_permissions WHERE permission_id = ${permissionId} AND permission_type='${permissionType}' AND permission_by=${loggedUserId}`;
+                        if (loggedUserType !== ADMIN) {
+                            condition = ` AND permission_by=${loggedUserId}`
+                        }
+                        let deleteNotIn = `DELETE FROM dealer_permissions WHERE permission_id = ${permissionId} AND permission_type='${permissionType}' ${condition}`;
                         console.log("deleteNotIn: ", deleteNotIn);
                         let deleteDealers = await sql.query(deleteNotIn);
                         console.log("deleteDealers: ", deleteDealers);
@@ -1544,6 +1556,8 @@ exports.dealerPermissions = async function (req, res) {
                         // let updateDealersOfType = await sql.query(updateDealersOfTypeQ)
 
                         if (deleteDealers.affectedRows) {
+                            // await sql.query(`DELETE FROM dealer_permissions WHERE permission_id = ${permissionId} AND permission_type='${permissionType}' AND permission_by IN (${dealers})`);
+
                             return res.send({
                                 status: true,
                                 msg: 'Permission remove successfully'

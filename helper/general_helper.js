@@ -1530,31 +1530,39 @@ module.exports = {
 		})
 		return user_acc_ids;
 	},
-	getDealersAgainstPermissions: async function (permission_id, permission_type, loggedUserId) {
+	getDealersAgainstPermissions: async function (permission_id, permission_type, loggedUserId, subDealers = []) {
 		let finalDealers = [];
-
-		let selectDealerQ = `SELECT dealer_id FROM dealer_permissions WHERE permission_id= ${permission_id} AND permission_type ='${permission_type}' AND permission_by = ${loggedUserId}`;
-		// console.log("selectDealerQ ", selectDealerQ)
+		let condition = '';
+		console.log("subDealers ", subDealers);
+		if (subDealers && subDealers.length) {
+			condition = ` OR (dealer_type = 'admin' AND (dealer_id IN (${subDealers}) OR dealer_id = 0) )`;
+		} else {
+			condition = ` OR (dealer_type = 'admin' AND dealer_id = 0)`;
+		}
+		let selectDealerQ = `SELECT dealer_id, dealer_type, permission_by FROM dealer_permissions WHERE permission_id= ${permission_id} AND permission_type ='${permission_type}' AND (permission_by=${loggedUserId} ${condition})`; // dealer_id = ${loggedUserId} OR 
+		console.log("selectDealerQ ", selectDealerQ)
 		let permittedDealers = await sql.query(selectDealerQ);
 
-		// console.log("permittedDealers results:: ", permittedDealers);
+		console.log("permittedDealers results:: ", permittedDealers);
 
 		if (permittedDealers.length > 0) {
-			if (permittedDealers[0].dealer_id == 0) {
-				finalDealers = 0;
+			let check = permittedDealers.find((dlr) => dlr.dealer_id == 0);
+			console.log("check=======> ", check);
+			if (check) {
+				finalDealers.push(check);
 			} else {
-				finalDealers = permittedDealers.map((prm) => prm.dealer_id)
+				finalDealers = permittedDealers //.map((prm) => prm.dealer_id)
 			}
 		}
-		// console.log("finalDealers", finalDealers);
+		console.log("finalDealers", finalDealers);
 
-		return JSON.stringify(finalDealers)
+		return finalDealers
 	},
-	savePermission: async function (prevDealers, allDealers, permissionType, permissionId, loggedUserId) {
+	savePermission: async function (prevDealers, allDealers, permissionType, permissionId, loggedUserId, loggedUserType) {
 		// this query is to avoid duplication records
 		// let dealers_data = await sql.query(`SELECT dealer_id FROM dealer_permissions WHERE permission_type='${permissionType}' AND permission_id=${permissionId} AND permission_by= ${loggedUserId}`);
 
-		let insertQuery = "INSERT INTO dealer_permissions (permission_id, dealer_id, permission_type, permission_by) VALUES ";
+		let insertQuery = "INSERT INTO dealer_permissions (permission_id, dealer_id, permission_type, permission_by, dealer_type) VALUES ";
 		let insertOrIgnore = ''
 		for (let i = 0; i < allDealers.length; i++) {
 			// console.log(i, "allDealers.length ", allDealers.length);
@@ -1566,9 +1574,9 @@ module.exports = {
 			}
 
 			if (i == (allDealers.length - 1)) {
-				insertOrIgnore = insertOrIgnore + `(${permissionId}, ${allDealers[i]}, '${permissionType}', '${loggedUserId}')`
+				insertOrIgnore = insertOrIgnore + `(${permissionId}, ${allDealers[i]}, '${permissionType}', '${loggedUserId}', '${loggedUserType}')`
 			} else {
-				insertOrIgnore = insertOrIgnore + `(${permissionId}, ${allDealers[i]}, '${permissionType}', '${loggedUserId}'),`
+				insertOrIgnore = insertOrIgnore + `(${permissionId}, ${allDealers[i]}, '${permissionType}', '${loggedUserId}', '${loggedUserType}'),`
 			}
 		}
 
@@ -1616,8 +1624,9 @@ module.exports = {
 		}
 		else if (loggedUserType === "dealer") {
 			dealerList = await sql.query(`SELECT dealer_id FROM dealers WHERE connected_dealer ='${loggedUserId}'`)
-			dealerCount = dealerList ? dealerList.length : 0;
+			dealerCount = (dealerList && dealerList.length) ? dealerList.length : 0;
 		}
+		// console.log("===================> dealerList:: ", dealerList);
 		dealerList = dealerList.map((dealer) => dealer.dealer_id);
 
 		return {
