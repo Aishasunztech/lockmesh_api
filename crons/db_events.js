@@ -21,7 +21,8 @@ exports.deviceQueue = async function () {
             if(event.type === 'INSERT'){
                 socket_helpers.sendJobToPanel(sockets.baseIo, event.affectedRows[0].after);
             } else if (event.type === 'UPDATE'){
-
+                console.log('device_history updated:', event);
+                console.log('after:', event.affectedRows)
             }
             
         },

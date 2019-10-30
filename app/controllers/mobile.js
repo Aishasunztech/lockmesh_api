@@ -40,7 +40,7 @@ exports.login = async function (req, resp) {
 
 
     var data;
-    //console.log(linkCode);
+    console.log(linkCode);
     if (linkCode) {
         if (linkCode.length <= 6) {
 
@@ -88,7 +88,7 @@ exports.login = async function (req, resp) {
                             }
                             return resp.send(data);
                         } else {
-                            // console.log(device);
+                            console.log(device);
                             data = {
                                 token: token,
                                 status: true,
