@@ -1531,30 +1531,39 @@ module.exports = {
 		return user_acc_ids;
 	},
 	getDealersAgainstPermissions: async function (permission_id, permission_type, loggedUserId, subDealers = []) {
+
 		let finalDealers = [];
 		let condition = '';
-		console.log("subDealers ", subDealers);
+		// console.log("subDealers ", subDealers);
+		// if (subDealers && subDealers.length)
+		// subDealers = subDealers
+
 		if (subDealers && subDealers.length) {
+
+			if (subDealers[0].dealer_id !== undefined) {
+				subDealers = subDealers.map((item) => item.dealer_id);
+			}
+			// console.log("filtered subDealers ", subDealers);
 			condition = ` OR (dealer_type = 'admin' AND (dealer_id IN (${subDealers}) OR dealer_id = 0) )`;
 		} else {
 			condition = ` OR (dealer_type = 'admin' AND dealer_id = 0)`;
 		}
 		let selectDealerQ = `SELECT dealer_id, dealer_type, permission_by FROM dealer_permissions WHERE permission_id= ${permission_id} AND permission_type ='${permission_type}' AND (permission_by=${loggedUserId} ${condition})`; // dealer_id = ${loggedUserId} OR 
-		console.log("selectDealerQ ", selectDealerQ)
+		// console.log("selectDealerQ ", selectDealerQ)
 		let permittedDealers = await sql.query(selectDealerQ);
 
-		console.log("permittedDealers results:: ", permittedDealers);
+		// console.log("permittedDealers results:: ", permittedDealers);
 
 		if (permittedDealers.length > 0) {
 			let check = permittedDealers.find((dlr) => dlr.dealer_id == 0);
-			console.log("check=======> ", check);
+			// console.log("check=======> ", check);
 			if (check) {
 				finalDealers.push(check);
 			} else {
 				finalDealers = permittedDealers //.map((prm) => prm.dealer_id)
 			}
 		}
-		console.log("finalDealers", finalDealers);
+		// console.log("finalDealers", finalDealers);
 
 		return finalDealers
 	},
@@ -1627,10 +1636,10 @@ module.exports = {
 			dealerCount = (dealerList && dealerList.length) ? dealerList.length : 0;
 		}
 		// console.log("===================> dealerList:: ", dealerList);
-		dealerList = dealerList.map((dealer) => dealer.dealer_id);
+		let getDealerIds = dealerList.map((dealer) => dealer.dealer_id);
 
 		return {
-			dealerList,
+			dealerList: getDealerIds,
 			dealerCount
 		}
 	},

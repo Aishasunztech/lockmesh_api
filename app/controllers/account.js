@@ -1433,9 +1433,9 @@ exports.getDomains = async function (req, res) {
                 condition = `AND dealer_type = 'admin'`
             }
             else if (loggedUserType === SDEALER) {
-                condition = `AND (dealer_type = 'admin' OR dealer_type == 'dealer')`
+                condition = `AND (dealer_type = 'admin' OR dealer_type = 'dealer')`
             }
-            selectQ = `SELECT domains.*, dealer_permissions.permission_id, dealer_permissions.dealer_id, dealer_permissions.permission_by, dealer_permissions.dealer_type FROM domains JOIN dealer_permissions ON (dealer_permissions.permission_id = domains.id) WHERE (dealer_permissions.dealer_id = ${loggedUserId} OR (dealer_permissions.dealer_id = 0 ${condition})) AND permission_type = 'domain'`;
+            selectQ = `SELECT domains.*, dealer_permissions.permission_id, dealer_permissions.dealer_id, dealer_permissions.permission_by, dealer_permissions.dealer_type FROM domains JOIN dealer_permissions ON (dealer_permissions.permission_id = domains.id) WHERE (dealer_permissions.dealer_id = ${loggedUserId} OR (dealer_permissions.dealer_id = 0 ${condition})) AND permission_type = 'domain';`;
         } else {
             selectQ = `SELECT * FROM domains`;
         }
@@ -1444,9 +1444,9 @@ exports.getDomains = async function (req, res) {
 
         // get all dealers under admin or sdealers under dealer
         let userDealers = await helpers.getUserDealers(loggedUserType, loggedUserId);
-        console.log("userDealers ========> ", userDealers);
-        sdealerList = userDealers.dealerList;
-        dealerCount = userDealers.dealerCount;
+        // console.log("userDealers ========> ", userDealers);
+        let sdealerList = userDealers.dealerList;
+        let dealerCount = userDealers.dealerCount;
 
         // if (loggedUserType === constants.ADMIN) {
         //     let adminRoleId = await helpers.getUserTypeIDByName(loggedUserType);
@@ -1462,7 +1462,7 @@ exports.getDomains = async function (req, res) {
             let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'domain', loggedUserId, sdealerList);
 
             if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
-                console.log('set permisin for all dealers ')
+                // console.log('set permisin for all dealers ')
 
                 sdealerList = sdealerList.map((dealer) => {
                     // console.log("dealer  ", dealer);
@@ -1477,14 +1477,14 @@ exports.getDomains = async function (req, res) {
                 results[i].statusAll = true
             } else {
                 if (permissionDealers.length) {
-                    permissionDealers = permissionDealers.filter((item) => item.dealer_id !== loggedUserId)
+                    permissionDealers = permissionDealers.filter((item) => item.dealer_id !== loggedUserId) 
                 }
                 results[i].dealers = JSON.stringify(permissionDealers);
                 results[i].statusAll = false
             }
-            let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
+            let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : [];
 
-            console.log('permissions are: ', permissions);
+            // console.log('permissions are: ', permissions);
 
             // if (loggedUserType === constants.DEALER) {
             //     sdealerList = sdealerList.map((dealer) => dealer.dealer_id);
@@ -1501,14 +1501,14 @@ exports.getDomains = async function (req, res) {
             //     })
             // }
             // }
-            console.log('permissions to check counter are: ', permissions);
+            // console.log('permissions to check counter are: ', permissions);
             let permissionCount = (permissions && permissions.length) ? permissions.length : 0;
-            console.log("dealerCount == permissionCount ", dealerCount == permissionCount, dealerCount, permissionCount)
+            // console.log("dealerCount == permissionCount ", dealerCount == permissionCount, dealerCount, permissionCount)
             let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
             results[i].permission_count = permissionC;
         }
 
-        console.log('get domains:: ', results);
+        // console.log('get domains:: ', results);
         if (results && results.length) {
             res.send({
                 status: true,

@@ -721,13 +721,14 @@ exports.getPackages = async function (req, res) {
     if (verify) {
         // let dealer_id = req.params.dealer_id;
         let dealer_id = verify.user.dealer_id;
+        let loggedUserType = verify.user.user_type;
 
         if (dealer_id) {
             let selectQuery = '';
-            if (verify.user.user_type === ADMIN) {
+            if (loggedUserType === ADMIN) {
                 selectQuery = "SELECT * FROM packages WHERE (delete_status != 1 OR  delete_status IS NULL)  AND (dealer_id='" + dealer_id + "' OR dealer_type = 'super_admin')";
             }
-            else if (verify.user.user_type === DEALER) {
+            else if (loggedUserType === DEALER) {
                 selectQuery = `SELECT dealer_packages_prices.price AS pkg_price, packages.* FROM dealer_packages_prices JOIN packages ON (packages.id = dealer_packages_prices.package_id) WHERE dealer_packages_prices.dealer_id = '${dealer_id}' OR  dealer_packages_prices.created_by = 'admin' AND packages.delete_status != 1`;
             }
 
@@ -749,8 +750,16 @@ exports.getPackages = async function (req, res) {
                     if (reslt && reslt.length) {
                         // console.log('result for get prices are is ', reslt);
 
-                        if (verify.user.user_type !== ADMIN) {
-                            let permissionsResults = await sql.query(`SELECT * FROM dealer_permissions WHERE (dealer_id = ${dealer_id} OR dealer_id = 0) AND permission_type = 'package';`);
+                        if (loggedUserType !== ADMIN) {
+                            let condition = '';
+                            if (loggedUserType === DEALER) {
+                                condition = `AND dealer_type = 'admin'`
+                            }
+                            else if (loggedUserType === SDEALER) {
+                                condition = `AND (dealer_type = 'admin' OR dealer_type = 'dealer')`
+                            }
+
+                            let permissionsResults = await sql.query(`SELECT * FROM dealer_permissions WHERE (dealer_id = ${dealer_id} OR (dealer_id = 0 ${condition})) AND permission_type = 'package';`);
                             let permissionIds = permissionsResults.map((prm) => prm.permission_id);
 
                             let checkPermissions = [];
@@ -764,30 +773,30 @@ exports.getPackages = async function (req, res) {
                             reslt = checkPermissions;
                         }
 
-                        console.log('result found ', reslt)
+                        // console.log('result found ', reslt)
 
                         let packages = [];
                         let dealerCount = 0;
                         let sdealerList = []
-                        if (verify.user.user_type !== SDEALER) {
-                            // if (verify.user.user_type === ADMIN) {
+                        if (loggedUserType !== SDEALER) {
+                            // if (loggedUserType === ADMIN) {
                             //     let dealerRoleId = await helpers.getUserTypeIDByName(DEALER);
                             //     dealerCount = await helpers.userDealerCount(dealerRoleId);
                             //     sdealerList = await sql.query(`SELECT * FROM dealers WHERE type!=${dealerRoleId} AND type != 4 AND type !=5 ORDER BY created DESC`);
                             // }
-                            // else if (verify.user.user_type === DEALER) {
+                            // else if (loggedUserType === DEALER) {
                             //     sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
                             //     dealerCount = sdealerList.length;
                             // }
                             // sdealerList = sdealerList.map((dealer) => dealer.dealer_id);
                             // get all dealers under admin or sdealers under dealer
-                            let userDealers = await helpers.getUserDealers(verify.user.user_type, dealer_id, 'package');
+                            let userDealers = await helpers.getUserDealers(loggedUserType, dealer_id, 'package');
                             // console.log("userDealers ", userDealers);
                             sdealerList = userDealers.dealerList;
                             dealerCount = userDealers.dealerCount;
 
                             for (var i = 0; i < reslt.length; i++) {
-                                if (verify.user.user_type === ADMIN) {
+                                if (loggedUserType === ADMIN) {
                                     if (reslt[i].dealer_type === 'super_admin') {
                                         let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'admin' AND package_id = " + reslt[i].id);
                                         if (result && result.length) {
@@ -795,7 +804,7 @@ exports.getPackages = async function (req, res) {
                                         }
                                     }
                                 }
-                                else if (verify.user.user_type === DEALER) {
+                                else if (loggedUserType === DEALER) {
                                     if (reslt[i].dealer_type === 'super_admin') {
                                         let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'dealer' AND package_id = " + reslt[i].id);
                                         if (result && result.length) {
@@ -816,20 +825,33 @@ exports.getPackages = async function (req, res) {
                                 }
                                 // console.log('push apps', reslt[i].push_apps)
 
-                                let permissionDealers = await helpers.getDealersAgainstPermissions(reslt[i].id, 'package', dealer_id);
-                                console.log("permissionDealers ", permissionDealers);
-                                if (permissionDealers == '0') {
+                                let permissionDealers = await helpers.getDealersAgainstPermissions(reslt[i].id, 'package', dealer_id, sdealerList);
+
+                                if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
+                                    sdealerList = sdealerList.map((dealer) => {
+                                        return {
+                                            dealer_id: dealer,
+                                            dealer_type: permissionDealers[0].dealer_type,
+                                            permission_by: permissionDealers[0].permission_by
+                                        }
+                                    })
+                                    sdealerList = sdealerList.filter((item) => item.dealer_id !== dealer_id)
                                     reslt[i].dealers = JSON.stringify(sdealerList);
+                                    reslt[i].statusAll = true
                                 } else {
+                                    if (permissionDealers.length) {
+                                        permissionDealers = permissionDealers.filter((item) => item.dealer_id !== dealer_id)
+                                    }
                                     reslt[i].dealers = JSON.stringify(permissionDealers);
+                                    reslt[i].statusAll = false
                                 }
 
                                 let permissions = (reslt[i].dealers !== undefined && reslt[i].dealers !== null) ? JSON.parse(reslt[i].dealers) : [];
                                 let permissionCount = 0
-                                if (verify.user.user_type === constants.DEALER) {
-                                    permissions = permissions.filter((item) => sdealerList.includes(item))
-                                }
-                                // if (verify.user.user_type === DEALER) {
+                                // if (loggedUserType === constants.DEALER) {
+                                //     permissions = permissions.filter((item) => sdealerList.includes(item))
+                                // }
+                                // if (loggedUserType === DEALER) {
                                 //     permissions = permissions.filter(function (item) {
                                 //         for (let i = 0; i < sdealerList.length; i++) {
                                 //             if (item === sdealerList[i].dealer_id) {
@@ -841,13 +863,13 @@ exports.getPackages = async function (req, res) {
                                 permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
                                 let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
                                 // console.log(permissionC);
-                                console.log(dealerCount, permissionCount, permissionC);
+                                // console.log(dealerCount, permissionCount, permissionC);
                                 reslt[i].dealer_permission = permissions;
                                 reslt[i].permission_count = permissionC;
                                 // packages.push(dta);
                             }
                         }
-                        console.log(reslt, 'reslt data of prices')
+                        // console.log(reslt, 'reslt data of prices')
                         res.send({
                             status: true,
                             msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
