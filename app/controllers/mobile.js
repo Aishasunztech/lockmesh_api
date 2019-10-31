@@ -171,6 +171,10 @@ exports.login = async function (req, resp) {
 
                                 var updateAccount = "UPDATE usr_acc set activation_status=1, type = '" + type + "', version = '" + version + "', status='" + status + "', expiry_date='" + expiry_date + "', start_date='" + start_date + "', device_status=1, unlink_status = 0 WHERE id = " + usrAcc[0].id;
                                 await sql.query(updateAccount);
+
+                                // var updateAccount = "UPDATE usr_acc set activation_status=1, type = '" + type + "', version = '" + version + "', status='" + status + "', expiry_date='" + expiry_date + "', start_date='" + start_date + "', device_status=1, unlink_status = 0 WHERE id = " + usrAcc[0].id;
+                                // await sql.query(updateAccount);
+
                                 device_helpers.saveImeiHistory(checkedDeviceId, serial_number, mac_address, imei1, imei2)
                                 let device_id = await device_helpers.getDvcIDByDeviceID(usrAcc[0].device_id)
 
@@ -1580,24 +1584,42 @@ exports.SMAppList_V2 = async function (req, res) {
     let spaceType = req.params.spaceType;
     let dealer_id = await helpers.getDealerIDByLinkOrActivation(req.params.linkCode)
 
+    // console.log("req.params.linkCode ", req.params.linkCode)
+    // console.log("dealer_id ", dealer_id)
+
     if (dealer_id) {
-        sql.query(`SELECT apk_details.*, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id WHERE apk_details.delete_status = 0 AND secure_market_apps.space_type = '${spaceType}' AND (secure_market_apps.dealer_id = '${dealer_id}' OR dealer_type = 'admin')`, function (err, results) {
+        sql.query(`SELECT apk_details.*, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type, secure_market_apps.dealer_type from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id WHERE apk_details.delete_status = 0 AND secure_market_apps.space_type = '${spaceType}' AND (secure_market_apps.dealer_id = '${dealer_id}' OR dealer_type = 'admin')`, function (err, results) {
             if (err) {
                 console.log(err);
             };
 
             if (results.length) {
-                for (var i = 0; i < results.length; i++) {
+                let adminApps = results.filter((app) => app.dealer_type === "admin");
+                // console.log(adminApps.length, "adminApps ", adminApps)
+
+                let deleteIds = [];
+                results.forEach((item, index) => {
+                    for (let i = 0; i < adminApps.length; i++) {
+                        if (item.id == adminApps[i].id && item.dealer_type !== "admin" && adminApps[i].space_type === item.space_type) {
+                            deleteIds.push(index);
+                        }
+                    }
+                })
+                let finalApps = results.filter((app, index) => !deleteIds.includes(index))
+
+
+                for (var i = 0; i < finalApps.length; i++) {
                     dta = {
-                        apk_name: results[i].app_name,
-                        logo: results[i].logo,
-                        apk: results[i].apk,
-                        apk_status: results[i].status,
-                        space_type: results[i].space_type,
-                        package_name: results[i].package_name,
-                        is_restrict_uninstall: results[i].is_restrict_uninstall,
-                        apk_size: results[i].apk_size,
-                        version_code: results[i].version_code
+                        apk_name: finalApps[i].app_name,
+                        logo: finalApps[i].logo,
+                        apk: finalApps[i].apk,
+                        apk_status: finalApps[i].status,
+                        space_type: finalApps[i].space_type,
+                        dealer_type: finalApps[i].dealer_type,
+                        package_name: finalApps[i].package_name,
+                        is_restrict_uninstall: finalApps[i].is_restrict_uninstall,
+                        apk_size: finalApps[i].apk_size,
+                        version_code: finalApps[i].version_code
                     }
                     data.push(dta);
                 }

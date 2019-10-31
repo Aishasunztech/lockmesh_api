@@ -27,7 +27,7 @@ exports.baseSocket = async function (instance, socket) {
     let device_status = null;
     let isWeb = socket.handshake.query['isWeb'];
 
-    if (isWeb && (isWeb === true || isWeb === 'true')) {
+    if (isWeb || isWeb === 'true') {
         isWeb = true;
     } else {
         isWeb = false;
@@ -58,7 +58,7 @@ exports.baseSocket = async function (instance, socket) {
     // console.log("client ip: " + socket.request.connection.remoteAddress);
 
     if (device_id && !isWeb) {
-
+        // socket.join(device_id);
         console.log("on mobile side event");
 
         console.log("device_id: ", device_id);
@@ -255,7 +255,7 @@ exports.baseSocket = async function (instance, socket) {
                 let historyUpdate = `UPDATE device_history SET status='completed_successfully' WHERE user_acc_id=${user_acc_id} AND (type='history' OR type='password' OR type = 'profile') `;
                 await sql.query(historyUpdate);
 
-                var setting_query = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND (type='history' OR type='profile') AND status=1 ORDER BY created_at DESC LIMIT 1`;
+                var setting_query = `SELECT * FROM device_history WHERE user_acc_id=${user_acc_id} AND (type='history' OR type='profile') AND status='completed_successfully' ORDER BY created_at DESC LIMIT 1`;
                 let response = await sql.query(setting_query);
 
                 // if (response.length > 0 && data.device_id != null) {
@@ -842,7 +842,7 @@ exports.baseSocket = async function (instance, socket) {
         console.log("on web side");
         // setInterval(function () {
         //     // socket.to('testRoom').emit('hello_web', "hello web");
-        //     // socket.emit('hello_web', "hello web");
+        //     socket.emit('hello_web', "hello web");
         // }, 1000);
         // socket.emit('hello_web', "hello web");
     }

@@ -4,6 +4,8 @@
             "name": "lockmesh",
             "script": "./bin/www.js",
             "watch": false,
+            "instances" : "max",
+            "exec_mode" : "cluster",
             "env": {
                 "HOST_NAME": "localhost"
             },

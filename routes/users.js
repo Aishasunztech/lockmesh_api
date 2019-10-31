@@ -40,8 +40,11 @@ const appController = require('../app/controllers/app');
 const languageController = require('../app/controllers/language');
 const simController = require('../app/controllers/sim');
 const agentController = require('../app/controllers/agent');
+const reportingController = require('../app/controllers/reports');
+
 
 const dashboardController = require('../app/controllers/dashboard');
+const NotificationController = require('../app/controllers/notification');
 
 
 // constants
@@ -1202,9 +1205,17 @@ router.post("/save-package", billingController.savePackage);
 
 router.delete("/delete_package/:id", billingController.deletePackage);
 
-router.put("/edit_package/:id", billingController.editPackage);
+router.put("/modify_item_price/:id", billingController.modifyItemPrice);
 
 router.post("/save-sa-package", billingController.saveSaPackage);
+
+router.post("/save-sa-hardware", billingController.saveSaHardware);
+
+router.post("/edit-sa-hardware", billingController.editSaHardware);
+
+router.post("/delete-sa-package", billingController.deleteSaPackage);
+
+router.post("/delete-sa-hardware", billingController.deleteSaHardware);
 
 router.get("/get-language", languageController.getLanguage);
 
@@ -1214,11 +1225,15 @@ router.get("/get-prices", billingController.getPrices);
 
 router.get("/get-packages", billingController.getPackages);
 
+router.get("/get-hardwares", billingController.getHardwares);
+
 router.get("/get-parent-packages", billingController.getParentPackages);
 
 router.patch("/check-package-name", billingController.checkPackageName);
 
 router.get('/get-parent-product-prices', billingController.getProductPrices);
+
+router.get('/get-parent-hardware-prices', billingController.getHardwarePrices);
 
 router.patch('/check-package-name', billingController.checkPackageName);
 
@@ -1347,4 +1362,20 @@ router.delete('/agents/:agentID', agentController.deleteAgent);
 router.get('/dashboard-data', dashboardController.getDashboardData);
 router.get('/get-domains', accountController.getDomains);
 router.post("/dealer-permissions/:permissionType", dealerController.dealerPermissions);
+
+
+router.get('/getInvoiceId', userController.getInvoiceId);
+
+
+//reporting routes
+router.post('/reporting/product', reportingController.generateProductReport);
+router.post('/reports/hardware', reportingController.generateHardwareReport);
+router.post('/reports/invoice', reportingController.generateInvoiceReport);
+router.post('/reports/payment-history', reportingController.generatePaymentHistoryReport);
+
+//PDF generator
+router.post('/reports/pdf-generator', reportingController.generatePDFReport);
+
+router.get('/get-processes', NotificationController.getSocketProcesses);
+
 module.exports = router;
