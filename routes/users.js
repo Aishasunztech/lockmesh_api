@@ -198,6 +198,9 @@ router.get("/transfer/history/:device_id", deviceController.transferHistory);
 /**UPDATE Device details**/
 router.put("/edit/devices", deviceController.editDevices);
 
+/**EXTEND SERVICE**/
+router.put("/edit-device/extendServices", deviceController.extendServices);
+
 /**UPDATE Device details**/
 router.post('/check-service-refund-credits', deviceController.getServiceRefund);
 

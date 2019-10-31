@@ -523,7 +523,7 @@ exports.baseSocket = async function (instance, socket) {
                 instance.emit(Constants.FINISH_POLICY + device_id, {
                     status: true
                 });
-                
+
                 socket.emit(Constants.GET_SYNC_STATUS + device_id, {
                     device_id: device_id,
                     apps_status: false,
