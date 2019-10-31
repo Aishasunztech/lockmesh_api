@@ -17,34 +17,115 @@ const helpers = require('../../helper/general_helper');
 exports.apkList = async function (req, res) {
     var verify = req.decoded;
     var data = [];
+    var obj = {};
+    var obj1 = {};
+    let selectQ = '';
 
     if (verify) {
-        if (verify.user.user_type === Constants.ADMIN) {
-            sql.query("select * from apk_details where delete_status=0 AND apk_type != 'permanent' order by id ASC", async function (error, results) {
+        let loggedUserType = verify.user.user_type;
+        let loggedUserId = verify.user.dealer_id;
+
+        if (loggedUserType === Constants.ADMIN) {
+            selectQ = `SELECT * FROM apk_details WHERE delete_status=0 AND apk_type != 'permanent' ORDER BY id ASC`
+        }
+        else if (loggedUserType === Constants.DEALER) {
+            selectQ = `SELECT apk_details.*, dealer_permissions.permission_id, dealer_permissions.dealer_id, dealer_permissions.permission_type FROM apk_details JOIN dealer_permissions ON (apk_details.id = dealer_permissions.permission_id) WHERE (dealer_permissions.dealer_id='${verify.user.id}' OR (dealer_permissions.dealer_id = 0 AND dealer_permissions.dealer_type='admin')) AND apk_details.apk_type != 'permanent' AND apk_details.delete_status = 0 AND dealer_permissions.permission_type = 'apk';`;
+        }
+        else if (loggedUserType === Constants.AUTO_UPDATE_ADMIN) {
+            selectQ = `SELECT * FROM apk_details WHERE delete_status=0 AND apk_type = 'permanent' ORDER BY id ASC`
+        }
+        else {
+            return res.send({
+                status: false,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"),
+                list: []
+            });
+        }
+
+        console.log("selectQ of apk list:: ", selectQ);
+        if (selectQ !== '') {
+            sql.query(selectQ, async function (error, results) {
                 if (error) {
                     console.log(error);
+                    return res.send({
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // "No result found",
+                        list: []
+                    })
                 }
 
-                if (results.length > 0) {
+                if (results && results.length > 0) {
+                    let dealerCount = 0;
+                    let sdealerList = [];
 
-                    let adminRoleId = await helpers.getUserTypeIDByName(Constants.ADMIN);
-                    let dealerCount = await helpers.dealerCount(adminRoleId);
-                    // console.log("dealer count", dealerCount)
+                    if (loggedUserType !== Constants.AUTO_UPDATE_ADMIN) {
+                        // if (loggedUserType === Constants.ADMIN) {
+                        //     let adminRoleId = await helpers.getUserTypeIDByName(loggedUserType);
+                        //     dealerCount = await helpers.dealerCount(adminRoleId);
+                        // }
+                        // else if (loggedUserType === Constants.DEALER) {
+                        //     sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                        //     dealerCount = sdealerList ? sdealerList.length : 0;
+                        // }
+                        // get all dealers under admin or sdealers under dealer
+                        let userDealers = await helpers.getUserDealers(loggedUserType, loggedUserId);
+                        // console.log("userDealers ", userDealers);
+                        sdealerList = userDealers.dealerList;
+                        dealerCount = userDealers.dealerCount;
+                    }
                     for (var i = 0; i < results.length; i++) {
-                        let policies = await sql.query(`SELECT * FROM policy LEFT JOIN policy_apps on (policy.id = policy_apps.policy_id) WHERE policy_apps.apk_id=${results[i].id} AND policy.delete_status=0`)
-                        let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
-                        let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
-                        let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
-                        dta = {
+                        let permissions = [];
+                        let policies = [];
+                        let permissionC = 0;
+
+                        if (loggedUserType !== Constants.AUTO_UPDATE_ADMIN) {
+                            let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'apk', loggedUserId, sdealerList);
+
+                            if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
+
+                                let Update_sdealerList = sdealerList.map((dealer) => {
+                                    return {
+                                        dealer_id: dealer,
+                                        dealer_type: permissionDealers[0].dealer_type,
+                                        permission_by: permissionDealers[0].permission_by
+                                    }
+                                })
+                                let final_list = Update_sdealerList.filter((item) => item.dealer_id !== loggedUserId)
+                                results[i].dealers = JSON.stringify(final_list);
+                                results[i].statusAll = true
+                            } else {
+                                if (permissionDealers.length) {
+                                    permissionDealers = permissionDealers.filter((item) => item.dealer_id !== loggedUserId)
+                                }
+                                results[i].dealers = JSON.stringify(permissionDealers);
+                                results[i].statusAll = false
+                            }
+
+                            policies = await sql.query(`SELECT * FROM policy LEFT JOIN policy_apps on (policy.id = policy_apps.policy_id) WHERE policy_apps.apk_id=${results[i].id} AND policy.delete_status=0`)
+                            permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : [];
+
+                            // if (loggedUserType === Constants.DEALER) {
+                            // permissions = permissions.filter((item) => sdealerList.includes(item))
+                            // permissions = permissions.filter(function (item) {
+                            //     for (let i = 0; i < sdealerList.length; i++) {
+                            //         if (item === sdealerList[i].dealer_id) {
+                            //             return item
+                            //         }
+                            //     }
+                            // })
+                            // }
+
+                            let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
+                            permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                        }
+                        obj = {
                             apk_id: results[i].id,
                             apk_name: results[i].app_name,
                             logo: results[i].logo,
                             apk: results[i].apk,
                             permissions: permissions,
                             apk_status: results[i].status,
-                            size: results[i].apk_size,
                             permission_count: permissionC,
-                            deleteable: (results[i].apk_type == "permanent") ? false : true,
                             label: results[i].label,
                             package_name: results[i].package_name,
                             policies: policies,
@@ -52,66 +133,15 @@ exports.apkList = async function (req, res) {
                             updated_at: results[i].modified,
                             created_at: results[i].created,
                         }
-                        data.push(dta);
-                    }
 
-                    return res.send({
-                        status: true,
-                        success: true,
-                        list: data
-                    });
-
-                } else {
-                    data = {
-                        status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // "No result found",
-                        list: []
-                    }
-                    return res.send(data);
-                }
-
-            });
-        } else if (verify.user.user_type === Constants.DEALER) {
-            sql.query("select dealer_apks.* ,apk_details.* from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.apk_type != 'permanent' AND delete_status = 0", async function (error, results) {
-                if (error) {
-                    console.log(error);
-                }
-                if (results && results.length > 0) {
-
-                    let sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
-                    // console.log(sdealerList);
-                    let dealerCount = sdealerList ? sdealerList.length : 0;
-                    // console.log("dealer_count ", dealerCount);
-                    for (var i = 0; i < results.length; i++) {
-                        let policies = await sql.query(`SELECT * FROM policy LEFT JOIN policy_apps on (policy.id = policy_apps.policy_id) WHERE policy_apps.apk_id=${results[i].id} AND policy.delete_status=0`)
-                        let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
-                        let Sdealerpermissions = permissions.filter(function (item) {
-                            for (let i = 0; i < sdealerList.length; i++) {
-                                if (item === sdealerList[i].dealer_id) {
-                                    return item
-                                }
+                        if (loggedUserType === Constants.ADMIN) {
+                            obj1 = {
+                                size: results[i].apk_size,
+                                deleteable: (results[i].apk_type == "permanent") ? false : true,
                             }
-                        })
-                        // console.log(Sdealerpermissions);
-                        let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
-                        let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
-                        dta = {
-                            apk_id: results[i].id,
-                            apk_name: results[i].app_name,
-                            logo: results[i].logo,
-                            apk: results[i].apk,
-                            permissions: Sdealerpermissions,
-                            apk_status: results[i].status,
-                            permission_count: permissionC,
-                            label: results[i].label,
-                            package_name: results[i].package_name,
-                            policies: policies,
-                            version: results[i].version_name,
-                            updated_at: results[i].modified,
-                            created_at: results[i].created,
-                            // "deleteable": (results[i].apk_type == "permanent") ? false : true
+                            obj = { ...obj, ...obj1 };
                         }
-                        data.push(dta);
+                        data.push(obj);
                     }
 
                     return res.send({
@@ -121,77 +151,204 @@ exports.apkList = async function (req, res) {
                     });
 
                 } else {
-                    data = {
+                    return res.send({
                         status: false,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // "No result found",
                         list: []
-                    }
-                    return res.send(data);
-                }
-            });
-        } else if (verify.user.user_type === Constants.AUTO_UPDATE_ADMIN) {
-            sql.query("select * from apk_details where delete_status=0 AND apk_type = 'permanent' order by id ASC", async function (error, results) {
-                if (error) {
-                    console.log(error);
-                }
-                if (results.length > 0) {
-                    // console.log("dealer_count ", dealerCount);
-                    for (var i = 0; i < results.length; i++) {
-                        // dta = {
-                        //     apk_id: results[i].id,
-                        //     apk_name: results[i].app_name,
-                        //     logo: results[i].logo,
-                        //     apk: results[i].apk,
-                        //     permissions: [],
-                        //     apk_status: results[i].status,
-                        //     permission_count: 0,
-                        //     // "deleteable": (results[i].apk_type == "permanent") ? false : true
-                        // }
-
-                        dta = {
-                            apk_id: results[i].id,
-                            apk_name: results[i].app_name,
-                            logo: results[i].logo,
-                            apk: results[i].apk,
-                            permissions: [],
-                            apk_status: results[i].status,
-                            permission_count: 0,
-                            label: results[i].label,
-                            package_name: results[i].package_name,
-                            version: results[i].version_name,
-                            updated_at: results[i].modified,
-                            created_at: results[i].created,
-                            // "deleteable": (results[i].apk_type == "permanent") ? false : true
-                        }
-                        data.push(dta);
-                    }
-
-                    return res.json({
-                        status: true,
-                        success: true,
-                        list: data
                     });
-
-                } else {
-                    data = {
-                        status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // "No result found",
-                        list: []
-                    }
-                    return res.send(data);
                 }
             });
         } else {
-            data = {
+            return res.send({
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // "No result found",
+                msg: await helpers.convertToLang(req.translation[""], "Processing Failed"),
                 list: []
-            }
-            return res.send(data);
+            });
         }
     }
 }
 
+// exports.apkList = async function (req, res) {
+//     var verify = req.decoded;
+//     var data = [];
+
+//     if (verify) {
+//         if (verify.user.user_type === Constants.ADMIN) {
+//             sql.query("select * from apk_details where delete_status=0 AND apk_type != 'permanent' order by id ASC", async function (error, results) {
+//                 if (error) {
+//                     console.log(error);
+//                 }
+
+//                 if (results.length > 0) {
+
+//                     let adminRoleId = await helpers.getUserTypeIDByName(Constants.ADMIN);
+//                     let dealerCount = await helpers.dealerCount(adminRoleId);
+//                     // console.log("dealer count", dealerCount)
+//                     for (var i = 0; i < results.length; i++) {
+//                         let policies = await sql.query(`SELECT * FROM policy LEFT JOIN policy_apps on (policy.id = policy_apps.policy_id) WHERE policy_apps.apk_id=${results[i].id} AND policy.delete_status=0`)
+//                         let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
+//                         let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
+//                         let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+//                         dta = {
+//                             apk_id: results[i].id,
+//                             apk_name: results[i].app_name,
+//                             logo: results[i].logo,
+//                             apk: results[i].apk,
+//                             permissions: permissions,
+//                             apk_status: results[i].status,
+//                             size: results[i].apk_size,
+//                             permission_count: permissionC,
+//                             deleteable: (results[i].apk_type == "permanent") ? false : true,
+//                             label: results[i].label,
+//                             package_name: results[i].package_name,
+//                             policies: policies,
+//                             version: results[i].version_name,
+//                             updated_at: results[i].modified,
+//                             created_at: results[i].created,
+//                         }
+//                         data.push(dta);
+//                     }
+
+//                     return res.send({
+//                         status: true,
+//                         success: true,
+//                         list: data
+//                     });
+
+//                 } else {
+//                     data = {
+//                         status: false,
+//                         msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // "No result found",
+//                         list: []
+//                     }
+//                     return res.send(data);
+//                 }
+
+//             });
+//         } else if (verify.user.user_type === Constants.DEALER) {
+//             // let selectQ = `SELECT dealer_apks.* ,apk_details.* FROM dealer_apks JOIN apk_details ON (apk_details.id = dealer_apks.apk_id) WHERE dealer_apks.dealer_id='${verify.user.id}' AND apk_details.apk_type != 'permanent' AND delete_status = 0`
+//             let selectQ = `SELECT apk_details.*, dealer_permissions.permission_id, dealer_permissions.dealer_id, dealer_permissions.permission_type FROM apk_details JOIN dealer_permissions ON (apk_details.id = dealer_permissions.permission_id) WHERE dealer_permissions.dealer_id='${verify.user.id}' AND apk_details.apk_type != 'permanent' AND apk_details.delete_status = 0 AND dealer_permissions.permission_type = 'apk';`;
+
+//             console.log("selectQ of apk list:: ", selectQ);
+//             sql.query(selectQ, async function (error, results) {
+//                 if (error) {
+//                     console.log(error);
+//                 }
+//                 if (results && results.length > 0) {
+
+//                     let sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+//                     // console.log(sdealerList);
+//                     let dealerCount = sdealerList ? sdealerList.length : 0;
+//                     // console.log("dealer_count ", dealerCount);
+//                     for (var i = 0; i < results.length; i++) {
+//                         let policies = await sql.query(`SELECT * FROM policy LEFT JOIN policy_apps on (policy.id = policy_apps.policy_id) WHERE policy_apps.apk_id=${results[i].id} AND policy.delete_status=0`)
+//                         let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : JSON.parse('[]');
+//                         let Sdealerpermissions = permissions.filter(function (item) {
+//                             for (let i = 0; i < sdealerList.length; i++) {
+//                                 if (item === sdealerList[i].dealer_id) {
+//                                     return item
+//                                 }
+//                             }
+//                         })
+//                         // console.log(Sdealerpermissions);
+//                         let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
+//                         let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+//                         dta = {
+//                             apk_id: results[i].id,
+//                             apk_name: results[i].app_name,
+//                             logo: results[i].logo,
+//                             apk: results[i].apk,
+//                             permissions: Sdealerpermissions,
+//                             apk_status: results[i].status,
+//                             permission_count: permissionC,
+//                             label: results[i].label,
+//                             package_name: results[i].package_name,
+//                             policies: policies,
+//                             version: results[i].version_name,
+//                             updated_at: results[i].modified,
+//                             created_at: results[i].created,
+//                             // "deleteable": (results[i].apk_type == "permanent") ? false : true
+//                         }
+//                         data.push(dta);
+//                     }
+
+//                     return res.send({
+//                         status: true,
+//                         success: true,
+//                         list: data
+//                     });
+
+//                 } else {
+//                     data = {
+//                         status: false,
+//                         msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // "No result found",
+//                         list: []
+//                     }
+//                     return res.send(data);
+//                 }
+//             });
+//         } else if (verify.user.user_type === Constants.AUTO_UPDATE_ADMIN) {
+//             sql.query("select * from apk_details where delete_status=0 AND apk_type = 'permanent' order by id ASC", async function (error, results) {
+//                 if (error) {
+//                     console.log(error);
+//                 }
+//                 if (results.length > 0) {
+//                     // console.log("dealer_count ", dealerCount);
+//                     for (var i = 0; i < results.length; i++) {
+//                         // dta = {
+//                         //     apk_id: results[i].id,
+//                         //     apk_name: results[i].app_name,
+//                         //     logo: results[i].logo,
+//                         //     apk: results[i].apk,
+//                         //     permissions: [],
+//                         //     apk_status: results[i].status,
+//                         //     permission_count: 0,
+//                         //     // "deleteable": (results[i].apk_type == "permanent") ? false : true
+//                         // }
+
+//                         dta = {
+//                             apk_id: results[i].id,
+//                             apk_name: results[i].app_name,
+//                             logo: results[i].logo,
+//                             apk: results[i].apk,
+//                             permissions: [],
+//                             apk_status: results[i].status,
+//                             permission_count: 0,
+//                             label: results[i].label,
+//                             package_name: results[i].package_name,
+//                             version: results[i].version_name,
+//                             updated_at: results[i].modified,
+//                             created_at: results[i].created,
+//                             // "deleteable": (results[i].apk_type == "permanent") ? false : true
+//                         }
+//                         data.push(dta);
+//                     }
+
+//                     return res.json({
+//                         status: true,
+//                         success: true,
+//                         list: data
+//                     });
+
+//                 } else {
+//                     data = {
+//                         status: false,
+//                         msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // "No result found",
+//                         list: []
+//                     }
+//                     return res.send(data);
+//                 }
+//             });
+//         } else {
+//             data = {
+//                 status: false,
+//                 msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // "No result found",
+//                 list: []
+//             }
+//             return res.send(data);
+//         }
+//     }
+// }
 
 exports.checkApkName = async function (req, res) {
     var verify = req.decoded;

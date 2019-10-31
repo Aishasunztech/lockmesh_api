@@ -834,15 +834,18 @@ exports.getPackages = async function (req, res) {
     if (verify) {
         // let dealer_id = req.params.dealer_id;
         let dealer_id = verify.user.dealer_id;
+        let loggedUserType = verify.user.user_type;
 
         if (dealer_id) {
             let selectQuery = '';
-            if (verify.user.user_type === ADMIN) {
+            if (loggedUserType === ADMIN) {
                 selectQuery = "SELECT * FROM packages WHERE (delete_status != 1 OR  delete_status IS NULL)  AND (dealer_id='" + dealer_id + "' OR dealer_type = 'super_admin')";
             }
-            else if (verify.user.user_type === DEALER) {
-                selectQuery = "select dealer_packages_prices.price as pkg_price ,  packages.* from dealer_packages_prices join packages on packages.id = dealer_packages_prices.package_id where dealer_packages_prices.dealer_id = '" + dealer_id + "' OR  dealer_packages_prices.created_by = 'admin' AND packages.delete_status != 1";
+            else if (loggedUserType === DEALER) {
+                selectQuery = `SELECT dealer_packages_prices.price AS pkg_price, packages.* FROM dealer_packages_prices JOIN packages ON (packages.id = dealer_packages_prices.package_id) WHERE dealer_packages_prices.dealer_id = '${dealer_id}' OR  dealer_packages_prices.created_by = 'admin' AND packages.delete_status != 1`;
             }
+
+            console.log('final query is:: ', selectQuery);
 
             if (selectQuery) {
                 sql.query(selectQuery, async (err, reslt) => {
@@ -857,84 +860,144 @@ exports.getPackages = async function (req, res) {
                         return
                     }
 
-                    if (reslt) {
+                    if (reslt && reslt.length) {
                         // console.log('result for get prices are is ', reslt);
 
-                        if (reslt.length) {
-                            let packages = [];
-                            let dealerCount = 0;
-                            let sdealerList = []
-                            if (verify.user.user_type !== SDEALER) {
-                                if (verify.user.user_type === ADMIN) {
-                                    let dealerRoleId = await helpers.getUserTypeIDByName(DEALER);
-                                    dealerCount = await helpers.userDealerCount(dealerRoleId);
+                        if (loggedUserType !== ADMIN) {
+                            let condition = '';
+                            if (loggedUserType === DEALER) {
+                                condition = ` OR (dealer_id = 0 AND dealer_type = 'admin') `;
+                            }
+                            else if (loggedUserType === SDEALER) {
+                                let getParentId = await sql.query(`SELECT connected_dealer FROM dealers WHERE dealer_id = ${dealer_id}`);
+                                condition = ` OR (dealer_id = 0 AND (dealer_type='admin' OR (dealer_type='dealer' AND permission_by=${getParentId[0].connected_dealer}))) `
+                                // condition = `AND (dealer_type = 'admin' OR dealer_type = 'dealer')`
+                            }
+
+                            let permissionsResults = await sql.query(`SELECT * FROM dealer_permissions WHERE (dealer_id = ${dealer_id} ${condition}) AND permission_type = 'package';`);
+                            let permissionIds = permissionsResults.map((prm) => prm.permission_id);
+
+                            let checkPermissions = [];
+                            if (permissionIds && permissionIds.length) {
+                                reslt.forEach(item => {
+                                    if (permissionIds.includes(item.id)) {
+                                        checkPermissions.push(item);
+                                    }
+                                });
+                            }
+                            reslt = checkPermissions;
+                        }
+
+                        // console.log('result found ', reslt)
+
+                        let packages = [];
+                        let dealerCount = 0;
+                        let sdealerList = []
+                        if (loggedUserType !== SDEALER) {
+                            // if (loggedUserType === ADMIN) {
+                            //     let dealerRoleId = await helpers.getUserTypeIDByName(DEALER);
+                            //     dealerCount = await helpers.userDealerCount(dealerRoleId);
+                            //     sdealerList = await sql.query(`SELECT * FROM dealers WHERE type!=${dealerRoleId} AND type != 4 AND type !=5 ORDER BY created DESC`);
+                            // }
+                            // else if (loggedUserType === DEALER) {
+                            //     sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                            //     dealerCount = sdealerList.length;
+                            // }
+                            // sdealerList = sdealerList.map((dealer) => dealer.dealer_id);
+                            // get all dealers under admin or sdealers under dealer
+                            let userDealers = await helpers.getUserDealers(loggedUserType, dealer_id, 'package');
+                            // console.log("userDealers ", userDealers);
+                            sdealerList = userDealers.dealerList;
+                            dealerCount = userDealers.dealerCount;
+
+                            for (var i = 0; i < reslt.length; i++) {
+                                if (loggedUserType === ADMIN) {
+                                    if (reslt[i].dealer_type === 'super_admin') {
+                                        let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'admin' AND package_id = " + reslt[i].id);
+                                        if (result && result.length) {
+                                            reslt[i].pkg_price = result[0].price
+                                        }
+                                    }
                                 }
-                                else if (verify.user.user_type === DEALER) {
-                                    sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
-                                    dealerCount = sdealerList.length;
-                                }
-                                for (var i = 0; i < reslt.length; i++) {
-                                    if (verify.user.user_type === ADMIN) {
-                                        if (reslt[i].dealer_type === 'super_admin') {
+                                else if (loggedUserType === DEALER) {
+                                    if (reslt[i].dealer_type === 'super_admin') {
+                                        let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'dealer' AND package_id = " + reslt[i].id);
+                                        if (result && result.length) {
+                                            reslt[i].pkg_price = result[0].price
+                                        } else {
                                             let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'admin' AND package_id = " + reslt[i].id);
                                             if (result && result.length) {
                                                 reslt[i].pkg_price = result[0].price
                                             }
                                         }
-                                    }
-                                    else if (verify.user.user_type === DEALER) {
-                                        if (reslt[i].dealer_type === 'super_admin') {
-                                            let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'dealer' AND package_id = " + reslt[i].id);
-                                            if (result && result.length) {
-                                                reslt[i].pkg_price = result[0].price
-                                            } else {
-                                                let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'admin' AND package_id = " + reslt[i].id);
-                                                if (result && result.length) {
-                                                    reslt[i].pkg_price = result[0].price
-                                                }
-                                            }
-                                        } else if (reslt[i].dealer_type === 'admin') {
+                                    } else if (reslt[i].dealer_type === 'admin') {
 
-                                            let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'dealer' AND package_id = " + reslt[i].id);
-                                            if (result && result.length) {
-                                                reslt[i].pkg_price = result[0].price
-                                            }
+                                        let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'dealer' AND package_id = " + reslt[i].id);
+                                        if (result && result.length) {
+                                            reslt[i].pkg_price = result[0].price
                                         }
                                     }
-                                    // console.log('push apps', reslt[i].push_apps)
-                                    let permissions = (reslt[i].dealers !== undefined && reslt[i].dealers !== null) ? JSON.parse(reslt[i].dealers) : [];
-                                    let permissionCount = 0
-                                    if (verify.user.user_type === DEALER) {
-                                        permissions = permissions.filter(function (item) {
-                                            for (let i = 0; i < sdealerList.length; i++) {
-                                                if (item === sdealerList[i].dealer_id) {
-                                                    return item
-                                                }
-                                            }
-                                        })
-                                    }
-                                    permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
-                                    let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
-                                    // console.log(permissionC);
-                                    console.log(dealerCount, permissionCount, permissionC);
-                                    reslt[i].dealer_permission = permissions;
-                                    reslt[i].permission_count = permissionC;
-                                    // packages.push(dta);
                                 }
-                            }
-                            // console.log(reslt, 'reslt data of prices')
-                            res.send({
-                                status: true,
-                                msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
-                                data: reslt
+                                // console.log('push apps', reslt[i].push_apps)
 
-                            })
-                            return
+                                let permissionDealers = await helpers.getDealersAgainstPermissions(reslt[i].id, 'package', dealer_id, sdealerList);
+
+                                if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
+
+                                    let Update_sdealerList = sdealerList.map((dealer) => {
+                                        return {
+                                            dealer_id: dealer,
+                                            dealer_type: permissionDealers[0].dealer_type,
+                                            permission_by: permissionDealers[0].permission_by
+                                        }
+                                    })
+                                    let final_list = Update_sdealerList.filter((item) => item.dealer_id !== dealer_id)
+                                    reslt[i].dealers = JSON.stringify(final_list);
+                                    reslt[i].statusAll = true
+                                } else {
+                                    if (permissionDealers.length) {
+                                        permissionDealers = permissionDealers.filter((item) => item.dealer_id !== dealer_id)
+                                    }
+                                    reslt[i].dealers = JSON.stringify(permissionDealers);
+                                    reslt[i].statusAll = false
+                                }
+
+                                let permissions = (reslt[i].dealers !== undefined && reslt[i].dealers !== null) ? JSON.parse(reslt[i].dealers) : [];
+                                let permissionCount = 0
+                                // if (loggedUserType === constants.DEALER) {
+                                //     permissions = permissions.filter((item) => sdealerList.includes(item))
+                                // }
+                                // if (loggedUserType === DEALER) {
+                                //     permissions = permissions.filter(function (item) {
+                                //         for (let i = 0; i < sdealerList.length; i++) {
+                                //             if (item === sdealerList[i].dealer_id) {
+                                //                 return item
+                                //             }
+                                //         }
+                                //     })
+                                // }
+                                permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
+                                let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                                // console.log(permissionC);
+                                // console.log(dealerCount, permissionCount, permissionC);
+                                reslt[i].dealer_permission = permissions;
+                                reslt[i].permission_count = permissionC;
+                                // packages.push(dta);
+                            }
                         }
-                    } else {
+                        // console.log(reslt, 'reslt data of prices')
                         res.send({
                             status: true,
                             msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
+                            data: reslt
+
+                        })
+                        return
+
+                    } else {
+                        res.send({
+                            status: true,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "Data Not found"), // "Data found",
                             data: []
 
                         })
@@ -1072,9 +1135,11 @@ exports.getParentPackages = async function (req, res) {
     if (verify) {
         let selectQuery = ""
         // console.log(verify.user);
-        let dealer_id = verify.user.dealer_id;
-        if (dealer_id) {
-            selectQuery = "select packages.* from dealer_packages join packages on packages.id = dealer_packages.package_id where dealer_packages.dealer_id = ' " + dealer_id + "' AND packages.delete_status != 1";
+        let loggedUserId = verify.user.dealer_id;
+
+        if (loggedUserId) {
+            // selectQuery = "select packages.* from dealer_packages join packages on packages.id = dealer_packages.package_id where dealer_packages.dealer_id = ' " + dealer_id + "' AND packages.delete_status != 1";
+            selectQuery = `SELECT packages.* FROM dealer_permissions JOIN packages ON (packages.id = dealer_permissions.permission_id) WHERE (dealer_permissions.dealer_id = '${loggedUserId}' OR dealer_permissions.dealer_id=0) AND packages.delete_status != 1`;
             sql.query(selectQuery, async (err, reslt) => {
                 if (err) {
                     console.log(err)

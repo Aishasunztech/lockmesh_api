@@ -125,7 +125,7 @@ exports.saveNewData = async function (req, res) {
                     pgp_emails.push(item.pgp_email)
                 })
             }
-            console.log(pgp_emails);
+            // console.log(pgp_emails.length, "check pgp_emails==> ", pgp_emails);
             for (let row of req.body.newData) {
                 if (!pgp_emails.includes(row.pgp_email)) {
                     let result = await sql.query("INSERT pgp_emails (pgp_email) value ('" + row.pgp_email + "')");
@@ -201,6 +201,31 @@ exports.importIDs = async (req, res) => {
             })
             return
         } else if (fieldName == 'pgp_emails') {
+
+            // *********************** Add Domains
+            let domains = []
+            let all_domains = await sql.query("SELECT name from domains")
+            if (all_domains.length) {
+                all_domains.map((item) => {
+                    domains.push(item.name)
+                })
+            }
+
+            // console.log('domains===> ', domains);
+
+            let checkDuplicateDomains = [];
+            for (let row of data) {
+                let domainName = row.pgp_email.split('@').pop();
+                if (!domains.includes(domainName) && !checkDuplicateDomains.includes(domainName)) {
+                    if (domainName) {
+                        checkDuplicateDomains.push(domainName);
+                        let insertQ = `INSERT INTO domains (name) value ('${domainName}')`;
+                        await sql.query(insertQ);
+                    }
+                }
+            }
+
+            // ******* Add pgp emails
             let pgp_emails = []
             let all_pgp_emails = await sql.query("SELECT pgp_email from pgp_emails")
             if (all_pgp_emails.length) {
@@ -208,15 +233,22 @@ exports.importIDs = async (req, res) => {
                     pgp_emails.push(item.pgp_email)
                 })
             }
-            console.log(pgp_emails);
+
+            // get latest domains
+            all_domains = await sql.query("SELECT * FROM domains");
+
             for (let row of data) {
                 if (!pgp_emails.includes(row.pgp_email)) {
                     if (row.pgp_email) {
-                        let insertQ = `INSERT INTO pgp_emails (pgp_email) value ('${row.pgp_email}')`;
+                        let indexDomain = all_domains.findIndex((dm) => dm.name == row.pgp_email.split('@').pop());
+                        let domain_id = (indexDomain > -1) ? all_domains[indexDomain].id : null;
+
+                        let insertQ = `INSERT INTO pgp_emails (pgp_email, domain_id) value ('${row.pgp_email}', ${domain_id})`;
                         await sql.query(insertQ);
                     }
                 }
             }
+
             res.send({
                 status: true
             })
@@ -492,20 +524,52 @@ exports.getAllChatIDs = async (req, res) => {
 exports.getPGPEmails = async (req, res) => {
     var verify = req.decoded; // await verifyToken(req, res);
     if (verify) {
-        var loggedInuid = verify.user.id;
-        let query = "select * from pgp_emails where used=0";
-        sql.query(query, async function (error, resp) {
+        let loggedUserId = verify.user.dealer_id;
+        let loggedUserType = verify.user.user_type;
+        let condition = '';
+
+        if (loggedUserType === constants.DEALER) {
+            condition = ` OR (dealer_id = 0 AND dealer_type='admin') `
+        }
+        else if (loggedUserType === constants.SDEALER) {
+            let getParentId = await sql.query(`SELECT connected_dealer FROM dealers WHERE dealer_id = ${loggedUserId}`);
+            condition = ` OR (dealer_id = 0 AND (dealer_type='admin' OR (dealer_type='dealer' AND permission_by=${getParentId[0].connected_dealer}))) `
+        }
+        else {
+            condition = ` OR dealer_id = 0 `
+        }
+
+        let pgpPermisionQ = `SELECT * FROM dealer_permissions WHERE (dealer_id = '${loggedUserId}' ${condition}) AND permission_type = 'domain';`;
+        console.log("pgpPermisionQ ", pgpPermisionQ);
+        let dealerDomainPermissions = await sql.query(pgpPermisionQ);
+        let permission_ids = dealerDomainPermissions.map((prm) => prm.permission_id);
+
+        let query = '';
+        if (permission_ids.length) {
+            query = `SELECT * FROM pgp_emails WHERE used=0 AND domain_id IN (${permission_ids.join()})`;
+        }
+        // query = `SELECT * FROM pgp_emails WHERE used=0`;
+
+        if (query !== '') {
+            let resp = await sql.query(query);
             res.send({
-                status: false,
+                status: true,
                 msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
                 data: resp
             });
-        });
+        } else {
+            res.send({
+                status: false,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
+                data: []
+            })
+        }
     }
     else {
         res.send({
             status: false,
             msg: await helpers.convertToLang(req.translation[MsgConstants.ACCESS_FORBIDDEN], "access forbidden"), // "access forbidden"
+            data: []
         })
     }
 }
@@ -515,8 +579,9 @@ exports.getAllPGPEmails = async (req, res) => {
     var verify = req.decoded;
     if (verify) {
         let type = verify.user.user_type;
+        let dealer_id = verify.user.dealer_id;
         if (type === DEALER || type === SDEALER) {
-            let userIDs = await helpers.getUserAccID(verify.user.dealer_id);
+            let userIDs = await helpers.getUserAccID(dealer_id);
             query = `SELECT * FROM pgp_emails WHERE used = '1' AND delete_status = '0' AND user_acc_id IN (${userIDs})`;
         } else {
             query = "SELECT * FROM pgp_emails";
@@ -1371,6 +1436,143 @@ exports.ackCreditRequest = async function (req, res) {
                 msg: await helpers.convertToLang(req.translation[""], "ERROR: White label server error occurred. Please try again."), // "Credits not updated please try again."
             })
             return
+        }
+    }
+}
+
+// exports.getDomains = async function (req, res) {
+//     var verify = req.decoded;
+
+//     if (verify) {
+//         let dealer_id = verify.user.dealer_id;
+//         let selectDomains = await sql.query(`SELECT * FROM domains`);
+//         // console.log(verify, 'get domains:: ', selectDomains);
+
+//         if (selectDomains.length) {
+//             if (verify.user.user_type !== ADMIN) {
+//                 let selectPermisions = await sql.query(`SELECT * FROM dealer_permissions WHERE dealer_id = ${dealer_id} AND permission_type = 'domain'`);
+//                 // console.log("selectPermisions ", selectPermisions)
+
+//                 let prmIds = selectPermisions.map((p) => p.permission_id);
+//                 // console.log("prmIds ", prmIds)
+//                 selectDomains = selectDomains.filter((prm) => prmIds.includes(prm.id));
+//             }
+
+//             // console.log("selectDomains final:: ", selectDomains);
+//             res.send({
+//                 status: true,
+//                 domains: selectDomains
+//             })
+//         } else {
+//             res.send({
+//                 status: true,
+//                 domains: []
+//             })
+//         }
+//     }
+// }
+
+exports.getDomains = async function (req, res) {
+    var verify = req.decoded;
+
+    if (verify) {
+        let loggedUserId = verify.user.dealer_id;
+        let loggedUserType = verify.user.user_type;
+        let selectQ = '';
+
+        if (loggedUserType !== ADMIN) {
+            let condition = '';
+            if (loggedUserType === DEALER) {
+                condition = ` OR (dealer_permissions.dealer_id = 0 AND dealer_permissions.dealer_type = 'admin') `
+            }
+            else if (loggedUserType === SDEALER) {
+                let getParentId = await sql.query(`SELECT connected_dealer FROM dealers WHERE dealer_id = ${loggedUserId}`);
+                condition = ` OR (dealer_permissions.dealer_id = 0 AND (dealer_permissions.dealer_type='admin' OR (dealer_permissions.dealer_type='dealer' AND dealer_permissions.permission_by=${getParentId[0].connected_dealer}))) `
+                // condition = `AND (dealer_type = 'admin' OR dealer_type = 'dealer')`
+            }
+            selectQ = `SELECT domains.*, dealer_permissions.permission_id, dealer_permissions.dealer_id, dealer_permissions.permission_by, dealer_permissions.dealer_type FROM domains JOIN dealer_permissions ON (dealer_permissions.permission_id = domains.id) WHERE (dealer_permissions.dealer_id = ${loggedUserId} ${condition}) AND permission_type = 'domain';`;
+        } else {
+            selectQ = `SELECT * FROM domains`;
+        }
+        console.log("selectDomains selectQ ", selectQ)
+        let selectDomains = await sql.query(selectQ);
+
+        // get all dealers under admin or sdealers under dealer
+        let userDealers = await helpers.getUserDealers(loggedUserType, loggedUserId);
+        // console.log("userDealers ========> ", userDealers);
+        let sdealerList = userDealers.dealerList;
+        let dealerCount = userDealers.dealerCount;
+
+        // if (loggedUserType === constants.ADMIN) {
+        //     let adminRoleId = await helpers.getUserTypeIDByName(loggedUserType);
+        //     dealerCount = await helpers.dealerCount(adminRoleId);
+        // }
+        // else if (loggedUserType === constants.DEALER) {
+        //     dealerCount = sdealerList ? sdealerList.length : 0;
+        // }
+        // console.log("dealerCount ", dealerCount);
+
+        let results = selectDomains;
+        for (var i = 0; i < results.length; i++) {
+            let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'domain', loggedUserId, sdealerList);
+
+            if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
+                // console.log('set permisin for all dealers ')
+
+                let Update_sdealerList = sdealerList.map((dealer) => {
+                    return {
+                        dealer_id: dealer,
+                        dealer_type: permissionDealers[0].dealer_type,
+                        permission_by: permissionDealers[0].permission_by
+                    }
+                })
+                let final_list = Update_sdealerList.filter((item) => item.dealer_id !== loggedUserId)
+                results[i].dealers = JSON.stringify(final_list);
+                results[i].statusAll = true
+            } else {
+                if (permissionDealers.length) {
+                    permissionDealers = permissionDealers.filter((item) => item.dealer_id !== loggedUserId)
+                }
+                results[i].dealers = JSON.stringify(permissionDealers);
+                results[i].statusAll = false
+            }
+            let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : [];
+
+            // console.log('permissions are: ', permissions);
+
+            // if (loggedUserType === constants.DEALER) {
+            //     sdealerList = sdealerList.map((dealer) => dealer.dealer_id);
+            //     permissions = permissions.filter((item) => sdealerList.includes(item))
+            // }
+            // if (permissions.length) {
+            // if (loggedUserType === constants.DEALER) {
+            //     permissions = permissions.filter(function (item) {
+            //         for (let i = 0; i < sdealerList.length; i++) {
+            //             if (item.dealer_id === sdealerList[i].dealer_id) {
+            //                 return item
+            //             }
+            //         }
+            //     })
+            // }
+            // }
+            // console.log('permissions to check counter are: ', permissions);
+            let permissionCount = (permissions && permissions.length) ? permissions.length : 0;
+            // console.log("dealerCount == permissionCount ", dealerCount == permissionCount, dealerCount, permissionCount)
+            let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+            results[i].permission_count = permissionC;
+        }
+
+        console.log('get domains:: ', results);
+        if (results && results.length) {
+            res.send({
+                status: true,
+                domains: results
+            })
+        } else {
+            res.send({
+                status: true,
+                domains: []
+            })
         }
     }
 }

@@ -379,13 +379,14 @@ exports.baseSocket = async function (instance, socket) {
                 let { link_code, device_id, policy_name, is_default } = response;
                 if (link_code != undefined && link_code !== null && link_code !== '') {
 
-                    let dealerQ = "SELECT * FROM dealers WHERE link_code ='" + link_code + "'";
+                    let dealerQ = `SELECT * FROM dealers WHERE link_code ='${link_code}'`;
 
                     if (is_default) {
                         let dealer = await sql.query(dealerQ);
                         if (dealer.length) {
-                            let policiesQ = "SELECT policy.* FROM policy LEFT JOIN dealer_policies ON policy.id = dealer_policies.policy_id WHERE (dealer_policies.dealer_id=" + dealer[0].dealer_id + " OR policy.dealer_id=" + dealer[0].dealer_id + " )  AND  policy.status=1  AND policy.delete_status=0";
+                            let policiesQ = `SELECT policy.* FROM policy LEFT JOIN dealer_permissions ON (policy.id = dealer_permissions.permission_id) WHERE (dealer_permissions.dealer_id=${dealer[0].dealer_id} OR dealer_permissions.dealer_id=0) AND policy.status=1 AND policy.delete_status=0 AND dealer_permissions.permission_type= 'policy';`;
 
+                            console.log("policiesQ ", policiesQ)
                             let policies = await sql.query(policiesQ);
                             if (policies.length) {
                                 let policyIds = [];
@@ -393,8 +394,8 @@ exports.baseSocket = async function (instance, socket) {
                                     policyIds.push(policy.id);
                                 });
 
-                                let defaultQ = "SELECT * FROM default_policies WHERE dealer_id = " + dealer[0].dealer_id + " AND policy_id IN (" + policyIds.join() + ") ";
-                                console.log(defaultQ);
+                                let defaultQ = `SELECT * FROM default_policies WHERE dealer_id =${dealer[0].dealer_id} AND policy_id IN (${policyIds.join()});`;
+                                console.log("defaultQ ", defaultQ);
                                 let defaultP = await sql.query(defaultQ);
                                 if (defaultP.length) {
                                     let policyQ = "SELECT * FROM policy WHERE id=" + defaultP[0].policy_id;
@@ -440,7 +441,7 @@ exports.baseSocket = async function (instance, socket) {
                     } else if (policy_name !== '' && policy_name !== null) {
                         let dealer = await sql.query(dealerQ);
                         if (dealer.length) {
-                            let policyQ = `SELECT policy.* FROM policy LEFT JOIN dealer_policies ON policy.id = dealer_policies.policy_id WHERE (dealer_policies.dealer_id = ${dealer[0].dealer_id} OR policy.dealer_id = ${dealer[0].dealer_id})  AND  lower(policy.command_name) = '${policy_name.toLowerCase()}' AND policy.status=1 AND policy.delete_status=0`;
+                            let policyQ = `SELECT policy.* FROM policy LEFT JOIN dealer_permissions ON (policy.id = dealer_permissions.permission_id) WHERE (dealer_permissions.dealer_id = ${dealer[0].dealer_id} OR dealer_permissions.dealer_id=0 OR policy.dealer_id = ${dealer[0].dealer_id})  AND  lower(policy.command_name) = '${policy_name.toLowerCase()}' AND policy.status=1 AND policy.delete_status=0`;
                             console.log("policyQ: ", policyQ);
 
                             let policy = await sql.query(policyQ);
@@ -523,7 +524,7 @@ exports.baseSocket = async function (instance, socket) {
                 instance.emit(Constants.FINISH_POLICY + device_id, {
                     status: true
                 });
-                
+
                 socket.emit(Constants.GET_SYNC_STATUS + device_id, {
                     device_id: device_id,
                     apps_status: false,
