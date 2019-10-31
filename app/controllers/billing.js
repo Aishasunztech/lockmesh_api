@@ -866,13 +866,15 @@ exports.getPackages = async function (req, res) {
                         if (loggedUserType !== ADMIN) {
                             let condition = '';
                             if (loggedUserType === DEALER) {
-                                condition = `AND dealer_type = 'admin'`
+                                condition = ` OR (dealer_id = 0 AND dealer_type = 'admin') `;
                             }
                             else if (loggedUserType === SDEALER) {
-                                condition = `AND (dealer_type = 'admin' OR dealer_type = 'dealer')`
+                                let getParentId = await sql.query(`SELECT connected_dealer FROM dealers WHERE dealer_id = ${dealer_id}`);
+                                condition = ` OR (dealer_id = 0 AND (dealer_type='admin' OR (dealer_type='dealer' AND permission_by=${getParentId[0].connected_dealer}))) `
+                                // condition = `AND (dealer_type = 'admin' OR dealer_type = 'dealer')`
                             }
 
-                            let permissionsResults = await sql.query(`SELECT * FROM dealer_permissions WHERE (dealer_id = ${dealer_id} OR (dealer_id = 0 ${condition})) AND permission_type = 'package';`);
+                            let permissionsResults = await sql.query(`SELECT * FROM dealer_permissions WHERE (dealer_id = ${dealer_id} ${condition}) AND permission_type = 'package';`);
                             let permissionIds = permissionsResults.map((prm) => prm.permission_id);
 
                             let checkPermissions = [];
@@ -941,15 +943,16 @@ exports.getPackages = async function (req, res) {
                                 let permissionDealers = await helpers.getDealersAgainstPermissions(reslt[i].id, 'package', dealer_id, sdealerList);
 
                                 if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
-                                    sdealerList = sdealerList.map((dealer) => {
+
+                                    let Update_sdealerList = sdealerList.map((dealer) => {
                                         return {
                                             dealer_id: dealer,
                                             dealer_type: permissionDealers[0].dealer_type,
                                             permission_by: permissionDealers[0].permission_by
                                         }
                                     })
-                                    sdealerList = sdealerList.filter((item) => item.dealer_id !== dealer_id)
-                                    reslt[i].dealers = JSON.stringify(sdealerList);
+                                    let final_list = Update_sdealerList.filter((item) => item.dealer_id !== dealer_id)
+                                    reslt[i].dealers = JSON.stringify(final_list);
                                     reslt[i].statusAll = true
                                 } else {
                                     if (permissionDealers.length) {

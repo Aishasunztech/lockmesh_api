@@ -55,15 +55,16 @@ exports.getPolicies = async function (req, res) {
                         let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'policy', userId, sdealerList);
 
                         if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
-                            sdealerList = sdealerList.map((dealer) => {
+
+                            let Update_sdealerList = sdealerList.map((dealer) => {
                                 return {
                                     dealer_id: dealer,
                                     dealer_type: permissionDealers[0].dealer_type,
                                     permission_by: permissionDealers[0].permission_by
                                 }
                             })
-                            sdealerList = sdealerList.filter((item) => item.dealer_id !== userId)
-                            results[i].dealers = JSON.stringify(sdealerList);
+                            let final_list = Update_sdealerList.filter((item) => item.dealer_id !== userId)
+                            results[i].dealers = JSON.stringify(final_list);
                             results[i].statusAll = true
                         } else {
                             if (permissionDealers.length) {
@@ -121,12 +122,14 @@ exports.getPolicies = async function (req, res) {
         } else {
             let condition = '';
             if (loggedUserType === app_Constants.DEALER) {
-                condition = `AND dealer_type = 'admin'`
+                condition = ` OR (dealer_id = 0 AND dealer_type = 'admin')`
             }
             else if (loggedUserType === app_Constants.SDEALER) {
-                condition = `AND (dealer_type = 'admin' OR dealer_type = 'dealer')`
+                let getParentId = await sql.query(`SELECT connected_dealer FROM dealers WHERE dealer_id = ${userId}`);
+                condition = ` OR (dealer_id = 0 AND (dealer_type='admin' OR (dealer_type='dealer' AND permission_by=${getParentId[0].connected_dealer}))) `
+                // condition = `AND (dealer_type = 'admin' OR dealer_type = 'dealer')`
             }
-            let myquery = `SELECT permission_id FROM dealer_permissions WHERE (dealer_id='${userId}' OR (dealer_id=0 ${condition})) AND permission_type='policy';`;
+            let myquery = `SELECT permission_id FROM dealer_permissions WHERE (dealer_id='${userId}' ${condition}) AND permission_type='policy';`;
 
             console.log("myquery ", myquery);
             let permittedids = await sql.query(myquery);
@@ -160,15 +163,16 @@ exports.getPolicies = async function (req, res) {
                         let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'policy', userId, sdealerList);
 
                         if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
-                            sdealerList = sdealerList.map((dealer) => {
+
+                            let Update_sdealerList = sdealerList.map((dealer) => {
                                 return {
                                     dealer_id: dealer,
                                     dealer_type: permissionDealers[0].dealer_type,
                                     permission_by: permissionDealers[0].permission_by
                                 }
                             })
-                            sdealerList = sdealerList.filter((item) => item.dealer_id !== userId)
-                            results[i].dealers = JSON.stringify(sdealerList);
+                            let final_list = Update_sdealerList.filter((item) => item.dealer_id !== userId)
+                            results[i].dealers = JSON.stringify(final_list);
                             results[i].statusAll = true
                         } else {
                             if (permissionDealers.length) {
@@ -177,11 +181,6 @@ exports.getPolicies = async function (req, res) {
                             results[i].dealers = JSON.stringify(permissionDealers);
                             results[i].statusAll = false
                         }
-                        // if (permissionDealers == '0') {
-                        //     results[i].dealers = JSON.stringify(sdealerList);
-                        // } else {
-                        //     results[i].dealers = permissionDealers;
-                        // }
 
                         let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : [];
                         // let Sdealerpermissions = permissions.filter((item) => sdealerList.includes(item))

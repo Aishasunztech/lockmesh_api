@@ -82,15 +82,16 @@ exports.apkList = async function (req, res) {
                             let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'apk', loggedUserId, sdealerList);
 
                             if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
-                                sdealerList = sdealerList.map((dealer) => {
+
+                                let Update_sdealerList = sdealerList.map((dealer) => {
                                     return {
                                         dealer_id: dealer,
                                         dealer_type: permissionDealers[0].dealer_type,
                                         permission_by: permissionDealers[0].permission_by
                                     }
                                 })
-                                sdealerList = sdealerList.filter((item) => item.dealer_id !== loggedUserId)
-                                results[i].dealers = JSON.stringify(sdealerList);
+                                let final_list = Update_sdealerList.filter((item) => item.dealer_id !== loggedUserId)
+                                results[i].dealers = JSON.stringify(final_list);
                                 results[i].statusAll = true
                             } else {
                                 if (permissionDealers.length) {
@@ -104,14 +105,14 @@ exports.apkList = async function (req, res) {
                             permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : [];
 
                             // if (loggedUserType === Constants.DEALER) {
-                                // permissions = permissions.filter((item) => sdealerList.includes(item))
-                                // permissions = permissions.filter(function (item) {
-                                //     for (let i = 0; i < sdealerList.length; i++) {
-                                //         if (item === sdealerList[i].dealer_id) {
-                                //             return item
-                                //         }
-                                //     }
-                                // })
+                            // permissions = permissions.filter((item) => sdealerList.includes(item))
+                            // permissions = permissions.filter(function (item) {
+                            //     for (let i = 0; i < sdealerList.length; i++) {
+                            //         if (item === sdealerList[i].dealer_id) {
+                            //             return item
+                            //         }
+                            //     }
+                            // })
                             // }
 
                             let permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;

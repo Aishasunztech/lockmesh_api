@@ -524,9 +524,24 @@ exports.getAllChatIDs = async (req, res) => {
 exports.getPGPEmails = async (req, res) => {
     var verify = req.decoded; // await verifyToken(req, res);
     if (verify) {
-        let dealer_id = verify.user.dealer_id;
+        let loggedUserId = verify.user.dealer_id;
+        let loggedUserType = verify.user.user_type;
+        let condition = '';
 
-        let dealerDomainPermissions = await sql.query(`SELECT * FROM dealer_permissions WHERE (dealer_id = '${dealer_id}' OR dealer_id = 0) AND permission_type = 'domain'`);
+        if (loggedUserType === constants.DEALER) {
+            condition = ` OR (dealer_id = 0 AND dealer_type='admin') `
+        }
+        else if (loggedUserType === constants.SDEALER) {
+            let getParentId = await sql.query(`SELECT connected_dealer FROM dealers WHERE dealer_id = ${loggedUserId}`);
+            condition = ` OR (dealer_id = 0 AND (dealer_type='admin' OR (dealer_type='dealer' AND permission_by=${getParentId[0].connected_dealer}))) `
+        }
+        else {
+            condition = ` OR dealer_id = 0 `
+        }
+
+        let pgpPermisionQ = `SELECT * FROM dealer_permissions WHERE (dealer_id = '${loggedUserId}' ${condition}) AND permission_type = 'domain';`;
+        console.log("pgpPermisionQ ", pgpPermisionQ);
+        let dealerDomainPermissions = await sql.query(pgpPermisionQ);
         let permission_ids = dealerDomainPermissions.map((prm) => prm.permission_id);
 
         let query = '';
@@ -1468,12 +1483,14 @@ exports.getDomains = async function (req, res) {
         if (loggedUserType !== ADMIN) {
             let condition = '';
             if (loggedUserType === DEALER) {
-                condition = `AND dealer_type = 'admin'`
+                condition = ` OR (dealer_permissions.dealer_id = 0 AND dealer_permissions.dealer_type = 'admin') `
             }
             else if (loggedUserType === SDEALER) {
-                condition = `AND (dealer_type = 'admin' OR dealer_type = 'dealer')`
+                let getParentId = await sql.query(`SELECT connected_dealer FROM dealers WHERE dealer_id = ${loggedUserId}`);
+                condition = ` OR (dealer_permissions.dealer_id = 0 AND (dealer_permissions.dealer_type='admin' OR (dealer_permissions.dealer_type='dealer' AND dealer_permissions.permission_by=${getParentId[0].connected_dealer}))) `
+                // condition = `AND (dealer_type = 'admin' OR dealer_type = 'dealer')`
             }
-            selectQ = `SELECT domains.*, dealer_permissions.permission_id, dealer_permissions.dealer_id, dealer_permissions.permission_by, dealer_permissions.dealer_type FROM domains JOIN dealer_permissions ON (dealer_permissions.permission_id = domains.id) WHERE (dealer_permissions.dealer_id = ${loggedUserId} OR (dealer_permissions.dealer_id = 0 ${condition})) AND permission_type = 'domain';`;
+            selectQ = `SELECT domains.*, dealer_permissions.permission_id, dealer_permissions.dealer_id, dealer_permissions.permission_by, dealer_permissions.dealer_type FROM domains JOIN dealer_permissions ON (dealer_permissions.permission_id = domains.id) WHERE (dealer_permissions.dealer_id = ${loggedUserId} ${condition}) AND permission_type = 'domain';`;
         } else {
             selectQ = `SELECT * FROM domains`;
         }
@@ -1502,20 +1519,19 @@ exports.getDomains = async function (req, res) {
             if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
                 // console.log('set permisin for all dealers ')
 
-                sdealerList = sdealerList.map((dealer) => {
-                    // console.log("dealer  ", dealer);
+                let Update_sdealerList = sdealerList.map((dealer) => {
                     return {
                         dealer_id: dealer,
                         dealer_type: permissionDealers[0].dealer_type,
                         permission_by: permissionDealers[0].permission_by
                     }
                 })
-                sdealerList = sdealerList.filter((item) => item.dealer_id !== loggedUserId)
-                results[i].dealers = JSON.stringify(sdealerList);
+                let final_list = Update_sdealerList.filter((item) => item.dealer_id !== loggedUserId)
+                results[i].dealers = JSON.stringify(final_list);
                 results[i].statusAll = true
             } else {
                 if (permissionDealers.length) {
-                    permissionDealers = permissionDealers.filter((item) => item.dealer_id !== loggedUserId) 
+                    permissionDealers = permissionDealers.filter((item) => item.dealer_id !== loggedUserId)
                 }
                 results[i].dealers = JSON.stringify(permissionDealers);
                 results[i].statusAll = false
@@ -1546,7 +1562,7 @@ exports.getDomains = async function (req, res) {
             results[i].permission_count = permissionC;
         }
 
-        // console.log('get domains:: ', results);
+        console.log('get domains:: ', results);
         if (results && results.length) {
             res.send({
                 status: true,
