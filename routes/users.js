@@ -44,6 +44,7 @@ const reportingController = require('../app/controllers/reports');
 
 
 const dashboardController = require('../app/controllers/dashboard');
+const NotificationController = require('../app/controllers/notification');
 
 
 // constants
@@ -1369,6 +1370,8 @@ router.delete('/agents/:agentID', agentController.deleteAgent);
  * @security JWT
  */
 router.get('/dashboard-data', dashboardController.getDashboardData);
+router.get('/get-domains', accountController.getDomains);
+router.post("/dealer-permissions/:permissionType", dealerController.dealerPermissions);
 
 
 router.get('/getInvoiceId', userController.getInvoiceId);
@@ -1383,5 +1386,6 @@ router.post('/reports/payment-history', reportingController.generatePaymentHisto
 //PDF generator
 router.post('/reports/pdf-generator', reportingController.generatePDFReport);
 
+router.get('/get-processes', NotificationController.getSocketProcesses);
 
 module.exports = router;

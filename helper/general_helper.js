@@ -1927,5 +1927,118 @@ module.exports = {
 			user_acc_ids.push(item.id);
 		})
 		return user_acc_ids;
-	}
+	},
+	getDealersAgainstPermissions: async function (permission_id, permission_type, loggedUserId, subDealers = []) {
+
+		let finalDealers = [];
+		let condition = '';
+		// console.log("subDealers ", subDealers);
+		// if (subDealers && subDealers.length)
+		// subDealers = subDealers
+
+		if (subDealers && subDealers.length) {
+
+			if (subDealers[0].dealer_id !== undefined) {
+				subDealers = subDealers.map((item) => item.dealer_id);
+			}
+			// console.log("filtered subDealers ", subDealers);
+			condition = ` OR (dealer_type = 'admin' AND (dealer_id IN (${subDealers}) OR dealer_id = 0) )`;
+		} else {
+			condition = ` OR (dealer_type = 'admin' AND dealer_id = 0)`;
+		}
+		let selectDealerQ = `SELECT dealer_id, dealer_type, permission_by FROM dealer_permissions WHERE permission_id= ${permission_id} AND permission_type ='${permission_type}' AND (permission_by=${loggedUserId} ${condition})`; // dealer_id = ${loggedUserId} OR 
+		console.log("selectDealerQ ", selectDealerQ)
+		let permittedDealers = await sql.query(selectDealerQ);
+
+		// console.log("permittedDealers results:: ", permittedDealers);
+
+		if (permittedDealers.length > 0) {
+			let check = permittedDealers.find((dlr) => dlr.dealer_id == 0);
+			// console.log("check=======> ", check);
+			if (check) {
+				finalDealers.push(check);
+			} else {
+				finalDealers = permittedDealers //.map((prm) => prm.dealer_id)
+			}
+		}
+		// console.log("finalDealers", finalDealers);
+
+		return finalDealers
+	},
+	savePermission: async function (prevDealers, allDealers, permissionType, permissionId, loggedUserId, loggedUserType) {
+		// this query is to avoid duplication records
+		// let dealers_data = await sql.query(`SELECT dealer_id FROM dealer_permissions WHERE permission_type='${permissionType}' AND permission_id=${permissionId} AND permission_by= ${loggedUserId}`);
+
+		let insertQuery = "INSERT INTO dealer_permissions (permission_id, dealer_id, permission_type, permission_by, dealer_type) VALUES ";
+		let insertOrIgnore = ''
+		for (let i = 0; i < allDealers.length; i++) {
+			// console.log(i, "allDealers.length ", allDealers.length);
+			if (prevDealers.length) {
+				let index = prevDealers.findIndex((dealer) => dealer.dealer_id == allDealers[i]);
+				if (index !== -1) {
+					continue
+				}
+			}
+
+			if (i == (allDealers.length - 1)) {
+				insertOrIgnore = insertOrIgnore + `(${permissionId}, ${allDealers[i]}, '${permissionType}', '${loggedUserId}', '${loggedUserType}')`
+			} else {
+				insertOrIgnore = insertOrIgnore + `(${permissionId}, ${allDealers[i]}, '${permissionType}', '${loggedUserId}', '${loggedUserType}'),`
+			}
+		}
+
+		// console.log("insertOrIgnore general helper:: ", insertOrIgnore)
+		// return insertOrIgnore;
+
+		if (insertOrIgnore) {
+			let insertDealerPermissionsQ = insertQuery + insertOrIgnore;
+			console.log("insertDealerPermissionsQ ", insertDealerPermissionsQ);
+			let insertDealers = await sql.query(insertDealerPermissionsQ);
+
+			if (insertDealers.affectedRows) {
+				return {
+					status: true,
+					msg: 'permission saved successfully'
+				}
+			} else {
+				return {
+					status: false,
+					msg: 'failed to save permission'
+				}
+			}
+		} else {
+			return {
+				status: false,
+				msg: 'failed to save permission'
+			}
+		}
+	},
+	getUserDealers: async function (loggedUserType, loggedUserId, permissionType = '') {
+		let dealerList = [];
+		let dealerCount = 0;
+
+		if (loggedUserType === "admin") {
+			if (permissionType == "package") {
+				dealerList = await sql.query(`SELECT * FROM dealers WHERE type = 2 ORDER BY created DESC`);
+				dealerCount = dealerList ? dealerList.length : 0;
+			} else {
+				let adminRoleId = await this.getUserTypeIDByName(loggedUserType);
+				let selectQ = `SELECT * FROM dealers WHERE type!=${adminRoleId} AND type != 4 AND type !=5 ORDER BY created DESC`;
+				dealerList = await sql.query(selectQ);
+				dealerCount = await this.dealerCount(adminRoleId);
+			}
+
+		}
+		else if (loggedUserType === "dealer") {
+			dealerList = await sql.query(`SELECT dealer_id FROM dealers WHERE connected_dealer ='${loggedUserId}'`)
+			dealerCount = (dealerList && dealerList.length) ? dealerList.length : 0;
+		}
+		// console.log("===================> dealerList:: ", dealerList);
+		let getDealerIds = dealerList.map((dealer) => dealer.dealer_id);
+
+		return {
+			dealerList: getDealerIds,
+			dealerCount
+		}
+	},
 }

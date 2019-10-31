@@ -4,6 +4,9 @@ require("stackify-node-apm");
 var app = require("../app");
 var debug = require("debug")("webportalbackend:server");
 var http = require("http");
+let socket = require('socket.io');
+
+
 var Constants = require("../constants/Application");
 const { sql } = require("../config/database");
 
@@ -14,17 +17,21 @@ var events = require('../crons/db_events');
  * Create HTTP server.
  */
 var server = http.createServer(app);
-
+let socketRoutes = require('../routes/sockets');
 // io.attach(server, {
 //     // pingInterval: 60000,
 //     // pingTimeout: 120000,
 //     // cookie: false
 // });
+let io= socket();
+io.attach(server);
+socketRoutes.baseSocket(io);
 
-// we can have multiple instances based on path in sockets file
-app.io.attach(server);
-require("../routes/sockets").baseSocket(app.io);
-
+// let dealerIo = socket({
+// 	path: '/dealer'
+// })
+// dealerIo.attach(server);
+// socketRoutes.dealerSocket(dealerIo);
 
 /**
  * Listen on provided port, on all network interfaces.

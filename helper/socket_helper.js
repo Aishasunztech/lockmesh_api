@@ -287,7 +287,7 @@ module.exports = {
         if (controls) {
             setting.controls = controls
         }
-
+        
         io.emit(Constants.ACK_SETTING_APPLIED + device_id, setting);
     },
 
@@ -388,6 +388,7 @@ module.exports = {
         })
 
     },
+
     ackFinishedPolicyStep: async function (io, device_id, user_acc_id) {
         console.log("FINISHED POLICY STEP")
 
@@ -403,6 +404,7 @@ module.exports = {
             });
         }
     },
+
     ackFinishedWipe: async function (io, device_id, user_acc_id) {
         console.log("DEVICE WIPED SUCCESSFULLY")
 
@@ -422,7 +424,6 @@ module.exports = {
             status: true
         });
     },
-
 
     getPolicy: (io, setting_id, device_id, policy) => {
         
@@ -449,5 +450,9 @@ module.exports = {
             device_id: device_id,
             status: true
         });
+    },
+
+    sendJobToPanel: function (io, job) {
+        io.emit(Constants.SEND_JOB_TO_PANEL, job);
     }
 }
