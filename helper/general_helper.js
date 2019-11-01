@@ -1793,8 +1793,6 @@ module.exports = {
 				})
 			}
 		});
-
-
 	},
 
 	calculateHardwareProfitLoss: async function (hardwares, loggedDealerType) {

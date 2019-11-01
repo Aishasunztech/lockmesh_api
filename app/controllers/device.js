@@ -2594,6 +2594,129 @@ exports.extendServices = async function (req, res) {
         }
     }
 };
+
+exports.cancelExtendedServices = async function (req, res) {
+    res.setHeader("Content-Type", "application/json");
+    var verify = req.decoded; // await verifyToken(req, res);
+    if (verify) {
+        if (!empty(req.body.service_id)) {
+            let service_id = req.body.service_id
+            let user_acc_id = req.body.user_acc_id
+            let extendedServicesData = `SELECT * FROM services_data WHERE id = ${service_id} AND status = 'extended' AND user_acc_id = ${user_acc_id}`
+            sql.query(extendedServicesData, async function (err, result) {
+                if (err) {
+                    console.log(err);
+                    res.send({
+                        status: false,
+                        msg: "Internal Server Error"
+                    });
+                    return
+                }
+                if (result && result.length) {
+
+                    let getDeviceInfo = `SELECT * FROM usr_acc WHERE id= ${user_acc_id}`
+                    let deviceData = await sql.query(getDeviceInfo)
+                    if (deviceData.length) {
+                        let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
+                        let service = result[0]
+                        let dealer_id = service.dealer_id
+                        let dealer_type = await helpers.getUserType(dealer_id)
+                        let servicePackages = JSON.parse(service.packages)
+                        let serviceProducts = JSON.parse(service.products)
+                        let totalPrice = service.total_credits
+                        let date_now = moment(new Date()).format("YYYY/MM/DD")
+                        let profitLoss = await helpers.calculateProfitLoss(servicePackages, serviceProducts, dealer_type)
+                        let service_admin_profit = profitLoss.admin_profit
+                        let service_dealer_profit = profitLoss.dealer_profit
+
+
+                        let updateDevcieExpiry = `UPDATE usr_acc SET expiry_date = '${service.start_date}' WHERE id = ${user_acc_id}`
+                        sql.query(updateDevcieExpiry)
+                        let update_service_data = `UPDATE services_data set status = 'deleted', paid_credits = 0, end_date = '${date_now}' WHERE id = ${service.id} `
+                        sql.query(update_service_data)
+                        let updateSaleDetails = `UPDATE services_sale SET paid_sale_price =0, paid_admin_cost = 0 , paid_dealer_cost = 0 , status = 'returned' , end_date = '${date_now}' WHERE user_acc_id = ${user_acc_id} AND service_data_id = ${service.id}`
+                        sql.query(updateSaleDetails)
+
+
+                        let transection_record = `SELECT * from financial_account_transections where transection_data LIKE '%service_id":${service.id}%' AND  user_dvc_acc_id = ${user_acc_id} AND user_id = '${verify.user.id}' AND type = 'services' ORDER BY id DESC LIMIT 1`
+                        let transection_record_data = await sql.query(transection_record)
+
+
+                        if (transection_record_data[0] && transection_record_data[0].status === 'pending') {
+
+                            let update_transection = "UPDATE financial_account_transections SET status = 'cancelled' WHERE id = " + transection_record_data[0].id
+                            await sql.query(update_transection)
+
+                            update_credits_query = 'update financial_account_balance set credits = credits + ' + transection_record_data[0].credits + ' where dealer_id ="' + dealer_id + '"';
+                            await sql.query(update_credits_query);
+
+                            let update_profits_transections = `UPDATE financial_account_transections SET status = 'cancelled' WHERE transection_data LIKE '%service_id": ${service.id}% ' user_dvc_acc_id = ${user_acc_id} AND status = 'holding' AND type = 'services'`
+                            await sql.query(update_profits_transections)
+
+                        } else {
+
+                            let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id, details: "REFUND SERVICES CREITS", service_id: service.id })}' ,${totalPrice} ,'debit' , 'transferred' , 'services')`
+                            await sql.query(transection_credits)
+
+                            update_credits_query = 'update financial_account_balance set credits = credits + ' + totalPrice + ' where dealer_id ="' + dealer_id + '"';
+                            await sql.query(update_credits_query);
+
+                            service_admin_profit = service_admin_profit - service_admin_profit * 0.03
+                            service_dealer_profit = service_dealer_profit - service_dealer_profit * 0.03
+
+                            if (service_admin_profit) {
+                                let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${admin_data[0].dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id, details: "REFUND SERVICES PROFIT CREITS", service_id: service.id })}' ,${service_admin_profit} ,'credit' , 'transferred' , 'services')`
+                                await sql.query(transection_credits)
+
+                                updateAdminProfit = 'update financial_account_balance set credits = credits - ' + service_admin_profit + ' where dealer_id ="' + admin_data[0].dealer_id + '"';
+                                await sql.query(updateAdminProfit);
+                            }
+
+                            if (service_dealer_profit) {
+                                let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${deviceData[0].prnt_dlr_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id, details: "REFUND SERVICES PROFIT CREITS", service_id: service.id })}' ,${service_dealer_profit} ,'credit' , 'transferred' , 'services')`
+                                await sql.query(transection_credits)
+
+                                updateAdminProfit = 'update financial_account_balance set credits = credits - ' + service_dealer_profit + ' where dealer_id ="' + deviceData[0].prnt_dlr_id + '"';
+                                await sql.query(updateAdminProfit);
+                            }
+                        }
+                        let dealer_balance = null
+
+                        if (dealer_type === verify.user.user_type) {
+                            dealer_balance = await sql.query(`SELECT * FROM financial_account_balance WHERE dealer_id = ${verify.user.user_type}`)
+                        }
+
+                        res.send({
+                            status: true,
+                            msg: "Extended Services Cancelled Successfully.",
+                            credits: (dealer_balance) ? dealer_balance[0].credits : null
+                        });
+                        return
+                    }
+                    else {
+                        res.send({
+                            status: false,
+                            msg: "Device Not found."
+                        });
+                        return
+                    }
+                } else {
+                    res.send({
+                        status: false,
+                        msg: "Extended Service not found."
+                    });
+                    return
+                }
+            })
+        } else {
+            res.send({
+                status: false,
+                msg: "Extended Service not found."
+            });
+            return
+        }
+    }
+};
 exports.getServiceRefund = async function (req, res) {
     res.setHeader("Content-Type", "application/json");
     var verify = req.decoded; // await verifyToken(req, res);

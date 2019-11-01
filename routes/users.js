@@ -202,6 +202,9 @@ router.put("/edit/devices", deviceController.editDevices);
 /**EXTEND SERVICE**/
 router.put("/edit-device/extendServices", deviceController.extendServices);
 
+/**CANCEL EXTEND SERVICE**/
+router.put("/cancel-extended-services", deviceController.cancelExtendedServices);
+
 /**UPDATE Device details**/
 router.post('/check-service-refund-credits', deviceController.getServiceRefund);
 
