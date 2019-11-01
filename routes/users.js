@@ -195,6 +195,8 @@ router.post("/transfer/user", deviceController.transferUser);
 
 router.get("/transfer/history/:device_id", deviceController.transferHistory);
 
+router.get("/getServicesHistory/:usr_acc_id", deviceController.getServicesHistory);
+
 
 /**UPDATE Device details**/
 router.put("/edit/devices", deviceController.editDevices);
