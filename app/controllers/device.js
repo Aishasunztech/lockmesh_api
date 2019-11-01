@@ -640,8 +640,22 @@ exports.acceptDevice = async function (req, res) {
                                                         else {
                                                             rsltq[0].chat_id = "N/A"
                                                         }
-                                                        if (servicesData[0]) {
-                                                            rsltq[0].services = servicesData[0]
+                                                        // if (servicesData[0]) {
+                                                        //     rsltq[0].services = servicesData[0]
+                                                        // }
+                                                        let services = servicesData;
+                                                        if (services) {
+                                                            if (services.length > 1) {
+                                                                services.map((item) => {
+                                                                    if (item.status === 'extended') {
+                                                                        rsltq[0].extended_services = item
+                                                                    } else {
+                                                                        rsltq[0].services = item
+                                                                    }
+                                                                })
+                                                            } else {
+                                                                rsltq[0].services = services
+                                                            }
                                                         }
                                                         rsltq[0].vpn = await device_helpers.getVpn(rsltq[0])
                                                         // rsltq[0].validity = await device_helpers.checkRemainDays(rsltq[0].created_at, rslts[0].validity)
@@ -1146,10 +1160,24 @@ exports.createDeviceProfile = async function (req, res) {
                                                 rsltq[i].created_at,
                                                 rsltq[i].validity
                                             );
-                                            let services = servicesData.find(data => data.user_acc_id === rsltq[i].id);
+                                            let services = servicesData.filter(data => data.user_acc_id === rsltq[i].id);
                                             if (services) {
-                                                rsltq[i].services = services
+                                                if (services.length > 1) {
+                                                    services.map((item) => {
+                                                        if (item.status === 'extended') {
+                                                            rsltq[i].extended_services = item
+                                                        } else {
+                                                            rsltq[i].services = item
+                                                        }
+                                                    })
+                                                } else {
+                                                    rsltq[i].services = services
+                                                }
                                             }
+                                            // let services = servicesData.find(data => data.user_acc_id === rsltq[i].id);
+                                            // if (services) {
+                                            //     rsltq[i].services = services
+                                            // }
 
                                             rsltq[i].vpn = await device_helpers.getVpn(rsltq[i])
                                             await device_helpers.saveActionHistory(
@@ -1451,9 +1479,23 @@ exports.createDeviceProfile = async function (req, res) {
                                                                     results[0].chat_id = "N/A"
                                                                 }
 
-                                                                if (servicesData[0]) {
-                                                                    results[0].services = servicesData[0]
+                                                                let services = servicesData
+                                                                if (services) {
+                                                                    if (services.length > 1) {
+                                                                        services.map((item) => {
+                                                                            if (item.status === 'extended') {
+                                                                                results[i].extended_services = item
+                                                                            } else {
+                                                                                results[i].services = item
+                                                                            }
+                                                                        })
+                                                                    } else {
+                                                                        results[i].services = services
+                                                                    }
                                                                 }
+                                                                // if (servicesData[0]) {
+                                                                //     results[0].services = servicesData[0]
+                                                                // }
 
                                                                 // dealerData = await device_helpers.getDealerdata(results[i]);
                                                                 device_helpers.saveActionHistory(
@@ -2115,9 +2157,23 @@ exports.editDevices = async function (req, res) {
                                 rsltq[0].chat_id = "N/A"
                             }
 
-                            if (servicesData[0]) {
-                                rsltq[0].services = servicesData[0]
+                            let services = servicesData;
+                            if (services) {
+                                if (services.length > 1) {
+                                    services.map((item) => {
+                                        if (item.status === 'extended') {
+                                            rsltq[0].extended_services = item
+                                        } else {
+                                            rsltq[0].services = item
+                                        }
+                                    })
+                                } else {
+                                    rsltq[0].services = services
+                                }
                             }
+                            // if (servicesData[0]) {
+                            //     rsltq[0].services = servicesData[0]
+                            // }
 
                             if (rsltq[0].expiry_date !== null) {
                                 let startDate = moment(new Date())
@@ -2549,9 +2605,23 @@ exports.extendServices = async function (req, res) {
                                 rsltq[0].chat_id = "N/A"
                             }
 
-                            if (servicesData[0]) {
-                                rsltq[0].services = servicesData[0]
+                            let services = servicesData;
+                            if (services) {
+                                if (services.length > 1) {
+                                    services.map((item) => {
+                                        if (item.status === 'extended') {
+                                            rsltq[0].extended_services = item
+                                        } else {
+                                            rsltq[0].services = item
+                                        }
+                                    })
+                                } else {
+                                    rsltq[0].services = services
+                                }
                             }
+                            // if (servicesData[0]) {
+                            //     rsltq[0].services = servicesData[0]
+                            // }
 
                             if (rsltq[0].expiry_date !== null) {
                                 let startDate = moment(new Date())
@@ -3062,9 +3132,24 @@ exports.unflagDevice = async function (req, res) {
                             else {
                                 resquery[0].chat_id = "N/A"
                             }
-                            if (servicesData[0]) {
-                                resquery[0].services = servicesData[0]
+
+                            let services = servicesData;
+                            if (services) {
+                                if (services.length > 1) {
+                                    services.map((item) => {
+                                        if (item.status === 'extended') {
+                                            resquery[0].extended_services = item
+                                        } else {
+                                            resquery[0].services = item
+                                        }
+                                    })
+                                } else {
+                                    resquery[0].services = services
+                                }
                             }
+                            // if (servicesData[0]) {
+                            //     resquery[0].services = servicesData[0]
+                            // }
                             // dealerData = await getDealerdata(res[i]);
                             resquery[0]["transfered_from"] = null;
                             resquery[0]["transfered_to"] = null;
@@ -3180,9 +3265,23 @@ exports.flagDevice = async function (req, res) {
                         else {
                             resquery[0].chat_id = "N/A"
                         }
-                        if (servicesData[0]) {
-                            resquery[0].services = servicesData[0]
+                        let services = servicesData;
+                        if (services) {
+                            if (services.length > 1) {
+                                services.map((item) => {
+                                    if (item.status === 'extended') {
+                                        resquery[0].extended_services = item
+                                    } else {
+                                        resquery[0].services = item
+                                    }
+                                })
+                            } else {
+                                resquery[0].services = services
+                            }
                         }
+                        // if (servicesData[0]) {
+                        //     resquery[0].services = servicesData[0]
+                        // }
                         // dealerData = await getDealerdata(res[i]);
                         resquery[0]["transfered_from"] = null;
                         resquery[0]["transfered_to"] = null;
@@ -3276,9 +3375,23 @@ exports.transferUser = async function (req, res) {
                     else {
                         resquery[0].chat_id = "N/A"
                     }
-                    if (servicesData[0]) {
-                        resquery[0].services = servicesData[0]
+                    let services = servicesData;
+                    if (services) {
+                        if (services.length > 1) {
+                            services.map((item) => {
+                                if (item.status === 'extended') {
+                                    resquery[0].extended_services = item
+                                } else {
+                                    resquery[0].services = item
+                                }
+                            })
+                        } else {
+                            resquery[0].services = services
+                        }
                     }
+                    // if (servicesData[0]) {
+                    //     resquery[0].services = servicesData[0]
+                    // }
                     device_helpers.saveActionHistory(resquery[0], constants.USER_TRANSFERED)
                     data = {
                         status: true,
@@ -3492,9 +3605,23 @@ exports.transferDeviceProfile = async function (req, res) {
                                     else {
                                         resquery[0].chat_id = "N/A"
                                     }
-                                    if (servicesData[0]) {
-                                        resquery[0].services = servicesData[0]
+                                    let services = servicesData;
+                                    if (services) {
+                                        if (services.length > 1) {
+                                            services.map((item) => {
+                                                if (item.status === 'extended') {
+                                                    resquery[0].extended_services = item
+                                                } else {
+                                                    resquery[0].services = item
+                                                }
+                                            })
+                                        } else {
+                                            resquery[0].services = services
+                                        }
                                     }
+                                    // if (servicesData[0]) {
+                                    //     resquery[0].services = servicesData[0]
+                                    // }
                                     device_helpers.saveActionHistory(resquery[0], "Device Transfered");
                                     // console.log(resquery[0]);
                                     socket_helpers.sendDeviceStatus(sockets.baseIo, resquery[0].device_id, "transfered");
@@ -3817,6 +3944,43 @@ exports.transferHistory = async function (req, res) {
 // ******************************************** End Transfer Module
 
 
+exports.getServicesHistory = async function (req, res) {
+    var verify = req.decoded;
+    let usr_acc_id = req.params.usr_acc_id;
+
+    console.log("getServicesHistory : ", usr_acc_id)
+    if (verify) {
+        console.log("hi");
+
+        let selectQ = `SELECT * FROM services_data WHERE user_acc_id = ${usr_acc_id} AND (status = 'returned' OR status = 'cancelled' OR status = 'completed' OR status = 'deleted') ORDER BY id DESC`
+        console.log("getServicesHistory selectQ ", selectQ);
+
+        let results = await sql.query(selectQ, async function (err, results) {
+            if (err) {
+                console.log("err ", err);
+                return res.send({
+                    status: false,
+                    data: []
+                });
+            }
+            // console.log("results ", results);
+
+            if (results && results.length) {
+                return res.send({
+                    status: true,
+                    data: results
+                });
+            } else {
+                return res.send({
+                    status: false,
+                    data: []
+                });
+            }
+        });
+
+    }
+}
+
 exports.suspendAccountDevices = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
     var device_id = req.params.id;
@@ -3888,9 +4052,23 @@ exports.suspendAccountDevices = async function (req, res) {
                                         resquery[0].chat_id = "N/A"
 
                                     }
-                                    if (servicesData[0]) {
-                                        resquery[0].services = servicesData[0]
+                                    let services = servicesData;
+                                    if (services) {
+                                        if (services.length > 1) {
+                                            services.map((item) => {
+                                                if (item.status === 'extended') {
+                                                    resquery[0].extended_services = item
+                                                } else {
+                                                    resquery[0].services = item
+                                                }
+                                            })
+                                        } else {
+                                            resquery[0].services = services
+                                        }
                                     }
+                                    // if (servicesData[0]) {
+                                    //     resquery[0].services = servicesData[0]
+                                    // }
                                     // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
                                     // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
                                     resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
@@ -3986,9 +4164,23 @@ exports.suspendAccountDevices = async function (req, res) {
                                             resquery[0].chat_id = "N/A"
 
                                         }
-                                        if (servicesData[0]) {
-                                            resquery[0].services = servicesData[0]
+                                        let services = servicesData;
+                                        if (services) {
+                                            if (services.length > 1) {
+                                                services.map((item) => {
+                                                    if (item.status === 'extended') {
+                                                        resquery[0].extended_services = item
+                                                    } else {
+                                                        resquery[0].services = item
+                                                    }
+                                                })
+                                            } else {
+                                                resquery[0].services = services
+                                            }
                                         }
+                                        // if (servicesData[0]) {
+                                        //     resquery[0].services = servicesData[0]
+                                        // }
                                         // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
                                         // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
                                         resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
@@ -4120,9 +4312,23 @@ exports.activateDevice = async function (req, res) {
                                         resquery[0].chat_id = "N/A"
 
                                     }
-                                    if (servicesData[0]) {
-                                        resquery[0].services = servicesData[0]
+                                    let services = servicesData;
+                                    if (services) {
+                                        if (services.length > 1) {
+                                            services.map((item) => {
+                                                if (item.status === 'extended') {
+                                                    resquery[0].extended_services = item
+                                                } else {
+                                                    resquery[0].services = item
+                                                }
+                                            })
+                                        } else {
+                                            resquery[0].services = services
+                                        }
                                     }
+                                    // if (servicesData[0]) {
+                                    //     resquery[0].services = servicesData[0]
+                                    // }
                                     // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
                                     // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
                                     resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
@@ -4221,9 +4427,23 @@ exports.activateDevice = async function (req, res) {
                                             resquery[0].chat_id = "N/A"
 
                                         }
-                                        if (servicesData[0]) {
-                                            resquery[0].services = servicesData[0]
+                                        let services = servicesData;
+                                        if (services) {
+                                            if (services.length > 1) {
+                                                services.map((item) => {
+                                                    if (item.status === 'extended') {
+                                                        resquery[0].extended_services = item
+                                                    } else {
+                                                        resquery[0].services = item
+                                                    }
+                                                })
+                                            } else {
+                                                resquery[0].services = services
+                                            }
                                         }
+                                        // if (servicesData[0]) {
+                                        //     resquery[0].services = servicesData[0]
+                                        // }
                                         // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
                                         // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
                                         resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
@@ -4383,9 +4603,23 @@ exports.wipeDevice = async function (req, res) {
                     else {
                         resquery[0].chat_id = "N/A"
                     }
-                    if (servicesData[0]) {
-                        resquery[0].services = servicesData[0]
+                    let services = servicesData;
+                    if (services) {
+                        if (services.length > 1) {
+                            services.map((item) => {
+                                if (item.status === 'extended') {
+                                    resquery[0].extended_services = item
+                                } else {
+                                    resquery[0].services = item
+                                }
+                            })
+                        } else {
+                            resquery[0].services = services
+                        }
                     }
+                    // if (servicesData[0]) {
+                    //     resquery[0].services = servicesData[0]
+                    // }
 
                     device_helpers.saveActionHistory(
                         resquery[0],
@@ -4480,9 +4714,23 @@ exports.connectDevice = async function (req, res) {
                             results[0].chat_id = "N/A"
 
                         }
-                        if (servicesData[0]) {
-                            results[0].services = servicesData[0]
+                        let services = servicesData;
+                        if (services) {
+                            if (services.length > 1) {
+                                services.map((item) => {
+                                    if (item.status === 'extended') {
+                                        results[0].extended_services = item
+                                    } else {
+                                        results[0].services = item
+                                    }
+                                })
+                            } else {
+                                results[0].services = services
+                            }
                         }
+                        // if (servicesData[0]) {
+                        //     results[0].services = servicesData[0]
+                        // }
                         // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
                         results[0].lastOnline = results[0].last_login ? results[0].last_login : "N/A"
                         // } else {
