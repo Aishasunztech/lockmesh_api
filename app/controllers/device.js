@@ -3829,7 +3829,7 @@ exports.getServicesHistory = async function (req, res) {
     if (verify) {
         console.log("hi");
 
-        let selectQ = `SELECT * FROM services_data WHERE user_acc_id = ${usr_acc_id} AND (status = 'returned' OR status = 'cancelled' OR status = 'completed' OR status = 'deleted')`
+        let selectQ = `SELECT * FROM services_data WHERE user_acc_id = ${usr_acc_id} AND (status = 'returned' OR status = 'cancelled' OR status = 'completed' OR status = 'deleted') ORDER BY id DESC`
         console.log("getServicesHistory selectQ ", selectQ);
 
         let results = await sql.query(selectQ, async function (err, results) {
@@ -3840,7 +3840,7 @@ exports.getServicesHistory = async function (req, res) {
                     data: []
                 });
             }
-            console.log("results ", results);
+            // console.log("results ", results);
 
             if (results && results.length) {
                 return res.send({
