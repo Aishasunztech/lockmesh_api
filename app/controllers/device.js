@@ -473,7 +473,7 @@ exports.acceptDevice = async function (req, res) {
                                                     if (pay_now) {
                                                         update_credits_query = 'update financial_account_balance set credits =' + remaining_credits + ' where dealer_id ="' + dealer_id + '"';
                                                     } else {
-                                                        update_credits_query = 'update financial_account_balance set due_credits = due_credits + ' + (total_price + hardwarePrice) + ' where dealer_id ="' + dealer_id + '"';
+                                                        update_credits_query = 'update financial_account_balance set credits = credits - ' + (total_price + hardwarePrice) + ' where dealer_id ="' + dealer_id + '"';
                                                     }
                                                     await sql.query(update_credits_query);
 
@@ -1073,7 +1073,7 @@ exports.createDeviceProfile = async function (req, res) {
                                     if (pay_now) {
                                         update_credits_query = 'UPDATE financial_account_balance set credits =' + remaining_credits + ' where dealer_id ="' + dealer_id + '"';
                                     } else {
-                                        update_credits_query = 'UPDATE financial_account_balance set due_credits = due_credits + ' + (total_price + hardwarePrice) + ' where dealer_id ="' + dealer_id + '"';
+                                        update_credits_query = 'UPDATE financial_account_balance set credits = credits - ' + (total_price + hardwarePrice) + ' where dealer_id ="' + dealer_id + '"';
                                     }
                                     await sql.query(update_credits_query);
                                     if (exp_month !== '0') {
@@ -1269,7 +1269,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                             if (pay_now) {
                                                                 update_credits_query = 'UPDATE financial_account_balance set credits =' + remaining_credits + ' where dealer_id ="' + dealer_id + '"';
                                                             } else {
-                                                                update_credits_query = 'UPDATE financial_account_balance set due_credits = due_credits + ' + (total_price + hardwarePrice) + ' where dealer_id ="' + dealer_id + '"';
+                                                                update_credits_query = 'UPDATE financial_account_balance set credits = credits - ' + (total_price + hardwarePrice) + ' where dealer_id ="' + dealer_id + '"';
                                                             }
 
                                                             await sql.query(update_credits_query);
@@ -1978,7 +1978,7 @@ exports.editDevices = async function (req, res) {
                                     let update_transection = "UPDATE financial_account_transections SET status = 'cancelled' WHERE id = " + transection_record_data[0].id
                                     await sql.query(update_transection)
 
-                                    update_credits_query = 'update financial_account_balance set due_credits = due_credits - ' + transection_record_data[0].credits + ' where dealer_id ="' + dealer_id + '"';
+                                    update_credits_query = 'update financial_account_balance set credits = credits + ' + transection_record_data[0].credits + ' where dealer_id ="' + dealer_id + '"';
                                     await sql.query(update_credits_query);
 
 
@@ -1989,7 +1989,7 @@ exports.editDevices = async function (req, res) {
                                         let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service charges" })}',${prevServicePaidPrice} ,'credit','pending' , 'services')`
                                         await sql.query(transection_credits)
 
-                                        update_credits_query = 'update financial_account_balance set due_credits = due_credits + ' + prevServicePaidPrice + ' where dealer_id ="' + dealer_id + '"';
+                                        update_credits_query = 'update financial_account_balance set credits = credits - ' + prevServicePaidPrice + ' where dealer_id ="' + dealer_id + '"';
                                         await sql.query(update_credits_query);
 
                                         let admin_holding_profit = prev_service_admin_profit - refund_prev_service_admin_profit
@@ -2060,7 +2060,7 @@ exports.editDevices = async function (req, res) {
                             await sql.query(transection_credits)
 
                             if (transection_status === 'pending') {
-                                update_credits_query = 'update financial_account_balance set due_credits = due_credits + ' + newServicePrice + ' where dealer_id ="' + dealer_id + '"';
+                                update_credits_query = 'update financial_account_balance set credits = credits - ' + newServicePrice + ' where dealer_id ="' + dealer_id + '"';
                             } else {
                                 update_credits_query = 'update financial_account_balance set credits = credits - ' + newServicePrice + ' where dealer_id ="' + dealer_id + '"';
                             }
@@ -5393,7 +5393,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                     await sql.query(update_transection)
                                     let update_profits_transections = "UPDATE financial_account_transections SET status = 'cancelled' WHERE user_dvc_acc_id = " + user_acc_id + " AND status = 'holding' AND type = 'services'"
                                     await sql.query(update_profits_transections)
-                                    let updateCredits = "UPDATE financial_account_balance set due_credits = due_credits - " + Number(bills[0].total_credits) + " WHERE dealer_id = " + verify.user.dealer_id
+                                    let updateCredits = "UPDATE financial_account_balance set credits = credits + " + Number(bills[0].total_credits) + " WHERE dealer_id = " + verify.user.dealer_id
                                     await sql.query(updateCredits);
                                 }
                                 else {
@@ -5427,7 +5427,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                     await sql.query(update_transection)
                                     let update_profits_transections = "UPDATE financial_account_transections SET status = 'cancelled' WHERE user_dvc_acc_id = " + user_acc_id + " AND status = 'holding' AND type = 'hardwares'"
                                     await sql.query(update_profits_transections)
-                                    let updateCredits = "UPDATE financial_account_balance set due_credits = due_credits - " + Number(total_hardware_credits) + " WHERE dealer_id = " + verify.user.dealer_id
+                                    let updateCredits = "UPDATE financial_account_balance set credits = credits + " + Number(total_hardware_credits) + " WHERE dealer_id = " + verify.user.dealer_id
                                     await sql.query(updateCredits);
                                 } else {
                                     refundedCredits = refundedCredits + Number(total_hardware_credits);

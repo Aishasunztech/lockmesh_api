@@ -174,7 +174,7 @@ exports.acceptServiceRequest = async function (req, res) {
                                     let update_transection = "UPDATE financial_account_transections SET status = 'cancelled' WHERE id = " + transection_record_data[0].id
                                     await sql.query(update_transection)
 
-                                    update_credits_query = 'update financial_account_balance set due_credits = due_credits - ' + transection_record_data[0].credits + ' where dealer_id ="' + dvc_dealer_id + '"';
+                                    update_credits_query = 'update financial_account_balance set credits = credits + ' + transection_record_data[0].credits + ' where dealer_id ="' + dvc_dealer_id + '"';
                                     await sql.query(update_credits_query);
 
 
@@ -185,7 +185,7 @@ exports.acceptServiceRequest = async function (req, res) {
                                         let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dvc_dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service charges" })}',${prevServicePaidPrice} ,'credit','pending' , 'services')`
                                         await sql.query(transection_credits)
 
-                                        update_credits_query = 'update financial_account_balance set due_credits = due_credits + ' + prevServicePaidPrice + ' where dealer_id ="' + dvc_dealer_id + '"';
+                                        update_credits_query = 'update financial_account_balance set credits = credits - ' + prevServicePaidPrice + ' where dealer_id ="' + dvc_dealer_id + '"';
                                         await sql.query(update_credits_query);
 
                                         let admin_holding_profit = prev_service_admin_profit - refund_prev_service_admin_profit
