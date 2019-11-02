@@ -8,7 +8,8 @@ const constants = require("../../constants/Application");
 var XLSX = require('xlsx');
 var path = require('path');
 var fs = require("fs");
-var axios = require("axios")
+var axios = require("axios");
+var moment = require("moment");
 const stripe = require("stripe")("sk_test_zJjguM8s6HqyvOrhtPGDk0lV007cDt8U25");
 // constants
 const ADMIN = "admin";
@@ -935,7 +936,7 @@ exports.purchaseCredits_CC = async function (req, res) {
                                                         }
                                                         if (result.affectedRows) {
 
-                                                            let transection_credits = `INSERT INTO financial_account_transections (user_id,transection_data, credits ,transection_type , status , type) VALUES (${dealerId},'${JSON.stringify({ request_type: "Creedit Card request" })}' ,${credits} ,'debit' , 'transferred', 'credits')`
+                                                            let transection_credits = `INSERT INTO financial_account_transections (user_id,transection_data, credits ,transection_type , status , type) VALUES (${dealerId},'${JSON.stringify({ request_type: "Credit Card" })}' ,${credits} ,'debit' , 'transferred', 'credits')`
                                                             await sql.query(transection_credits)
 
                                                             let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
@@ -1374,3 +1375,95 @@ exports.ackCreditRequest = async function (req, res) {
         }
     }
 }
+
+exports.getLatestPaymentHistory = async function (req, res) {
+
+    let paymentHistoryData  = [];
+    let _limit              = '';
+    let verify              = req.decoded;
+    let condition           = '';
+
+    if (verify) {
+
+        if (req.body.type) {
+            condition += ' AND type = "' + req.body.type + '"'
+        }
+
+        if (req.body.status) {
+            condition += ' AND status = "' + req.body.status + '"'
+        }
+
+        if (req.body.limit){
+            let limit   = req.body.limit;
+            _limit      = 'LIMIT '+limit
+        }
+        paymentHistoryData = await sql.query("SELECT * FROM financial_account_transections WHERE user_id = " +verify.user.id  +condition+ " ORDER BY id DESC "+ _limit);
+
+        return res.send(paymentHistoryData);
+    }
+
+};
+
+
+exports.getOverdueDetails = async function (req, res) {
+
+    let paymentHistoryData  = [];
+    let response            = {}
+    let verify              = req.decoded;
+    let _0to21              = 0;
+    let _0to21_dues         = 0;
+    let _21to30             = 0;
+    let _21to30_dues        = 0;
+    let _30to60             = 0;
+    let _30to60_dues        = 0;
+    let _60toOnward         = 0;
+    let _60toOnward_dues    = 0;
+
+    if (verify) {
+        paymentHistoryData = await sql.query("SELECT * FROM financial_account_transections WHERE user_id = " +verify.user.id + " AND status = 'pending'");
+
+        paymentHistoryData.map(item => {
+
+            let now         = moment();
+            let end         = moment(item.created_at).format('YYYY-MM-DD');
+            let duration    = now.diff(end, 'days');
+            console.log(duration)
+            if (duration > 0 && duration <= 21){
+
+                ++_0to21;
+                _0to21_dues         += item.due_credits;
+
+            }else if(duration > 21 && duration <= 30){
+
+                ++_21to30;
+                _21to30_dues        += item.due_credits;
+
+            }else if(duration > 30 && duration <= 60){
+
+                ++_30to60;
+                _30to60_dues        += item.due_credits;
+
+            }else{
+
+                ++_60toOnward;
+                _60toOnward_dues    += item.due_credits;
+            }
+
+            response = {
+                _0to21,
+                _0to21_dues,
+                _21to30,
+                _21to30_dues,
+                _30to60,
+                _30to60_dues,
+                _60toOnward,
+                _60toOnward_dues,
+            };
+
+
+        });
+        return res.send(response);
+    }
+
+};
+

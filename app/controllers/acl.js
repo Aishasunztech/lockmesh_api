@@ -57,7 +57,8 @@ exports.checkComponent = async function (req, res) {
                 created: user[0].created,
                 modified: user[0].modified,
                 two_factor_auth: user[0].is_two_factor_auth,
-                verified: user[0].verified
+                verified: user[0].verified,
+                account_balance_status: user[0].account_balance_status,
             }
 
             res.json({

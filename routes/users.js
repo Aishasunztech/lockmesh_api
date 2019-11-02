@@ -1363,4 +1363,8 @@ router.post('/reports/payment-history', reportingController.generatePaymentHisto
 router.post('/reports/sales', reportingController.generateSalesReport);
 
 
+router.post('/get-latest-payment-history', accountController.getLatestPaymentHistory);
+router.get('/get-overdue-details', accountController.getOverdueDetails);
+
+
 module.exports = router;
