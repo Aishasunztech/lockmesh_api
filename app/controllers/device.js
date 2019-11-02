@@ -119,7 +119,7 @@ exports.devices = async function (req, res) {
                                 }
                             })
                         } else {
-                            results[i].services = services
+                            results[i].services = services[0]
                         }
                     }
                     let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
@@ -654,7 +654,7 @@ exports.acceptDevice = async function (req, res) {
                                                                     }
                                                                 })
                                                             } else {
-                                                                rsltq[0].services = services
+                                                                rsltq[0].services = services[0]
                                                             }
                                                         }
                                                         rsltq[0].vpn = await device_helpers.getVpn(rsltq[0])
@@ -1171,7 +1171,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                         }
                                                     })
                                                 } else {
-                                                    rsltq[i].services = services
+                                                    rsltq[i].services = services[0]
                                                 }
                                             }
                                             // let services = servicesData.find(data => data.user_acc_id === rsltq[i].id);
@@ -1484,13 +1484,13 @@ exports.createDeviceProfile = async function (req, res) {
                                                                     if (services.length > 1) {
                                                                         services.map((item) => {
                                                                             if (item.status === 'extended') {
-                                                                                results[i].extended_services = item
+                                                                                results[0].extended_services = item
                                                                             } else {
-                                                                                results[i].services = item
+                                                                                results[0].services = item
                                                                             }
                                                                         })
                                                                     } else {
-                                                                        results[i].services = services
+                                                                        results[0].services = services[0]
                                                                     }
                                                                 }
                                                                 // if (servicesData[0]) {
@@ -2168,7 +2168,7 @@ exports.editDevices = async function (req, res) {
                                         }
                                     })
                                 } else {
-                                    rsltq[0].services = services
+                                    rsltq[0].services = services[0]
                                 }
                             }
                             // if (servicesData[0]) {
@@ -2616,7 +2616,7 @@ exports.extendServices = async function (req, res) {
                                         }
                                     })
                                 } else {
-                                    rsltq[0].services = services
+                                    rsltq[0].services = services[0]
                                 }
                             }
                             // if (servicesData[0]) {
@@ -2672,7 +2672,9 @@ exports.cancelExtendedServices = async function (req, res) {
         if (!empty(req.body.service_id)) {
             let service_id = req.body.service_id
             let user_acc_id = req.body.user_acc_id
+            // console.log(req.body);
             let extendedServicesData = `SELECT * FROM services_data WHERE id = ${service_id} AND status = 'extended' AND user_acc_id = ${user_acc_id}`
+
             sql.query(extendedServicesData, async function (err, result) {
                 if (err) {
                     console.log(err);
@@ -2753,15 +2755,93 @@ exports.cancelExtendedServices = async function (req, res) {
                         let dealer_balance = null
 
                         if (dealer_type === verify.user.user_type) {
-                            dealer_balance = await sql.query(`SELECT * FROM financial_account_balance WHERE dealer_id = ${verify.user.user_type}`)
+                            dealer_balance = await sql.query(`SELECT * FROM financial_account_balance WHERE dealer_id = ${verify.user.id}`)
                         }
 
-                        res.send({
-                            status: true,
-                            msg: "Extended Services Cancelled Successfully.",
-                            credits: (dealer_balance) ? dealer_balance[0].credits : null
-                        });
-                        return
+                        sql.query(
+                            "select devices.*  ," +
+                            usr_acc_query_text +
+                            ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id where usr_acc.id = " + user_acc_id,
+                            async function (error, results) {
+                                if (error) {
+                                    console.log(error);
+                                }
+                                // console.log('rslt done', results);
+                                if (results.length == 0) {
+                                    _data = {
+                                        status: false,
+                                        msg: await helpers.convertToLang(
+                                            req.translation[MsgConstants.NO_DETAIL_FOUND],
+                                            "No details found"
+                                        ) // No details found
+                                    };
+                                } else {
+                                    var query =
+                                        "select * from dealers where dealer_id =" +
+                                        results[0].dealer_id;
+                                    let dealer_details = await sql.query(query);
+
+                                    let pgp_emails = await device_helpers.getPgpEmails(results[0].id);
+                                    let sim_ids = await device_helpers.getSimids(results[0].id);
+                                    let chat_ids = await device_helpers.getChatids(results[0].id);
+                                    results[0].finalStatus = device_helpers.checkStatus(results[0]);
+                                    let servicesData = await device_helpers.getServicesData(results[0].id);
+                                    // let loginHistoryData = await device_helpers.getLastLoginDetail(results[0].usr_device_id)
+                                    if (pgp_emails[0] && pgp_emails[0].pgp_email) {
+                                        results[0].pgp_email = pgp_emails[0].pgp_email
+                                    } else {
+                                        results[0].pgp_email = "N/A"
+                                    }
+                                    if (sim_ids && sim_ids.length) {
+                                        results[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
+                                        results[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
+                                    }
+                                    if (chat_ids[0] && chat_ids[0].chat_id) {
+                                        results[0].chat_id = chat_ids[0].chat_id
+                                    }
+                                    else {
+                                        results[0].chat_id = "N/A"
+                                    }
+                                    let services = servicesData;
+                                    if (services) {
+                                        if (services.length > 1) {
+                                            services.map((item) => {
+                                                if (item.status === 'extended') {
+                                                    results[0].extended_services = item
+                                                } else {
+                                                    results[0].services = item
+                                                }
+                                            })
+                                        } else {
+                                            results[0].services = services[0]
+                                        }
+                                    }
+                                    results[0].lastOnline = results[0].last_login ? results[0].last_login : "N/A"
+                                    let device_data = results[0]
+                                    let startDate = moment(new Date())
+                                    let expiray_date = new Date(device_data.expiry_date)
+                                    let endDate = moment(expiray_date)
+                                    let remainTermDays = endDate.diff(startDate, 'days')
+                                    device_data.remainTermDays = remainTermDays
+
+                                    if (dealer_details.length) {
+                                        device_data.link_code = dealer_details[0].link_code;
+                                        device_data.dealer_name =
+                                            dealer_details[0].dealer_name;
+                                    } else {
+                                        device_data.link_code = 0;
+                                        device_data.dealer_name = "";
+                                    }
+                                    res.send({
+                                        status: true,
+                                        msg: "Extended Services Cancelled Successfully.",
+                                        credits: (dealer_balance) ? dealer_balance[0].credits : null,
+                                        data: device_data
+                                    });
+                                    return
+
+                                }
+                            })
                     }
                     else {
                         res.send({
@@ -3144,7 +3224,7 @@ exports.unflagDevice = async function (req, res) {
                                         }
                                     })
                                 } else {
-                                    resquery[0].services = services
+                                    resquery[0].services = services[0]
                                 }
                             }
                             // if (servicesData[0]) {
@@ -3276,7 +3356,7 @@ exports.flagDevice = async function (req, res) {
                                     }
                                 })
                             } else {
-                                resquery[0].services = services
+                                resquery[0].services = services[0]
                             }
                         }
                         // if (servicesData[0]) {
@@ -3386,7 +3466,7 @@ exports.transferUser = async function (req, res) {
                                 }
                             })
                         } else {
-                            resquery[0].services = services
+                            resquery[0].services = services[0]
                         }
                     }
                     // if (servicesData[0]) {
@@ -3616,7 +3696,7 @@ exports.transferDeviceProfile = async function (req, res) {
                                                 }
                                             })
                                         } else {
-                                            resquery[0].services = services
+                                            resquery[0].services = services[0]
                                         }
                                     }
                                     // if (servicesData[0]) {
@@ -4063,7 +4143,7 @@ exports.suspendAccountDevices = async function (req, res) {
                                                 }
                                             })
                                         } else {
-                                            resquery[0].services = services
+                                            resquery[0].services = services[0]
                                         }
                                     }
                                     // if (servicesData[0]) {
@@ -4175,7 +4255,7 @@ exports.suspendAccountDevices = async function (req, res) {
                                                     }
                                                 })
                                             } else {
-                                                resquery[0].services = services
+                                                resquery[0].services = services[0]
                                             }
                                         }
                                         // if (servicesData[0]) {
@@ -4323,7 +4403,7 @@ exports.activateDevice = async function (req, res) {
                                                 }
                                             })
                                         } else {
-                                            resquery[0].services = services
+                                            resquery[0].services = services[0]
                                         }
                                     }
                                     // if (servicesData[0]) {
@@ -4438,7 +4518,7 @@ exports.activateDevice = async function (req, res) {
                                                     }
                                                 })
                                             } else {
-                                                resquery[0].services = services
+                                                resquery[0].services = services[0]
                                             }
                                         }
                                         // if (servicesData[0]) {
@@ -4614,7 +4694,7 @@ exports.wipeDevice = async function (req, res) {
                                 }
                             })
                         } else {
-                            resquery[0].services = services
+                            resquery[0].services = services[0]
                         }
                     }
                     // if (servicesData[0]) {
@@ -4725,7 +4805,7 @@ exports.connectDevice = async function (req, res) {
                                     }
                                 })
                             } else {
-                                results[0].services = services
+                                results[0].services = services[0]
                             }
                         }
                         // if (servicesData[0]) {
