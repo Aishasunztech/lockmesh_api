@@ -1968,10 +1968,12 @@ module.exports = {
 		})
 		return user_acc_ids;
 	},
-	getDealersAgainstPermissions: async function (permission_id, permission_type, loggedUserId, subDealers = []) {
+	getDealersAgainstPermissions: async function (permission_id, permission_type, loggedUserId, subDealers = [], loggedUserType = '') {
 
 		let finalDealers = [];
+		let allDealers = [];
 		let condition = '';
+		let statusAll = false;
 		// console.log("subDealers ", subDealers);
 		// if (subDealers && subDealers.length)
 		// subDealers = subDealers
@@ -1982,28 +1984,66 @@ module.exports = {
 				subDealers = subDealers.map((item) => item.dealer_id);
 			}
 			// console.log("filtered subDealers ", subDealers);
-			condition = ` OR (dealer_type = 'admin' AND (dealer_id IN (${subDealers}) OR dealer_id = 0) )`;
+			if (permission_type === "package" && loggedUserType === "dealer") {
+				condition = ` OR (dealer_type = 'dealer' AND (dealer_id IN (${subDealers}) OR dealer_id = 0) )`;
+			} else {
+				condition = ` OR (dealer_type = 'admin' AND (dealer_id IN (${subDealers}) OR dealer_id = 0) )`;
+			}
 		} else {
-			condition = ` OR (dealer_type = 'admin' AND dealer_id = 0)`;
+			if (permission_type === "package" && loggedUserType === "dealer") {
+				condition = ` OR (dealer_type = 'dealer' AND dealer_id = 0)`;
+			} else {
+				condition = ` OR (dealer_type = 'admin' AND dealer_id = 0)`;
+			}
 		}
 		let selectDealerQ = `SELECT dealer_id, dealer_type, permission_by FROM dealer_permissions WHERE permission_id= ${permission_id} AND permission_type ='${permission_type}' AND (permission_by=${loggedUserId} ${condition})`; // dealer_id = ${loggedUserId} OR 
 		console.log("selectDealerQ ", selectDealerQ)
-		let permittedDealers = await sql.query(selectDealerQ);
+		let results = await sql.query(selectDealerQ);
 
-		// console.log("permittedDealers results:: ", permittedDealers);
+		console.log("permittedDealers results:: ", results);
 
-		if (permittedDealers.length > 0) {
-			let check = permittedDealers.find((dlr) => dlr.dealer_id == 0);
-			// console.log("check=======> ", check);
-			if (check) {
-				finalDealers.push(check);
-			} else {
-				finalDealers = permittedDealers //.map((prm) => prm.dealer_id)
+		if (results.length > 0) {
+			for (let i = 0; i < results.length; i++) {
+				if (results[i].dealer_id == 0) {
+					let Update_sdealerList = subDealers.map((dealer) => {
+						return {
+							dealer_id: dealer,
+							dealer_type: results[i].dealer_type,
+							permission_by: results[i].permission_by
+						}
+					})
+
+					finalDealers.push(...Update_sdealerList);
+					statusAll = true
+				} else {
+					finalDealers.push(results[i]);
+				}
 			}
 		}
-		// console.log("finalDealers", finalDealers);
+		console.log("finalDealers", finalDealers);
 
-		return finalDealers
+
+		if (loggedUserType !== "admin") {
+			let deleteIds = [];
+			finalDealers.forEach((item) => {
+				// console.log("item ", item);
+				if (item.dealer_type === "admin") {
+					let index = finalDealers.findIndex((sd) => sd.dealer_type === "dealer" && sd.dealer_id === item.dealer_id);
+					deleteIds.push(index);
+				}
+			})
+			// console.log("deleteIds index: ", deleteIds);
+			allDealers = finalDealers.filter((item, i) => !deleteIds.includes(i));
+		} else {
+			allDealers = finalDealers;
+		}
+
+		allDealers = allDealers.filter((item) => item.dealer_id !== loggedUserId)
+
+		return {
+			allDealers: JSON.stringify(allDealers),
+			statusAll
+		}
 	},
 	savePermission: async function (prevDealers, allDealers, permissionType, permissionId, loggedUserId, loggedUserType) {
 		// this query is to avoid duplication records
