@@ -331,7 +331,7 @@ exports.savePrices = async function (req, res) {
     if (verify) {
         let data = req.body.data;
         if (data) {
-            // console.log(data, 'data')
+            console.log(data, 'data')
             // let dealer_id = req.body.dealer_id;
             let dealer_id = verify.user.dealer_id;
             if (dealer_id) {
@@ -378,7 +378,7 @@ exports.savePrices = async function (req, res) {
                                 // console.log(days, 'days are')
                                 let unit_price = innerKey;
                                 let updateQuery = "UPDATE prices SET unit_price='" + innerObject[f_key] + "', price_expiry='" + days + "' WHERE dealer_id='" + dealer_id + "' AND price_term='" + innerKey + "' AND price_for='" + key + "'";
-                                // console.log(updateQuery, 'query')
+                                console.log(updateQuery, 'query')
                                 sql.query(updateQuery, async function (err, result) {
                                     if (err) {
                                         console.log(err)
@@ -388,7 +388,7 @@ exports.savePrices = async function (req, res) {
                                         // console.log('outerKey', outerKey)
                                         if (!result.affectedRows) {
                                             let insertQuery = "INSERT INTO prices (price_for, unit_price, price_term, price_expiry, dealer_id , dealer_type) VALUES('" + outerKey + "', '" + innerObject[f_key] + "', '" + unit_price + "', '" + days + "', '" + dealer_id + "' , '" + verify.user.user_type + "')";
-                                            // console.log('Billing query', insertQuery)
+                                            console.log('Billing query', insertQuery)
                                             let rslt = await sql.query(insertQuery);
                                             if (rslt) {
                                                 if (rslt.affectedRows == 0) {
@@ -544,12 +544,12 @@ exports.savePackage = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
 
     if (verify) {
-        // console.log(verify.user, 'user is the ')
+        console.log(verify.user, 'user is the ')
         let data = req.body.data;
         let dealer_id = verify.user.dealer_id;
         // console.log(data);
         if (data) {
-            // console.log(data, 'data')
+            console.log(data, 'data')
             // let dealer_id = req.body.data.dealer_id;
             if (dealer_id) {
                 // console.log(dealer_id, 'whitelableid');
@@ -565,20 +565,24 @@ exports.savePackage = async function (req, res) {
                 } else {
                     let days = 0;
                     if (data.pkgTerm) {
-                        stringarray = data.pkgTerm.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
-                        if (stringarray) {
-                            // console.log(stringarray,'is string lenth', stringarray.length)
-                            if (stringarray.length) {
-                                month = stringarray[0];
-                                // console.log('is month', month, stringarray[1])
-                                if (month && stringarray[1]) {
-                                    // console.log('sring[1]', stringarray[1])
-                                    if (stringarray[1] == 'month') {
-                                        days = parseInt(month) * 30
-                                    } else if (string[1] == 'year') {
-                                        days = parseInt(month) * 365
-                                    } else {
-                                        days = 30
+                        if (data.pkgTerm === "trial") {
+                            days = 7;
+                        } else {
+                            stringarray = data.pkgTerm.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
+                            if (stringarray) {
+                                // console.log(stringarray,'is string lenth', stringarray.length)
+                                if (stringarray.length) {
+                                    month = stringarray[0];
+                                    // console.log('is month', month, stringarray[1])
+                                    if (month && stringarray[1]) {
+                                        // console.log('sring[1]', stringarray[1])
+                                        if (stringarray[1] == 'month') {
+                                            days = parseInt(month) * 30
+                                        } else if (string[1] == 'year') {
+                                            days = parseInt(month) * 365
+                                        } else {
+                                            days = 30
+                                        }
                                     }
                                 }
                             }
@@ -589,10 +593,21 @@ exports.savePackage = async function (req, res) {
                     sql.query(insertQuery, async (err, rslt) => {
                         if (err) {
                             console.log(err)
+                            return res.send({
+                                status: false,
+                                msg: await helpers.convertToLang(req.translation[""], "Package Not Saved"),
+                            })
+
                         }
 
                         if (rslt) {
                             if (rslt.affectedRows) {
+
+                                // save package price
+                                let insertQ = "INSERT INTO dealer_packages_prices ( package_id,dealer_id , created_by , price) VALUES(" + rslt.insertId + ",'" + dealer_id + "' ,'" + verify.user.user_type + "' , '" + data.pkgPrice + "')";
+                                console.log(insertQ);
+                                sql.query(insertQ)
+
                                 insertedRecord = await sql.query("SELECT * FROM packages WHERE dealer_id='" + dealer_id + "' AND id='" + rslt.insertId + "'")
                                 res.send({
                                     status: true,
@@ -1072,7 +1087,7 @@ exports.getPackages = async function (req, res) {
                     }
 
                     if (reslt && reslt.length) {
-                        // console.log('result for get prices are is ', reslt);
+                        console.log('result for get prices are is ', reslt);
 
                         if (loggedUserType !== ADMIN) {
                             let condition = '';
@@ -1085,13 +1100,21 @@ exports.getPackages = async function (req, res) {
                                 // condition = `AND (dealer_type = 'admin' OR dealer_type = 'dealer')`
                             }
 
-                            let permissionsResults = await sql.query(`SELECT * FROM dealer_permissions WHERE (dealer_id = ${dealer_id} ${condition}) AND permission_type = 'package';`);
+                            let selectQ = `SELECT * FROM dealer_permissions WHERE (dealer_id = ${dealer_id} ${condition}) AND permission_type = 'package';`;
+                            console.log("selectQ dealer_permissions getPackages :: ", selectQ);
+                            let permissionsResults = await sql.query(selectQ);
                             let permissionIds = permissionsResults.map((prm) => prm.permission_id);
 
                             let checkPermissions = [];
                             if (permissionIds && permissionIds.length) {
                                 reslt.forEach(item => {
-                                    if (permissionIds.includes(item.id)) {
+                                    if (permissionIds.includes(item.id) || dealer_id === item.dealer_id) {
+                                        checkPermissions.push(item);
+                                    }
+                                });
+                            } else {
+                                reslt.forEach(item => {
+                                    if (dealer_id === item.dealer_id) {
                                         checkPermissions.push(item);
                                     }
                                 });
@@ -1347,15 +1370,27 @@ exports.getParentPackages = async function (req, res) {
         let selectQuery = ""
         // console.log(verify.user);
         let loggedUserId = verify.user.dealer_id;
+        let loggedUserType = verify.user.user_type;
 
         if (loggedUserId) {
+            let condition = '';
+            if (loggedUserType === DEALER) {
+                condition = ` OR (dealer_permissions.dealer_id = 0 AND dealer_permissions.dealer_type = 'admin') `
+            }
+            else if (loggedUserType === SDEALER) {
+                let getParentId = await sql.query(`SELECT connected_dealer FROM dealers WHERE dealer_id = ${loggedUserId}`);
+                condition = ` OR (dealer_permissions.dealer_id = 0 AND (dealer_permissions.dealer_type='admin' OR (dealer_permissions.dealer_type='dealer' AND dealer_permissions.permission_by=${getParentId[0].connected_dealer}))) `
+            }
+
             // selectQuery = "select packages.* from dealer_packages join packages on packages.id = dealer_packages.package_id where dealer_packages.dealer_id = ' " + dealer_id + "' AND packages.delete_status != 1";
-            selectQuery = `SELECT packages.* FROM dealer_permissions JOIN packages ON (packages.id = dealer_permissions.permission_id) WHERE (dealer_permissions.dealer_id = '${loggedUserId}' OR dealer_permissions.dealer_id=0) AND packages.delete_status != 1`;
+            selectQuery = `SELECT packages.* FROM packages JOIN dealer_permissions ON (packages.id = dealer_permissions.permission_id) WHERE (dealer_permissions.dealer_id = '${loggedUserId}' ${condition}) AND packages.delete_status != 1 AND dealer_permissions.permission_type = 'package';`;
+            console.log("selectQuery ", selectQuery)
             sql.query(selectQuery, async (err, reslt) => {
                 if (err) {
                     console.log(err)
                 }
                 if (reslt.length) {
+                    console.log("reslt getParentPackages ", reslt)
 
                     for (let i = 0; i < reslt.length; i++) {
                         if (verify.user.user_type === DEALER) {

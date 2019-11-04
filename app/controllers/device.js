@@ -3950,7 +3950,7 @@ exports.getServicesHistory = async function (req, res) {
 
     console.log("getServicesHistory : ", usr_acc_id)
     if (verify) {
-        console.log("hi");
+        // console.log("hi");
 
         let selectQ = `SELECT * FROM services_data WHERE user_acc_id = ${usr_acc_id} AND (status = 'returned' OR status = 'cancelled' OR status = 'completed' OR status = 'deleted') ORDER BY id DESC`
         console.log("getServicesHistory selectQ ", selectQ);

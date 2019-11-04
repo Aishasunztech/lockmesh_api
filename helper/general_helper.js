@@ -2016,7 +2016,7 @@ module.exports = {
 		let dealerCount = 0;
 
 		if (loggedUserType === "admin") {
-			if (permissionType == "package") {
+			if (permissionType === "package") {
 				dealerList = await sql.query(`SELECT * FROM dealers WHERE type = 2 ORDER BY created DESC`);
 				dealerCount = dealerList ? dealerList.length : 0;
 			} else {
