@@ -1546,28 +1546,49 @@ exports.getDomains = async function (req, res) {
 
         let results = selectDomains;
         for (var i = 0; i < results.length; i++) {
-            let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'domain', loggedUserId, sdealerList);
+            let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'domain', loggedUserId, sdealerList, loggedUserType);
+            // let allDealers = [];
 
-            if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
-                // console.log('set permisin for all dealers ')
+            results[i].dealers = permissionDealers.allDealers;
+            results[i].statusAll = permissionDealers.statusAll;
 
-                let Update_sdealerList = sdealerList.map((dealer) => {
-                    return {
-                        dealer_id: dealer,
-                        dealer_type: permissionDealers[0].dealer_type,
-                        permission_by: permissionDealers[0].permission_by
-                    }
-                })
-                let final_list = Update_sdealerList.filter((item) => item.dealer_id !== loggedUserId)
-                results[i].dealers = JSON.stringify(final_list);
-                results[i].statusAll = true
-            } else {
-                if (permissionDealers.length) {
-                    permissionDealers = permissionDealers.filter((item) => item.dealer_id !== loggedUserId)
-                }
-                results[i].dealers = JSON.stringify(permissionDealers);
-                results[i].statusAll = false
-            }
+            // if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
+            //     // console.log('set permisin for all dealers ')
+
+            //     let Update_sdealerList = sdealerList.map((dealer) => {
+            //         return {
+            //             dealer_id: dealer,
+            //             dealer_type: permissionDealers[0].dealer_type,
+            //             permission_by: permissionDealers[0].permission_by
+            //         }
+            //     })
+            //     let final_list = Update_sdealerList.filter((item) => item.dealer_id !== loggedUserId)
+            //     // results[i].dealers = JSON.stringify(final_list);
+            //     allDealers = final_list;
+            //     results[i].statusAll = true
+            // } else {
+            //     if (permissionDealers.length) {
+            //         permissionDealers = permissionDealers.filter((item) => item.dealer_id !== loggedUserId)
+            //     }
+            //     allDealers = permissionDealers;
+            //     // results[i].dealers = JSON.stringify(permissionDealers);
+            //     results[i].statusAll = false
+            // }
+
+            // if (loggedUserType !== ADMIN) {
+            //     let deleteIds = [];
+            //     allDealers.forEach((item) => {
+            //         console.log("item ", item);
+            //         if (item.dealer_type === "admin") {
+            //             let index = allDealers.findIndex((sd) => sd.dealer_type === "dealer" && sd.dealer_id === item.dealer_id);
+            //             deleteIds.push(index);
+            //         }
+            //     })
+            //     console.log("deleteIds index: ", deleteIds);
+            //     results[i].dealers = JSON.stringify(allDealers.filter((item, i) => !deleteIds.includes(i)));
+            // } else {
+            //     results[i].dealers = JSON.stringify(allDealers);
+            // }
             let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : [];
 
             // console.log('permissions are: ', permissions);

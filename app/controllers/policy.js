@@ -52,27 +52,30 @@ exports.getPolicies = async function (req, res) {
 
                     for (var i = 0; i < results.length; i++) {
                         // console.log('push apps', results[i].push_apps)
-                        let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'policy', userId, sdealerList);
+                        let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'policy', userId, sdealerList, loggedUserType);
 
-                        if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
+                        results[i].dealers = permissionDealers.allDealers;
+                        results[i].statusAll = permissionDealers.statusAll;
 
-                            let Update_sdealerList = sdealerList.map((dealer) => {
-                                return {
-                                    dealer_id: dealer,
-                                    dealer_type: permissionDealers[0].dealer_type,
-                                    permission_by: permissionDealers[0].permission_by
-                                }
-                            })
-                            let final_list = Update_sdealerList.filter((item) => item.dealer_id !== userId)
-                            results[i].dealers = JSON.stringify(final_list);
-                            results[i].statusAll = true
-                        } else {
-                            if (permissionDealers.length) {
-                                permissionDealers = permissionDealers.filter((item) => item.dealer_id !== userId)
-                            }
-                            results[i].dealers = JSON.stringify(permissionDealers);
-                            results[i].statusAll = false
-                        }
+                        // if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
+
+                        //     let Update_sdealerList = sdealerList.map((dealer) => {
+                        //         return {
+                        //             dealer_id: dealer,
+                        //             dealer_type: permissionDealers[0].dealer_type,
+                        //             permission_by: permissionDealers[0].permission_by
+                        //         }
+                        //     })
+                        //     let final_list = Update_sdealerList.filter((item) => item.dealer_id !== userId)
+                        //     results[i].dealers = JSON.stringify(final_list);
+                        //     results[i].statusAll = true
+                        // } else {
+                        //     if (permissionDealers.length) {
+                        //         permissionDealers = permissionDealers.filter((item) => item.dealer_id !== userId)
+                        //     }
+                        //     results[i].dealers = JSON.stringify(permissionDealers);
+                        //     results[i].statusAll = false
+                        // }
                         let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : [];
                         let controls = (results[i].controls !== undefined && results[i].controls !== null) ? JSON.parse(results[i].controls) : [];
                         let push_apps = (results[i].push_apps !== undefined && results[i].push_apps !== null) ? JSON.parse(results[i].push_apps) : [];
@@ -90,6 +93,7 @@ exports.getPolicies = async function (req, res) {
                         // console.log(created_by);
                         dta = {
                             id: results[i].id,
+                            statusAll: results[i].statusAll,
                             policy_name: results[i].policy_name,
                             policy_note: results[i].policy_note,
                             status: results[i].status,
@@ -160,27 +164,30 @@ exports.getPolicies = async function (req, res) {
                     let default_policy_id = (default_policy.length) ? default_policy[0].policy_id : null
 
                     for (var i = 0; i < results.length; i++) {
-                        let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'policy', userId, sdealerList);
+                        let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'policy', userId, sdealerList, loggedUserType);
 
-                        if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
+                        results[i].dealers = permissionDealers.allDealers;
+                        results[i].statusAll = permissionDealers.statusAll;
 
-                            let Update_sdealerList = sdealerList.map((dealer) => {
-                                return {
-                                    dealer_id: dealer,
-                                    dealer_type: permissionDealers[0].dealer_type,
-                                    permission_by: permissionDealers[0].permission_by
-                                }
-                            })
-                            let final_list = Update_sdealerList.filter((item) => item.dealer_id !== userId)
-                            results[i].dealers = JSON.stringify(final_list);
-                            results[i].statusAll = true
-                        } else {
-                            if (permissionDealers.length) {
-                                permissionDealers = permissionDealers.filter((item) => item.dealer_id !== userId)
-                            }
-                            results[i].dealers = JSON.stringify(permissionDealers);
-                            results[i].statusAll = false
-                        }
+                        // if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
+
+                        //     let Update_sdealerList = sdealerList.map((dealer) => {
+                        //         return {
+                        //             dealer_id: dealer,
+                        //             dealer_type: permissionDealers[0].dealer_type,
+                        //             permission_by: permissionDealers[0].permission_by
+                        //         }
+                        //     })
+                        //     let final_list = Update_sdealerList.filter((item) => item.dealer_id !== userId)
+                        //     results[i].dealers = JSON.stringify(final_list);
+                        //     results[i].statusAll = true
+                        // } else {
+                        //     if (permissionDealers.length) {
+                        //         permissionDealers = permissionDealers.filter((item) => item.dealer_id !== userId)
+                        //     }
+                        //     results[i].dealers = JSON.stringify(permissionDealers);
+                        //     results[i].statusAll = false
+                        // }
 
                         let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : [];
                         // let Sdealerpermissions = permissions.filter((item) => sdealerList.includes(item))
@@ -204,6 +211,7 @@ exports.getPolicies = async function (req, res) {
                         // console.log(created_by);
                         dta = {
                             id: results[i].id,
+                            statusAll: results[i].statusAll,
                             policy_name: results[i].policy_name,
                             policy_note: results[i].policy_note,
                             status: results[i].status,
