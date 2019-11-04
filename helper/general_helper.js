@@ -399,9 +399,23 @@ module.exports = {
 				if (chat_id) {
 					device.chat_id = chat_id.chat_id
 				}
-				let services = servicesData.find(data => data.user_acc_id === device.id);
-				if (services) {
-					device.services = services
+				// let services = servicesData.find(data => data.user_acc_id === device.id);
+				// if (services) {
+				// 	device.services = services
+				// }
+				let services = servicesData.filter(data => data.user_acc_id === device.id);
+				if (services && services.length) {
+					// if (services.length > 1) {
+					services.map((item) => {
+						if (item.status === 'extended') {
+							device.extended_services = item
+						} else {
+							device.services = item
+						}
+					})
+					// } else {
+					//     device.services = services[0]
+					// }
 				}
 			}
 
@@ -559,8 +573,22 @@ module.exports = {
 				results[0].chat_id = "N/A"
 
 			}
-			if (servicesData[0]) {
-				results[0].services = servicesData[0]
+			// if (servicesData[0]) {
+			// 	results[0].services = servicesData[0]
+			// }
+			let services = servicesData;
+			if (services && services.length) {
+				// if (services.length > 1) {
+				services.map((item) => {
+					if (item.status === 'extended') {
+						results[0].extended_services = item
+					} else {
+						results[0].services = item
+					}
+				})
+				// } else {
+				//     results[0].services = services[0]
+				// }
 			}
 			return results[0];
 		} else {
@@ -967,9 +995,23 @@ module.exports = {
 				if (chat_id) {
 					results[i].chat_id = chat_id.chat_id
 				}
-				let services = servicesData.find(data => data.user_acc_id === results[i].id);
-				if (services) {
-					results[i].services = services
+				// let services = servicesData.find(data => data.user_acc_id === results[i].id);
+				// if (services) {
+				// 	results[i].services = services
+				// }
+				let services = servicesData.filter(data => data.user_acc_id === results[i].id);
+				if (services && services.length) {
+					// if (services.length > 1) {
+					services.map((item) => {
+						if (item.status === 'extended') {
+							results[i].extended_services = item
+						} else {
+							results[i].services = item
+						}
+					})
+					// } else {
+					//     results[i].services = services[0]
+					// }
 				}
 			}
 			return results;
@@ -2019,7 +2061,7 @@ module.exports = {
 		let dealerCount = 0;
 
 		if (loggedUserType === "admin") {
-			if (permissionType == "package") {
+			if (permissionType === "package") {
 				dealerList = await sql.query(`SELECT * FROM dealers WHERE type = 2 ORDER BY created DESC`);
 				dealerCount = dealerList ? dealerList.length : 0;
 			} else {
