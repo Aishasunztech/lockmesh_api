@@ -40,12 +40,11 @@ router.post('/device_status', mobileController.deviceStatus);
 
 router.post('/imeiChanged', mobileController.IMEIChanged);
 
-// router.get('/admin/marketApplist', mobileController.adminSMAppList);
-
-// router.get('/marketApplist/:linkCode', mobileController.SMAppList);
 
 router.get('/marketApplist/admin/:spaceType', mobileController.adminSMAppList_V2);
 
 router.get('/marketApplist/:linkCode/:spaceType', mobileController.SMAppList_V2);
+
+router.post('/market-app-list', mobileController.SMAppListV3);
 
 module.exports = router;
