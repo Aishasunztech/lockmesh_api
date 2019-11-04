@@ -647,8 +647,6 @@ module.exports = {
         var type = (req.body.type) ? req.body.type : null
         var version = (req.body.version) ? req.body.version : null
 
-        console.log(version, "Version");
-
         var imei1 = null;
         var imei2 = null;
         var simNo1 = null;
