@@ -999,9 +999,43 @@ exports.purchaseCredits_CC = async function (req, res) {
                                                             })
                                                             return
                                                         }
-                                                        if (result.affectedRows) {
 
-                                                            let transection_credits = `INSERT INTO financial_account_transections (user_id,transection_data, credits ,transection_type , status , type) VALUES (${dealerId},'${JSON.stringify({ request_type: "Credit Card" })}' ,${credits} ,'debit' , 'transferred', 'credits')`
+                                                        console.log(result);
+                                                        if (result.affectedRows) {
+                                                            let get_last_panding_transections_query = `SELECT * from financial_account_transections WHERE user_id = ${dealerId} AND status = 'pending' ORDER BY created_at asc`
+                                                            let last_panding_transections = await sql.query(get_last_panding_transections_query)
+                                                            console.log(last_panding_transections.length);
+                                                            if (last_panding_transections && last_panding_transections.length) {
+                                                                for (let i = 0; i < last_panding_transections.length; i++) {
+                                                                    let paid_credits = 0
+                                                                    let due_credits = 0
+                                                                    if (credits > 0) {
+                                                                        if (credits >= last_panding_transections[i].due_credits) {
+                                                                            credits = credits - last_panding_transections[i].due_credits
+                                                                            paid_credits = last_panding_transections[i].due_credits
+                                                                            due_credits = 0
+                                                                            sql.query(`UPDATE financial_account_transections SET paid_credits = paid_credits + ${paid_credits} , due_credits = ${due_credits} , status = 'transferred' WHERE id = ${last_panding_transections[i].id}`)
+
+                                                                        } else {
+                                                                            due_credits = last_panding_transections[i].due_credits - credits
+                                                                            paid_credits = credits
+                                                                            credits = 0
+                                                                            sql.query(`UPDATE financial_account_transections SET paid_credits = paid_credits + ${paid_credits} , due_credits = ${due_credits} WHERE id = ${last_panding_transections[i].id}`)
+                                                                        }
+                                                                        // if (duration > 60) {
+                                                                        //     if (item.due_credits > 0) {
+                                                                        //     }
+                                                                        // } else if (duration > 21) {
+                                                                        //     console.log("21+");
+                                                                        // } else {
+                                                                        //     console.log("21+");
+                                                                        // }
+                                                                    } else {
+                                                                        break
+                                                                    }
+                                                                }
+                                                            }
+                                                            let transection_credits = `INSERT INTO financial_account_transections (user_id,transection_data, credits ,transection_type , status , type , current_balance) VALUES (${dealerId},'${JSON.stringify({ request_type: "Credit Card" })}' ,${credits} ,'debit' , 'transferred', 'credits' , ${dealerBalanceData[0] ? dealerBalanceData[0].credits : 0})`
                                                             await sql.query(transection_credits)
 
                                                             let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
@@ -1023,6 +1057,12 @@ exports.purchaseCredits_CC = async function (req, res) {
                                                                     return
                                                                 }
                                                             })
+                                                        } else {
+                                                            res.send({
+                                                                status: false,
+                                                                msg: "ERROR: Internal Server error."
+                                                            })
+                                                            return
                                                         }
 
                                                     })
@@ -1579,10 +1619,10 @@ exports.getDomains = async function (req, res) {
 }
 exports.getLatestPaymentHistory = async function (req, res) {
 
-    let paymentHistoryData  = [];
-    let _limit              = '';
-    let verify              = req.decoded;
-    let condition           = '';
+    let paymentHistoryData = [];
+    let _limit = '';
+    let verify = req.decoded;
+    let condition = '';
 
     if (verify) {
 
@@ -1594,11 +1634,11 @@ exports.getLatestPaymentHistory = async function (req, res) {
             condition += ' AND status = "' + req.body.status + '"'
         }
 
-        if (req.body.limit){
-            let limit   = req.body.limit;
-            _limit      = 'LIMIT '+limit
+        if (req.body.limit) {
+            let limit = req.body.limit;
+            _limit = 'LIMIT ' + limit
         }
-        paymentHistoryData = await sql.query("SELECT * FROM financial_account_transections WHERE user_id = " +verify.user.id  +condition+ " ORDER BY id DESC "+ _limit);
+        paymentHistoryData = await sql.query("SELECT * FROM financial_account_transections WHERE user_id = " + verify.user.id + condition + " ORDER BY id DESC " + _limit);
 
         return res.send(paymentHistoryData);
     }
@@ -1608,46 +1648,55 @@ exports.getLatestPaymentHistory = async function (req, res) {
 
 exports.getOverdueDetails = async function (req, res) {
 
-    let paymentHistoryData  = [];
-    let response            = {}
-    let verify              = req.decoded;
-    let _0to21              = 0;
-    let _0to21_dues         = 0;
-    let _21to30             = 0;
-    let _21to30_dues        = 0;
-    let _30to60             = 0;
-    let _30to60_dues        = 0;
-    let _60toOnward         = 0;
-    let _60toOnward_dues    = 0;
+    let paymentHistoryData = [];
+    let response = {
+        _0to21: 0,
+        _0to21_dues: 0,
+        _21to30: 0,
+        _21to30_dues: 0,
+        _30to60: 0,
+        _30to60_dues: 0,
+        _60toOnward: 0,
+        _60toOnward_dues: 0,
+    }
+    let verify = req.decoded;
+    let _0to21 = 0;
+    let _0to21_dues = 0;
+    let _21to30 = 0;
+    let _21to30_dues = 0;
+    let _30to60 = 0;
+    let _30to60_dues = 0;
+    let _60toOnward = 0;
+    let _60toOnward_dues = 0;
 
     if (verify) {
-        paymentHistoryData = await sql.query("SELECT * FROM financial_account_transections WHERE user_id = " +verify.user.id + " AND status = 'pending'");
+        paymentHistoryData = await sql.query("SELECT * FROM financial_account_transections WHERE user_id = " + verify.user.id + " AND status = 'pending'");
 
         paymentHistoryData.map(item => {
 
-            let now         = moment();
-            let end         = moment(item.created_at).format('YYYY-MM-DD');
-            let duration    = now.diff(end, 'days');
+            let now = moment();
+            let end = moment(item.created_at).format('YYYY-MM-DD');
+            let duration = now.diff(end, 'days');
             console.log(duration)
-            if (duration > 0 && duration <= 21){
+            if (duration > 0 && duration <= 21) {
 
                 ++_0to21;
-                _0to21_dues         += item.due_credits;
+                _0to21_dues += item.due_credits;
 
-            }else if(duration > 21 && duration <= 30){
+            } else if (duration > 21 && duration <= 30) {
 
                 ++_21to30;
-                _21to30_dues        += item.due_credits;
+                _21to30_dues += item.due_credits;
 
-            }else if(duration > 30 && duration <= 60){
+            } else if (duration > 30 && duration <= 60) {
 
                 ++_30to60;
-                _30to60_dues        += item.due_credits;
+                _30to60_dues += item.due_credits;
 
-            }else{
+            } else {
 
                 ++_60toOnward;
-                _60toOnward_dues    += item.due_credits;
+                _60toOnward_dues += item.due_credits;
             }
 
             response = {

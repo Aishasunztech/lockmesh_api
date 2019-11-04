@@ -466,7 +466,7 @@ exports.acceptDevice = async function (req, res) {
                                                         service_id = service_data_result.insertId
                                                         helpers.saveServiceSalesDetails(packages, products, loggedDealerType, usr_acc_id, service_data_result.insertId, pay_now)
                                                     }
-                                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status, type) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${total_price} ,'credit' , '${transection_status}' , 'services')`
+                                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status, type , paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${total_price} ,'credit' , '${transection_status}' , 'services' , ${(pay_now) ? total_price : 0} , ${(pay_now) ? 0 : total_price})`
                                                     await sql.query(transection_credits)
 
                                                     let update_credits_query = '';
@@ -539,13 +539,13 @@ exports.acceptDevice = async function (req, res) {
                                                             await sql.query(hardware_data);
                                                         }
 
-                                                        let hardware_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${hardwarePrice} , 'credit' , '${transection_status}' , 'hardwares')`
+                                                        let hardware_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${hardwarePrice} , 'credit' , '${transection_status}' , 'hardwares' , ${(pay_now) ? hardwarePrice : 0} , ${(pay_now) ? 0 : hardwarePrice})`
                                                         await sql.query(hardware_transection)
 
                                                     }
 
 
-                                                    await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, usr_acc_id, loggedDealerType, pay_now)
+                                                    await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, usr_acc_id, loggedDealerType, pay_now, service_id)
 
                                                     let updateChatIds = 'update chat_ids set used=1, user_acc_id="' + usr_acc_id + '" where chat_id ="' + chat_id + '"';
                                                     let chatIdUpdateResult = await sql.query(updateChatIds);
@@ -971,8 +971,9 @@ exports.createDeviceProfile = async function (req, res) {
 
                                                     let service_data = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date ,total_credits,service_expiry_date) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${discounted_price / duplicate} , '${expiry_date}' )`
                                                     let service_data_result = await sql.query(service_data);
-                                                    // console.log(service_data_result);
+                                                    let service_id = null
                                                     if (service_data_result.affectedRows) {
+                                                        service_id = service_data_result.insertId
                                                         helpers.saveServiceSalesDetails(packages, products, loggedUserType, user_acc_id, service_data_result.insertId, pay_now)
                                                     }
                                                     var transection_status = 'transferred'
@@ -1038,14 +1039,14 @@ exports.createDeviceProfile = async function (req, res) {
                                                             await sql.query(hardware_data);
                                                         }
 
-                                                        let hardware_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${hardwarePrice / duplicate} , 'credit' , '${transection_status}' , 'hardwares')`
+                                                        let hardware_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${hardwarePrice / duplicate} , 'credit' , '${transection_status}' , 'hardwares' ,${(pay_now) ? hardwarePrice / duplicate : 0} , ${(pay_now) ? 0 : hardwarePrice / duplicate})`
                                                         await sql.query(hardware_transection)
                                                     }
 
-                                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price / duplicate} ,'credit' , '${transection_status}' , 'services')`
+                                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price / duplicate} ,'credit' , '${transection_status}' , 'services' , ${(pay_now) ? total_price / duplicate : 0} , ${(pay_now) ? 0 : total_price / duplicate})`
                                                     await sql.query(transection_credits)
 
-                                                    await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, user_acc_id, loggedUserType, pay_now)
+                                                    await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, user_acc_id, loggedUserType, pay_now, service_id)
 
                                                     let updateChatIds = 'update chat_ids set used=1, user_acc_id="' + user_acc_id + '" where chat_id ="' + chat_id + '"';
                                                     await sql.query(updateChatIds);
@@ -1349,14 +1350,14 @@ exports.createDeviceProfile = async function (req, res) {
                                                                     await sql.query(hardware_data);
                                                                 }
 
-                                                                let hardware_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${hardwarePrice} , 'credit' , '${transection_status}' , 'hardwares')`
+                                                                let hardware_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${hardwarePrice} , 'credit' , '${transection_status}' , 'hardwares', ${(pay_now) ? hardwarePrice : 0} , ${(pay_now) ? 0 : hardwarePrice})`
                                                                 await sql.query(hardware_transection)
                                                             }
 
-                                                            let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price} ,'credit' , '${transection_status}' , 'services')`
+                                                            let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price} ,'credit' , '${transection_status}' , 'services' , ${(pay_now) ? total_price : 0} , ${(pay_now) ? 0 : total_price})`
                                                             await sql.query(transection_credits)
 
-                                                            helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, user_acc_id, loggedUserType, pay_now)
+                                                            helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, user_acc_id, loggedUserType, pay_now, service_id)
 
                                                             let updateChatIds = 'update chat_ids set used=1, user_acc_id="' + user_acc_id + '" where chat_id ="' + chat_id + '"';
                                                             let chatIdUpdateResult = await sql.query(updateChatIds);
@@ -1986,7 +1987,7 @@ exports.editDevices = async function (req, res) {
                                     await sql.query(update_profits_transections)
 
                                     if (prevServicePaidPrice > 0) {
-                                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service charges" })}',${prevServicePaidPrice} ,'credit','pending' , 'services')`
+                                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service charges" })}',${prevServicePaidPrice} ,'credit','pending' , 'services' , 0 , ${prevServicePaidPrice})`
                                         await sql.query(transection_credits)
 
                                         update_credits_query = 'update financial_account_balance set credits = credits - ' + prevServicePaidPrice + ' where dealer_id ="' + dealer_id + '"';
@@ -2045,8 +2046,9 @@ exports.editDevices = async function (req, res) {
 
                             let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice} ,'${date_now}' ,'${expiry_date}')`
                             let service_data_result = await sql.query(service_billing);
-
+                            let service_id = null
                             if (service_data_result.affectedRows) {
+                                service_id = service_data_result.insertId
                                 helpers.saveServiceSalesDetails(packages, products, loggedDealerType, usr_acc_id, service_data_result.insertId, pay_now)
                             }
 
@@ -2056,7 +2058,7 @@ exports.editDevices = async function (req, res) {
                                 transection_status = 'pending'
                             }
 
-                            let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${newServicePrice} ,'credit' , '${transection_status}' , 'services')`
+                            let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${newServicePrice} ,'credit' , '${transection_status}' , 'services' , ${(pay_now) ? newServicePrice : 0} , ${(pay_now) ? 0 : newServicePrice})`
                             await sql.query(transection_credits)
 
                             if (transection_status === 'pending') {
@@ -2071,7 +2073,7 @@ exports.editDevices = async function (req, res) {
                             //     total_price = total_price - refund_due_credits
                             // }
 
-                            await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, usr_acc_id, loggedDealerType, pay_now)
+                            await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, usr_acc_id, loggedDealerType, pay_now, service_id)
 
 
                             let inv_no = await helpers.getInvoiceId()
@@ -2519,14 +2521,14 @@ exports.extendServices = async function (req, res) {
                             transection_status = 'pending'
                         }
 
-                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, service_id: service_id })}' ,${newServicePrice} ,'credit' , '${transection_status}' , 'services')`
+                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, service_id: service_id })}' ,${newServicePrice} ,'credit' , '${transection_status}' , 'services' , ${(pay_now) ? newServicePrice : 0} , ${(pay_now) ? 0 : newServicePrice})`
                         await sql.query(transection_credits)
 
 
                         let update_credits_query = 'update financial_account_balance set credits = credits - ' + newServicePrice + ' where dealer_id ="' + dealer_id + '"';
                         await sql.query(update_credits_query);
 
-                        await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, usr_acc_id, loggedDealerType, pay_now)
+                        await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, usr_acc_id, loggedDealerType, pay_now, service_id)
 
 
                         let inv_no = await helpers.getInvoiceId()

@@ -1851,10 +1851,13 @@ module.exports = {
 			dealer_profit
 		}
 	},
-	updateProfitLoss: async function (admin_profit, dealer_profit, admin_data, connected_dealer, usr_acc_id, loggedDealerType, pay_now) {
+	updateProfitLoss: async function (admin_profit, dealer_profit, admin_data, connected_dealer, usr_acc_id, loggedDealerType, pay_now, service_id) {
 		let transection_data = {
 			user_acc_id: usr_acc_id,
-			dealer_type: "admin"
+			dealer_type: "admin",
+			transection_type: "profit",
+			service_id: service_id
+
 		}
 		let transection_status = "transferred"
 		if (!pay_now) {

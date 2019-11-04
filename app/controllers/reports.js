@@ -3,11 +3,11 @@ const generalHelper = require('../../helper/general_helper');
 const moment = require('moment');
 const { sql } = require("../../config/database");
 
-let productData         = {};
-let invoiceData         = {};
-let hardwareData        = {};
-let paymentHistoryData  = {};
-let salesData           = [];
+let productData = {};
+let invoiceData = {};
+let hardwareData = {};
+let paymentHistoryData = {};
+let salesData = [];
 exports.generateProductReport = async function (req, res) {
     let verify = req.decoded;
 
@@ -170,7 +170,7 @@ exports.generatePaymentHistoryReport = async function (req, res) {
         if (transaction_type) {
             condition += ' AND fat.transection_type = "' + transaction_type + '"'
         }
-        
+
         paymentHistoryData = await sql.query(`SELECT fat.*, d.device_id as device_id, ua.link_code as dealer_pin FROM financial_account_transections as fat 
         JOIN usr_acc as ua on ua.id = fat.user_dvc_acc_id 
         JOIN devices as d on ua.device_id = d.id
@@ -192,13 +192,13 @@ exports.generateHardwareReport = async function (req, res) {
 
     if (verify) {
 
-        let user_type   = verify.user.user_type;
-        let dealer      = req.body.dealer;
-        let from        = req.body.from;
-        let to          = req.body.to;
-        let hardware    = req.body.hardware;
-        let condition   = '';
-        let response    = {};
+        let user_type = verify.user.user_type;
+        let dealer = req.body.dealer;
+        let from = req.body.from;
+        let to = req.body.to;
+        let hardware = req.body.hardware;
+        let condition = '';
+        let response = {};
 
         if (hardware) {
             condition += ' AND hd.hardware_name = "' + hardware + '"'
@@ -240,22 +240,22 @@ exports.generateSalesReport = async function (req, res) {
     let verify = req.decoded;
 
     if (verify) {
-        
-        let user_type       = verify.user.user_type;
-        let dealer          = req.body.dealer;
-        let from            = req.body.from;
-        let to              = req.body.to;
-        let productType     = req.body.product_type;
-        let condition       = '';
-        let packages        = [];
-        let packagesData    = [];
-        let products        = [];
-        let productsData    = [];
-        let hardwares       = [];
-        let hardwaresData   = [];
-        let response        = {}
 
-        if(productType === 'PACKAGES' || productType === 'ALL'){
+        let user_type = verify.user.user_type;
+        let dealer = req.body.dealer;
+        let from = req.body.from;
+        let to = req.body.to;
+        let productType = req.body.product_type;
+        let condition = '';
+        let packages = [];
+        let packagesData = [];
+        let products = [];
+        let productsData = [];
+        let hardwares = [];
+        let hardwaresData = [];
+        let response = {}
+
+        if (productType === 'PACKAGES' || productType === 'ALL') {
 
             if (dealer === '' && user_type === Constants.DEALER) {
 
@@ -278,33 +278,33 @@ exports.generateSalesReport = async function (req, res) {
             JOIN devices as d on ua.device_id = d.id
             WHERE ss.status != 'cancelled' AND ss.item_type LIKE 'package'  ${condition} ORDER BY ss.id DESC`);
 
-            packages.map(function(value,index) {
+            packages.map(function (value, index) {
 
-                let cost_price      = 0;
-                let sale_price      = 0;
-                let profit_loss     = 0;
+                let cost_price = 0;
+                let sale_price = 0;
+                let profit_loss = 0;
 
-                if (value.item_dealer_cost == 0 && user_type === Constants.ADMIN){
+                if (value.item_dealer_cost == 0 && user_type === Constants.ADMIN) {
 
-                    cost_price  = value.item_admin_cost;
-                    sale_price  = value.item_sale_price;
+                    cost_price = value.item_admin_cost;
+                    sale_price = value.item_sale_price;
                     profit_loss = sale_price - cost_price;
 
-                }else{
+                } else {
 
                     if (user_type === Constants.DEALER) {
-                        cost_price  = value.item_dealer_cost;
-                        sale_price  = value.total_credits;
+                        cost_price = value.item_dealer_cost;
+                        sale_price = value.total_credits;
                         profit_loss = sale_price - cost_price;
                     } else {
-                        cost_price  = value.item_admin_cost;
-                        sale_price  = value.item_dealer_cost;
+                        cost_price = value.item_admin_cost;
+                        sale_price = value.item_dealer_cost;
                         profit_loss = sale_price - cost_price;
                     }
 
                 }
 
-               let name = JSON.parse(value.item_data).pkg_name;
+                let name = JSON.parse(value.item_data).pkg_name;
                 packagesData.push({
                     'type': 'Package',
                     'name': name.replace(/_/g, ' '),
@@ -319,7 +319,7 @@ exports.generateSalesReport = async function (req, res) {
 
         }
 
-        if(productType === 'PRODUCTS' || productType === 'ALL'){
+        if (productType === 'PRODUCTS' || productType === 'ALL') {
 
             if (dealer === '' && user_type === Constants.DEALER) {
 
@@ -342,27 +342,27 @@ exports.generateSalesReport = async function (req, res) {
             JOIN devices as d on ua.device_id = d.id
             WHERE ss.status != 'cancelled' AND ss.item_type LIKE 'product'  ${condition} ORDER BY ss.id DESC`);
 
-            products.map(function(value,index) {
+            products.map(function (value, index) {
 
-                let cost_price      = 0;
-                let sale_price      = 0;
-                let profit_loss     = 0;
+                let cost_price = 0;
+                let sale_price = 0;
+                let profit_loss = 0;
 
-                if (value.item_dealer_cost == 0 && user_type === Constants.ADMIN){
+                if (value.item_dealer_cost == 0 && user_type === Constants.ADMIN) {
 
-                    cost_price  = value.item_admin_cost;
-                    sale_price  = value.item_sale_price;
+                    cost_price = value.item_admin_cost;
+                    sale_price = value.item_sale_price;
                     profit_loss = sale_price - cost_price;
 
-                }else{
+                } else {
 
                     if (user_type === Constants.DEALER) {
-                        cost_price  = value.item_dealer_cost;
-                        sale_price  = value.total_credits;
+                        cost_price = value.item_dealer_cost;
+                        sale_price = value.total_credits;
                         profit_loss = sale_price - cost_price;
                     } else {
-                        cost_price  = value.item_admin_cost;
-                        sale_price  = value.item_dealer_cost;
+                        cost_price = value.item_admin_cost;
+                        sale_price = value.item_dealer_cost;
                         profit_loss = sale_price - cost_price;
                     }
 
@@ -383,48 +383,48 @@ exports.generateSalesReport = async function (req, res) {
 
         }
 
-        if(productType === 'HARDWARES' || productType === 'ALL'){
-            
+        if (productType === 'HARDWARES' || productType === 'ALL') {
+
             if (dealer === '' && user_type === Constants.DEALER) {
                 let sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
                 condition += ' AND hd.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
             } else if (dealer) {
                 condition += ' AND dealer_id = ' + dealer
             }
-    
+
             if (from) {
                 condition += ' AND DATE(hd.created_at) >= "' + moment(from).format('YYYY-MM-DD') + '"'
             }
-    
+
             if (to) {
                 condition += ' AND DATE(hd.created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
             }
-    
+
             hardwares = await sql.query(`SELECT hd.*, d.device_id as device_id  FROM hardwares_data as hd
             JOIN usr_acc as ua on ua.id = hd.user_acc_id 
             JOIN devices as d on ua.device_id = d.id
             WHERE hd.id IS NOT NULL ${condition} ORDER BY hd.id DESC`);
 
-            hardwares.map(function(value, index) {
-                let cost_price      = 0;
-                let sale_price      = 0;
-                let profit_loss     = 0;
+            hardwares.map(function (value, index) {
+                let cost_price = 0;
+                let sale_price = 0;
+                let profit_loss = 0;
 
-                if (value.dealer_cost_credits === 0 && user_type === Constants.ADMIN){
+                if (value.dealer_cost_credits === 0 && user_type === Constants.ADMIN) {
 
-                    cost_price  = value.admin_cost_credits;
-                    sale_price  = value.total_credits;
+                    cost_price = value.admin_cost_credits;
+                    sale_price = value.total_credits;
                     profit_loss = sale_price - cost_price;
 
-                }else{
+                } else {
 
                     if (user_type === Constants.DEALER) {
-                        cost_price  = value.dealer_cost_credits;
-                        sale_price  = value.total_credits;
+                        cost_price = value.dealer_cost_credits;
+                        sale_price = value.total_credits;
                         profit_loss = sale_price - cost_price;
                     } else {
-                        cost_price  = value.admin_cost_credits;
-                        sale_price  = value.dealer_cost_credits;
+                        cost_price = value.admin_cost_credits;
+                        sale_price = value.dealer_cost_credits;
                         profit_loss = sale_price - cost_price;
                     }
 
@@ -441,7 +441,7 @@ exports.generateSalesReport = async function (req, res) {
                     'created_at': value.created_at,
                 })
             });
-            
+
         }
 
         response = {
