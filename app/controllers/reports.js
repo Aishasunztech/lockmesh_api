@@ -3,11 +3,12 @@ const generalHelper = require('../../helper/general_helper');
 const moment = require('moment');
 const { sql } = require("../../config/database");
 
-let productData = {};
-let invoiceData = {};
-let hardwareData = {};
-let paymentHistoryData = {};
-let salesData = [];
+let productData         = {};
+let invoiceData         = {};
+let hardwareData        = {};
+let paymentHistoryData  = {};
+let salesData           = [];
+
 exports.generateProductReport = async function (req, res) {
     let verify = req.decoded;
 
@@ -68,7 +69,6 @@ exports.generateProductReport = async function (req, res) {
         response = {
             status: true,
             data: productData,
-
         };
 
         return res.send(response);
@@ -219,7 +219,7 @@ exports.generateHardwareReport = async function (req, res) {
             condition += ' AND DATE(hd.created_at) <= ' + moment(to).format('YYYY-MM-DD')
         }
 
-        hardwareData = await sql.query(`SELECT hd.*, d.device_id FROM hardwares_data as hd
+        hardwareData = await sql.query(`SELECT hd.*, d.device_id, ua.link_code as dealer_pin FROM hardwares_data as hd
         JOIN usr_acc as ua on ua.id = hd.user_acc_id 
         JOIN devices as d on ua.device_id = d.id 
         WHERE hd.status = 'returned' ${condition} ORDER BY hd.id DESC`);
@@ -240,27 +240,27 @@ exports.generateSalesReport = async function (req, res) {
     let verify = req.decoded;
 
     if (verify) {
+        
+        let user_type       = verify.user.user_type;
+        let dealer          = req.body.dealer;
+        let from            = req.body.from;
+        let to              = req.body.to;
+        let productType     = req.body.product_type;
+        let condition       = '';
+        let packages        = [];
+        let packagesData    = [];
+        let products        = [];
+        let productsData    = [];
+        let hardwares       = [];
+        let hardwaresData   = [];
+        let response        = {};
 
-        let user_type = verify.user.user_type;
-        let dealer = req.body.dealer;
-        let from = req.body.from;
-        let to = req.body.to;
-        let productType = req.body.product_type;
-        let condition = '';
-        let packages = [];
-        let packagesData = [];
-        let products = [];
-        let productsData = [];
-        let hardwares = [];
-        let hardwaresData = [];
-        let response = {}
-
-        if (productType === 'PACKAGES' || productType === 'ALL') {
+        if(productType === 'PACKAGES' || productType === 'ALL'){
 
             if (dealer === '' && user_type === Constants.DEALER) {
 
                 let sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
-                condition += ' AND dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
+                condition += ' AND ua.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
             } else if (dealer) {
                 condition += ' AND ua.dealer_id = ' + dealer
             }
@@ -273,7 +273,7 @@ exports.generateSalesReport = async function (req, res) {
                 condition += ' AND DATE(ss.created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
             }
 
-            packages = await sql.query(`SELECT ss.*, d.device_id as device_id, ua.dealer_id as dealer_id FROM services_sale as ss
+            packages = await sql.query(`SELECT ss.*, d.device_id as device_id, ua.link_code as dealer_pin FROM services_sale as ss
             JOIN usr_acc as ua on ua.id = ss.user_acc_id 
             JOIN devices as d on ua.device_id = d.id
             WHERE ss.status != 'cancelled' AND ss.item_type LIKE 'package'  ${condition} ORDER BY ss.id DESC`);
@@ -308,7 +308,7 @@ exports.generateSalesReport = async function (req, res) {
                 packagesData.push({
                     'type': 'Package',
                     'name': name.replace(/_/g, ' '),
-                    'dealer_id': value.dealer_id,
+                    'dealer_pin': value.dealer_pin,
                     'device_id': value.device_id,
                     'cost_price': cost_price,
                     'sale_price': sale_price,
@@ -337,7 +337,7 @@ exports.generateSalesReport = async function (req, res) {
                 condition += ' AND DATE(ss.created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
             }
 
-            products = await sql.query(`SELECT ss.*, d.device_id as device_id, ua.dealer_id as dealer_id FROM services_sale as ss
+            products = await sql.query(`SELECT ss.*, d.device_id as device_id, ua.dealer_id as dealer_id, ua.link_code as dealer_pin FROM services_sale as ss
             JOIN usr_acc as ua on ua.id = ss.user_acc_id 
             JOIN devices as d on ua.device_id = d.id
             WHERE ss.status != 'cancelled' AND ss.item_type LIKE 'product'  ${condition} ORDER BY ss.id DESC`);
@@ -372,7 +372,7 @@ exports.generateSalesReport = async function (req, res) {
                 productsData.push({
                     'type': 'Product',
                     'name': name.replace(/_/g, ' '),
-                    'dealer_id': value.dealer_id,
+                    'dealer_pin': value.dealer_pin,
                     'device_id': value.device_id,
                     'cost_price': cost_price,
                     'sale_price': sale_price,
@@ -389,7 +389,7 @@ exports.generateSalesReport = async function (req, res) {
                 let sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
                 condition += ' AND hd.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
             } else if (dealer) {
-                condition += ' AND dealer_id = ' + dealer
+                condition += ' AND hd.dealer_id = ' + dealer
             }
 
             if (from) {
@@ -399,8 +399,8 @@ exports.generateSalesReport = async function (req, res) {
             if (to) {
                 condition += ' AND DATE(hd.created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
             }
-
-            hardwares = await sql.query(`SELECT hd.*, d.device_id as device_id  FROM hardwares_data as hd
+    
+            hardwares = await sql.query(`SELECT hd.*, d.device_id as device_id, ua.link_code as dealer_pin FROM hardwares_data as hd
             JOIN usr_acc as ua on ua.id = hd.user_acc_id 
             JOIN devices as d on ua.device_id = d.id
             WHERE hd.id IS NOT NULL ${condition} ORDER BY hd.id DESC`);
@@ -433,7 +433,7 @@ exports.generateSalesReport = async function (req, res) {
                 hardwaresData.push({
                     'type': 'Hardware',
                     'name': value.hardware_name,
-                    'dealer_id': value.dealer_id,
+                    'dealer_pin': value.dealer_pin,
                     'device_id': value.device_id,
                     'cost_price': cost_price,
                     'sale_price': sale_price,
