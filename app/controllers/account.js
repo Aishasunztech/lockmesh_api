@@ -1002,6 +1002,9 @@ exports.purchaseCredits_CC = async function (req, res) {
 
                                                         console.log(result);
                                                         if (result.affectedRows) {
+                                                            let transection_credits = `INSERT INTO financial_account_transections (user_id,transection_data, credits ,transection_type , status , type , current_balance) VALUES (${dealerId},'${JSON.stringify({ request_type: "Credit Card" })}' ,${credits} ,'debit' , 'transferred', 'credits' , ${dealerBalanceData[0] ? dealerBalanceData[0].credits : 0})`
+                                                            await sql.query(transection_credits)
+
                                                             let get_last_panding_transections_query = `SELECT * from financial_account_transections WHERE user_id = ${dealerId} AND status = 'pending' ORDER BY created_at asc`
                                                             let last_panding_transections = await sql.query(get_last_panding_transections_query)
                                                             console.log(last_panding_transections.length);
@@ -1035,28 +1038,16 @@ exports.purchaseCredits_CC = async function (req, res) {
                                                                     }
                                                                 }
                                                             }
-                                                            let transection_credits = `INSERT INTO financial_account_transections (user_id,transection_data, credits ,transection_type , status , type , current_balance) VALUES (${dealerId},'${JSON.stringify({ request_type: "Credit Card" })}' ,${credits} ,'debit' , 'transferred', 'credits' , ${dealerBalanceData[0] ? dealerBalanceData[0].credits : 0})`
-                                                            await sql.query(transection_credits)
+
 
                                                             let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
-                                                            sql.query(query, async function (err, result) {
-                                                                if (err) {
-                                                                    console.log(err);
-                                                                    res.send({
-                                                                        status: false,
-                                                                        msg: ""
-                                                                    })
-                                                                    return
-                                                                }
-                                                                if (result.affectedRows > 0) {
-                                                                    res.send({
-                                                                        status: true,
-                                                                        msg: await helpers.convertToLang(req.translation[MsgConstants.PAYMENT_HAS_BEEN_DONE], "Payment has been done"), // "Payment has been done.",
-                                                                        credits: totalCredits
-                                                                    })
-                                                                    return
-                                                                }
+                                                            sql.query(query)
+                                                            res.send({
+                                                                status: true,
+                                                                msg: await helpers.convertToLang(req.translation[MsgConstants.PAYMENT_HAS_BEEN_DONE], "your account has been recharged successfully."), // "Payment has been done.",
+                                                                credits: totalCredits
                                                             })
+                                                            return
                                                         } else {
                                                             res.send({
                                                                 status: false,
