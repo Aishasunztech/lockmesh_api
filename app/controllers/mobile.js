@@ -1645,3 +1645,88 @@ exports.SMAppList_V2 = async function (req, res) {
         return res.send(data);
     }
 }
+
+exports.SMAppListV3 = async function (req, res) {
+    let data = [];
+    let spaceType = req.body.spaceType;
+    let linkCode = req.body.linkCode;
+    let querySM = ''
+
+    // if linkCode is available then send both admin and dealer apps other wise send on admin permitted apps
+    if (!linkCode) {
+
+        querySM = `SELECT apk_details.*, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type FROM apk_details JOIN secure_market_apps ON (secure_market_apps.apk_id = apk_details.id) WHERE apk_details.delete_status = 0 AND secure_market_apps.dealer_type = 'admin' AND secure_market_apps.space_type = '${spaceType}'`;
+    } else {
+        let dealer_id = await helpers.getDealerIDByLinkOrActivation(linkCode)
+        if (!dealer_id) {
+            querySM = `SELECT apk_details.*, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type FROM apk_details JOIN secure_market_apps ON (secure_market_apps.apk_id = apk_details.id) WHERE apk_details.delete_status = 0 AND secure_market_apps.dealer_type = 'admin' AND secure_market_apps.space_type = '${spaceType}'`;
+        } else {
+            querySM = `SELECT apk_details.*, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type, secure_market_apps.dealer_type from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id WHERE apk_details.delete_status = 0 AND secure_market_apps.space_type = '${spaceType}' AND (secure_market_apps.dealer_id = '${dealer_id}' OR dealer_type = 'admin')`
+        }
+    }
+
+
+    sql.query(querySM, function (err, results) {
+        console.log(err, results);
+        if (err || ! results) {
+            data = {
+                status: false,
+                msg: "No result found"
+            }
+            return res.send(data);
+        };
+
+        let apps = [];
+        if (results.length) {
+            let finalApps = []
+            if (linkCode) {
+
+                let adminApps = results.filter((app) => app.dealer_type === "admin");
+                // console.log(adminApps.length, "adminApps ", adminApps)
+
+                let deleteIds = [];
+                results.forEach((item, index) => {
+                    for (let i = 0; i < adminApps.length; i++) {
+                        if (item.id == adminApps[i].id && item.dealer_type !== "admin" && adminApps[i].space_type === item.space_type) {
+                            deleteIds.push(index);
+                        }
+                    }
+                })
+                finalApps = results.filter((app, index) => !deleteIds.includes(index))
+            } else {
+                finalApps = results;
+            }
+
+
+            for (var i = 0; i < finalApps.length; i++) {
+                dta = {
+                    apk_name: finalApps[i].app_name,
+                    logo: finalApps[i].logo,
+                    apk: finalApps[i].apk,
+                    apk_status: finalApps[i].status,
+                    space_type: finalApps[i].space_type,
+                    // dealer_type: finalApps[i].dealer_type,
+                    package_name: finalApps[i].package_name,
+                    is_restrict_uninstall: finalApps[i].is_restrict_uninstall,
+                    apk_size: finalApps[i].apk_size,
+                    version_code: finalApps[i].version_code
+                }
+                apps.push(dta);
+            }
+            //   console.log(data);
+            //res.json("status" : true , result : data);
+            data = {
+                success: true,
+                status: true,
+                list: apps
+            }
+        } else {
+            data = {
+                status: true,
+                msg: "No result found",
+                list: apps
+            }
+        }
+        return res.send(data);
+    })
+}
