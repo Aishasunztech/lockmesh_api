@@ -896,21 +896,19 @@ exports.resetPwd = async function (req, res) {
 
 
 exports.getLoggedDealerApps = async function (req, res) {
-    // console.log('apoi recivedx')
     var verify = req.decoded;
-    // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
         let loggedUserId = verify.user.id;
         let loggedUserType = verify.user.user_type;
 
         let getAppsQ = "SELECT apk_details.* FROM apk_details ";
         if (loggedUserType !== ADMIN) {
-            getAppsQ = getAppsQ + " JOIN dealer_apks on dealer_apks.apk_id = apk_details.id WHERE dealer_apks.dealer_id =" + loggedUserId + " AND delete_status=0 AND apk_type != 'permanent'";
+            getAppsQ = `${getAppsQ} JOIN dealer_permissions ON (dealer_permissions.permission_id = apk_details.id) WHERE (dealer_permissions.dealer_id =${loggedUserId} OR dealer_permissions.dealer_id=0) AND apk_details.delete_status=0 AND apk_details.apk_type != 'permanent' AND dealer_permissions.permission_type = 'apk';`;
         } else {
-            getAppsQ = getAppsQ + " WHERE delete_status=0 AND apk_type != 'permanent'";
+            getAppsQ = `${getAppsQ} WHERE delete_status=0 AND apk_type != 'permanent';`;
 
         }
-        // console.log(getAppsQ);
+        console.log("getAppsQ ", getAppsQ);
         let apps = await sql.query(getAppsQ);
 
         if (apps.length > 0) {
@@ -1318,3 +1316,372 @@ exports.twoFactorAuth = async function (req, res) {
         }
     }
 }
+
+
+
+
+/**
+ * save dealer permissions with new structure
+ * @author Usman Hafeez
+ * 
+ */
+exports.dealerPermissions = async function (req, res) {
+    var verify = req.decoded;
+    if (verify) {
+        let loggedUserId = verify.user.dealer_id;
+        let loggedUserType = verify.user.user_type;
+        let permissionType = req.params.permissionType;
+        console.log(req.body, "permissionType ", permissionType)
+        let action = req.body.action // save, delete, 
+        let permissionId = req.body.permissionId;
+        let dealers = req.body.dealers;
+        let statusAll = req.body.statusAll;
+
+        let prevPermissionsQ = ''
+        let prevParsDealers = [];
+        let allDealers = [];
+
+        prevPermissionsQ = `SELECT dealer_id FROM dealer_permissions WHERE permission_id = ${permissionId} AND permission_type ='${permissionType}' AND permission_by = ${loggedUserId}`;
+        // console.log("prevPermissionsQ ", prevPermissionsQ)
+
+        let getPermissionDealers = await sql.query(prevPermissionsQ);
+        // console.log("getPermissionDealers ", getPermissionDealers)
+
+        if (getPermissionDealers.length > 0) {
+            if (getPermissionDealers[0].dealer_id == 0) {
+                prevParsDealers = 0;
+                // if (permissionType == "package") {
+                //     if (loggedUserType === ADMIN) {
+                //         let getDealers = await sql.query(`SELECT * FROM dealers WHERE type = 2 ORDER BY created DESC`);
+                //         allDealers = getDealers.map((dlr) => dlr.dealer_id);
+                //     }
+                //     else if (loggedUserType === DEALER) {
+                //         let getDealers = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                //         allDealers = getDealers.map((dlr) => dlr.dealer_id);
+                //     }
+                // } else {
+                let dealerData = await general_helpers.getUserDealers(loggedUserType, loggedUserId, permissionType);
+                allDealers = dealerData.dealerList;
+                // }
+            } else {
+                prevParsDealers = getPermissionDealers.map((prm) => prm.dealer_id);
+            }
+        }
+        // console.log("prevParsDelaer", prevParsDealers);
+
+        // console.log("selected", dealers);
+        let newDealers = JSON.parse(dealers); // dealers from client side to permit
+        let condition = '';
+
+        if (newDealers.length) {
+
+            if (prevParsDealers === 0) {
+                if (action === 'delete') {
+
+                    // console.log("prevParsDealers, permissionType, permissionId, loggedUserId ::", getPermissionDealers, prevParsDealers, permissionType, permissionId, loggedUserId)
+                    // let responseData = await general_helpers.savePermission(prevParsDealers, permissionType, permissionId, loggedUserId)
+
+                    let deleteNotIn = `DELETE FROM dealer_permissions WHERE permission_id = ${permissionId} AND permission_type='${permissionType}' AND permission_by=${loggedUserId}`;
+                    // console.log("deleteNotIn: ", deleteNotIn);
+                    let deleteDealers = await sql.query(deleteNotIn);
+
+                    if (deleteDealers.affectedRows) {
+                        // console.log("allDealers ", allDealers);
+                        prevParsDealers = allDealers.filter((dealerId) => !newDealers.includes(dealerId))
+                        // console.log("prevParsDelaer delete func for all dealers: ", prevParsDealers);
+
+                        if (prevParsDealers.length) {
+
+                            let responseData = await general_helpers.savePermission(getPermissionDealers, prevParsDealers, permissionType, permissionId, loggedUserId, loggedUserType)
+                            // console.log("responseData ", responseData);
+                            if (responseData.status) {
+                                return res.send({
+                                    status: true,
+                                    msg: 'Permission remove successfully'
+                                })
+                            } else {
+                                return res.send({
+                                    status: false,
+                                    msg: 'Failed to remove permission'
+                                })
+                            }
+                        } else {
+                            return res.send({
+                                status: true,
+                                msg: 'Permission remove successfully'
+                            })
+                        }
+                    } else {
+                        return res.send({
+                            status: false,
+                            msg: 'Permission not found'
+                        })
+                    }
+
+
+                } else {
+                    return res.send({
+                        status: false,
+                        msg: 'permission action is not defined.'
+                    })
+                }
+            } else {
+
+                if (action === 'save') {
+                    console.log('save action')
+
+                    // if selected all dealers
+                    if (!statusAll) {
+                        // console.log('save action not all');
+
+                        // if (prevParsDealers != 0) {
+                        if (prevParsDealers.length) {
+                            // console.log('previous exist')
+                            for (let i = 0; i < newDealers.length; i++) {
+                                if (prevParsDealers.indexOf(newDealers[i]) === -1) {
+                                    prevParsDealers.push(newDealers[i])
+                                }
+                            }
+                        } else {
+                            // console.log('previous not exist')
+                            prevParsDealers = newDealers
+                        }
+
+                        // console.log(typeof (prevParsDealers), "prevParsDelaer updated", prevParsDealers);
+
+                        if (prevParsDealers.length) {
+                            // delete dealers that are not in new permissions
+                            let deleteNotIn = `DELETE FROM dealer_permissions WHERE dealer_id NOT IN (${prevParsDealers}) AND permission_id = ${permissionId} AND permission_type='${permissionType}' AND permission_by= ${loggedUserId}`;
+                            let deleteDealers = await sql.query(deleteNotIn);
+                            // console.log("deleteDealers: ", deleteDealers);
+                        }
+
+                        let responseData = await general_helpers.savePermission(getPermissionDealers, prevParsDealers, permissionType, permissionId, loggedUserId, loggedUserType)
+                        // console.log("responseData ", responseData);
+                        return res.send(responseData);
+                        // }
+
+
+                    } else {
+                        console.log("All", dealers);
+                        let parsedDealers = JSON.parse(dealers);
+
+                        for (let i = 0; i < parsedDealers.length; i++) {
+                            if (prevParsDealers.indexOf(parsedDealers[i]) === -1) {
+                                prevParsDealers.push(parsedDealers[i])
+                            }
+                        }
+
+                        // delete All Entries with dealer ids
+                        let deleteAllDealersQ = `DELETE FROM dealer_permissions WHERE permission_id = ${permissionId} AND permission_type='${permissionType}' AND permission_by = ${loggedUserId}`;
+                        // console.log("deleteAllDealersQ: ", deleteAllDealersQ);
+                        let deleteAllDealers = await sql.query(deleteAllDealersQ);
+                        // console.log("deleteAllDealers: ", deleteAllDealers);
+
+                        let insertAllDealersQ = `INSERT INTO dealer_permissions (permission_id, dealer_id, permission_type, permission_by, dealer_type) VALUE (${permissionId}, '0', '${permissionType}', ${loggedUserId}, '${loggedUserType}')`;
+                        console.log("insertAllDealersQ: ", insertAllDealersQ);
+                        let insertAllDealers = await sql.query(insertAllDealersQ, async function (error, result) {
+                            if (error) {
+                                return res.send({
+                                    status: false,
+                                    msg: 'Permission duplicate problem'
+                                })
+                            }
+
+                            return res.send({
+                                status: true,
+                                msg: 'Permission saved successfully'
+                            })
+                        });
+
+                    }
+
+                } else if (action === 'delete') {
+                    console.log('delete dealers:');
+
+                    if (!statusAll) {
+                        dealers = JSON.parse(dealers);
+
+                        if (prevParsDealers !== 0) {
+                            for (let i = 0; i < dealers.length; i++) {
+                                var index = prevParsDealers.indexOf(dealers[i]);
+                                // console.log("array index", index);
+                                if (index > -1) {
+                                    prevParsDealers.splice(index, 1);
+                                }
+                            }
+
+
+                            console.log("prevParsDealers ", prevParsDealers);
+
+                            // delete dealers that are not in new permissions
+                            let deleteNotIn = '';
+                            if (prevParsDealers.length) {
+                                deleteNotIn = `DELETE FROM dealer_permissions WHERE dealer_id NOT IN (${prevParsDealers.join()}) AND permission_id = ${permissionId} AND permission_type='${permissionType}' AND permission_by=${loggedUserId}`;
+                            } else {
+                                deleteNotIn = `DELETE FROM dealer_permissions WHERE dealer_id IN (${dealers}) AND permission_id = ${permissionId} AND permission_type='${permissionType}' AND permission_by=${loggedUserId}`;
+                            }
+                            console.log("deleteNotIn: ", deleteNotIn);
+                            let deleteDealers = await sql.query(deleteNotIn);
+                            // console.log("deleteDealers: ", deleteDealers);
+
+                            if (deleteDealers.affectedRows) {
+                                await sql.query(`DELETE FROM dealer_permissions WHERE permission_id = ${permissionId} AND permission_type='${permissionType}' AND permission_by IN (${dealers})`);
+
+                                return res.send({
+                                    status: true,
+                                    msg: 'Permission remove successfully'
+                                })
+                            } else {
+                                return res.send({
+                                    status: false,
+                                    msg: 'Failed to remove permission'
+                                })
+                            }
+                        } else {
+
+                        }
+
+                    } else {
+
+                        if (loggedUserType !== ADMIN) {
+                            condition = ` AND permission_by=${loggedUserId}`
+                        }
+                        let deleteNotIn = `DELETE FROM dealer_permissions WHERE permission_id = ${permissionId} AND permission_type='${permissionType}' ${condition}`;
+                        console.log("deleteNotIn: ", deleteNotIn);
+                        let deleteDealers = await sql.query(deleteNotIn);
+                        console.log("deleteDealers: ", deleteDealers);
+
+                        // let updateDealersOfTypeQ = `UPDATE ${tableName} SET dealers = '${JSON.stringify([])}' WHERE id=${permissionId}`;
+                        // let updateDealersOfType = await sql.query(updateDealersOfTypeQ)
+
+                        if (deleteDealers.affectedRows) {
+                            // await sql.query(`DELETE FROM dealer_permissions WHERE permission_id = ${permissionId} AND permission_type='${permissionType}' AND permission_by IN (${dealers})`);
+
+                            return res.send({
+                                status: true,
+                                msg: 'Permission remove successfully'
+                            })
+                        } else {
+                            return res.send({
+                                status: false,
+                                msg: 'Failed to remove permission'
+                            })
+                        }
+                    }
+                    // dealers = JSON.parse(dealers);
+
+                    // if (dealers.length) {
+                    //     for (let i = 0; i < dealers.length; i++) {
+                    //         var index = prevParsDealers.indexOf(dealers[i]);
+                    //         console.log("array index", index);
+                    //         if (index > -1) {
+                    //             prevParsDealers.splice(index, 1);
+                    //         }
+                    //     }
+                    //     // console.log(prevParsDealers);
+                    //     let toDeleteDealers = (prevParsDealers.length > 0) ? prevParsDealers.join() : '""';
+
+                    //     let updateDealersOfTypeQ = `UPDATE ${tableName} SET dealers = '${JSON.stringify(prevParsDealers)}' WHERE id=${permissionId}`;
+                    //     let updateDealersOfType = await sql.query(updateDealersOfTypeQ)
+
+
+                    // let deleteNotInQ = `DELETE FROM dealer_permissions WHERE dealer_id NOT IN (${toDeleteDealers}) AND permission_id = ${permissionId} AND permission_type='${permissionType}'`;
+                    //     console.log(deleteNotIn);
+                    //     await sql.query(deleteNotIn);
+                    //     if (prevParsDealers.length > 0) {
+                    //         let dealerids = []
+                    //         let apkIds = []
+                    //         let dealer_apks_data = await sql.query("SELECT * from dealer_apks");
+                    //         if (dealer_apks_data.length) {
+                    //             dealer_apks_data.map(
+                    //             insertOrIgnore = ins(item) => {
+                    //                 dealerids.push(item.dealer_id)
+                    //                 apkIds.push(item.apk_id)
+                    //             })
+                    //         }
+                    //         let insertQuery = "INSERT INTO dealer_apks (dealer_id, apk_id) VALUES";
+
+                    //         let insertOrIgnore = ' '
+                    //         for (let i = 0; i < prevParsDealers.length; i++) {
+                    //             if (apkIds.indexOf(apkId) !== -1 && dealerids.indexOf(prevParsDealers[i]) !== -1) {
+                    //                 continue
+                    //             }ertOrIgnore + "(" + prevParsDealers[i] + "," + apkId + "),"
+                    //         }
+                    //         if (insertOrIgnore.length > 1) {
+                    //             let query = insertQuery + insertOrIgnore;
+                    //             query = query.slice(0, query.length - 1)
+                    //             console.log(query);
+                    //             await sql.query(query);
+                    //         }
+                    //     }
+                    //     // console.log(insertQuery + insertOrIgnore);
+                    // }
+
+                    // sql.query(updateAPKQ, async (error, result) => {
+                    //     if (error) {
+                    //         console.log(error);
+                    //     }
+                    //     let permissionC = [];
+                    //     let rslt = await sql.query("select dealers from apk_details where id='" + apkId + "' order by id ASC")
+                    //     if (rslt.length) {
+                    //         console.log(rslt, ' do ti ');
+                    //         if (rslt !== undefined && rslt !== null) {
+                    //             let permission = JSON.parse(rslt[0].dealers);
+                    //             console.log("Verify user id", verify.user.user_type);
+                    //             if (verify.user.user_type === Constants.ADMIN) {
+                    //                 if (permission !== undefined && permission !== null && permission !== '[]') {
+                    //                     let adminRoleId = await helpers.getUserTypeIDByName(Constants.ADMIN);
+                    //                     let dealerCount = await helpers.dealerCount(adminRoleId);
+                    //                     permissionC = ((permission.length == dealerCount) && (permission.length > 0)) ? "All" : permission.length.toString();
+
+                    //                 }
+                    //             }
+                    //             else if (verify.user.user_type === Constants.DEALER) {
+                    //                 let sdealerList = await sql.query("select count(*) as dealer_count ,dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                    //                 let dealerCount = sdealerList[0].dealer_count;
+                    //                 console.log("dasda", dealerCount);
+                    //                 let Sdealerpermissions = permission.filter(function (item) {
+                    //                     for (let i = 0; i < sdealerList.length; i++) {
+                    //                         if (item === sdealerList[i].dealer_id) {
+                    //                             return item
+                    //                         }
+                    //                     }
+                    //                 })
+                    //                 console.log("sadasdsad", Sdealerpermissions);
+                    //                 let permissionCount = (Sdealerpermissions !== undefined && Sdealerpermissions !== null && Sdealerpermissions !== '[]') ? Sdealerpermissions.length : 0;
+                    //                 permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                    //             }
+                    //         };
+
+                    //     }
+                    //     if (result.affectedRows) {
+                    //         res.send({
+                    //             status: true,
+                    //             msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_REMOVED_SUCCESSFULLY], "Permission Removed successfully"), // "Permission Removed successfully",
+                    //             permission_count: permissionC,
+                    //         })
+                    //     } else {
+                    //         res.send({
+                    //             status: false,
+                    //             msg: await helpers.convertToLang(req.translation[MsgConstants.PERMISSION_NOT_SAVED], "Permission couldn't be saved"), // "Permission couldn't be saved"
+                    //         })
+                    //     }
+                    // });
+
+                } else {
+                    return res.send({
+                        status: false,
+                        msg: 'permission action is not defined'
+                    })
+                }
+            }
+        } else {
+            return res.send({
+                status: false,
+                msg: 'Dealers not selected'
+            })
+        }
+    }
+}
+

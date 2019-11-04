@@ -1360,6 +1360,8 @@ router.delete('/agents/:agentID', agentController.deleteAgent);
  * @security JWT
  */
 router.get('/dashboard-data', dashboardController.getDashboardData);
+router.get('/get-domains', accountController.getDomains);
+router.post("/dealer-permissions/:permissionType", dealerController.dealerPermissions);
 
 
 router.get('/getInvoiceId', userController.getInvoiceId);
