@@ -109,18 +109,18 @@ exports.devices = async function (req, res) {
                         results[i].chat_id = chat_id.chat_id
                     }
                     let services = servicesData.filter(data => data.user_acc_id === results[i].id);
-                    if (services) {
-                        if (services.length > 1) {
-                            services.map((item) => {
-                                if (item.status === 'extended') {
-                                    results[i].extended_services = item
-                                } else {
-                                    results[i].services = item
-                                }
-                            })
-                        } else {
-                            results[i].services = services[0]
-                        }
+                    if (services && services.length) {
+                        // if (services.length > 1) {
+                        services.map((item) => {
+                            if (item.status === 'extended') {
+                                results[i].extended_services = item
+                            } else {
+                                results[i].services = item
+                            }
+                        })
+                        // } else {
+                        //     results[i].services = services[0]
+                        // }
                     }
                     let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
                     if (lastOnline) {
@@ -644,8 +644,8 @@ exports.acceptDevice = async function (req, res) {
                                                         //     rsltq[0].services = servicesData[0]
                                                         // }
                                                         let services = servicesData;
-                                                        if (services) {
-                                                            if (services.length > 1) {
+                                                        if (services && services.length) {
+                                                            // if (services.length > 1) {
                                                                 services.map((item) => {
                                                                     if (item.status === 'extended') {
                                                                         rsltq[0].extended_services = item
@@ -653,9 +653,9 @@ exports.acceptDevice = async function (req, res) {
                                                                         rsltq[0].services = item
                                                                     }
                                                                 })
-                                                            } else {
-                                                                rsltq[0].services = services[0]
-                                                            }
+                                                            // } else {
+                                                            //     rsltq[0].services = services[0]
+                                                            // }
                                                         }
                                                         rsltq[0].vpn = await device_helpers.getVpn(rsltq[0])
                                                         // rsltq[0].validity = await device_helpers.checkRemainDays(rsltq[0].created_at, rslts[0].validity)
@@ -1161,8 +1161,8 @@ exports.createDeviceProfile = async function (req, res) {
                                                 rsltq[i].validity
                                             );
                                             let services = servicesData.filter(data => data.user_acc_id === rsltq[i].id);
-                                            if (services) {
-                                                if (services.length > 1) {
+                                            if (services && services.length) {
+                                                // if (services.length > 1) {
                                                     services.map((item) => {
                                                         if (item.status === 'extended') {
                                                             rsltq[i].extended_services = item
@@ -1170,12 +1170,12 @@ exports.createDeviceProfile = async function (req, res) {
                                                             rsltq[i].services = item
                                                         }
                                                     })
-                                                } else {
-                                                    rsltq[i].services = services[0]
-                                                }
+                                                // } else {
+                                                //     rsltq[i].services = services[0]
+                                                // }
                                             }
                                             // let services = servicesData.find(data => data.user_acc_id === rsltq[i].id);
-                                            // if (services) {
+                                            // if (services && services.length) {
                                             //     rsltq[i].services = services
                                             // }
 
@@ -1480,8 +1480,8 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 }
 
                                                                 let services = servicesData
-                                                                if (services) {
-                                                                    if (services.length > 1) {
+                                                                if (services && services.length) {
+                                                                    // if (services.length > 1) {
                                                                         services.map((item) => {
                                                                             if (item.status === 'extended') {
                                                                                 results[0].extended_services = item
@@ -1489,9 +1489,9 @@ exports.createDeviceProfile = async function (req, res) {
                                                                                 results[0].services = item
                                                                             }
                                                                         })
-                                                                    } else {
-                                                                        results[0].services = services[0]
-                                                                    }
+                                                                    // } else {
+                                                                    //     results[0].services = services[0]
+                                                                    // }
                                                                 }
                                                                 // if (servicesData[0]) {
                                                                 //     results[0].services = servicesData[0]
@@ -2158,8 +2158,8 @@ exports.editDevices = async function (req, res) {
                             }
 
                             let services = servicesData;
-                            if (services) {
-                                if (services.length > 1) {
+                            if (services && services.length) {
+                                // if (services.length > 1) {
                                     services.map((item) => {
                                         if (item.status === 'extended') {
                                             rsltq[0].extended_services = item
@@ -2167,9 +2167,9 @@ exports.editDevices = async function (req, res) {
                                             rsltq[0].services = item
                                         }
                                     })
-                                } else {
-                                    rsltq[0].services = services[0]
-                                }
+                                // } else {
+                                //     rsltq[0].services = services[0]
+                                // }
                             }
                             // if (servicesData[0]) {
                             //     rsltq[0].services = servicesData[0]
@@ -2606,8 +2606,8 @@ exports.extendServices = async function (req, res) {
                             }
 
                             let services = servicesData;
-                            if (services) {
-                                if (services.length > 1) {
+                            if (services && services.length) {
+                                // if (services.length > 1) {
                                     services.map((item) => {
                                         if (item.status === 'extended') {
                                             rsltq[0].extended_services = item
@@ -2615,9 +2615,9 @@ exports.extendServices = async function (req, res) {
                                             rsltq[0].services = item
                                         }
                                     })
-                                } else {
-                                    rsltq[0].services = services[0]
-                                }
+                                // } else {
+                                //     rsltq[0].services = services[0]
+                                // }
                             }
                             // if (servicesData[0]) {
                             //     rsltq[0].services = servicesData[0]
@@ -2803,8 +2803,8 @@ exports.cancelExtendedServices = async function (req, res) {
                                         results[0].chat_id = "N/A"
                                     }
                                     let services = servicesData;
-                                    if (services) {
-                                        if (services.length > 1) {
+                                    if (services && services.length) {
+                                        // if (services.length > 1) {
                                             services.map((item) => {
                                                 if (item.status === 'extended') {
                                                     results[0].extended_services = item
@@ -2812,9 +2812,9 @@ exports.cancelExtendedServices = async function (req, res) {
                                                     results[0].services = item
                                                 }
                                             })
-                                        } else {
-                                            results[0].services = services[0]
-                                        }
+                                        // } else {
+                                        //     results[0].services = services[0]
+                                        // }
                                     }
                                     results[0].lastOnline = results[0].last_login ? results[0].last_login : "N/A"
                                     let device_data = results[0]
@@ -3214,8 +3214,8 @@ exports.unflagDevice = async function (req, res) {
                             }
 
                             let services = servicesData;
-                            if (services) {
-                                if (services.length > 1) {
+                            if (services && services.length) {
+                                // if (services.length > 1) {
                                     services.map((item) => {
                                         if (item.status === 'extended') {
                                             resquery[0].extended_services = item
@@ -3223,9 +3223,9 @@ exports.unflagDevice = async function (req, res) {
                                             resquery[0].services = item
                                         }
                                     })
-                                } else {
-                                    resquery[0].services = services[0]
-                                }
+                                // } else {
+                                //     resquery[0].services = services[0]
+                                // }
                             }
                             // if (servicesData[0]) {
                             //     resquery[0].services = servicesData[0]
@@ -3346,8 +3346,8 @@ exports.flagDevice = async function (req, res) {
                             resquery[0].chat_id = "N/A"
                         }
                         let services = servicesData;
-                        if (services) {
-                            if (services.length > 1) {
+                        if (services && services.length) {
+                            // if (services.length > 1) {
                                 services.map((item) => {
                                     if (item.status === 'extended') {
                                         resquery[0].extended_services = item
@@ -3355,9 +3355,9 @@ exports.flagDevice = async function (req, res) {
                                         resquery[0].services = item
                                     }
                                 })
-                            } else {
-                                resquery[0].services = services[0]
-                            }
+                            // } else {
+                            //     resquery[0].services = services[0]
+                            // }
                         }
                         // if (servicesData[0]) {
                         //     resquery[0].services = servicesData[0]
@@ -3456,8 +3456,8 @@ exports.transferUser = async function (req, res) {
                         resquery[0].chat_id = "N/A"
                     }
                     let services = servicesData;
-                    if (services) {
-                        if (services.length > 1) {
+                    if (services && services.length) {
+                        // if (services.length > 1) {
                             services.map((item) => {
                                 if (item.status === 'extended') {
                                     resquery[0].extended_services = item
@@ -3465,9 +3465,9 @@ exports.transferUser = async function (req, res) {
                                     resquery[0].services = item
                                 }
                             })
-                        } else {
-                            resquery[0].services = services[0]
-                        }
+                        // } else {
+                        //     resquery[0].services = services[0]
+                        // }
                     }
                     // if (servicesData[0]) {
                     //     resquery[0].services = servicesData[0]
@@ -3686,8 +3686,8 @@ exports.transferDeviceProfile = async function (req, res) {
                                         resquery[0].chat_id = "N/A"
                                     }
                                     let services = servicesData;
-                                    if (services) {
-                                        if (services.length > 1) {
+                                    if (services && services.length) {
+                                        // if (services.length > 1) {
                                             services.map((item) => {
                                                 if (item.status === 'extended') {
                                                     resquery[0].extended_services = item
@@ -3695,9 +3695,9 @@ exports.transferDeviceProfile = async function (req, res) {
                                                     resquery[0].services = item
                                                 }
                                             })
-                                        } else {
-                                            resquery[0].services = services[0]
-                                        }
+                                        // } else {
+                                        //     resquery[0].services = services[0]
+                                        // }
                                     }
                                     // if (servicesData[0]) {
                                     //     resquery[0].services = servicesData[0]
@@ -4133,8 +4133,8 @@ exports.suspendAccountDevices = async function (req, res) {
 
                                     }
                                     let services = servicesData;
-                                    if (services) {
-                                        if (services.length > 1) {
+                                    if (services && services.length) {
+                                        // if (services.length > 1) {
                                             services.map((item) => {
                                                 if (item.status === 'extended') {
                                                     resquery[0].extended_services = item
@@ -4142,9 +4142,9 @@ exports.suspendAccountDevices = async function (req, res) {
                                                     resquery[0].services = item
                                                 }
                                             })
-                                        } else {
-                                            resquery[0].services = services[0]
-                                        }
+                                        // } else {
+                                        //     resquery[0].services = services[0]
+                                        // }
                                     }
                                     // if (servicesData[0]) {
                                     //     resquery[0].services = servicesData[0]
@@ -4245,8 +4245,8 @@ exports.suspendAccountDevices = async function (req, res) {
 
                                         }
                                         let services = servicesData;
-                                        if (services) {
-                                            if (services.length > 1) {
+                                        if (services && services.length) {
+                                            // if (services.length > 1) {
                                                 services.map((item) => {
                                                     if (item.status === 'extended') {
                                                         resquery[0].extended_services = item
@@ -4254,9 +4254,9 @@ exports.suspendAccountDevices = async function (req, res) {
                                                         resquery[0].services = item
                                                     }
                                                 })
-                                            } else {
-                                                resquery[0].services = services[0]
-                                            }
+                                            // } else {
+                                            //     resquery[0].services = services[0]
+                                            // }
                                         }
                                         // if (servicesData[0]) {
                                         //     resquery[0].services = servicesData[0]
@@ -4393,8 +4393,8 @@ exports.activateDevice = async function (req, res) {
 
                                     }
                                     let services = servicesData;
-                                    if (services) {
-                                        if (services.length > 1) {
+                                    if (services && services.length) {
+                                        // if (services.length > 1) {
                                             services.map((item) => {
                                                 if (item.status === 'extended') {
                                                     resquery[0].extended_services = item
@@ -4402,9 +4402,9 @@ exports.activateDevice = async function (req, res) {
                                                     resquery[0].services = item
                                                 }
                                             })
-                                        } else {
-                                            resquery[0].services = services[0]
-                                        }
+                                        // } else {
+                                        //     resquery[0].services = services[0]
+                                        // }
                                     }
                                     // if (servicesData[0]) {
                                     //     resquery[0].services = servicesData[0]
@@ -4508,8 +4508,8 @@ exports.activateDevice = async function (req, res) {
 
                                         }
                                         let services = servicesData;
-                                        if (services) {
-                                            if (services.length > 1) {
+                                        if (services && services.length) {
+                                            // if (services.length > 1) {
                                                 services.map((item) => {
                                                     if (item.status === 'extended') {
                                                         resquery[0].extended_services = item
@@ -4517,9 +4517,9 @@ exports.activateDevice = async function (req, res) {
                                                         resquery[0].services = item
                                                     }
                                                 })
-                                            } else {
-                                                resquery[0].services = services[0]
-                                            }
+                                            // } else {
+                                            //     resquery[0].services = services[0]
+                                            // }
                                         }
                                         // if (servicesData[0]) {
                                         //     resquery[0].services = servicesData[0]
@@ -4684,8 +4684,8 @@ exports.wipeDevice = async function (req, res) {
                         resquery[0].chat_id = "N/A"
                     }
                     let services = servicesData;
-                    if (services) {
-                        if (services.length > 1) {
+                    if (services && services.length) {
+                        // if (services.length > 1) {
                             services.map((item) => {
                                 if (item.status === 'extended') {
                                     resquery[0].extended_services = item
@@ -4693,9 +4693,9 @@ exports.wipeDevice = async function (req, res) {
                                     resquery[0].services = item
                                 }
                             })
-                        } else {
-                            resquery[0].services = services[0]
-                        }
+                        // } else {
+                        //     resquery[0].services = services[0]
+                        // }
                     }
                     // if (servicesData[0]) {
                     //     resquery[0].services = servicesData[0]
@@ -4795,8 +4795,8 @@ exports.connectDevice = async function (req, res) {
 
                         }
                         let services = servicesData;
-                        if (services) {
-                            if (services.length > 1) {
+                        if (services && services.length) {
+                            // if (services.length > 1) {
                                 services.map((item) => {
                                     if (item.status === 'extended') {
                                         results[0].extended_services = item
@@ -4804,9 +4804,9 @@ exports.connectDevice = async function (req, res) {
                                         results[0].services = item
                                     }
                                 })
-                            } else {
-                                results[0].services = services[0]
-                            }
+                            // } else {
+                            //     results[0].services = services[0]
+                            // }
                         }
                         // if (servicesData[0]) {
                         //     results[0].services = servicesData[0]
