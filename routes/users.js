@@ -1383,13 +1383,15 @@ router.get('/getInvoiceId', userController.getInvoiceId);
 
 
 //reporting routes
-router.post('/reporting/product', reportingController.generateProductReport);
+router.post('/reports/product', reportingController.generateProductReport);
 router.post('/reports/hardware', reportingController.generateHardwareReport);
 router.post('/reports/invoice', reportingController.generateInvoiceReport);
 router.post('/reports/payment-history', reportingController.generatePaymentHistoryReport);
+router.post('/reports/sales', reportingController.generateSalesReport);
 
-//PDF generator
-router.post('/reports/pdf-generator', reportingController.generatePDFReport);
+
+router.post('/get-latest-payment-history', accountController.getLatestPaymentHistory);
+router.get('/get-overdue-details', accountController.getOverdueDetails);
 
 router.get('/get-processes', NotificationController.getSocketProcesses);
 
