@@ -3,9 +3,6 @@ const PDFDocument = require("pdfkit");
 
 function createInvoice(invoice, path, type = null) {
 
-    console.log(type, invoice);
-
-
     let doc = new PDFDocument({ size: "A4", margin: 50 });
 
     generateHeader(doc);
@@ -247,9 +244,9 @@ function generateEditInvoiceTable(doc, invoice, type) {
             invoiceTableTop,
             "Item",
             "Description",
-            "Term",
-            "Unit price (Credits)",
-            "Quantity",
+            "Original Term",
+            "Credit Term",
+            "Unit Price",
             "Total  (Credits)"
         );
         generateHr(doc, invoiceTableTop + 15);
@@ -258,66 +255,37 @@ function generateEditInvoiceTable(doc, invoice, type) {
 
         let counter = 0
 
-        for (i = 0; i < invoice.prevService.prevServicePackages.length; i++) {
-            const item = invoice.prevService.prevServicePackages[i];
-            const position = invoiceTableTop + (counter + 1) * 30;
-            counter++
-            generateTableRow(
-                doc,
-                position,
-                "Package",
-                item.pkg_name,
-                item.pkg_term,
-                item.pkg_price,
-                invoice.quantity,
-                item.pkg_price * invoice.quantity
-            );
-
-            generateHr(doc, position + 15);
-        }
-        for (i = 0; i < invoice.prevService.prevServiceProducts.length; i++) {
-            const item = invoice.prevService.prevServiceProducts[i];
-            const position = invoiceTableTop + (counter + 1) * 30;
-            counter++
-            generateTableRow(
-                doc,
-                position,
-                "Product",
-                item.price_for,
-                item.price_term,
-                item.unit_price,
-                invoice.quantity,
-                item.unit_price * invoice.quantity
-            );
-            generateHr(doc, position + 15);
-        }
-
-        const preServiceRemainingDaysPosition = invoiceTableTop + (counter + 1) * 30
+        const item = invoice.prevService;
+        const position = invoiceTableTop + (counter + 1) * 30;
+        counter++
         generateTableRow(
             doc,
-            preServiceRemainingDaysPosition,
-            "",
-            "",
-            "",
-            "Remaining Days :",
-            "",
-            invoice.prevService.serviceRemainingDays
+            position,
+            "REFUND",
+            "Prev Service Refund",
+            "1 Month",
+            item.serviceRemainingDays,
+            "-12",
+            "-" + invoice.prevService.creditsToRefund
+
         );
+        generateHr(doc, position + 15);
 
-        let creditsToRefund = preServiceRemainingDaysPosition + 20
+        let prevServiceTotal = invoiceTableTop + (counter + 1) * 30
+        doc.font("Helvetica-Bold");
         generateTableRow(
             doc,
-            creditsToRefund,
+            prevServiceTotal,
             "",
             "",
             "",
-            "Credits To Refund :",
+            "TOTAL REFUND :",
             "",
-            invoice.prevService.creditsToRefund + " Credits"
+            "-", invoice.prevService.creditsToRefund + " Credits"
         );
 
 
-        let newServicesPosition = creditsToRefund + 20
+        let newServicesPosition = prevServiceTotal + 20
         doc
             .fillColor("#444444")
             .fontSize(15)
@@ -391,27 +359,16 @@ function generateEditInvoiceTable(doc, invoice, type) {
     );
     let discountPricePosition = 0
     if (invoice.pay_now) {
-        const discountPosition = subtotalPosition + 20;
-        generateTableRow(
-            doc,
-            discountPosition,
-            "",
-            "",
-            "",
-            "Discount :",
-            "",
-            invoice.discountPercent + " Credits"
-        );
-        discountPricePosition = discountPosition + 20;
+        discountPricePosition = subtotalPosition + 20;
         generateTableRow(
             doc,
             discountPricePosition,
             "",
             "",
             "",
-            "Discount Price : ",
+            "Discount: ",
             "",
-            invoice.discount + " Credits"
+            "-" + invoice.discount + " Credits"
         );
     }
     let refundPricePosition = 0
@@ -427,9 +384,9 @@ function generateEditInvoiceTable(doc, invoice, type) {
         "",
         "",
         "",
-        "Credits To Refund : ",
+        "REFUND : ",
         "",
-        invoice.prevService.creditsToRefund + " Credits"
+        "-" + invoice.prevService.creditsToRefund + " Credits"
     );
 
     let paidToDatePosition = 0
@@ -444,9 +401,9 @@ function generateEditInvoiceTable(doc, invoice, type) {
         "",
         "",
         "",
-        "Paid To Date : ",
+        "TOTAL : ",
         "",
-        ((invoice.pay_now) ? invoice.paid : 0) + " Credits"
+        invoice.paid + " Credits"
     );
 
     const duePosition = paidToDatePosition + 15;
@@ -457,9 +414,9 @@ function generateEditInvoiceTable(doc, invoice, type) {
         "",
         "",
         "",
-        "Balance Due:",
+        "Paid to date:",
         "",
-        invoice.paid + " Credits"
+        (invoice.pay_now) ? invoice.paid : 0 + " Credits"
     );
     doc.font("Helvetica-Bold");
     generateTableRow(
@@ -501,7 +458,7 @@ function generateTableRow(
         .text(item, 50, y)
         .text(description, 100, y, { width: 150, align: "center" })
         .text(term, 250, y)
-        .text(unitCost, 300, y, { width: 120, align: "center" })
+        .text(unitCost, 300, y, { width: 120, align: "right" })
         .text(quantity, 400, y, { width: 65, align: "center" })
         .text(lineTotal, 0, y, { align: "right" });
 }

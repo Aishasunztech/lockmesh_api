@@ -5,6 +5,7 @@ const { sql } = require('../../config/database');
 const MsgConstants = require('../../constants/MsgConstants');
 const helpers = require('../../helper/general_helper');
 const constants = require('../../constants/Application');
+const moment = require('moment');
 // constants
 const ADMIN = "admin";
 const DEALER = "dealer";
@@ -111,6 +112,216 @@ exports.acceptRequest = async function (req, res) {
         }
     }
 }
+exports.acceptServiceRequest = async function (req, res) {
+    var verify = req.decoded; // await verifyToken(req, res);
+
+    if (verify) {
+        try {
+            let id = req.params.id
+            let request = req.body
+            let usr_acc_id = req.body.user_acc_id
+            let query = "SELECT * from services_data where id = " + id + " and  status = 'request_for_cancel'"
+            // console.log(query);
+            let currentDate = moment().format("YYYY/MM/DD")
+            sql.query(query, async function (err, result) {
+                if (err) {
+                    console.log(err);
+                }
+                if (result.length) {
+                    let getDeviceInfo = `SELECT * FROM usr_acc WHERE id= ${usr_acc_id}`
+                    let deviceData = await sql.query(getDeviceInfo)
+                    if (deviceData.length) {
+                        let dvc_dealer_id = deviceData[0].dealer_id
+                        let dvc_dealer_type = await helpers.getUserType(dvc_dealer_id)
+                        sql.query("update services_data set status = 'cancelled' , end_date = '" + currentDate + "' where id = " + id, async function (err, reslt) {
+                            if (err) {
+                                data = {
+                                    "status": false,
+                                    msg: await helpers.convertToLang(req.translation[""], "Internal Server Error. Please try again"), // "Request is already deleted"
+                                };
+                                res.send(data);
+                                return
+                            }
+                            if (reslt && reslt.affectedRows > 0) {
+
+                                let updateUserAcc = `UPDATE usr_acc SET expiry_date = '${currentDate}' , status = 'expired' WHERE id = ${usr_acc_id}`
+                                sql.query(updateUserAcc)
+
+                                let prevService = result[0]
+                                let prevServicePackages = JSON.parse(prevService.packages)
+                                let prevServiceProducts = JSON.parse(prevService.products)
+                                let preTotalPrice = prevService.total_credits
+                                let prevServiceExpiryDate = moment(new Date(prevService.service_expiry_date))
+                                let prevServiceStartDate = moment(new Date(prevService.start_date))
+                                let dateNow = moment(new Date())
+                                let serviceRemainingDays = prevServiceExpiryDate.diff(dateNow, 'days') + 1
+                                let prevServiceTotalDays = prevServiceExpiryDate.diff(prevServiceStartDate, 'days')
+                                let creditsToRefund = ((preTotalPrice / prevServiceTotalDays) * serviceRemainingDays).toFixed(2)
+                                let prevServicePaidPrice = preTotalPrice - creditsToRefund
+
+                                let profitLoss = await helpers.calculateProfitLoss(prevServicePackages, prevServiceProducts, dvc_dealer_type)
+                                let prev_service_admin_profit = profitLoss.admin_profit
+                                let prev_service_dealer_profit = profitLoss.dealer_profit
+                                let refund_prev_service_admin_profit = (prev_service_admin_profit / prevServiceTotalDays) * serviceRemainingDays
+                                let refund_prev_service_dealer_profit = (prev_service_dealer_profit / prevServiceTotalDays) * serviceRemainingDays
+
+                                helpers.updateRefundSaleDetails(usr_acc_id, prevService.id, serviceRemainingDays, prevServiceTotalDays)
+
+                                let transection_record = "SELECT * from financial_account_transections where user_dvc_acc_id = " + usr_acc_id + " AND user_id = '" + dvc_dealer_id + "' AND type = 'services' ORDER BY id DESC LIMIT 1"
+                                let transection_record_data = await sql.query(transection_record)
+
+                                if (transection_record_data[0] && transection_record_data[0].status === 'pending') {
+                                    let update_transection = "UPDATE financial_account_transections SET status = 'cancelled' WHERE id = " + transection_record_data[0].id
+                                    await sql.query(update_transection)
+
+                                    update_credits_query = 'update financial_account_balance set credits = credits + ' + transection_record_data[0].credits + ' where dealer_id ="' + dvc_dealer_id + '"';
+                                    await sql.query(update_credits_query);
+
+
+                                    let update_profits_transections = "UPDATE financial_account_transections SET status = 'cancelled' WHERE user_dvc_acc_id = " + usr_acc_id + " AND status = 'holding' AND type = 'services'"
+                                    await sql.query(update_profits_transections)
+
+                                    if (prevServicePaidPrice > 0) {
+                                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dvc_dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service charges" })}',${prevServicePaidPrice} ,'credit','pending' , 'services' , 0 , ${prevServicePaidPrice})`
+                                        await sql.query(transection_credits)
+
+                                        update_credits_query = 'update financial_account_balance set credits = credits - ' + prevServicePaidPrice + ' where dealer_id ="' + dvc_dealer_id + '"';
+                                        await sql.query(update_credits_query);
+
+                                        let admin_holding_profit = prev_service_admin_profit - refund_prev_service_admin_profit
+                                        let dealer_holding_profit = prev_service_dealer_profit - refund_prev_service_dealer_profit
+
+                                        if (admin_holding_profit > 0) {
+                                            let admin_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${verify.user.id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service holding profit" })}',${admin_holding_profit} ,'debit','holding' , 'services')`
+                                            await sql.query(admin_profit_transection)
+                                        }
+
+                                        if (dealer_holding_profit > 0) {
+                                            let dealer_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${deviceData[0].prnt_dlr_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service holding profit" })}',${dealer_holding_profit} ,'debit','holding' , 'services')`
+                                            await sql.query(dealer_profit_transection)
+                                        }
+                                    }
+
+                                } else {
+                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dvc_dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, details: "REFUND SERVICES CREITS" })}' ,${creditsToRefund} ,'debit' , 'transferred' , 'services')`
+                                    await sql.query(transection_credits)
+                                    update_credits_query = 'update financial_account_balance set credits = credits + ' + creditsToRefund + ' where dealer_id ="' + dvc_dealer_id + '"';
+                                    await sql.query(update_credits_query);
+                                    refund_prev_service_admin_profit = refund_prev_service_admin_profit - refund_prev_service_admin_profit * 0.03
+                                    refund_prev_service_dealer_profit = refund_prev_service_dealer_profit - refund_prev_service_dealer_profit * 0.03
+
+                                    if (prevServicePaidPrice > 0) {
+
+                                        let admin_prev_service_profit = prev_service_admin_profit - refund_prev_service_admin_profit
+                                        let dealer_prev_service_profit = prev_service_dealer_profit - refund_prev_service_dealer_profit
+
+                                        if (admin_prev_service_profit > 0) {
+
+                                            let admin_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${verify.user.id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service refund profit" })}',${admin_prev_service_profit} ,'credit','transferred' , 'services')`
+                                            await sql.query(admin_profit_transection)
+                                        }
+                                        if (dealer_prev_service_profit > 0) {
+                                            let dealer_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${deviceData[0].prnt_dlr_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service refund profit" })}',${dealer_prev_service_profit} ,'credit','transferred' , 'services')`
+                                            await sql.query(dealer_profit_transection)
+                                        }
+                                    }
+                                    // console.log("", refund_prev_service_admin_profit);
+                                    if (refund_prev_service_admin_profit) {
+                                        updateAdminProfit = 'update financial_account_balance set credits = credits - ' + refund_prev_service_admin_profit + ' where dealer_id ="' + verify.user.id + '"';
+                                        await sql.query(updateAdminProfit);
+                                    }
+                                    if (refund_prev_service_dealer_profit) {
+                                        updateAdminProfit = 'update financial_account_balance set credits = credits - ' + refund_prev_service_dealer_profit + ' where dealer_id ="' + deviceData[0].prnt_dlr_id + '"';
+                                        await sql.query(updateAdminProfit);
+                                    }
+                                }
+
+
+                                res.send({
+                                    status: true,
+                                    msg: await helpers.convertToLang(req.translation[""], "Services has been cancalled successfully from device."), // "Credits added successfully.",
+                                })
+                                return
+                            }
+                        })
+                    } else {
+                        data = {
+                            "status": false,
+                            msg: await helpers.convertToLang(req.translation[""], "Device Data not found."), // "Request is already deleted"
+                        };
+                        res.send(data);
+                        return
+                    }
+                } else {
+                    data = {
+                        "status": false,
+                        msg: await helpers.convertToLang(req.translation[""], "Request not found on server. Please try again"), // "Request is already deleted"
+                    };
+                    res.send(data);
+                    return
+                }
+            })
+        } catch (error) {
+            console.log(error);
+        }
+    }
+}
+
+exports.deleteServiceRequest = async function (req, res) {
+    var verify = req.decoded; // await verifyToken(req, res);
+
+    if (verify) {
+        try {
+            let id = req.params.id
+            let query = "SELECT * from services_data where id = " + id + " and  status = 'request_for_cancel'"
+            console.log(query);
+            sql.query(query, async function (err, result) {
+                if (err) {
+                    data = {
+                        "status": false,
+                        msg: await helpers.convertToLang(req.translation[""], "Internal server error. Please Try again"), // "Request is already deleted"
+                    };
+                    res.send(data);
+                    return
+                }
+                if (result.length) {
+
+                    let updateQuery = "update services_data set status = 'active' where id= " + id
+                    sql.query(updateQuery, async function (err, result) {
+                        if (err) {
+                            console.log(err);
+                        }
+                        if (result && result.affectedRows > 0) {
+                            data = {
+                                "status": true,
+                                "msg": await helpers.convertToLang(req.translation[""], "Request rejected successfully"), // Request deleted successfully."
+                            };
+                            res.send(data);
+                            return
+                        } else {
+                            data = {
+                                "status": false,
+                                "msg": await helpers.convertToLang(req.translation[""], "Request not rejected please try again"), // Request not deleted please try again."
+                            };
+                            res.send(data);
+                            return
+                        }
+                    })
+
+                } else {
+                    data = {
+                        "status": false,
+                        msg: await helpers.convertToLang(req.translation[""], "Request Not found. Please try again later."), // "Request is already deleted"
+                    };
+                    res.send(data);
+                    return
+                }
+            })
+        } catch (error) {
+            console.log(error)
+        }
+    }
+}
 
 // *****************************  SET AND GET => PRICES & PAKAGES   **************************
 exports.savePrices = async function (req, res) {
@@ -120,7 +331,7 @@ exports.savePrices = async function (req, res) {
     if (verify) {
         let data = req.body.data;
         if (data) {
-            // console.log(data, 'data')
+            console.log(data, 'data')
             // let dealer_id = req.body.dealer_id;
             let dealer_id = verify.user.dealer_id;
             if (dealer_id) {
@@ -167,7 +378,7 @@ exports.savePrices = async function (req, res) {
                                 // console.log(days, 'days are')
                                 let unit_price = innerKey;
                                 let updateQuery = "UPDATE prices SET unit_price='" + innerObject[f_key] + "', price_expiry='" + days + "' WHERE dealer_id='" + dealer_id + "' AND price_term='" + innerKey + "' AND price_for='" + key + "'";
-                                // console.log(updateQuery, 'query')
+                                console.log(updateQuery, 'query')
                                 sql.query(updateQuery, async function (err, result) {
                                     if (err) {
                                         console.log(err)
@@ -177,7 +388,7 @@ exports.savePrices = async function (req, res) {
                                         // console.log('outerKey', outerKey)
                                         if (!result.affectedRows) {
                                             let insertQuery = "INSERT INTO prices (price_for, unit_price, price_term, price_expiry, dealer_id , dealer_type) VALUES('" + outerKey + "', '" + innerObject[f_key] + "', '" + unit_price + "', '" + days + "', '" + dealer_id + "' , '" + verify.user.user_type + "')";
-                                            // console.log('Billing query', insertQuery)
+                                            console.log('Billing query', insertQuery)
                                             let rslt = await sql.query(insertQuery);
                                             if (rslt) {
                                                 if (rslt.affectedRows == 0) {
@@ -333,12 +544,12 @@ exports.savePackage = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
 
     if (verify) {
-        // console.log(verify.user, 'user is the ')
+        console.log(verify.user, 'user is the ')
         let data = req.body.data;
         let dealer_id = verify.user.dealer_id;
         // console.log(data);
         if (data) {
-            // console.log(data, 'data')
+            console.log(data, 'data')
             // let dealer_id = req.body.data.dealer_id;
             if (dealer_id) {
                 // console.log(dealer_id, 'whitelableid');
@@ -354,20 +565,24 @@ exports.savePackage = async function (req, res) {
                 } else {
                     let days = 0;
                     if (data.pkgTerm) {
-                        stringarray = data.pkgTerm.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
-                        if (stringarray) {
-                            // console.log(stringarray,'is string lenth', stringarray.length)
-                            if (stringarray.length) {
-                                month = stringarray[0];
-                                // console.log('is month', month, stringarray[1])
-                                if (month && stringarray[1]) {
-                                    // console.log('sring[1]', stringarray[1])
-                                    if (stringarray[1] == 'month') {
-                                        days = parseInt(month) * 30
-                                    } else if (string[1] == 'year') {
-                                        days = parseInt(month) * 365
-                                    } else {
-                                        days = 30
+                        if (data.pkgTerm === "trial") {
+                            days = 7;
+                        } else {
+                            stringarray = data.pkgTerm.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
+                            if (stringarray) {
+                                // console.log(stringarray,'is string lenth', stringarray.length)
+                                if (stringarray.length) {
+                                    month = stringarray[0];
+                                    // console.log('is month', month, stringarray[1])
+                                    if (month && stringarray[1]) {
+                                        // console.log('sring[1]', stringarray[1])
+                                        if (stringarray[1] == 'month') {
+                                            days = parseInt(month) * 30
+                                        } else if (string[1] == 'year') {
+                                            days = parseInt(month) * 365
+                                        } else {
+                                            days = 30
+                                        }
                                     }
                                 }
                             }
@@ -378,10 +593,21 @@ exports.savePackage = async function (req, res) {
                     sql.query(insertQuery, async (err, rslt) => {
                         if (err) {
                             console.log(err)
+                            return res.send({
+                                status: false,
+                                msg: await helpers.convertToLang(req.translation[""], "Package Not Saved"),
+                            })
+
                         }
 
                         if (rslt) {
                             if (rslt.affectedRows) {
+
+                                // save package price
+                                let insertQ = "INSERT INTO dealer_packages_prices ( package_id,dealer_id , created_by , price) VALUES(" + rslt.insertId + ",'" + dealer_id + "' ,'" + verify.user.user_type + "' , '" + data.pkgPrice + "')";
+                                console.log(insertQ);
+                                sql.query(insertQ)
+
                                 insertedRecord = await sql.query("SELECT * FROM packages WHERE dealer_id='" + dealer_id + "' AND id='" + rslt.insertId + "'")
                                 res.send({
                                     status: true,
@@ -861,7 +1087,7 @@ exports.getPackages = async function (req, res) {
                     }
 
                     if (reslt && reslt.length) {
-                        // console.log('result for get prices are is ', reslt);
+                        console.log('result for get prices are is ', reslt);
 
                         if (loggedUserType !== ADMIN) {
                             let condition = '';
@@ -874,13 +1100,21 @@ exports.getPackages = async function (req, res) {
                                 // condition = `AND (dealer_type = 'admin' OR dealer_type = 'dealer')`
                             }
 
-                            let permissionsResults = await sql.query(`SELECT * FROM dealer_permissions WHERE (dealer_id = ${dealer_id} ${condition}) AND permission_type = 'package';`);
+                            let selectQ = `SELECT * FROM dealer_permissions WHERE (dealer_id = ${dealer_id} ${condition}) AND permission_type = 'package';`;
+                            console.log("selectQ dealer_permissions getPackages :: ", selectQ);
+                            let permissionsResults = await sql.query(selectQ);
                             let permissionIds = permissionsResults.map((prm) => prm.permission_id);
-
+                            console.log("permissionIds get pkgs: ", permissionIds);
                             let checkPermissions = [];
                             if (permissionIds && permissionIds.length) {
                                 reslt.forEach(item => {
-                                    if (permissionIds.includes(item.id)) {
+                                    if (permissionIds.includes(item.id) || dealer_id === item.dealer_id) {
+                                        checkPermissions.push(item);
+                                    }
+                                });
+                            } else {
+                                reslt.forEach(item => {
+                                    if (dealer_id === item.dealer_id) {
                                         checkPermissions.push(item);
                                     }
                                 });
@@ -906,7 +1140,7 @@ exports.getPackages = async function (req, res) {
                             // sdealerList = sdealerList.map((dealer) => dealer.dealer_id);
                             // get all dealers under admin or sdealers under dealer
                             let userDealers = await helpers.getUserDealers(loggedUserType, dealer_id, 'package');
-                            // console.log("userDealers ", userDealers);
+                            console.log("userDealers ", userDealers);
                             sdealerList = userDealers.dealerList;
                             dealerCount = userDealers.dealerCount;
 
@@ -940,27 +1174,38 @@ exports.getPackages = async function (req, res) {
                                 }
                                 // console.log('push apps', reslt[i].push_apps)
 
-                                let permissionDealers = await helpers.getDealersAgainstPermissions(reslt[i].id, 'package', dealer_id, sdealerList);
+                                let permissionDealers = await helpers.getDealersAgainstPermissions(reslt[i].id, 'package', dealer_id, sdealerList, loggedUserType);
 
-                                if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
+                                reslt[i].dealers = permissionDealers.allDealers;
+                                reslt[i].statusAll = permissionDealers.statusAll;
 
-                                    let Update_sdealerList = sdealerList.map((dealer) => {
-                                        return {
-                                            dealer_id: dealer,
-                                            dealer_type: permissionDealers[0].dealer_type,
-                                            permission_by: permissionDealers[0].permission_by
-                                        }
-                                    })
-                                    let final_list = Update_sdealerList.filter((item) => item.dealer_id !== dealer_id)
-                                    reslt[i].dealers = JSON.stringify(final_list);
-                                    reslt[i].statusAll = true
-                                } else {
-                                    if (permissionDealers.length) {
-                                        permissionDealers = permissionDealers.filter((item) => item.dealer_id !== dealer_id)
-                                    }
-                                    reslt[i].dealers = JSON.stringify(permissionDealers);
-                                    reslt[i].statusAll = false
-                                }
+                                // if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
+
+                                //     let Update_sdealerList = sdealerList.map((dealer) => {
+                                //         return {
+                                //             dealer_id: dealer,
+                                //             dealer_type: permissionDealers[0].dealer_type,
+                                //             permission_by: permissionDealers[0].permission_by
+                                //         }
+                                //     })
+                                //     // let deleteIds = [];
+                                //     // Update_sdealerList.forEach((item) => {
+                                //     //     if (item.dealer_type === "admin") {
+                                //     //         let index = Update_sdealerList.findIndex((sd) => sd.dealer_type === "dealer" && sd.dealer_id === item.dealer_id);
+                                //     //         deleteIds.push(index);
+                                //     //     }
+                                //     // })
+                                //     // console.log("deleteIds index: ", deleteIds);
+                                //     let final_list = Update_sdealerList.filter((item) => item.dealer_id !== dealer_id)
+                                //     reslt[i].dealers = JSON.stringify(final_list);
+                                //     reslt[i].statusAll = true
+                                // } else {
+                                //     if (permissionDealers.length) {
+                                //         permissionDealers = permissionDealers.filter((item) => item.dealer_id !== dealer_id)
+                                //     }
+                                //     reslt[i].dealers = JSON.stringify(permissionDealers);
+                                //     reslt[i].statusAll = false
+                                // }
 
                                 let permissions = (reslt[i].dealers !== undefined && reslt[i].dealers !== null) ? JSON.parse(reslt[i].dealers) : [];
                                 let permissionCount = 0
@@ -985,7 +1230,7 @@ exports.getPackages = async function (req, res) {
                                 // packages.push(dta);
                             }
                         }
-                        // console.log(reslt, 'reslt data of prices')
+                        console.log(reslt, 'reslt data of prices')
                         res.send({
                             status: true,
                             msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
@@ -1136,15 +1381,27 @@ exports.getParentPackages = async function (req, res) {
         let selectQuery = ""
         // console.log(verify.user);
         let loggedUserId = verify.user.dealer_id;
+        let loggedUserType = verify.user.user_type;
 
         if (loggedUserId) {
+            let condition = '';
+            if (loggedUserType === DEALER) {
+                condition = ` OR (dealer_permissions.dealer_id = 0 AND dealer_permissions.dealer_type = 'admin') `
+            }
+            else if (loggedUserType === SDEALER) {
+                let getParentId = await sql.query(`SELECT connected_dealer FROM dealers WHERE dealer_id = ${loggedUserId}`);
+                condition = ` OR (dealer_permissions.dealer_id = 0 AND (dealer_permissions.dealer_type='admin' OR (dealer_permissions.dealer_type='dealer' AND dealer_permissions.permission_by=${getParentId[0].connected_dealer}))) `
+            }
+
             // selectQuery = "select packages.* from dealer_packages join packages on packages.id = dealer_packages.package_id where dealer_packages.dealer_id = ' " + dealer_id + "' AND packages.delete_status != 1";
-            selectQuery = `SELECT packages.* FROM dealer_permissions JOIN packages ON (packages.id = dealer_permissions.permission_id) WHERE (dealer_permissions.dealer_id = '${loggedUserId}' OR dealer_permissions.dealer_id=0) AND packages.delete_status != 1`;
+            selectQuery = `SELECT packages.* FROM packages JOIN dealer_permissions ON (packages.id = dealer_permissions.permission_id) WHERE (dealer_permissions.dealer_id = '${loggedUserId}' ${condition}) AND packages.delete_status != 1 AND dealer_permissions.permission_type = 'package';`;
+            console.log("selectQuery ", selectQuery)
             sql.query(selectQuery, async (err, reslt) => {
                 if (err) {
                     console.log(err)
                 }
                 if (reslt.length) {
+                    console.log("reslt getParentPackages ", reslt)
 
                     for (let i = 0; i < reslt.length; i++) {
                         if (verify.user.user_type === DEALER) {
@@ -1431,7 +1688,6 @@ exports.getUserCredits = async function (req, res) {
                     console.log(err);
                 }
                 if (result && result.length) {
-                    console.log(result);
                     data = {
                         "status": true,
                         "credits": result[0].credits,
@@ -1463,7 +1719,6 @@ exports.deleteRequest = async function (req, res) {
         try {
             let id = req.params.id
             let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
-            console.log(query);
             sql.query(query, async function (err, result) {
                 if (err) {
                     console.log(err);
@@ -1578,5 +1833,59 @@ exports.editSaHardware = async function (req, res) {
         } else {
             res.send({ status: false });
         }
+    }
+}
+exports.getCancelServiceRequests = async function (req, res) {
+    var verify = req.decoded;
+
+    if (verify) {
+
+
+
+        let requestsQuery = `SELECT s.*,
+        d.device_id AS device_id , ua.link_code as dealer_pin
+           FROM services_data AS s
+           JOIN usr_acc AS ua
+               ON ua.id = s.user_acc_id
+           JOIN devices AS d
+               ON ua.device_id = d.id
+           WHERE s.status = 'request_for_cancel' ORDER BY  s.id DESC`
+
+        sql.query(requestsQuery, function (err, results) {
+            if (err) {
+                console.log(err);
+                return res.send({
+                    status: false,
+                    data: []
+                })
+            }
+            if (results.length) {
+                console.log(results);
+                // let currentDate = moment()                let service_term = moment(request.service_expiry_date).diff(moment(request.start_date), 'month', true)
+
+                results.map((request) => {
+                    let preTotalPrice = request.total_credits
+                    let requestExpiryDate = moment(new Date(request.service_expiry_date))
+                    let requestStartDate = moment(new Date(request.start_date))
+                    let dateNow = moment(new Date())
+                    let serviceRemainingDays = requestExpiryDate.diff(dateNow, 'days') + 1
+                    let totalDays = requestExpiryDate.diff(requestStartDate, 'days')
+                    let creditsToRefund = Math.floor((preTotalPrice / totalDays) * serviceRemainingDays)
+                    let service_term = requestExpiryDate.diff(requestStartDate, 'month', true)
+                    request.service_remaining_days = serviceRemainingDays
+                    request.credits_to_refund = creditsToRefund
+                    request.service_term = service_term
+                })
+                return res.send({
+                    status: true,
+                    data: results
+                })
+            } else {
+                return res.send({
+                    status: true,
+                    data: []
+                })
+            }
+        });
     }
 }

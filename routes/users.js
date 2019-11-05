@@ -106,6 +106,7 @@ router.get("/user_type", aclController.getUserType);
 
 /**GET all the devices**/
 router.get("/devices", deviceController.devices);
+router.get("/get-devices-for-report", deviceController.getDevicesForReport);
 
 /**
  * @route PUT /users/new/device
@@ -195,9 +196,17 @@ router.post("/transfer/user", deviceController.transferUser);
 
 router.get("/transfer/history/:device_id", deviceController.transferHistory);
 
+router.get("/getServicesHistory/:usr_acc_id", deviceController.getServicesHistory);
+
 
 /**UPDATE Device details**/
 router.put("/edit/devices", deviceController.editDevices);
+
+/**EXTEND SERVICE**/
+router.put("/edit-device/extendServices", deviceController.extendServices);
+
+/**CANCEL EXTEND SERVICE**/
+router.put("/cancel-extended-services", deviceController.cancelExtendedServices);
 
 /**UPDATE Device details**/
 router.post('/check-service-refund-credits', deviceController.getServiceRefund);
@@ -1247,6 +1256,13 @@ router.put("/delete_request/:id", billingController.deleteRequest);
 
 router.put("/accept_request/:id", billingController.acceptRequest);
 
+router.put("/delete_service_request/:id", billingController.deleteServiceRequest);
+
+router.put("/accept_service_request/:id", billingController.acceptServiceRequest);
+
+router.get("/get-cancel-service-requests", billingController.getCancelServiceRequests);
+
+
 /*** Create Backup ***/
 router.post("/create_backup_DB", backupController.createBackupDB);
 
@@ -1368,13 +1384,15 @@ router.get('/getInvoiceId', userController.getInvoiceId);
 
 
 //reporting routes
-router.post('/reporting/product', reportingController.generateProductReport);
+router.post('/reports/product', reportingController.generateProductReport);
 router.post('/reports/hardware', reportingController.generateHardwareReport);
 router.post('/reports/invoice', reportingController.generateInvoiceReport);
 router.post('/reports/payment-history', reportingController.generatePaymentHistoryReport);
+router.post('/reports/sales', reportingController.generateSalesReport);
 
-//PDF generator
-router.post('/reports/pdf-generator', reportingController.generatePDFReport);
+
+router.post('/get-latest-payment-history', accountController.getLatestPaymentHistory);
+router.get('/get-overdue-details', accountController.getOverdueDetails);
 
 router.get('/get-processes', NotificationController.getSocketProcesses);
 

@@ -242,7 +242,7 @@ module.exports = {
             if (checkSetting.length) {
                 var updateQuery = `UPDATE user_app_permissions SET permissions ='${controls}' WHERE device_id='${device_id}' `;
                 var updateSetting = await sql.query(updateQuery);
-                
+
             } else {
                 var insertQuery = `INSERT INTO user_app_permissions (device_id, permissions) VALUE ('${device_id}', '${controls}')`;
                 let insertSetting = await sql.query(insertQuery);
@@ -501,7 +501,7 @@ module.exports = {
      * String ids of usr_acc table
      */
     getServicesData: async (ids) => {
-        let query = "SELECT * FROM services_data WHERE user_acc_id IN (" + ids + ") AND (end_date IS NULL OR end_date = '')"
+        let query = "SELECT * FROM services_data WHERE user_acc_id IN (" + ids + ") AND (end_date IS NULL OR end_date = '') AND (status = 'active' OR status = 'request_for_cancel' OR status = 'extended') "
         let results = await sql.query(query);
         if (results.length) {
             return results

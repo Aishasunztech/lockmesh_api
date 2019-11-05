@@ -8,7 +8,8 @@ const constants = require("../../constants/Application");
 var XLSX = require('xlsx');
 var path = require('path');
 var fs = require("fs");
-var axios = require("axios")
+var axios = require("axios");
+var moment = require("moment");
 const stripe = require("stripe")("sk_test_zJjguM8s6HqyvOrhtPGDk0lV007cDt8U25");
 // constants
 const ADMIN = "admin";
@@ -909,154 +910,146 @@ exports.purchaseCredits_CC = async function (req, res) {
 
             if (credits != undefined && credits != '' && credits != null) {
 
-                if (promo_code != '') {
+                // if (promo_code != '') {
 
-                } else {
-                    // console.log(result);
-                    stripe.tokens.create({
-                        card: {
-                            number: cardNumber,
-                            exp_month: cardExpiryMonth,
-                            exp_year: cardExpiryYear,
-                            cvc: cvc
+                // } else {
+                // console.log(result);
+                axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
+                    if (response.data.status) {
+                        let data = {
+                            credits: credits,
+                            payment_type: "CC",
+                            dealer_id: dealerId,
+                            dealer_pin: (verify.user.user_type === ADMIN) ? 'N/A' : verify.user.link_code,
+                            dealer_type: verify.user.user_type,
+                            dealer_name: verify.user.dealer_name,
+                            label: app_constants.APP_TITLE,
+                            dealer_email: verify.user.email
                         }
-                    }, async function (err, token) {
-                        if (err) {
-                            console.log(err.type);
-                            switch (err.type) {
-                                case 'StripeCardError':
-                                    // A declined card error
-                                    console.log(err.message);
-                                    err.message; // => e.g. "Your card's expiration year is invalid."
-                                    break;
-                                case 'RateLimitError':
-                                    // Too many requests made to the API too quickly
-                                    break;
-                                case 'StripeInvalidRequestError':
-                                    // Invalid parameters were supplied to Stripe's API
-                                    break;
-                                case 'StripeAPIError':
-                                    // An error occurred internally with Stripe's API
-                                    break;
-                                case 'StripeConnectionError':
-                                    // Some kind of error occurred during the HTTPS communication
-                                    break;
-                                case 'StripeAuthenticationError':
-                                    // You probably used an incorrect API key
-                                    break;
-                                default:
-                                    // Handle any other types of unexpected errors
-                                    break;
+                        stripe.tokens.create({
+                            card: {
+                                number: cardNumber,
+                                exp_month: cardExpiryMonth,
+                                exp_year: cardExpiryYear,
+                                cvc: cvc
                             }
-                            res.send({
-                                status: false,
-                                msg: err.message
-                            })
-                            return
-                        } else {
-                            stripeToken = token
-                            // console.log(token);
-                            stripe.charges.create({
-                                amount: total_price,
-                                currency: "usd",
-                                source: stripeToken.id, // obtained with Stripe.js
-                                metadata: { 'order_id': '6735' }
-                            }).then(async function (response) {
-                                if (response.status == 'succeeded') {
-                                    axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
-                                        if (response.data.status) {
-                                            let data = {
-                                                credits: credits,
-                                                payment_type: "CC",
-                                                dealer_id: dealerId,
-                                                dealer_pin: (verify.user.user_type === ADMIN) ? 'N/A' : verify.user.link_code,
-                                                dealer_type: verify.user.user_type,
-                                                dealer_name: verify.user.dealer_name,
-                                                label: app_constants.APP_TITLE,
-                                                dealer_email: verify.user.email
-                                            }
-                                            axios.post(app_constants.ADD_CREDITS_SALE_RECORD, data, { headers: { authorization: response.data.user.token } }).then(async function (response) {
-                                                if (response.data.status) {
-                                                    let checkBalanceAccout = "SELECT * from financial_account_balance WHERE dealer_id = " + dealerId
-                                                    let dealerBalanceData = await sql.query(checkBalanceAccout);
-                                                    let addCreditsQ = ""
-                                                    let totalCredits = 0
-                                                    if (dealerBalanceData.length) {
-                                                        totalCredits = dealerBalanceData[0].credits + credits
-                                                        addCreditsQ = `UPDATE financial_account_balance SET credits = credits + ${credits} WHERE dealer_id = ${dealerId}`
+                        }, async function (err, token) {
+                            if (err) {
+                                console.log(err.type);
+                                switch (err.type) {
+                                    case 'StripeCardError':
+                                        // A declined card error
+                                        console.log(err.message);
+                                        err.message; // => e.g. "Your card's expiration year is invalid."
+                                        break;
+                                    case 'RateLimitError':
+                                        // Too many requests made to the API too quickly
+                                        break;
+                                    case 'StripeInvalidRequestError':
+                                        // Invalid parameters were supplied to Stripe's API
+                                        break;
+                                    case 'StripeAPIError':
+                                        // An error occurred internally with Stripe's API
+                                        break;
+                                    case 'StripeConnectionError':
+                                        // Some kind of error occurred during the HTTPS communication
+                                        break;
+                                    case 'StripeAuthenticationError':
+                                        // You probably used an incorrect API key
+                                        break;
+                                    default:
+                                        // Handle any other types of unexpected errors
+                                        break;
+                                }
+                                res.send({
+                                    status: false,
+                                    msg: err.message
+                                })
+                                return
+                            } else {
+                                stripeToken = token
+                                // console.log(token);
+                                stripe.charges.create({
+                                    amount: total_price,
+                                    currency: "usd",
+                                    source: stripeToken.id, // obtained with Stripe.js
+                                    metadata: { 'order_id': '6735' }
+                                }).then(async function (stripeResponse) {
+                                    if (stripeResponse.status == 'succeeded') {
+                                        axios.post(app_constants.ADD_CREDITS_SALE_RECORD, data, { headers: { authorization: response.data.user.token } }).then(async function (response) {
+                                            if (response.data.status) {
+                                                let checkBalanceAccout = "SELECT * from financial_account_balance WHERE dealer_id = " + dealerId
+                                                let dealerBalanceData = await sql.query(checkBalanceAccout);
+                                                let addCreditsQ = ""
+                                                let totalCredits = 0
+                                                if (dealerBalanceData.length) {
+                                                    totalCredits = dealerBalanceData[0].credits + credits
+                                                    addCreditsQ = `UPDATE financial_account_balance SET credits = credits + ${credits} WHERE dealer_id = ${dealerId}`
+                                                } else {
+                                                    totalCredits = credits
+                                                    addCreditsQ = `INSERT INTO financial_account_balance (dealer_id,credits) VALUES(${dealerId} , ${credits})`
+                                                }
+
+                                                sql.query(addCreditsQ, async function (err, result) {
+                                                    if (err) {
+                                                        console.log(err);
+                                                        res.send({
+                                                            status: false,
+                                                            msg: ""
+                                                        })
+                                                        return
+                                                    }
+                                                    if (result.affectedRows) {
+                                                        let transection_credits = `INSERT INTO financial_account_transections (user_id,transection_data, credits ,transection_type , status , type , current_balance) VALUES (${dealerId},'${JSON.stringify({ request_type: "Credit Card" })}' ,${credits} ,'debit' , 'transferred', 'credits' , ${dealerBalanceData[0] ? dealerBalanceData[0].credits : 0})`
+                                                        await sql.query(transection_credits)
+                                                        await helpers.updatePendingTransactions(dealerId, credits)
+                                                        let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
+                                                        sql.query(query)
+                                                        res.send({
+                                                            status: true,
+                                                            msg: await helpers.convertToLang(req.translation[""], "your account has been recharged successfully."), // "Payment has been done.",
+                                                            credits: totalCredits
+                                                        })
+                                                        return
                                                     } else {
-                                                        totalCredits = credits
-                                                        addCreditsQ = `INSERT INTO financial_account_balance (dealer_id,credits) VALUES(${dealerId} , ${credits})`
+                                                        res.send({
+                                                            status: false,
+                                                            msg: "ERROR: Internal Server error."
+                                                        })
+                                                        return
                                                     }
 
-                                                    sql.query(addCreditsQ, async function (err, result) {
-                                                        if (err) {
-                                                            console.log(err);
-                                                            res.send({
-                                                                status: false,
-                                                                msg: ""
-                                                            })
-                                                            return
-                                                        }
-                                                        if (result.affectedRows) {
-
-                                                            let transection_credits = `INSERT INTO financial_account_transections (user_id,transection_data, credits ,transection_type , status , type) VALUES (${dealerId},'${JSON.stringify({ request_type: "Creedit Card request" })}' ,${credits} ,'debit' , 'transferred', 'credits')`
-                                                            await sql.query(transection_credits)
-
-                                                            let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
-                                                            sql.query(query, async function (err, result) {
-                                                                if (err) {
-                                                                    console.log(err);
-                                                                    res.send({
-                                                                        status: false,
-                                                                        msg: ""
-                                                                    })
-                                                                    return
-                                                                }
-                                                                if (result.affectedRows > 0) {
-                                                                    res.send({
-                                                                        status: true,
-                                                                        msg: await helpers.convertToLang(req.translation[MsgConstants.PAYMENT_HAS_BEEN_DONE], "Payment has been done"), // "Payment has been done.",
-                                                                        credits: totalCredits
-                                                                    })
-                                                                    return
-                                                                }
-                                                            })
-                                                        }
-
-                                                    })
-                                                } else {
-                                                    console.log(err);
-                                                    res.send({
-                                                        status: false,
-                                                        msg: "ERROR: Superadmin server not responding please try again later."
-                                                    })
-                                                    return
-                                                }
-                                            }).catch((err) => {
+                                                })
+                                            } else {
                                                 console.log(err);
                                                 res.send({
                                                     status: false,
                                                     msg: "ERROR: Superadmin server not responding please try again later."
                                                 })
                                                 return
+                                            }
+                                        }).catch((err) => {
+                                            console.log(err);
+                                            res.send({
+                                                status: false,
+                                                msg: "ERROR: Superadmin server not responding please try again later."
                                             })
-                                        }
-                                    }).catch((err) => {
-                                        console.log(err);
-                                        res.send({
-                                            status: false,
-                                            msg: "ERROR: Superadmin server not responding please try again later."
+                                            return
                                         })
-                                        return
-                                    })
-                                };
-                            });
-                        }
-                    });
-
-
-                }
+                                    };
+                                });
+                            }
+                        });
+                    }
+                }).catch((err) => {
+                    console.log(err);
+                    res.send({
+                        status: false,
+                        msg: "ERROR: Superadmin server not responding please try again later."
+                    })
+                    return
+                })
+                // }
             }
         } catch (error) {
             console.log(error)
@@ -1349,6 +1342,9 @@ exports.ackCreditRequest = async function (req, res) {
                                     })
                                     return
                                 }
+                                let transection_credits = `INSERT INTO financial_account_transections (user_id,transection_data, credits ,transection_type , status , type , current_balance) VALUES (${dealer_id},'${JSON.stringify({ request_type: "Cash" })}' ,${credits} ,'debit' , 'transferred', 'credits' , ${result[0] ? result[0].credits : 0})`
+                                await sql.query(transection_credits)
+                                await helpers.updatePendingTransactions(dealer_id, credits)
                                 if (result.length) {
                                     let newCredit = credits + result[0].credits
                                     sql.query("update financial_account_balance set credits = " + newCredit + " where dealer_id = " + dealer_id, async function (err, reslt) {
@@ -1514,28 +1510,49 @@ exports.getDomains = async function (req, res) {
 
         let results = selectDomains;
         for (var i = 0; i < results.length; i++) {
-            let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'domain', loggedUserId, sdealerList);
+            let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'domain', loggedUserId, sdealerList, loggedUserType);
+            // let allDealers = [];
 
-            if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
-                // console.log('set permisin for all dealers ')
+            results[i].dealers = permissionDealers.allDealers;
+            results[i].statusAll = permissionDealers.statusAll;
 
-                let Update_sdealerList = sdealerList.map((dealer) => {
-                    return {
-                        dealer_id: dealer,
-                        dealer_type: permissionDealers[0].dealer_type,
-                        permission_by: permissionDealers[0].permission_by
-                    }
-                })
-                let final_list = Update_sdealerList.filter((item) => item.dealer_id !== loggedUserId)
-                results[i].dealers = JSON.stringify(final_list);
-                results[i].statusAll = true
-            } else {
-                if (permissionDealers.length) {
-                    permissionDealers = permissionDealers.filter((item) => item.dealer_id !== loggedUserId)
-                }
-                results[i].dealers = JSON.stringify(permissionDealers);
-                results[i].statusAll = false
-            }
+            // if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
+            //     // console.log('set permisin for all dealers ')
+
+            //     let Update_sdealerList = sdealerList.map((dealer) => {
+            //         return {
+            //             dealer_id: dealer,
+            //             dealer_type: permissionDealers[0].dealer_type,
+            //             permission_by: permissionDealers[0].permission_by
+            //         }
+            //     })
+            //     let final_list = Update_sdealerList.filter((item) => item.dealer_id !== loggedUserId)
+            //     // results[i].dealers = JSON.stringify(final_list);
+            //     allDealers = final_list;
+            //     results[i].statusAll = true
+            // } else {
+            //     if (permissionDealers.length) {
+            //         permissionDealers = permissionDealers.filter((item) => item.dealer_id !== loggedUserId)
+            //     }
+            //     allDealers = permissionDealers;
+            //     // results[i].dealers = JSON.stringify(permissionDealers);
+            //     results[i].statusAll = false
+            // }
+
+            // if (loggedUserType !== ADMIN) {
+            //     let deleteIds = [];
+            //     allDealers.forEach((item) => {
+            //         console.log("item ", item);
+            //         if (item.dealer_type === "admin") {
+            //             let index = allDealers.findIndex((sd) => sd.dealer_type === "dealer" && sd.dealer_id === item.dealer_id);
+            //             deleteIds.push(index);
+            //         }
+            //     })
+            //     console.log("deleteIds index: ", deleteIds);
+            //     results[i].dealers = JSON.stringify(allDealers.filter((item, i) => !deleteIds.includes(i)));
+            // } else {
+            //     results[i].dealers = JSON.stringify(allDealers);
+            // }
             let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : [];
 
             // console.log('permissions are: ', permissions);
@@ -1576,3 +1593,101 @@ exports.getDomains = async function (req, res) {
         }
     }
 }
+exports.getLatestPaymentHistory = async function (req, res) {
+
+    let paymentHistoryData = [];
+    let _limit = '';
+    let verify = req.decoded;
+    let condition = '';
+
+    if (verify) {
+
+        if (req.body.type) {
+            condition += ' AND type = "' + req.body.type + '"'
+        }
+
+        if (req.body.status) {
+            condition += ' AND status = "' + req.body.status + '"'
+        }
+
+        if (req.body.limit) {
+            let limit = req.body.limit;
+            _limit = 'LIMIT ' + limit
+        }
+        paymentHistoryData = await sql.query("SELECT * FROM financial_account_transections WHERE user_id = " + verify.user.id + condition + " ORDER BY id DESC " + _limit);
+
+        return res.send(paymentHistoryData);
+    }
+
+};
+
+
+exports.getOverdueDetails = async function (req, res) {
+
+    let paymentHistoryData = [];
+    let response = {
+        _0to21: 0,
+        _0to21_dues: 0,
+        _21to30: 0,
+        _21to30_dues: 0,
+        _30to60: 0,
+        _30to60_dues: 0,
+        _60toOnward: 0,
+        _60toOnward_dues: 0,
+    };
+
+
+    let verify = req.decoded;
+    let _0to21 = 0;
+    let _0to21_dues = 0;
+    let _21to30 = 0;
+    let _21to30_dues = 0;
+    let _30to60 = 0;
+    let _30to60_dues = 0;
+    let _60toOnward = 0;
+    let _60toOnward_dues = 0;
+
+    if (verify) {
+        paymentHistoryData = await sql.query("SELECT * FROM financial_account_transections WHERE user_id = " + verify.user.id + " AND status = 'pending'");
+
+        paymentHistoryData.map(item => {
+
+            let now = moment();
+            let end = moment(item.created_at).format('YYYY-MM-DD');
+            let duration = now.diff(end, 'days');
+
+            if (duration > 0 && duration <= 21) {
+                ++_0to21;
+                _0to21_dues += parseInt(item.due_credits);
+
+            } else if (duration > 21 && duration <= 30) {
+                ++_21to30;
+                _21to30_dues += parseInt(item.due_credits);
+
+            } else if (duration > 30 && duration <= 60) {
+                ++_30to60;
+                _30to60_dues += parseInt(item.due_credits);
+
+            } else if (duration > 60) {
+                ++_60toOnward;
+                _60toOnward_dues += parseInt(item.due_credits);
+            }
+
+            response = {
+                _0to21,
+                _0to21_dues,
+                _21to30,
+                _21to30_dues,
+                _30to60,
+                _30to60_dues,
+                _60toOnward,
+                _60toOnward_dues,
+            };
+
+
+        });
+        return res.send(response);
+    }
+
+};
+

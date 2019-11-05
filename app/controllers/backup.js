@@ -57,9 +57,24 @@ exports.createBackupDB = async function (req, res) {
                 if (chat_id) {
                     results[i].chat_id = chat_id.chat_id
                 }
-                let services = servicesData.find(data => data.user_acc_id === results[i].id);
-                if (services) {
-                    results[i].services = services
+
+                // let services = servicesData.find(data => data.user_acc_id === results[i].id);
+                // if (services) {
+                //     results[i].services = services
+                // }
+                let services = servicesData.filter(data => data.user_acc_id === results[i].id);
+                if (services && services.length) {
+                    // if (services.length > 1) {
+                    services.map((item) => {
+                        if (item.status === 'extended') {
+                            results[i].extended_services = item
+                        } else {
+                            results[i].services = item
+                        }
+                    })
+                    // } else {
+                    //     results[i].services = services[0]
+                    // }
                 }
                 // let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
                 // if (lastOnline) {
