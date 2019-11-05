@@ -121,8 +121,8 @@ exports.trasnferApps = async function (req, res) {
             // console.log(deleteNotIn);
             await sql.query(deleteNotIn);
         } else {
-            let deleteNotIn = "DELETE FROM secure_market_apps WHERE apk_id NOT IN ('" + toDelete + "') AND space_type= '" + spaceType + "' AND dealer_id = '" + dealer_id + " '"
-            console.log(deleteNotIn);
+            let deleteNotIn = "DELETE FROM secure_market_apps WHERE apk_id NOT IN (" + toDelete + ") AND space_type= '" + spaceType + "' AND dealer_id = '" + dealer_id + "'"
+            // console.log(deleteNotIn);
             await sql.query(deleteNotIn);
 
             let adminAppKeys = await sql.query(`SELECT apk_id FROM secure_market_apps WHERE dealer_type = '${ADMIN}' AND space_type = '${spaceType}'`);

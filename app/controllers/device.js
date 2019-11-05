@@ -5083,7 +5083,8 @@ exports.applySettings = async function (req, res) {
                 if (err) {
                     console.log("apply setting and profile query error: ", err);
                 }
-
+                
+                
                 if (rslts && rslts.insertId) {
                     let isOnline = await device_helpers.isDeviceOnline(device_id);
 
