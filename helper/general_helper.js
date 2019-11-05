@@ -2124,4 +2124,53 @@ module.exports = {
 			dealerCount
 		}
 	},
+	updatePendingTransactions: async function (daelerId, credits) {
+		let get_last_panding_transections_query = `SELECT * from financial_account_transections WHERE user_id = ${dealerId} AND status = 'pending' ORDER BY created_at asc`
+		let last_panding_transections = await sql.query(get_last_panding_transections_query)
+		console.log(last_panding_transections.length);
+		if (last_panding_transections && last_panding_transections.length) {
+			for (let i = 0; i < last_panding_transections.length; i++) {
+				let paid_credits = 0
+				let due_credits = 0
+				if (credits > 0) {
+					if (credits >= last_panding_transections[i].due_credits) {
+						credits = credits - last_panding_transections[i].due_credits
+						paid_credits = last_panding_transections[i].due_credits
+						due_credits = 0
+						sql.query(`UPDATE financial_account_transections SET paid_credits = paid_credits + ${paid_credits} , due_credits = ${due_credits} , status = 'transferred' WHERE id = ${last_panding_transections[i].id}`)
+
+					} else {
+						due_credits = last_panding_transections[i].due_credits - credits
+						paid_credits = credits
+						credits = 0
+						sql.query(`UPDATE financial_account_transections SET paid_credits = paid_credits + ${paid_credits} , due_credits = ${due_credits} WHERE id = ${last_panding_transections[i].id}`)
+					}
+				} else {
+					break
+				}
+			}
+
+
+			let allDealers = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_id = ${dealerId}`);
+			if (allDealers.length) {
+				let item = allDealers[0]
+				let getDate = moment().subtract(22, 'day').format('YYYY-MM-DD');
+				let getTransaction = await sql.query("SELECT * FROM financial_account_transections " +
+					"WHERE user_id = " + item.dealer_id + " AND status = 'pending' AND DATE(created_at) >= " + getDate + " LIMIT 1");
+				if (getTransaction.length) {
+					let now = moment();
+					let end = moment(getTransaction[0].created_at).format('YYYY-MM-DD');
+					let duration = now.diff(end, 'days');
+
+					if (duration > 21 && duration <= 60) {
+						await sql.query("UPDATE dealers set account_balance_status = 'restricted' WHERE dealer_id = " + item.dealer_id);
+					} else if (duration > 60) {
+						await sql.query("UPDATE dealers set account_balance_status = 'suspended' WHERE dealer_id = " + item.dealer_id);
+					}
+				} else {
+					await sql.query("UPDATE dealers set account_balance_status = 'active' WHERE dealer_id = " + item.dealer_id);
+				}
+			}
+		}
+	}
 }
