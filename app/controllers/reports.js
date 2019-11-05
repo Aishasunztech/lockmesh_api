@@ -87,6 +87,7 @@ exports.generateInvoiceReport = async function (req, res) {
         let dealer = req.body.dealer;
         let from = req.body.from;
         let to = req.body.to;
+        let device = req.body.device;
         let payment_status = req.body.payment_status;
         let condition = '';
 
@@ -110,6 +111,15 @@ exports.generateInvoiceReport = async function (req, res) {
         if (payment_status) {
             condition += ' AND i.end_user_payment_status = "' + payment_status + '"'
         }
+
+        if (device === Constants.DEVICE_PRE_ACTIVATION) {
+            condition += ' AND d.device_id IS NULL'
+        }
+
+        if (device && device !== Constants.DEVICE_PRE_ACTIVATION) {
+            condition += ' AND d.device_id = "' + device + '"'
+        }
+
         invoiceData = await sql.query(`SELECT i.*,
          d.device_id AS device_id, ua.link_code as dealer_pin
             FROM invoices AS i

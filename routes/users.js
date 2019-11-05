@@ -106,6 +106,7 @@ router.get("/user_type", aclController.getUserType);
 
 /**GET all the devices**/
 router.get("/devices", deviceController.devices);
+router.get("/get-devices-for-report", deviceController.getDevicesForReport);
 
 /**
  * @route PUT /users/new/device

@@ -1633,7 +1633,9 @@ exports.getOverdueDetails = async function (req, res) {
         _30to60_dues: 0,
         _60toOnward: 0,
         _60toOnward_dues: 0,
-    }
+    };
+
+
     let verify = req.decoded;
     let _0to21 = 0;
     let _0to21_dues = 0;
@@ -1652,26 +1654,22 @@ exports.getOverdueDetails = async function (req, res) {
             let now = moment();
             let end = moment(item.created_at).format('YYYY-MM-DD');
             let duration = now.diff(end, 'days');
-            console.log(duration)
-            if (duration > 0 && duration <= 21) {
 
+            if (duration > 0 && duration <= 21) {
                 ++_0to21;
-                _0to21_dues += item.due_credits;
+                _0to21_dues += parseInt(item.due_credits);
 
             } else if (duration > 21 && duration <= 30) {
-
                 ++_21to30;
-                _21to30_dues += item.due_credits;
+                _21to30_dues += parseInt(item.due_credits);
 
             } else if (duration > 30 && duration <= 60) {
-
                 ++_30to60;
-                _30to60_dues += item.due_credits;
+                _30to60_dues += parseInt(item.due_credits);
 
-            } else {
-
+            } else if (duration > 60) {
                 ++_60toOnward;
-                _60toOnward_dues += item.due_credits;
+                _60toOnward_dues += parseInt(item.due_credits);
             }
 
             response = {

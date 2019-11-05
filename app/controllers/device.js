@@ -219,6 +219,38 @@ exports.devices = async function (req, res) {
     }
 };
 
+exports.getDevicesForReport = async function (req, res) {
+    var verify      = req.decoded;
+    var where_con   = "";
+
+    if (verify){
+        let user_type = verify.user.user_type;
+
+        if (user_type === Constants.DEALER) {
+            let sDealerIds = await helpers.getSdealersByDealerId(verify.user.id);
+            where_con += ' AND ua.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
+        } else {
+            where_con += ' AND ua.dealer_id = ' + dealer
+        }
+
+        let deviceQuery = `SELECT d.* FROM devices as d
+            JOIN usr_acc as ua
+                on ua.device_id = d.id
+         WHERE d.reject_status = 0 ${where_con} ORDER BY d.id DESC`;
+
+        sql.query(deviceQuery, async function (error, results, fields) {
+            console.log(results)
+            data = {
+                data: results
+            };
+
+            return res.send(data);
+
+        });
+    }
+};
+
+
 // /**GET New the devices**/
 exports.newDevices = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
