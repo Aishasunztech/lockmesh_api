@@ -544,7 +544,7 @@ router.get("/getFile/:file", async function (req, res) {
 
 });
 
-router.get('/languages', languageController.languages)
+// router.get('/languages', languageController.getAll_Languages)
 
 // router.get('/create_lng_file', async function (req, res) {
 //     sql.query("SELECT * FROM languages", async function (err, data) {

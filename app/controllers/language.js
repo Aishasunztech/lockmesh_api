@@ -157,23 +157,23 @@ exports.saveLanguage = async function (req, res) {
     }
 }
 
-exports.languages = async function (req, res) {
-    // var verify = req.decoded;
-    // if (verify) {
-    let languages = [];
-    let selectQuery = "SELECT * FROM languages";
-    languages = await sql.query(selectQuery);
+exports.getAll_Languages = async function (req, res) {
+    var verify = req.decoded;
+    if (verify) {
+        let languages = [];
+        let selectQuery = "SELECT * FROM languages";
+        languages = await sql.query(selectQuery);
 
-    if (languages.length) {
-        res.send({
-            status: true,
-            data: languages
-        });
-    } else {
-        res.send({
-            status: false,
-            data: []
-        })
+        if (languages.length) {
+            res.send({
+                status: true,
+                data: languages
+            });
+        } else {
+            res.send({
+                status: false,
+                data: []
+            })
+        }
     }
-    // }
 };
