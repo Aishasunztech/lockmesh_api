@@ -1230,6 +1230,8 @@ router.get("/get-language", languageController.getLanguage);
 
 router.patch("/save-language", languageController.saveLanguage);
 
+router.get('/get-all-languages', languageController.getAll_Languages);
+
 router.get("/get-prices", billingController.getPrices);
 
 router.get("/get-packages", billingController.getPackages);
