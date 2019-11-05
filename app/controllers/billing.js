@@ -1688,7 +1688,6 @@ exports.getUserCredits = async function (req, res) {
                     console.log(err);
                 }
                 if (result && result.length) {
-                    console.log(result);
                     data = {
                         "status": true,
                         "credits": result[0].credits,
@@ -1720,7 +1719,6 @@ exports.deleteRequest = async function (req, res) {
         try {
             let id = req.params.id
             let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
-            console.log(query);
             sql.query(query, async function (err, result) {
                 if (err) {
                     console.log(err);

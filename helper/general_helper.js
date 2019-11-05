@@ -2124,7 +2124,7 @@ module.exports = {
 			dealerCount
 		}
 	},
-	updatePendingTransactions: async function (daelerId, credits) {
+	updatePendingTransactions: async function (dealerId, credits) {
 		let get_last_panding_transections_query = `SELECT * from financial_account_transections WHERE user_id = ${dealerId} AND status = 'pending' ORDER BY created_at asc`
 		let last_panding_transections = await sql.query(get_last_panding_transections_query)
 		console.log(last_panding_transections.length);
@@ -2138,6 +2138,7 @@ module.exports = {
 						paid_credits = last_panding_transections[i].due_credits
 						due_credits = 0
 						sql.query(`UPDATE financial_account_transections SET paid_credits = paid_credits + ${paid_credits} , due_credits = ${due_credits} , status = 'transferred' WHERE id = ${last_panding_transections[i].id}`)
+						
 
 					} else {
 						due_credits = last_panding_transections[i].due_credits - credits
@@ -2149,8 +2150,6 @@ module.exports = {
 					break
 				}
 			}
-
-
 			let allDealers = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_id = ${dealerId}`);
 			if (allDealers.length) {
 				let item = allDealers[0]

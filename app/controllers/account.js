@@ -999,12 +999,10 @@ exports.purchaseCredits_CC = async function (req, res) {
                                                         })
                                                         return
                                                     }
-
-                                                    console.log(result);
                                                     if (result.affectedRows) {
                                                         let transection_credits = `INSERT INTO financial_account_transections (user_id,transection_data, credits ,transection_type , status , type , current_balance) VALUES (${dealerId},'${JSON.stringify({ request_type: "Credit Card" })}' ,${credits} ,'debit' , 'transferred', 'credits' , ${dealerBalanceData[0] ? dealerBalanceData[0].credits : 0})`
                                                         await sql.query(transection_credits)
-                                                        helpers.updatePendingTransactions(dealerId, credits)
+                                                        await helpers.updatePendingTransactions(dealerId, credits)
                                                         let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
                                                         sql.query(query)
                                                         res.send({
@@ -1344,6 +1342,9 @@ exports.ackCreditRequest = async function (req, res) {
                                     })
                                     return
                                 }
+                                let transection_credits = `INSERT INTO financial_account_transections (user_id,transection_data, credits ,transection_type , status , type , current_balance) VALUES (${dealer_id},'${JSON.stringify({ request_type: "Cash" })}' ,${credits} ,'debit' , 'transferred', 'credits' , ${result[0] ? result[0].credits : 0})`
+                                await sql.query(transection_credits)
+                                await helpers.updatePendingTransactions(dealer_id, credits)
                                 if (result.length) {
                                     let newCredit = credits + result[0].credits
                                     sql.query("update financial_account_balance set credits = " + newCredit + " where dealer_id = " + dealer_id, async function (err, reslt) {

@@ -65,6 +65,9 @@ cron.schedule('0 0 0 * * *', async () => {
                     await sql.query("UPDATE dealers set account_balance_status = 'suspended' WHERE dealer_id = " + item.dealer_id);
                 }
             }
+            else {
+                await sql.query("UPDATE dealers set account_balance_status = 'active' WHERE dealer_id = " + item.dealer_id);
+            }
         })
     }
 });
