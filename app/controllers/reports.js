@@ -346,8 +346,8 @@ exports.generateSalesReport = async function (req, res) {
 
                 if (value.item_dealer_cost == 0 && user_type === Constants.ADMIN) {
 
-                    cost_price  = value.item_admin_cost;
-                    sale_price  = value.item_sale_price;
+                    cost_price  = parseInt(value.item_admin_cost);
+                    sale_price  = parseInt(value.item_sale_price);
                     profit_loss = sale_price - cost_price;
 
                     totalCost       += cost_price;
@@ -356,16 +356,16 @@ exports.generateSalesReport = async function (req, res) {
                 } else {
 
                     if (user_type === Constants.DEALER) {
-                        cost_price = value.item_dealer_cost;
-                        sale_price = value.total_credits;
+                        cost_price = parseInt(value.item_dealer_cost);
+                        sale_price = parseInt(value.total_credits);
                         profit_loss = sale_price - cost_price;
 
                         totalCost       += cost_price;
                         totalSale       += profit_loss;
 
                     } else {
-                        cost_price = value.item_admin_cost;
-                        sale_price = value.item_dealer_cost;
+                        cost_price = parseInt(value.item_admin_cost);
+                        sale_price = parseInt(value.item_dealer_cost);
                         profit_loss = sale_price - cost_price;
 
                         totalCost       += cost_price;
@@ -419,8 +419,8 @@ exports.generateSalesReport = async function (req, res) {
 
                 if (value.item_dealer_cost == 0 && user_type === Constants.ADMIN) {
 
-                    cost_price = value.item_admin_cost;
-                    sale_price = value.item_sale_price;
+                    cost_price = parseInt(value.item_admin_cost);
+                    sale_price = parseInt(value.item_sale_price);
                     profit_loss = sale_price - cost_price;
 
                     totalCost       += cost_price;
@@ -429,15 +429,15 @@ exports.generateSalesReport = async function (req, res) {
                 } else {
 
                     if (user_type === Constants.DEALER) {
-                        cost_price = value.item_dealer_cost;
-                        sale_price = value.total_credits;
+                        cost_price = parseInt(value.item_dealer_cost);
+                        sale_price = parseInt(value.total_credits);
                         profit_loss = sale_price - cost_price;
 
                         totalCost       += cost_price;
                         totalSale       += profit_loss;
                     } else {
-                        cost_price = value.item_admin_cost;
-                        sale_price = value.item_dealer_cost;
+                        cost_price = parseInt(value.item_admin_cost);
+                        sale_price = parseInt(value.item_dealer_cost);
                         profit_loss = sale_price - cost_price;
 
                         totalCost       += cost_price;
@@ -479,9 +479,11 @@ exports.generateSalesReport = async function (req, res) {
             }
     
             hardwares = await sql.query(`SELECT hd.*, d.device_id as device_id, ua.link_code as dealer_pin FROM hardwares_data as hd
-            JOIN usr_acc as ua on ua.id = hd.user_acc_id 
-            JOIN devices as d on ua.device_id = d.id
-            WHERE hd.id IS NOT NULL ${condition} ORDER BY hd.id DESC`);
+                JOIN usr_acc as ua 
+                    on ua.id = hd.user_acc_id 
+                JOIN devices as d 
+                    on ua.device_id = d.id
+                WHERE hd.id IS NOT NULL ${condition} ORDER BY hd.id DESC`);
 
             hardwares.map(function (value, index) {
                 let cost_price = 0;
@@ -490,8 +492,8 @@ exports.generateSalesReport = async function (req, res) {
 
                 if (value.dealer_cost_credits === 0 && user_type === Constants.ADMIN) {
 
-                    cost_price = value.admin_cost_credits;
-                    sale_price = value.total_credits;
+                    cost_price = parseInt(value.admin_cost_credits);
+                    sale_price = parseInt(value.total_credits);
                     profit_loss = sale_price - cost_price;
 
                     totalCost       += cost_price;
@@ -500,15 +502,15 @@ exports.generateSalesReport = async function (req, res) {
                 } else {
 
                     if (user_type === Constants.DEALER) {
-                        cost_price = value.dealer_cost_credits;
-                        sale_price = value.total_credits;
+                        cost_price  = parseInt(value.dealer_cost_credits);
+                        sale_price  = parseInt(value.total_credits);
                         profit_loss = sale_price - cost_price;
 
                         totalCost       += cost_price;
                         totalSale       += profit_loss;
                     } else {
-                        cost_price = value.admin_cost_credits;
-                        sale_price = value.dealer_cost_credits;
+                        cost_price = parseInt(value.admin_cost_credits);
+                        sale_price = parseInt(value.dealer_cost_credits);
                         profit_loss = sale_price - cost_price;
 
                         totalCost       += cost_price;
@@ -525,17 +527,21 @@ exports.generateSalesReport = async function (req, res) {
                     'cost_price': cost_price,
                     'sale_price': sale_price,
                     'profit_loss': profit_loss,
-                    'totalCost'  : totalCost,
-                    'totalSale'   : totalSale,
-                    'totalProfitLoss': totalSale - totalCost,
                     'created_at': value.created_at,
                 })
             });
 
         }
 
+        let saleInfo = {
+            'totalCost'  : totalCost,
+            'totalSale'   : totalSale,
+            'totalProfitLoss': totalSale - totalCost,
+        };
+
         response = {
             data: [...packagesData, ...productsData, ...hardwaresData],
+            saleInfo,
         };
         return res.send(response);
     }
