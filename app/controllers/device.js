@@ -2411,7 +2411,7 @@ exports.extendServices = async function (req, res) {
                                     }
 
                                     if (item.pkg_features.chat_id) {
-                                        chatIncluded = transferUser
+                                        chatIncluded = true
                                     }
                                     if (item.pkg_features.pgp_email) {
                                         pgpIncluded = true
