@@ -31,6 +31,48 @@ if (HOST_NAME) {
 		case "localhost":
 			break;
 
+		case "LockMesh Dev":
+			URL = "https://dev.lockmesh.com";
+			SUPERADMIN_URL = "https://dev.meshguard.co";
+			SUPERADMIN_URL_API = "https://devapi.meshguard.co"
+
+			DB_USERNAME = "web";
+			DB_PASSWORD = "Alibaba@40C#";
+
+			// Email
+			SMTP_FROM_EMAIL = "admin@lockmesh.com";
+			SMTP_FROM_NAME = "Admin";
+			break;
+		
+		case "PreDev":
+			URL = "https://predev.lockmesh.com";
+			SUPERADMIN_URL = "https://dev.meshguard.co";
+			SUPERADMIN_URL_API = "https://devapi.meshguard.co"
+
+			DB_USERNAME = "web";
+			DB_PASSWORD = "Alibaba@40C#";
+
+			// Email
+			SMTP_FROM_EMAIL = "admin@lockmesh.com";
+			SMTP_FROM_NAME = "Admin";
+			break;
+
+		case "LoadTester":
+			URL = "https://loadtester.lockmesh.com";
+			SUPERADMIN_URL = "https://dev.meshguard.co";
+			SUPERADMIN_URL_API = "https://devapi.meshguard.co"
+
+			DB_USERNAME = "web";
+			DB_PASSWORD = "Alibaba@40C#";
+
+			// Email
+			SMTP_FROM_EMAIL = "admin@lockmesh.com";
+			SMTP_FROM_NAME = "Admin";
+			break;
+
+
+
+
 		case "LockMesh":
 			URL = "https://lockmesh.com";
 			SUPERADMIN_URL = "https://meshguard.co";
@@ -100,21 +142,6 @@ if (HOST_NAME) {
 			DEVICE_ID_SYSTEM_LETTER = "K";
 			DEALER_PIN_SYSTEM_LETTER = "3";
 			STAFF_ID_SYSTEM_LETTER = '4';
-			break;
-
-		case "LockMesh Dev":
-			URL = "https://dev.lockmesh.com";
-			SUPERADMIN_URL = "https://dev.meshguard.co";
-			SUPERADMIN_URL_API = "https://devapi.meshguard.co"
-
-			// DB_HOST = "localhost";
-			// DB_NAME = 'lockmesh_db'
-			DB_USERNAME = "web";
-			DB_PASSWORD = "Alibaba@40C#";
-
-			// Email
-			SMTP_FROM_EMAIL = "admin@lockmesh.com";
-			SMTP_FROM_NAME = "Admin";
 			break;
 
 		default:

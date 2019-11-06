@@ -6,14 +6,32 @@
 		"database": "lockmesh_db",
 		"dialect": "mysql"
 	},
-	"lockmesh": {
+	"dev_lockmesh": {
 		"host": "localhost",
 		"username": "web",
 		"password": "Alibaba@40C#",
 		"database": "lockmesh_db",
 		"dialect": "mysql"
 	},
-	"dev_lockmesh": {
+	"predev": {
+		"host": "localhost",
+		"username": "web",
+		"password": "Alibaba@40C#",
+		"database": "lockmesh_db",
+		"dialect": "mysql"
+	},
+	"loadtester": {
+		"host": "localhost",
+		"username": "web",
+		"password": "Alibaba@40C#",
+		"database": "lockmesh_db",
+		"dialect": "mysql"
+	},
+
+
+
+
+	"lockmesh": {
 		"host": "localhost",
 		"username": "web",
 		"password": "Alibaba@40C#",
