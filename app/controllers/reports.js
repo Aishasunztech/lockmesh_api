@@ -37,7 +37,11 @@ exports.generateProductReport = async function (req, res) {
 
         if (dealer === '' && user_type === Constants.DEALER) {
             let sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
-            condition += ' AND parentTable.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
+            if (sDealerIds.length > 0){
+                condition += ' AND parentTable.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
+            }else{
+                condition += ' AND parentTable.dealer_id = ' + verify.user.id
+            }
         } else if (dealer) {
             condition += ' AND parentTable.dealer_id = ' + dealer
         }
@@ -122,8 +126,13 @@ exports.generateInvoiceReport = async function (req, res) {
 
 
         if (dealer === '' && user_type === Constants.DEALER) {
+
             let sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
-            condition += ' AND i.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
+            if (sDealerIds.length > 0){
+                condition += ' AND i.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
+            }else{
+                condition += ' AND i.dealer_id = ' + verify.user.id
+            }
         } else if (dealer) {
             condition += ' AND i.dealer_id = ' + dealer
         }
@@ -159,7 +168,7 @@ exports.generateInvoiceReport = async function (req, res) {
             WHERE i.del_status = '0' ${condition}
             ORDER BY  i.id DESC`);
 
-        response = {
+        let response = {
             data: invoiceData,
         };
 
@@ -189,8 +198,14 @@ exports.generatePaymentHistoryReport = async function (req, res) {
         };
 
         if (dealer === '' && user_type === Constants.DEALER) {
+
             let sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
-            condition += ' AND fat.user_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
+            if (sDealerIds.length > 0){
+                condition += ' AND fat.user_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
+            }else{
+                condition += ' AND fat.user_id = ' + verify.user.id
+            }
+
         } else if (dealer) {
             condition += ' AND fat.user_id = ' + dealer
         }
@@ -254,8 +269,14 @@ exports.generateHardwareReport = async function (req, res) {
         }
 
         if (dealer === '' && user_type === Constants.DEALER) {
+
             let sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
-            condition += ' AND hd.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
+            if (sDealerIds.length > 0){
+                condition += ' AND hd.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
+            }else{
+                condition += ' AND hd.dealer_id = ' + verify.user.id
+            }
+
         } else if (dealer) {
             condition += ' AND hd.dealer_id = ' + dealer
         }
@@ -320,7 +341,12 @@ exports.generateSalesReport = async function (req, res) {
             if (dealer === '' && user_type === Constants.DEALER) {
 
                 let sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
-                condition += ' AND ua.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
+                if (sDealerIds.length > 0){
+                    condition += ' AND ua.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
+                }else{
+                    condition += ' AND ua.dealer_id = ' + verify.user.id
+                }
+
             } else if (dealer) {
                 condition += ' AND ua.dealer_id = ' + dealer
             }
@@ -393,7 +419,13 @@ exports.generateSalesReport = async function (req, res) {
             if (dealer === '' && user_type === Constants.DEALER) {
 
                 let sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
-                condition += ' AND ua.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
+                if (sDealerIds.length > 0){
+                    condition += ' AND ua.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
+                }else{
+                    condition += ' AND ua.dealer_id = ' + verify.user.id
+                }
+
+
             } else if (dealer) {
                 condition += ' AND ua.dealer_id = ' + dealer
             }
@@ -464,8 +496,14 @@ exports.generateSalesReport = async function (req, res) {
         if (productType === 'HARDWARES' || productType === 'ALL') {
 
             if (dealer === '' && user_type === Constants.DEALER) {
+
                 let sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
-                condition += ' AND hd.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
+                if (sDealerIds.length > 0){
+                    condition += ' AND hd.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
+                }else{
+                    condition += ' AND hd.dealer_id = ' + verify.user.id
+                }
+
             } else if (dealer) {
                 condition += ' AND hd.dealer_id = ' + dealer
             }
