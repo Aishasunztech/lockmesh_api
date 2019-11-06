@@ -2,27 +2,34 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('hardwares', {
+    return queryInterface.createTable('user_acc_services', {
       id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true
       },
-      dealer_id: {
+      user_acc_id: {
         type: Sequelize.INTEGER,
+        // allowNull: false,
       },
-      dealer_type: {
-        type: Sequelize.STRING,
+      service_id: {
+        type: Sequelize.INTEGER,
+        // allowNull: false,
       },
-      hardware_name: {
-        type: Sequelize.STRING,
+      product_id: {
+        type: Sequelize.INTEGER,
+        // allowNull: false,
       },
-      hardware_price: {
-        type: Sequelize.STRING,
+      type: {
+        type: Sequelize.ENUM,
+        values: ['pgp_email','chat_id','sim_id','vpn','sim_id2','']
+        // allowNull: false,
       },
-      delete_status: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: 0
+      start_date: {
+        type: Sequelize.STRING
+      },
+      end_date: {
+        type: Sequelize.STRING
       },
       created_at: {
         type: 'TIMESTAMP',
@@ -31,15 +38,10 @@ module.exports = {
       updated_at: {
         type: 'TIMESTAMP',
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
-      }
+      },
+      
+      
     })
-    /*
-      Add altering commands here.
-      Return a promise to correctly handle asynchronicity.
-
-      Example:
-      return queryInterface.createTable('users', { id: Sequelize.INTEGER });
-    */
   },
 
   down: (queryInterface, Sequelize) => {

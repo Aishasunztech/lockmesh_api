@@ -220,10 +220,10 @@ exports.devices = async function (req, res) {
 };
 
 exports.getDevicesForReport = async function (req, res) {
-    var verify      = req.decoded;
-    var where_con   = "";
+    var verify = req.decoded;
+    var where_con = "";
 
-    if (verify){
+    if (verify) {
         let user_type = verify.user.user_type;
 
         if (user_type === constants.DEALER) {
@@ -373,6 +373,7 @@ exports.acceptDevice = async function (req, res) {
             else {
                 if (result.length || term === '0' || !pay_now) {
                     let dealer_credits = (result.length) ? result[0].credits : 0
+                    let dealer_credits_copy = dealer_credits
                     let admin_credits = 0
                     if (dealer_credits > discounted_price || term === '0' || !pay_now) {
 
@@ -382,12 +383,7 @@ exports.acceptDevice = async function (req, res) {
 
                                 if (pay_now) {
                                     dealer_credits = dealer_credits - discounted_price
-                                    // if (hardwares.length) {
-                                    //     hardwarePrice = hardwarePrice - (hardwarePrice * 0.03)
-                                    // }
                                 }
-
-
                                 if (term !== '0') {
                                     let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedDealerType)
                                     if (pay_now) {
@@ -437,7 +433,6 @@ exports.acceptDevice = async function (req, res) {
                                         let checkUnique = `SELECT usr_acc.* FROM usr_acc WHERE account_email= '${device_email}' AND device_id != '${device_id}' AND user_id != '${user_id}'`
                                         sql.query(checkUnique, async (checkUniqueEror, success) => {
                                             if (checkUniqueEror) {
-                                                console.log(checkUniqueEror)
                                                 res.send({
                                                     status: false,
                                                     msg: await helpers.convertToLang(req.translation[MsgConstants.NEW_DEVICE_NOT_ADDED], "New Device Not Added Please try Again"), // "New Device Not Added Please try Again"
@@ -496,8 +491,33 @@ exports.acceptDevice = async function (req, res) {
                                                         service_id = service_data_result.insertId
                                                         helpers.saveServiceSalesDetails(packages, products, loggedDealerType, usr_acc_id, service_data_result.insertId, pay_now)
                                                     }
-                                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status, type , paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${total_price} ,'credit' , '${transection_status}' , 'services' , ${(pay_now) ? total_price : 0} , ${(pay_now) ? 0 : total_price})`
-                                                    await sql.query(transection_credits)
+
+                                                    let dealer_credits_remaining = true
+                                                    if (pay_now) {
+                                                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price} ,'credit' , '${transection_status}' , 'services' , ${total_price} , ${0})`
+                                                        await sql.query(transection_credits)
+                                                    }
+                                                    else {
+                                                        let transection_due_credits = total_price;
+                                                        let paid_credits = 0
+                                                        if (dealer_credits_copy > 0) {
+                                                            if (dealer_credits_copy < total_price) {
+                                                                transection_due_credits = total_price - dealer_credits_copy
+                                                                paid_credits = dealer_credits_copy
+                                                                let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${total_price} ,'credit' , '${transection_status}' , 'services' , ${paid_credits} , ${transection_due_credits})`
+                                                                await sql.query(transection_credits)
+                                                                dealer_credits_remaining = false
+                                                            } else {
+                                                                dealer_credits_copy -= total_price
+                                                                let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${total_price} ,'credit' , 'transferred' , 'services' , ${total_price} ,0)`
+                                                                await sql.query(transection_credits)
+                                                            }
+                                                        } else {
+                                                            let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${total_price} ,'credit' , 'pending' , 'services' , 0 ,${total_price})`
+                                                            await sql.query(transection_credits)
+                                                            dealer_credits_remaining = false
+                                                        }
+                                                    }
 
                                                     let update_credits_query = '';
                                                     if (pay_now) {
@@ -568,16 +588,27 @@ exports.acceptDevice = async function (req, res) {
                                                             let hardware_data = `INSERT INTO hardwares_data(user_acc_id, dealer_id, hardware_name , hardware_data,total_credits , admin_cost_credits , dealer_cost_credits ) VALUES(${usr_acc_id}, ${dealer_id}, '${hardwares[i].hardware_name}', '${JSON.stringify(hardwares[i])}' ,${price} ,${admin_cost}, ${dealer_cost})`
                                                             await sql.query(hardware_data);
                                                         }
-
-                                                        let hardware_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${hardwarePrice} , 'credit' , '${transection_status}' , 'hardwares' , ${(pay_now) ? hardwarePrice : 0} , ${(pay_now) ? 0 : hardwarePrice})`
-                                                        await sql.query(hardware_transection)
+                                                        if (pay_now) {
+                                                            let hardware_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${hardwarePrice} , 'credit' , '${transection_status}' , 'hardwares', ${hardwarePrice} ,0)`
+                                                            await sql.query(hardware_transection)
+                                                        } else {
+                                                            if (dealer_credits_remaining) {
+                                                                let paid_transection = dealer_credits_copy
+                                                                let due_transection = hardwarePrice - paid_transection
+                                                                let hardware_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${hardwarePrice} , 'credit' , '${transection_status}' , 'hardwares', ${paid_transection} , ${due_transection})`
+                                                                await sql.query(hardware_transection)
+                                                            } else {
+                                                                let hardware_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${hardwarePrice} , 'credit' , '${transection_status}' , 'hardwares',0, ${hardwarePrice})`
+                                                                await sql.query(hardware_transection)
+                                                            }
+                                                        }
 
                                                     }
 
 
                                                     await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, usr_acc_id, loggedDealerType, pay_now, service_id)
 
-                                                    let updateChatIds = 'update chat_ids set used=1, user_acc_id="' + usr_acc_id + '" where chat_id ="' + chat_id + '"';
+                                                    let updateChatIds = 'update chat_ids set used=1, user_acc_id="' + usr_acc_id + '" , start_date = ' + start_date + ' where chat_id ="' + chat_id + '"';
                                                     let chatIdUpdateResult = await sql.query(updateChatIds);
                                                     if (chatIdUpdateResult.affectedRows) {
                                                         let getChatID = "SELECT * FROM chat_ids WHERE chat_id = '" + chat_id + "'"
@@ -588,7 +619,7 @@ exports.acceptDevice = async function (req, res) {
                                                             }
                                                         })
                                                     }
-                                                    let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + usr_acc_id + '" where sim_id ="' + sim_id + '"';
+                                                    let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + usr_acc_id + '" , start_date = ' + start_date + ' where sim_id ="' + sim_id + '"';
                                                     let simIdUpdateResult = await sql.query(updateSimIds)
                                                     if (simIdUpdateResult.affectedRows) {
                                                         let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id + "'"
@@ -601,7 +632,7 @@ exports.acceptDevice = async function (req, res) {
                                                     }
 
                                                     if (sim_id2) {
-                                                        let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + usr_acc_id + '" where sim_id ="' + sim_id2 + '"';
+                                                        let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + usr_acc_id + '" , start_date = ' + start_date + ' where sim_id ="' + sim_id2 + '"';
                                                         let simIdUpdateResult = await sql.query(updateSimIds)
                                                         if (simIdUpdateResult.affectedRows) {
                                                             let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id + "'"
@@ -614,7 +645,7 @@ exports.acceptDevice = async function (req, res) {
                                                         }
                                                     }
 
-                                                    let updatePgpEmails = 'update pgp_emails set used=1, user_acc_id="' + usr_acc_id + '" where pgp_email ="' + pgp_email + '"';
+                                                    let updatePgpEmails = 'update pgp_emails set used=1, user_acc_id="' + usr_acc_id + '" , start_date = ' + start_date + ' where pgp_email ="' + pgp_email + '"';
                                                     let pgpEmailUpdateResult = await sql.query(updatePgpEmails);
                                                     if (pgpEmailUpdateResult.affectedRows) {
                                                         let getsimID = "SELECT * FROM pgp_emails WHERE pgp_email = '" + pgp_email + "'"
@@ -676,13 +707,13 @@ exports.acceptDevice = async function (req, res) {
                                                         let services = servicesData;
                                                         if (services && services.length) {
                                                             // if (services.length > 1) {
-                                                                services.map((item) => {
-                                                                    if (item.status === 'extended') {
-                                                                        rsltq[0].extended_services = item
-                                                                    } else {
-                                                                        rsltq[0].services = item
-                                                                    }
-                                                                })
+                                                            services.map((item) => {
+                                                                if (item.status === 'extended') {
+                                                                    rsltq[0].extended_services = item
+                                                                } else {
+                                                                    rsltq[0].services = item
+                                                                }
+                                                            })
                                                             // } else {
                                                             //     rsltq[0].services = services[0]
                                                             // }
@@ -892,6 +923,7 @@ exports.createDeviceProfile = async function (req, res) {
             else {
                 if (result.length || req.body.term === '0' || !pay_now) {
                     let dealer_credits = result.length ? result[0].credits : 0;
+                    let dealer_credits_copy = dealer_credits
                     if (dealer_credits >= discounted_price || req.body.term === '0' || !pay_now) {
                         if (products.length || packages.length) {
 
@@ -913,9 +945,6 @@ exports.createDeviceProfile = async function (req, res) {
                                 }
                             }
 
-                            // let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedUserType)
-                            // admin_profit = profitLoss.admin_profit
-                            // dealer_profit = profitLoss.dealer_profit
                             if (duplicate > 0) {
                                 if (dealer_credits > discounted_price || req.body.term === '0') {
                                     let pgpEmail = "SELECT pgp_email from pgp_emails WHERE used=0";
@@ -1078,11 +1107,11 @@ exports.createDeviceProfile = async function (req, res) {
 
                                                     await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, user_acc_id, loggedUserType, pay_now, service_id)
 
-                                                    let updateChatIds = 'update chat_ids set used=1, user_acc_id="' + user_acc_id + '" where chat_id ="' + chat_id + '"';
+                                                    let updateChatIds = 'update chat_ids set used=1, user_acc_id="' + user_acc_id + '"  , start_date = ' + start_date + ' where chat_id ="' + chat_id + '"';
                                                     await sql.query(updateChatIds);
-                                                    let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + user_acc_id + '" where sim_id ="' + sim_id + '" OR sim_id = "' + sim_id2 + '"';
+                                                    let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + user_acc_id + '" , start_date = ' + start_date + ' where sim_id ="' + sim_id + '" OR sim_id = "' + sim_id2 + '"';
                                                     await sql.query(updateSimIds)
-                                                    let updatePgpEmails = 'update pgp_emails set used=1, user_acc_id="' + user_acc_id + '" where pgp_email ="' + pgp_email + '"';
+                                                    let updatePgpEmails = 'update pgp_emails set used=1, user_acc_id="' + user_acc_id + '" , start_date = ' + start_date + ' where pgp_email ="' + pgp_email + '"';
                                                     await sql.query(updatePgpEmails);
                                                     if (policy_id !== '') {
                                                         var slctpolicy = "select * from policy where id = " + policy_id + "";
@@ -1194,13 +1223,13 @@ exports.createDeviceProfile = async function (req, res) {
                                             let services = servicesData.filter(data => data.user_acc_id === rsltq[i].id);
                                             if (services && services.length) {
                                                 // if (services.length > 1) {
-                                                    services.map((item) => {
-                                                        if (item.status === 'extended') {
-                                                            rsltq[i].extended_services = item
-                                                        } else {
-                                                            rsltq[i].services = item
-                                                        }
-                                                    })
+                                                services.map((item) => {
+                                                    if (item.status === 'extended') {
+                                                        rsltq[i].extended_services = item
+                                                    } else {
+                                                        rsltq[i].services = item
+                                                    }
+                                                })
                                                 // } else {
                                                 //     rsltq[i].services = services[0]
                                                 // }
@@ -1320,6 +1349,33 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 service_id = service_data_result.insertId
                                                                 helpers.saveServiceSalesDetails(packages, products, loggedUserType, user_acc_id, service_data_result.insertId, pay_now)
                                                             }
+                                                            let dealer_credits_remaining = true
+                                                            if (pay_now) {
+                                                                let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price} ,'credit' , '${transection_status}' , 'services' , ${total_price} , ${0})`
+                                                                await sql.query(transection_credits)
+                                                            }
+                                                            else {
+                                                                let transection_due_credits = total_price;
+                                                                let paid_credits = 0
+
+                                                                if (dealer_credits_copy > 0) {
+                                                                    if (dealer_credits_copy < total_price) {
+                                                                        transection_due_credits = total_price - dealer_credits_copy
+                                                                        paid_credits = dealer_credits_copy
+                                                                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price} ,'credit' , '${transection_status}' , 'services' , ${paid_credits} , ${transection_due_credits})`
+                                                                        await sql.query(transection_credits)
+                                                                        dealer_credits_remaining = false
+                                                                    } else {
+                                                                        dealer_credits_copy -= total_price
+                                                                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price} ,'credit' , 'transferred' , 'services' , ${total_price} ,0)`
+                                                                        await sql.query(transection_credits)
+                                                                    }
+                                                                } else {
+                                                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${total_price} ,'credit' , 'pending' , 'services' , 0 ,${total_price})`
+                                                                    await sql.query(transection_credits)
+                                                                    dealer_credits_remaining = false
+                                                                }
+                                                            }
 
                                                             if (hardwares.length) {
                                                                 let dealer_hardware_profit = 0
@@ -1379,17 +1435,26 @@ exports.createDeviceProfile = async function (req, res) {
                                                                     let hardware_data = `INSERT INTO hardwares_data(user_acc_id, dealer_id, hardware_name , hardware_data,total_credits , admin_cost_credits , dealer_cost_credits ) VALUES(${user_acc_id}, ${dealer_id}, '${hardwares[i].hardware_name}', '${JSON.stringify(hardwares[i])}', ${price} , ${admin_cost} , ${dealer_cost})`
                                                                     await sql.query(hardware_data);
                                                                 }
-
-                                                                let hardware_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${hardwarePrice} , 'credit' , '${transection_status}' , 'hardwares', ${(pay_now) ? hardwarePrice : 0} , ${(pay_now) ? 0 : hardwarePrice})`
-                                                                await sql.query(hardware_transection)
+                                                                if (pay_now) {
+                                                                    let hardware_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${hardwarePrice} , 'credit' , '${transection_status}' , 'hardwares', ${hardwarePrice} ,0)`
+                                                                    await sql.query(hardware_transection)
+                                                                } else {
+                                                                    if (dealer_credits_remaining) {
+                                                                        let paid_transection = dealer_credits_copy
+                                                                        let due_transection = hardwarePrice - paid_transection
+                                                                        let hardware_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${hardwarePrice} , 'credit' , '${transection_status}' , 'hardwares', ${paid_transection} , ${due_transection})`
+                                                                        await sql.query(hardware_transection)
+                                                                    } else {
+                                                                        let hardware_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${hardwarePrice} , 'credit' , '${transection_status}' , 'hardwares',0, ${hardwarePrice})`
+                                                                        await sql.query(hardware_transection)
+                                                                    }
+                                                                }
                                                             }
 
-                                                            let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price} ,'credit' , '${transection_status}' , 'services' , ${(pay_now) ? total_price : 0} , ${(pay_now) ? 0 : total_price})`
-                                                            await sql.query(transection_credits)
 
                                                             helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, user_acc_id, loggedUserType, pay_now, service_id)
 
-                                                            let updateChatIds = 'update chat_ids set used=1, user_acc_id="' + user_acc_id + '" where chat_id ="' + chat_id + '"';
+                                                            let updateChatIds = 'update chat_ids set used=1, user_acc_id="' + user_acc_id + '" , start_date = ' + start_date + ' where chat_id ="' + chat_id + '"';
                                                             let chatIdUpdateResult = await sql.query(updateChatIds);
                                                             if (chatIdUpdateResult.affectedRows) {
                                                                 let getChatID = "SELECT * FROM chat_ids WHERE chat_id = '" + chat_id + "'"
@@ -1400,7 +1465,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                                     }
                                                                 })
                                                             }
-                                                            let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + user_acc_id + '" where sim_id ="' + sim_id + '"';
+                                                            let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + user_acc_id + '" , , start_date = ' + start_date + ' where sim_id ="' + sim_id + '"';
                                                             let simIdUpdateResult = await sql.query(updateSimIds)
                                                             if (simIdUpdateResult.affectedRows) {
                                                                 let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id + "'"
@@ -1413,7 +1478,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                             }
 
                                                             if (sim_id2) {
-                                                                let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + user_acc_id + '" where sim_id ="' + sim_id2 + '"';
+                                                                let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + user_acc_id + '" , start_date = ' + start_date + ' where sim_id ="' + sim_id2 + '"';
                                                                 let simIdUpdateResult = await sql.query(updateSimIds)
                                                                 if (simIdUpdateResult.affectedRows) {
                                                                     let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id + "'"
@@ -1426,7 +1491,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 }
                                                             }
 
-                                                            let updatePgpEmails = 'update pgp_emails set used=1, user_acc_id="' + user_acc_id + '" where pgp_email ="' + pgp_email + '"';
+                                                            let updatePgpEmails = 'update pgp_emails set used=1, user_acc_id="' + user_acc_id + '" , start_date = ' + start_date + ' where pgp_email ="' + pgp_email + '"';
                                                             let pgpEmailUpdateResult = await sql.query(updatePgpEmails);
                                                             if (pgpEmailUpdateResult.affectedRows) {
                                                                 let getsimID = "SELECT * FROM pgp_emails WHERE pgp_email = '" + pgp_email + "'"
@@ -1513,13 +1578,13 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 let services = servicesData
                                                                 if (services && services.length) {
                                                                     // if (services.length > 1) {
-                                                                        services.map((item) => {
-                                                                            if (item.status === 'extended') {
-                                                                                results[0].extended_services = item
-                                                                            } else {
-                                                                                results[0].services = item
-                                                                            }
-                                                                        })
+                                                                    services.map((item) => {
+                                                                        if (item.status === 'extended') {
+                                                                            results[0].extended_services = item
+                                                                        } else {
+                                                                            results[0].services = item
+                                                                        }
+                                                                    })
                                                                     // } else {
                                                                     //     results[0].services = services[0]
                                                                     // }
@@ -1918,7 +1983,7 @@ exports.editDevices = async function (req, res) {
                                 let updatePgpEmails =
                                     'update pgp_emails set user_acc_id = "' +
                                     usr_acc_id +
-                                    '",  used=1 where pgp_email ="' +
+                                    '",  used=1 , start_date = ' + date_now + ' where pgp_email ="' +
                                     pgp_email +
                                     '"';
                                 await sql.query(updatePgpEmails);
@@ -1928,13 +1993,13 @@ exports.editDevices = async function (req, res) {
                                     constants.DEVICE_PRE_ACTIVATION
                                 ) {
                                     let updatePrevPgp =
-                                        'update pgp_emails set user_acc_id = null,  used=0 where pgp_email ="' +
+                                        'update pgp_emails set user_acc_id = null,  used=0 , start_date = NULL where pgp_email ="' +
                                         prevPGP +
                                         '"';
                                     await sql.query(updatePrevPgp);
                                 } else {
                                     let updatePrevPgp =
-                                        'update pgp_emails set user_acc_id = null,  used=1 where pgp_email ="' +
+                                        'update pgp_emails set user_acc_id = null,  used=1 ,  end_date = ' + date_now + ' where pgp_email ="' +
                                         prevPGP +
                                         '"';
                                     await sql.query(updatePrevPgp);
@@ -1945,7 +2010,7 @@ exports.editDevices = async function (req, res) {
                                 let updateChatIds =
                                     'update chat_ids set user_acc_id = "' +
                                     usr_acc_id +
-                                    '", used=1 where chat_id ="' +
+                                    '", used=1 , start_date = ' + date_now + ' where chat_id ="' +
                                     chat_id +
                                     '"';
                                 await sql.query(updateChatIds);
@@ -1954,13 +2019,13 @@ exports.editDevices = async function (req, res) {
                                     constants.DEVICE_PRE_ACTIVATION
                                 ) {
                                     let updatePrevChat =
-                                        'update chat_ids set user_acc_id = null,  used=0 where chat_id ="' +
+                                        'update chat_ids set user_acc_id = null,  used=0 , start_date = NULL where chat_id ="' +
                                         prevChatID +
                                         '"';
                                     await sql.query(updatePrevChat);
                                 } else {
                                     let updatePrevChat =
-                                        'update chat_ids set user_acc_id = null,  used=1 where chat_id ="' +
+                                        'update chat_ids set user_acc_id = null,  used=1 , end_date = ' + date_now + ' where chat_id ="' +
                                         prevChatID +
                                         '"';
                                     await sql.query(updatePrevChat);
@@ -1971,7 +2036,7 @@ exports.editDevices = async function (req, res) {
                                 let updateSimIds =
                                     'update sim_ids set user_acc_id = "' +
                                     usr_acc_id +
-                                    '",  used=1 where sim_id ="' +
+                                    '",  used=1 , start_date = ' + date_now + ' where sim_id ="' +
                                     sim_id +
                                     '"';
                                 await sql.query(updateSimIds);
@@ -1980,13 +2045,13 @@ exports.editDevices = async function (req, res) {
                                     constants.DEVICE_PRE_ACTIVATION
                                 ) {
                                     let updatePrevSim =
-                                        'update sim_ids set user_acc_id = null,  used=0 where sim_id ="' +
+                                        'update sim_ids set user_acc_id = null,  used=0 , start_date = NULL where sim_id ="' +
                                         prevSimId +
                                         '"';
                                     await sql.query(updatePrevSim);
                                 } else {
                                     let updatePrevSim =
-                                        'update sim_ids set user_acc_id = null,  used=1 where sim_id ="' +
+                                        'update sim_ids set user_acc_id = null,  used=1 , end_date = ' + date_now + ' where sim_id ="' +
                                         prevSimId +
                                         '"';
                                     await sql.query(updatePrevSim);
@@ -2192,13 +2257,13 @@ exports.editDevices = async function (req, res) {
                             let services = servicesData;
                             if (services && services.length) {
                                 // if (services.length > 1) {
-                                    services.map((item) => {
-                                        if (item.status === 'extended') {
-                                            rsltq[0].extended_services = item
-                                        } else {
-                                            rsltq[0].services = item
-                                        }
-                                    })
+                                services.map((item) => {
+                                    if (item.status === 'extended') {
+                                        rsltq[0].extended_services = item
+                                    } else {
+                                        rsltq[0].services = item
+                                    }
+                                })
                                 // } else {
                                 //     rsltq[0].services = services[0]
                                 // }
@@ -2640,13 +2705,13 @@ exports.extendServices = async function (req, res) {
                             let services = servicesData;
                             if (services && services.length) {
                                 // if (services.length > 1) {
-                                    services.map((item) => {
-                                        if (item.status === 'extended') {
-                                            rsltq[0].extended_services = item
-                                        } else {
-                                            rsltq[0].services = item
-                                        }
-                                    })
+                                services.map((item) => {
+                                    if (item.status === 'extended') {
+                                        rsltq[0].extended_services = item
+                                    } else {
+                                        rsltq[0].services = item
+                                    }
+                                })
                                 // } else {
                                 //     rsltq[0].services = services[0]
                                 // }
@@ -2837,13 +2902,13 @@ exports.cancelExtendedServices = async function (req, res) {
                                     let services = servicesData;
                                     if (services && services.length) {
                                         // if (services.length > 1) {
-                                            services.map((item) => {
-                                                if (item.status === 'extended') {
-                                                    results[0].extended_services = item
-                                                } else {
-                                                    results[0].services = item
-                                                }
-                                            })
+                                        services.map((item) => {
+                                            if (item.status === 'extended') {
+                                                results[0].extended_services = item
+                                            } else {
+                                                results[0].services = item
+                                            }
+                                        })
                                         // } else {
                                         //     results[0].services = services[0]
                                         // }
@@ -3248,13 +3313,13 @@ exports.unflagDevice = async function (req, res) {
                             let services = servicesData;
                             if (services && services.length) {
                                 // if (services.length > 1) {
-                                    services.map((item) => {
-                                        if (item.status === 'extended') {
-                                            resquery[0].extended_services = item
-                                        } else {
-                                            resquery[0].services = item
-                                        }
-                                    })
+                                services.map((item) => {
+                                    if (item.status === 'extended') {
+                                        resquery[0].extended_services = item
+                                    } else {
+                                        resquery[0].services = item
+                                    }
+                                })
                                 // } else {
                                 //     resquery[0].services = services[0]
                                 // }
@@ -3380,13 +3445,13 @@ exports.flagDevice = async function (req, res) {
                         let services = servicesData;
                         if (services && services.length) {
                             // if (services.length > 1) {
-                                services.map((item) => {
-                                    if (item.status === 'extended') {
-                                        resquery[0].extended_services = item
-                                    } else {
-                                        resquery[0].services = item
-                                    }
-                                })
+                            services.map((item) => {
+                                if (item.status === 'extended') {
+                                    resquery[0].extended_services = item
+                                } else {
+                                    resquery[0].services = item
+                                }
+                            })
                             // } else {
                             //     resquery[0].services = services[0]
                             // }
@@ -3490,13 +3555,13 @@ exports.transferUser = async function (req, res) {
                     let services = servicesData;
                     if (services && services.length) {
                         // if (services.length > 1) {
-                            services.map((item) => {
-                                if (item.status === 'extended') {
-                                    resquery[0].extended_services = item
-                                } else {
-                                    resquery[0].services = item
-                                }
-                            })
+                        services.map((item) => {
+                            if (item.status === 'extended') {
+                                resquery[0].extended_services = item
+                            } else {
+                                resquery[0].services = item
+                            }
+                        })
                         // } else {
                         //     resquery[0].services = services[0]
                         // }
@@ -3720,13 +3785,13 @@ exports.transferDeviceProfile = async function (req, res) {
                                     let services = servicesData;
                                     if (services && services.length) {
                                         // if (services.length > 1) {
-                                            services.map((item) => {
-                                                if (item.status === 'extended') {
-                                                    resquery[0].extended_services = item
-                                                } else {
-                                                    resquery[0].services = item
-                                                }
-                                            })
+                                        services.map((item) => {
+                                            if (item.status === 'extended') {
+                                                resquery[0].extended_services = item
+                                            } else {
+                                                resquery[0].services = item
+                                            }
+                                        })
                                         // } else {
                                         //     resquery[0].services = services[0]
                                         // }
@@ -4167,13 +4232,13 @@ exports.suspendAccountDevices = async function (req, res) {
                                     let services = servicesData;
                                     if (services && services.length) {
                                         // if (services.length > 1) {
-                                            services.map((item) => {
-                                                if (item.status === 'extended') {
-                                                    resquery[0].extended_services = item
-                                                } else {
-                                                    resquery[0].services = item
-                                                }
-                                            })
+                                        services.map((item) => {
+                                            if (item.status === 'extended') {
+                                                resquery[0].extended_services = item
+                                            } else {
+                                                resquery[0].services = item
+                                            }
+                                        })
                                         // } else {
                                         //     resquery[0].services = services[0]
                                         // }
@@ -4279,13 +4344,13 @@ exports.suspendAccountDevices = async function (req, res) {
                                         let services = servicesData;
                                         if (services && services.length) {
                                             // if (services.length > 1) {
-                                                services.map((item) => {
-                                                    if (item.status === 'extended') {
-                                                        resquery[0].extended_services = item
-                                                    } else {
-                                                        resquery[0].services = item
-                                                    }
-                                                })
+                                            services.map((item) => {
+                                                if (item.status === 'extended') {
+                                                    resquery[0].extended_services = item
+                                                } else {
+                                                    resquery[0].services = item
+                                                }
+                                            })
                                             // } else {
                                             //     resquery[0].services = services[0]
                                             // }
@@ -4427,13 +4492,13 @@ exports.activateDevice = async function (req, res) {
                                     let services = servicesData;
                                     if (services && services.length) {
                                         // if (services.length > 1) {
-                                            services.map((item) => {
-                                                if (item.status === 'extended') {
-                                                    resquery[0].extended_services = item
-                                                } else {
-                                                    resquery[0].services = item
-                                                }
-                                            })
+                                        services.map((item) => {
+                                            if (item.status === 'extended') {
+                                                resquery[0].extended_services = item
+                                            } else {
+                                                resquery[0].services = item
+                                            }
+                                        })
                                         // } else {
                                         //     resquery[0].services = services[0]
                                         // }
@@ -4542,13 +4607,13 @@ exports.activateDevice = async function (req, res) {
                                         let services = servicesData;
                                         if (services && services.length) {
                                             // if (services.length > 1) {
-                                                services.map((item) => {
-                                                    if (item.status === 'extended') {
-                                                        resquery[0].extended_services = item
-                                                    } else {
-                                                        resquery[0].services = item
-                                                    }
-                                                })
+                                            services.map((item) => {
+                                                if (item.status === 'extended') {
+                                                    resquery[0].extended_services = item
+                                                } else {
+                                                    resquery[0].services = item
+                                                }
+                                            })
                                             // } else {
                                             //     resquery[0].services = services[0]
                                             // }
@@ -4718,13 +4783,13 @@ exports.wipeDevice = async function (req, res) {
                     let services = servicesData;
                     if (services && services.length) {
                         // if (services.length > 1) {
-                            services.map((item) => {
-                                if (item.status === 'extended') {
-                                    resquery[0].extended_services = item
-                                } else {
-                                    resquery[0].services = item
-                                }
-                            })
+                        services.map((item) => {
+                            if (item.status === 'extended') {
+                                resquery[0].extended_services = item
+                            } else {
+                                resquery[0].services = item
+                            }
+                        })
                         // } else {
                         //     resquery[0].services = services[0]
                         // }
@@ -4829,13 +4894,13 @@ exports.connectDevice = async function (req, res) {
                         let services = servicesData;
                         if (services && services.length) {
                             // if (services.length > 1) {
-                                services.map((item) => {
-                                    if (item.status === 'extended') {
-                                        results[0].extended_services = item
-                                    } else {
-                                        results[0].services = item
-                                    }
-                                })
+                            services.map((item) => {
+                                if (item.status === 'extended') {
+                                    results[0].extended_services = item
+                                } else {
+                                    results[0].services = item
+                                }
+                            })
                             // } else {
                             //     results[0].services = services[0]
                             // }
@@ -5016,6 +5081,7 @@ exports.applySettings = async function (req, res) {
                 if (err) {
                     console.log("apply setting and profile query error: ", err);
                 }
+
 
                 if (rslts && rslts.insertId) {
                     let isOnline = await device_helpers.isDeviceOnline(device_id);

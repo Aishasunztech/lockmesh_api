@@ -79,27 +79,30 @@ exports.apkList = async function (req, res) {
                         let permissionC = 0;
 
                         if (loggedUserType !== Constants.AUTO_UPDATE_ADMIN) {
-                            let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'apk', loggedUserId, sdealerList);
+                            let permissionDealers = await helpers.getDealersAgainstPermissions(results[i].id, 'apk', loggedUserId, sdealerList, loggedUserType);
 
-                            if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
+                            results[i].dealers = permissionDealers.allDealers;
+                            results[i].statusAll = permissionDealers.statusAll;
 
-                                let Update_sdealerList = sdealerList.map((dealer) => {
-                                    return {
-                                        dealer_id: dealer,
-                                        dealer_type: permissionDealers[0].dealer_type,
-                                        permission_by: permissionDealers[0].permission_by
-                                    }
-                                })
-                                let final_list = Update_sdealerList.filter((item) => item.dealer_id !== loggedUserId)
-                                results[i].dealers = JSON.stringify(final_list);
-                                results[i].statusAll = true
-                            } else {
-                                if (permissionDealers.length) {
-                                    permissionDealers = permissionDealers.filter((item) => item.dealer_id !== loggedUserId)
-                                }
-                                results[i].dealers = JSON.stringify(permissionDealers);
-                                results[i].statusAll = false
-                            }
+                            // if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
+
+                            //     let Update_sdealerList = sdealerList.map((dealer) => {
+                            //         return {
+                            //             dealer_id: dealer,
+                            //             dealer_type: permissionDealers[0].dealer_type,
+                            //             permission_by: permissionDealers[0].permission_by
+                            //         }
+                            //     })
+                            //     let final_list = Update_sdealerList.filter((item) => item.dealer_id !== loggedUserId)
+                            //     results[i].dealers = JSON.stringify(final_list);
+                            //     results[i].statusAll = true
+                            // } else {
+                            //     if (permissionDealers.length) {
+                            //         permissionDealers = permissionDealers.filter((item) => item.dealer_id !== loggedUserId)
+                            //     }
+                            //     results[i].dealers = JSON.stringify(permissionDealers);
+                            //     results[i].statusAll = false
+                            // }
 
                             policies = await sql.query(`SELECT * FROM policy LEFT JOIN policy_apps on (policy.id = policy_apps.policy_id) WHERE policy_apps.apk_id=${results[i].id} AND policy.delete_status=0`)
                             permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : [];
@@ -120,6 +123,7 @@ exports.apkList = async function (req, res) {
                         }
                         obj = {
                             apk_id: results[i].id,
+                            statusAll: results[i].statusAll,
                             apk_name: results[i].app_name,
                             logo: results[i].logo,
                             apk: results[i].apk,

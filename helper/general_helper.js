@@ -1971,10 +1971,12 @@ module.exports = {
 		})
 		return user_acc_ids;
 	},
-	getDealersAgainstPermissions: async function (permission_id, permission_type, loggedUserId, subDealers = []) {
+	getDealersAgainstPermissions: async function (permission_id, permission_type, loggedUserId, subDealers = [], loggedUserType = '') {
 
 		let finalDealers = [];
+		let allDealers = [];
 		let condition = '';
+		let statusAll = false;
 		// console.log("subDealers ", subDealers);
 		// if (subDealers && subDealers.length)
 		// subDealers = subDealers
@@ -1985,28 +1987,66 @@ module.exports = {
 				subDealers = subDealers.map((item) => item.dealer_id);
 			}
 			// console.log("filtered subDealers ", subDealers);
-			condition = ` OR (dealer_type = 'admin' AND (dealer_id IN (${subDealers}) OR dealer_id = 0) )`;
+			if (permission_type === "package" && loggedUserType === "dealer") {
+				condition = ` OR (dealer_type = 'dealer' AND (dealer_id IN (${subDealers}) OR dealer_id = 0) )`;
+			} else {
+				condition = ` OR (dealer_type = 'admin' AND (dealer_id IN (${subDealers}) OR dealer_id = 0) )`;
+			}
 		} else {
-			condition = ` OR (dealer_type = 'admin' AND dealer_id = 0)`;
+			if (permission_type === "package" && loggedUserType === "dealer") {
+				condition = ` OR (dealer_type = 'dealer' AND dealer_id = 0)`;
+			} else {
+				condition = ` OR (dealer_type = 'admin' AND dealer_id = 0)`;
+			}
 		}
 		let selectDealerQ = `SELECT dealer_id, dealer_type, permission_by FROM dealer_permissions WHERE permission_id= ${permission_id} AND permission_type ='${permission_type}' AND (permission_by=${loggedUserId} ${condition})`; // dealer_id = ${loggedUserId} OR 
 		console.log("selectDealerQ ", selectDealerQ)
-		let permittedDealers = await sql.query(selectDealerQ);
+		let results = await sql.query(selectDealerQ);
 
-		// console.log("permittedDealers results:: ", permittedDealers);
+		console.log("permittedDealers results:: ", results);
 
-		if (permittedDealers.length > 0) {
-			let check = permittedDealers.find((dlr) => dlr.dealer_id == 0);
-			// console.log("check=======> ", check);
-			if (check) {
-				finalDealers.push(check);
-			} else {
-				finalDealers = permittedDealers //.map((prm) => prm.dealer_id)
+		if (results.length > 0) {
+			for (let i = 0; i < results.length; i++) {
+				if (results[i].dealer_id == 0) {
+					let Update_sdealerList = subDealers.map((dealer) => {
+						return {
+							dealer_id: dealer,
+							dealer_type: results[i].dealer_type,
+							permission_by: results[i].permission_by
+						}
+					})
+
+					finalDealers.push(...Update_sdealerList);
+					statusAll = true
+				} else {
+					finalDealers.push(results[i]);
+				}
 			}
 		}
-		// console.log("finalDealers", finalDealers);
+		console.log("finalDealers", finalDealers);
 
-		return finalDealers
+
+		if (loggedUserType !== "admin") {
+			let deleteIds = [];
+			finalDealers.forEach((item) => {
+				// console.log("item ", item);
+				if (item.dealer_type === "admin") {
+					let index = finalDealers.findIndex((sd) => sd.dealer_type === "dealer" && sd.dealer_id === item.dealer_id);
+					deleteIds.push(index);
+				}
+			})
+			// console.log("deleteIds index: ", deleteIds);
+			allDealers = finalDealers.filter((item, i) => !deleteIds.includes(i));
+		} else {
+			allDealers = finalDealers;
+		}
+
+		allDealers = allDealers.filter((item) => item.dealer_id !== loggedUserId)
+
+		return {
+			allDealers: JSON.stringify(allDealers),
+			statusAll
+		}
 	},
 	savePermission: async function (prevDealers, allDealers, permissionType, permissionId, loggedUserId, loggedUserType) {
 		// this query is to avoid duplication records
@@ -2084,4 +2124,52 @@ module.exports = {
 			dealerCount
 		}
 	},
+	updatePendingTransactions: async function (dealerId, credits) {
+		let get_last_panding_transections_query = `SELECT * from financial_account_transections WHERE user_id = ${dealerId} AND status = 'pending' ORDER BY created_at asc`
+		let last_panding_transections = await sql.query(get_last_panding_transections_query)
+		console.log(last_panding_transections.length);
+		if (last_panding_transections && last_panding_transections.length) {
+			for (let i = 0; i < last_panding_transections.length; i++) {
+				let paid_credits = 0
+				let due_credits = 0
+				if (credits > 0) {
+					if (credits >= last_panding_transections[i].due_credits) {
+						credits = credits - last_panding_transections[i].due_credits
+						paid_credits = last_panding_transections[i].due_credits
+						due_credits = 0
+						sql.query(`UPDATE financial_account_transections SET paid_credits = paid_credits + ${paid_credits} , due_credits = ${due_credits} , status = 'transferred' WHERE id = ${last_panding_transections[i].id}`)
+						
+
+					} else {
+						due_credits = last_panding_transections[i].due_credits - credits
+						paid_credits = credits
+						credits = 0
+						sql.query(`UPDATE financial_account_transections SET paid_credits = paid_credits + ${paid_credits} , due_credits = ${due_credits} WHERE id = ${last_panding_transections[i].id}`)
+					}
+				} else {
+					break
+				}
+			}
+			let allDealers = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_id = ${dealerId}`);
+			if (allDealers.length) {
+				let item = allDealers[0]
+				let getDate = moment().subtract(22, 'day').format('YYYY-MM-DD');
+				let getTransaction = await sql.query("SELECT * FROM financial_account_transections " +
+					"WHERE user_id = " + item.dealer_id + " AND status = 'pending' AND DATE(created_at) >= " + getDate + " LIMIT 1");
+				if (getTransaction.length) {
+					let now = moment();
+					let end = moment(getTransaction[0].created_at).format('YYYY-MM-DD');
+					let duration = now.diff(end, 'days');
+
+					if (duration > 21 && duration <= 60) {
+						await sql.query("UPDATE dealers set account_balance_status = 'restricted' WHERE dealer_id = " + item.dealer_id);
+					} else if (duration > 60) {
+						await sql.query("UPDATE dealers set account_balance_status = 'suspended' WHERE dealer_id = " + item.dealer_id);
+					}
+				} else {
+					await sql.query("UPDATE dealers set account_balance_status = 'active' WHERE dealer_id = " + item.dealer_id);
+				}
+			}
+		}
+	}
 }
