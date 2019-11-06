@@ -366,6 +366,7 @@ exports.generateSalesReport = async function (req, res) {
 
             packages.map(function (value, index) {
 
+                let name        = JSON.parse(value.item_data).pkg_name;
                 let cost_price  = 0;
                 let sale_price  = 0;
                 let profit_loss = 0;
@@ -379,9 +380,20 @@ exports.generateSalesReport = async function (req, res) {
                     totalCost       += cost_price;
                     totalSale       += profit_loss;
 
+                    packagesData.push({
+                        'type': 'Package',
+                        'name': name.replace(/_/g, ' '),
+                        'dealer_pin': value.dealer_pin,
+                        'device_id': value.device_id,
+                        'cost_price': cost_price,
+                        'sale_price': sale_price,
+                        'profit_loss': profit_loss,
+                        'created_at': value.created_at,
+                    })
+
                 } else {
 
-                    if (user_type === Constants.DEALER) {
+                    if (value.item_dealer_cost != 0 && user_type === Constants.DEALER) {
                         cost_price = parseInt(value.item_dealer_cost);
                         sale_price = parseInt(value.total_credits);
                         profit_loss = sale_price - cost_price;
@@ -389,27 +401,38 @@ exports.generateSalesReport = async function (req, res) {
                         totalCost       += cost_price;
                         totalSale       += profit_loss;
 
-                    } else {
+                        packagesData.push({
+                            'type': 'Package',
+                            'name': name.replace(/_/g, ' '),
+                            'dealer_pin': value.dealer_pin,
+                            'device_id': value.device_id,
+                            'cost_price': cost_price,
+                            'sale_price': sale_price,
+                            'profit_loss': profit_loss,
+                            'created_at': value.created_at,
+                        })
+
+                    } else if (user_type === Constants.ADMIN){
                         cost_price = parseInt(value.item_admin_cost);
                         sale_price = parseInt(value.item_dealer_cost);
                         profit_loss = sale_price - cost_price;
 
                         totalCost       += cost_price;
                         totalSale       += profit_loss;
+
+                        packagesData.push({
+                            'type': 'Package',
+                            'name': name.replace(/_/g, ' '),
+                            'dealer_pin': value.dealer_pin,
+                            'device_id': value.device_id,
+                            'cost_price': cost_price,
+                            'sale_price': sale_price,
+                            'profit_loss': profit_loss,
+                            'created_at': value.created_at,
+                        })
                     }
                 }
 
-                let name = JSON.parse(value.item_data).pkg_name;
-                packagesData.push({
-                    'type': 'Package',
-                    'name': name.replace(/_/g, ' '),
-                    'dealer_pin': value.dealer_pin,
-                    'device_id': value.device_id,
-                    'cost_price': cost_price,
-                    'sale_price': sale_price,
-                    'profit_loss': profit_loss,
-                    'created_at': value.created_at,
-                })
             });
 
         }
