@@ -914,7 +914,7 @@ exports.modifyItemPrice = async function (req, res) {
                                     })
                                     return
                                 } else {
-                                    let insertQ = "INSERT INTO dealer_Hardwares_prices (Hardware_id,dealer_id,created_by,price) VALUES (" + id + ", " + verify.user.dealer_id + " , '" + user_type + "' , " + price + ") "
+                                    let insertQ = "INSERT INTO dealer_hardwares_prices (Hardware_id,dealer_id,created_by,price) VALUES (" + id + ", " + verify.user.dealer_id + " , '" + user_type + "' , " + price + ") "
                                     sql.query(insertQ, function (err, result) {
                                         if (err) {
                                             console.log(err);

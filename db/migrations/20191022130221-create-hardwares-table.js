@@ -22,6 +22,7 @@ module.exports = {
       },
       delete_status: {
         type: Sequelize.BOOLEAN,
+        defaultValue: 0
       },
       created_at: {
         type: 'TIMESTAMP',
