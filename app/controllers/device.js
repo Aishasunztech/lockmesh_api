@@ -1375,7 +1375,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                                         await sql.query(transection_credits)
                                                                     }
                                                                 } else {
-                                                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${total_price} ,'credit' , 'pending' , 'services' , 0 ,${total_price})`
+                                                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price} ,'credit' , 'pending' , 'services' , 0 ,${total_price})`
                                                                     await sql.query(transection_credits)
                                                                     dealer_credits_remaining = false
                                                                 }
@@ -1469,7 +1469,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                                     }
                                                                 })
                                                             }
-                                                            let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + user_acc_id + '" , , start_date = "' + start_date + '" where sim_id ="' + sim_id + '"';
+                                                            let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + user_acc_id + '" ,start_date = "' + start_date + '" where sim_id ="' + sim_id + '"';
                                                             let simIdUpdateResult = await sql.query(updateSimIds)
                                                             if (simIdUpdateResult.affectedRows) {
                                                                 let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id + "'"
@@ -2055,7 +2055,7 @@ exports.editDevices = async function (req, res) {
                                     await sql.query(updatePrevSim);
                                 } else {
                                     let updatePrevSim =
-                                        'update sim_ids set user_acc_id = null,  used=1 , end_date = "' + date_now + '" where sim_id ="' +
+                                        'update sim_ids set user_acc_id = null,  used=1 , expiry_date = "' + date_now + '" where sim_id ="' +
                                         prevSimId +
                                         '"';
                                     await sql.query(updatePrevSim);
@@ -5467,7 +5467,15 @@ exports.deleteUnlinkDevice = async function (req, res) {
                     let admin_hardware_profit = 0
                     let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
                     for (let device of req.body.devices) {
-                        if (action == 'pre-active') {
+                        let statusChangeQuery = "UPDATE usr_acc SET del_status='" + 1 + "' WHERE device_id='" + device.usr_device_id + "'";
+                        let resp = await sql.query(statusChangeQuery)
+                        if (resp.affectedRows) {
+                            await sql.query("UPDATE pgp_emails set user_acc_id = null , used = 0 , start_date = null where pgp_email ='" + device.pgp_email + "'")
+                            await sql.query("UPDATE chat_ids set user_acc_id = null , used = 0 , start_date = null where chat_id ='" + device.chat_id + "'")
+                            await sql.query("UPDATE sim_ids set user_acc_id = null , used = 0 , start_date = null where sim_id ='" + device.sim_id + "' OR sim_id ='" + device.sim_id2 + "'")
+                            let deleteHistoryQuery = "UPDATE acc_action_history SET del_status='1' WHERE user_acc_id='" + device.id + "' AND dealer_id = '" + verify.user.id + "' AND action = 'PRE-ACTIVATED'";
+                            await sql.query(deleteHistoryQuery)
+                            deletedDevices.push(device.id);
                             let user_acc_id = device.id
                             let getBillingPkgs = "select * from services_data where user_acc_id = " + user_acc_id + " AND status = 'active'"
                             let bills = await sql.query(getBillingPkgs);
@@ -5495,8 +5503,9 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                     await sql.query(update_transection)
                                     let update_profits_transections = "UPDATE financial_account_transections SET status = 'cancelled' WHERE user_dvc_acc_id = " + user_acc_id + " AND status = 'holding' AND type = 'services'"
                                     await sql.query(update_profits_transections)
-                                    let updateCredits = "UPDATE financial_account_balance set credits = credits + " + Number(bills[0].total_credits) + " WHERE dealer_id = " + verify.user.dealer_id
-                                    await sql.query(updateCredits);
+                                    // let updateCredits = "UPDATE financial_account_balance set credits = credits + " + Number(bills[0].total_credits) + " WHERE dealer_id = " + verify.user.dealer_id
+                                    // await sql.query(updateCredits);
+                                    refundedCredits = refundedCredits + Number(bills[0].total_credits);
                                 }
                                 else {
                                     refundedCredits = refundedCredits + Number(bills[0].total_credits);
@@ -5543,16 +5552,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                 }
                             }
 
-                            let statusChangeQuery = "UPDATE usr_acc SET del_status='" + 1 + "' WHERE device_id='" + device.usr_device_id + "'";
-                            let resp = await sql.query(statusChangeQuery)
-                            if (resp.affectedRows) {
-                                await sql.query("UPDATE pgp_emails set user_acc_id = null , used = 0 where pgp_email ='" + device.pgp_email + "'")
-                                await sql.query("UPDATE chat_ids set user_acc_id = null , used = 0 where chat_id ='" + device.chat_id + "'")
-                                await sql.query("UPDATE sim_ids set user_acc_id = null , used = 0 where sim_id ='" + device.sim_id + "' OR sim_id ='" + device.sim_id2 + "'")
-                                let deleteHistoryQuery = "UPDATE acc_action_history SET del_status='1' WHERE user_acc_id='" + device.id + "' AND dealer_id = '" + verify.user.id + "' AND action = 'PRE-ACTIVATED'";
-                                await sql.query(deleteHistoryQuery)
-                                deletedDevices.push(device.id);
-                            }
+
                             if (admin_profit !== 0) {
                                 let type = ""
                                 if (admin_profit > 0) {
@@ -5612,7 +5612,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
                         }
                         else {
                             deleteError += 1;
-                            NotDeleted.push(device.id)
+                            NotDeleted.push(device.device_id)
                         }
                     }
                     if (refundedCredits !== 0) {
