@@ -1867,12 +1867,12 @@ module.exports = {
 			}
 
 		} else if (loggedDealerType === Constants.SDEALER) {
-			if (hardwareData.length) {
-				for (let i = 0; i < packagesData.length; i++) {
+			if (hardwaresData.length) {
+				for (let i = 0; i < hardwaresData.length; i++) {
 					let adminHardwarePrice = await sql.query("SELECT * FROM dealer_hardwares_prices WHERE hardware_id = " + hardwaresData[i].id + " AND created_by = 'admin'")
 					let adminPrice = null
 					if (adminHardwarePrice.length) {
-						adminPrice = adminhardwarePrice[0].price
+						adminPrice = adminHardwarePrice[0].price
 					}
 					hardwares.map((hardware) => {
 						if (hardware.id === hardwaresData[i].id) {
