@@ -665,5 +665,25 @@ router.get('/update_dealer_ids_product_tables', async function (req, res) {
 })
 
 
+router.get('/add-existing-dealers-accounts', async function (req, res) {
+    let query = "SELECT * FROM dealers"
+    sql.query(query, function (err, result) {
+        if (err) {
+            console.log(err);
+            return res.send("QUERY ERROR")
+        }
+        if (result && result.length) {
+            result.map(async (item) => {
+                let dealer_account = await sql.query(`SELECT * FROM financial_account_balance WHERE dealer_id = ${item.dealer_id}`)
+                if (dealer_account.length == 0) {
+                    sql.query("INSERT INTO financial_account_balance(dealer_id) VALUES(" + item.dealer_id + ")")
+                }
+            })
+            return res.send("ACCOUNTS ADDED SUCCESSFULLY")
+        }
+    })
+})
+
+
 
 module.exports = router;
