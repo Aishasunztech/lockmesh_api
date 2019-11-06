@@ -1987,7 +1987,7 @@ exports.editDevices = async function (req, res) {
                                 let updatePgpEmails =
                                     'update pgp_emails set user_acc_id = "' +
                                     usr_acc_id +
-                                    '",  used=1 , start_date = ' + date_now + ' where pgp_email ="' +
+                                    '",  used=1 , start_date = "' + date_now + '" where pgp_email ="' +
                                     pgp_email +
                                     '"';
                                 await sql.query(updatePgpEmails);
@@ -2014,7 +2014,7 @@ exports.editDevices = async function (req, res) {
                                 let updateChatIds =
                                     'update chat_ids set user_acc_id = "' +
                                     usr_acc_id +
-                                    '", used=1 , start_date = ' + date_now + ' where chat_id ="' +
+                                    '", used=1 , start_date = "' + date_now + '" where chat_id ="' +
                                     chat_id +
                                     '"';
                                 await sql.query(updateChatIds);
@@ -2040,7 +2040,7 @@ exports.editDevices = async function (req, res) {
                                 let updateSimIds =
                                     'update sim_ids set user_acc_id = "' +
                                     usr_acc_id +
-                                    '",  used=1 , start_date = ' + date_now + ' where sim_id ="' +
+                                    '",  used=1 , start_date = "' + date_now + '" where sim_id ="' +
                                     sim_id +
                                     '"';
                                 await sql.query(updateSimIds);

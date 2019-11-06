@@ -560,6 +560,17 @@ exports.generateSalesReport = async function (req, res) {
                     totalCost       += cost_price;
                     totalSale       += sale_price;
 
+                    hardwaresData.push({
+                        'type': 'Hardware',
+                        'name': value.hardware_name,
+                        'dealer_pin': value.dealer_pin,
+                        'device_id': value.device_id,
+                        'cost_price': cost_price,
+                        'sale_price': sale_price,
+                        'profit_loss': profit_loss,
+                        'created_at': value.created_at,
+                    })
+
                 } else {
 
                     if (value.item_dealer_cost != 0 && user_type === Constants.DEALER) {
@@ -569,6 +580,18 @@ exports.generateSalesReport = async function (req, res) {
 
                         totalCost       += cost_price;
                         totalSale       += sale_price;
+
+                        hardwaresData.push({
+                            'type': 'Hardware',
+                            'name': value.hardware_name,
+                            'dealer_pin': value.dealer_pin,
+                            'device_id': value.device_id,
+                            'cost_price': cost_price,
+                            'sale_price': sale_price,
+                            'profit_loss': profit_loss,
+                            'created_at': value.created_at,
+                        })
+
                     } else if (user_type === Constants.ADMIN){
                         cost_price = parseInt(value.admin_cost_credits);
                         sale_price = parseInt(value.dealer_cost_credits);
@@ -576,20 +599,21 @@ exports.generateSalesReport = async function (req, res) {
 
                         totalCost       += cost_price;
                         totalSale       += sale_price;
+
+                        hardwaresData.push({
+                            'type': 'Hardware',
+                            'name': value.hardware_name,
+                            'dealer_pin': value.dealer_pin,
+                            'device_id': value.device_id,
+                            'cost_price': cost_price,
+                            'sale_price': sale_price,
+                            'profit_loss': profit_loss,
+                            'created_at': value.created_at,
+                        })
                     }
 
                 }
 
-                hardwaresData.push({
-                    'type': 'Hardware',
-                    'name': value.hardware_name,
-                    'dealer_pin': value.dealer_pin,
-                    'device_id': value.device_id,
-                    'cost_price': cost_price,
-                    'sale_price': sale_price,
-                    'profit_loss': profit_loss,
-                    'created_at': value.created_at,
-                })
             });
 
         }
