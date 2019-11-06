@@ -18,7 +18,7 @@ const { sql } = require("../../config/database");
 const device_helpers = require("../../helper/device_helpers");
 const helpers = require("../../helper/general_helper");
 const verifyToken = require("../../config/auth");
-const sockets = require("../../routes/sockets");
+// const sockets = require("../../routes/sockets");
 
 // constants
 const constants = require("../../constants/Application");
@@ -122,6 +122,8 @@ exports.getFilteredBulkDevices = async function (req, res) {
                         let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
                         let sim_ids = await device_helpers.getSimids(user_acc_ids);
                         let chat_ids = await device_helpers.getChatids(user_acc_ids);
+                        let servicesData = await device_helpers.getServicesData(user_acc_ids)
+
                         // let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
 
                         for (var i = 0; i < results.length; i++) {
@@ -129,17 +131,22 @@ exports.getFilteredBulkDevices = async function (req, res) {
                             if (pgp_email) {
                                 results[i].pgp_email = pgp_email.pgp_email
                             }
-                            let sim_id = sim_ids.find(sim_id => sim_id.user_acc_id === results[i].id);
-                            if (sim_id) {
-                                results[i].sim_id = sim_id.sim_id
+                            let sim_idArray = sim_ids.filter(sim_id => sim_id.user_acc_id === results[i].id);
+                            if (sim_idArray && sim_idArray.length) {
+                                results[i].sim_id = sim_idArray[0].sim_id
+                                results[i].sim_id2 = sim_idArray[1] ? sim_idArray[1].sim_id : "N/A"
                             }
                             let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === results[i].id);
                             if (chat_id) {
                                 results[i].chat_id = chat_id.chat_id
                             }
+                            let services = servicesData.find(data => data.user_acc_id === results[i].id);
+                            if (services) {
+                                results[i].services = services
+                            }
                             // let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
                             // if (lastOnline) {
-                                results[i].lastOnline = results[i].last_login
+                            results[i].lastOnline = results[i].last_login
                             // }
                             results[i].finalStatus = device_helpers.checkStatus(
                                 results[i]
@@ -303,6 +310,8 @@ exports.suspendBulkAccountDevices = async function (req, res) {
                     let pgp_emails = await device_helpers.getPgpEmails(resquery[0].id);
                     let sim_ids = await device_helpers.getSimids(resquery[0].id);
                     let chat_ids = await device_helpers.getChatids(resquery[0].id);
+                    let servicesData = await device_helpers.getServicesData(resquery[0].id)
+
                     if (resquery.length) {
                         resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
                         if (pgp_emails[0] && pgp_emails[0].pgp_email) {
@@ -310,10 +319,9 @@ exports.suspendBulkAccountDevices = async function (req, res) {
                         } else {
                             resquery[0].pgp_email = "N/A"
                         }
-                        if (sim_ids[0] && sim_ids[0].sim_id) {
-                            resquery[0].sim_id = sim_ids[0].sim_id
-                        } else {
-                            resquery[0].sim_id = "N/A"
+                        if (sim_ids && sim_ids.length) {
+                            resquery[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
+                            resquery[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
                         }
                         if (chat_ids[0] && chat_ids[0].chat_id) {
                             resquery[0].chat_id = chat_ids[0].chat_id
@@ -321,6 +329,10 @@ exports.suspendBulkAccountDevices = async function (req, res) {
                         else {
                             resquery[0].chat_id = "N/A"
                         }
+                        if (servicesData[0]) {
+                            resquery[0].services = servicesData[0]
+                        }
+
 
                         SuspendDevices.push(resquery[0]);
 
@@ -328,10 +340,10 @@ exports.suspendBulkAccountDevices = async function (req, res) {
                             resquery[0],
                             constants.DEVICE_SUSPENDED
                         );
-                        sockets.sendDeviceStatus(
-                            resquery[0].device_id,
-                            "suspended"
-                        );
+                        // sockets.sendDeviceStatus(
+                        //     resquery[0].device_id,
+                        //     "suspended"
+                        // );
                     }
                 }
             } else {
@@ -424,6 +436,8 @@ exports.activateBulkDevices = async function (req, res) {
                     let pgp_emails = await device_helpers.getPgpEmails(resquery[0].id);
                     let sim_ids = await device_helpers.getSimids(resquery[0].id);
                     let chat_ids = await device_helpers.getChatids(resquery[0].id);
+                    let servicesData = await device_helpers.getServicesData(resquery[0].id);
+
                     if (resquery.length) {
                         resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
                         if (pgp_emails[0] && pgp_emails[0].pgp_email) {
@@ -431,23 +445,25 @@ exports.activateBulkDevices = async function (req, res) {
                         } else {
                             resquery[0].pgp_email = "N/A"
                         }
-                        if (sim_ids[0] && sim_ids[0].sim_id) {
-                            resquery[0].sim_id = sim_ids[0].sim_id
-                        } else {
-                            resquery[0].sim_id = "N/A"
+                        if (sim_ids && sim_ids.length) {
+                            resquery[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
+                            resquery[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
                         }
                         if (chat_ids[0] && chat_ids[0].chat_id) {
                             resquery[0].chat_id = chat_ids[0].chat_id
                         }
                         else {
                             resquery[0].chat_id = "N/A"
-
                         }
-                        sockets.sendDeviceStatus(
-                            resquery[0].device_id,
-                            "active",
-                            true
-                        );
+                        if (servicesData[0]) {
+                            resquery[0].services = servicesData[0]
+                        }
+
+                        // sockets.sendDeviceStatus(
+                        //     resquery[0].device_id,
+                        //     "active",
+                        //     true
+                        // );
 
                         ActivateDevices.push(resquery[0]);
 
@@ -534,7 +550,7 @@ exports.getUsersOfDealers = async function (req, res) {
 
     console.log('getUsersOfDealers: =============> ', req.body);
 
-    return null;
+    return;
     if (verify) {
 
         if (verify.user.user_type == "admin") {
@@ -544,7 +560,7 @@ exports.getUsersOfDealers = async function (req, res) {
                 IN_DEALER_ARRAY.push(item.key);
             })
 
-            // var role = await helpers.getuserTypeIdByName(verify.user.user_type);
+            // var role = await helpers.getuserTypeIDByName(verify.user.user_type);
 
             let selectUserQuery = "";
             if (IN_DEALER_ARRAY.length > 0) {

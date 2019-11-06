@@ -99,17 +99,15 @@ module.exports = {
 
     // applications
     insertApps: async function (apps, deviceId) {
-        console.log('insertApps');
+        // console.log('insertApps');
 
         let deviceData = await this.getDeviceByDeviceId(deviceId);
 
-        if (apps && deviceData) {
+        if (apps && apps.length && deviceData) {
 
             // this query will delete all apps of device even extension. its working correct because mobile side sent all data again otherwise its wrong
             await sql.query(`DELETE FROM user_apps WHERE device_id = ${deviceData.id}`);
-
-            apps.forEach(async (app) => {
-
+            for (let app of apps) {
                 let default_app = (app.defaultApp !== undefined && app.defaultApp !== null) ? app.defaultApp : (app.default_app !== undefined && app.default_app !== null) ? app.default_app : false;
                 let system_app = (app.systemApp !== undefined && app.systemApp !== null) ? app.systemApp : (app.system_app !== undefined && app.system_app !== null) ? app.system_app : false;
                 let id = 0;
@@ -139,8 +137,7 @@ module.exports = {
                     console.log("insertId App: ", id);
                     await this.insertOrUpdateApps(id, deviceData.id, app.guest, app.encrypted, app.enable);
                 }
-
-            });
+            }
 
         } else {
             console.log("device not connected may be deleted or apps was empty");
@@ -176,13 +173,10 @@ module.exports = {
     insertExtensions: async function (extensions, deviceId) {
         console.log("insertExtensions")
         let deviceData = await this.getDeviceByDeviceId(deviceId);
-        if (extensions && deviceData) {
+        if (extensions && extensions.length && deviceData) {
 
             // delete extension settings before insert
-
-            extensions.forEach(async (app) => {
-                console.log("extension: ", app.uniqueName);
-
+            for (let app of extensions) {
                 let getPrntExt = `SELECT id FROM apps_info WHERE (unique_name='${app.uniqueName}' AND (extension=1 OR extension=true) AND extension_id=0) `;
 
                 // console.log("extension query: ", getPrntExt);
@@ -197,7 +191,7 @@ module.exports = {
                     if (checkExt && checkExt.length) {
                         id = checkExt[0].id;
                         let updateExtQ = `UPDATE apps_info SET icon= '${iconName}', extension= 1, extension_id = ${extension[0].id}, label = '${app.label}', default_app= 0 WHERE id=${checkExt[0].id}`;
-                        console.log('updateExtQ: ', updateExtQ);
+                        // console.log('updateExtQ: ', updateExtQ);
                         let updateExt = await sql.query(updateExtQ);
                     } else {
                         let insertExtQ = `INSERT INTO apps_info (unique_name, label, icon, extension, extension_id) VALUES ('${app.uniqueExtension}', '${app.label}', '${iconName}', 1, ${extension[0].id})`;
@@ -209,11 +203,12 @@ module.exports = {
                     }
 
                     if (id) {
-                        console.log("insertId Extensions: ", id)
+                        // console.log("insertId Extensions: ", id)
                         await this.insertOrUpdateExtensions(id, deviceData.id, app.guest, app.encrypted, true);
                     }
                 }
-            });
+            }
+
         } else {
             console.log("Extensions not found");
         }
@@ -230,7 +225,7 @@ module.exports = {
             } else {
                 var insertQuery = `INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (${deviceId}, ${appId}, ${guest}, ${encrypted}, ${enable})`;
                 let insertExtension = await sql.query(insertQuery);
-                console.log("insertExtension:", insertExtension.insertId);
+                // console.log("insertExtension:", insertExtension.insertId);
             }
 
         } catch (error) {
@@ -247,7 +242,7 @@ module.exports = {
             if (checkSetting.length) {
                 var updateQuery = `UPDATE user_app_permissions SET permissions ='${controls}' WHERE device_id='${device_id}' `;
                 var updateSetting = await sql.query(updateQuery);
-                console.log("updateSetting:", updateSetting);
+
             } else {
                 var insertQuery = `INSERT INTO user_app_permissions (device_id, permissions) VALUE ('${device_id}', '${controls}')`;
                 let insertSetting = await sql.query(insertQuery);
@@ -365,7 +360,7 @@ module.exports = {
         if (app.icon) {
 
             if (typeof app.icon !== 'string' && typeof app.icon !== 'String' && typeof app.icon !== String) {
-                console.log("logo uploading: ", packageName);
+                // console.log("logo uploading: ", packageName);
                 var base64Data = Buffer.from(app.icon).toString("base64");
 
                 let icon = `../uploads/icon_${packageName}_${iconName}.png`;
@@ -467,7 +462,7 @@ module.exports = {
     getPgpEmails: async (ids) => {
 
 
-        let query = "SELECT pgp_email ,user_acc_id from pgp_emails WHERE user_acc_id IN (" + ids + ")"
+        let query = "SELECT pgp_email ,user_acc_id from pgp_emails WHERE user_acc_id IN (" + ids + ") AND used = 1"
         let results = await sql.query(query);
         if (results.length) {
             return results
@@ -480,7 +475,7 @@ module.exports = {
      * String ids of usr_acc table
      */
     getSimids: async (ids) => {
-        let query = "SELECT sim_id,user_acc_id FROM sim_ids WHERE user_acc_id IN (" + ids + ")"
+        let query = "SELECT sim_id,user_acc_id FROM sim_ids WHERE user_acc_id IN (" + ids + ") AND used = 1"
         // console.log(query);
         let results = await sql.query(query);
         if (results.length) {
@@ -493,7 +488,20 @@ module.exports = {
      * String ids of usr_acc table
      */
     getChatids: async (ids) => {
-        let query = "SELECT chat_id,user_acc_id FROM chat_ids WHERE user_acc_id IN (" + ids + ")"
+        let query = "SELECT chat_id,user_acc_id FROM chat_ids WHERE user_acc_id IN (" + ids + ") AND used = 1"
+        let results = await sql.query(query);
+        if (results.length) {
+            return results
+        } else {
+            return []
+        }
+    },
+    /**
+    /**
+     * String ids of usr_acc table
+     */
+    getServicesData: async (ids) => {
+        let query = "SELECT * FROM services_data WHERE user_acc_id IN (" + ids + ") AND (end_date IS NULL OR end_date = '') AND (status = 'active' OR status = 'request_for_cancel' OR status = 'extended') "
         let results = await sql.query(query);
         if (results.length) {
             return results
@@ -514,53 +522,13 @@ module.exports = {
         }
     },
 
-    getPgpEmails_deviceList: async (ids) => {
-
-
-        let query = "SELECT pgp_email ,user_acc_id from pgp_emails WHERE user_acc_id IN (" + ids + ")"
+    getVpn: async (result) => {
+        let query = "SELECT vpn_id FROM acc_vpn WHERE user_acc_id = '" + result.id + "'"
         let results = await sql.query(query);
         if (results.length) {
-            return results
-        }
-        else {
-            return []
-        }
-    },
-    /**
-     * String ids of usr_acc table
-     */
-    getSimids_deviceList: async (ids) => {
-        let query = "SELECT sim_id,user_acc_id FROM sim_ids WHERE user_acc_id IN (" + ids + ")"
-        // console.log(query);
-        let results = await sql.query(query);
-        if (results.length) {
-            return results
+            return results[0].vpn_id
         } else {
-            return []
-        }
-    },
-    /**
-     * String ids of usr_acc table
-     */
-    getChatids_deviceList: async (ids) => {
-        let query = "SELECT chat_id,user_acc_id FROM chat_ids WHERE user_acc_id IN (" + ids + ")"
-        let results = await sql.query(query);
-        if (results.length) {
-            return results
-        } else {
-            return []
-        }
-    },
-    /**
-     * String usr_device_ids of usr_acc table
-     */
-    getLastLoginDetail_deviceList: async (ids) => {
-        let query = `SELECT MAX(created_at) as created_at, device_id FROM login_history WHERE device_id IN (${ids}) GROUP BY device_id ORDER BY created_at DESC  `;
-        let results = await sql.query(query);
-        if (results.length) {
-            return results
-        } else {
-            return []
+            return 'NO'
         }
     },
 
@@ -604,9 +572,9 @@ module.exports = {
         let query = "INSERT INTO acc_action_history (action, device_id, device_name, session_id, model, ip_address, simno, imei, simno2, imei2, serial_number, mac_address, fcm_token, online, is_sync, flagged, screen_start_date, reject_status, account_email, dealer_id, prnt_dlr_id, link_code, client_id, start_date, expiry_months, expiry_date, activation_code, status, device_status, activation_status, wipe_status, account_status, unlink_status, transfer_status, transfer_user_status, transfered_from, transfered_to, user_transfered_from, user_transfered_to, dealer_name, prnt_dlr_name, user_acc_id, pgp_email, chat_id, sim_id, finalStatus) VALUES "
         let finalQuery = ''
         if (action === Constants.DEVICE_UNLINKED || action === Constants.UNLINK_DEVICE_DELETE) {
-            finalQuery = query + "('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','offline','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + device.prnt_dlr_id + "','" + device.link_code + "','" + device.client_id + "','', " + device.expiry_months + ",'','" + device.activation_code + "','',0,null,'" + device.wipe_status + "','" + device.account_status + "',1,'" + device.transfer_status + "','" + device.transfer_user_status + "','" + device.transfered_from + "','" + device.transfered_to + "','" + device.user_transfered_from + "','" + device.user_transfered_to + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','Unlinked')"
+            finalQuery = query + "('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','offline','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + device.prnt_dlr_id + "','" + device.link_code + "','" + device.client_id + "','', '" + device.expiry_months + "','','" + device.activation_code + "','',0,null,'" + device.wipe_status + "','" + device.account_status + "',1,'" + device.transfer_status + "','" + device.transfer_user_status + "','" + device.transfered_from + "','" + device.transfered_to + "','" + device.user_transfered_from + "','" + device.user_transfered_to + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','Unlinked')"
         } else {
-            finalQuery = query + "('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','" + device.online + "','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + device.prnt_dlr_id + "','" + device.link_code + "', '" + device.client_id + "', '" + device.start_date + "', " + device.expiry_months + ", '" + device.expiry_date + "','" + device.activation_code + "','" + device.status + "','" + device.device_status + "',0,'" + device.wipe_status + "','" + device.account_status + "','" + device.unlink_status + "','" + device.transfer_status + "','" + device.transfer_user_status + "','" + device.transfered_from + "','" + device.transfered_to + "','" + device.user_transfered_from + "','" + device.user_transfered_to + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','" + device.finalStatus + "')"
+            finalQuery = query + "('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','" + device.online + "','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + device.prnt_dlr_id + "','" + device.link_code + "', '" + device.client_id + "', '" + device.start_date + "', '" + device.expiry_months + "', '" + device.expiry_date + "','" + device.activation_code + "','" + device.status + "','" + device.device_status + "',0,'" + device.wipe_status + "','" + device.account_status + "','" + device.unlink_status + "','" + device.transfer_status + "','" + device.transfer_user_status + "','" + device.transfered_from + "','" + device.transfered_to + "','" + device.user_transfered_from + "','" + device.user_transfered_to + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','" + device.finalStatus + "')"
         }
         // console.log(finalQuery);
         await sql.query(finalQuery)
@@ -678,8 +646,6 @@ module.exports = {
         var mac_address = req.body.macAddr;
         var type = (req.body.type) ? req.body.type : null
         var version = (req.body.version) ? req.body.version : null
-
-        console.log(version, "Version");
 
         var imei1 = null;
         var imei2 = null;
@@ -769,36 +735,84 @@ module.exports = {
         let app_list = [];
         let deviceData = await this.getDeviceByDeviceId(deviceId);
 
-        if (deviceData) {
-            if (apps) {
+        if (deviceData && apps) {
 
-                for (let i = 0; i < apps.length; i++) {
-                    let iconName = this.uploadIconFile(apps[i], apps[i].label, apps[i].packageName);
-                    await installApps(apps, i, deviceData, iconName, this.getApp);
-                    await this.getApp(apps[i].uniqueName, deviceData.id, apps[i].guest, apps[i].encrypted, apps[i].enable);
+            for (let i = 0; i < apps.length; i++) {
+                // let iconName = this.uploadIconFile(apps[i], apps[i].label, apps[i].packageName);
+                await this.installApps(apps[i], deviceData);
 
-                    var getAppsQ = `SELECT user_apps.id, user_apps.device_id, user_apps.app_id, user_apps.guest, user_apps.encrypted, user_apps.enable,
+                // await this.getApp(apps[i].uniqueName, deviceData.id, apps[i].guest, apps[i].encrypted, apps[i].enable);
+
+
+                var getAppsQ = `SELECT user_apps.id, user_apps.device_id, user_apps.app_id, user_apps.guest, user_apps.encrypted, user_apps.enable,
 				    apps_info.label, apps_info.default_app, apps_info.system_app, apps_info.package_name, apps_info.visible, apps_info.unique_name as uniqueName, apps_info.icon as icon , apps_info.extension, apps_info.extension_id
 				    FROM user_apps
 				    LEFT JOIN apps_info on (user_apps.app_id = apps_info.id)
 				    LEFT JOIN devices on (user_apps.device_id=devices.id)
                     WHERE devices.device_id = '${deviceId}' AND apps_info.package_name='${apps[i].packageName}'`;
-                    console.log("getAppsQ: ", getAppsQ);
-                    let app = await sql.query(getAppsQ);
-                    console.log("getapplication: ", app);
-                    if (app.length) {
-                        app_list.push(app[0]);
-                    }
-                }
+                console.log("getAppsQ: ", getAppsQ);
+                let app = await sql.query(getAppsQ);
 
-            } else {
-                console.log("apps not found")
+                if (app.length) {
+                    app_list.push(app[0]);
+                }
             }
         } else {
             console.log("device not found")
         }
         return app_list
     },
+    saveSimActionHistory: async function (device_id, action, setting) {
+        let InsertQ = `INSERT INTO sim_action_history (device_id, action, settings) VALUES ('${device_id}', '${action}', '${JSON.stringify(setting)}')`;
+        console.log("saveSimActionHistory InsertQ ", InsertQ);
+        await sql.query(InsertQ);
+    },
+
+    installApps: async function (app, deviceData) {
+        // let default_app = (apps[i].defaultApp !== undefined && apps[i].defaultApp !== null) ? apps[i].defaultApp : (apps[i].default_app !== undefined && apps[i].default_app !== null) ? apps[i].default_app : false;
+        // let system_app = (apps[i].systemApp !== undefined && apps[i].systemApp !== null) ? apps[i].systemApp : (apps[i].system_app !== undefined && apps[i].system_app !== null) ? apps[i].system_app : false;
+        // let query = `INSERT INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app, system_app)
+        //                     VALUES ('${apps[i].uniqueName}', '${apps[i].label}', '${apps[i].packageName}', '${iconName}', ${apps[i].extension} , ${apps[i].visible}, ${default_app}, ${system_app})
+        //                     ON DUPLICATE KEY UPDATE
+        //                     extension= ${apps[i].extension},
+        //                     icon= '${iconName}',
+        //                     visible= ${apps[i].visible},
+        //                     default_app= ${default_app},
+        //                     system_app= ${system_app} 
+        //                     `;
+        // await sql.query(query);
+
+        let default_app = (app.defaultApp !== undefined && app.defaultApp !== null) ? app.defaultApp : (app.default_app !== undefined && app.default_app !== null) ? app.default_app : false;
+        let system_app = (app.systemApp !== undefined && app.systemApp !== null) ? app.systemApp : (app.system_app !== undefined && app.system_app !== null) ? app.system_app : false;
+        let id = 0;
+
+        let checkAppQ = `SELECT id FROM apps_info WHERE unique_name='${app.uniqueName}' LIMIT 1`;
+        let checkApp = await sql.query(checkAppQ);
+        let iconName = this.uploadIconFile(app, app.label, app.packageName);
+
+        if (checkApp && checkApp.length) {
+            id = checkApp[0].id;
+
+            let updateAppQ = `UPDATE apps_info SET extension= ${app.extension}, icon= '${iconName}', label= '${app.label}', visible= ${app.visible}, default_app= ${default_app}, system_app= ${system_app} WHERE id=${checkApp[0].id}`
+            console.log("updateApp: ", updateAppQ);
+            let updateApp = await sql.query(updateAppQ);
+
+        } else {
+            let insertAppQ = `INSERT INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app, system_app)
+                            VALUES ('${app.uniqueName}', '${app.label}', '${app.packageName}', '${iconName}', ${app.extension} , ${app.visible}, ${default_app}, ${system_app})`;
+            console.log("insertApp: ", insertAppQ);
+            let insertedApp = await sql.query(insertAppQ);
+            if (insertedApp) {
+                id = insertedApp.insertId;
+            }
+        }
+
+        if (id) {
+            console.log("insertId App: ", id);
+            await this.insertOrUpdateApps(id, deviceData.id, app.guest, app.encrypted, app.enable);
+        }
+
+    }
     // compareSim: async function (deviceSim, panelSim, action) {
     //     console.log("deviceSim ", deviceSim)
     //     console.log("panelSim ", panelSim)
@@ -813,18 +827,4 @@ module.exports = {
     // }
 }
 
-async function installApps(apps, i, deviceData, iconName, getApp) {
-    let default_app = (apps[i].defaultApp !== undefined && apps[i].defaultApp !== null) ? apps[i].defaultApp : (apps[i].default_app !== undefined && apps[i].default_app !== null) ? apps[i].default_app : false;
-    let system_app = (apps[i].systemApp !== undefined && apps[i].systemApp !== null) ? apps[i].systemApp : (apps[i].system_app !== undefined && apps[i].system_app !== null) ? apps[i].system_app : false;
-    let query = `INSERT INTO apps_info (unique_name, label, package_name, icon, extension, visible, default_app, system_app)
-                        VALUES ('${apps[i].uniqueName}', '${apps[i].label}', '${apps[i].packageName}', '${iconName}', ${apps[i].extension} , ${apps[i].visible}, ${default_app}, ${system_app})
-                        ON DUPLICATE KEY UPDATE
-                        extension= ${apps[i].extension},
-                        icon= '${iconName}',
-                        visible= ${apps[i].visible},
-                        default_app= ${default_app},
-                        system_app= ${system_app} 
-                        `;
-    await sql.query(query);
 
-}

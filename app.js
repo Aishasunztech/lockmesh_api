@@ -18,7 +18,7 @@ const swaggerOptions = require('./config/swaggerOptions');
 const constants = require('./config/constants');
 
 
-// app.io = io;
+
 app.disable("etag");
 
 
@@ -54,7 +54,7 @@ app.use(
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
 	res.header("Access-Control-Allow-Origin", "*");
 	res.header(
 		"Access-Control-Allow-Headers",
@@ -80,32 +80,31 @@ app.use(function(req, res, next) {
 
 var basic = auth.basic({
 	realm: "API Documentation"
-}, (username, password, callback) => { 
+}, (username, password, callback) => {
 	// Custom authentication
 	// Use callback(error) if you want to throw async error.
 	callback(username === constants.BASIC_AUTH_USER && password === constants.BASIC_AUTH_PASSWORD);
 }
 );
 
-app.use('/api-docs', auth.connect(basic) ,function(req, res, next){
+app.use('/api-docs', auth.connect(basic), function (req, res, next) {
 	next();
 })
 
 expressSwagger(swaggerOptions.options);
 
 // routes
-app.get("/",function(req, res) {
+app.get("/", function (req, res) {
 	res.send("Express");
 });
 
-app.get("/itest", function(req, res) {
+app.get("/itest", function (req, res) {
 	console.log("iTest failed successfully!!");
 	stackify.log("info", "hey! - iTest failed successfully!!");
-	
+
 });
 
 // app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-
 require("./routes/index.js")(app);
 
 module.exports = app;

@@ -232,9 +232,19 @@ module.exports = {
 			return false;
 		}
 	},
-	getSdealersByDealerId: async dealer_id => {
-		var query =
-			"SELECT * FROM dealers WHERE connected_dealer = " + dealer_id;
+	userDealerCount: async (type) => {
+
+		var query = "SELECT COUNT(*) as dealer_count FROM dealers WHERE type =" + type;
+		let res = await sql.query(query);
+		if (res.length) {
+			return res[0].dealer_count;
+		} else {
+			return false;
+		}
+	},
+	getSdealersByDealerId: async (dealer_id) => {
+
+		var query = "SELECT * FROM dealers WHERE connected_dealer = " + dealer_id;
 		let res = await sql.query(query);
 		let dealerList = [];
 		if (res.length) {
@@ -372,19 +382,40 @@ module.exports = {
 			let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
 			let sim_ids = await device_helpers.getSimids(user_acc_ids);
 			let chat_ids = await device_helpers.getChatids(user_acc_ids);
+			let servicesData = await device_helpers.getServicesData(user_acc_ids)
+
 			for (let device of results) {
 				device.finalStatus = device_helpers.checkStatus(device);
 				let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === device.id);
 				if (pgp_email) {
 					device.pgp_email = pgp_email.pgp_email
 				}
-				let sim_id = sim_ids.find(sim_id => sim_id.user_acc_id === device.id);
-				if (sim_id) {
-					device.sim_id = sim_id.sim_id
+				let sim_idArray = sim_ids.filter(sim_id => sim_id.user_acc_id === device.id);
+				if (sim_idArray && sim_idArray.length) {
+					device.sim_id = sim_idArray[0].sim_id
+					device.sim_id2 = sim_idArray[1] ? sim_idArray[1].sim_id : "N/A"
 				}
 				let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === device.id);
 				if (chat_id) {
 					device.chat_id = chat_id.chat_id
+				}
+				// let services = servicesData.find(data => data.user_acc_id === device.id);
+				// if (services) {
+				// 	device.services = services
+				// }
+				let services = servicesData.filter(data => data.user_acc_id === device.id);
+				if (services && services.length) {
+					// if (services.length > 1) {
+					services.map((item) => {
+						if (item.status === 'extended') {
+							device.extended_services = item
+						} else {
+							device.services = item
+						}
+					})
+					// } else {
+					//     device.services = services[0]
+					// }
 				}
 			}
 
@@ -434,7 +465,7 @@ module.exports = {
 	},
 	getExpDateByMonth: function (currentDate, expiryMonth) {
 		return moment(currentDate, "YYYY-MM-DD")
-			.add(expiryMonth, "M")
+			.add(Number(expiryMonth), "M")
 			.strftime("%Y/%m/%d");
 	},
 	// checkDeviceId: async function (device_id, sn, mac) {
@@ -518,20 +549,22 @@ module.exports = {
 			device_id +
 			'"'
 		);
-		let pgp_emails = await device_helpers.getPgpEmails(results[0].id);
-		let sim_ids = await device_helpers.getSimids(results[0].id);
-		let chat_ids = await device_helpers.getChatids(results[0].id);
+
 		if (results.length) {
+			let pgp_emails = await device_helpers.getPgpEmails(results[0].id);
+			let sim_ids = await device_helpers.getSimids(results[0].id);
+			let chat_ids = await device_helpers.getChatids(results[0].id);
+			let servicesData = await device_helpers.getServicesData(results[0].id);
+
 			results[0].finalStatus = device_helpers.checkStatus(results[0]);
 			if (pgp_emails[0] && pgp_emails[0].pgp_email) {
 				results[0].pgp_email = pgp_emails[0].pgp_email
 			} else {
 				results[0].pgp_email = "N/A"
 			}
-			if (sim_ids[0] && sim_ids[0].sim_id) {
-				results[0].sim_id = sim_ids[0].sim_id
-			} else {
-				results[0].sim_id = "N/A"
+			if (sim_ids && sim_ids.length) {
+				results[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
+				results[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
 			}
 			if (chat_ids[0] && chat_ids[0].chat_id) {
 				results[0].chat_id = chat_ids[0].chat_id
@@ -539,6 +572,23 @@ module.exports = {
 			else {
 				results[0].chat_id = "N/A"
 
+			}
+			// if (servicesData[0]) {
+			// 	results[0].services = servicesData[0]
+			// }
+			let services = servicesData;
+			if (services && services.length) {
+				// if (services.length > 1) {
+				services.map((item) => {
+					if (item.status === 'extended') {
+						results[0].extended_services = item
+					} else {
+						results[0].services = item
+					}
+				})
+				// } else {
+				//     results[0].services = services[0]
+				// }
 			}
 			return results[0];
 		} else {
@@ -732,10 +782,7 @@ module.exports = {
 	},
 	getAPKLabelScript: async function (filePath) {
 		try {
-			let label =
-				"aapt dump badging " +
-				filePath +
-				' | grep "application" | sed -e "s/.*label=\'//" -e "s/\' .*//"';
+			let label = `aapt dump badging ${filePath} | grep "application" | sed -e "s/.*label=\'//" -e "s/\' .*//"`;
 			const { stdout, stderr, error } = await exec(label);
 			// console.log('stdout:', stdout);
 			// console.log('stderr:', stderr);
@@ -932,19 +979,39 @@ module.exports = {
 			let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
 			let sim_ids = await device_helpers.getSimids(user_acc_ids);
 			let chat_ids = await device_helpers.getChatids(user_acc_ids);
+			let servicesData = await device_helpers.getServicesData(user_acc_ids)
 			for (var i = 0; i < results.length; i++) {
 				results[i].finalStatus = device_helpers.checkStatus(results[i]);
 				let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === results[i].id);
 				if (pgp_email) {
 					results[i].pgp_email = pgp_email.pgp_email
 				}
-				let sim_id = sim_ids.find(sim_id => sim_id.user_acc_id === results[i].id);
-				if (sim_id) {
-					results[i].sim_id = sim_id.sim_id
+				let sim_idArray = sim_ids.filter(sim_id => sim_id.user_acc_id === results[i].id);
+				if (sim_idArray && sim_idArray.length) {
+					results[i].sim_id = sim_idArray[0].sim_id
+					results[i].sim_id2 = sim_idArray[1] ? sim_idArray[1].sim_id : "N/A"
 				}
 				let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === results[i].id);
 				if (chat_id) {
 					results[i].chat_id = chat_id.chat_id
+				}
+				// let services = servicesData.find(data => data.user_acc_id === results[i].id);
+				// if (services) {
+				// 	results[i].services = services
+				// }
+				let services = servicesData.filter(data => data.user_acc_id === results[i].id);
+				if (services && services.length) {
+					// if (services.length > 1) {
+					services.map((item) => {
+						if (item.status === 'extended') {
+							results[i].extended_services = item
+						} else {
+							results[i].services = item
+						}
+					})
+					// } else {
+					//     results[i].services = services[0]
+					// }
 				}
 			}
 			return results;
@@ -1145,7 +1212,6 @@ module.exports = {
 		controls.forEach(control => {
 			control.setting_status = (control.setting_status) ? true : false;
 		})
-		console.log('controls', controls);
 		// copy refactored
 		policy[0].app_list = JSON.stringify(appList);
 		policy[0].permissions = JSON.stringify(permissions);
@@ -1222,4 +1288,888 @@ module.exports = {
 			readStream.pipe(writeStream);
 		}
 	},
+	calculateProfitLoss: async function (packages, products, loggedDealerType) {
+		let packagesIds = []
+		let productIds = []
+		var dealer_profit = 0
+		var admin_profit = 0
+		packages.map((item) => {
+			packagesIds.push(item.id)
+		})
+		products.map((item) => {
+			productIds.push(item.id)
+		})
+
+		let packagesData = []
+		let pricesData = []
+
+		if (packagesIds.length) {
+			packagesData = await sql.query("SELECT * from packages where id IN (" + packagesIds.join(",") + ")")
+		}
+		if (productIds.length) {
+			pricesData = await sql.query("SELECT * from prices where id IN (" + productIds.join(",") + ")")
+		}
+		let sa_sim_prices = {}
+		let sa_chat_prices = {}
+		let sa_vpn_prices = {}
+		let sa_pgp_prices = {}
+
+		let sa_product_prices = await sql.query("SELECT * FROM prices where dealer_type = 'super_admin'")
+		sa_product_prices.map((item) => {
+			if (item.price_for === "sim_id") {
+				sa_sim_prices[item.price_term] = Number(item.unit_price)
+			}
+			else if (item.price_for === "chat_id") {
+				sa_chat_prices[item.price_term] = Number(item.unit_price)
+			}
+			else if (item.price_for === "vpn") {
+				sa_vpn_prices[item.price_term] = Number(item.unit_price)
+			}
+			else if (item.price_for === "pgp_email") {
+				sa_pgp_prices[item.price_term] = Number(item.unit_price)
+			}
+		})
+		if (loggedDealerType === Constants.DEALER) {
+			if (packagesData.length) {
+				packagesData.map(async (item) => {
+					if (item.dealer_type === 'super_admin') {
+						packages.map((pkg) => {
+							if (pkg.id === item.id) {
+								admin_profit += pkg.pkg_price - item.pkg_price
+							}
+						})
+					} else if (item.dealer_type === 'admin') {
+						let sa_total_price = 0
+						packages.map((pkg) => {
+							if (pkg.id === item.id) {
+								if (pkg.pkg_features.sim_id) {
+									sa_total_price += sa_sim_prices[item.pkg_term]
+								}
+								if (pkg.pkg_features.sim_id2) {
+									sa_total_price += sa_sim_prices[item.pkg_term]
+								}
+								if (pkg.pkg_features.chat_id) {
+									sa_total_price += sa_chat_prices[item.pkg_term]
+								}
+								if (pkg.pkg_features.pgp_email) {
+									sa_total_price += sa_pgp_prices[item.pkg_term]
+								}
+								if (pkg.pkg_features.vpn) {
+									sa_total_price += sa_vpn_prices[item.pkg_term]
+								}
+								admin_profit += Number(pkg.pkg_price) - sa_total_price
+							}
+						})
+					}
+				})
+			}
+			if (pricesData.length) {
+				pricesData.map(async (item) => {
+					if (item.price_for === "sim_id") {
+						admin_profit += item.unit_price - sa_sim_prices[item.price_term]
+					}
+					else if (item.price_for === "SIM ID 2") {
+						admin_profit += item.unit_price - sa_sim_prices[item.price_term]
+					}
+					else if (item.price_for === "chat_id") {
+						admin_profit += item.unit_price - sa_chat_prices[item.price_term]
+					}
+					else if (item.price_for === "vpn") {
+						admin_profit += item.unit_price - sa_vpn_prices[item.price_term]
+					}
+					else if (item.price_for === "pgp_email") {
+						admin_profit += item.unit_price - sa_pgp_prices[item.price_term]
+					}
+				})
+			}
+		} else if (loggedDealerType === Constants.SDEALER) {
+			let admin_sim_prices = {}
+			let admin_chat_prices = {}
+			let admin_vpn_prices = {}
+			let admin_pgp_prices = {}
+
+			let sa_product_prices = await sql.query("SELECT * FROM prices where dealer_type = 'admin'")
+			sa_product_prices.map((item) => {
+				if (item.price_for === "sim_id") {
+					admin_sim_prices[item.price_term] = Number(item.unit_price)
+				}
+				else if (item.price_for === "chat_id") {
+					admin_chat_prices[item.price_term] = Number(item.unit_price)
+				}
+				else if (item.price_for === "vpn") {
+					admin_vpn_prices[item.price_term] = Number(item.unit_price)
+				}
+				else if (item.price_for === "pgp_email") {
+					admin_pgp_prices[item.price_term] = Number(item.unit_price)
+				}
+			})
+			if (packagesData.length) {
+				for (let i = 0; i < packagesData.length; i++) {
+					let adminPackagePrice = await sql.query("SELECT * FROM dealer_packages_prices WHERE package_id = " + packagesData[i].id + " AND created_by = 'admin'")
+					let adminPrice = null
+					if (adminPackagePrice.length) {
+						adminPrice = adminPackagePrice[0].price
+					}
+					if (packagesData[i].dealer_type === 'super_admin') {
+						packages.map((pkg) => {
+							if (pkg.id === packagesData[i].id) {
+								if (adminPrice) {
+									admin_profit += adminPrice - packagesData[i].pkg_price
+									dealer_profit += pkg.pkg_price - adminPrice
+								} else {
+									dealer_profit += pkg.pkg_price - packagesData[i].pkg_price
+								}
+							}
+						})
+					}
+					else if (packagesData[i].dealer_type === 'admin') {
+						let sa_total_price = 0
+						packages.map((pkg) => {
+							if (pkg.id === packagesData[i].id) {
+								if (pkg.pkg_features.sim_id) {
+									sa_total_price += sa_sim_prices[packagesData[i].pkg_term]
+								}
+								if (pkg.pkg_features.sim_id2) {
+									sa_total_price += sa_sim_prices[packagesData[i].pkg_term]
+								}
+								if (pkg.pkg_features.chat_id) {
+									sa_total_price += sa_chat_prices[packagesData[i].pkg_term]
+								}
+								if (pkg.pkg_features.pgp_email) {
+									sa_total_price += sa_pgp_prices[packagesData[i].pkg_term]
+								}
+								if (pkg.pkg_features.vpn) {
+									sa_total_price += sa_vpn_prices[packagesData[i].pkg_term]
+								}
+								admin_profit += adminPrice - sa_total_price
+								dealer_profit += Number(pkg.pkg_price) - adminPrice
+							}
+						})
+					}
+					else if (packagesData[i].dealer_type === 'dealer') {
+						let sa_total_price = 0
+						let admin_total_price = 0
+						packages.map((pkg) => {
+							if (pkg.id === packagesData[i].id) {
+								if (pkg.pkg_features.sim_id) {
+									sa_total_price += sa_sim_prices[packagesData[i].pkg_term]
+									admin_total_price += admin_sim_prices[packagesData[i].pkg_term]
+								}
+								if (pkg.pkg_features.sim_id2) {
+									sa_total_price += sa_sim_prices[packagesData[i].pkg_term]
+									admin_total_price += admin_sim_prices[packagesData[i].pkg_term]
+								}
+								if (pkg.pkg_features.chat_id) {
+									sa_total_price += sa_chat_prices[packagesData[i].pkg_term]
+									admin_total_price += admin_chat_prices[packagesData[i].pkg_term]
+
+								}
+								if (pkg.pkg_features.pgp_email) {
+									sa_total_price += sa_pgp_prices[packagesData[i].pkg_term]
+									admin_total_price += admin_pgp_prices[packagesData[i].pkg_term]
+								}
+								if (pkg.pkg_features.vpn) {
+									sa_total_price += sa_vpn_prices[packagesData[i].pkg_term]
+									admin_total_price += admin_vpn_prices[packagesData[i].pkg_term]
+								}
+								admin_profit += admin_total_price - sa_total_price
+								dealer_profit += Number(pkg.pkg_price) - admin_total_price
+							}
+						})
+					}
+				}
+			}
+			if (pricesData.length) {
+				pricesData.map(async (item) => {
+					if (item.price_for === "sim_id") {
+						admin_profit += admin_sim_prices[item.price_term] - sa_sim_prices[item.price_term]
+						dealer_profit += item.unit_price - admin_sim_prices[item.price_term]
+					}
+					else if (item.price_for === "SIM ID 2") {
+						admin_profit += admin_sim_prices[item.price_term] - sa_sim_prices[item.price_term]
+						dealer_profit += item.unit_price - admin_sim_prices[item.price_term]
+					}
+					else if (item.price_for === "chat_id") {
+						admin_profit += admin_chat_prices[item.price_term] - sa_chat_prices[item.price_term]
+						dealer_profit += item.unit_price - admin_chat_prices[item.price_term]
+					}
+					else if (item.price_for === "vpn") {
+						admin_profit += admin_vpn_prices[item.price_term] - sa_vpn_prices[item.price_term]
+						dealer_profit += item.unit_price - admin_vpn_prices[item.price_term]
+					}
+					else if (item.price_for === "pgp_email") {
+						admin_profit += admin_pgp_prices[item.price_term] - sa_pgp_prices[item.price_term]
+						dealer_profit += item.unit_price - admin_pgp_prices[item.price_term]
+					}
+				})
+			}
+
+		}
+		return {
+			admin_profit,
+			dealer_profit
+		}
+	},
+	saveServiceSalesDetails: async function (packages, products, loggedDealerType, user_acc_id, service_id, pay_now) {
+		let packagesIds = []
+		let productIds = []
+		var dealer_profit = 0
+		var admin_profit = 0
+		let discount = 0.03
+		packages.map((item) => {
+			packagesIds.push(item.id)
+		})
+		products.map((item) => {
+			productIds.push(item.id)
+		})
+
+		let packagesData = []
+		let pricesData = []
+
+		if (packagesIds.length) {
+			packagesData = await sql.query("SELECT * from packages where id IN (" + packagesIds.join(",") + ")")
+		}
+		if (productIds.length) {
+			pricesData = await sql.query("SELECT * from prices where id IN (" + productIds.join(",") + ")")
+		}
+		let sa_sim_prices = {}
+		let sa_chat_prices = {}
+		let sa_vpn_prices = {}
+		let sa_pgp_prices = {}
+
+		let sa_product_prices = await sql.query("SELECT * FROM prices where dealer_type = 'super_admin'")
+		sa_product_prices.map((item) => {
+			if (item.price_for === "sim_id") {
+				sa_sim_prices[item.price_term] = Number(item.unit_price)
+			}
+			else if (item.price_for === "chat_id") {
+				sa_chat_prices[item.price_term] = Number(item.unit_price)
+			}
+			else if (item.price_for === "vpn") {
+				sa_vpn_prices[item.price_term] = Number(item.unit_price)
+			}
+			else if (item.price_for === "pgp_email") {
+				sa_pgp_prices[item.price_term] = Number(item.unit_price)
+			}
+		})
+		if (loggedDealerType === Constants.DEALER) {
+			if (packagesData.length) {
+				packagesData.map((item) => {
+					if (item.dealer_type === 'super_admin') {
+						packages.map((pkg) => {
+							if (pkg.id === item.id) {
+								if (pay_now) {
+									pkg.pkg_price = pkg.pkg_price - (pkg.pkg_price * discount)
+									item.pkg_price = item.pkg_price - (item.pkg_price * discount)
+								}
+								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id ,item_id,item_data, item_type, item_term, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package','${pkg.pkg_term}' ,${pkg.pkg_price} , ${item.pkg_price} , 'delivered')`)
+							}
+						})
+					} else if (item.dealer_type === 'admin') {
+						let sa_total_price = 0
+						packages.map((pkg) => {
+							if (pkg.id === item.id) {
+								if (pkg.pkg_features.sim_id) {
+									sa_total_price += sa_sim_prices[item.pkg_term]
+								}
+								if (pkg.pkg_features.sim_id2) {
+									sa_total_price += sa_sim_prices[item.pkg_term]
+								}
+								if (pkg.pkg_features.chat_id) {
+									sa_total_price += sa_chat_prices[item.pkg_term]
+								}
+								if (pkg.pkg_features.pgp_email) {
+									sa_total_price += sa_pgp_prices[item.pkg_term]
+								}
+								if (pkg.pkg_features.vpn) {
+									sa_total_price += sa_vpn_prices[item.pkg_term]
+								}
+								if (pay_now) {
+									pkg.pkg_price = pkg.pkg_price - (pkg.pkg_price * discount)
+									sa_total_price = sa_total_price - (sa_total_price * discount)
+								}
+								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id ,item_id ,  item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id}, '${JSON.stringify(pkg)}','${item.pkg_term}' ,'package', ${pkg.pkg_price} , ${sa_total_price} , 'delivered')`)
+							}
+						})
+					}
+				})
+			}
+			if (pricesData.length) {
+				pricesData.map(async (item) => {
+					if (item.price_for === "sim_id") {
+						// admin_profit += item.unit_price - sa_sim_prices[item.price_term]
+						let adminCostPrice = sa_sim_prices[item.price_term]
+						if (pay_now) {
+							item.unit_price = item.unit_price - (item.unit_price * discount)
+							adminCostPrice = sa_sim_prices[item.price_term] - (sa_sim_prices[item.price_term] * discount)
+						}
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id ,item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${adminCostPrice} , 'delivered')`)
+					}
+					else if (item.price_for === "SIM ID 2") {
+						let adminCostPrice = sa_sim_prices[item.price_term]
+						if (pay_now) {
+							item.unit_price = item.unit_price - (item.unit_price * discount)
+							adminCostPrice = sa_sim_prices[item.price_term] - (sa_sim_prices[item.price_term] * discount)
+						}
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id ,item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${adminCostPrice} , 'delivered')`)
+					}
+					else if (item.price_for === "chat_id") {
+						let adminCostPrice = sa_chat_prices[item.price_term]
+						if (pay_now) {
+							item.unit_price = item.unit_price - (item.unit_price * discount)
+							adminCostPrice = sa_chat_prices[item.price_term] - (sa_chat_prices[item.price_term] * discount)
+						}
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id ,item_id , item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${adminCostPrice} , 'delivered')`)
+					}
+					else if (item.price_for === "vpn") {
+						let adminCostPrice = sa_vpn_prices[item.price_term]
+						if (pay_now) {
+							item.unit_price = item.unit_price - (item.unit_price * discount)
+							adminCostPrice = sa_vpn_prices[item.price_term] - (sa_vpn_prices[item.price_term] * discount)
+						}
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id ,item_id , item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${adminCostPrice} , 'delivered')`)
+					}
+					else if (item.price_for === "pgp_email") {
+						let adminCostPrice = sa_pgp_prices[item.price_term]
+						if (pay_now) {
+							item.unit_price = item.unit_price - (item.unit_price * discount)
+							adminCostPrice = sa_pgp_prices[item.price_term] - (sa_pgp_prices[item.price_term] * discount)
+						}
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id , item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}','${item.price_term}','product', ${item.unit_price} , ${adminCostPrice} , 'delivered')`)
+					}
+				})
+			}
+		} else if (loggedDealerType === Constants.SDEALER) {
+			let admin_sim_prices = {}
+			let admin_chat_prices = {}
+			let admin_vpn_prices = {}
+			let admin_pgp_prices = {}
+
+			let sa_product_prices = await sql.query("SELECT * FROM prices where dealer_type = 'admin'")
+			sa_product_prices.map((item) => {
+				if (item.price_for === "sim_id") {
+					admin_sim_prices[item.price_term] = Number(item.unit_price)
+				}
+				else if (item.price_for === "chat_id") {
+					admin_chat_prices[item.price_term] = Number(item.unit_price)
+				}
+				else if (item.price_for === "vpn") {
+					admin_vpn_prices[item.price_term] = Number(item.unit_price)
+				}
+				else if (item.price_for === "pgp_email") {
+					admin_pgp_prices[item.price_term] = Number(item.unit_price)
+				}
+			})
+			if (packagesData.length) {
+				for (let i = 0; i < packagesData.length; i++) {
+					let adminPackagePrice = await sql.query("SELECT * FROM dealer_packages_prices WHERE package_id = " + packagesData[i].id + " AND created_by = 'admin'")
+					let adminPrice = null
+					if (adminPackagePrice.length) {
+						adminPrice = adminPackagePrice[0].price
+					}
+					if (packagesData[i].dealer_type === 'super_admin') {
+						packages.map((pkg) => {
+							if (pkg.id === packagesData[i].id) {
+								if (adminPrice) {
+									admin_profit += adminPrice - packagesData[i].pkg_price
+									if (pay_now) {
+										pkg.pkg_price = pkg.pkg_price - (pkg.pkg_price * discount)
+										packagesData[i].pkg_price = packagesData[i].pkg_price - (packagesData[i].pkg_price * discount)
+										adminPrice = adminPrice - (adminPrice * discount)
+									}
+									sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term,item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package',' ${pkg.pkg_term}', ${pkg.pkg_price} ,${packagesData[i].pkg_price} , ${adminPrice} , 'delivered')`)
+								} else {
+									if (pay_now) {
+										pkg.pkg_price = pkg.pkg_price - (pkg.pkg_price * discount)
+										packagesData[i].pkg_price = packagesData[i].pkg_price - (packagesData[i].pkg_price * discount)
+									}
+									sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package', '${pkg.pkg_term}', ${pkg.pkg_price} ,${packagesData[i].pkg_price} , ${packagesData[i].pkg_price} , 'delivered')`)
+								}
+							}
+						})
+					}
+					else if (packagesData[i].dealer_type === 'admin') {
+						let sa_total_price = 0
+						packages.map((pkg) => {
+							if (pkg.id === packagesData[i].id) {
+								if (pkg.pkg_features.sim_id) {
+									sa_total_price += sa_sim_prices[packagesData[i].pkg_term]
+								}
+								if (pkg.pkg_features.sim_id2) {
+									sa_total_price += sa_sim_prices[packagesData[i].pkg_term]
+								}
+								if (pkg.pkg_features.chat_id) {
+									sa_total_price += sa_chat_prices[packagesData[i].pkg_term]
+								}
+								if (pkg.pkg_features.pgp_email) {
+									sa_total_price += sa_pgp_prices[packagesData[i].pkg_term]
+								}
+								if (pkg.pkg_features.vpn) {
+									sa_total_price += sa_vpn_prices[packagesData[i].pkg_term]
+								}
+								if (pay_now) {
+									pkg.pkg_price = pkg.pkg_price - (pkg.pkg_price * discount)
+									sa_total_price = sa_total_price - (sa_total_price * discount)
+									adminPrice = adminPrice - (adminPrice * discount)
+								}
+								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package', '${pkg.pkg_term}', ${pkg.pkg_price} ,${sa_total_price} , ${adminPrice} , 'delivered')`)
+							}
+						})
+					}
+					else if (packagesData[i].dealer_type === 'dealer') {
+						let sa_total_price = 0
+						let admin_total_price = 0
+						packages.map((pkg) => {
+							if (pkg.id === packagesData[i].id) {
+								if (pkg.pkg_features.sim_id) {
+									sa_total_price += sa_sim_prices[packagesData[i].pkg_term]
+									admin_total_price += admin_sim_prices[packagesData[i].pkg_term]
+								}
+								if (pkg.pkg_features.sim_id2) {
+									sa_total_price += sa_sim_prices[packagesData[i].pkg_term]
+									admin_total_price += admin_sim_prices[packagesData[i].pkg_term]
+								}
+								if (pkg.pkg_features.chat_id) {
+									sa_total_price += sa_chat_prices[packagesData[i].pkg_term]
+									admin_total_price += admin_chat_prices[packagesData[i].pkg_term]
+
+								}
+								if (pkg.pkg_features.pgp_email) {
+									sa_total_price += sa_pgp_prices[packagesData[i].pkg_term]
+									admin_total_price += admin_pgp_prices[packagesData[i].pkg_term]
+								}
+								if (pkg.pkg_features.vpn) {
+									sa_total_price += sa_vpn_prices[packagesData[i].pkg_term]
+									admin_total_price += admin_vpn_prices[packagesData[i].pkg_term]
+								}
+								if (pay_now) {
+									pkg.pkg_price = pkg.pkg_price - (pkg.pkg_price * discount)
+									sa_total_price = sa_total_price - (sa_total_price * discount)
+									admin_total_price = admin_total_price - (admin_total_price * discount)
+								}
+								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package', '${pkg.pkg_term}', ${pkg.pkg_price} ,${sa_total_price} , ${admin_total_price} , 'delivered')`)
+							}
+						})
+					}
+				}
+			}
+			if (pricesData.length) {
+				pricesData.map(async (item) => {
+					if (item.price_for === "sim_id") {
+						let adminCostPrice = sa_sim_prices[item.price_term]
+						let dealerCostPrice = admin_sim_prices[item.price_term]
+						if (pay_now) {
+							item.unit_price = item.unit_price - (item.unit_price * discount)
+							adminCostPrice = sa_sim_prices[item.price_term] - (sa_sim_prices[item.price_term] * discount)
+							dealerCostPrice = admin_sim_prices[item.price_term] - (admin_sim_prices[item.price_term] * discount)
+						}
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}', 'product', ${item.price_term}, ${item.unit_price} ,${adminCostPrice} , ${dealerCostPrice} , 'delivered')`)
+					}
+					else if (item.price_for === "SIM ID 2") {
+						let adminCostPrice = sa_sim_prices[item.price_term]
+						let dealerCostPrice = admin_sim_prices[item.price_term]
+						if (pay_now) {
+							item.unit_price = item.unit_price - (item.unit_price * discount)
+							adminCostPrice = sa_sim_prices[item.price_term] - (sa_sim_prices[item.price_term] * discount)
+							dealerCostPrice = admin_sim_prices[item.price_term] - (admin_sim_prices[item.price_term] * discount)
+						}
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}', 'product', '${item.price_term}', ${item.unit_price} ,${adminCostPrice} , ${dealerCostPrice} , 'delivered')`)
+
+					}
+					else if (item.price_for === "chat_id") {
+						let adminCostPrice = sa_chat_prices[item.price_term]
+						let dealerCostPrice = admin_chat_prices[item.price_term]
+						if (pay_now) {
+							item.unit_price = item.unit_price - (item.unit_price * discount)
+							adminCostPrice = sa_chat_prices[item.price_term] - (sa_chat_prices[item.price_term] * discount)
+							dealerCostPrice = admin_chat_prices[item.price_term] - (admin_chat_prices[item.price_term] * discount)
+						}
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}', 'product', '${item.price_term}', ${item.unit_price} ,${adminCostPrice} , ${dealerCostPrice} , 'delivered')`)
+
+					}
+					else if (item.price_for === "vpn") {
+						let adminCostPrice = sa_vpn_prices[item.price_term]
+						let dealerCostPrice = admin_vpn_prices[item.price_term]
+						if (pay_now) {
+							item.unit_price = item.unit_price - (item.unit_price * discount)
+							adminCostPrice = sa_vpn_prices[item.price_term] - (sa_vpn_prices[item.price_term] * discount)
+							dealerCostPrice = admin_vpn_prices[item.price_term] - (admin_vpn_prices[item.price_term] * discount)
+						}
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}', 'product', '${item.price_term}', ${item.unit_price} ,${adminCostPrice} , ${dealerCostPrice} , 'delivered')`)
+
+					}
+					else if (item.price_for === "pgp_email") {
+						let adminCostPrice = sa_pgp_prices[item.price_term]
+						let dealerCostPrice = admin_pgp_prices[item.price_term]
+						if (pay_now) {
+							item.unit_price = item.unit_price - (item.unit_price * discount)
+							adminCostPrice = sa_pgp_prices[item.price_term] - (sa_pgp_prices[item.price_term] * discount)
+							dealerCostPrice = admin_pgp_prices[item.price_term] - (admin_pgp_prices[item.price_term] * discount)
+						}
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}', 'product', '${item.price_term}', ${item.unit_price} ,${adminCostPrice} , ${dealerCostPrice} , 'delivered')`)
+					}
+				})
+			}
+
+		}
+		return {
+			admin_profit,
+			dealer_profit
+		}
+	},
+
+	updateRefundSaleDetails: async function (user_acc_id, service_id, serviceRemainingDays, prevServiceTotalDays) {
+		let serviceSalesQuery = `SELECT * FROM services_sale WHERE service_data_id = ${service_id} AND user_acc_id = ${user_acc_id}`
+		sql.query(serviceSalesQuery, function (err, result) {
+			if (err) {
+				return
+			}
+			if (result.length) {
+				result.map((item) => {
+					let paid_sale_price = item.item_sale_price - ((item.item_sale_price / prevServiceTotalDays) * serviceRemainingDays).toFixed(2);
+					let paid_admin_cost = item.item_admin_cost - (item.item_admin_cost / prevServiceTotalDays * serviceRemainingDays).toFixed(2);
+					let paid_dealer_cost = item.item_dealer_cost - (item.item_dealer_cost / prevServiceTotalDays * serviceRemainingDays).toFixed(2);
+					let dateNow = moment().format("YYYY-MM-DD HH:mm:ss")
+					let updateSaleDetails = `UPDATE services_sale SET paid_sale_price = ${paid_sale_price}, paid_admin_cost = ${paid_admin_cost} , paid_dealer_cost = ${paid_dealer_cost} , status = 'returned' , end_date = '${dateNow}' WHERE user_acc_id = ${user_acc_id} AND service_data_id = ${service_id}`
+					sql.query(updateSaleDetails)
+				})
+			}
+		});
+	},
+
+	calculateHardwareProfitLoss: async function (hardwares, loggedDealerType) {
+		let hardwareIds = []
+		var dealer_profit = 0
+		var admin_profit = 0
+		hardwares.map((item) => {
+			hardwareIds.push(item.id)
+		})
+
+		let hardwaresData = []
+		if (hardwareIds.length) {
+			console.log("SELECT * from hardwares where id IN (" + hardwareIds.join(",") + ")");
+			hardwaresData = await sql.query("SELECT * from hardwares where id IN (" + hardwareIds.join(",") + ")")
+		}
+
+		// console.log(loggedDealerType, hardwaresData, hardwareIds);
+
+		if (loggedDealerType === Constants.DEALER) {
+			if (hardwaresData.length) {
+				hardwaresData.map((item) => {
+					hardwares.map((hardware) => {
+						console.log(hardware.id, item.id);
+						if (hardware.id === item.id) {
+							console.log(hardware.hardware_price, item.hardware_price);
+							admin_profit += hardware.hardware_price - item.hardware_price
+						}
+					})
+				})
+			}
+
+		} else if (loggedDealerType === Constants.SDEALER) {
+			if (hardwaresData.length) {
+				for (let i = 0; i < hardwaresData.length; i++) {
+					let adminHardwarePrice = await sql.query("SELECT * FROM dealer_hardwares_prices WHERE hardware_id = " + hardwaresData[i].id + " AND created_by = 'admin'")
+					let adminPrice = null
+					if (adminHardwarePrice.length) {
+						adminPrice = adminHardwarePrice[0].price
+					}
+					hardwares.map((hardware) => {
+						if (hardware.id === hardwaresData[i].id) {
+							if (adminPrice) {
+								admin_profit += adminPrice - hardwaresData[i].hardware_price
+								dealer_profit += hardware.hardware_price - adminPrice
+							} else {
+								dealer_profit += hardware.hardware_price - hardwaresData[i].hardware_price
+							}
+						}
+					})
+
+				}
+			}
+		}
+		return {
+			admin_profit,
+			dealer_profit
+		}
+	},
+	updateProfitLoss: async function (admin_profit, dealer_profit, admin_data, connected_dealer, usr_acc_id, loggedDealerType, pay_now, service_id) {
+		let transection_data = {
+			user_acc_id: usr_acc_id,
+			dealer_type: "admin",
+			transection_type: "profit",
+			service_id: service_id
+
+		}
+		let transection_status = "transferred"
+		if (!pay_now) {
+			transection_status = "holding"
+		}
+		if (admin_profit > 0) {
+			let admin_profit_query = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data ,credits , transection_type , status , type) VALUES (${admin_data[0].dealer_id},${usr_acc_id} ,'${JSON.stringify(transection_data)}', ${admin_profit} ,'debit', '${transection_status}', 'services')`
+			let profit_result = await sql.query(admin_profit_query);
+			if (profit_result.insertId && pay_now) {
+				let update_admin_credits = `UPDATE financial_account_balance SET credits = credits + ${admin_profit} WHERE dealer_id = ${admin_data[0].dealer_id}`
+				let updateCredits = await sql.query(update_admin_credits)
+				if (updateCredits.affectedRows === 0) {
+					let insert_admin_credits = `INSERT INTO financial_account_balance (dealer_id , credits) VALUES(${admin_data[0].dealer_id} , ${admin_profit})`
+					await sql.query(insert_admin_credits)
+				}
+			}
+		} else if (admin_profit < 0) {
+			let admin_loss_query = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type, status , type) VALUES (${admin_data[0].dealer_id},${usr_acc_id} ,'${JSON.stringify(transection_data)}' ,${admin_profit} ,'credit', '${transection_status}', 'services')`
+			let loss_result = await sql.query(admin_loss_query);
+			if (loss_result.insertId && pay_now) {
+				let update_admin_credits = `UPDATE financial_account_balance SET credits = credits + ${admin_profit} WHERE dealer_id = ${admin_data[0].dealer_id}`
+				await sql.query(update_admin_credits)
+			}
+		}
+		if (loggedDealerType === Constants.SDEALER) {
+			transection_data.dealer_type = "dealer"
+			if (dealer_profit > 0) {
+				let dealer_profit_query = `INSERT INTO financial_account_transections ( user_id,user_dvc_acc_id, transection_data ,credits, transection_type, status, type) VALUES (${connected_dealer},${usr_acc_id} ,'${JSON.stringify(transection_data)}' ,${admin_profit} ,'debit', '${transection_status}', 'services')`
+				let profit_result = await sql.query(dealer_profit_query);
+				if (profit_result.insertId && pay_now) {
+					let update_dealet_credits = `UPDATE financial_account_balance SET credits = credits + ${dealer_profit} WHERE dealer_id = ${connected_dealer}`
+					let updateCredits = await sql.query(update_dealet_credits)
+					if (updateCredits.affectedRows === 0) {
+						let insert_dealer_credits = `INSERT INTO financial_account_balance (dealer_id , credits) VALUES(${connected_dealer} , ${admin_profit})`
+						await sql.query(insert_dealer_credits)
+					}
+				}
+			} else if (dealer_profit < 0) {
+				let dealer_loss_query = `INSERT INTO financial_account_transections ( user_id,user_dvc_acc_id, transection_data ,credits, transection_type, status, type) VALUES (${connected_dealer},${usr_acc_id},'${JSON.stringify(transection_data)}' ,${admin_profit} ,'credit', '${transection_status}', 'services')`
+				let profit_result = await sql.query(dealer_loss_query);
+				if (profit_result.insertId && pay_now) {
+					let update_dealet_credits = `UPDATE financial_account_balance SET credits = credits + ${dealer_profit} WHERE dealer_id = ${connected_dealer}`
+					await sql.query(update_dealet_credits)
+				}
+			}
+		}
+	},
+	getInvoiceId: async function () {
+		let invoiceId = ""
+		var max = "000000"
+		let lastInvoice = "SELECT id from invoices ORDER BY id DESC LIMIT 1"
+		let result = await sql.query(lastInvoice)
+		if (result && result.length) {
+			invoiceId = (result[0].id + 1).toString()
+			invoiceId = max.substring(0, max.length - invoiceId.length) + invoiceId
+		} else {
+			invoiceId = "000001"
+		}
+		return 'PI' + invoiceId;
+	},
+	getUserAccID: async function (dealerId) {
+		let getUserAccId = await sql.query(`SELECT id FROM usr_acc WHERE dealer_id=${dealerId}`);
+		console.log("getUserAccId ", getUserAccId);
+		let user_acc_ids = [];
+
+
+		getUserAccId.forEach((item) => {
+			user_acc_ids.push(item.id);
+		})
+		return user_acc_ids;
+	},
+	getDealersAgainstPermissions: async function (permission_id, permission_type, loggedUserId, subDealers = [], loggedUserType = '') {
+
+		let finalDealers = [];
+		let allDealers = [];
+		let condition = '';
+		let statusAll = false;
+		// console.log("subDealers ", subDealers);
+		// if (subDealers && subDealers.length)
+		// subDealers = subDealers
+
+		if (subDealers && subDealers.length) {
+
+			if (subDealers[0].dealer_id !== undefined) {
+				subDealers = subDealers.map((item) => item.dealer_id);
+			}
+			// console.log("filtered subDealers ", subDealers);
+			if (permission_type === "package" && loggedUserType === "dealer") {
+				condition = ` OR (dealer_type = 'dealer' AND (dealer_id IN (${subDealers}) OR dealer_id = 0) )`;
+			} else {
+				condition = ` OR (dealer_type = 'admin' AND (dealer_id IN (${subDealers}) OR dealer_id = 0) )`;
+			}
+		} else {
+			if (permission_type === "package" && loggedUserType === "dealer") {
+				condition = ` OR (dealer_type = 'dealer' AND dealer_id = 0)`;
+			} else {
+				condition = ` OR (dealer_type = 'admin' AND dealer_id = 0)`;
+			}
+		}
+		let selectDealerQ = `SELECT dealer_id, dealer_type, permission_by FROM dealer_permissions WHERE permission_id= ${permission_id} AND permission_type ='${permission_type}' AND (permission_by=${loggedUserId} ${condition})`; // dealer_id = ${loggedUserId} OR 
+		console.log("selectDealerQ ", selectDealerQ)
+		let results = await sql.query(selectDealerQ);
+
+		console.log("permittedDealers results:: ", results);
+
+		if (results.length > 0) {
+			for (let i = 0; i < results.length; i++) {
+				if (results[i].dealer_id == 0) {
+					let Update_sdealerList = subDealers.map((dealer) => {
+						return {
+							dealer_id: dealer,
+							dealer_type: results[i].dealer_type,
+							permission_by: results[i].permission_by
+						}
+					})
+
+					finalDealers.push(...Update_sdealerList);
+					statusAll = true
+				} else {
+					finalDealers.push(results[i]);
+				}
+			}
+		}
+		console.log("finalDealers", finalDealers);
+
+
+		if (loggedUserType !== "admin") {
+			let deleteIds = [];
+			finalDealers.forEach((item) => {
+				// console.log("item ", item);
+				if (item.dealer_type === "admin") {
+					let index = finalDealers.findIndex((sd) => sd.dealer_type === "dealer" && sd.dealer_id === item.dealer_id);
+					deleteIds.push(index);
+				}
+			})
+			// console.log("deleteIds index: ", deleteIds);
+			allDealers = finalDealers.filter((item, i) => !deleteIds.includes(i));
+		} else {
+			allDealers = finalDealers;
+		}
+
+		allDealers = allDealers.filter((item) => item.dealer_id !== loggedUserId)
+
+		return {
+			allDealers: JSON.stringify(allDealers),
+			statusAll
+		}
+	},
+	savePermission: async function (prevDealers, allDealers, permissionType, permissionId, loggedUserId, loggedUserType) {
+		// this query is to avoid duplication records
+		// let dealers_data = await sql.query(`SELECT dealer_id FROM dealer_permissions WHERE permission_type='${permissionType}' AND permission_id=${permissionId} AND permission_by= ${loggedUserId}`);
+
+		let insertQuery = "INSERT INTO dealer_permissions (permission_id, dealer_id, permission_type, permission_by, dealer_type) VALUES ";
+		let insertOrIgnore = ''
+		for (let i = 0; i < allDealers.length; i++) {
+			// console.log(i, "allDealers.length ", allDealers.length);
+			if (prevDealers.length) {
+				let index = prevDealers.findIndex((dealer) => dealer.dealer_id == allDealers[i]);
+				if (index !== -1) {
+					continue
+				}
+			}
+
+			if (i == (allDealers.length - 1)) {
+				insertOrIgnore = insertOrIgnore + `(${permissionId}, ${allDealers[i]}, '${permissionType}', '${loggedUserId}', '${loggedUserType}')`
+			} else {
+				insertOrIgnore = insertOrIgnore + `(${permissionId}, ${allDealers[i]}, '${permissionType}', '${loggedUserId}', '${loggedUserType}'),`
+			}
+		}
+
+		// console.log("insertOrIgnore general helper:: ", insertOrIgnore)
+		// return insertOrIgnore;
+
+		if (insertOrIgnore) {
+			let insertDealerPermissionsQ = insertQuery + insertOrIgnore;
+			console.log("insertDealerPermissionsQ ", insertDealerPermissionsQ);
+			let insertDealers = await sql.query(insertDealerPermissionsQ);
+
+			if (insertDealers.affectedRows) {
+				return {
+					status: true,
+					msg: 'permission saved successfully'
+				}
+			} else {
+				return {
+					status: false,
+					msg: 'failed to save permission'
+				}
+			}
+		} else {
+			return {
+				status: false,
+				msg: 'failed to save permission'
+			}
+		}
+	},
+	getUserDealers: async function (loggedUserType, loggedUserId, permissionType = '') {
+		let dealerList = [];
+		let dealerCount = 0;
+
+		if (loggedUserType === "admin") {
+			if (permissionType === "package") {
+				dealerList = await sql.query(`SELECT * FROM dealers WHERE type = 2 ORDER BY created DESC`);
+				dealerCount = dealerList ? dealerList.length : 0;
+			} else {
+				let adminRoleId = await this.getUserTypeIDByName(loggedUserType);
+				let selectQ = `SELECT * FROM dealers WHERE type!=${adminRoleId} AND type != 4 AND type !=5 ORDER BY created DESC`;
+				dealerList = await sql.query(selectQ);
+				dealerCount = await this.dealerCount(adminRoleId);
+			}
+
+		}
+		else if (loggedUserType === "dealer") {
+			dealerList = await sql.query(`SELECT dealer_id FROM dealers WHERE connected_dealer ='${loggedUserId}'`)
+			dealerCount = (dealerList && dealerList.length) ? dealerList.length : 0;
+		}
+		// console.log("===================> dealerList:: ", dealerList);
+		let getDealerIds = dealerList.map((dealer) => dealer.dealer_id);
+
+		return {
+			dealerList: getDealerIds,
+			dealerCount
+		}
+	},
+	updatePendingTransactions: async function (dealerId, credits) {
+		let get_last_panding_transections_query = `SELECT * from financial_account_transections WHERE user_id = ${dealerId} AND status = 'pending' ORDER BY created_at asc`
+		let last_panding_transections = await sql.query(get_last_panding_transections_query)
+		console.log(last_panding_transections.length);
+		if (last_panding_transections && last_panding_transections.length) {
+			for (let i = 0; i < last_panding_transections.length; i++) {
+				let paid_credits = 0
+				let due_credits = 0
+				if (credits > 0) {
+					if (credits >= last_panding_transections[i].due_credits) {
+						credits = credits - last_panding_transections[i].due_credits
+						paid_credits = last_panding_transections[i].due_credits
+						due_credits = 0
+						sql.query(`UPDATE financial_account_transections SET paid_credits = paid_credits + ${paid_credits} , due_credits = ${due_credits} , status = 'transferred' WHERE id = ${last_panding_transections[i].id}`)
+						
+
+					} else {
+						due_credits = last_panding_transections[i].due_credits - credits
+						paid_credits = credits
+						credits = 0
+						sql.query(`UPDATE financial_account_transections SET paid_credits = paid_credits + ${paid_credits} , due_credits = ${due_credits} WHERE id = ${last_panding_transections[i].id}`)
+					}
+				} else {
+					break
+				}
+			}
+			let allDealers = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_id = ${dealerId}`);
+			if (allDealers.length) {
+				let item = allDealers[0]
+				let getDate = moment().subtract(22, 'day').format('YYYY-MM-DD');
+				let getTransaction = await sql.query("SELECT * FROM financial_account_transections " +
+					"WHERE user_id = " + item.dealer_id + " AND status = 'pending' AND DATE(created_at) >= " + getDate + " LIMIT 1");
+				if (getTransaction.length) {
+					let now = moment();
+					let end = moment(getTransaction[0].created_at).format('YYYY-MM-DD');
+					let duration = now.diff(end, 'days');
+
+					if (duration > 21 && duration <= 60) {
+						await sql.query("UPDATE dealers set account_balance_status = 'restricted' WHERE dealer_id = " + item.dealer_id);
+					} else if (duration > 60) {
+						await sql.query("UPDATE dealers set account_balance_status = 'suspended' WHERE dealer_id = " + item.dealer_id);
+					}
+				} else {
+					await sql.query("UPDATE dealers set account_balance_status = 'active' WHERE dealer_id = " + item.dealer_id);
+				}
+			}
+		}
+	}
 }

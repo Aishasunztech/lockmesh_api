@@ -4,6 +4,9 @@ require("stackify-node-apm");
 var app = require("../app");
 var debug = require("debug")("webportalbackend:server");
 var http = require("http");
+let socket = require('socket.io');
+
+
 var Constants = require("../constants/Application");
 const { sql } = require("../config/database");
 
@@ -14,11 +17,23 @@ var events = require('../crons/db_events');
  * Create HTTP server.
  */
 var server = http.createServer(app);
+let socketRoutes = require('../routes/sockets');
+// io.attach(server, {
+//     // pingInterval: 60000,
+//     // pingTimeout: 120000,
+//     // cookie: false
+// });
+let io= socket();
+io.attach(server);
+socketRoutes.baseSocket(io);
 
-// app.io.attach(server);
-let io = require("../routes/sockets").listen(server);
+// let dealerIo = socket({
+// 	path: '/dealer'
+// })
+// dealerIo.attach(server);
+// socketRoutes.dealerSocket(dealerIo);
 
-
+// events.deviceQueue()
 /**
  * Listen on provided port, on all network interfaces.
  */
