@@ -228,9 +228,9 @@ exports.getDevicesForReport = async function (req, res) {
 
         if (user_type === constants.DEALER) {
             let sDealerIds = await helpers.getSdealersByDealerId(verify.user.id);
-            if (sDealerIds.length > 0){
+            if (sDealerIds.length > 0) {
                 where_con += ' AND ua.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
-            }else{
+            } else {
                 where_con += ' AND ua.dealer_id = ' + verify.user.id
             }
         } else {
@@ -2555,7 +2555,7 @@ exports.extendServices = async function (req, res) {
                                         '"';
                                     await sql.query(updatePgpEmails);
                                 }
-                                let pgpData = await sql.query(`SELECT * FROM pgp_emails WHERE pgp_email = ${pgp_email}`)
+                                let pgpData = await sql.query(`SELECT * FROM pgp_emails WHERE pgp_email = '${pgp_email}'`)
                                 if (pgpData && pgpData.length) {
                                     let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, type , start_date , status) VALUES(${usr_acc_id} , ${service_id} , ${pgpData[0].id} , 'pgp_email' , '${date_now}' , 'extended')`
                                     sql.query(insertAccService)
@@ -2572,7 +2572,7 @@ exports.extendServices = async function (req, res) {
                                         '"';
                                     await sql.query(updateChatIds);
                                 }
-                                let chatData = await sql.query(`SELECT * FROM chat_ids WHERE chat_id = ${chat_id}`)
+                                let chatData = await sql.query(`SELECT * FROM chat_ids WHERE chat_id = '${chat_id}'`)
                                 if (chatData && chatData.length) {
                                     let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, type , start_date , status) VALUES(${usr_acc_id} , ${service_id} , ${chatData[0].id} , 'chat_id' , '${date_now}' , 'extended')`
                                     sql.query(insertAccService)
@@ -2589,7 +2589,7 @@ exports.extendServices = async function (req, res) {
                                         '"';
                                     await sql.query(updateSimIds);
                                 }
-                                let simData = await sql.query(`SELECT * FROM sim_ids WHERE sim_id = ${sim_id}`)
+                                let simData = await sql.query(`SELECT * FROM sim_ids WHERE sim_id = '${sim_id}'`)
                                 if (simData && simData.length) {
                                     let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, type , start_date , status) VALUES(${usr_acc_id} , ${service_id} , ${simData[0].id} , 'sim_id' , '${date_now}' , 'extended')`
                                     sql.query(insertAccService)
@@ -2606,7 +2606,7 @@ exports.extendServices = async function (req, res) {
                                         '"';
                                     await sql.query(updateSimIds);
                                 }
-                                let simData = await sql.query(`SELECT * FROM sim_ids WHERE sim_id = ${sim_id2}`)
+                                let simData = await sql.query(`SELECT * FROM sim_ids WHERE sim_id = '${sim_id2}'`)
                                 if (simData && simData.length) {
                                     let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, type , start_date , status) VALUES(${usr_acc_id} , ${service_id} , ${simData[0].id} , 'sim_id2' , '${date_now}' , 'extended')`
                                     sql.query(insertAccService)
