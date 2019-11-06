@@ -378,7 +378,7 @@ exports.generateSalesReport = async function (req, res) {
                     profit_loss = sale_price - cost_price;
 
                     totalCost       += cost_price;
-                    totalSale       += profit_loss;
+                    totalSale       += sale_price;
 
                     packagesData.push({
                         'type': 'Package',
@@ -395,11 +395,11 @@ exports.generateSalesReport = async function (req, res) {
 
                     if (value.item_dealer_cost != 0 && user_type === Constants.DEALER) {
                         cost_price = parseInt(value.item_dealer_cost);
-                        sale_price = parseInt(value.total_credits);
+                        sale_price = parseInt(value.item_sale_price);
                         profit_loss = sale_price - cost_price;
 
                         totalCost       += cost_price;
-                        totalSale       += profit_loss;
+                        totalSale       += sale_price;
 
                         packagesData.push({
                             'type': 'Package',
@@ -418,7 +418,7 @@ exports.generateSalesReport = async function (req, res) {
                         profit_loss = sale_price - cost_price;
 
                         totalCost       += cost_price;
-                        totalSale       += profit_loss;
+                        totalSale       += sale_price;
 
                         packagesData.push({
                             'type': 'Package',
@@ -558,24 +558,24 @@ exports.generateSalesReport = async function (req, res) {
                     profit_loss = sale_price - cost_price;
 
                     totalCost       += cost_price;
-                    totalSale       += profit_loss;
+                    totalSale       += sale_price;
 
                 } else {
 
-                    if (user_type === Constants.DEALER) {
+                    if (value.item_dealer_cost != 0 && user_type === Constants.DEALER) {
                         cost_price  = parseInt(value.dealer_cost_credits);
                         sale_price  = parseInt(value.total_credits);
                         profit_loss = sale_price - cost_price;
 
                         totalCost       += cost_price;
-                        totalSale       += profit_loss;
-                    } else {
+                        totalSale       += sale_price;
+                    } else if (user_type === Constants.ADMIN){
                         cost_price = parseInt(value.admin_cost_credits);
                         sale_price = parseInt(value.dealer_cost_credits);
                         profit_loss = sale_price - cost_price;
 
                         totalCost       += cost_price;
-                        totalSale       += profit_loss;
+                        totalSale       += sale_price;
                     }
 
                 }
