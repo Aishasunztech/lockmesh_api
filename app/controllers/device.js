@@ -2053,7 +2053,7 @@ exports.editDevices = async function (req, res) {
                                     await sql.query(updatePrevSim);
                                 } else {
                                     let updatePrevSim =
-                                        'update sim_ids set user_acc_id = null,  used=1 , end_date = "' + date_now + '" where sim_id ="' +
+                                        'update sim_ids set user_acc_id = null,  used=1 , expiry_date = "' + date_now + '" where sim_id ="' +
                                         prevSimId +
                                         '"';
                                     await sql.query(updatePrevSim);
@@ -5544,9 +5544,9 @@ exports.deleteUnlinkDevice = async function (req, res) {
                             let statusChangeQuery = "UPDATE usr_acc SET del_status='" + 1 + "' WHERE device_id='" + device.usr_device_id + "'";
                             let resp = await sql.query(statusChangeQuery)
                             if (resp.affectedRows) {
-                                await sql.query("UPDATE pgp_emails set user_acc_id = null , used = 0 where pgp_email ='" + device.pgp_email + "'")
-                                await sql.query("UPDATE chat_ids set user_acc_id = null , used = 0 where chat_id ='" + device.chat_id + "'")
-                                await sql.query("UPDATE sim_ids set user_acc_id = null , used = 0 where sim_id ='" + device.sim_id + "' OR sim_id ='" + device.sim_id2 + "'")
+                                await sql.query("UPDATE pgp_emails set user_acc_id = null , used = 0 , start_date = null where pgp_email ='" + device.pgp_email + "'")
+                                await sql.query("UPDATE chat_ids set user_acc_id = null , used = 0 , start_date = null where chat_id ='" + device.chat_id + "'")
+                                await sql.query("UPDATE sim_ids set user_acc_id = null , used = 0 , start_date = null where sim_id ='" + device.sim_id + "' OR sim_id ='" + device.sim_id2 + "'")
                                 let deleteHistoryQuery = "UPDATE acc_action_history SET del_status='1' WHERE user_acc_id='" + device.id + "' AND dealer_id = '" + verify.user.id + "' AND action = 'PRE-ACTIVATED'";
                                 await sql.query(deleteHistoryQuery)
                                 deletedDevices.push(device.id);
