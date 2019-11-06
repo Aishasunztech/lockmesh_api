@@ -228,22 +228,24 @@ exports.getDevicesForReport = async function (req, res) {
 
         if (user_type === constants.DEALER) {
             let sDealerIds = await helpers.getSdealersByDealerId(verify.user.id);
-            where_con += ' AND ua.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
+            if (sDealerIds.length > 0){
+                where_con += ' AND ua.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
+            }else{
+                where_con += ' AND ua.dealer_id = ' + verify.user.id
+            }
         } else {
-            where_con += ' AND ua.dealer_id = ' + dealer
+            where_con += ' AND ua.dealer_id = ' + verify.user.id
         }
 
-        let deviceQuery = `SELECT d.* FROM devices as d
+        let deviceQuery = `SELECT d.device_id as device_id FROM devices as d
             JOIN usr_acc as ua
                 on ua.device_id = d.id
-         WHERE d.reject_status = 0 ${where_con} ORDER BY d.id DESC`;
-
+         WHERE d.reject_status = 0 AND d.device_id IS NOT NULL ${where_con} GROUP BY device_id`;
+        console.log(deviceQuery)
         sql.query(deviceQuery, async function (error, results, fields) {
-            console.log(results)
             data = {
                 data: results
             };
-
             return res.send(data);
 
         });
