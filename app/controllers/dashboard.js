@@ -14,9 +14,11 @@ exports.getDashboardData = async function (req, res) {
 
     console.log(verify.user.user_type, 'user type is')
     if (verify) {
+        let loggedUserType = verify.user.user_type;
+
         dealer_role = await general_helpers.getDealerTypeIdByName('dealer');
         sdealer_role = await general_helpers.getDealerTypeIdByName('sdealer');
-        if (verify.user.user_type == constants.ADMIN) {
+        if (loggedUserType == constants.ADMIN) {
 
             let users = await sql.query("select * from users where del_status =0 order by created_at DESC");
             if (users) {
@@ -73,7 +75,7 @@ exports.getDashboardData = async function (req, res) {
                 dashboardData.onlineDevices = online_devices;
             }
 
-        } else if (verify.user.user_type == constants.DEALER) {
+        } else if (loggedUserType == constants.DEALER) {
 
             // sdealers
             if (!empty(sdealer_role)) {
@@ -131,11 +133,23 @@ exports.getDashboardData = async function (req, res) {
             }
 
             // policies
-            let permittedids = await sql.query(`SELECT policy_id FROM dealer_policies WHERE dealer_id='${verify.user.id}'`);
+            // let permittedids = await sql.query(`SELECT policy_id FROM dealer_policies WHERE dealer_id='${verify.user.id}'`);
+
+            let condition = '';
+            if (loggedUserType === constants.DEALER) {
+                condition = ` OR (dealer_id = 0 AND dealer_type = 'admin')`
+            }
+            else if (loggedUserType === constants.SDEALER) {
+                let getParentId = await sql.query(`SELECT connected_dealer FROM dealers WHERE dealer_id = ${verify.user.id}`);
+                condition = ` OR (dealer_id = 0 AND (dealer_type='admin' OR (dealer_type='dealer' AND permission_by=${getParentId[0].connected_dealer}))) `
+            }
+            let permittedids = await sql.query(`SELECT permission_id FROM dealer_permissions WHERE (dealer_id='${verify.user.id}' ${condition}) AND permission_type = 'policy';`);
+
+
             let prrr = [];
             if (permittedids && permittedids.length) {
                 for (let item of permittedids) {
-                    prrr.push(item.policy_id)
+                    prrr.push(item.permission_id)
                 }
             }
             let query = ''
