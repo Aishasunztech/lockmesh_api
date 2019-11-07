@@ -4,14 +4,24 @@
             "name": "lockmesh",
             "script": "./bin/www.js",
             "watch": false,
+            "__instances" : "max",
+            "__exec_mode" : "cluster",
             "env": {
                 "HOST_NAME": "localhost"
             },
-            "env_lockmesh": {
-                "HOST_NAME": "LockMesh"
-            },
             "env_dev_lockmesh": {
                 "HOST_NAME": "LockMesh Dev"
+            },
+            "env_predev": {
+                "HOST_NAME": "PreDev"
+            },
+            "env_loadtester": {
+                "HOST_NAME": "LoadTester"
+            },
+
+            
+            "env_lockmesh": {
+                "HOST_NAME": "LockMesh"
             },
             "env_titanlocker": {
                 "HOST_NAME": "TitanLocker"
