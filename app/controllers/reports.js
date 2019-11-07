@@ -324,6 +324,7 @@ exports.generateSalesReport = async function (req, res) {
         let from            = req.body.from;
         let to              = req.body.to;
         let productType     = req.body.product_type;
+        let device          = req.body.device;
         let condition       = '';
         let packages        = [];
         let packagesData    = [];
@@ -357,6 +358,14 @@ exports.generateSalesReport = async function (req, res) {
 
             if (to) {
                 condition += ' AND DATE(ss.created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
+            }
+
+            if (device === Constants.DEVICE_PRE_ACTIVATION) {
+                condition += ' AND d.device_id IS NULL'
+            }
+
+            if (device && device !== Constants.DEVICE_PRE_ACTIVATION) {
+                condition += ' AND d.device_id = "' + device + '"'
             }
 
             packages = await sql.query(`SELECT ss.*, d.device_id as device_id, ua.link_code as dealer_pin FROM services_sale as ss
@@ -461,6 +470,14 @@ exports.generateSalesReport = async function (req, res) {
                 condition += ' AND DATE(ss.created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
             }
 
+            if (device === Constants.DEVICE_PRE_ACTIVATION) {
+                condition += ' AND d.device_id IS NULL'
+            }
+
+            if (device && device !== Constants.DEVICE_PRE_ACTIVATION) {
+                condition += ' AND d.device_id = "' + device + '"'
+            }
+
             products = await sql.query(`SELECT ss.*, d.device_id as device_id, ua.dealer_id as dealer_id, ua.link_code as dealer_pin FROM services_sale as ss
             JOIN usr_acc as ua on ua.id = ss.user_acc_id 
             JOIN devices as d on ua.device_id = d.id
@@ -537,6 +554,14 @@ exports.generateSalesReport = async function (req, res) {
 
             if (to) {
                 condition += ' AND DATE(hd.created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
+            }
+
+            if (device === Constants.DEVICE_PRE_ACTIVATION) {
+                condition += ' AND d.device_id IS NULL'
+            }
+
+            if (device && device !== Constants.DEVICE_PRE_ACTIVATION) {
+                condition += ' AND d.device_id = "' + device + '"'
             }
     
             hardwares = await sql.query(`SELECT hd.*, d.device_id as device_id, ua.link_code as dealer_pin FROM hardwares_data as hd
