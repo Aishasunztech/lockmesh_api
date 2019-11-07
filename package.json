@@ -53,7 +53,7 @@
     "randomatic": "^3.1.0",
     "request-promise": "^4.2.2",
     "sequelize": "^6.0.0",
-    "sequelize-cli": "^5.5.0",
+    "sequelize-cli": "^5.5.1",
     "socket.io": "^2.2.0",
     "stackify-logger": "^3.0.0",
     "stackify-node-apm": "^1.6.1",

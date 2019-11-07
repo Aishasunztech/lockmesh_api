@@ -354,6 +354,7 @@ exports.addDealer = async function (req, res) {
 
                 if (rows && rows.affectedRows) {
 
+                    sql.query("INSERT INTO financial_account_balance(dealer_id) VALUES(" + rows.insertId + ")")
                     sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('" + rows.insertId + "', '" + JSON.stringify(constants.deviceColumns) + "', 'devices') ")
                     sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('" + rows.insertId + "', '" + JSON.stringify(constants.dealerColumns) + "', 'dealer') ")
                     sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('" + rows.insertId + "', '" + JSON.stringify(constants.sdealerColumns) + "', 'sdealer') ")

@@ -1652,11 +1652,11 @@ exports.getOverdueDetails = async function (req, res) {
 
         paymentHistoryData.map(item => {
 
-            let now = moment();
-            let end = moment(item.created_at).format('YYYY-MM-DD');
+            let now     = moment();
+            let end     = moment(item.created_at).format('YYYY-MM-DD');
             let duration = now.diff(end, 'days');
 
-            if (duration > 0 && duration <= 21) {
+            if (duration >= 0 && duration <= 21) {
                 ++_0to21;
                 _0to21_dues += parseInt(item.due_credits);
 
