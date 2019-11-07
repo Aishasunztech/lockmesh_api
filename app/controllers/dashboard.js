@@ -52,22 +52,22 @@ exports.getDashboardData = async function (req, res) {
             }
 
 
-// console.log(`SELECT devices.* ,${usr_acc_query_text} FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) WHERE devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0  ${where_con} ORDER BY devices.id DESC`)
+            // console.log(`SELECT devices.* ,${usr_acc_query_text} FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) WHERE devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0  ${where_con} ORDER BY devices.id DESC`)
             let devices = await sql.query(`SELECT devices.* ,${usr_acc_query_text} FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) WHERE devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0  ORDER BY devices.id DESC`);
-            
+
             if (devices) {
                 // console.log(devices, 'devices are');
                 let online_devices = 0;
                 let active_devices = 0;
-                for(let device of devices){
-                //    console.log(device_helpers.checkStatus(device)); 
-                  
-                   if(device.online == 'online'){
-                    online_devices+= 1;
-                   }
-                   if(device_helpers.checkStatus(device) == constants.DEVICE_ACTIVATED){
-                       active_devices+=1;
-                   }
+                for (let device of devices) {
+                    //    console.log(device_helpers.checkStatus(device)); 
+
+                    if (device.online == 'online') {
+                        online_devices += 1;
+                    }
+                    if (device_helpers.checkStatus(device) == constants.DEVICE_ACTIVATED) {
+                        active_devices += 1;
+                    }
                 }
                 dashboardData.activeDevices = active_devices;
                 dashboardData.onlineDevices = online_devices;
@@ -98,13 +98,14 @@ exports.getDashboardData = async function (req, res) {
                 // console.log("select Count(*) as total_users from users WHERE dealer_id IN (" + dealer.join() + ") AND del_status = 0 order by created_at DESC");
                 let results = await sql.query("select  Count(*) as total_users from users WHERE dealer_id IN (" + dealer.join() + ") AND del_status = 0 order by created_at DESC")
 
-                if(results && results.length){
+                if (results && results.length) {
                     dashboardData.users = results[0].total_users;
                 }
             }
 
             // apks
-            let apkList = await sql.query("select count(*) as total_apks from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.apk_type != 'permanent' AND delete_status = 0");
+            // let apkList = await sql.query("select count(*) as total_apks from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.apk_type != 'permanent' AND delete_status = 0");
+            let apkList = await sql.query(`SELECT count(*) AS total_apks FROM dealer_permissions JOIN apk_details ON (apk_details.id = dealer_permissions.permission_id) WHERE (dealer_permissions.dealer_id='${verify.user.id}' OR (dealer_permissions.dealer_id = 0 AND dealer_permissions.dealer_type='admin')) AND apk_details.apk_type != 'permanent' AND delete_status = 0 AND dealer_permissions.permission_type = 'apk';`);
             if (apkList && apkList.length) {
                 dashboardData.apks = apkList[0].total_apks;
             }
@@ -115,48 +116,48 @@ exports.getDashboardData = async function (req, res) {
                 // console.log(devices, 'devices are');
                 let online_devices = 0;
                 let active_devices = 0;
-                for(let device of devices){
-                //    console.log(device_helpers.checkStatus(device)); 
-                  
-                   if(device.online == 'online'){
-                    online_devices+= 1;
-                   }
-                   if(device_helpers.checkStatus(device) == constants.DEVICE_ACTIVATED){
-                       active_devices+=1;
-                   }
+                for (let device of devices) {
+                    //    console.log(device_helpers.checkStatus(device)); 
+
+                    if (device.online == 'online') {
+                        online_devices += 1;
+                    }
+                    if (device_helpers.checkStatus(device) == constants.DEVICE_ACTIVATED) {
+                        active_devices += 1;
+                    }
                 }
                 dashboardData.activeDevices = active_devices;
                 dashboardData.onlineDevices = online_devices;
             }
 
             // policies
-                let permittedids = await sql.query(`SELECT policy_id FROM dealer_policies WHERE dealer_id='${verify.user.id}'`);
-                let prrr = [];
-                if (permittedids && permittedids.length) {
-                    for (let item of permittedids) {
-                        prrr.push(item.policy_id)
-                    }
+            let permittedids = await sql.query(`SELECT policy_id FROM dealer_policies WHERE dealer_id='${verify.user.id}'`);
+            let prrr = [];
+            if (permittedids && permittedids.length) {
+                for (let item of permittedids) {
+                    prrr.push(item.policy_id)
                 }
-                let query = ''
-                if (prrr.length) {
-                    query = "select count(*) as total_policies from policy where (dealer_id='" + verify.user.id + "' OR id IN (" + prrr + ")) AND delete_status=0"
-                }
-                else {
-                    query = "select count(*) as total_policies from policy where dealer_id='" + verify.user.id + "' AND delete_status=0"
-                }
-                console.log(query)
-               let policies = await sql.query(query);
-               console.log(policies, 'polices are')
-               if(policies && policies.length){
-                   dashboardData.policies = policies[0].total_policies;
-               }
+            }
+            let query = ''
+            if (prrr.length) {
+                query = "select count(*) as total_policies from policy where (dealer_id='" + verify.user.id + "' OR id IN (" + prrr + ")) AND delete_status=0"
+            }
+            else {
+                query = "select count(*) as total_policies from policy where dealer_id='" + verify.user.id + "' AND delete_status=0"
+            }
+            console.log(query)
+            let policies = await sql.query(query);
+            console.log(policies, 'polices are')
+            if (policies && policies.length) {
+                dashboardData.policies = policies[0].total_policies;
+            }
 
 
             //    link requests 
-           let link_requests = await sql.query(`select count(*) as link_requests FROM devices LEFT JOIN usr_acc ON  (devices.id = usr_acc.device_id) WHERE ((usr_acc.device_status=0 OR usr_acc.device_status="0") AND (usr_acc.unlink_status=0 OR usr_acc.unlink_status="0") AND (usr_acc.activation_status IS NULL)) AND devices.reject_status = 0  AND (usr_acc.dealer_id =${verify.user.id} OR usr_acc.prnt_dlr_id = ${verify.user.id})  ORDER BY devices.id DESC`)
-               if(link_requests && link_requests.length){
-                   dashboardData.link_requests = link_requests[0].link_requests;
-               }
+            let link_requests = await sql.query(`select count(*) as link_requests FROM devices LEFT JOIN usr_acc ON  (devices.id = usr_acc.device_id) WHERE ((usr_acc.device_status=0 OR usr_acc.device_status="0") AND (usr_acc.unlink_status=0 OR usr_acc.unlink_status="0") AND (usr_acc.activation_status IS NULL)) AND devices.reject_status = 0  AND (usr_acc.dealer_id =${verify.user.id} OR usr_acc.prnt_dlr_id = ${verify.user.id})  ORDER BY devices.id DESC`)
+            if (link_requests && link_requests.length) {
+                dashboardData.link_requests = link_requests[0].link_requests;
+            }
 
 
         } else {
@@ -166,32 +167,32 @@ exports.getDashboardData = async function (req, res) {
                 // console.log(devices, 'devices are');
                 let online_devices = 0;
                 let active_devices = 0;
-                for(let device of devices){
-                //    console.log(device_helpers.checkStatus(device)); 
-                  
-                   if(device.online == 'online'){
-                    online_devices+= 1;
-                   }
-                   if(device_helpers.checkStatus(device) == constants.DEVICE_ACTIVATED){
-                       active_devices+=1;
-                   }
+                for (let device of devices) {
+                    //    console.log(device_helpers.checkStatus(device)); 
+
+                    if (device.online == 'online') {
+                        online_devices += 1;
+                    }
+                    if (device_helpers.checkStatus(device) == constants.DEVICE_ACTIVATED) {
+                        active_devices += 1;
+                    }
                 }
                 dashboardData.activeDevices = active_devices;
                 dashboardData.onlineDevices = online_devices;
             }
 
             // users
-            let users = await sql.query("select count(*) as total_users from users WHERE dealer_id = '" + verify.user.id + "' AND del_status = 0 order by created_at DESC")            
-            if(users && users.length){
+            let users = await sql.query("select count(*) as total_users from users WHERE dealer_id = '" + verify.user.id + "' AND del_status = 0 order by created_at DESC")
+            if (users && users.length) {
                 dashboardData.users = users[0].total_users;
             }
- 
+
 
             // link requests
-           let link_requests = await sql.query(`select count(*) as link_requests FROM devices LEFT JOIN usr_acc ON  (devices.id = usr_acc.device_id) WHERE ((usr_acc.device_status=0 OR usr_acc.device_status="0") AND (usr_acc.unlink_status=0 OR usr_acc.unlink_status="0") AND (usr_acc.activation_status IS NULL)) AND devices.reject_status = 0  AND (usr_acc.dealer_id =${verify.user.id}) ORDER BY devices.id DESC`)
-           if(link_requests && link_requests.length){
-               dashboardData.link_requests = link_requests[0].link_requests;
-           }
+            let link_requests = await sql.query(`select count(*) as link_requests FROM devices LEFT JOIN usr_acc ON  (devices.id = usr_acc.device_id) WHERE ((usr_acc.device_status=0 OR usr_acc.device_status="0") AND (usr_acc.unlink_status=0 OR usr_acc.unlink_status="0") AND (usr_acc.activation_status IS NULL)) AND devices.reject_status = 0  AND (usr_acc.dealer_id =${verify.user.id}) ORDER BY devices.id DESC`)
+            if (link_requests && link_requests.length) {
+                dashboardData.link_requests = link_requests[0].link_requests;
+            }
         }
 
 
