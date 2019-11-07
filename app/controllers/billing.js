@@ -646,20 +646,24 @@ exports.saveSaPackage = async function (req, res) {
             // console.log(dealer_id, 'whitelableid');
             let days = 0;
             if (data.pkgTerm) {
-                stringarray = data.pkgTerm.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
-                if (stringarray) {
-                    // console.log(stringarray,'is string lenth', stringarray.length)
-                    if (stringarray.length) {
-                        month = stringarray[0];
-                        // console.log('is month', month, stringarray[1])
-                        if (month && stringarray[1]) {
-                            // console.log('sring[1]', stringarray[1])
-                            if (stringarray[1] == 'month') {
-                                days = parseInt(month) * 30
-                            } else if (string[1] == 'year') {
-                                days = parseInt(month) * 365
-                            } else {
-                                days = 30
+                if (data.pkgTerm === "trial") {
+                    days = 7;
+                } else {
+                    stringarray = data.pkgTerm.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
+                    if (stringarray) {
+                        // console.log(stringarray,'is string lenth', stringarray.length)
+                        if (stringarray.length) {
+                            month = stringarray[0];
+                            // console.log('is month', month, stringarray[1])
+                            if (month && stringarray[1]) {
+                                // console.log('sring[1]', stringarray[1])
+                                if (stringarray[1] == 'month') {
+                                    days = parseInt(month) * 30
+                                } else if (string[1] == 'year') {
+                                    days = parseInt(month) * 365
+                                } else {
+                                    days = 30
+                                }
                             }
                         }
                     }
