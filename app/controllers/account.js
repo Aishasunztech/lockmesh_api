@@ -216,7 +216,7 @@ exports.importIDs = async (req, res) => {
 
             let checkDuplicateDomains = [];
             for (let row of data) {
-                let domainName = row.pgp_email.split('@').pop();
+                let domainName = row.pgp_email.split('@').pop().trim();
                 if (!domains.includes(domainName) && !checkDuplicateDomains.includes(domainName)) {
                     if (domainName) {
                         checkDuplicateDomains.push(domainName);
@@ -241,7 +241,7 @@ exports.importIDs = async (req, res) => {
             for (let row of data) {
                 if (!pgp_emails.includes(row.pgp_email)) {
                     if (row.pgp_email) {
-                        let indexDomain = all_domains.findIndex((dm) => dm.name == row.pgp_email.split('@').pop());
+                        let indexDomain = all_domains.findIndex((dm) => dm.name === row.pgp_email.split('@').pop().trim());
                         let domain_id = (indexDomain > -1) ? all_domains[indexDomain].id : null;
 
                         let insertQ = `INSERT INTO pgp_emails (pgp_email, domain_id) value ('${row.pgp_email}', ${domain_id})`;
