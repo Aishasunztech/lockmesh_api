@@ -118,7 +118,7 @@ exports.trasnferApps = async function (req, res) {
         let dealer_type = verify.user.user_type;
         let dealer_id = verify.user.id;
         if (dealer_type === ADMIN) {
-            let deleteNotIn = "DELETE FROM secure_market_apps WHERE apk_id NOT IN (" + toDelete + ") AND space_type= '" + spaceType + "'"
+            let deleteNotIn = `DELETE FROM secure_market_apps WHERE apk_id NOT IN ("${toDelete}") AND space_type= '${spaceType}' AND dealer_type = 'admin';`
             // console.log(deleteNotIn);
             await sql.query(deleteNotIn);
         } else {
