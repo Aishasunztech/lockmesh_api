@@ -21,9 +21,49 @@ deploy_DevLM_API:
     - echo "Deploy to dev server"
     - ssh-add <(echo "$PRIVATE_KEY")
     - rm -rf .git
-    - ssh -o StrictHostKeyChecking=no web@178.128.192.244 "cd /var/www/html/${WORK_DIR}; git reset --hard; git pull origin ${BRANCH}; npm install; sequelize-cli db:migrate --env dev_lockmesh; pm2 reload all; exit"
+    - ssh -o StrictHostKeyChecking=no web@178.128.192.244 "cd /var/www/html/${WORK_DIR}; git reset --hard; git pull origin ${BRANCH}; npm install; sequelize-cli db:migrate --env lm_server; pm2 reload lockmesh; exit"
   only:
     - development
+
+deploy_PreDevLM_API:
+  stage: deploy
+  environment:
+    name: PreDevLockmeshAPI
+    url: https://predevapi.lockmesh.com
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    - mkdir -p ~/.ssh
+    - eval $(ssh-agent -s)
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  script:
+    - echo "Deploy to dev server"
+    - ssh-add <(echo "$PRIVATE_KEY")
+    - rm -rf .git
+    - ssh -o StrictHostKeyChecking=no web@142.93.165.21 "cd /var/www/html/${WORK_DIR}; git reset --hard; git pull origin ${BRANCH}; npm install; sequelize-cli db:migrate --env lm_server; pm2 reload lockmesh; exit"
+  only:
+    - predev
+
+deploy_LoadTesterLM_API:
+  stage: deploy
+  environment:
+    name: LoadTesterLM_API
+    url: https://loadtesterapi.lockmesh.com
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    - mkdir -p ~/.ssh
+    - eval $(ssh-agent -s)
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  script:
+    - echo "Deploy to dev server"
+    - ssh-add <(echo "$PRIVATE_KEY")
+    - rm -rf .git
+    - ssh -o StrictHostKeyChecking=no web@46.101.239.249 "cd /var/www/html/${WORK_DIR}; git reset --hard; git pull origin ${BRANCH}; npm install; sequelize-cli db:migrate --env lm_server; pm2 reload lockmesh; exit"
+  only:
+    - loadtester
+
+
+
+
 
 deploy_LiveLM_API:
   stage: deploy
@@ -36,10 +76,10 @@ deploy_LiveLM_API:
     - eval $(ssh-agent -s)
     - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
   script:
-    - echo "Deploy to live LM server"
+    - echo "Deploy to live server"
     - ssh-add <(echo "$PRIVATE_KEY")
     - rm -rf .git
-    - ssh -o StrictHostKeyChecking=no web@178.128.202.140 "cd /var/www/html/${WORK_DIR}; git reset --hard; git pull origin ${BRANCH}; npm install; sequelize-cli db:migrate --env lockmesh; pm2 reload all; exit"
+    - ssh -o StrictHostKeyChecking=no web@178.128.202.140 "cd /var/www/html/${WORK_DIR}; git reset --hard; git pull origin ${BRANCH}; npm install; sequelize-cli db:migrate --env lm_server; pm2 reload lockmesh; exit"
   only:
     - master
 
@@ -54,10 +94,46 @@ deploy_LiveTitan_API:
     - eval $(ssh-agent -s)
     - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
   script:
-    - echo "Deploy to live LM server"
+    - echo "Deploy to live server"
     - ssh-add <(echo "$PRIVATE_KEY")
     - rm -rf .git
-    - ssh -o StrictHostKeyChecking=no web@165.22.65.173 "cd /var/www/html/${WORK_DIR}; git reset --hard; git pull origin ${BRANCH}; npm install; sequelize-cli db:migrate --env titanlocker; pm2 reload all; exit"
+    - ssh -o StrictHostKeyChecking=no web@165.22.65.173 "cd /var/www/html/${WORK_DIR}; git reset --hard; git pull origin ${BRANCH}; npm install; sequelize-cli db:migrate --env lm_server; pm2 reload lockmesh; exit"
+  only:
+    - master
+
+deploy_LiveCryptPhoneC_API:
+  stage: deploy
+  environment:
+    name: LiveCryptPhoneCAPI
+    url: https://cryptcapi.lockmesh.com
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    - mkdir -p ~/.ssh
+    - eval $(ssh-agent -s)
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  script:
+    - echo "Deploy to live server"
+    - ssh-add <(echo "$PRIVATE_KEY")
+    - rm -rf .git
+    - ssh -o StrictHostKeyChecking=no web@46.101.218.40 "cd /var/www/html/${WORK_DIR}; git reset --hard; git pull origin ${BRANCH}; npm install; sequelize-cli db:migrate --env lm_server; pm2 reload lockmesh; exit"
+  only:
+    - master
+
+deploy_LiveCryptPhoneK_API:
+  stage: deploy
+  environment:
+    name: LiveCryptPhoneKAPI
+    url: https://cryptkapi.lockmesh.com
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    - mkdir -p ~/.ssh
+    - eval $(ssh-agent -s)
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  script:
+    - echo "Deploy to live server"
+    - ssh-add <(echo "$PRIVATE_KEY")
+    - rm -rf .git
+    - ssh -o StrictHostKeyChecking=no web@46.101.248.37 "cd /var/www/html/${WORK_DIR}; git reset --hard; git pull origin ${BRANCH}; npm install; sequelize-cli db:migrate --env lm_server; pm2 reload lockmesh; exit"
   only:
     - master
 
