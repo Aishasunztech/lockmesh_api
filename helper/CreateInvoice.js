@@ -66,7 +66,7 @@ function generateCustomerInformation(doc, invoice) {
         .text(invoice.shipping.device_id, 425, customerInformationTop + 15)
         .font("Helvetica")
         .text("User ID:", 325, customerInformationTop + 30)
-        .font("Helvetica")
+        .font("Helvetica-Bold")
         .text(invoice.shipping.user_id, 425, customerInformationTop + 30)
         .font("Helvetica")
         .text("Dealer PIN:", 325, customerInformationTop + 45)
@@ -198,7 +198,7 @@ function generateInvoiceTable(doc, invoice) {
         "",
         "Paid To Date : ",
         "",
-        (invoice.pay_now) ? invoice.paid : 0 + " Credits"
+        ((invoice.pay_now) ? invoice.paid : 0) + " Credits"
     );
 
     const duePosition = paidToDatePosition + 25;
@@ -459,7 +459,7 @@ function generateTableRow(
         .text(description, 100, y, { width: 150, align: "center" })
         .text(term, 250, y)
         .text(unitCost, 300, y, { width: 120, align: "right" })
-        .text(quantity, 400, y, { width: 65, align: "center" })
+        .text(quantity, 400, y, { width: 65, align: "right" })
         .text(lineTotal, 0, y, { align: "right" });
 }
 

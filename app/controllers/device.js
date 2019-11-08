@@ -508,8 +508,8 @@ exports.acceptDevice = async function (req, res) {
                                                     if (!pay_now) {
                                                         transection_status = 'pending'
                                                     } else {
-                                                        total_price = total_price - (total_price * 0.03)
-                                                        hardwarePrice = hardwarePrice - (hardwarePrice * 0.03)
+                                                        total_price = total_price - Math.ceil(Number(total_price * 0.03))
+                                                        hardwarePrice = hardwarePrice - Math.ceil(Number((hardwarePrice * 0.03)))
                                                     }
 
                                                     let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages , total_credits, start_date, service_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${total_price} ,'${start_date}',  '${expiry_date}')`
@@ -518,7 +518,7 @@ exports.acceptDevice = async function (req, res) {
                                                     let service_id = null
                                                     if (service_data_result.affectedRows) {
                                                         service_id = service_data_result.insertId
-                                                        helpers.saveServiceSalesDetails(packages, products, loggedDealerType, usr_acc_id, service_data_result.insertId, pay_now)
+                                                        helpers.saveServiceSalesDetails(JSON.parse(JSON.stringify(packages)), products, loggedDealerType, usr_acc_id, service_data_result.insertId, pay_now)
                                                     }
 
                                                     let dealer_credits_remaining = true
@@ -592,7 +592,7 @@ exports.acceptDevice = async function (req, res) {
                                                         for (let i = 0; i < hardwares.length; i++) {
                                                             let price = hardwares[i].hardware_price
                                                             if (pay_now) {
-                                                                price = price - (price * 0.03)
+                                                                price = price - Math.ceil(Number((price * 0.03)))
                                                             }
 
                                                             let admin_cost = 0
@@ -610,8 +610,8 @@ exports.acceptDevice = async function (req, res) {
                                                             }
 
                                                             if (pay_now) {
-                                                                admin_cost = admin_cost - (admin_cost * 0.03)
-                                                                dealer_cost = dealer_cost - (dealer_cost * 0.03)
+                                                                admin_cost = admin_cost - Math.ceil(Number((admin_cost * 0.03)))
+                                                                dealer_cost = dealer_cost - Math.ceil(Number((dealer_cost * 0.03)))
                                                             }
 
                                                             let hardware_data = `INSERT INTO hardwares_data(user_acc_id, dealer_id, hardware_name , hardware_data,total_credits , admin_cost_credits , dealer_cost_credits ) VALUES(${usr_acc_id}, ${dealer_id}, '${hardwares[i].hardware_name}', '${JSON.stringify(hardwares[i])}' ,${price} ,${admin_cost}, ${dealer_cost})`
@@ -951,11 +951,11 @@ exports.createDeviceProfile = async function (req, res) {
         let invoice_subtotal = total_price + hardwarePrice
         let endUser_pay_status = req.body.paid_by_user
 
-        // console.log(endUser_pay_status);
+        // console.log(req.body);
         // let services_discounted_price = 0
         // let hardwares_discounted_price = 0
         if (pay_now) {
-            discount = ((total_price + hardwarePrice) * 0.03);
+            discount = Math.ceil(Number(((total_price + hardwarePrice) * 0.03)));
             discounted_price = (total_price + hardwarePrice) - discount
         }
         let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
@@ -986,8 +986,8 @@ exports.createDeviceProfile = async function (req, res) {
                             if (exp_month !== '0') {
                                 let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedUserType)
                                 if (pay_now) {
-                                    admin_profit = profitLoss.admin_profit - (profitLoss.admin_profit * 0.03)
-                                    dealer_profit = profitLoss.dealer_profit - (profitLoss.dealer_profit * 0.03)
+                                    admin_profit = profitLoss.admin_profit - Math.ceil(Number((profitLoss.admin_profit * 0.03)))
+                                    dealer_profit = profitLoss.dealer_profit - Math.ceil(Number((profitLoss.dealer_profit * 0.03)))
                                 } else {
                                     admin_profit = profitLoss.admin_profit
                                     dealer_profit = profitLoss.dealer_profit
@@ -1082,7 +1082,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                     let service_id = null
                                                     if (service_data_result.affectedRows) {
                                                         service_id = service_data_result.insertId
-                                                        helpers.saveServiceSalesDetails(packages, products, loggedUserType, user_acc_id, service_data_result.insertId, pay_now)
+                                                        helpers.saveServiceSalesDetails(JSON.parse(JSON.stringify(packages)), products, loggedUserType, user_acc_id, service_data_result.insertId, pay_now)
                                                     }
                                                     var transection_status = 'transferred'
                                                     if (!pay_now) {
@@ -1124,7 +1124,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                         for (let i = 0; i < hardwares.length; i++) {
                                                             let price = hardwares[i].hardware_price
                                                             if (pay_now) {
-                                                                price = price - (price * 0.03)
+                                                                price = price - Math.ceil(Number((price * 0.03)))
                                                             }
                                                             let admin_cost = 0
                                                             let dealer_cost = 0
@@ -1140,8 +1140,8 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 }
                                                             }
                                                             if (pay_now) {
-                                                                admin_cost = admin_cost - (admin_cost * 0.03)
-                                                                dealer_cost = dealer_cost - (dealer_cost * 0.03)
+                                                                admin_cost = admin_cost - Math.ceil(Number((admin_cost * 0.03)))
+                                                                dealer_cost = dealer_cost - Math.ceil(Number((dealer_cost * 0.03)))
                                                             }
                                                             let hardware_data = `INSERT INTO hardwares_data(user_acc_id, dealer_id, hardware_name, hardware_data,total_credits, admin_cost_credits, dealer_cost_credits) VALUES(${user_acc_id}, ${dealer_id}, '${hardwares[i].hardware_name}', '${JSON.stringify(hardwares[i])}', ${price} , ${admin_cost} , ${dealer_cost})`
                                                             await sql.query(hardware_data);
@@ -1410,8 +1410,8 @@ exports.createDeviceProfile = async function (req, res) {
                                                             if (!pay_now) {
                                                                 transection_status = 'pending'
                                                             } else {
-                                                                total_price = total_price - (total_price * 0.03)
-                                                                hardwarePrice = hardwarePrice - (hardwarePrice * 0.03)
+                                                                total_price = total_price - Math.ceil(Number((total_price * 0.03)))
+                                                                hardwarePrice = hardwarePrice - Math.ceil(Number((hardwarePrice * 0.03)))
                                                             }
 
                                                             let service_data = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date, total_credits ,service_expiry_date) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price} , '${expiry_date}')`
@@ -1419,7 +1419,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                             let service_id = null
                                                             if (service_data_result.affectedRows) {
                                                                 service_id = service_data_result.insertId
-                                                                helpers.saveServiceSalesDetails(packages, products, loggedUserType, user_acc_id, service_data_result.insertId, pay_now)
+                                                                helpers.saveServiceSalesDetails(JSON.parse(JSON.stringify(packages)), products, loggedUserType, user_acc_id, service_data_result.insertId, pay_now)
                                                             }
                                                             let dealer_credits_remaining = true
                                                             if (pay_now) {
@@ -1483,7 +1483,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 for (let i = 0; i < hardwares.length; i++) {
                                                                     let price = hardwares[i].hardware_price
                                                                     if (pay_now) {
-                                                                        price = price - (price * 0.03)
+                                                                        price = price - Math.ceil(Number((price * 0.03)))
                                                                     }
                                                                     let admin_cost = 0
                                                                     let dealer_cost = 0
@@ -1500,8 +1500,8 @@ exports.createDeviceProfile = async function (req, res) {
                                                                     }
 
                                                                     if (pay_now) {
-                                                                        admin_cost = admin_cost - (admin_cost * 0.03)
-                                                                        dealer_cost = dealer_cost - (dealer_cost * 0.03)
+                                                                        admin_cost = admin_cost - Math.ceil(Number((admin_cost * 0.03)))
+                                                                        dealer_cost = dealer_cost - Math.ceil(Number((dealer_cost * 0.03)))
                                                                     }
 
                                                                     let hardware_data = `INSERT INTO hardwares_data(user_acc_id, dealer_id, hardware_name , hardware_data,total_credits , admin_cost_credits , dealer_cost_credits ) VALUES(${user_acc_id}, ${dealer_id}, '${hardwares[i].hardware_name}', '${JSON.stringify(hardwares[i])}', ${price} , ${admin_cost} , ${dealer_cost})`
@@ -1581,6 +1581,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 var applyQuery = "INSERT INTO device_history (dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES (" + dealer_id + "," + user_acc_id + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
                                                                 sql.query(applyQuery)
                                                             }
+                                                            // console.log(packages);
                                                             if (exp_month !== '0') {
                                                                 let inv_no = await helpers.getInvoiceId()
                                                                 const invoice = {
@@ -1778,6 +1779,7 @@ exports.editDevices = async function (req, res) {
             let dealer_id = req.body.dealer_id;
             let client_id = req.body.client_id;
             let model = req.body.model;
+            let user_id = req.body.user_id;
             let usr_acc_id = req.body.usr_acc_id;
             let usr_device_id = req.body.usr_device_id;
             let prevPGP = req.body.prevPGP;
@@ -1819,7 +1821,7 @@ exports.editDevices = async function (req, res) {
             let pay_now = req.body.pay_now
             let cancelService = req.body.cancelService ? req.body.cancelService : false
 
-            console.log("Cancel Services", cancelService);
+            // console.log("Cancel Services", user_id);
             // if (pay_now) {
             //     total_price = total_price - (total_price * 0.03);
             // }
@@ -2160,7 +2162,7 @@ exports.editDevices = async function (req, res) {
                             let service_id = null
                             if (service_data_result.affectedRows) {
                                 service_id = service_data_result.insertId
-                                helpers.saveServiceSalesDetails(packages, products, loggedDealerType, usr_acc_id, service_data_result.insertId, pay_now)
+                                helpers.saveServiceSalesDetails(JSON.parse(JSON.stringify(packages)), products, loggedDealerType, usr_acc_id, service_data_result.insertId, pay_now)
                             }
 
                             if (pgp_email != prevPGP) {
@@ -2256,7 +2258,7 @@ exports.editDevices = async function (req, res) {
                                 let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id + "'"
                                 sql.query(getsimID, function (err, result) {
                                     if (result && result.length) {
-                                        let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].sim_id}' , 'sim_id' , '${start_date}')`
+                                        let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].sim_id}' , 'sim_id' , '${start_date}')`
                                         sql.query(insertAccService)
                                     }
                                 })
@@ -2312,7 +2314,7 @@ exports.editDevices = async function (req, res) {
                                     name: verify.user.dealer_name,
                                     device_id: device_id,
                                     dealer_pin: verify.user.link_code,
-                                    user_id: ""
+                                    user_id: user_id
                                 },
                                 products: products,
                                 packages: packages,
@@ -2327,7 +2329,7 @@ exports.editDevices = async function (req, res) {
                                 discount: (pay_now) ? Math.ceil(newServicePrice * 0.03) : 0,
                                 discountPercent: "5%",
                                 quantity: 1,
-                                subtotal: newServicePrice + Math.ceil(newServicePrice * 0.03),
+                                subtotal: pay_now ? newServicePrice + Math.ceil(newServicePrice * 0.03) : newServicePrice,
                                 paid: total_price,
                                 invoice_nr: inv_no
                             };
@@ -2686,7 +2688,7 @@ exports.extendServices = async function (req, res) {
                         let service_id = null
                         if (service_data_result.affectedRows) {
                             service_id = service_data_result.insertId
-                            helpers.saveServiceSalesDetails(packages, products, loggedDealerType, usr_acc_id, service_data_result.insertId, pay_now)
+                            helpers.saveServiceSalesDetails(JSON.parse(JSON.stringify(packages)), products, loggedDealerType, usr_acc_id, service_data_result.insertId, pay_now)
                         }
 
                         if (renewService) {
