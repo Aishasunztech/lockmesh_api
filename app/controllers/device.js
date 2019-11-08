@@ -366,7 +366,7 @@ exports.acceptDevice = async function (req, res) {
         let invoice_subtotal = total_price + hardwarePrice
 
         if (pay_now) {
-            discount = ((total_price + hardwarePrice) * 0.03);
+            discount = Math.ceil(((total_price + hardwarePrice) * 0.03));
             discounted_price = (total_price + hardwarePrice) - discount
         }
         // if (pay_now) {
@@ -416,8 +416,8 @@ exports.acceptDevice = async function (req, res) {
                                 if (term !== '0') {
                                     let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedDealerType)
                                     if (pay_now) {
-                                        admin_profit = profitLoss.admin_profit - (profitLoss.admin_profit * 0.03)
-                                        dealer_profit = profitLoss.dealer_profit - (profitLoss.dealer_profit * 0.03)
+                                        admin_profit = profitLoss.admin_profit - Math.ceil((profitLoss.admin_profit * 0.03))
+                                        dealer_profit = profitLoss.dealer_profit - Math.ceil((profitLoss.dealer_profit * 0.03))
                                     } else {
                                         admin_profit = profitLoss.admin_profit
                                         dealer_profit = profitLoss.dealer_profit
@@ -563,8 +563,8 @@ exports.acceptDevice = async function (req, res) {
                                                         let hardwareProfits = await helpers.calculateHardwareProfitLoss(hardwares, loggedDealerType)
                                                         // console.log(hardwareProfits);
                                                         if (pay_now) {
-                                                            admin_hardware_profit = hardwareProfits.admin_profit - (hardwareProfits.admin_profit * 0.03)
-                                                            dealer_hardware_profit = hardwareProfits.dealer_profit - (hardwareProfits.dealer_profit * 0.03)
+                                                            admin_hardware_profit = hardwareProfits.admin_profit - Math.ceil((hardwareProfits.admin_profit * 0.03))
+                                                            dealer_hardware_profit = hardwareProfits.dealer_profit - Math.ceil((hardwareProfits.dealer_profit * 0.03))
                                                         } else {
                                                             admin_hardware_profit = hardwareProfits.admin_profit
                                                             dealer_hardware_profit = hardwareProfits.dealer_profit
@@ -1096,8 +1096,8 @@ exports.createDeviceProfile = async function (req, res) {
                                                         let hardwareProfits = await helpers.calculateHardwareProfitLoss(hardwares, loggedUserType)
                                                         // console.log(hardwareProfits);
                                                         if (pay_now) {
-                                                            admin_hardware_profit = hardwareProfits.admin_profit - (hardwareProfits.admin_profit * 0.03)
-                                                            dealer_hardware_profit = hardwareProfits.dealer_profit - (hardwareProfits.dealer_profit * 0.03)
+                                                            admin_hardware_profit = hardwareProfits.admin_profit - Math.ceil((hardwareProfits.admin_profit * 0.03))
+                                                            dealer_hardware_profit = hardwareProfits.dealer_profit - Math.ceil((hardwareProfits.dealer_profit * 0.03))
                                                         } else {
                                                             admin_hardware_profit = hardwareProfits.admin_profit
                                                             dealer_hardware_profit = hardwareProfits.dealer_profit
@@ -1456,8 +1456,8 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 let hardwareProfits = await helpers.calculateHardwareProfitLoss(hardwares, loggedUserType)
                                                                 // console.log(hardwareProfits);
                                                                 if (pay_now) {
-                                                                    admin_hardware_profit = hardwareProfits.admin_profit - (hardwareProfits.admin_profit * 0.03)
-                                                                    dealer_hardware_profit = hardwareProfits.dealer_profit - (hardwareProfits.dealer_profit * 0.03)
+                                                                    admin_hardware_profit = hardwareProfits.admin_profit - Math.ceil((hardwareProfits.admin_profit * 0.03))
+                                                                    dealer_hardware_profit = hardwareProfits.dealer_profit - Math.ceil((hardwareProfits.dealer_profit * 0.03))
                                                                 } else {
                                                                     admin_hardware_profit = hardwareProfits.admin_profit
                                                                     dealer_hardware_profit = hardwareProfits.dealer_profit
@@ -1977,14 +1977,14 @@ exports.editDevices = async function (req, res) {
                                     }
                                     // console.log(newServicePrice, prevServicePaidPrice, newServicePrice, creditsToRefund);
                                     if (pay_now) {
-                                        newServicePrice = newServicePrice - (newServicePrice * 0.03)
+                                        newServicePrice = newServicePrice - Math.ceil((newServicePrice * 0.03))
                                     }
                                     total_price = newServicePrice - creditsToRefund
 
                                     let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedDealerType)
                                     if (pay_now) {
-                                        admin_profit = profitLoss.admin_profit - (profitLoss.admin_profit * 0.03)
-                                        dealer_profit = profitLoss.dealer_profit - (profitLoss.dealer_profit * 0.03)
+                                        admin_profit = profitLoss.admin_profit - Math.ceil((profitLoss.admin_profit * 0.03))
+                                        dealer_profit = profitLoss.dealer_profit - Math.ceil((profitLoss.dealer_profit * 0.03))
                                     } else {
                                         admin_profit = profitLoss.admin_profit
                                         dealer_profit = profitLoss.dealer_profit
@@ -2125,8 +2125,8 @@ exports.editDevices = async function (req, res) {
                                     await sql.query(transection_credits)
                                     update_credits_query = 'update financial_account_balance set credits = credits + ' + creditsToRefund + ' where dealer_id ="' + dealer_id + '"';
                                     await sql.query(update_credits_query);
-                                    refund_prev_service_admin_profit = refund_prev_service_admin_profit - refund_prev_service_admin_profit * 0.03
-                                    refund_prev_service_dealer_profit = refund_prev_service_dealer_profit - refund_prev_service_dealer_profit * 0.03
+                                    refund_prev_service_admin_profit = refund_prev_service_admin_profit - Math.ceil((refund_prev_service_admin_profit * 0.03))
+                                    refund_prev_service_dealer_profit = refund_prev_service_dealer_profit - Math.ceil((refund_prev_service_dealer_profit * 0.03))
 
                                     if (prevServicePaidPrice > 0) {
 
@@ -2603,7 +2603,7 @@ exports.extendServices = async function (req, res) {
                                 })
                             }
                             if (pay_now) {
-                                newServicePrice = newServicePrice - (newServicePrice * 0.03)
+                                newServicePrice = newServicePrice - Math.ceil((newServicePrice * 0.03))
                             }
 
                             total_price = newServicePrice
@@ -2643,8 +2643,8 @@ exports.extendServices = async function (req, res) {
                                 }
                                 let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedDealerType)
                                 if (pay_now) {
-                                    admin_profit = profitLoss.admin_profit - (profitLoss.admin_profit * 0.03)
-                                    dealer_profit = profitLoss.dealer_profit - (profitLoss.dealer_profit * 0.03)
+                                    admin_profit = profitLoss.admin_profit - Math.ceil((profitLoss.admin_profit * 0.03))
+                                    dealer_profit = profitLoss.dealer_profit - Math.ceil((profitLoss.dealer_profit * 0.03))
                                 } else {
                                     admin_profit = profitLoss.admin_profit
                                     dealer_profit = profitLoss.dealer_profit
@@ -3013,8 +3013,8 @@ exports.cancelExtendedServices = async function (req, res) {
                             update_credits_query = 'update financial_account_balance set credits = credits + ' + totalPrice + ' where dealer_id ="' + dealer_id + '"';
                             await sql.query(update_credits_query);
 
-                            service_admin_profit = service_admin_profit - service_admin_profit * 0.03
-                            service_dealer_profit = service_dealer_profit - service_dealer_profit * 0.03
+                            service_admin_profit = service_admin_profit - Math.ceil(service_admin_profit * 0.03)
+                            service_dealer_profit = service_dealer_profit - Math.ceil(service_dealer_profit * 0.03)
 
                             if (service_admin_profit) {
                                 let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${admin_data[0].dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id, details: "REFUND SERVICES PROFIT CREITS", service_id: service.id })}' ,${service_admin_profit} ,'credit' , 'transferred' , 'services')`
@@ -5927,8 +5927,8 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                     await sql.query(dealer_profit_query);
                                     if (device.expiry_months != 0) {
                                         let profits = await helpers.calculateProfitLoss(packages, products, verify.user.user_type)
-                                        dealer_profit = profits.dealer_profit - (profits.dealer_profit * 0.03)
-                                        admin_profit = profits.admin_profit - (profits.admin_profit * 0.03)
+                                        dealer_profit = profits.dealer_profit - Math.ceil((profits.dealer_profit * 0.03))
+                                        admin_profit = profits.admin_profit - Math.ceil((profits.admin_profit * 0.03))
                                     }
                                 }
                             }
@@ -5960,8 +5960,8 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                     await sql.query(dealer_profit_query);
 
                                     let profits = await helpers.calculateHardwareProfitLoss(hardwares, verify.user.user_type)
-                                    dealer_hardware_profit = profits.dealer_profit - (profits.dealer_profit * 0.03)
-                                    admin_hardware_profit = profits.admin_profit - (profits.admin_profit * 0.03)
+                                    dealer_hardware_profit = profits.dealer_profit - Math.ceil((profits.dealer_profit * 0.03))
+                                    admin_hardware_profit = profits.admin_profit - Math.ceil((profits.admin_profit * 0.03))
 
                                 }
                             }
