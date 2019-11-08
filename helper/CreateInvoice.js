@@ -7,10 +7,10 @@ function createInvoice(invoice, path, type = null) {
 
     generateHeader(doc);
     generateCustomerInformation(doc, invoice);
-    if (type) {
+    if (type === 'editService') {
         generateEditInvoiceTable(doc, invoice, type);
     } else {
-        generateInvoiceTable(doc, invoice);
+        generateInvoiceTable(doc, invoice, type);
     }
     generateFooter(doc);
 
@@ -77,10 +77,18 @@ function generateCustomerInformation(doc, invoice) {
     generateHr(doc, 267);
 }
 
-function generateInvoiceTable(doc, invoice) {
+function generateInvoiceTable(doc, invoice, type) {
     let i;
-    const invoiceTableTop = 330;
+    let invoiceTableTop = 330;
+    if (type === 'extend') {
+        doc
+            .fillColor("#444444")
+            .fontSize(15)
+            .font("Helvetica-Bold")
+            .text("EXTENDED SERVICES", 220, 330);
 
+        invoiceTableTop = 365;
+    }
     doc.font("Helvetica-Bold");
     generateTableRow(
         doc,
@@ -161,18 +169,18 @@ function generateInvoiceTable(doc, invoice) {
     );
     let discountPricePosition = 0
     if (invoice.pay_now) {
-        const discountPosition = subtotalPosition + 20;
-        generateTableRow(
-            doc,
-            discountPosition,
-            "",
-            "",
-            "",
-            "Discount :",
-            "",
-            invoice.discountPercent + " Credits"
-        );
-        discountPricePosition = discountPosition + 20;
+        // const discountPosition = subtotalPosition + 20;
+        // generateTableRow(
+        //     doc,
+        //     discountPosition,
+        //     "",
+        //     "",
+        //     "",
+        //     "Discount :",
+        //     "",
+        //     invoice.discountPercent + " Credits"
+        // );
+        discountPricePosition = subtotalPosition + 20;
         generateTableRow(
             doc,
             discountPricePosition,
@@ -181,7 +189,7 @@ function generateInvoiceTable(doc, invoice) {
             "",
             "Discount Price : ",
             "",
-            invoice.discount + " Credits"
+            "-" + invoice.discount + " Credits"
         );
     }
     let paidToDatePosition = 0

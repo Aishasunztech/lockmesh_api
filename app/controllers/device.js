@@ -792,7 +792,7 @@ exports.acceptDevice = async function (req, res) {
                                                             hardwares: hardwares,
                                                             pay_now: pay_now,
                                                             discount: discount,
-                                                            discountPercent: "5%",
+                                                            discountPercent: "3%",
                                                             quantity: 1,
                                                             subtotal: invoice_subtotal,
                                                             paid: discounted_price,
@@ -1199,7 +1199,7 @@ exports.createDeviceProfile = async function (req, res) {
                                             hardwares: hardwares,
                                             pay_now: pay_now,
                                             discount: discount,
-                                            discountPercent: "5%",
+                                            discountPercent: "3%",
                                             quantity: duplicate,
                                             subtotal: invoice_subtotal,
                                             paid: discounted_price,
@@ -1596,7 +1596,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                                     hardwares: hardwares,
                                                                     pay_now: pay_now,
                                                                     discount: discount,
-                                                                    discountPercent: "5%",
+                                                                    discountPercent: "3%",
                                                                     quantity: 1,
                                                                     subtotal: invoice_subtotal,
                                                                     paid: discounted_price,
@@ -2327,7 +2327,7 @@ exports.editDevices = async function (req, res) {
                                 },
                                 pay_now: pay_now,
                                 discount: (pay_now) ? Math.ceil(newServicePrice * 0.03) : 0,
-                                discountPercent: "5%",
+                                discountPercent: "3%",
                                 quantity: 1,
                                 subtotal: pay_now ? newServicePrice + Math.ceil(newServicePrice * 0.03) : newServicePrice,
                                 paid: total_price,
@@ -2526,6 +2526,7 @@ exports.extendServices = async function (req, res) {
             let chatIncluded = false
             let pgpIncluded = false
             let vpnIncluded = false
+            let user_id = req.body.user_id
 
             var checkDevice =
                 "SELECT start_date ,expiry_date , expiry_months from usr_acc WHERE device_id = '" +
@@ -2794,29 +2795,23 @@ exports.extendServices = async function (req, res) {
                                 name: verify.user.dealer_name,
                                 device_id: device_id,
                                 dealer_pin: verify.user.link_code,
-                                user_id: ""
+                                user_id: user_id
                             },
                             products: products,
                             packages: packages,
-                            prevService: {
-                                prevServicePackages: prevServicePackages,
-                                prevServiceProducts: prevServiceProducts,
-                                creditsToRefund: creditsToRefund,
-                                serviceRemainingDays: serviceRemainingDays,
-                                prevServiceTotalDays: prevServiceTotalDays
-                            },
+                            hardwares: [],
                             pay_now: pay_now,
                             discount: (pay_now) ? Math.ceil(newServicePrice * 0.03) : 0,
-                            discountPercent: "5%",
+                            discountPercent: "3%",
                             quantity: 1,
-                            subtotal: newServicePrice + Math.ceil(newServicePrice * 0.03),
+                            subtotal: (pay_now) ? newServicePrice + Math.ceil(newServicePrice * 0.03) : newServicePrice,
                             paid: total_price,
                             invoice_nr: inv_no
                         };
 
                         let fileName = "invoice-" + inv_no + ".pdf"
                         let filePath = path.join(__dirname, "../../uploads/" + fileName)
-                        // await createInvoice(invoice, filePath, 'editService')
+                        await createInvoice(invoice, filePath, 'extend')
 
                         let attachment = {
                             fileName: fileName,
@@ -2825,9 +2820,9 @@ exports.extendServices = async function (req, res) {
 
                         sql.query(`INSERT INTO invoices (inv_no,user_acc_id,dealer_id,file_name ,end_user_payment_status) VALUES('${inv_no}',${usr_acc_id},${dealer_id}, '${fileName}' , '${endUser_pay_status}')`)
 
-                        html = 'You have changed the services on device. Device ID ' + device_id + '.<br>Your Invoice is attached below. <br>';
+                        html = 'You have extended the services on device. Device ID ' + device_id + '.<br>Your Invoice is attached below. <br>';
 
-                        // sendEmail("DEVICE SERVICE HAS BEEN CHANGED.", html, verify.user.dealer_email, null, attachment);
+                        sendEmail("DEVICE SERVICE HAS BEEN EXTENDED.", html, verify.user.dealer_email, null, attachment);
 
                         let user_credits_q = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
                         let results = await sql.query(user_credits_q)
