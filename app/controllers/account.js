@@ -793,94 +793,94 @@ exports.purchaseCredits = async function (req, res) {
             let currency = req.body.data.currency
             let dealerId = verify.user.id
             // console.log(verify.user);
-            console.log(verify.user);
+            // console.log(verify.user);
 
             // return
             if (credits != undefined && credits != '' && credits != null) {
 
-                if (promo_code != '') {
+                // if (promo_code) {
 
-                } else {
-                    let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
-                    // console.log(query);
-                    sql.query(query, async function (err, result) {
-                        if (err) {
-                            console.log(err);
-                        }
-                        // console.log(result);
-                        if (result.affectedRows > 0) {
-                            // if (verify.user.user_type === ADMIN) {
-                            if (method == 'CASH') {
-                                console.log(app_constants.SUPERADMIN_LOGIN_URL);
-                                axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then(async function (response) {
-                                    if (response.data.status) {
-                                        let data = {
-                                            dealer_id: dealerId,
-                                            dealer_name: verify.user.dealer_name,
-                                            label: app_constants.APP_TITLE,
-                                            credits: credits,
-                                            dealer_email: verify.user.email,
-                                            dealer_pin: (verify.user.user_type === ADMIN) ? 'N/A' : verify.user.link_code,
-                                            request_id: result.insertId,
-                                            account_type: verify.user.user_type
+                // } else {
+                let query = `INSERT INTO credit_purchase (dealer_id,credits,usd_price,currency_price,payment_method) VALUES (${dealerId},${credits},${total_price},${currency_price},'${method}')`;
+                console.log(query);
+                sql.query(query, async function (err, result) {
+                    if (err) {
+                        console.log(err);
+                    }
+                    // console.log(result);
+                    if (result.affectedRows > 0) {
+                        // if (verify.user.user_type === ADMIN) {
+                        if (method == 'CASH') {
+                            console.log(app_constants.SUPERADMIN_LOGIN_URL);
+                            axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then(async function (response) {
+                                if (response.data.status) {
+                                    let data = {
+                                        dealer_id: dealerId,
+                                        dealer_name: verify.user.dealer_name,
+                                        label: app_constants.APP_TITLE,
+                                        credits: credits,
+                                        dealer_email: verify.user.email,
+                                        dealer_pin: (verify.user.user_type === ADMIN) ? 'N/A' : verify.user.link_code,
+                                        request_id: result.insertId,
+                                        account_type: verify.user.user_type
+                                    }
+                                    axios.post(app_constants.REQUEST_FOR_CREDITS, data, { headers: { authorization: response.data.user.token } }).then(async function (response) {
+                                        // console.log(response);
+                                        if (response.data.status) {
+                                            res.send({
+                                                status: true,
+                                                msg: response.data.msg
+                                            })
+
+                                        } else {
+                                            // console.log("object");
+                                            res.send({
+                                                status: false,
+                                                msg: response.data.msg
+                                            })
                                         }
-                                        axios.post(app_constants.REQUEST_FOR_CREDITS, data, { headers: { authorization: response.data.user.token } }).then(async function (response) {
-                                            // console.log(response);
-                                            if (response.data.status) {
-                                                res.send({
-                                                    status: true,
-                                                    msg: response.data.msg
-                                                })
-
-                                            } else {
-                                                // console.log("object");
-                                                res.send({
-                                                    status: false,
-                                                    msg: response.data.msg
-                                                })
-                                            }
-                                        })
-                                    }
-                                    else {
-                                        // console.log("NOT ALLOWED");
-                                        res.send({
-                                            status: false,
-                                            msg: await helpers.convertToLang(req.translation[MsgConstants.NOT_ALLOWED_TO_MAKE_REQUEST], "Not allowed to make request"), // "Not allowed to make request.",
-                                        })
-                                        return
-                                    }
-                                })
-                            } else {
-                                res.send()
-                            }
-                            // } 
-                            // else {
-                            //     // console.log(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`);
-                            //     sql.query(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`, async function (err, result) {
-                            //         if (err) {
-                            //             console.log(err);
-                            //         }
-                            //         if (result && result.affectedRows > 0) {
-                            //             res.send({
-                            //                 status: true,
-                            //                 msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_SUBMITTED_SUCCESSFULLY], "Request submitted successfully"), // "Request submitted successfully.",
-                            //             })
-                            //             return
-                            //         }
-                            //         else {
-                            //             res.send({
-                            //                 status: false,
-                            //                 msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_NOT_SUBMITTED_SUCCESSFULLY], "Request not submitted please try again"), // "Request not submitted please try again.",
-                            //             })
-                            //         }
-                            //     })
-
-                            // }
+                                    })
+                                }
+                                else {
+                                    // console.log("NOT ALLOWED");
+                                    res.send({
+                                        status: false,
+                                        msg: await helpers.convertToLang(req.translation[MsgConstants.NOT_ALLOWED_TO_MAKE_REQUEST], "Not allowed to make request"), // "Not allowed to make request.",
+                                    })
+                                    return
+                                }
+                            })
                         } else {
                             res.send()
                         }
-                    })
-                }
+                        // } 
+                        // else {
+                        //     // console.log(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`);
+                        //     sql.query(`INSERT into credit_requests (dealer_id,dealer_name,dealer_email,credits,dealer_type) VALUES (${dealerId},'${verify.user.dealer_name}','${verify.user.email}',${credits},'${verify.user.user_type}')`, async function (err, result) {
+                        //         if (err) {
+                        //             console.log(err);
+                        //         }
+                        //         if (result && result.affectedRows > 0) {
+                        //             res.send({
+                        //                 status: true,
+                        //                 msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_SUBMITTED_SUCCESSFULLY], "Request submitted successfully"), // "Request submitted successfully.",
+                        //             })
+                        //             return
+                        //         }
+                        //         else {
+                        //             res.send({
+                        //                 status: false,
+                        //                 msg: await helpers.convertToLang(req.translation[MsgConstants.REQUEST_NOT_SUBMITTED_SUCCESSFULLY], "Request not submitted please try again"), // "Request not submitted please try again.",
+                        //             })
+                        //         }
+                        //     })
+
+                        // }
+                    } else {
+                        res.send()
+                    }
+                })
+
             }
         } catch (error) {
             console.log(error);
@@ -1652,8 +1652,8 @@ exports.getOverdueDetails = async function (req, res) {
 
         paymentHistoryData.map(item => {
 
-            let now     = moment();
-            let end     = moment(item.created_at).format('YYYY-MM-DD');
+            let now = moment();
+            let end = moment(item.created_at).format('YYYY-MM-DD');
             let duration = now.diff(end, 'days');
 
             if (duration >= 0 && duration <= 21) {

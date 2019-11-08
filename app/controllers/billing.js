@@ -207,8 +207,8 @@ exports.acceptServiceRequest = async function (req, res) {
                                     await sql.query(transection_credits)
                                     update_credits_query = 'update financial_account_balance set credits = credits + ' + creditsToRefund + ' where dealer_id ="' + dvc_dealer_id + '"';
                                     await sql.query(update_credits_query);
-                                    refund_prev_service_admin_profit = refund_prev_service_admin_profit - refund_prev_service_admin_profit * 0.03
-                                    refund_prev_service_dealer_profit = refund_prev_service_dealer_profit - refund_prev_service_dealer_profit * 0.03
+                                    refund_prev_service_admin_profit = refund_prev_service_admin_profit - Math.ceil((refund_prev_service_admin_profit * 0.03))
+                                    refund_prev_service_dealer_profit = refund_prev_service_dealer_profit - Math.ceil((refund_prev_service_dealer_profit * 0.03))
 
                                     if (prevServicePaidPrice > 0) {
 

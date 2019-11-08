@@ -509,6 +509,17 @@ module.exports = {
             return []
         }
     },
+
+    getUserAccServicesData: async (ids, servicesIds) => {
+        let query = "SELECT * FROM user_acc_services WHERE user_acc_id IN (" + ids + ") AND service_id IN (" + servicesIds + ") "
+        // console.log(query);
+        let results = await sql.query(query);
+        if (results.length) {
+            return results
+        } else {
+            return []
+        }
+    },
     /**
      * String usr_device_ids of usr_acc table
      */

@@ -7,10 +7,10 @@ function createInvoice(invoice, path, type = null) {
 
     generateHeader(doc);
     generateCustomerInformation(doc, invoice);
-    if (type) {
+    if (type === 'editService') {
         generateEditInvoiceTable(doc, invoice, type);
     } else {
-        generateInvoiceTable(doc, invoice);
+        generateInvoiceTable(doc, invoice, type);
     }
     generateFooter(doc);
 
@@ -66,7 +66,7 @@ function generateCustomerInformation(doc, invoice) {
         .text(invoice.shipping.device_id, 425, customerInformationTop + 15)
         .font("Helvetica")
         .text("User ID:", 325, customerInformationTop + 30)
-        .font("Helvetica")
+        .font("Helvetica-Bold")
         .text(invoice.shipping.user_id, 425, customerInformationTop + 30)
         .font("Helvetica")
         .text("Dealer PIN:", 325, customerInformationTop + 45)
@@ -77,10 +77,18 @@ function generateCustomerInformation(doc, invoice) {
     generateHr(doc, 267);
 }
 
-function generateInvoiceTable(doc, invoice) {
+function generateInvoiceTable(doc, invoice, type) {
     let i;
-    const invoiceTableTop = 330;
+    let invoiceTableTop = 330;
+    if (type === 'extend') {
+        doc
+            .fillColor("#444444")
+            .fontSize(15)
+            .font("Helvetica-Bold")
+            .text("EXTENDED SERVICES", 220, 330);
 
+        invoiceTableTop = 365;
+    }
     doc.font("Helvetica-Bold");
     generateTableRow(
         doc,
@@ -161,18 +169,18 @@ function generateInvoiceTable(doc, invoice) {
     );
     let discountPricePosition = 0
     if (invoice.pay_now) {
-        const discountPosition = subtotalPosition + 20;
-        generateTableRow(
-            doc,
-            discountPosition,
-            "",
-            "",
-            "",
-            "Discount :",
-            "",
-            invoice.discountPercent + " Credits"
-        );
-        discountPricePosition = discountPosition + 20;
+        // const discountPosition = subtotalPosition + 20;
+        // generateTableRow(
+        //     doc,
+        //     discountPosition,
+        //     "",
+        //     "",
+        //     "",
+        //     "Discount :",
+        //     "",
+        //     invoice.discountPercent + " Credits"
+        // );
+        discountPricePosition = subtotalPosition + 20;
         generateTableRow(
             doc,
             discountPricePosition,
@@ -181,7 +189,7 @@ function generateInvoiceTable(doc, invoice) {
             "",
             "Discount Price : ",
             "",
-            invoice.discount + " Credits"
+            "-" + invoice.discount + " Credits"
         );
     }
     let paidToDatePosition = 0
@@ -198,7 +206,7 @@ function generateInvoiceTable(doc, invoice) {
         "",
         "Paid To Date : ",
         "",
-        (invoice.pay_now) ? invoice.paid : 0 + " Credits"
+        ((invoice.pay_now) ? invoice.paid : 0) + " Credits"
     );
 
     const duePosition = paidToDatePosition + 25;
@@ -459,7 +467,7 @@ function generateTableRow(
         .text(description, 100, y, { width: 150, align: "center" })
         .text(term, 250, y)
         .text(unitCost, 300, y, { width: 120, align: "right" })
-        .text(quantity, 400, y, { width: 65, align: "center" })
+        .text(quantity, 400, y, { width: 65, align: "right" })
         .text(lineTotal, 0, y, { align: "right" });
 }
 
