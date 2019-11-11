@@ -836,6 +836,39 @@ module.exports = {
     //     }
 
     // }
+    ,
+    editDeviceAdmin: async (body, verify) => {
+        let data = {
+            status: false,
+            msg: "INTERNAL SERVER ERROR"
+        }
+
+        let loggedDealerId = verify.user.id;
+        let loggedDealerType = verify.user.user_type;
+        let device_id = body.device_id;
+        let dealer_id = body.dealer_id;
+        let client_id = body.client_id;
+        let model = body.model;
+        let usr_acc_id = body.usr_acc_id;
+        let usr_device_id = body.usr_device_id;
+        let prevPGP = body.prevPGP;
+        let prevChatID = body.prevChatID;
+        let prevSimId = body.prevSimId;
+        let finalStatus = body.finalStatus;
+        var note = body.note;
+        var validity = body.validity;
+        let start_date = body.start_date;
+        let sim_id = body.sim_id;
+        let sim_id2 = body.sim_id2;
+        let chat_id = body.chat_id;
+        let pgp_email = body.pgp_email;
+        let prevService = body.prevService
+        let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
+        var expiry_date = moment(body.expiry_date).format("YYYY/MM/DD")
+        var date_now = moment(new Date()).format('YYYY/MM/DD')
+        console.log(expiry_date, chat_id, pgp_email, sim_id, sim_id2, prevService);
+        return data
+    }
 }
 
 
