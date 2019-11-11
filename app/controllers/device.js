@@ -1810,7 +1810,7 @@ exports.editDevices = async function (req, res) {
             let dealer_credits = 0
             let refund_due_credits = 0
             let remaining_credits = null
-            var expiry_date = req.body.expiry_date
+            var expiry_date = loggedDealerType === constants.ADMIN ? moment(req.body.expiry_date).format("YYYY/MM/DD") : req.body.expiry_date
             var date_now = moment(new Date()).format('YYYY/MM/DD')
             let creditsToRefund = 0
             let prevServicePaidPrice = 0
@@ -1821,7 +1821,8 @@ exports.editDevices = async function (req, res) {
             let prevServiceTotalDays = 0
             let pay_now = req.body.pay_now
             let cancelService = req.body.cancelService ? req.body.cancelService : false
-
+            // console.log(expiry_date);
+            // return
             // console.log("Cancel Services", user_id);
             // if (pay_now) {
             //     total_price = total_price - (total_price * 0.03);
@@ -2528,7 +2529,9 @@ exports.extendServices = async function (req, res) {
             let pgpIncluded = false
             let vpnIncluded = false
             let user_id = req.body.user_id
-
+            // let pkg_term = null
+            // console.log(expiry_date);
+            // return
             var checkDevice =
                 "SELECT start_date ,expiry_date , expiry_months from usr_acc WHERE device_id = '" +
                 usr_device_id +
@@ -2564,6 +2567,7 @@ exports.extendServices = async function (req, res) {
                             dealer_credits = results[0] ? results[0].credits : 0
                             if (packages && packages.length) {
                                 packages.map((item) => {
+                                    // pkg_term = item.pkg_term.split(' ')[0]
                                     newServicePrice += Number(item.pkg_price)
                                     if (item.pkg_features.sim_id) {
                                         simIncluded = true
@@ -2638,8 +2642,14 @@ exports.extendServices = async function (req, res) {
                                         return
                                     }
                                 }
+                                let prevServiceRecord = await sql.query(`SELECT * FROM services_data WHERE user_acc_id = ${usr_acc_id} AND (status = 'active' OR status = 'request_for_cancel')`)
                                 if (renewService) {
-                                    expiry_date = moment(rows[0].expiry_date, "YYYY/MM/DD").add(rows[0].expiry_months, "M").format('YYYY/MM/DD');
+                                    // console.log(prevServiceRecord);
+                                    let service_expiry_date = moment(prevServiceRecord[0].service_expiry_date)
+                                    let service_start_date = moment(prevServiceRecord[0].start_date)
+                                    // console.log(service_expiry_date, service_start_date);
+                                    let service_months = service_expiry_date.diff(service_start_date, 'months', true)
+                                    expiry_date = moment(prevServiceRecord[0].service_expiry_date, "YYYY/MM/DD").add(service_months, "M").format('YYYY/MM/DD');
                                 } else {
                                     expiry_date = moment(rows[0].expiry_date, "YYYY/MM/DD").add(expiry_date, "M").format('YYYY/MM/DD');
                                 }

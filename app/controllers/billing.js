@@ -1516,12 +1516,18 @@ exports.getProductPrices = async function (req, res) {
                     } else {
                         res.send({
                             status: false,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "Data found"), // "Data found",
                             data: []
                         })
                     }
                 })
 
+            } else {
+                res.send({
+                    status: false,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "Data not found"), // "Data found",
+                    data: []
+                })
             }
         } else {
 
