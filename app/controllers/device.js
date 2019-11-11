@@ -1790,6 +1790,7 @@ exports.editDevices = async function (req, res) {
             var validity = req.body.validity;
             let start_date = req.body.start_date;
             let sim_id = req.body.sim_id;
+            let sim_id2 = req.body.sim_id2;
             let chat_id = req.body.chat_id;
             let pgp_email = req.body.pgp_email;
 
@@ -2186,7 +2187,7 @@ exports.editDevices = async function (req, res) {
                                     await sql.query(updatePrevPgp);
                                 } else {
                                     let updatePrevPgp =
-                                        'update pgp_emails set user_acc_id = null,  used=1 ,  end_date = "' + date_now + '" where pgp_email ="' +
+                                        'update pgp_emails set   used=1 ,  end_date = "' + date_now + '" where pgp_email ="' +
                                         prevPGP +
                                         '"';
                                     await sql.query(updatePrevPgp);
@@ -2212,7 +2213,7 @@ exports.editDevices = async function (req, res) {
                                     await sql.query(updatePrevChat);
                                 } else {
                                     let updatePrevChat =
-                                        'update chat_ids set user_acc_id = null,  used=1 , end_date = "' + date_now + '" where chat_id ="' +
+                                        'update chat_ids set used=1 , end_date = "' + date_now + '" where chat_id ="' +
                                         prevChatID +
                                         '"';
                                     await sql.query(updatePrevChat);
@@ -2238,7 +2239,7 @@ exports.editDevices = async function (req, res) {
                                     await sql.query(updatePrevSim);
                                 } else {
                                     let updatePrevSim =
-                                        'update sim_ids set user_acc_id = null,  used=1 , expiry_date = "' + date_now + '" where sim_id ="' +
+                                        'update sim_ids set used=1 , expiry_date = "' + date_now + '" where sim_id ="' +
                                         prevSimId +
                                         '"';
                                     await sql.query(updatePrevSim);
