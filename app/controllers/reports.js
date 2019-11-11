@@ -63,7 +63,7 @@ exports.generateProductReport = async function (req, res) {
         }
 
         if (product === 'CHAT' || product === 'ALL') {
-            productData.CHAT = await sql.query(`SELECT parentTable.* FROM chat_ids as parentTable
+            productData.CHAT = await sql.query(`SELECT parentTable.*, d.device_id as device_id, ua.link_code as dealer_pin FROM chat_ids as parentTable
             JOIN usr_acc AS ua
                 ON ua.id = parentTable.user_acc_id
             JOIN devices AS d
@@ -73,7 +73,7 @@ exports.generateProductReport = async function (req, res) {
         }
 
         if (product === 'PGP' || product === 'ALL') {
-            productData.PGP = await sql.query(`SELECT * FROM pgp_emails as parentTable
+            productData.PGP = await sql.query(`SELECT parentTable.*, d.device_id as device_id, ua.link_code as dealer_pin FROM pgp_emails as parentTable
             JOIN usr_acc AS ua
                 ON ua.id = parentTable.user_acc_id
             JOIN devices AS d
@@ -82,7 +82,7 @@ exports.generateProductReport = async function (req, res) {
         }
 
         if (product === 'SIM' || product === 'ALL') {
-            productData.SIM = await sql.query(`SELECT * FROM sim_ids as parentTable
+            productData.SIM = await sql.query(`SELECT parentTable.*, d.device_id as device_id, ua.link_code as dealer_pin FROM sim_ids as parentTable
             JOIN usr_acc AS ua
                 ON ua.id = parentTable.user_acc_id
             JOIN devices AS d
@@ -91,7 +91,7 @@ exports.generateProductReport = async function (req, res) {
         }
 
         if (product === 'VPN' || product === 'ALL') {
-            productData.VPN = await sql.query(`SELECT * FROM acc_vpn as parentTable
+            productData.VPN = await sql.query(`SELECT parentTable.*, d.device_id as device_id, ua.link_code as dealer_pin FROM acc_vpn as parentTable
             JOIN usr_acc AS ua
                 ON ua.id = parentTable.user_acc_id
             JOIN devices AS d
@@ -655,5 +655,6 @@ exports.generateSalesReport = async function (req, res) {
         };
         return res.send(response);
     }
+
 
 };
