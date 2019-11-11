@@ -291,21 +291,21 @@ exports.exportIDs = async (req, res) => {
                                 sim_id: sim_id.sim_id,
                                 start_date: sim_id.start_date,
                                 expiry_date: sim_id.expiry_date,
-                                used: sim_id.used
+                                used: sim_id.used == 1 ? "Yes" : "No"
                             });
                         });
                     } else if (fieldName === "chat_ids") {
                         response.forEach((chat_id) => {
                             data.push({
                                 chat_id: chat_id.chat_id,
-                                used: chat_id.used
+                                used: chat_id.used == 1 ? "Yes" : "No"
                             });
                         });
                     } else if (fieldName === "pgp_emails") {
                         response.forEach((pgp_email) => {
                             data.push({
                                 pgp_email: pgp_email.pgp_email,
-                                used: pgp_email.used
+                                used: pgp_email.used == 1 ? "Yes" : "No"
                             });
                         });
                     }
