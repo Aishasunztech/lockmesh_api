@@ -1865,12 +1865,12 @@ exports.editDevices = async function (req, res) {
                 });
                 return;
             }
-            sql.query(checkDevice, async function (error, rows) {
-                if (rows.length) {
-                    if (loggedDealerType === constants.ADMIN) {
-                        let response = await device_helpers.editDeviceAdmin(req.body, verify)
-                        res.send(response)
-                    } else {
+            if (loggedDealerType === constants.ADMIN) {
+                let response = await device_helpers.editDeviceAdmin(req.body, verify)
+                res.send(response)
+            } else {
+                sql.query(checkDevice, async function (error, rows) {
+                    if (rows.length) {
                         if (newService) {
                             let user_credits_q = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
                             let results = await sql.query(user_credits_q)
@@ -2461,17 +2461,17 @@ exports.editDevices = async function (req, res) {
                             res.send(data);
                             return;
                         });
+                    } else {
+                        res.send({
+                            status: false,
+                            msg: await helpers.convertToLang(
+                                req.translation[MsgConstants.DEVICE_NOT_FOUND],
+                                "No Device found"
+                            ) // No Device found
+                        });
                     }
-                } else {
-                    res.send({
-                        status: false,
-                        msg: await helpers.convertToLang(
-                            req.translation[MsgConstants.DEVICE_NOT_FOUND],
-                            "No Device found"
-                        ) // No Device found
-                    });
-                }
-            });
+                });
+            }
         } else {
             res.send({
                 status: false,

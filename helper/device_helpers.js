@@ -867,6 +867,115 @@ module.exports = {
         var expiry_date = moment(body.expiry_date).format("YYYY/MM/DD")
         var date_now = moment(new Date()).format('YYYY/MM/DD')
         console.log(expiry_date, chat_id, pgp_email, sim_id, sim_id2, prevService);
+        let common_Query = ""
+        let usr_acc_Query = ""
+
+        if (expiry_date == "" || expiry_date === null) {
+            var status = "expired";
+        } else if (expiry_date == 0) {
+            var status = "trial";
+        } else if (finalStatus === Constants.DEVICE_PRE_ACTIVATION) {
+            var status = "";
+        } else if (finalStatus === Constants.DEVICE_EXPIRED) {
+            var status = "expired";
+        } else {
+            var status = "active";
+        }
+
+        var checkDevice =
+            "SELECT start_date ,expiry_date from usr_acc WHERE device_id = '" +
+            usr_device_id +
+            "'";
+        sql.query(checkDevice, async function (error, rows) {
+            if (rows.length) {
+                common_Query =
+                    "UPDATE devices set model = '" +
+                    model +
+                    "' WHERE id = '" +
+                    usr_device_id +
+                    "'";
+                if (
+                    finalStatus !== Constants.DEVICE_PRE_ACTIVATION
+                ) {
+                    if (expiry_date == 0) {
+                        usr_acc_Query =
+                            "UPDATE usr_acc set status = '" +
+                            status +
+                            "',note = '" +
+                            note +
+                            "' ,client_id = '" +
+                            client_id +
+                            "', device_status = 1, unlink_status=0 ,  start_date = '" +
+                            start_date +
+                            "' WHERE device_id = '" +
+                            usr_device_id +
+                            "'";
+                    } else {
+                        usr_acc_Query =
+                            "UPDATE usr_acc set  status = '" +
+                            status +
+                            "',note = '" +
+                            note +
+                            "' ,client_id = '" +
+                            client_id +
+                            "', device_status = 1, unlink_status=0 ,  start_date = '" +
+                            start_date +
+                            "' ,expiry_date = '" +
+                            expiry_date +
+                            "' WHERE device_id = '" +
+                            usr_device_id +
+                            "'";
+                    }
+                } else {
+                    if (expiry_date == 0) {
+                        usr_acc_Query =
+                            "UPDATE usr_acc set status = '" +
+                            status +
+                            "',validity = '" +
+                            validity +
+                            "' ,note = '" +
+                            note +
+                            "' ,client_id = '" +
+                            client_id +
+                            "', device_status = 0, unlink_status=0 ,start_date = '" +
+                            start_date +
+                            "' WHERE device_id = '" +
+                            usr_device_id +
+                            "'";
+                    } else {
+                        usr_acc_Query =
+                            "UPDATE usr_acc set status = '" +
+                            status +
+                            "',validity = '" +
+                            validity +
+                            "' ,note = '" +
+                            note +
+                            "' ,client_id = '" +
+                            client_id +
+                            "', device_status = 0, unlink_status=0 ,start_date = '" +
+                            start_date +
+                            "', expiry_date = '" +
+                            expiry_date +
+                            "' WHERE device_id = '" +
+                            usr_device_id +
+                            "'";
+                    }
+                }
+                sql.query(common_Query, async function (error, row) {
+                    await sql.query(usr_acc_Query);
+                    if (expiry_date !== rows[0].expiry_date) {
+                        let service_id = prevService.id
+                        let grace_days = moment(rows[0].expiry_date).diff(moment(expiry_date), days)
+                        console.log(grace_days, service_id);
+                        sql.query(`INSER INTO grace_days_histories 
+                        (dealer_id,device_id, user_acc_id , service_id , grace_days , from_date , to_date)
+                        VALUES (${dealer_id} , ${device_id} ,${usr_acc_id} , ${service_id} , ${grace_days} , ${rows[0].expiry_date} , ${expiry_date} ) 
+                        `)
+
+                    }
+                })
+            }
+        })
         return data
     }
 }
