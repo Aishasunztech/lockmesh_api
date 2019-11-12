@@ -381,7 +381,7 @@ exports.generateSalesReport = async function (req, res) {
                 let sale_price = 0;
                 let profit_loss = 0;
 
-                if (value.item_dealer_cost == 0 && user_type === Constants.ADMIN) {
+                if (value.item_dealer_cost == 0 && (user_type === Constants.ADMIN || user_type === Constants.SUPER_ADMIN)) {
 
                     cost_price = parseInt(value.item_admin_cost);
                     sale_price = parseInt(value.item_sale_price);
@@ -422,7 +422,7 @@ exports.generateSalesReport = async function (req, res) {
                             'created_at': value.created_at,
                         })
 
-                    } else if (user_type === Constants.ADMIN) {
+                    } else if (user_type === Constants.ADMIN || user_type === Constants.SUPER_ADMIN) {
                         cost_price = parseInt(value.item_admin_cost);
                         sale_price = parseInt(value.item_dealer_cost);
                         profit_loss = sale_price - cost_price;
@@ -490,7 +490,7 @@ exports.generateSalesReport = async function (req, res) {
                 let sale_price = 0;
                 let profit_loss = 0;
 
-                if (value.item_dealer_cost == 0 && user_type === Constants.ADMIN) {
+                if (value.item_dealer_cost == 0 && (user_type === Constants.ADMIN || user_type === Constants.SUPER_ADMIN)) {
 
                     cost_price = parseInt(value.item_admin_cost);
                     sale_price = parseInt(value.item_sale_price);
@@ -565,19 +565,22 @@ exports.generateSalesReport = async function (req, res) {
                 condition += ' AND d.device_id = "' + device + '"'
             }
 
-            hardwares = await sql.query(`SELECT hd.*, d.device_id as device_id, ua.link_code as dealer_pin FROM hardwares_data as hd
-                JOIN usr_acc as ua 
-                    on ua.id = hd.user_acc_id 
-                JOIN devices as d 
-                    on ua.device_id = d.id
-                WHERE hd.id IS NOT NULL ${condition} AND hd.status != 'returned' ORDER BY hd.id DESC`);
+            let salesQ = `SELECT hd.*, d.device_id as device_id, ua.link_code as dealer_pin FROM hardwares_data as hd
+            JOIN usr_acc as ua 
+                on ua.id = hd.user_acc_id 
+            JOIN devices as d 
+                on ua.device_id = d.id
+            WHERE hd.id IS NOT NULL ${condition} AND hd.status != 'returned' ORDER BY hd.id DESC`;
+            console.log(salesQ);
+
+            hardwares = await sql.query(salesQ);
 
             hardwares.map(function (value, index) {
                 let cost_price = 0;
                 let sale_price = 0;
                 let profit_loss = 0;
 
-                if (value.dealer_cost_credits === 0 && user_type === Constants.ADMIN) {
+                if (value.dealer_cost_credits === 0 && (user_type === Constants.ADMIN || user_type === Constants.SUPER_ADMIN)) {
 
                     cost_price = parseInt(value.admin_cost_credits);
                     sale_price = parseInt(value.total_credits);
@@ -618,7 +621,7 @@ exports.generateSalesReport = async function (req, res) {
                             'created_at': value.created_at,
                         })
 
-                    } else if (user_type === Constants.ADMIN) {
+                    } else if (user_type === Constants.ADMIN || user_type === Constants.SUPER_ADMIN) {
                         cost_price = parseInt(value.admin_cost_credits);
                         sale_price = parseInt(value.dealer_cost_credits);
                         profit_loss = sale_price - cost_price;
@@ -650,11 +653,16 @@ exports.generateSalesReport = async function (req, res) {
             'totalProfitLoss': totalSale - totalCost,
         };
 
+        console.log(hardwaresData);
+
         response = {
             data: [...packagesData, ...productsData, ...hardwaresData],
             saleInfo,
             status: true,
         };
+        
+        console.log(response);
+
         return res.send(response);
     }
 
