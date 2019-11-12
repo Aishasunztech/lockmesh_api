@@ -8,6 +8,7 @@ module.exports = {
   DEALER: "dealer",
   SDEALER: "sdealer",
   AUTO_UPDATE_ADMIN: "auto_update_admin",
+  SUPER_ADMIN: 'SuperAdmin',
 
   DEVICE: 'device',
   SOCKET: 'socket',

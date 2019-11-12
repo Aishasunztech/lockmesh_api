@@ -293,12 +293,28 @@ exports.superAdminLogin = async function (req, res) {
 	let email = req.body.email
 	var enc_pwd = md5(password);
 	if (name != undefined && password != undefined && email != undefined && name != null && password != null && email != null && name != '' && password != '' && email != '') {
-		let user = await sql.query(`select * from dealers where dealer_name = '${name}' AND dealer_email = '${email}' AND password = '${enc_pwd}' AND type = '5'`)
+		let user = await sql.query(`SELECT * FROM dealers WHERE dealer_name = '${name}' AND dealer_email = '${email}' AND password = '${enc_pwd}' AND type = '5'`)
 		if (user.length) {
+			var userType = await helpers.getUserType(user[0].dealer_id);
+			// console.log(userType);
+			user.user_type = userType;
+			// console.log({
+			// 	user: {
+			// 		...user,
+			// 		user_type: userType
+			// 	},
+			// 	user_type: userType
+
+			// });
 
 			jwt.sign(
 				{
-					user
+					user: {
+						...user,
+						user_type: userType
+					},
+					user_type: userType
+	
 				},
 				constants.SECRET,
 				{
@@ -315,7 +331,7 @@ exports.superAdminLogin = async function (req, res) {
 						data = {
 							status: true,
 							token: token,
-							msg: 'User loged in Successfully', //                           expiresIn: constants.EXPIRES_IN, // await helpers.convertToLang(req.translation[MsgConstants.USER_LOGED_IN_SUCCESSFULLY], MsgConstants.USER_LOGED_IN_SUCCESSFULLY),
+							msg: 'User logged in Successfully', // expiresIn: constants.EXPIRES_IN, // await helpers.convertToLang(req.translation[MsgConstants.USER_LOGED_IN_SUCCESSFULLY], MsgConstants.USER_LOGED_IN_SUCCESSFULLY),
 							user,
 						}
 						res.send(data);
