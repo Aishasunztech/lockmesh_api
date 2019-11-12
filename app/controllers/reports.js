@@ -170,6 +170,7 @@ exports.generateInvoiceReport = async function (req, res) {
 
         let response = {
             data: invoiceData,
+            status: true
         };
 
         return res.send(response);
@@ -652,6 +653,7 @@ exports.generateSalesReport = async function (req, res) {
         response = {
             data: [...packagesData, ...productsData, ...hardwaresData],
             saleInfo,
+            status: true,
         };
         return res.send(response);
     }
