@@ -5958,10 +5958,11 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                     await sql.query(update_transection)
                                     let update_profits_transections = "UPDATE financial_account_transections SET status = 'cancelled' WHERE user_dvc_acc_id = " + user_acc_id + " AND status = 'holding' AND type = 'hardwares'"
                                     await sql.query(update_profits_transections)
-                                    let updateCredits = "UPDATE financial_account_balance set credits = credits + " + Number(total_hardware_credits) + " WHERE dealer_id = " + verify.user.dealer_id
-                                    await sql.query(updateCredits);
+                                    // let updateCredits = "UPDATE financial_account_balance set credits = credits + " + Number(hardware_transection_record_data[0].credits) + " WHERE dealer_id = " + verify.user.dealer_id
+                                    // await sql.query(updateCredits);
+                                    refundedCredits = refundedCredits + Number(hardware_transection_record_data[0].credits);
                                 } else {
-                                    refundedCredits = refundedCredits + Number(total_hardware_credits);
+                                    refundedCredits = refundedCredits + Number(hardware_transection_record_data[0].credits);
                                     let dealer_profit_query = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data ,credits , transection_type , type) VALUES (${verify.user.id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}', ${total_hardware_credits} ,'debit' , 'hardwares')`
                                     await sql.query(dealer_profit_query);
 
