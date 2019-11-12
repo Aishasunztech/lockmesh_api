@@ -45,16 +45,20 @@ exports.addAclModule = async function (req, res) {
                 queryValues = queryValues + `(3, ${componentId}) `
             }
 
-            insertQuery = `INSERT INTO acl_module_to_user_roles (user_role_id, component_id) VALUES ${queryValues.replace(/,\s*$/, "")}`
-            console.log("insertQuery acl_module_to_user_roles:: ", insertQuery);
-            let sResults = await sql.query(insertQuery);
-
-            console.log("sResults ", sResults);
-
-            if (sResults.affectedRows > 0) {
-                return res.send({ status: true, msg: "component path and role added successfully" });
+            if (queryValues === '') {
+                return res.send({ status: false, msg: "query value are empty" });
             } else {
-                return res.send({ status: false, msg: "failed to add acl role" });
+                insertQuery = `INSERT INTO acl_module_to_user_roles (user_role_id, component_id) VALUES ${queryValues.replace(/,\s*$/, "")}`
+                console.log("insertQuery acl_module_to_user_roles:: ", insertQuery);
+                let sResults = await sql.query(insertQuery);
+
+                console.log("sResults ", sResults);
+
+                if (sResults.affectedRows > 0) {
+                    return res.send({ status: true, msg: "component path and role added successfully" });
+                } else {
+                    return res.send({ status: false, msg: "failed to add acl role" });
+                }
             }
 
         } else {
