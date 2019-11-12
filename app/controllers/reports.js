@@ -569,7 +569,7 @@ exports.generateSalesReport = async function (req, res) {
                     on ua.id = hd.user_acc_id 
                 JOIN devices as d 
                     on ua.device_id = d.id
-                WHERE hd.id IS NOT NULL ${condition} ORDER BY hd.id DESC`);
+                WHERE hd.id IS NOT NULL ${condition} AND hd.status != 'returned' ORDER BY hd.id DESC`);
 
             hardwares.map(function (value, index) {
                 let cost_price = 0;
