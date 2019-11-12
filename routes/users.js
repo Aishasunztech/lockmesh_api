@@ -1398,4 +1398,7 @@ router.get('/get-overdue-details', accountController.getOverdueDetails);
 
 router.get('/get-processes', NotificationController.getSocketProcesses);
 
+// acl 
+router.post('/add-acl-module', aclController.addAclModule);
+
 module.exports = router;
