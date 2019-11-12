@@ -1,0 +1,26 @@
+using postman
+
+
+1: send request:
+
+path: http://localhost:3000/users/add-acl-module
+method: POST
+
+Sample data
+
+{
+    title: "Devices",
+    componentName: "Devices",
+    uri: "/devices",
+    
+    //************************ allow role access ***************** /
+    admin: true,
+    dealer: true,
+    sdealer: true
+}
+
+2: set headers:
+
+{
+    authorization: copy-past-token
+}
