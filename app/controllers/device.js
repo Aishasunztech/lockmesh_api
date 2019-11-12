@@ -250,23 +250,26 @@ exports.getDevicesForReport = async function (req, res) {
 
     if (verify) {
         let user_type = verify.user.user_type;
+        let dealer_id =  req.params.dealer_id ? req.params.dealer_id : '';
 
-        if (user_type === constants.DEALER) {
+        if (user_type === constants.DEALER && dealer_id === '') {
             let sDealerIds = await helpers.getSdealersByDealerId(verify.user.id);
             if (sDealerIds.length > 0) {
                 where_con += ' AND ua.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
             } else {
                 where_con += ' AND ua.dealer_id = ' + verify.user.id
             }
-        } else {
-            where_con += ' AND ua.dealer_id = ' + verify.user.id
+        } else if (user_type === constants.ADMIN && dealer_id === '') {
+            where_con = ''
+        }else if (dealer_id !== ''){
+            where_con += ' AND ua.dealer_id = ' + dealer_id
         }
 
         let deviceQuery = `SELECT d.device_id as device_id FROM devices as d
             JOIN usr_acc as ua
                 on ua.device_id = d.id
          WHERE d.reject_status = 0 AND d.device_id IS NOT NULL ${where_con} GROUP BY device_id`;
-        console.log(deviceQuery)
+        console.log(deviceQuery);
         sql.query(deviceQuery, async function (error, results, fields) {
             data = {
                 data: results
@@ -5958,10 +5961,11 @@ exports.deleteUnlinkDevice = async function (req, res) {
                                     await sql.query(update_transection)
                                     let update_profits_transections = "UPDATE financial_account_transections SET status = 'cancelled' WHERE user_dvc_acc_id = " + user_acc_id + " AND status = 'holding' AND type = 'hardwares'"
                                     await sql.query(update_profits_transections)
-                                    let updateCredits = "UPDATE financial_account_balance set credits = credits + " + Number(total_hardware_credits) + " WHERE dealer_id = " + verify.user.dealer_id
-                                    await sql.query(updateCredits);
+                                    // let updateCredits = "UPDATE financial_account_balance set credits = credits + " + Number(hardware_transection_record_data[0].credits) + " WHERE dealer_id = " + verify.user.dealer_id
+                                    // await sql.query(updateCredits);
+                                    refundedCredits = refundedCredits + Number(hardware_transection_record_data[0].credits);
                                 } else {
-                                    refundedCredits = refundedCredits + Number(total_hardware_credits);
+                                    refundedCredits = refundedCredits + Number(hardware_transection_record_data[0].credits);
                                     let dealer_profit_query = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data ,credits , transection_type , type) VALUES (${verify.user.id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}', ${total_hardware_credits} ,'debit' , 'hardwares')`
                                     await sql.query(dealer_profit_query);
 
