@@ -45,14 +45,19 @@ exports.getAllUsers = async function (req, res) {
                 }
                 dealer = [verify.user.id]
                 console.log(result);
-                if (result.length) {
-                    for (var i = 0; i < result.length; i++) {
-                        var sDealers_id = result[i].dealer_id;
-                        dealer.push(sDealers_id)
-                    }
-                }
+                // if (result.length) {
+                //     for (var i = 0; i < result.length; i++) {
+                //         var sDealers_id = result[i].dealer_id;
+                //         dealer.push(sDealers_id)
+                //     }
+                // }
                 console.log("select * from users WHERE dealer_id IN (" + dealer.join() + ") order by created_at DESC");
-                let results = await sql.query("select * from users WHERE dealer_id IN (" + dealer.join() + ") AND del_status = 0 order by created_at DESC")
+
+                let selectQry = `SELECT * FROM users WHERE dealer_id = ${verify.user.id} AND del_status = 0 ORDER BY created_at DESC;`;
+                // console.log("selectQry :::::: ", selectQry);
+
+
+                let results = await sql.query(selectQry)
                 if (results.length) {
                     for (let i = 0; i < results.length; i++) {
                         let data = await helpers.getAllRecordbyUserID(results[i].user_id)
@@ -66,6 +71,14 @@ exports.getAllUsers = async function (req, res) {
                         }
                     }
                     res.send(data);
+                } else {
+                    data = {
+                        status: false,
+                        data: {
+                            users_list: [],
+                        }
+                    }
+                    return res.send(data);
                 }
             });
         }
