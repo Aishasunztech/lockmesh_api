@@ -265,14 +265,15 @@ exports.getDevicesForReport = async function (req, res) {
             where_con += ' AND ua.dealer_id = ' + dealer_id
         }
 
-        let deviceQuery = `SELECT d.device_id as device_id FROM devices as d
+        let deviceQuery = `SELECT d.device_id as device_id, ua.dealer_id as dealer_id FROM devices as d
             JOIN usr_acc as ua
                 on ua.device_id = d.id
          WHERE d.reject_status = 0 AND d.device_id IS NOT NULL ${where_con} GROUP BY device_id`;
         console.log(deviceQuery);
         sql.query(deviceQuery, async function (error, results, fields) {
             data = {
-                data: results
+                data: results,
+                status: true
             };
             return res.send(data);
 
