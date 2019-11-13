@@ -327,6 +327,7 @@ exports.generateSalesReport = async function (req, res) {
         let productType = req.body.product_type;
         let device = req.body.device;
         let condition = '';
+        let hardwareCondition = '';
         let packages = [];
         let packagesData = [];
         let products = [];
@@ -381,7 +382,7 @@ exports.generateSalesReport = async function (req, res) {
                 let sale_price = 0;
                 let profit_loss = 0;
 
-                if (value.item_dealer_cost == 0 && user_type === Constants.ADMIN) {
+                if (value.item_dealer_cost == 0 && (user_type === Constants.ADMIN || user_type === Constants.SUPER_ADMIN)) {
 
                     cost_price = parseInt(value.item_admin_cost);
                     sale_price = parseInt(value.item_sale_price);
@@ -422,7 +423,7 @@ exports.generateSalesReport = async function (req, res) {
                             'created_at': value.created_at,
                         })
 
-                    } else if (user_type === Constants.ADMIN) {
+                    } else if (user_type === Constants.ADMIN || user_type === Constants.SUPER_ADMIN) {
                         cost_price = parseInt(value.item_admin_cost);
                         sale_price = parseInt(value.item_dealer_cost);
                         profit_loss = sale_price - cost_price;
@@ -447,137 +448,53 @@ exports.generateSalesReport = async function (req, res) {
 
         }
 
-        if (productType === 'PRODUCTS' || productType === 'ALL') {
-
-            if (dealer === '' && user_type === Constants.DEALER) {
-
-                let sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
-                if (sDealerIds.length > 0) {
-                    condition += ' AND ua.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
-                } else {
-                    condition += ' AND ua.dealer_id = ' + verify.user.id
-                }
-
-
-            } else if (dealer) {
-                condition += ' AND ua.dealer_id = ' + dealer
-            }
-
-            if (from) {
-                condition += ' AND DATE(ss.created_at) >= "' + moment(from).format('YYYY-MM-DD') + '"'
-            }
-
-            if (to) {
-                condition += ' AND DATE(ss.created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
-            }
-
-            if (device === Constants.DEVICE_PRE_ACTIVATION) {
-                condition += ' AND d.device_id IS NULL'
-            }
-
-            if (device && device !== Constants.DEVICE_PRE_ACTIVATION) {
-                condition += ' AND d.device_id = "' + device + '"'
-            }
-
-            products = await sql.query(`SELECT ss.*, d.device_id as device_id, ua.dealer_id as dealer_id, ua.link_code as dealer_pin FROM services_sale as ss
-            JOIN usr_acc as ua on ua.id = ss.user_acc_id 
-            JOIN devices as d on ua.device_id = d.id
-            WHERE ss.status != 'cancelled' AND ss.item_type LIKE 'product'  ${condition} ORDER BY ss.id DESC`);
-
-            products.map(function (value, index) {
-
-                let cost_price = 0;
-                let sale_price = 0;
-                let profit_loss = 0;
-
-                if (value.item_dealer_cost == 0 && user_type === Constants.ADMIN) {
-
-                    cost_price = parseInt(value.item_admin_cost);
-                    sale_price = parseInt(value.item_sale_price);
-                    profit_loss = sale_price - cost_price;
-
-                    totalCost += cost_price;
-                    totalSale += profit_loss;
-
-                } else {
-
-                    if (user_type === Constants.DEALER) {
-                        cost_price = parseInt(value.item_dealer_cost);
-                        sale_price = parseInt(value.total_credits);
-                        profit_loss = sale_price - cost_price;
-
-                        totalCost += cost_price;
-                        totalSale += profit_loss;
-                    } else {
-                        cost_price = parseInt(value.item_admin_cost);
-                        sale_price = parseInt(value.item_dealer_cost);
-                        profit_loss = sale_price - cost_price;
-
-                        totalCost += cost_price;
-                        totalSale += profit_loss;
-                    }
-
-                }
-
-                let name = JSON.parse(value.item_data).price_for;
-                productsData.push({
-                    'type': 'Product',
-                    'name': name.replace(/_/g, ' '),
-                    'dealer_pin': value.dealer_pin,
-                    'device_id': value.device_id,
-                    'cost_price': cost_price,
-                    'sale_price': sale_price,
-                    'profit_loss': profit_loss,
-                    'created_at': value.created_at,
-                })
-            });
-
-        }
-
         if (productType === 'HARDWARES' || productType === 'ALL') {
 
             if (dealer === '' && user_type === Constants.DEALER) {
 
                 let sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
                 if (sDealerIds.length > 0) {
-                    condition += ' AND hd.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
+                    hardwareCondition += ' AND hd.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
                 } else {
-                    condition += ' AND hd.dealer_id = ' + verify.user.id
+                    hardwareCondition += ' AND hd.dealer_id = ' + verify.user.id
                 }
 
             } else if (dealer) {
-                condition += ' AND hd.dealer_id = ' + dealer
+                hardwareCondition += ' AND hd.dealer_id = ' + dealer
             }
 
             if (from) {
-                condition += ' AND DATE(hd.created_at) >= "' + moment(from).format('YYYY-MM-DD') + '"'
+                hardwareCondition += ' AND DATE(hd.created_at) >= "' + moment(from).format('YYYY-MM-DD') + '"'
             }
 
             if (to) {
-                condition += ' AND DATE(hd.created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
+                hardwareCondition += ' AND DATE(hd.created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
             }
 
             if (device === Constants.DEVICE_PRE_ACTIVATION) {
-                condition += ' AND d.device_id IS NULL'
+                hardwareCondition += ' AND d.device_id IS NULL'
             }
 
             if (device && device !== Constants.DEVICE_PRE_ACTIVATION) {
-                condition += ' AND d.device_id = "' + device + '"'
+                hardwareCondition += ' AND d.device_id = "' + device + '"'
             }
 
-            hardwares = await sql.query(`SELECT hd.*, d.device_id as device_id, ua.link_code as dealer_pin FROM hardwares_data as hd
-                JOIN usr_acc as ua 
-                    on ua.id = hd.user_acc_id 
-                JOIN devices as d 
-                    on ua.device_id = d.id
-                WHERE hd.id IS NOT NULL ${condition} AND hd.status != 'returned' ORDER BY hd.id DESC`);
+            let salesQ = `SELECT hd.*, d.device_id as device_id, ua.link_code as dealer_pin FROM hardwares_data as hd
+            JOIN usr_acc as ua 
+                on ua.id = hd.user_acc_id 
+            JOIN devices as d 
+                on ua.device_id = d.id
+            WHERE hd.id IS NOT NULL ${hardwareCondition} AND hd.status != 'returned' ORDER BY hd.id DESC`;
+            console.log(salesQ);
+
+            hardwares = await sql.query(salesQ);
 
             hardwares.map(function (value, index) {
                 let cost_price = 0;
                 let sale_price = 0;
                 let profit_loss = 0;
 
-                if (value.dealer_cost_credits === 0 && user_type === Constants.ADMIN) {
+                if (value.dealer_cost_credits === 0 && (user_type === Constants.ADMIN || user_type === Constants.SUPER_ADMIN)) {
 
                     cost_price = parseInt(value.admin_cost_credits);
                     sale_price = parseInt(value.total_credits);
@@ -618,7 +535,7 @@ exports.generateSalesReport = async function (req, res) {
                             'created_at': value.created_at,
                         })
 
-                    } else if (user_type === Constants.ADMIN) {
+                    } else if (user_type === Constants.ADMIN || user_type === Constants.SUPER_ADMIN) {
                         cost_price = parseInt(value.admin_cost_credits);
                         sale_price = parseInt(value.dealer_cost_credits);
                         profit_loss = sale_price - cost_price;
@@ -650,13 +567,107 @@ exports.generateSalesReport = async function (req, res) {
             'totalProfitLoss': totalSale - totalCost,
         };
 
+        console.log(hardwaresData);
+
         response = {
             data: [...packagesData, ...productsData, ...hardwaresData],
             saleInfo,
             status: true,
         };
+        
+        console.log(response);
+
         return res.send(response);
     }
 
 
 };
+
+
+
+// if (productType === 'PRODUCTS' || productType === 'ALL') {
+
+//     if (dealer === '' && user_type === Constants.DEALER) {
+
+//         let sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
+//         if (sDealerIds.length > 0) {
+//             condition += ' AND ua.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
+//         } else {
+//             condition += ' AND ua.dealer_id = ' + verify.user.id
+//         }
+
+
+//     } else if (dealer) {
+//         condition += ' AND ua.dealer_id = ' + dealer
+//     }
+
+//     if (from) {
+//         condition += ' AND DATE(ss.created_at) >= "' + moment(from).format('YYYY-MM-DD') + '"'
+//     }
+
+//     if (to) {
+//         condition += ' AND DATE(ss.created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
+//     }
+
+//     if (device === Constants.DEVICE_PRE_ACTIVATION) {
+//         condition += ' AND d.device_id IS NULL'
+//     }
+
+//     if (device && device !== Constants.DEVICE_PRE_ACTIVATION) {
+//         condition += ' AND d.device_id = "' + device + '"'
+//     }
+
+//     products = await sql.query(`SELECT ss.*, d.device_id as device_id, ua.dealer_id as dealer_id, ua.link_code as dealer_pin FROM services_sale as ss
+//     JOIN usr_acc as ua on ua.id = ss.user_acc_id 
+//     JOIN devices as d on ua.device_id = d.id
+//     WHERE ss.status != 'cancelled' AND ss.item_type LIKE 'product'  ${condition} ORDER BY ss.id DESC`);
+
+//     products.map(function (value, index) {
+
+//         let cost_price = 0;
+//         let sale_price = 0;
+//         let profit_loss = 0;
+
+//         if (value.item_dealer_cost == 0 && (user_type === Constants.ADMIN || user_type === Constants.SUPER_ADMIN)) {
+
+//             cost_price = parseInt(value.item_admin_cost);
+//             sale_price = parseInt(value.item_sale_price);
+//             profit_loss = sale_price - cost_price;
+
+//             totalCost += cost_price;
+//             totalSale += profit_loss;
+
+//         } else {
+
+//             if (user_type === Constants.DEALER) {
+//                 cost_price = parseInt(value.item_dealer_cost);
+//                 sale_price = parseInt(value.total_credits);
+//                 profit_loss = sale_price - cost_price;
+
+//                 totalCost += cost_price;
+//                 totalSale += profit_loss;
+//             } else {
+//                 cost_price = parseInt(value.item_admin_cost);
+//                 sale_price = parseInt(value.item_dealer_cost);
+//                 profit_loss = sale_price - cost_price;
+
+//                 totalCost += cost_price;
+//                 totalSale += profit_loss;
+//             }
+
+//         }
+
+//         let name = JSON.parse(value.item_data).price_for;
+//         productsData.push({
+//             'type': 'Product',
+//             'name': name.replace(/_/g, ' '),
+//             'dealer_pin': value.dealer_pin,
+//             'device_id': value.device_id,
+//             'cost_price': cost_price,
+//             'sale_price': sale_price,
+//             'profit_loss': profit_loss,
+//             'created_at': value.created_at,
+//         })
+//     });
+
+// }
