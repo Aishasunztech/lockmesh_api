@@ -250,7 +250,7 @@ exports.getDevicesForReport = async function (req, res) {
 
     if (verify) {
         let user_type = verify.user.user_type;
-        let dealer_id =  req.params.dealer_id ? req.params.dealer_id : '';
+        let dealer_id = req.params.dealer_id ? req.params.dealer_id : '';
 
         if (user_type === constants.DEALER && dealer_id === '') {
             let sDealerIds = await helpers.getSdealersByDealerId(verify.user.id);
@@ -261,7 +261,7 @@ exports.getDevicesForReport = async function (req, res) {
             }
         } else if (user_type === constants.ADMIN && dealer_id === '') {
             where_con = ''
-        }else if (dealer_id !== ''){
+        } else if (dealer_id !== '') {
             where_con += ' AND ua.dealer_id = ' + dealer_id
         }
 
@@ -515,7 +515,7 @@ exports.acceptDevice = async function (req, res) {
                                                         hardwarePrice = hardwarePrice - Math.ceil(Number((hardwarePrice * 0.03)))
                                                     }
 
-                                                    let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages , total_credits, start_date, service_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${total_price} ,'${start_date}',  '${expiry_date}')`
+                                                    let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages , total_credits, start_date, service_expiry_date , service_term) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${total_price} ,'${start_date}',  '${expiry_date}' ,'${term}' )`
 
                                                     let service_data_result = await sql.query(service_billing);
                                                     let service_id = null
@@ -1080,7 +1080,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                 // console.log("affectedRows", resps.affectedRows);
                                                 if (resps.affectedRows) {
 
-                                                    let service_data = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date ,total_credits,service_expiry_date) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${discounted_price / duplicate} , '${expiry_date}' )`
+                                                    let service_data = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date ,total_credits,service_expiry_date , service_term) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${discounted_price / duplicate} , '${expiry_date}' , '${exp_month}')`
                                                     let service_data_result = await sql.query(service_data);
                                                     let service_id = null
                                                     if (service_data_result.affectedRows) {
@@ -1417,7 +1417,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 hardwarePrice = hardwarePrice - Math.ceil(Number((hardwarePrice * 0.03)))
                                                             }
 
-                                                            let service_data = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date, total_credits ,service_expiry_date) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price} , '${expiry_date}')`
+                                                            let service_data = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date, total_credits ,service_expiry_date , service_term) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price} , '${expiry_date}' , '${exp_month}')`
                                                             let service_data_result = await sql.query(service_data);
                                                             let service_id = null
                                                             if (service_data_result.affectedRows) {
@@ -1824,6 +1824,7 @@ exports.editDevices = async function (req, res) {
             let prevServiceTotalDays = 0
             let pay_now = req.body.pay_now
             let cancelService = req.body.cancelService ? req.body.cancelService : false
+            let exp_month = expiry_date
             // console.log(expiry_date);
             // return
             // console.log("Cancel Services", user_id);
@@ -2165,7 +2166,7 @@ exports.editDevices = async function (req, res) {
                                     }
                                 }
 
-                                let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice} ,'${date_now}' ,'${expiry_date}')`
+                                let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date , service_term) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice} ,'${date_now}' ,'${expiry_date}' , '${exp_month}')`
                                 let service_data_result = await sql.query(service_billing);
                                 let service_id = null
                                 if (service_data_result.affectedRows) {
@@ -2535,6 +2536,7 @@ exports.extendServices = async function (req, res) {
             let pgpIncluded = false
             let vpnIncluded = false
             let user_id = req.body.user_id
+            let exp_month = expiry_date
             // let pkg_term = null
             // console.log(expiry_date);
             // return
@@ -2701,7 +2703,7 @@ exports.extendServices = async function (req, res) {
                     sql.query(common_Query, async function (error, row) {
                         await sql.query(usr_acc_Query);
 
-                        let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date , status) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice} ,'${rows[0].expiry_date}' ,'${expiry_date}' , 'extended')`
+                        let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date , status , service_term) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice} ,'${rows[0].expiry_date}' ,'${expiry_date}' , 'extended' , '${exp_month}')`
                         let service_data_result = await sql.query(service_billing);
                         let service_id = null
                         if (service_data_result.affectedRows) {

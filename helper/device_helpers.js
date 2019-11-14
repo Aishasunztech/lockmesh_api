@@ -3,6 +3,8 @@ const { sql } = require('../config/database');
 var moment = require("moment-strftime");
 var fs = require("fs");
 var path = require('path');
+var { getAllRecordbyDeviceId } = require('./general_helper')
+var socket_helpers = require('./socket_helper')
 
 // let usr_acc_query_text = "usr_acc.id,usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name";
 
@@ -840,7 +842,7 @@ module.exports = {
     editDeviceAdmin: async (body, verify) => {
         let data = {
             status: false,
-            msg: "INTERNAL SERVER ERROR"
+            msg: "Internal server error"
         }
 
         let loggedDealerId = verify.user.id;
@@ -854,6 +856,7 @@ module.exports = {
         let prevPGP = body.prevPGP;
         let prevChatID = body.prevChatID;
         let prevSimId = body.prevSimId;
+        let prevSimId2 = body.prevSimId2;
         let finalStatus = body.finalStatus;
         var note = body.note;
         var validity = body.validity;
@@ -862,120 +865,163 @@ module.exports = {
         let sim_id2 = body.sim_id2;
         let chat_id = body.chat_id;
         let pgp_email = body.pgp_email;
-        let prevService = body.prevService
+        let service = body.prevService
         let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
         var expiry_date = moment(body.expiry_date).format("YYYY/MM/DD")
         var date_now = moment(new Date()).format('YYYY/MM/DD')
-        console.log(expiry_date, chat_id, pgp_email, sim_id, sim_id2, prevService);
+        // console.log(expiry_date, chat_id, pgp_email, sim_id, sim_id2, prevService);
         let common_Query = ""
         let usr_acc_Query = ""
-
-        if (expiry_date == "" || expiry_date === null) {
-            var status = "expired";
-        } else if (expiry_date == 0) {
-            var status = "trial";
-        } else if (finalStatus === Constants.DEVICE_PRE_ACTIVATION) {
-            var status = "";
-        } else if (finalStatus === Constants.DEVICE_EXPIRED) {
-            var status = "expired";
-        } else {
-            var status = "active";
-        }
 
         var checkDevice =
             "SELECT start_date ,expiry_date from usr_acc WHERE device_id = '" +
             usr_device_id +
             "'";
-        sql.query(checkDevice, async function (error, rows) {
-            if (rows.length) {
-                common_Query =
-                    "UPDATE devices set model = '" +
-                    model +
-                    "' WHERE id = '" +
-                    usr_device_id +
-                    "'";
-                if (
-                    finalStatus !== Constants.DEVICE_PRE_ACTIVATION
-                ) {
-                    if (expiry_date == 0) {
-                        usr_acc_Query =
-                            "UPDATE usr_acc set status = '" +
-                            status +
-                            "',note = '" +
-                            note +
-                            "' ,client_id = '" +
-                            client_id +
-                            "', device_status = 1, unlink_status=0 ,  start_date = '" +
-                            start_date +
-                            "' WHERE device_id = '" +
-                            usr_device_id +
-                            "'";
-                    } else {
-                        usr_acc_Query =
-                            "UPDATE usr_acc set  status = '" +
-                            status +
-                            "',note = '" +
-                            note +
-                            "' ,client_id = '" +
-                            client_id +
-                            "', device_status = 1, unlink_status=0 ,  start_date = '" +
-                            start_date +
-                            "' ,expiry_date = '" +
-                            expiry_date +
-                            "' WHERE device_id = '" +
-                            usr_device_id +
-                            "'";
-                    }
+        let rows = await sql.query(checkDevice)
+        if (rows && rows.length) {
+            let service_id = null
+            if (expiry_date !== rows[0].expiry_date) {
+                // console.log(service);
+                if (service) {
+                    service_id = service.id
                 } else {
-                    if (expiry_date == 0) {
-                        usr_acc_Query =
-                            "UPDATE usr_acc set status = '" +
-                            status +
-                            "',validity = '" +
-                            validity +
-                            "' ,note = '" +
-                            note +
-                            "' ,client_id = '" +
-                            client_id +
-                            "', device_status = 0, unlink_status=0 ,start_date = '" +
-                            start_date +
-                            "' WHERE device_id = '" +
-                            usr_device_id +
-                            "'";
+                    let serviceData = await sql.query(`SELECT * FROM services_data WHERE user_acc_id = ${usr_acc_id} ORDER BY created_at DESC LIMIT 1`)
+                    if (serviceData && serviceData.length) {
+                        service_id = serviceData[0].id
                     } else {
-                        usr_acc_Query =
-                            "UPDATE usr_acc set status = '" +
-                            status +
-                            "',validity = '" +
-                            validity +
-                            "' ,note = '" +
-                            note +
-                            "' ,client_id = '" +
-                            client_id +
-                            "', device_status = 0, unlink_status=0 ,start_date = '" +
-                            start_date +
-                            "', expiry_date = '" +
-                            expiry_date +
-                            "' WHERE device_id = '" +
-                            usr_device_id +
-                            "'";
+                        return {
+                            status: false,
+                            msg: "No service found on this device Please Add service first to use grace days."
+                        }
                     }
                 }
-                sql.query(common_Query, async function (error, row) {
-                    await sql.query(usr_acc_Query);
-                    if (expiry_date !== rows[0].expiry_date) {
-                        let service_id = prevService.id
-                        let grace_days = moment(rows[0].expiry_date).diff(moment(expiry_date), days)
-                        console.log(grace_days, service_id);
-                        sql.query(`INSER INTO grace_days_histories 
-                        (dealer_id,device_id, user_acc_id , service_id , grace_days , from_date , to_date)
-                        VALUES (${dealer_id} , ${device_id} ,${usr_acc_id} , ${service_id} , ${grace_days} , ${rows[0].expiry_date} , ${expiry_date} ) 
-                        `)
-
-                    }
-                })
             }
-        })
+            if (finalStatus === Constants.DEVICE_PRE_ACTIVATION) {
+                var status = "";
+            } else if (finalStatus === Constants.DEVICE_EXPIRED) {
+                var status = "expired";
+            } else {
+                var status = "active";
+            }
+
+            if (date_now < expiry_date && finalStatus === Constants.DEVICE_EXPIRED) {
+                // console.log(device);
+                require('./socket_helper').sendDeviceStatus(sockets.baseIo,
+                    device_id,
+                    "active",
+                    true
+                );
+                status = "active";
+            }
+            common_Query =
+                "UPDATE devices set model = '" +
+                model +
+                "' WHERE id = '" +
+                usr_device_id +
+                "'";
+            if (
+                finalStatus !== Constants.DEVICE_PRE_ACTIVATION
+            ) {
+                if (expiry_date == 0) {
+                    usr_acc_Query =
+                        "UPDATE usr_acc set status = '" +
+                        status +
+                        "',note = '" +
+                        note +
+                        "' ,client_id = '" +
+                        client_id +
+                        "', device_status = 1, unlink_status=0 ,  start_date = '" +
+                        start_date +
+                        "' WHERE device_id = '" +
+                        usr_device_id +
+                        "'";
+                } else {
+                    usr_acc_Query =
+                        "UPDATE usr_acc set  status = '" +
+                        status +
+                        "',note = '" +
+                        note +
+                        "' ,client_id = '" +
+                        client_id +
+                        "', device_status = 1, unlink_status=0 ,  start_date = '" +
+                        start_date +
+                        "' ,expiry_date = '" +
+                        expiry_date +
+                        "' WHERE device_id = '" +
+                        usr_device_id +
+                        "'";
+                }
+            } else {
+                if (expiry_date == 0) {
+                    usr_acc_Query =
+                        "UPDATE usr_acc set status = '" +
+                        status +
+                        "',validity = '" +
+                        validity +
+                        "' ,note = '" +
+                        note +
+                        "' ,client_id = '" +
+                        client_id +
+                        "', device_status = 0, unlink_status=0 ,start_date = '" +
+                        start_date +
+                        "' WHERE device_id = '" +
+                        usr_device_id +
+                        "'";
+                } else {
+                    usr_acc_Query =
+                        "UPDATE usr_acc set status = '" +
+                        status +
+                        "',validity = '" +
+                        validity +
+                        "' ,note = '" +
+                        note +
+                        "' ,client_id = '" +
+                        client_id +
+                        "', device_status = 0, unlink_status=0 ,start_date = '" +
+                        start_date +
+                        "', expiry_date = '" +
+                        expiry_date +
+                        "' WHERE device_id = '" +
+                        usr_device_id +
+                        "'";
+                }
+            }
+            let row = await sql.query(common_Query)
+            if (row && row.affectedRows) {
+                await sql.query(usr_acc_Query);
+                data = {
+                    status: true,
+                    msg: "Record Updated Successfully."
+                }
+                if (expiry_date !== rows[0].expiry_date) {
+                    let grace_days = moment(new Date(expiry_date)).diff(moment(new Date(rows[0].expiry_date)), 'days')
+                    let alreadyGraced = await sql.query(`SELECT * FROM grace_days_histories WHERE user_acc_id = ${usr_acc_id} AND service_id = ${service_id}`)
+                    let grace_day_query = ''
+                    if (alreadyGraced && alreadyGraced.length) {
+                        grace_days = moment(new Date(expiry_date)).diff(moment(new Date(alreadyGraced[0].from_date)), 'days')
+                        grace_day_query = `UPDATE grace_days_histories SET to_date = '${expiry_date}' , grace_days = ${grace_days} WHERE id = ${alreadyGraced[0].id}`
+                    } else {
+                        grace_day_query = `INSERT INTO grace_days_histories 
+                                    (dealer_id,device_id, user_acc_id , service_id , grace_days , from_date , to_date)
+                                    VALUES (${dealer_id} , '${device_id}' ,${usr_acc_id} , ${service_id} , ${grace_days} , '${rows[0].expiry_date}' , '${expiry_date}' )`
+                    }
+                    let result = await sql.query(grace_day_query)
+                    if (result.insertId || result.affectedRows) {
+                        let updateService = `UPDATE services_data SET service_expiry_date = '${expiry_date}' WHERE id = ${service_id}`
+                        await sql.query(updateService)
+                        data.msg = "Grace Days Added SuccessFully."
+                    } else {
+                        data.msg = "Expiry Date Updated but services not updated"
+                    }
+                }
+                // console.log(device_id);
+                let deviceData = await require('./general_helper').getAllRecordbyDeviceId(device_id)
+                // console.log(deviceData);
+                data.data = [deviceData]
+                // console.log(data);
+            }
+        }
+
         return data
     }
 }
