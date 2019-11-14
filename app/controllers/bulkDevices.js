@@ -887,105 +887,112 @@ exports.getUsersOfDealers = async function (req, res) {
     }
 }
 
+
 exports.applyBulkPushApps = async function (req, res) {
     try {
-        var verify = req.decoded; // await verifyToken(req, res);
-        // if (verify.status !== undefined && verify.status == true) {
-        if (verify) {
-            let device_id = req.params.device_id;
+        var verify = req.decoded;
+        let selectedDevices = req.body.selectedDevices;
+        console.log("req.body ", req.body)
 
+        if (verify && selectedDevices.length) {
             let dealer_id = verify.user.id;
-
-            let usrAccId = req.body.usrAccId;
-
-            let push_apps = req.body.push_apps;
+            let push_apps = req.body.apps;
             let noOfApps = push_apps.length;
 
-            let apps = push_apps === undefined ? "" : JSON.stringify(push_apps);
+            let apps = push_apps === undefined ? "[]" : JSON.stringify(push_apps);
 
-            var applyQuery =
-                "INSERT INTO device_history (device_id,dealer_id,user_acc_id, push_apps, type) VALUES ('" +
-                device_id +
-                "'," +
-                dealer_id +
-                "," +
-                usrAccId +
-                ", '" +
-                apps +
-                "', 'push_apps')";
+            let failedToPush = [];
+            let queueAppsList = [];
+            let pushedAppsList = [];
 
-            sql.query(applyQuery, async function (err, rslts) {
-                if (err) {
-                    console.log(err);
-                }
-                if (rslts) {
-                    let isOnline = await device_helpers.isDeviceOnline(
-                        device_id
-                    );
+            for (let index = 0; index < selectedDevices.length; index++) {
+
+                var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, push_apps, type) VALUES ('${selectedDevices[index].device_id}', ${dealer_id}, ${selectedDevices[index].usrAccId}, '${apps}', 'push_apps');`;
+                console.log("applyQuery for bulk push apps ", applyQuery)
+                let rslts = await sql.query(applyQuery);
+
+                if (rslts && rslts.affectedRows) {
+                    let isOnline = await device_helpers.isDeviceOnline(selectedDevices[index].device_id);
                     //job Queue query
-                    var loadDeviceQ =
-                        "INSERT INTO apps_queue_jobs (device_id,action,type,total_apps,is_in_process) " +
-                        " VALUES ('" +
-                        device_id +
-                        "', 'push', 'push', " +
-                        noOfApps +
-                        " ,1)";
-                    // var loadDeviceQ = "UPDATE devices set is_push_apps=1 WHERE device_id='" + device_id + "'";
-                    await sql.query(loadDeviceQ);
-
+                    var loadDeviceQ = `INSERT INTO apps_queue_jobs (device_id,action,type,total_apps,is_in_process) VALUES ('${selectedDevices[index].device_id}', 'push', 'push', ${noOfApps}, 1);`;
+                    sql.query(loadDeviceQ);
                     if (isOnline) {
-                        // sockets.applyPushApps(apps, device_id);
-                        data = {
-                            status: true,
-                            online: true,
-                            noOfApps: noOfApps,
-                            msg: await helpers.convertToLang(
-                                req.translation[
-                                MsgConstants.APPS_ARE_BEING_PUSHED
-                                ],
-                                "Apps are Being pushed"
-                            ),
-                            content: ""
-                        };
+                        console.log("device is online")
+                        socket_helpers.applyPushApps(sockets.baseIo, rslts.insertId, apps, selectedDevices[index].device_id);
+                        pushedAppsList.push(selectedDevices[index].device_id);
                     } else {
-                        // sockets.applyPushApps(apps, device_id);
-                        data = {
-                            status: true,
-                            noOfApps: noOfApps,
-                            msg: await helpers.convertToLang(
-                                req.translation[
-                                MsgConstants.WARNING_DEVICE_OFFLINE
-                                ],
-                                "Warning Device Offline"
-                            ),
-                            content: await helpers.convertToLang(
-                                req.translation[
-                                MsgConstants
-                                    .APPS_PUSHED_TO_DEVICE_ON_BACK_ONLINE
-                                ],
-                                "Apps pushed to device. Action will be performed when device is back online"
-                            )
-                        };
+                        console.log("device is offline")
+                        socket_helpers.applyPushApps(sockets.baseIo, apps, selectedDevices[index].device_id);
+                        queueAppsList.push(selectedDevices[index].usr_device_id);
                     }
-                    res.send(data);
+
+                    // res.send(data);
                 } else {
-                    data = {
-                        status: false,
-                        msg: await helpers.convertToLang(
-                            req.translation[MsgConstants.ERROR_PROC],
-                            "Error while Processing"
-                        ), // Error while Processing',
-                        content: ""
-                    };
-                    res.send(data);
+                    failedToPush.push(selectedDevices[index].device_id);
                 }
-            });
+            } // end for loop
+
+            console.log("check data:::::::::::::::::::::: ", failedToPush, queueAppsList, pushedAppsList)
+
+            if (failedToPush.length > 0) {
+                console.log("failedToPush")
+                data = {
+                    status: false,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"),
+                    content: ""
+                };
+            }
+            else if (queueAppsList.length > 0) {
+                console.log("queueAppsList ")
+                data = {
+                    status: true,
+                    noOfApps: 0, // queueAppsList[0].length,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.WARNING_DEVICE_OFFLINE], "Warning Device Offline"),
+                    content: await helpers.convertToLang(req.translation[MsgConstants.APPS_PUSHED_TO_DEVICE_ON_BACK_ONLINE], "Apps pushed to device. Action will be performed when device is back online")
+                };
+                let dvc_ids = [];
+                // queueAppsList.forEach((item) => {
+                //     dvc_ids.push(item.usr_device_id);
+                // });
+                req.body["device_ids"] = dvc_ids;
+                req.body["action_by"] = dealer_id;
+                device_helpers.saveBuklActionHistory(req.body, constants.BULK_PUSHED_APPS);
+            }
+            else if (pushedAppsList.length > 0) {
+                console.log("pushedAppsList")
+                data = {
+                    status: true,
+                    online: true,
+                    noOfApps: 0, //pushedAppsList[0].length,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.APPS_ARE_BEING_PUSHED], "Apps are Being pushed"),
+                    content: ""
+                };
+
+                // let dvc_ids = [];
+                // pushedAppsList.forEach((item) => {
+                //     dvc_ids.push(item.usr_device_id);
+                // });
+                // req.body["device_ids"] = dvc_ids;
+                req.body["action_by"] = dealer_id;
+                // device_helpers.saveBuklActionHistory(req.body, constants.BULK_PUSHED_APPS);
+            } else {
+                data = {
+                    status: false,
+                    msg: 'invalid'
+                }
+            }
+            console.log('send response ')
+            res.send(data);
         }
     } catch (error) {
         console.log(error);
+        res.send({
+            status: false,
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"),
+            content: ""
+        });
     }
 };
-
 
 exports.applyBulkPullApps = async function (req, res) {
     try {
@@ -1025,7 +1032,7 @@ exports.applyBulkPullApps = async function (req, res) {
                             msg: await helpers.convertToLang(req.translation[MsgConstants.APPS_ARE_BEING_PULLED], "Apps are Being pulled"),
                             content: ""
                         };
-                        // sockets.getPullApps(apps, device_id);
+                        socket_helpers.getPullApps(sockets.baseIo, rslts.insertId, apps, device_id);
                     } else {
                         data = {
                             status: true,

@@ -1432,8 +1432,8 @@ router.post("/bulkActivate", bulkDevicesController.activateBulkDevices);
 router.get("/getBulkHistory", bulkDevicesController.bulkDevicesHistory);
 router.post("/getUsersOfDealers", bulkDevicesController.getUsersOfDealers);
 
-// router.post("/apply_bulk_pushapps", bulkDevicesController.applyBulkPushApps);
+router.post("/apply_bulk_pushapps", bulkDevicesController.applyBulkPushApps);
 
-// router.post("/apply_bulk_pullapps", bulkDevicesController.applyBulkPullApps);
+router.post("/apply_bulk_pullapps", bulkDevicesController.applyBulkPullApps);
 
 module.exports = router;
