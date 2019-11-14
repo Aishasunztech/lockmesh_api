@@ -250,7 +250,7 @@ exports.getDevicesForReport = async function (req, res) {
 
     if (verify) {
         let user_type = verify.user.user_type;
-        let dealer_id =  req.params.dealer_id ? req.params.dealer_id : '';
+        let dealer_id = req.params.dealer_id ? req.params.dealer_id : '';
 
         if (user_type === constants.DEALER && dealer_id === '') {
             let sDealerIds = await helpers.getSdealersByDealerId(verify.user.id);
@@ -261,7 +261,7 @@ exports.getDevicesForReport = async function (req, res) {
             }
         } else if (user_type === constants.ADMIN && dealer_id === '') {
             where_con = ''
-        }else if (dealer_id !== ''){
+        } else if (dealer_id !== '') {
             where_con += ' AND ua.dealer_id = ' + dealer_id
         }
 
