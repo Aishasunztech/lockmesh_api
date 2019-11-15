@@ -11,6 +11,10 @@ var fs = require("fs");
 var axios = require("axios");
 var moment = require("moment");
 const stripe = require("stripe")("sk_test_zJjguM8s6HqyvOrhtPGDk0lV007cDt8U25");
+var coinbase = require('coinbase-commerce-node');
+var Client = coinbase.Client;
+Client.init('435a9c0a-426e-4c14-9b60-46ee54995b92');
+var Charge = coinbase.resources.Charge;
 // constants
 const ADMIN = "admin";
 const DEALER = "dealer";
@@ -1057,6 +1061,24 @@ exports.purchaseCredits_CC = async function (req, res) {
 
     }
 }
+exports.purchaseCredits_BTC = async function (req, res) {
+    console.log('asasasasas')
+    var chargeData = {
+        'name': 'The Sovereign Individual',
+        'description': 'Mastering the Transition to the Information Age',
+        'local_price': {
+            'amount': '100.00',
+            'currency': 'USD'
+        },
+        'pricing_type': 'fixed_price'
+
+    }
+    Charge.create(chargeData, function (error, response) {
+        console.log(error);
+        console.log(response);
+    });
+}
+
 exports.saveProfile = async function (req, res) {
     try {
         var verify = req.decoded; // await verifyToken(req, res);

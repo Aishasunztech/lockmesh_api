@@ -966,6 +966,7 @@ router.post("/purchase_credits", accountController.purchaseCredits);
  */
 // Purchase credits form Credit card
 router.post("/purchase_credits_CC", accountController.purchaseCredits_CC);
+router.post("/purchase_credits_BTC", accountController.purchaseCredits_BTC);
 /**
  * @route POST /users/save_policy_permissions
  * @group APK - All Operations on apks
