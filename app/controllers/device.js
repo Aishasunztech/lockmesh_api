@@ -108,7 +108,7 @@ exports.devices = async function (req, res) {
                         }
                         // let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
                         // if (lastOnline) {
-                            results[i].lastOnline = results[i].last_login ? results[i].last_login : "N/A"
+                        results[i].lastOnline = results[i].last_login ? results[i].last_login : "N/A"
                         // }
                         results[i].finalStatus = device_helpers.checkStatus(
                             results[i]
@@ -757,10 +757,14 @@ exports.editDevices = async function (req, res) {
 
                                 }
                             } else {
+                                var expiry_date = loggedDealerType === constants.ADMIN ? moment(req.body.expiry_date).format("YYYY/MM/DD") : req.body.expiry_date
                                 if (finalStatus === constants.DEVICE_TRIAL) {
                                     status = "trial";
                                 }
-                                var expiry_date = req.body.expiry_date;
+                                else if (finalStatus === constants.DEVICE_EXPIRED && moment().format("YYYY/MM/DD") < expiry_date) {
+                                    status = 'active'
+                                }
+                                // var expiry_date = req.body.expiry_date;
                             }
 
                             common_Query =
@@ -968,7 +972,7 @@ exports.editDevices = async function (req, res) {
                                         rsltq[0].chat_id = "N/A"
                                     }
                                     // if (loginHistoryData[0] && loginHistoryData.created_at) {
-                                        rsltq[0].lastOnline = rsltq[0].last_login ? rsltq[0].last_login : "N/A"
+                                    rsltq[0].lastOnline = rsltq[0].last_login ? rsltq[0].last_login : "N/A"
                                     // }
                                     // else {
                                     //     rsltq[0].lastOnline = "N/A"
@@ -1260,7 +1264,7 @@ exports.unflagDevice = async function (req, res) {
 
                             // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id);
                             // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                                resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
+                            resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
                             // } else {
                             //     resquery[0].lastOnline = "N/A"
                             // }
@@ -1375,7 +1379,7 @@ exports.flagDevice = async function (req, res) {
 
                         // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id);
                         // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                            resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
+                        resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
                         // } else {
                         //     resquery[0].lastOnline = "N/A"
                         // }
@@ -1996,7 +2000,7 @@ exports.createDeviceProfile = async function (req, res) {
                         rsltq[i].chat_id = chat_id.chat_id
                     }
                     rsltq[i].lastOnline = rsltq[i].last_login ? rsltq[i].last_login : "N/A"
-                    
+
                     rsltq[i].finalStatus = device_helpers.checkStatus(
                         rsltq[i]
                     );
@@ -2317,7 +2321,7 @@ exports.suspendAccountDevices = async function (req, res) {
                                     }
                                     // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
                                     // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                                        resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
+                                    resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
                                     // } else {
                                     //     resquery[0].lastOnline = "N/A"
                                     // }
@@ -2412,7 +2416,7 @@ exports.suspendAccountDevices = async function (req, res) {
                                         }
                                         // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
                                         // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                                            resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
+                                        resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
                                         // } else {
                                         //     resquery[0].lastOnline = "N/A"
                                         // }
@@ -2543,7 +2547,7 @@ exports.activateDevice = async function (req, res) {
                                     }
                                     // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
                                     // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                                        resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
+                                    resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
                                     // } else {
                                     //     resquery[0].lastOnline = "N/A"
                                     // }
@@ -2641,7 +2645,7 @@ exports.activateDevice = async function (req, res) {
                                         }
                                         // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
                                         // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                                            resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
+                                        resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
                                         // } else {
                                         //     resquery[0].lastOnline = "N/A"
                                         // }
@@ -2893,7 +2897,7 @@ exports.connectDevice = async function (req, res) {
 
                         }
                         // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                            results[0].lastOnline = results[0].last_login ? results[0].last_login : "N/A"
+                        results[0].lastOnline = results[0].last_login ? results[0].last_login : "N/A"
                         // } else {
                         //     results[0].lastOnline = "N/A"
                         // }
