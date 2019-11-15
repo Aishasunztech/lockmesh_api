@@ -2,9 +2,15 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.renameColumn('services_data', 'service_term_days', 'service_term', {
-      type: Sequelize.STRING,
-    })
+    return Promise.all([
+      queryInterface.renameColumn('services_data', 'service_term_days', 'service_term', {
+        type: Sequelize.STRING,
+      }),
+      queryInterface.addColumn('services_data', 'grace_days', {
+        type: Sequelize.BOOLEAN,
+        defaultValue : 0
+      })
+    ])
   },
 
   down: (queryInterface, Sequelize) => {

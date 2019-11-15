@@ -43,7 +43,7 @@ if (HOST_NAME) {
 			SMTP_FROM_EMAIL = "admin@lockmesh.com";
 			SMTP_FROM_NAME = "Admin";
 			break;
-		
+
 		case "PreDev":
 			URL = "https://predev.lockmesh.com";
 			SUPERADMIN_URL = "https://dev.meshguard.co";

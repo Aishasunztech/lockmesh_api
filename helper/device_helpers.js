@@ -1007,7 +1007,7 @@ module.exports = {
                     }
                     let result = await sql.query(grace_day_query)
                     if (result.insertId || result.affectedRows) {
-                        let updateService = `UPDATE services_data SET service_expiry_date = '${expiry_date}' WHERE id = ${service_id}`
+                        let updateService = `UPDATE services_data SET service_expiry_date = '${expiry_date}', grace_days = ${grace_days} WHERE id = ${service_id}`
                         await sql.query(updateService)
                         data.msg = "Grace Days Added SuccessFully."
                     } else {
