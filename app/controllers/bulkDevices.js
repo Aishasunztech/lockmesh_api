@@ -637,191 +637,179 @@ exports.bulkDevicesHistory = async function (req, res) {
 
                 // get devices
                 console.log("getHistory[index].device_id ", getHistory[index].device_ids);
-                // return;
 
-                let query = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers ON (usr_acc.dealer_id = dealers.dealer_id) 
+                if (JSON.parse(getHistory[index].device_ids).length) {
+                    let query = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers ON (usr_acc.dealer_id = dealers.dealer_id) 
                 WHERE devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 AND usr_acc.device_id IN (${JSON.parse(getHistory[index].device_ids)}) ORDER BY devices.id DESC`;
-                console.log('query is: ', query);
+                    console.log('query is: ', query);
 
-                let results = await sql.query(query);
-                // console.log('result is: ', results)
+                    let results = await sql.query(query);
+                    // console.log('result is: ', results)
 
-                if (results.length) {
-                    let devices_acc_array = [];
-                    let usr_device_ids_array = []
-                    for (let i = 0; i < results.length; i++) {
-                        devices_acc_array.push(results[i].id)
-                        usr_device_ids_array.push(results[i].usr_device_id)
-                    }
-                    let user_acc_ids = devices_acc_array.join()
-                    let usr_device_ids = usr_device_ids_array.join()
-                    // let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
-                    // let sim_ids = await device_helpers.getSimids(user_acc_ids);
-                    // let chat_ids = await device_helpers.getChatids(user_acc_ids);
-                    let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
-                    let servicesData = await device_helpers.getServicesData(user_acc_ids)
-                    let servicesIds = servicesData.map(item => { return item.id })
-                    let userAccServiceData = []
-                    if (servicesIds.length) {
-                        userAccServiceData = await device_helpers.getUserAccServicesData(user_acc_ids, servicesIds)
-                    }
-
-                    for (var i = 0; i < results.length; i++) {
-                        results[i].sim_id = "N/A"
-                        results[i].sim_id2 = "N/A"
-                        results[i].pgp_email = "N/A"
-                        results[i].chat_id = "N/A"
-
-                        let service_id = null
-                        let services = servicesData.filter(data => data.user_acc_id === results[i].id);
-                        if (services && services.length) {
-                            services.map((item) => {
-                                if (item.status === 'extended') {
-                                    results[i].extended_services = item
-                                } else {
-                                    results[i].services = item
-                                    service_id = item.id
-                                }
-                            })
+                    if (results.length) {
+                        let devices_acc_array = [];
+                        let usr_device_ids_array = []
+                        for (let i = 0; i < results.length; i++) {
+                            devices_acc_array.push(results[i].id)
+                            usr_device_ids_array.push(results[i].usr_device_id)
                         }
-                        let productsData = userAccServiceData.filter(item => item.user_acc_id === results[i].id && item.service_id === service_id);
-                        if (productsData && productsData.length) {
-                            productsData.map((item) => {
-                                if (item.type === 'sim_id') {
-                                    results[i].sim_id = item.product_value
-                                }
-                                else if (item.type === 'sim_id2') {
-                                    results[i].sim_id2 = item.product_value
-                                }
-                                else if (item.type === 'pgp_email') {
-                                    results[i].pgp_email = item.product_value
-                                }
-                                else if (item.type === 'chat_id') {
-                                    results[i].chat_id = item.product_value
-                                }
-                            })
+                        let user_acc_ids = devices_acc_array.join()
+                        let usr_device_ids = usr_device_ids_array.join()
+                        // let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
+                        // let sim_ids = await device_helpers.getSimids(user_acc_ids);
+                        // let chat_ids = await device_helpers.getChatids(user_acc_ids);
+                        let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
+                        let servicesData = await device_helpers.getServicesData(user_acc_ids)
+                        let servicesIds = servicesData.map(item => { return item.id })
+                        let userAccServiceData = []
+                        if (servicesIds.length) {
+                            userAccServiceData = await device_helpers.getUserAccServicesData(user_acc_ids, servicesIds)
                         }
-                        // let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === results[i].id);
-                        // if (pgp_email) {
-                        //     results[i].pgp_email = pgp_email.pgp_email
-                        // }
-                        // let sim_idArray = sim_ids.filter(sim_id => sim_id.user_acc_id === results[i].id);
-                        // if (sim_idArray && sim_idArray.length) {
-                        //     results[i].sim_id = sim_idArray[0].sim_id
-                        //     results[i].sim_id2 = sim_idArray[1] ? sim_idArray[1].sim_id : "N/A"
-                        // }
-                        // let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === results[i].id);
-                        // if (chat_id) {
-                        //     results[i].chat_id = chat_id.chat_id
-                        // }
 
-                        let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
-                        if (lastOnline) {
-                            results[i].lastOnline = lastOnline.created_at
+                        for (var i = 0; i < results.length; i++) {
+                            results[i].sim_id = "N/A"
+                            results[i].sim_id2 = "N/A"
+                            results[i].pgp_email = "N/A"
+                            results[i].chat_id = "N/A"
+
+                            let service_id = null
+                            let services = servicesData.filter(data => data.user_acc_id === results[i].id);
+                            if (services && services.length) {
+                                services.map((item) => {
+                                    if (item.status === 'extended') {
+                                        results[i].extended_services = item
+                                    } else {
+                                        results[i].services = item
+                                        service_id = item.id
+                                    }
+                                })
+                            }
+                            let productsData = userAccServiceData.filter(item => item.user_acc_id === results[i].id && item.service_id === service_id);
+                            if (productsData && productsData.length) {
+                                productsData.map((item) => {
+                                    if (item.type === 'sim_id') {
+                                        results[i].sim_id = item.product_value
+                                    }
+                                    else if (item.type === 'sim_id2') {
+                                        results[i].sim_id2 = item.product_value
+                                    }
+                                    else if (item.type === 'pgp_email') {
+                                        results[i].pgp_email = item.product_value
+                                    }
+                                    else if (item.type === 'chat_id') {
+                                        results[i].chat_id = item.product_value
+                                    }
+                                })
+                            }
+                            // let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === results[i].id);
+                            // if (pgp_email) {
+                            //     results[i].pgp_email = pgp_email.pgp_email
+                            // }
+                            // let sim_idArray = sim_ids.filter(sim_id => sim_id.user_acc_id === results[i].id);
+                            // if (sim_idArray && sim_idArray.length) {
+                            //     results[i].sim_id = sim_idArray[0].sim_id
+                            //     results[i].sim_id2 = sim_idArray[1] ? sim_idArray[1].sim_id : "N/A"
+                            // }
+                            // let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === results[i].id);
+                            // if (chat_id) {
+                            //     results[i].chat_id = chat_id.chat_id
+                            // }
+
+                            let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
+                            if (lastOnline) {
+                                results[i].lastOnline = lastOnline.created_at
+                            }
+                            results[i].finalStatus = device_helpers.checkStatus(
+                                results[i]
+                            );
+                            results[i].validity = await device_helpers.checkRemainDays(
+                                results[i].created_at,
+                                results[i].validity
+                            );
                         }
-                        results[i].finalStatus = device_helpers.checkStatus(
-                            results[i]
-                        );
-                        results[i].validity = await device_helpers.checkRemainDays(
-                            results[i].created_at,
-                            results[i].validity
-                        );
+
+                        let finalResult = [...results];
+                        let checkValue = helpers.checkValue;
+                        for (let device of finalResult) {
+
+                            let remainTermDays = "N/A"
+
+                            if (device.expiry_date !== null) {
+                                let startDate = moment(new Date())
+                                let expiray_date = new Date(device.expiry_date)
+                                let endDate = moment(expiray_date)
+                                remainTermDays = endDate.diff(startDate, 'days')
+                            }
+                            device.remainTermDays = remainTermDays
+                            device.account_email = checkValue(device.account_email);
+                            device.firmware_info = checkValue(device.firmware_info);
+                            device.account_name = checkValue(device.account_name);
+                            device.account_status = checkValue(device.account_status);
+                            device.activation_code = checkValue(device.activation_code);
+                            device.activation_status = checkValue(
+                                device.activation_status
+                            );
+                            device.batch_no = checkValue(device.batch_no);
+                            device.chat_id = checkValue(device.chat_id);
+                            device.client_id = checkValue(device.client_id);
+                            device.connected_dealer = checkValue(
+                                device.connected_dealer
+                            );
+                            device.created_at = checkValue(device.created_at);
+                            device.dealer_id = checkValue(device.dealer_id);
+                            device.dealer_name = checkValue(device.dealer_name);
+                            device.del_status = checkValue(device.del_status);
+                            device.device_id = checkValue(device.device_id);
+                            device.device_status = checkValue(device.device_status);
+                            device.expiry_date = checkValue(device.expiry_date);
+                            device.expiry_months = checkValue(device.expiry_months);
+                            device.fcm_token = checkValue(device.fcm_token);
+                            device.finalStatus = checkValue(device.finalStatus);
+                            device.flagged = checkValue(device.flagged);
+                            device.id = checkValue(device.id);
+                            device.imei = checkValue(device.imei);
+                            device.imei2 = checkValue(device.imei2);
+                            device.ip_address = checkValue(device.ip_address);
+                            device.is_push_apps = checkValue(device.is_push_apps);
+                            device.is_sync = checkValue(device.is_sync);
+                            device.link_code = checkValue(device.link_code);
+                            device.mac_address = checkValue(device.mac_address);
+                            device.model = checkValue(device.model);
+                            device.name = checkValue(device.name);
+                            device.note = checkValue(device.note);
+                            device.online = checkValue(device.online);
+                            device.pgp_email = checkValue(device.pgp_email);
+                            device.prnt_dlr_id = checkValue(device.prnt_dlr_id);
+                            device.prnt_dlr_name = checkValue(device.prnt_dlr_name);
+                            device.reject_status = checkValue(device.reject_status);
+                            device.screen_start_date = checkValue(
+                                device.screen_start_date
+                            );
+                            device.serial_number = checkValue(device.serial_number);
+                            device.session_id = checkValue(device.session_id);
+                            device.sim_id = checkValue(device.sim_id);
+                            device.sim_id2 = checkValue(device.sim_id2)
+                            device.simno = checkValue(device.simno);
+                            device.simno2 = checkValue(device.simno2);
+                            device.start_date = checkValue(device.start_date);
+                            device.status = checkValue(device.status);
+                            device.transfer_status = checkValue(device.transfer_status);
+                            device.unlink_status = checkValue(device.unlink_status);
+                            device.updated_at = checkValue(device.updated_at);
+                            device.user_id = checkValue(device.user_id);
+                            device.usr_device_id = checkValue(device.usr_device_id);
+                            device.validity = checkValue(device.validity);
+                        }
+
+                        getHistory[index]["data"] = JSON.stringify(finalResult);
+                    } else {
+                        getHistory[index]["data"] = "[]";
                     }
-
-                    let finalResult = [...results];
-                    let checkValue = helpers.checkValue;
-                    for (let device of finalResult) {
-
-                        let remainTermDays = "N/A"
-
-                        if (device.expiry_date !== null) {
-                            let startDate = moment(new Date())
-                            let expiray_date = new Date(device.expiry_date)
-                            let endDate = moment(expiray_date)
-                            remainTermDays = endDate.diff(startDate, 'days')
-                        }
-                        device.remainTermDays = remainTermDays
-                        device.account_email = checkValue(device.account_email);
-                        device.firmware_info = checkValue(device.firmware_info);
-                        device.account_name = checkValue(device.account_name);
-                        device.account_status = checkValue(device.account_status);
-                        device.activation_code = checkValue(device.activation_code);
-                        device.activation_status = checkValue(
-                            device.activation_status
-                        );
-                        device.batch_no = checkValue(device.batch_no);
-                        device.chat_id = checkValue(device.chat_id);
-                        device.client_id = checkValue(device.client_id);
-                        device.connected_dealer = checkValue(
-                            device.connected_dealer
-                        );
-                        device.created_at = checkValue(device.created_at);
-                        device.dealer_id = checkValue(device.dealer_id);
-                        device.dealer_name = checkValue(device.dealer_name);
-                        device.del_status = checkValue(device.del_status);
-                        device.device_id = checkValue(device.device_id);
-                        device.device_status = checkValue(device.device_status);
-                        device.expiry_date = checkValue(device.expiry_date);
-                        device.expiry_months = checkValue(device.expiry_months);
-                        device.fcm_token = checkValue(device.fcm_token);
-                        device.finalStatus = checkValue(device.finalStatus);
-                        device.flagged = checkValue(device.flagged);
-                        device.id = checkValue(device.id);
-                        device.imei = checkValue(device.imei);
-                        device.imei2 = checkValue(device.imei2);
-                        device.ip_address = checkValue(device.ip_address);
-                        device.is_push_apps = checkValue(device.is_push_apps);
-                        device.is_sync = checkValue(device.is_sync);
-                        device.link_code = checkValue(device.link_code);
-                        device.mac_address = checkValue(device.mac_address);
-                        device.model = checkValue(device.model);
-                        device.name = checkValue(device.name);
-                        device.note = checkValue(device.note);
-                        device.online = checkValue(device.online);
-                        device.pgp_email = checkValue(device.pgp_email);
-                        device.prnt_dlr_id = checkValue(device.prnt_dlr_id);
-                        device.prnt_dlr_name = checkValue(device.prnt_dlr_name);
-                        device.reject_status = checkValue(device.reject_status);
-                        device.screen_start_date = checkValue(
-                            device.screen_start_date
-                        );
-                        device.serial_number = checkValue(device.serial_number);
-                        device.session_id = checkValue(device.session_id);
-                        device.sim_id = checkValue(device.sim_id);
-                        device.sim_id2 = checkValue(device.sim_id2)
-                        device.simno = checkValue(device.simno);
-                        device.simno2 = checkValue(device.simno2);
-                        device.start_date = checkValue(device.start_date);
-                        device.status = checkValue(device.status);
-                        device.transfer_status = checkValue(device.transfer_status);
-                        device.unlink_status = checkValue(device.unlink_status);
-                        device.updated_at = checkValue(device.updated_at);
-                        device.user_id = checkValue(device.user_id);
-                        device.usr_device_id = checkValue(device.usr_device_id);
-                        device.validity = checkValue(device.validity);
-                    }
-
-                    getHistory[index]["data"] = JSON.stringify(finalResult);
                 } else {
                     getHistory[index]["data"] = "[]";
                 }
-                // });
-                // end get devices
-
             }
         }
-
-
-
-
-        // getHistory[0]["data"] = JSON.stringify([{ a: "aa" }]);
-        console.log("getHistory ===================================> ", getHistory);
-
-        // data = {
-        //     status: true,
-        //     data: getHistory
-        // }
-
         res.send(getHistory);
 
     }
@@ -892,9 +880,9 @@ exports.applyBulkPushApps = async function (req, res) {
     try {
         var verify = req.decoded;
         let selectedDevices = req.body.selectedDevices;
-        console.log("req.body ", req.body)
+        console.log("applyBulkPushApps req.body::  ", req.body)
 
-        if (verify && selectedDevices.length) {
+        if (verify && selectedDevices && selectedDevices.length && req.body.apps.length) {
             let dealer_id = verify.user.id;
             let push_apps = req.body.apps;
             let noOfApps = push_apps.length;
@@ -919,11 +907,11 @@ exports.applyBulkPushApps = async function (req, res) {
                     if (isOnline) {
                         console.log("device is online")
                         socket_helpers.applyPushApps(sockets.baseIo, rslts.insertId, apps, selectedDevices[index].device_id);
-                        pushedAppsList.push(selectedDevices[index].device_id);
+                        pushedAppsList.push({ device_id: selectedDevices[index].device_id, usr_device_id: selectedDevices[index].usr_device_id });
                     } else {
                         console.log("device is offline")
                         socket_helpers.applyPushApps(sockets.baseIo, apps, selectedDevices[index].device_id);
-                        queueAppsList.push(selectedDevices[index].usr_device_id);
+                        queueAppsList.push({ device_id: selectedDevices[index].device_id, usr_device_id: selectedDevices[index].usr_device_id });
                     }
 
                     // res.send(data);
@@ -932,57 +920,70 @@ exports.applyBulkPushApps = async function (req, res) {
                 }
             } // end for loop
 
-            console.log("check data:::::::::::::::::::::: ", failedToPush, queueAppsList, pushedAppsList)
+            let messageTxt = '';
+            let contentTxt = '';
 
             if (failedToPush.length > 0) {
-                console.log("failedToPush")
-                data = {
-                    status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"),
-                    content: ""
-                };
+                messageTxt = await helpers.convertToLang(req.translation[""], "Failed to Push Apps");
             }
             else if (queueAppsList.length > 0) {
-                console.log("queueAppsList ")
-                data = {
-                    status: true,
-                    noOfApps: 0, // queueAppsList[0].length,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.WARNING_DEVICE_OFFLINE], "Warning Device Offline"),
-                    content: await helpers.convertToLang(req.translation[MsgConstants.APPS_PUSHED_TO_DEVICE_ON_BACK_ONLINE], "Apps pushed to device. Action will be performed when device is back online")
-                };
-                let dvc_ids = [];
-                // queueAppsList.forEach((item) => {
-                //     dvc_ids.push(item.usr_device_id);
-                // });
-                req.body["device_ids"] = dvc_ids;
-                req.body["action_by"] = dealer_id;
-                device_helpers.saveBuklActionHistory(req.body, constants.BULK_PUSHED_APPS);
+                messageTxt = await helpers.convertToLang(req.translation[""], "Warning All Devices Are Offline");
+                contentTxt = await helpers.convertToLang(req.translation[""], "Apps pushed to these devices. Action will be performed when devices back online");
             }
             else if (pushedAppsList.length > 0) {
-                console.log("pushedAppsList")
+                messageTxt = await helpers.convertToLang(req.translation[""], "Apps are Being pushed on All Selected Devices");
+            }
+
+            if (failedToPush.length || queueAppsList.length || pushedAppsList.length) {
+
+                // get user_device_ids and string device ids of online and offline devices
+                let queue_dvc_ids = [];
+                let queue_usr_dvc_ids = [];
+                let pushed_dvc_ids = [];
+                let pushed_usr_dvc_ids = [];
+
+                let all_usr_dvc_ids = [];
+
+                queueAppsList.forEach(item => {
+                    queue_dvc_ids.push(item.usr_device_id);
+                    queue_usr_dvc_ids.push(item.usr_device_id);
+                });
+
+                pushedAppsList.forEach(item => {
+                    pushed_dvc_ids.push(item.usr_device_id);
+                    pushed_usr_dvc_ids.push(item.usr_device_id);
+                });
+                all_usr_dvc_ids = [...queue_usr_dvc_ids, ...pushed_usr_dvc_ids];
+
+                req.body["device_ids"] = all_usr_dvc_ids;
+                req.body["action_by"] = dealer_id;
+                device_helpers.saveBuklActionHistory(req.body, constants.BULK_PUSHED_APPS);
+
                 data = {
                     status: true,
-                    online: true,
-                    noOfApps: 0, //pushedAppsList[0].length,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.APPS_ARE_BEING_PUSHED], "Apps are Being pushed"),
-                    content: ""
+                    online: pushedAppsList.length ? true : false,
+                    offline: queueAppsList.length ? true : false,
+                    failed: failedToPush.length ? true : false,
+                    msg: messageTxt,
+                    content: contentTxt,
+                    data: {
+                        failed_device_ids: failedToPush,
+                        queue_device_ids: queue_dvc_ids,
+                        pushed_device_ids: pushed_dvc_ids,
+                    }
                 };
-
-                // let dvc_ids = [];
-                // pushedAppsList.forEach((item) => {
-                //     dvc_ids.push(item.usr_device_id);
-                // });
-                // req.body["device_ids"] = dvc_ids;
-                req.body["action_by"] = dealer_id;
-                // device_helpers.saveBuklActionHistory(req.body, constants.BULK_PUSHED_APPS);
             } else {
                 data = {
                     status: false,
-                    msg: 'invalid'
+                    msg: 'Error while Processing'
                 }
             }
-            console.log('send response ')
             res.send(data);
+        } else {
+            res.send({
+                status: false,
+                msg: await helpers.convertToLang(req.translation[""], "Data not found"),
+            });
         }
     } catch (error) {
         console.log(error);
@@ -997,77 +998,117 @@ exports.applyBulkPushApps = async function (req, res) {
 exports.applyBulkPullApps = async function (req, res) {
     try {
         var verify = req.decoded;
+        let selectedDevices = req.body.selectedDevices;
+        console.log("applyBulkPullApps req.body::  ", req.body)
 
-        if (verify) {
-            let device_id = req.params.device_id;
-
-            let usrAccId = req.body.usrAccId;
-
+        if (verify && selectedDevices && selectedDevices.length && req.body.apps.length) {
             let dealer_id = verify.user.id;
-            let pull_apps = req.body.pull_apps;
+            let pull_apps = req.body.apps;
             let noOfApps = pull_apps.length;
 
-            let apps = pull_apps === undefined ? "" : JSON.stringify(pull_apps);
+            let apps = pull_apps === undefined ? "[]" : JSON.stringify(pull_apps);
 
-            var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, pull_apps, type) VALUES ('${device_id}', ${dealer_id}, ${usrAccId}, '${apps}', 'pull_apps')`;
+            let failedToPull = [];
+            let queueAppsList = [];
+            let pulledAppsList = [];
 
-            sql.query(applyQuery, async function (err, rslts) {
-                if (err) {
-                    console.log(err);
-                }
+            for (let index = 0; index < selectedDevices.length; index++) {
 
-                if (rslts) {
-                    let isOnline = await device_helpers.isDeviceOnline(device_id);
+                var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, push_apps, type) VALUES ('${selectedDevices[index].device_id}', ${dealer_id}, ${selectedDevices[index].usrAccId}, '${apps}', 'pull_apps');`;
+                console.log("applyQuery for bulk pull apps ", applyQuery)
+                let rslts = await sql.query(applyQuery);
 
-                    var loadDeviceQ = `INSERT INTO apps_queue_jobs (device_id, action, type, total_apps, is_in_process)
-						VALUES ('${device_id}', 'pull', 'pull', ${noOfApps}, 1)`;
-
-                    await sql.query(loadDeviceQ);
-
+                if (rslts && rslts.affectedRows) {
+                    let isOnline = await device_helpers.isDeviceOnline(selectedDevices[index].device_id);
+                    //job Queue query
+                    var loadDeviceQ = `INSERT INTO apps_queue_jobs (device_id,action,type,total_apps,is_in_process) VALUES ('${selectedDevices[index].device_id}', 'pull', 'pull', ${noOfApps}, 1);`;
+                    sql.query(loadDeviceQ);
                     if (isOnline) {
-                        data = {
-                            status: true,
-                            online: true,
-                            noOfApps: noOfApps,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.APPS_ARE_BEING_PULLED], "Apps are Being pulled"),
-                            content: ""
-                        };
-                        socket_helpers.getPullApps(sockets.baseIo, rslts.insertId, apps, device_id);
+                        console.log("device is online")
+                        socket_helpers.getPullApps(sockets.baseIo, rslts.insertId, apps, selectedDevices[index].device_id);
+                        pulledAppsList.push({ device_id: selectedDevices[index].device_id, usr_device_id: selectedDevices[index].usr_device_id });
                     } else {
-                        data = {
-                            status: true,
-                            noOfApps: noOfApps,
-                            msg: await helpers.convertToLang(
-                                req.translation[
-                                MsgConstants.WARNING_DEVICE_OFFLINE
-                                ],
-                                "Warning Device Offline"
-                            ),
-                            content: await helpers.convertToLang(
-                                req.translation[
-                                MsgConstants
-                                    .APPS_PULLED_TO_DEVICE_ON_BACK_ONLINE
-                                ],
-                                "Apps pulled to device. Action will be performed when device is back online"
-                            )
-                        };
+                        console.log("device is offline")
+                        socket_helpers.getPullApps(sockets.baseIo, apps, selectedDevices[index].device_id);
+                        queueAppsList.push({ device_id: selectedDevices[index].device_id, usr_device_id: selectedDevices[index].usr_device_id });
                     }
 
-                    return res.send(data);
+                    // res.send(data);
                 } else {
-                    data = {
-                        status: false,
-                        msg: await helpers.convertToLang(
-                            req.translation[MsgConstants.ERROR_PROC],
-                            "Error while Processing"
-                        ), // Error while Processing',
-                        content: ""
-                    };
-                    res.send(data);
+                    failedToPull.push(selectedDevices[index].device_id);
                 }
+            } // end for loop
+
+            let messageTxt = '';
+            let contentTxt = '';
+
+            if (failedToPull.length > 0) {
+                messageTxt = await helpers.convertToLang(req.translation[""], "Failed to Pull Apps");
+            }
+            else if (queueAppsList.length > 0) {
+                messageTxt = await helpers.convertToLang(req.translation[""], "Warning All Devices Are Offline");
+                contentTxt = await helpers.convertToLang(req.translation[""], "Apps pulled from these devices. Action will be performed when devices back online");
+            }
+            else if (pulledAppsList.length > 0) {
+                messageTxt = await helpers.convertToLang(req.translation[""], "Apps are Being pulled from All Selected Devices");
+            }
+
+            if (failedToPull.length || queueAppsList.length || pulledAppsList.length) {
+
+                // get user_device_ids and string device ids of online and offline devices
+                let queue_dvc_ids = [];
+                let queue_usr_dvc_ids = [];
+                let pulled_dvc_ids = [];
+                let pulled_usr_dvc_ids = [];
+
+                let all_usr_dvc_ids = [];
+
+                queueAppsList.forEach(item => {
+                    queue_dvc_ids.push(item.usr_device_id);
+                    queue_usr_dvc_ids.push(item.usr_device_id);
+                });
+
+                pulledAppsList.forEach(item => {
+                    pulled_dvc_ids.push(item.usr_device_id);
+                    pulled_usr_dvc_ids.push(item.usr_device_id);
+                });
+                all_usr_dvc_ids = [...queue_usr_dvc_ids, ...pulled_usr_dvc_ids];
+
+                req.body["device_ids"] = all_usr_dvc_ids;
+                req.body["action_by"] = dealer_id;
+                device_helpers.saveBuklActionHistory(req.body, constants.BULK_PULLED_APPS);
+
+                data = {
+                    status: true,
+                    online: pulledAppsList.length ? true : false,
+                    offline: queueAppsList.length ? true : false,
+                    failed: failedToPull.length ? true : false,
+                    msg: messageTxt,
+                    content: contentTxt,
+                    data: {
+                        failed_device_ids: failedToPull,
+                        queue_device_ids: queue_dvc_ids,
+                        pushed_device_ids: pulled_dvc_ids,
+                    }
+                };
+            } else {
+                data = {
+                    status: false,
+                    msg: 'Error while Processing'
+                }
+            }
+            res.send(data);
+        } else {
+            res.send({
+                status: false,
+                msg: await helpers.convertToLang(req.translation[""], "Data not found"),
             });
         }
     } catch (error) {
         console.log(error);
+        res.send({
+            status: false,
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR_PROC], "Error while Processing"),
+        });
     }
 };
