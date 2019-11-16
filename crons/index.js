@@ -80,10 +80,16 @@ cron.schedule('0 0 0 * * *', async () => {
     for (let i = 0; i < results.length; i++) {
         let service_data = await sql.query(`SELECT * FROM services_data WHERE (status = 'active' OR status = 'request_for_cancel') AND user_acc_id = ${results[i].id} `);
         if (service_data.length) {
-            if (service_data[0].service_expiry_date <= moment().format('YYYY/MM/DD')) {
+            let current_date = moment().format('YYYY/MM/DD')
+            if (service_data[0].service_expiry_date <= current_date) {
+
                 await sql.query("UPDATE services_data set end_date = '" + service_data[0].service_expiry_date + "', status = 'completed', paid_credits = " + service_data[0].total_credits + " WHERE id = " + service_data[0].id);
                 await sql.query(`UPDATE user_acc_services SET status = 'expired' , end_date = ${service_data[0].service_expiry_date} WHERE service_id =  ${service_data[0].id}`)
-                await sql.query(`UPDATE services_date SET status = 'active' WHERE user_acc_id = ${results[i].id} AND status = 'extended'`)
+                let extended_service = await sql.query(`SELECT * FROM services_data WHERE user_acc_id = ${results[i].id} AND status = 'extended'`)
+                if (extended_service && extended_service.length) {
+                    let end_date = current_date.add(moment(extended_service[0].service_term))
+                    await sql.query(`UPDATE services_data SET status = 'active' , start_date = ${current_date} , end_date = ${end_date} WHERE user_acc_id = ${results[i].id} AND status = 'extended'`)
+                }
             }
         }
     }
