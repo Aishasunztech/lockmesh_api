@@ -136,15 +136,17 @@ module.exports = {
 
 		if (componentUri.includes("/connect-device/")) {
 			componentUri = "/connect-device/:deviceId";
+		} else if (componentUri.includes('/connect-dealer/')){
+			componentUri = '/connect-dealer'
 		}
-		// console.log(componentUri);
-
-		var component = await sql.query(
-			"SELECT * FROM acl_modules WHERE uri ='" + componentUri + "' "
-		);
-		// console.log("SELECT * FROM acl_modules WHERE uri ='" + componentUri + "' ");
+		console.log("componentUri:", componentUri);
+		// this query should be based on ComponentName, not on ComponentUri
+		let componentQ = `SELECT * FROM acl_modules WHERE uri LIKE '${componentUri}%'`
+		
+		let component = await sql.query(componentQ);
+		
 		if (component.length) {
-			// console.log("hello", component);
+			
 			return component[0];
 		} else {
 			return false;
