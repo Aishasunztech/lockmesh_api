@@ -928,10 +928,10 @@ exports.applyBulkPushApps = async function (req, res) {
             }
             else if (queueAppsList.length > 0) {
                 messageTxt = await helpers.convertToLang(req.translation[""], "Warning All Devices Are Offline");
-                contentTxt = await helpers.convertToLang(req.translation[""], "Apps pushed to these devices. Action will be performed when devices back online");
+                contentTxt = await helpers.convertToLang(req.translation[""], "Apps pushed to all selected devices. Action will be performed when devices back online");
             }
             else if (pushedAppsList.length > 0) {
-                messageTxt = await helpers.convertToLang(req.translation[""], "Apps are Being pushed on All Selected Devices");
+                messageTxt = await helpers.convertToLang(req.translation[""], "Apps are Being Pushed on All Selected Devices");
             }
 
             if (failedToPush.length || queueAppsList.length || pushedAppsList.length) {
@@ -945,12 +945,12 @@ exports.applyBulkPushApps = async function (req, res) {
                 let all_usr_dvc_ids = [];
 
                 queueAppsList.forEach(item => {
-                    queue_dvc_ids.push(item.usr_device_id);
+                    queue_dvc_ids.push(item.device_id);
                     queue_usr_dvc_ids.push(item.usr_device_id);
                 });
 
                 pushedAppsList.forEach(item => {
-                    pushed_dvc_ids.push(item.usr_device_id);
+                    pushed_dvc_ids.push(item.device_id);
                     pushed_usr_dvc_ids.push(item.usr_device_id);
                 });
                 all_usr_dvc_ids = [...queue_usr_dvc_ids, ...pushed_usr_dvc_ids];
@@ -1014,7 +1014,7 @@ exports.applyBulkPullApps = async function (req, res) {
 
             for (let index = 0; index < selectedDevices.length; index++) {
 
-                var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, push_apps, type) VALUES ('${selectedDevices[index].device_id}', ${dealer_id}, ${selectedDevices[index].usrAccId}, '${apps}', 'pull_apps');`;
+                var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, pull_apps, type) VALUES ('${selectedDevices[index].device_id}', ${dealer_id}, ${selectedDevices[index].usrAccId}, '${apps}', 'pull_apps');`;
                 console.log("applyQuery for bulk pull apps ", applyQuery)
                 let rslts = await sql.query(applyQuery);
 
@@ -1047,10 +1047,10 @@ exports.applyBulkPullApps = async function (req, res) {
             }
             else if (queueAppsList.length > 0) {
                 messageTxt = await helpers.convertToLang(req.translation[""], "Warning All Devices Are Offline");
-                contentTxt = await helpers.convertToLang(req.translation[""], "Apps pulled from these devices. Action will be performed when devices back online");
+                contentTxt = await helpers.convertToLang(req.translation[""], "Apps pulled from all selected devices. Action will be performed when devices back online");
             }
             else if (pulledAppsList.length > 0) {
-                messageTxt = await helpers.convertToLang(req.translation[""], "Apps are Being pulled from All Selected Devices");
+                messageTxt = await helpers.convertToLang(req.translation[""], "Apps are Being Pulled from All Selected Devices");
             }
 
             if (failedToPull.length || queueAppsList.length || pulledAppsList.length) {
@@ -1064,12 +1064,12 @@ exports.applyBulkPullApps = async function (req, res) {
                 let all_usr_dvc_ids = [];
 
                 queueAppsList.forEach(item => {
-                    queue_dvc_ids.push(item.usr_device_id);
+                    queue_dvc_ids.push(item.device_id);
                     queue_usr_dvc_ids.push(item.usr_device_id);
                 });
 
                 pulledAppsList.forEach(item => {
-                    pulled_dvc_ids.push(item.usr_device_id);
+                    pulled_dvc_ids.push(item.device_id);
                     pulled_usr_dvc_ids.push(item.usr_device_id);
                 });
                 all_usr_dvc_ids = [...queue_usr_dvc_ids, ...pulled_usr_dvc_ids];
