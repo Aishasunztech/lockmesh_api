@@ -288,7 +288,8 @@ exports.suspendBulkAccountDevices = async function (req, res) {
 
         let alreadyExpired = [];
         let failedToSuspend = [];
-        let SuspendDevices = [];
+        let onlineDevices = [];
+        let offlineDevices = [];
 
         var selectQuery = `select * from usr_acc WHERE device_id IN (${device_ids})`;
         var getDevices = await sql.query(selectQuery);
@@ -309,9 +310,6 @@ exports.suspendBulkAccountDevices = async function (req, res) {
                         '"';
 
                     let resquery = await sql.query(selectQuery);
-                    // let pgp_emails = await device_helpers.getPgpEmails(resquery[0].id);
-                    // let sim_ids = await device_helpers.getSimids(resquery[0].id);
-                    // let chat_ids = await device_helpers.getChatids(resquery[0].id);
 
                     if (resquery.length) {
                         resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
@@ -325,21 +323,7 @@ exports.suspendBulkAccountDevices = async function (req, res) {
                         resquery[0].sim_id2 = "N/A"
                         resquery[0].pgp_email = "N/A"
                         resquery[0].chat_id = "N/A"
-                        // if (pgp_emails[0] && pgp_emails[0].pgp_email) {
-                        //     resquery[0].pgp_email = pgp_emails[0].pgp_email
-                        // } else {
-                        //     resquery[0].pgp_email = "N/A"
-                        // }
-                        // if (sim_ids && sim_ids.length) {
-                        //     resquery[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
-                        //     resquery[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
-                        // }
-                        // if (chat_ids[0] && chat_ids[0].chat_id) {
-                        //     resquery[0].chat_id = chat_ids[0].chat_id
-                        // }
-                        // else {
-                        //     resquery[0].chat_id = "N/A"
-                        // }
+
                         let services = servicesData;
                         let service_id = null
                         if (services && services.length) {
@@ -383,16 +367,22 @@ exports.suspendBulkAccountDevices = async function (req, res) {
                         }
                         resquery[0].remainTermDays = remainTermDays
 
-                        SuspendDevices.push(resquery[0]);
+                        // onlineDevices.push(resquery[0]);
 
+                        // check online/offline devices
+                        let isOnline = await device_helpers.isDeviceOnline(resquery[0].device_id);
+                        if (isOnline) {
+                            // console.log("device is online")
+                            onlineDevices.push({ device_id: resquery[0].device_id, usr_device_id: resquery[0].usr_device_id });
+                        } else {
+                            // console.log("device is offline")
+                            offlineDevices.push({ device_id: resquery[0].device_id, usr_device_id: resquery[0].usr_device_id });
+                        }
                         device_helpers.saveActionHistory(
                             resquery[0],
                             constants.DEVICE_SUSPENDED
                         );
-                        // sockets.sendDeviceStatus(
-                        //     resquery[0].device_id,
-                        //     "suspended"
-                        // );
+
                         socket_helpers.sendDeviceStatus(sockets.baseIo, resquery[0].device_id, "suspended");
                     }
                 }
@@ -401,33 +391,78 @@ exports.suspendBulkAccountDevices = async function (req, res) {
             }
         }
 
-        if (alreadyExpired.length > 0) {
-            data = {
-                status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.NOT_SUSP_ACC_EXP], "Can't suspend !!! Account Already Expired") // Can't suspend !!! Account Already Expired."
-            };
-        } else if (failedToSuspend.length > 0) {
-            data = {
-                status: false,
-                msg: await helpers.convertToLang(
-                    req.translation[MsgConstants.ACC_NOT_SUSP], "Account not suspended.Please try again") // Account not suspended.Please try again.
-            };
-        } else if (SuspendDevices.length > 0) {
-            data = {
-                data: SuspendDevices,
-                status: true,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.ACC_SUSP_SUCC], "Account suspended successfully") // Account suspended successfully.
-            };
+        let messageTxt = '';
+        let contentTxt = '';
 
-            let dvc_ids = [];
-            SuspendDevices.forEach((item) => {
-                dvc_ids.push(item.usr_device_id);
+        if (failedToSuspend.length) {
+            messageTxt = await helpers.convertToLang(req.translation[MsgConstants.ACC_NOT_SUSP], "Account not suspended.Please try again") // Account not suspended.Please try again.
+        }
+        else if (alreadyExpired.length) {
+            messageTxt = await helpers.convertToLang(req.translation[MsgConstants.NOT_SUSP_ACC_EXP], "Can't suspend !!! Account Already Expired") // Can't suspend !!! Account Already Expired."
+        }
+        else if (offlineDevices.length) {
+            messageTxt = await helpers.convertToLang(req.translation[""], "Warning All Devices Are Offline");
+            contentTxt = await helpers.convertToLang(req.translation[""], "All Selected Devices will Activate Soon. Action will be performed when devices back online");
+        }
+        else if (onlineDevices.length) {
+            messageTxt = await helpers.convertToLang(req.translation[MsgConstants.ACC_SUSP_SUCC], "Account suspended successfully") // Account suspended successfully.
+
+            // let dvc_ids = [];
+            // onlineDevices.forEach((item) => {
+            //     dvc_ids.push(item.usr_device_id);
+            // });
+            // req.body["device_ids"] = dvc_ids;
+            // req.body["action_by"] = userId;
+
+            // device_helpers.saveBuklActionHistory(req.body, constants.BULK_SUSPENDED_DEVICES);
+        }
+
+        if (failedToSuspend.length || alreadyExpired.length || onlineDevices.length || offlineDevices.length) {
+
+            // get user_device_ids and string device ids of online and offline devices
+            let queue_dvc_ids = [];
+            let queue_usr_dvc_ids = [];
+            let pushed_dvc_ids = [];
+            let pushed_usr_dvc_ids = [];
+
+            let all_usr_dvc_ids = [];
+
+            offlineDevices.forEach(item => {
+                queue_dvc_ids.push(item.device_id);
+                queue_usr_dvc_ids.push(item.usr_device_id);
             });
-            req.body["device_ids"] = dvc_ids;
-            req.body["action_by"] = userId;
 
+            onlineDevices.forEach(item => {
+                pushed_dvc_ids.push(item.device_id);
+                pushed_usr_dvc_ids.push(item.usr_device_id);
+            });
+            all_usr_dvc_ids = [...queue_usr_dvc_ids, ...pushed_usr_dvc_ids];
+
+            req.body["device_ids"] = all_usr_dvc_ids;
+            req.body["action_by"] = userId;
+            // console.log('save bulk history')
             device_helpers.saveBuklActionHistory(req.body, constants.BULK_SUSPENDED_DEVICES);
 
+            data = {
+                status: true,
+                online: onlineDevices.length ? true : false,
+                offline: offlineDevices.length ? true : false,
+                failed: failedToSuspend.length ? true : false,
+                expire: alreadyExpired.length ? true : false,
+                msg: messageTxt,
+                content: contentTxt,
+                data: {
+                    failed_device_ids: failedToSuspend,
+                    queue_device_ids: queue_dvc_ids,
+                    pushed_device_ids: pushed_dvc_ids,
+                    expire_device_ids: alreadyExpired
+                }
+            };
+        } else {
+            data = {
+                status: false,
+                msg: 'Error while Processing'
+            }
         }
         res.send(data);
 
@@ -443,51 +478,46 @@ exports.suspendBulkAccountDevices = async function (req, res) {
 
 exports.activateBulkDevices = async function (req, res) {
     var verify = req.decoded;
-    // var device_id = req.params.id;
     var tod_dat = datetime.create();
     var formatted_dt = tod_dat.format("Y-m-d H:M:S");
     let device_ids = req.body.device_ids;
-    console.log('data is: ', req.body)
+    // console.log('data is: ', req.body)
 
     if (verify && device_ids.length) {
         let userId = verify.user.id;
-        console.log("userId ", userId);
-        // let usertype = await helpers.getUserType(userId);
-        // console.log("usertype ", usertype);
+        // console.log("userId ", userId);
 
         let alreadyExpired = [];
         let failedToActivate = [];
-        let ActivateDevices = [];
+        let onlineDevices = [];
+        let offlineDevices = [];
 
         var selectQuery = `select * from usr_acc WHERE device_id IN (${device_ids})`;
         var getDevices = await sql.query(selectQuery);
 
+        // console.log("start for loop")
         for (let index = 0; index < getDevices.length; index++) {
+            // console.log('index is: ', index)
 
             if (getDevices[0].expiry_date < formatted_dt) {
+                // console.log('expiry_date is: ')
                 alreadyExpired.push(getDevices[index].device_id);
             } else {
+                // console.log('not expiry')
                 var updateStatus = "update usr_acc set account_status='' where device_id = '" + getDevices[index].device_id + "'";
-
                 var results = await sql.query(updateStatus);
 
                 if (results.affectedRows == 0) {
+                    // console.log('failed')
                     failedToActivate.push(getDevices[index].device_id);
                 } else {
-
-                    let selectQuery = "select devices.*  ," +
-                        usr_acc_query_text +
-                        ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
-                        getDevices[index].device_id +
-                        '"'
-
+                    // console.log('not failed')
+                    let selectQuery = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices left join usr_acc ON (devices.id = usr_acc.device_id) LEFT JOIN dealers ON (usr_acc.dealer_id = dealers.dealer_id) WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= '${getDevices[index].device_id}';`
+                    // console.log("selectQuery ", selectQuery)
                     let resquery = await sql.query(selectQuery);
 
-                    // let pgp_emails = await device_helpers.getPgpEmails(resquery[0].id);
-                    // let sim_ids = await device_helpers.getSimids(resquery[0].id);
-                    // let chat_ids = await device_helpers.getChatids(resquery[0].id);
-
                     if (resquery.length) {
+                        // console.log("select device detail")
                         resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
                         let servicesData = await device_helpers.getServicesData(resquery[0].id);
                         let servicesIds = servicesData.map(item => { return item.id })
@@ -499,21 +529,7 @@ exports.activateBulkDevices = async function (req, res) {
                         resquery[0].sim_id2 = "N/A"
                         resquery[0].pgp_email = "N/A"
                         resquery[0].chat_id = "N/A"
-                        // if (pgp_emails[0] && pgp_emails[0].pgp_email) {
-                        //     resquery[0].pgp_email = pgp_emails[0].pgp_email
-                        // } else {
-                        //     resquery[0].pgp_email = "N/A"
-                        // }
-                        // if (sim_ids && sim_ids.length) {
-                        //     resquery[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
-                        //     resquery[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
-                        // }
-                        // if (chat_ids[0] && chat_ids[0].chat_id) {
-                        //     resquery[0].chat_id = chat_ids[0].chat_id
-                        // }
-                        // else {
-                        //     resquery[0].chat_id = "N/A"
-                        // }
+
                         let services = servicesData;
                         let service_id = null
                         if (services && services.length) {
@@ -555,57 +571,99 @@ exports.activateBulkDevices = async function (req, res) {
                         }
                         resquery[0].remainTermDays = remainTermDays
 
-
-                        // sockets.sendDeviceStatus(
-                        //     resquery[0].device_id,
-                        //     "active",
-                        //     true
-                        // );
                         socket_helpers.sendDeviceStatus(sockets.baseIo,
                             resquery[0].device_id,
                             "active",
                             true
                         );
 
-                        ActivateDevices.push(resquery[0]);
+                        // check online/offline devices
+                        let isOnline = await device_helpers.isDeviceOnline(resquery[0].device_id);
+                        if (isOnline) {
+                            // console.log("device is online")
+                            onlineDevices.push({ device_id: resquery[0].device_id, usr_device_id: resquery[0].usr_device_id });
+                        } else {
+                            // console.log("device is offline")
+                            offlineDevices.push({ device_id: resquery[0].device_id, usr_device_id: resquery[0].usr_device_id });
+                        }
 
+                        // console.log('save action history')
                         device_helpers.saveActionHistory(
                             resquery[0],
                             constants.DEVICE_ACTIVATED
                         );
                     }
-
                 }
-
             }
-
         }
 
-        if (alreadyExpired.length > 0) {
-            data = {
-                status: false,
-                msg: await helpers.convertToLang(req.translation[""], "Devices cannnot be activated.It is expired already")
-            };
-        } else if (failedToActivate.length > 0) {
-            data = {
-                status: false,
-                msg: await helpers.convertToLang(req.translation[""], "Devices not activated.Please try again")
-            };
-        } else if (ActivateDevices.length > 0) {
-            data = {
-                data: ActivateDevices,
-                status: true,
-                msg: await helpers.convertToLang(req.translation[""], "Devices activated successfully")
-            };
+        // console.log("after end of loop ", failedToActivate, alreadyExpired, onlineDevices, offlineDevices)
 
-            let dvc_ids = [];
-            ActivateDevices.forEach((item) => {
-                dvc_ids.push(item.usr_device_id);
+        let messageTxt = '';
+        let contentTxt = '';
+
+        if (failedToActivate.length) {
+            messageTxt = await helpers.convertToLang(req.translation[""], "All Devices Failed to activate. Please try again")
+        }
+        else if (alreadyExpired.length) {
+            messageTxt = await helpers.convertToLang(req.translation[""], "Warning All Selected Devices cannot be activated. These are expired already")
+        }
+        else if (offlineDevices.length) {
+            messageTxt = await helpers.convertToLang(req.translation[""], "Warning All Devices Are Offline");
+            contentTxt = await helpers.convertToLang(req.translation[""], "All Selected Devices will Activate Soon. Action will be performed when devices back online");
+        }
+        else if (onlineDevices.length) {
+            messageTxt = await helpers.convertToLang(req.translation[""], "All Devices activated successfully")
+        }
+
+        if (failedToActivate.length || alreadyExpired.length || onlineDevices.length || offlineDevices.length) {
+
+            // get user_device_ids and string device ids of online and offline devices
+            let queue_dvc_ids = [];
+            let queue_usr_dvc_ids = [];
+            let pushed_dvc_ids = [];
+            let pushed_usr_dvc_ids = [];
+
+            let all_usr_dvc_ids = [];
+
+            offlineDevices.forEach(item => {
+                queue_dvc_ids.push(item.device_id);
+                queue_usr_dvc_ids.push(item.usr_device_id);
             });
-            req.body["device_ids"] = dvc_ids;
+
+            onlineDevices.forEach(item => {
+                pushed_dvc_ids.push(item.device_id);
+                pushed_usr_dvc_ids.push(item.usr_device_id);
+            });
+            all_usr_dvc_ids = [...queue_usr_dvc_ids, ...pushed_usr_dvc_ids];
+
+            req.body["device_ids"] = all_usr_dvc_ids;
             req.body["action_by"] = userId;
+            // console.log('save bulk history')
             device_helpers.saveBuklActionHistory(req.body, constants.BULK_ACTIVATED_DEVICES);
+
+            data = {
+                status: true,
+                online: onlineDevices.length ? true : false,
+                offline: offlineDevices.length ? true : false,
+                failed: failedToActivate.length ? true : false,
+                expire: alreadyExpired.length ? true : false,
+                msg: messageTxt,
+                content: contentTxt,
+                data: {
+                    failed_device_ids: failedToActivate,
+                    queue_device_ids: queue_dvc_ids,
+                    pushed_device_ids: pushed_dvc_ids,
+                    expire_device_ids: alreadyExpired
+                }
+            };
+        } else {
+            data = {
+                status: false,
+                msg: 'Error while Processing'
+            }
         }
+        // console.log("response data is: ", data)
         res.send(data);
 
     } else {
@@ -923,14 +981,14 @@ exports.applyBulkPushApps = async function (req, res) {
             let messageTxt = '';
             let contentTxt = '';
 
-            if (failedToPush.length > 0) {
+            if (failedToPush.length) {
                 messageTxt = await helpers.convertToLang(req.translation[""], "Failed to Push Apps");
             }
-            else if (queueAppsList.length > 0) {
+            else if (queueAppsList.length) {
                 messageTxt = await helpers.convertToLang(req.translation[""], "Warning All Devices Are Offline");
                 contentTxt = await helpers.convertToLang(req.translation[""], "Apps pushed to all selected devices. Action will be performed when devices back online");
             }
-            else if (pushedAppsList.length > 0) {
+            else if (pushedAppsList.length) {
                 messageTxt = await helpers.convertToLang(req.translation[""], "Apps are Being Pushed on All Selected Devices");
             }
 
