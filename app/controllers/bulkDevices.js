@@ -402,19 +402,10 @@ exports.suspendBulkAccountDevices = async function (req, res) {
         }
         else if (offlineDevices.length) {
             messageTxt = await helpers.convertToLang(req.translation[""], "Warning All Devices Are Offline");
-            contentTxt = await helpers.convertToLang(req.translation[""], "All Selected Devices will Activate Soon. Action will be performed when devices back online");
+            contentTxt = await helpers.convertToLang(req.translation[""], "All Selected Devices will Suspended Soon. Action will be performed when devices back online");
         }
         else if (onlineDevices.length) {
             messageTxt = await helpers.convertToLang(req.translation[MsgConstants.ACC_SUSP_SUCC], "Account suspended successfully") // Account suspended successfully.
-
-            // let dvc_ids = [];
-            // onlineDevices.forEach((item) => {
-            //     dvc_ids.push(item.usr_device_id);
-            // });
-            // req.body["device_ids"] = dvc_ids;
-            // req.body["action_by"] = userId;
-
-            // device_helpers.saveBuklActionHistory(req.body, constants.BULK_SUSPENDED_DEVICES);
         }
 
         if (failedToSuspend.length || alreadyExpired.length || onlineDevices.length || offlineDevices.length) {
