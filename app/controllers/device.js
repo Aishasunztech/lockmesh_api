@@ -516,7 +516,7 @@ exports.acceptDevice = async function (req, res) {
                                                         hardwarePrice = hardwarePrice - Math.ceil(Number((hardwarePrice * 0.03)))
                                                     }
 
-                                                    let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages , total_credits, start_date, service_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${total_price} ,'${start_date}',  '${expiry_date}')`
+                                                    let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages , total_credits, start_date, service_expiry_date , service_term) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${total_price} ,'${start_date}',  '${expiry_date}' ,'${term}' )`
 
                                                     let service_data_result = await sql.query(service_billing);
                                                     let service_id = null
@@ -1081,7 +1081,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                 // console.log("affectedRows", resps.affectedRows);
                                                 if (resps.affectedRows) {
 
-                                                    let service_data = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date ,total_credits,service_expiry_date) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${discounted_price / duplicate} , '${expiry_date}' )`
+                                                    let service_data = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date ,total_credits,service_expiry_date , service_term) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${discounted_price / duplicate} , '${expiry_date}' , '${exp_month}')`
                                                     let service_data_result = await sql.query(service_data);
                                                     let service_id = null
                                                     if (service_data_result.affectedRows) {
@@ -1418,7 +1418,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 hardwarePrice = hardwarePrice - Math.ceil(Number((hardwarePrice * 0.03)))
                                                             }
 
-                                                            let service_data = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date, total_credits ,service_expiry_date) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price} , '${expiry_date}')`
+                                                            let service_data = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date, total_credits ,service_expiry_date , service_term) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price} , '${expiry_date}' , '${exp_month}')`
                                                             let service_data_result = await sql.query(service_data);
                                                             let service_id = null
                                                             if (service_data_result.affectedRows) {
@@ -1825,6 +1825,7 @@ exports.editDevices = async function (req, res) {
             let prevServiceTotalDays = 0
             let pay_now = req.body.pay_now
             let cancelService = req.body.cancelService ? req.body.cancelService : false
+            let exp_month = expiry_date
             // console.log(expiry_date);
             // return
             // console.log("Cancel Services", user_id);
@@ -1869,610 +1870,613 @@ exports.editDevices = async function (req, res) {
                 });
                 return;
             }
-            sql.query(checkDevice, async function (error, rows) {
-                if (rows.length) {
-
-                    if (newService) {
-                        let user_credits_q = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
-                        let results = await sql.query(user_credits_q)
-                        if (results && results.length || expiry_date == 0 || !pay_now) {
-                            dealer_credits = results[0] ? results[0].credits : 0
-                            if (dealer_credits < total_price && pay_now) {
-                                res.send({
-                                    status: false,
-                                    msg: "Error: Dealer doesn't have enough credits to make this request. Please purchase credits and try again later."
-                                });
-                                return
-                            } else {
-                                if (pgp_email) {
-                                    let checkUniquePgp =
-                                        "SELECT * from pgp_emails WHERE pgp_email= '" +
-                                        pgp_email +
-                                        "' AND user_acc_id != '' AND user_acc_id != '" +
-                                        usr_acc_id +
-                                        "'";
-                                    // let checkUnique = "SELECT usr_acc.* from usr_acc WHERE account_email= '" + device_email + "' AND device_id != '" + device_id + "'"
-                                    let success = await sql.query(checkUniquePgp)
-                                    if (success.length) {
-                                        res.send({
-                                            status: false,
-                                            msg: await helpers.convertToLang(
-                                                req.translation[
-                                                MsgConstants.PGP_EMAIL_ALRDY_TKN
-                                                ],
-                                                "PGP email already taken"
-                                            ) // PGP email already taken
-                                        });
-                                        return
+            if (loggedDealerType === constants.ADMIN) {
+                let response = await device_helpers.editDeviceAdmin(req.body, verify)
+                res.send(response)
+            } else {
+                sql.query(checkDevice, async function (error, rows) {
+                    if (rows.length) {
+                        if (newService) {
+                            let user_credits_q = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
+                            let results = await sql.query(user_credits_q)
+                            if (results && results.length || expiry_date == 0 || !pay_now) {
+                                dealer_credits = results[0] ? results[0].credits : 0
+                                if (dealer_credits < total_price && pay_now) {
+                                    res.send({
+                                        status: false,
+                                        msg: "Error: Dealer doesn't have enough credits to make this request. Please purchase credits and try again later."
+                                    });
+                                    return
+                                } else {
+                                    if (pgp_email) {
+                                        let checkUniquePgp =
+                                            "SELECT * from pgp_emails WHERE pgp_email= '" +
+                                            pgp_email +
+                                            "' AND user_acc_id != '' AND user_acc_id != '" +
+                                            usr_acc_id +
+                                            "'";
+                                        // let checkUnique = "SELECT usr_acc.* from usr_acc WHERE account_email= '" + device_email + "' AND device_id != '" + device_id + "'"
+                                        let success = await sql.query(checkUniquePgp)
+                                        if (success.length) {
+                                            res.send({
+                                                status: false,
+                                                msg: await helpers.convertToLang(
+                                                    req.translation[
+                                                    MsgConstants.PGP_EMAIL_ALRDY_TKN
+                                                    ],
+                                                    "PGP email already taken"
+                                                ) // PGP email already taken
+                                            });
+                                            return
+                                        }
                                     }
-                                }
 
-                                if (expiry_date == 0) {
-                                    if (
-                                        finalStatus ===
-                                        constants.DEVICE_PRE_ACTIVATION ||
-                                        finalStatus === constants.DEVICE_TRIAL
+                                    if (expiry_date == 0) {
+                                        if (
+                                            finalStatus ===
+                                            constants.DEVICE_PRE_ACTIVATION ||
+                                            finalStatus === constants.DEVICE_TRIAL
+                                        ) {
+                                            var trailDate = moment(
+                                                date_now,
+                                                "YYYY/MM/DD"
+                                            ).add(7, "days");
+                                            expiry_date = moment(trailDate).format(
+                                                "YYYY/MM/DD"
+                                            );
+                                        }
+                                    } else if (
+                                        expiry_date == 1 ||
+                                        expiry_date == 3 ||
+                                        expiry_date == 6 ||
+                                        expiry_date == 12
                                     ) {
-                                        var trailDate = moment(
+                                        expiry_date = moment(
                                             date_now,
                                             "YYYY/MM/DD"
-                                        ).add(7, "days");
-                                        expiry_date = moment(trailDate).format(
+                                        ).add(expiry_date, "M").format('YYYY/MM/DD');
+
+                                        let currentDate = moment(new Date()).format(
                                             "YYYY/MM/DD"
                                         );
-                                    }
-                                } else if (
-                                    expiry_date == 1 ||
-                                    expiry_date == 3 ||
-                                    expiry_date == 6 ||
-                                    expiry_date == 12
-                                ) {
-                                    expiry_date = moment(
-                                        date_now,
-                                        "YYYY/MM/DD"
-                                    ).add(expiry_date, "M").format('YYYY/MM/DD');
-
-                                    let currentDate = moment(new Date()).format(
-                                        "YYYY/MM/DD"
-                                    );
-                                    // console.log(currentDate, expiry_date);
-                                    if (currentDate < expiry_date && finalStatus === constants.DEVICE_EXPIRED) {
-                                        // console.log(device);
-                                        socket_helpers.sendDeviceStatus(sockets.baseIo,
-                                            device_id,
-                                            "active",
-                                            true
-                                        );
-                                        status = "active";
-                                    }
-                                    if (prevService) {
-                                        prevServiceData = await sql.query("SELECT * from services_data WHERE id = " + prevService.id)
-                                        if (prevServiceData.length) {
-                                            let prevService = prevServiceData[0]
-                                            prevServicePackages = JSON.parse(prevService.packages)
-                                            prevServiceProducts = JSON.parse(prevService.products)
-                                            let preTotalPrice = prevService.total_credits
-                                            let prevServiceExpiryDate = moment(new Date(prevService.service_expiry_date))
-                                            let prevServiceStartDate = moment(new Date(prevService.start_date))
-                                            let dateNow = moment(new Date())
-                                            serviceRemainingDays = prevServiceExpiryDate.diff(dateNow, 'days') + 1
-                                            prevServiceTotalDays = prevServiceExpiryDate.diff(prevServiceStartDate, 'days')
-                                            // console.log(serviceRemainingDays, prevServiceTotalDays, preTotalPrice);
-                                            creditsToRefund = ((preTotalPrice / prevServiceTotalDays) * serviceRemainingDays).toFixed(2)
-                                            console.log(creditsToRefund);
-                                            // return
-                                            prevServicePaidPrice = preTotalPrice - creditsToRefund
-
-                                            let profitLoss = await helpers.calculateProfitLoss(prevServicePackages, prevServiceProducts, loggedDealerType)
-                                            prev_service_admin_profit = profitLoss.admin_profit
-                                            prev_service_dealer_profit = profitLoss.dealer_profit
-                                            refund_prev_service_admin_profit = (prev_service_admin_profit / prevServiceTotalDays) * serviceRemainingDays
-                                            refund_prev_service_dealer_profit = (prev_service_dealer_profit / prevServiceTotalDays) * serviceRemainingDays
+                                        // console.log(currentDate, expiry_date);
+                                        if (currentDate < expiry_date && finalStatus === constants.DEVICE_EXPIRED) {
+                                            // console.log(device);
+                                            socket_helpers.sendDeviceStatus(sockets.baseIo,
+                                                device_id,
+                                                "active",
+                                                true
+                                            );
+                                            status = "active";
                                         }
-                                    }
-                                    // console.log(products);
-                                    if (packages && packages.length) {
-                                        packages.map((item) => {
-                                            newServicePrice += Number(item.pkg_price)
-                                        })
-                                    }
-                                    if (products && products.length) {
-                                        products.map((item) => {
-                                            newServicePrice += Number(item.unit_price)
-                                        })
-                                    }
-                                    // console.log(newServicePrice, prevServicePaidPrice, newServicePrice, creditsToRefund);
-                                    if (pay_now) {
-                                        newServicePrice = newServicePrice - Math.ceil((newServicePrice * 0.03))
-                                    }
-                                    total_price = newServicePrice - creditsToRefund
+                                        if (prevService) {
+                                            prevServiceData = await sql.query("SELECT * from services_data WHERE id = " + prevService.id)
+                                            if (prevServiceData.length) {
+                                                let prevService = prevServiceData[0]
+                                                prevServicePackages = JSON.parse(prevService.packages)
+                                                prevServiceProducts = JSON.parse(prevService.products)
+                                                let preTotalPrice = prevService.total_credits
+                                                let prevServiceExpiryDate = moment(new Date(prevService.service_expiry_date))
+                                                let prevServiceStartDate = moment(new Date(prevService.start_date))
+                                                let dateNow = moment(new Date())
+                                                serviceRemainingDays = prevServiceExpiryDate.diff(dateNow, 'days') + 1
+                                                prevServiceTotalDays = prevServiceExpiryDate.diff(prevServiceStartDate, 'days')
+                                                // console.log(serviceRemainingDays, prevServiceTotalDays, preTotalPrice);
+                                                creditsToRefund = ((preTotalPrice / prevServiceTotalDays) * serviceRemainingDays).toFixed(2)
+                                                console.log(creditsToRefund);
+                                                // return
+                                                prevServicePaidPrice = preTotalPrice - creditsToRefund
 
-                                    let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedDealerType)
-                                    if (pay_now) {
-                                        admin_profit = profitLoss.admin_profit - Math.ceil((profitLoss.admin_profit * 0.03))
-                                        dealer_profit = profitLoss.dealer_profit - Math.ceil((profitLoss.dealer_profit * 0.03))
-                                    } else {
-                                        admin_profit = profitLoss.admin_profit
-                                        dealer_profit = profitLoss.dealer_profit
-                                    }
-                                }
-
-                            }
-                        } else {
-                            res.send({
-                                status: false,
-                                msg: "Error: Dealer doesn't have credits to make this request. Please purchase credits and try again later."
-                            });
-                            return
-                        }
-                    }
-                    common_Query =
-                        "UPDATE devices set model = '" +
-                        req.body.model +
-                        "' WHERE id = '" +
-                        usr_device_id +
-                        "'";
-                    if (
-                        finalStatus !== constants.DEVICE_PRE_ACTIVATION
-                    ) {
-                        if (expiry_date == 0) {
-                            usr_acc_Query =
-                                "UPDATE usr_acc set status = '" +
-                                status +
-                                "',note = '" +
-                                note +
-                                "' ,client_id = '" +
-                                client_id +
-                                "', device_status = 1, unlink_status=0 ,  start_date = '" +
-                                start_date +
-                                "' WHERE device_id = '" +
-                                usr_device_id +
-                                "'";
-                        } else {
-                            usr_acc_Query =
-                                "UPDATE usr_acc set  status = '" +
-                                status +
-                                "',note = '" +
-                                note +
-                                "' ,client_id = '" +
-                                client_id +
-                                "', device_status = 1, unlink_status=0 ,  start_date = '" +
-                                start_date +
-                                "' ,expiry_date = '" +
-                                expiry_date +
-                                "' WHERE device_id = '" +
-                                usr_device_id +
-                                "'";
-                        }
-                    } else {
-                        if (expiry_date == 0) {
-                            usr_acc_Query =
-                                "UPDATE usr_acc set status = '" +
-                                status +
-                                "',validity = '" +
-                                validity +
-                                "' ,note = '" +
-                                note +
-                                "' ,client_id = '" +
-                                client_id +
-                                "', device_status = 0, unlink_status=0 ,start_date = '" +
-                                start_date +
-                                "' WHERE device_id = '" +
-                                usr_device_id +
-                                "'";
-                        } else {
-                            usr_acc_Query =
-                                "UPDATE usr_acc set status = '" +
-                                status +
-                                "',validity = '" +
-                                validity +
-                                "' ,note = '" +
-                                note +
-                                "' ,client_id = '" +
-                                client_id +
-                                "', device_status = 0, unlink_status=0 ,start_date = '" +
-                                start_date +
-                                "', expiry_date = '" +
-                                expiry_date +
-                                "' WHERE device_id = '" +
-                                usr_device_id +
-                                "'";
-                        }
-                    }
-                    sql.query(common_Query, async function (error, row) {
-                        await sql.query(usr_acc_Query);
-                        if (newService) {
-
-                            let update_credits_query = '';
-
-                            if (prevService) {
-                                let update_prev_service_billing = `UPDATE services_data set status = 'returned',paid_credits = ${prevServicePaidPrice}, end_date = '${date_now}' WHERE id = ${prevService.id} `
-                                await sql.query(update_prev_service_billing);
-
-                                helpers.updateRefundSaleDetails(usr_acc_id, prevService.id, serviceRemainingDays, prevServiceTotalDays)
-
-                                let transection_record = "SELECT * from financial_account_transections where user_dvc_acc_id = " + usr_acc_id + " AND user_id = '" + verify.user.id + "' AND type = 'services' ORDER BY id DESC LIMIT 1"
-                                let transection_record_data = await sql.query(transection_record)
-
-                                if (transection_record_data[0] && transection_record_data[0].status === 'pending') {
-                                    let update_transection = "UPDATE financial_account_transections SET status = 'cancelled' WHERE id = " + transection_record_data[0].id
-                                    await sql.query(update_transection)
-
-                                    update_credits_query = 'update financial_account_balance set credits = credits + ' + transection_record_data[0].credits + ' where dealer_id ="' + dealer_id + '"';
-                                    await sql.query(update_credits_query);
-
-
-                                    let update_profits_transections = "UPDATE financial_account_transections SET status = 'cancelled' WHERE user_dvc_acc_id = " + usr_acc_id + " AND status = 'holding' AND type = 'services'"
-                                    await sql.query(update_profits_transections)
-
-                                    if (prevServicePaidPrice > 0) {
-                                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service charges" })}',${prevServicePaidPrice} ,'credit','pending' , 'services' , 0 , ${prevServicePaidPrice})`
-                                        await sql.query(transection_credits)
-
-                                        update_credits_query = 'update financial_account_balance set credits = credits - ' + prevServicePaidPrice + ' where dealer_id ="' + dealer_id + '"';
-                                        await sql.query(update_credits_query);
-
-                                        let admin_holding_profit = prev_service_admin_profit - refund_prev_service_admin_profit
-                                        let dealer_holding_profit = prev_service_dealer_profit - refund_prev_service_dealer_profit
-
-                                        if (admin_holding_profit > 0) {
-                                            let admin_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${admin_data[0].dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service holding profit" })}',${admin_holding_profit} ,'debit','holding' , 'services')`
-                                            await sql.query(admin_profit_transection)
+                                                let profitLoss = await helpers.calculateProfitLoss(prevServicePackages, prevServiceProducts, loggedDealerType)
+                                                prev_service_admin_profit = profitLoss.admin_profit
+                                                prev_service_dealer_profit = profitLoss.dealer_profit
+                                                refund_prev_service_admin_profit = (prev_service_admin_profit / prevServiceTotalDays) * serviceRemainingDays
+                                                refund_prev_service_dealer_profit = (prev_service_dealer_profit / prevServiceTotalDays) * serviceRemainingDays
+                                            }
                                         }
+                                        // console.log(products);
+                                        if (packages && packages.length) {
+                                            packages.map((item) => {
+                                                newServicePrice += Number(item.pkg_price)
+                                            })
+                                        }
+                                        if (products && products.length) {
+                                            products.map((item) => {
+                                                newServicePrice += Number(item.unit_price)
+                                            })
+                                        }
+                                        // console.log(newServicePrice, prevServicePaidPrice, newServicePrice, creditsToRefund);
+                                        if (pay_now) {
+                                            newServicePrice = newServicePrice - Math.ceil((newServicePrice * 0.03))
+                                        }
+                                        total_price = newServicePrice - creditsToRefund
 
-                                        if (dealer_holding_profit > 0) {
-                                            let dealer_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${verify.user.connected_dealer},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service holding profit" })}',${dealer_holding_profit} ,'debit','holding' , 'services')`
-                                            await sql.query(dealer_profit_transection)
+                                        let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedDealerType)
+                                        if (pay_now) {
+                                            admin_profit = profitLoss.admin_profit - Math.ceil((profitLoss.admin_profit * 0.03))
+                                            dealer_profit = profitLoss.dealer_profit - Math.ceil((profitLoss.dealer_profit * 0.03))
+                                        } else {
+                                            admin_profit = profitLoss.admin_profit
+                                            dealer_profit = profitLoss.dealer_profit
                                         }
                                     }
 
-                                } else {
-                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, details: "REFUND SERVICES CREITS" })}' ,${creditsToRefund} ,'debit' , 'transferred' , 'services')`
-                                    await sql.query(transection_credits)
-                                    update_credits_query = 'update financial_account_balance set credits = credits + ' + creditsToRefund + ' where dealer_id ="' + dealer_id + '"';
-                                    await sql.query(update_credits_query);
-                                    refund_prev_service_admin_profit = refund_prev_service_admin_profit - Math.ceil((refund_prev_service_admin_profit * 0.03))
-                                    refund_prev_service_dealer_profit = refund_prev_service_dealer_profit - Math.ceil((refund_prev_service_dealer_profit * 0.03))
-
-                                    if (prevServicePaidPrice > 0) {
-
-                                        let admin_prev_service_profit = prev_service_admin_profit - refund_prev_service_admin_profit
-                                        let dealer_prev_service_profit = prev_service_dealer_profit - refund_prev_service_dealer_profit
-
-                                        if (admin_prev_service_profit > 0) {
-
-                                            let admin_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${admin_data[0].dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service refund profit" })}',${admin_prev_service_profit} ,'credit','transferred' , 'services')`
-                                            await sql.query(admin_profit_transection)
-                                        }
-                                        if (dealer_prev_service_profit > 0) {
-                                            let dealer_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${verify.user.connected_dealer},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service refund profit" })}',${dealer_prev_service_profit} ,'credit','transferred' , 'services')`
-                                            await sql.query(dealer_profit_transection)
-                                        }
-                                    }
-                                    // console.log("", refund_prev_service_admin_profit);
-                                    if (refund_prev_service_admin_profit) {
-                                        updateAdminProfit = 'update financial_account_balance set credits = credits - ' + refund_prev_service_admin_profit + ' where dealer_id ="' + admin_data[0].dealer_id + '"';
-                                        await sql.query(updateAdminProfit);
-                                    }
-                                    if (refund_prev_service_dealer_profit) {
-                                        updateAdminProfit = 'update financial_account_balance set credits = credits - ' + refund_prev_service_dealer_profit + ' where dealer_id ="' + verify.user.connected_dealer + '"';
-                                        await sql.query(updateAdminProfit);
-                                    }
-
-
                                 }
-                            }
-
-                            let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice} ,'${date_now}' ,'${expiry_date}')`
-                            let service_data_result = await sql.query(service_billing);
-                            let service_id = null
-                            if (service_data_result.affectedRows) {
-                                service_id = service_data_result.insertId
-                                helpers.saveServiceSalesDetails(JSON.parse(JSON.stringify(packages)), products, loggedDealerType, usr_acc_id, service_data_result.insertId, pay_now)
-                            }
-
-                            if (pgp_email != prevPGP) {
-                                console.log("PGP change");
-                                let updatePgpEmails =
-                                    'update pgp_emails set user_acc_id = "' +
-                                    usr_acc_id +
-                                    '",  used=1 , start_date = "' + date_now + '" , dealer_id = "' + dealer_id + '"  where pgp_email ="' +
-                                    pgp_email +
-                                    '"';
-                                await sql.query(updatePgpEmails);
-
-                                if (
-                                    finalStatus ===
-                                    constants.DEVICE_PRE_ACTIVATION
-                                ) {
-                                    let updatePrevPgp =
-                                        'update pgp_emails set user_acc_id = null,  used=0 , start_date = NULL , dealer_id = null where pgp_email ="' +
-                                        prevPGP +
-                                        '"';
-                                    await sql.query(updatePrevPgp);
-                                } else {
-                                    let updatePrevPgp =
-                                        'update pgp_emails set   used=1 ,  end_date = "' + date_now + '" where pgp_email ="' +
-                                        prevPGP +
-                                        '"';
-                                    await sql.query(updatePrevPgp);
-                                }
-                            }
-                            if (chat_id != prevChatID) {
-                                console.log("Chat change");
-                                let updateChatIds =
-                                    'update chat_ids set user_acc_id = "' +
-                                    usr_acc_id +
-                                    '", used=1 , start_date = "' + date_now + '" , dealer_id = "' + dealer_id + '" where chat_id ="' +
-                                    chat_id +
-                                    '"';
-                                await sql.query(updateChatIds);
-                                if (
-                                    finalStatus ===
-                                    constants.DEVICE_PRE_ACTIVATION
-                                ) {
-                                    let updatePrevChat =
-                                        'update chat_ids set user_acc_id = null,  used=0 , start_date = NULL , dealer_id = null where chat_id ="' +
-                                        prevChatID +
-                                        '"';
-                                    await sql.query(updatePrevChat);
-                                } else {
-                                    let updatePrevChat =
-                                        'update chat_ids set used=1 , end_date = "' + date_now + '" where chat_id ="' +
-                                        prevChatID +
-                                        '"';
-                                    await sql.query(updatePrevChat);
-                                }
-                            }
-                            if (sim_id != prevSimId) {
-                                console.log("sim change");
-                                let updateSimIds =
-                                    'update sim_ids set user_acc_id = "' +
-                                    usr_acc_id +
-                                    '",  used=1 , start_date = "' + date_now + '" , dealer_id = "' + dealer_id + '" where sim_id ="' +
-                                    sim_id +
-                                    '"';
-                                await sql.query(updateSimIds);
-                                if (
-                                    finalStatus ===
-                                    constants.DEVICE_PRE_ACTIVATION
-                                ) {
-                                    let updatePrevSim =
-                                        'update sim_ids set user_acc_id = null,  used=0 , start_date = NULL , dealer_id = null where sim_id ="' +
-                                        prevSimId +
-                                        '"';
-                                    await sql.query(updatePrevSim);
-                                } else {
-                                    let updatePrevSim =
-                                        'update sim_ids set used=1 , expiry_date = "' + date_now + '" where sim_id ="' +
-                                        prevSimId +
-                                        '"';
-                                    await sql.query(updatePrevSim);
-                                }
-                            }
-
-                            if (chat_id && chat_id !== '') {
-                                let getChatID = "SELECT * FROM chat_ids WHERE chat_id = '" + chat_id + "'"
-                                sql.query(getChatID, function (err, result) {
-                                    if (result && result.length) {
-                                        let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].chat_id}' , 'chat_id' , '${start_date}')`
-                                        sql.query(insertAccService)
-                                    }
-                                })
-                            }
-                            if (sim_id && sim_id !== '') {
-                                let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id + "'"
-                                sql.query(getsimID, function (err, result) {
-                                    if (result && result.length) {
-                                        let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].sim_id}' , 'sim_id' , '${start_date}')`
-                                        sql.query(insertAccService)
-                                    }
-                                })
-                            }
-
-                            if (sim_id2 && sim_id2 !== '') {
-                                let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id2 + "'"
-                                sql.query(getsimID, function (err, result) {
-                                    if (result && result.length) {
-                                        let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].sim_id}' , 'sim_id' , '${start_date}')`
-                                        sql.query(insertAccService)
-                                    }
-                                })
-                            }
-                            if (pgp_email && pgp_email !== '') {
-                                let getsimID = "SELECT * FROM pgp_emails WHERE pgp_email = '" + pgp_email + "'"
-                                sql.query(getsimID, function (err, result) {
-                                    if (result && result.length) {
-                                        let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].pgp_email}' , 'pgp_email' , '${start_date}')`
-                                        sql.query(insertAccService)
-                                    }
-                                })
-                            }
-
-
-                            let transection_status = 'transferred'
-
-                            if (!pay_now) {
-                                transection_status = 'pending'
-                            }
-
-                            let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${newServicePrice} ,'credit' , '${transection_status}' , 'services' , ${(pay_now) ? newServicePrice : 0} , ${(pay_now) ? 0 : newServicePrice})`
-                            await sql.query(transection_credits)
-
-                            if (transection_status === 'pending') {
-                                update_credits_query = 'update financial_account_balance set credits = credits - ' + newServicePrice + ' where dealer_id ="' + dealer_id + '"';
                             } else {
-                                update_credits_query = 'update financial_account_balance set credits = credits - ' + newServicePrice + ' where dealer_id ="' + dealer_id + '"';
+                                res.send({
+                                    status: false,
+                                    msg: "Error: Dealer doesn't have credits to make this request. Please purchase credits and try again later."
+                                });
+                                return
                             }
-                            await sql.query(update_credits_query);
-                            // if (pay_now) {
-                            //     update_credits_query = 'update financial_account_balance set credits =' + remaining_credits + ' ,due_credits = due_credits - ' + refund_due_credits + '  where dealer_id ="' + dealer_id + '"';
-                            // } else {
-                            //     total_price = total_price - refund_due_credits
-                            // }
-
-                            await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, usr_acc_id, loggedDealerType, pay_now, service_id)
-
-
-                            let inv_no = await helpers.getInvoiceId()
-                            const invoice = {
-                                shipping: {
-                                    name: verify.user.dealer_name,
-                                    device_id: device_id,
-                                    dealer_pin: verify.user.link_code,
-                                    user_id: user_id
-                                },
-                                products: products,
-                                packages: packages,
-                                prevService: {
-                                    prevServicePackages: prevServicePackages,
-                                    prevServiceProducts: prevServiceProducts,
-                                    creditsToRefund: creditsToRefund,
-                                    serviceRemainingDays: serviceRemainingDays,
-                                    prevServiceTotalDays: prevServiceTotalDays
-                                },
-                                pay_now: pay_now,
-                                discount: (pay_now) ? Math.ceil(newServicePrice * 0.03) : 0,
-                                discountPercent: "3%",
-                                quantity: 1,
-                                subtotal: pay_now ? newServicePrice + Math.ceil(newServicePrice * 0.03) : newServicePrice,
-                                paid: total_price,
-                                invoice_nr: inv_no
-                            };
-
-                            let fileName = "invoice-" + inv_no + ".pdf"
-                            let filePath = path.join(__dirname, "../../uploads/" + fileName)
-                            await createInvoice(invoice, filePath, 'editService')
-
-                            let attachment = {
-                                fileName: fileName,
-                                file: filePath
-                            }
-
-                            sql.query(`INSERT INTO invoices (inv_no,user_acc_id,dealer_id,file_name ,end_user_payment_status) VALUES('${inv_no}',${usr_acc_id},${dealer_id}, '${fileName}' , '${endUser_pay_status}')`)
-
-                            html = 'You have changed the services on device. Device ID ' + device_id + '.<br>Your Invoice is attached below. <br>';
-
-                            sendEmail("DEVICE SERVICE HAS BEEN CHANGED.", html, verify.user.dealer_email, null, attachment);
-
                         }
-
-                        if (cancelService) {
-                            let query = "UPDATE services_data SET status = 'request_for_cancel' WHERE user_acc_id = " + usr_acc_id + " AND  status = 'active'"
-                            await sql.query(query);
-                        }
-
-                        let user_credits_q = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
-                        let results = await sql.query(user_credits_q)
-
-                        var slctquery =
-                            "select devices.*  ," +
-                            usr_acc_query_text +
-                            ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id where devices.id = '" +
+                        common_Query =
+                            "UPDATE devices set model = '" +
+                            req.body.model +
+                            "' WHERE id = '" +
                             usr_device_id +
                             "'";
-                        // console.log(slctquery);
-                        rsltq = await sql.query(slctquery);
-
-                        // let pgp_emails = await device_helpers.getPgpEmails(rsltq[0].id);
-                        // let sim_ids = await device_helpers.getSimids(rsltq[0].id);
-                        // let chat_ids = await device_helpers.getChatids(rsltq[0].id);
-                        let servicesData = await device_helpers.getServicesData(rsltq[0].id);
-                        let servicesIds = servicesData.map(item => { return item.id })
-                        let userAccServiceData = []
-                        if (servicesIds.length) {
-                            userAccServiceData = await device_helpers.getUserAccServicesData(rsltq[0].id, servicesIds)
+                        if (
+                            finalStatus !== constants.DEVICE_PRE_ACTIVATION
+                        ) {
+                            if (expiry_date == 0) {
+                                usr_acc_Query =
+                                    "UPDATE usr_acc set status = '" +
+                                    status +
+                                    "',note = '" +
+                                    note +
+                                    "' ,client_id = '" +
+                                    client_id +
+                                    "', device_status = 1, unlink_status=0 ,  start_date = '" +
+                                    start_date +
+                                    "' WHERE device_id = '" +
+                                    usr_device_id +
+                                    "'";
+                            } else {
+                                usr_acc_Query =
+                                    "UPDATE usr_acc set  status = '" +
+                                    status +
+                                    "',note = '" +
+                                    note +
+                                    "' ,client_id = '" +
+                                    client_id +
+                                    "', device_status = 1, unlink_status=0 ,  start_date = '" +
+                                    start_date +
+                                    "' ,expiry_date = '" +
+                                    expiry_date +
+                                    "' WHERE device_id = '" +
+                                    usr_device_id +
+                                    "'";
+                            }
+                        } else {
+                            if (expiry_date == 0) {
+                                usr_acc_Query =
+                                    "UPDATE usr_acc set status = '" +
+                                    status +
+                                    "',validity = '" +
+                                    validity +
+                                    "' ,note = '" +
+                                    note +
+                                    "' ,client_id = '" +
+                                    client_id +
+                                    "', device_status = 0, unlink_status=0 ,start_date = '" +
+                                    start_date +
+                                    "' WHERE device_id = '" +
+                                    usr_device_id +
+                                    "'";
+                            } else {
+                                usr_acc_Query =
+                                    "UPDATE usr_acc set status = '" +
+                                    status +
+                                    "',validity = '" +
+                                    validity +
+                                    "' ,note = '" +
+                                    note +
+                                    "' ,client_id = '" +
+                                    client_id +
+                                    "', device_status = 0, unlink_status=0 ,start_date = '" +
+                                    start_date +
+                                    "', expiry_date = '" +
+                                    expiry_date +
+                                    "' WHERE device_id = '" +
+                                    usr_device_id +
+                                    "'";
+                            }
                         }
+                        sql.query(common_Query, async function (error, row) {
+                            await sql.query(usr_acc_Query);
+                            if (newService) {
 
-                        if (rsltq.length) {
-                            rsltq[0].sim_id = "N/A"
-                            rsltq[0].sim_id2 = "N/A"
-                            rsltq[0].pgp_email = "N/A"
-                            rsltq[0].chat_id = "N/A"
-                            rsltq[0].finalStatus = device_helpers.checkStatus(rsltq[0]);
-                            // if (pgp_emails[0] && pgp_emails[0].pgp_email) {
-                            //     rsltq[0].pgp_email = pgp_emails[0].pgp_email
-                            // } else {
-                            //     rsltq[0].pgp_email = "N/A"
-                            // }
-                            // if (sim_ids && sim_ids.length) {
-                            //     rsltq[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
-                            //     rsltq[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
-                            // }
-                            // if (chat_ids[0] && chat_ids[0].chat_id) {
-                            //     rsltq[0].chat_id = chat_ids[0].chat_id
-                            // }
-                            // else {
-                            //     rsltq[0].chat_id = "N/A"
-                            // }
+                                let update_credits_query = '';
 
-                            let services = servicesData;
-                            let service_id = null
-                            if (services && services.length) {
-                                services.map((item) => {
-                                    if (item.status === 'extended') {
-                                        rsltq[0].extended_services = item
+                                if (prevService) {
+                                    let update_prev_service_billing = `UPDATE services_data set status = 'returned',paid_credits = ${prevServicePaidPrice}, end_date = '${date_now}' WHERE id = ${prevService.id} `
+                                    await sql.query(update_prev_service_billing);
+
+                                    helpers.updateRefundSaleDetails(usr_acc_id, prevService.id, serviceRemainingDays, prevServiceTotalDays)
+
+                                    let transection_record = "SELECT * from financial_account_transections where user_dvc_acc_id = " + usr_acc_id + " AND user_id = '" + verify.user.id + "' AND type = 'services' ORDER BY id DESC LIMIT 1"
+                                    let transection_record_data = await sql.query(transection_record)
+
+                                    if (transection_record_data[0] && transection_record_data[0].status === 'pending') {
+                                        let update_transection = "UPDATE financial_account_transections SET status = 'cancelled' WHERE id = " + transection_record_data[0].id
+                                        await sql.query(update_transection)
+
+                                        update_credits_query = 'update financial_account_balance set credits = credits + ' + transection_record_data[0].credits + ' where dealer_id ="' + dealer_id + '"';
+                                        await sql.query(update_credits_query);
+
+
+                                        let update_profits_transections = "UPDATE financial_account_transections SET status = 'cancelled' WHERE user_dvc_acc_id = " + usr_acc_id + " AND status = 'holding' AND type = 'services'"
+                                        await sql.query(update_profits_transections)
+
+                                        if (prevServicePaidPrice > 0) {
+                                            let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service charges" })}',${prevServicePaidPrice} ,'credit','pending' , 'services' , 0 , ${prevServicePaidPrice})`
+                                            await sql.query(transection_credits)
+
+                                            update_credits_query = 'update financial_account_balance set credits = credits - ' + prevServicePaidPrice + ' where dealer_id ="' + dealer_id + '"';
+                                            await sql.query(update_credits_query);
+
+                                            let admin_holding_profit = prev_service_admin_profit - refund_prev_service_admin_profit
+                                            let dealer_holding_profit = prev_service_dealer_profit - refund_prev_service_dealer_profit
+
+                                            if (admin_holding_profit > 0) {
+                                                let admin_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${admin_data[0].dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service holding profit" })}',${admin_holding_profit} ,'debit','holding' , 'services')`
+                                                await sql.query(admin_profit_transection)
+                                            }
+
+                                            if (dealer_holding_profit > 0) {
+                                                let dealer_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${verify.user.connected_dealer},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service holding profit" })}',${dealer_holding_profit} ,'debit','holding' , 'services')`
+                                                await sql.query(dealer_profit_transection)
+                                            }
+                                        }
+
                                     } else {
-                                        rsltq[0].services = item
-                                        service_id = item.id
+                                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, details: "REFUND SERVICES CREITS" })}' ,${creditsToRefund} ,'debit' , 'transferred' , 'services')`
+                                        await sql.query(transection_credits)
+                                        update_credits_query = 'update financial_account_balance set credits = credits + ' + creditsToRefund + ' where dealer_id ="' + dealer_id + '"';
+                                        await sql.query(update_credits_query);
+                                        refund_prev_service_admin_profit = refund_prev_service_admin_profit - Math.ceil((refund_prev_service_admin_profit * 0.03))
+                                        refund_prev_service_dealer_profit = refund_prev_service_dealer_profit - Math.ceil((refund_prev_service_dealer_profit * 0.03))
+
+                                        if (prevServicePaidPrice > 0) {
+
+                                            let admin_prev_service_profit = prev_service_admin_profit - refund_prev_service_admin_profit
+                                            let dealer_prev_service_profit = prev_service_dealer_profit - refund_prev_service_dealer_profit
+
+                                            if (admin_prev_service_profit > 0) {
+
+                                                let admin_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${admin_data[0].dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service refund profit" })}',${admin_prev_service_profit} ,'credit','transferred' , 'services')`
+                                                await sql.query(admin_profit_transection)
+                                            }
+                                            if (dealer_prev_service_profit > 0) {
+                                                let dealer_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${verify.user.connected_dealer},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service refund profit" })}',${dealer_prev_service_profit} ,'credit','transferred' , 'services')`
+                                                await sql.query(dealer_profit_transection)
+                                            }
+                                        }
+                                        // console.log("", refund_prev_service_admin_profit);
+                                        if (refund_prev_service_admin_profit) {
+                                            updateAdminProfit = 'update financial_account_balance set credits = credits - ' + refund_prev_service_admin_profit + ' where dealer_id ="' + admin_data[0].dealer_id + '"';
+                                            await sql.query(updateAdminProfit);
+                                        }
+                                        if (refund_prev_service_dealer_profit) {
+                                            updateAdminProfit = 'update financial_account_balance set credits = credits - ' + refund_prev_service_dealer_profit + ' where dealer_id ="' + verify.user.connected_dealer + '"';
+                                            await sql.query(updateAdminProfit);
+                                        }
+
+
                                     }
-                                })
+                                }
+
+                                let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date , service_term) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice} ,'${date_now}' ,'${expiry_date}' , '${exp_month}')`
+                                let service_data_result = await sql.query(service_billing);
+                                let service_id = null
+                                if (service_data_result.affectedRows) {
+                                    service_id = service_data_result.insertId
+                                    helpers.saveServiceSalesDetails(JSON.parse(JSON.stringify(packages)), products, loggedDealerType, usr_acc_id, service_data_result.insertId, pay_now)
+                                }
+
+                                if (pgp_email != prevPGP) {
+                                    console.log("PGP change");
+                                    let updatePgpEmails =
+                                        'update pgp_emails set user_acc_id = "' +
+                                        usr_acc_id +
+                                        '",  used=1 , start_date = "' + date_now + '" , dealer_id = "' + dealer_id + '"  where pgp_email ="' +
+                                        pgp_email +
+                                        '"';
+                                    await sql.query(updatePgpEmails);
+
+                                    if (
+                                        finalStatus ===
+                                        constants.DEVICE_PRE_ACTIVATION
+                                    ) {
+                                        let updatePrevPgp =
+                                            'update pgp_emails set user_acc_id = null,  used=0 , start_date = NULL , dealer_id = null where pgp_email ="' +
+                                            prevPGP +
+                                            '"';
+                                        await sql.query(updatePrevPgp);
+                                    } else {
+                                        let updatePrevPgp =
+                                            'update pgp_emails set   used=1 ,  end_date = "' + date_now + '" where pgp_email ="' +
+                                            prevPGP +
+                                            '"';
+                                        await sql.query(updatePrevPgp);
+                                    }
+                                }
+                                if (chat_id != prevChatID) {
+                                    console.log("Chat change");
+                                    let updateChatIds =
+                                        'update chat_ids set user_acc_id = "' +
+                                        usr_acc_id +
+                                        '", used=1 , start_date = "' + date_now + '" , dealer_id = "' + dealer_id + '" where chat_id ="' +
+                                        chat_id +
+                                        '"';
+                                    await sql.query(updateChatIds);
+                                    if (
+                                        finalStatus ===
+                                        constants.DEVICE_PRE_ACTIVATION
+                                    ) {
+                                        let updatePrevChat =
+                                            'update chat_ids set user_acc_id = null,  used=0 , start_date = NULL , dealer_id = null where chat_id ="' +
+                                            prevChatID +
+                                            '"';
+                                        await sql.query(updatePrevChat);
+                                    } else {
+                                        let updatePrevChat =
+                                            'update chat_ids set used=1 , end_date = "' + date_now + '" where chat_id ="' +
+                                            prevChatID +
+                                            '"';
+                                        await sql.query(updatePrevChat);
+                                    }
+                                }
+                                if (sim_id != prevSimId) {
+                                    console.log("sim change");
+                                    let updateSimIds =
+                                        'update sim_ids set user_acc_id = "' +
+                                        usr_acc_id +
+                                        '",  used=1 , start_date = "' + date_now + '" , dealer_id = "' + dealer_id + '" where sim_id ="' +
+                                        sim_id +
+                                        '"';
+                                    await sql.query(updateSimIds);
+                                    if (
+                                        finalStatus ===
+                                        constants.DEVICE_PRE_ACTIVATION
+                                    ) {
+                                        let updatePrevSim =
+                                            'update sim_ids set user_acc_id = null,  used=0 , start_date = NULL , dealer_id = null where sim_id ="' +
+                                            prevSimId +
+                                            '"';
+                                        await sql.query(updatePrevSim);
+                                    } else {
+                                        let updatePrevSim =
+                                            'update sim_ids set used=1 , expiry_date = "' + date_now + '" where sim_id ="' +
+                                            prevSimId +
+                                            '"';
+                                        await sql.query(updatePrevSim);
+                                    }
+                                }
+
+                                if (chat_id && chat_id !== '') {
+                                    let getChatID = "SELECT * FROM chat_ids WHERE chat_id = '" + chat_id + "'"
+                                    sql.query(getChatID, function (err, result) {
+                                        if (result && result.length) {
+                                            let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].chat_id}' , 'chat_id' , '${start_date}')`
+                                            sql.query(insertAccService)
+                                        }
+                                    })
+                                }
+                                if (sim_id && sim_id !== '') {
+                                    let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id + "'"
+                                    sql.query(getsimID, function (err, result) {
+                                        if (result && result.length) {
+                                            let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].sim_id}' , 'sim_id' , '${start_date}')`
+                                            sql.query(insertAccService)
+                                        }
+                                    })
+                                }
+
+                                if (sim_id2 && sim_id2 !== '') {
+                                    let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id2 + "'"
+                                    sql.query(getsimID, function (err, result) {
+                                        if (result && result.length) {
+                                            let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].sim_id}' , 'sim_id' , '${start_date}')`
+                                            sql.query(insertAccService)
+                                        }
+                                    })
+                                }
+                                if (pgp_email && pgp_email !== '') {
+                                    let getsimID = "SELECT * FROM pgp_emails WHERE pgp_email = '" + pgp_email + "'"
+                                    sql.query(getsimID, function (err, result) {
+                                        if (result && result.length) {
+                                            let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].pgp_email}' , 'pgp_email' , '${start_date}')`
+                                            sql.query(insertAccService)
+                                        }
+                                    })
+                                }
+
+
+                                let transection_status = 'transferred'
+
+                                if (!pay_now) {
+                                    transection_status = 'pending'
+                                }
+
+                                let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${newServicePrice} ,'credit' , '${transection_status}' , 'services' , ${(pay_now) ? newServicePrice : 0} , ${(pay_now) ? 0 : newServicePrice})`
+                                await sql.query(transection_credits)
+
+                                if (transection_status === 'pending') {
+                                    update_credits_query = 'update financial_account_balance set credits = credits - ' + newServicePrice + ' where dealer_id ="' + dealer_id + '"';
+                                } else {
+                                    update_credits_query = 'update financial_account_balance set credits = credits - ' + newServicePrice + ' where dealer_id ="' + dealer_id + '"';
+                                }
+                                await sql.query(update_credits_query);
+                                // if (pay_now) {
+                                //     update_credits_query = 'update financial_account_balance set credits =' + remaining_credits + ' ,due_credits = due_credits - ' + refund_due_credits + '  where dealer_id ="' + dealer_id + '"';
+                                // } else {
+                                //     total_price = total_price - refund_due_credits
+                                // }
+
+                                await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, usr_acc_id, loggedDealerType, pay_now, service_id)
+
+
+                                let inv_no = await helpers.getInvoiceId()
+                                const invoice = {
+                                    shipping: {
+                                        name: verify.user.dealer_name,
+                                        device_id: device_id,
+                                        dealer_pin: verify.user.link_code,
+                                        user_id: user_id
+                                    },
+                                    products: products,
+                                    packages: packages,
+                                    prevService: {
+                                        prevServicePackages: prevServicePackages,
+                                        prevServiceProducts: prevServiceProducts,
+                                        creditsToRefund: creditsToRefund,
+                                        serviceRemainingDays: serviceRemainingDays,
+                                        prevServiceTotalDays: prevServiceTotalDays
+                                    },
+                                    pay_now: pay_now,
+                                    discount: (pay_now) ? Math.ceil(newServicePrice * 0.03) : 0,
+                                    discountPercent: "3%",
+                                    quantity: 1,
+                                    subtotal: pay_now ? newServicePrice + Math.ceil(newServicePrice * 0.03) : newServicePrice,
+                                    paid: total_price,
+                                    invoice_nr: inv_no
+                                };
+
+                                let fileName = "invoice-" + inv_no + ".pdf"
+                                let filePath = path.join(__dirname, "../../uploads/" + fileName)
+                                await createInvoice(invoice, filePath, 'editService')
+
+                                let attachment = {
+                                    fileName: fileName,
+                                    file: filePath
+                                }
+
+                                sql.query(`INSERT INTO invoices (inv_no,user_acc_id,dealer_id,file_name ,end_user_payment_status) VALUES('${inv_no}',${usr_acc_id},${dealer_id}, '${fileName}' , '${endUser_pay_status}')`)
+
+                                html = 'You have changed the services on device. Device ID ' + device_id + '.<br>Your Invoice is attached below. <br>';
+
+                                sendEmail("DEVICE SERVICE HAS BEEN CHANGED.", html, verify.user.dealer_email, null, attachment);
+
                             }
 
-                            let productsData = userAccServiceData.filter(item => item.user_acc_id === rsltq[0].id && item.service_id === service_id);
-                            if (productsData && productsData.length) {
-                                productsData.map((item) => {
-                                    if (item.type === 'sim_id') {
-                                        rsltq[0].sim_id = item.product_value
-                                    }
-                                    else if (item.type === 'sim_id2') {
-                                        rsltq[0].sim_id2 = item.product_value
-                                    }
-                                    else if (item.type === 'pgp_email') {
-                                        rsltq[0].pgp_email = item.product_value
-                                    }
-                                    else if (item.type === 'chat_id') {
-                                        rsltq[0].chat_id = item.product_value
-                                    }
-                                })
+                            if (cancelService) {
+                                let query = "UPDATE services_data SET status = 'request_for_cancel' WHERE user_acc_id = " + usr_acc_id + " AND  status = 'active'"
+                                await sql.query(query);
                             }
-                            // if (servicesData[0]) {
-                            //     rsltq[0].services = servicesData[0]
-                            // }
 
-                            if (rsltq[0].expiry_date !== null) {
-                                let startDate = moment(new Date())
-                                let expiray_date = new Date(rsltq[0].expiry_date)
-                                let endDate = moment(expiray_date)
-                                remainTermDays = endDate.diff(startDate, 'days')
-                                rsltq[0].remainTermDays = remainTermDays
+                            let user_credits_q = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
+                            let results = await sql.query(user_credits_q)
+
+                            var slctquery =
+                                "select devices.*  ," +
+                                usr_acc_query_text +
+                                ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id where devices.id = '" +
+                                usr_device_id +
+                                "'";
+                            // console.log(slctquery);
+                            rsltq = await sql.query(slctquery);
+
+                            // let pgp_emails = await device_helpers.getPgpEmails(rsltq[0].id);
+                            // let sim_ids = await device_helpers.getSimids(rsltq[0].id);
+                            // let chat_ids = await device_helpers.getChatids(rsltq[0].id);
+                            let servicesData = await device_helpers.getServicesData(rsltq[0].id);
+                            let servicesIds = servicesData.map(item => { return item.id })
+                            let userAccServiceData = []
+                            if (servicesIds.length) {
+                                userAccServiceData = await device_helpers.getUserAccServicesData(rsltq[0].id, servicesIds)
                             }
-                        }
-                        data = {
-                            status: true,
-                            msg: cancelService ? "Request has been submitted to cancel your services." : await helpers.convertToLang(
-                                req.translation[
-                                MsgConstants.RECORD_UPD_SUCC
-                                ],
-                                "Record updated successfully"
-                            ), // Record updated successfully.
-                            data: rsltq,
-                            credits: results[0] ? results[0].credits : 0,
-                        };
-                        res.send(data);
-                        return;
-                    });
 
-                } else {
-                    res.send({
-                        status: false,
-                        msg: await helpers.convertToLang(
-                            req.translation[MsgConstants.DEVICE_NOT_FOUND],
-                            "No Device found"
-                        ) // No Device found
-                    });
-                }
-            });
+                            if (rsltq.length) {
+                                rsltq[0].sim_id = "N/A"
+                                rsltq[0].sim_id2 = "N/A"
+                                rsltq[0].pgp_email = "N/A"
+                                rsltq[0].chat_id = "N/A"
+                                rsltq[0].finalStatus = device_helpers.checkStatus(rsltq[0]);
+                                // if (pgp_emails[0] && pgp_emails[0].pgp_email) {
+                                //     rsltq[0].pgp_email = pgp_emails[0].pgp_email
+                                // } else {
+                                //     rsltq[0].pgp_email = "N/A"
+                                // }
+                                // if (sim_ids && sim_ids.length) {
+                                //     rsltq[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
+                                //     rsltq[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
+                                // }
+                                // if (chat_ids[0] && chat_ids[0].chat_id) {
+                                //     rsltq[0].chat_id = chat_ids[0].chat_id
+                                // }
+                                // else {
+                                //     rsltq[0].chat_id = "N/A"
+                                // }
+
+                                let services = servicesData;
+                                let service_id = null
+                                if (services && services.length) {
+                                    services.map((item) => {
+                                        if (item.status === 'extended') {
+                                            rsltq[0].extended_services = item
+                                        } else {
+                                            rsltq[0].services = item
+                                            service_id = item.id
+                                        }
+                                    })
+                                }
+
+                                let productsData = userAccServiceData.filter(item => item.user_acc_id === rsltq[0].id && item.service_id === service_id);
+                                if (productsData && productsData.length) {
+                                    productsData.map((item) => {
+                                        if (item.type === 'sim_id') {
+                                            rsltq[0].sim_id = item.product_value
+                                        }
+                                        else if (item.type === 'sim_id2') {
+                                            rsltq[0].sim_id2 = item.product_value
+                                        }
+                                        else if (item.type === 'pgp_email') {
+                                            rsltq[0].pgp_email = item.product_value
+                                        }
+                                        else if (item.type === 'chat_id') {
+                                            rsltq[0].chat_id = item.product_value
+                                        }
+                                    })
+                                }
+                                // if (servicesData[0]) {
+                                //     rsltq[0].services = servicesData[0]
+                                // }
+
+                                if (rsltq[0].expiry_date !== null) {
+                                    let startDate = moment(new Date())
+                                    let expiray_date = new Date(rsltq[0].expiry_date)
+                                    let endDate = moment(expiray_date)
+                                    remainTermDays = endDate.diff(startDate, 'days')
+                                    rsltq[0].remainTermDays = remainTermDays
+                                }
+                            }
+                            data = {
+                                status: true,
+                                msg: cancelService ? "Request has been submitted to cancel your services." : await helpers.convertToLang(
+                                    req.translation[
+                                    MsgConstants.RECORD_UPD_SUCC
+                                    ],
+                                    "Record updated successfully"
+                                ), // Record updated successfully.
+                                data: rsltq,
+                                credits: results[0] ? results[0].credits : 0,
+                            };
+                            res.send(data);
+                            return;
+                        });
+                    } else {
+                        res.send({
+                            status: false,
+                            msg: await helpers.convertToLang(
+                                req.translation[MsgConstants.DEVICE_NOT_FOUND],
+                                "No Device found"
+                            ) // No Device found
+                        });
+                    }
+                });
+            }
         } else {
             res.send({
                 status: false,
@@ -2533,6 +2537,7 @@ exports.extendServices = async function (req, res) {
             let pgpIncluded = false
             let vpnIncluded = false
             let user_id = req.body.user_id
+            let exp_month = expiry_date
             // let pkg_term = null
             // console.log(expiry_date);
             // return
@@ -2699,7 +2704,7 @@ exports.extendServices = async function (req, res) {
                     sql.query(common_Query, async function (error, row) {
                         await sql.query(usr_acc_Query);
 
-                        let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date , status) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice} ,'${rows[0].expiry_date}' ,'${expiry_date}' , 'extended')`
+                        let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date , status , service_term) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice} ,'${rows[0].expiry_date}' ,'${expiry_date}' , 'extended' , '${exp_month}')`
                         let service_data_result = await sql.query(service_billing);
                         let service_id = null
                         if (service_data_result.affectedRows) {
@@ -2992,8 +2997,8 @@ exports.cancelExtendedServices = async function (req, res) {
                         let service_dealer_profit = profitLoss.dealer_profit
 
 
-                        let updateDevcieExpiry = `UPDATE usr_acc SET expiry_date = '${service.start_date}' WHERE id = ${user_acc_id}`
-                        sql.query(updateDevcieExpiry)
+                        let updateDeviceExpiry = `UPDATE usr_acc SET expiry_date = '${service.start_date}' WHERE id = ${user_acc_id}`
+                        sql.query(updateDeviceExpiry)
                         let update_service_data = `UPDATE services_data set status = 'deleted', paid_credits = 0, end_date = '${date_now}' WHERE id = ${service.id} `
                         sql.query(update_service_data)
                         let updateSaleDetails = `UPDATE services_sale SET paid_sale_price =0, paid_admin_cost = 0 , paid_dealer_cost = 0 , status = 'returned' , end_date = '${date_now}' WHERE user_acc_id = ${user_acc_id} AND service_data_id = ${service.id}`
@@ -3006,13 +3011,14 @@ exports.cancelExtendedServices = async function (req, res) {
 
                         if (transection_record_data[0] && transection_record_data[0].status === 'pending') {
 
+
                             let update_transection = "UPDATE financial_account_transections SET status = 'cancelled' WHERE id = " + transection_record_data[0].id
                             await sql.query(update_transection)
 
                             update_credits_query = 'update financial_account_balance set credits = credits + ' + transection_record_data[0].credits + ' where dealer_id ="' + dealer_id + '"';
                             await sql.query(update_credits_query);
 
-                            let update_profits_transections = `UPDATE financial_account_transections SET status = 'cancelled' WHERE transection_data LIKE '%service_id": ${service.id}% ' user_dvc_acc_id = ${user_acc_id} AND status = 'holding' AND type = 'services'`
+                            let update_profits_transections = `UPDATE financial_account_transections SET status = 'cancelled' WHERE transection_data LIKE '%transection_type":"profit","service_id": ${service.id}% ' user_dvc_acc_id = ${user_acc_id} AND status = 'holding' AND type = 'services'`
                             await sql.query(update_profits_transections)
 
                         } else {
@@ -3022,6 +3028,9 @@ exports.cancelExtendedServices = async function (req, res) {
 
                             update_credits_query = 'update financial_account_balance set credits = credits + ' + totalPrice + ' where dealer_id ="' + dealer_id + '"';
                             await sql.query(update_credits_query);
+
+                            let update_profits_transections = `SELECT * financial_account_transections SET status = 'cancelled' WHERE transection_data LIKE '%transection_type":"profit","service_id": ${service.id}% ' user_dvc_acc_id = ${user_acc_id} AND status = 'transferred' AND type = 'services'`
+                            await sql.query(update_profits_transections)
 
                             service_admin_profit = service_admin_profit - Math.ceil(service_admin_profit * 0.03)
                             service_dealer_profit = service_dealer_profit - Math.ceil(service_dealer_profit * 0.03)

@@ -401,6 +401,18 @@ router.post("/add/dealer", dealerController.addDealer);
 
 /**
  * This function comment is parsed by doctrine
+ * @route GET /users/connect-dealer
+ * @group Dealer - Operations about Dealers
+ * @param {string} dealerId.param.required - dealer name
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+/*** Add Dealer ***/
+router.get("/connect-dealer/:dealerId", dealerController.connectDealer);
+
+/**
+ * This function comment is parsed by doctrine
  * @route PUT /users/edit/dealers
  * @group Dealer - Operations about Dealers
  * @param {string} name.formData.required - dealer name 

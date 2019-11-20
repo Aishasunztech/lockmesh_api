@@ -1,8 +1,11 @@
+// libraries
 var generator = require('generate-password');
 var empty = require('is-empty');
 var md5 = require('md5');
 var randomize = require('randomatic');
 var empty = require('is-empty');
+var moment = require("moment");
+
 var Constants = require('../../constants/Application');
 const { sql } = require('../../config/database');
 const { sendEmail } = require('../../lib/email');
@@ -23,6 +26,7 @@ const SDEALER = "sdealer";
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
 // let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
 let usr_acc_query_text = constants.usr_acc_query_text;
+let dealer_query_text = 'dealer_id, first_name, last_name, dealer_email, connected_dealer, dealer_name, link_code, is_two_factor_auth, type, unlink_status, account_status, created, modified';
 
 exports.getAllDealers = async function (req, res) {
     var verify = req.decoded;
@@ -32,7 +36,7 @@ exports.getAllDealers = async function (req, res) {
         var role = await general_helpers.getUserTypeIDByName(verify.user.user_type);
         if (verify.user.user_type == constants.ADMIN) {
 
-            sql.query(`SELECT * FROM dealers WHERE type!=${role} AND type != 4 AND type !=5 ORDER BY created DESC`, async function (error, results) {
+            sql.query(`SELECT ${dealer_query_text} FROM dealers WHERE type!=${role} AND type != 4 AND type !=5 ORDER BY created DESC`, async function (error, results) {
                 if (error) {
                     console.log(error);
                     res.send({
@@ -80,7 +84,7 @@ exports.getAllDealers = async function (req, res) {
             });
         } else {
 
-            sql.query(`SELECT * FROM dealers WHERE connected_dealer = '${verify.user.id}' AND  type = 3 ORDER BY created DESC`, async function (error, results) {
+            sql.query(`SELECT ${dealer_query_text} FROM dealers WHERE connected_dealer = '${verify.user.id}' AND  type = 3 ORDER BY created DESC`, async function (error, results) {
                 if (error) {
                     res.send({
                         status: false,
@@ -118,6 +122,7 @@ exports.getAllDealers = async function (req, res) {
 
     }
 }
+
 exports.getUserDealers = async function (req, res) {
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
@@ -126,7 +131,7 @@ exports.getUserDealers = async function (req, res) {
         var role = await general_helpers.getUserTypeIDByName(verify.user.user_type)
         if (verify.user.user_type == constants.ADMIN) {
 
-            sql.query(`SELECT * FROM dealers WHERE type = 2 ORDER BY created DESC`, async function (error, results) {
+            sql.query(`SELECT ${dealer_query_text} FROM dealers WHERE type = 2 ORDER BY created DESC`, async function (error, results) {
                 if (error) {
                     console.log(error);
                     res.send({
@@ -227,7 +232,7 @@ exports.getDealers = async function (req, res) {
         }
 
         if (!empty(role)) {
-            sql.query(`SELECT * FROM dealers WHERE type=${role}  ${where} ORDER BY created DESC`, async function (error, results) {
+            sql.query(`SELECT ${dealer_query_text} FROM dealers WHERE type=${role}  ${where} ORDER BY created DESC`, async function (error, results) {
                 if (error) {
                     console.log(error);
                     res.send({
@@ -274,13 +279,153 @@ exports.getDealers = async function (req, res) {
                 return;
             });
         } else {
-            res.send({
+            return res.send({
                 status: false,
                 msg: "Error in query " + error,
                 data: []
             });
-            return;
         }
+    }
+}
+
+exports.connectDealer = async function (req, res) {
+    var verify = req.decoded;
+    // if (verify.status !== undefined && verify.status == true) {
+
+    let dealer_id = req.params.dealerId;
+    let userType = verify.user.user_type;
+    let userId = verify.user.id;
+
+    if (!dealer_id || userType === SDEALER) {
+        return res.send({
+            status: false,
+            dealer: null
+        })
+    }
+    let where_con = '';
+    if (userType === DEALER) {
+        where_con = ` AND connected_dealer= ${userId}`
+    }
+
+    let dealerQ = `SELECT ${dealer_query_text} FROM dealers WHERE dealer_id=${dealer_id} ${where_con} LIMIT 1`;
+    let dealer = await sql.query(dealerQ);
+    if (dealer && dealer.length) {
+
+        let _0to21 = 0;
+        let _0to21_dues = 0;
+        let _21to30 = 0;
+        let _21to30_dues = 0;
+        let _30to60 = 0;
+        let _30to60_dues = 0;
+        let _60toOnward = 0;
+        let _60toOnward_dues = 0;
+
+        // get parent dealer
+        let get_parent_dealer = null;
+        if (dealer[0].connected_dealer != 0 && dealer[0].connected_dealer != '' && dealer[0].connected_dealer != '0') {
+            get_parent_dealer = await sql.query(`SELECT dealer_id, dealer_name FROM dealers WHERE dealer_id=${dealer[0].connected_dealer} LIMIT 1`);
+
+        }
+
+        // devices
+        var get_connected_devices = await sql.query(`SELECT COUNT(*) AS total FROM usr_acc WHERE dealer_id='${dealer[0].dealer_id}'`);
+
+        // last login
+        var last_login = await sql.query(`SELECT MAX(created_at) AS last_login FROM login_history WHERE dealer_id=${dealer[0].dealer_id} AND type='token' LIMIT 1`)
+        
+        // Dealer Type
+        let dealer_type = await sql.query(`SELECT role FROM user_roles WHERE id = ${dealer[0].type} LIMIT 1`)
+
+        // Payment History
+        paymentHistoryData = await sql.query(`SELECT * FROM financial_account_transections WHERE user_id = ${dealer[0].dealer_id} AND status = 'pending'`);
+
+        paymentHistoryData.map(item => {
+
+            let now = moment();
+            let end = moment(item.created_at).format('YYYY-MM-DD');
+            let duration = now.diff(end, 'days');
+
+            if (duration >= 0 && duration <= 21) {
+                ++_0to21;
+                _0to21_dues += parseInt(item.due_credits);
+
+            } else if (duration > 21 && duration <= 30) {
+                ++_21to30;
+                _21to30_dues += parseInt(item.due_credits);
+
+            } else if (duration > 30 && duration <= 60) {
+                ++_30to60;
+                _30to60_dues += parseInt(item.due_credits);
+
+            } else if (duration > 60) {
+                ++_60toOnward;
+                _60toOnward_dues += parseInt(item.due_credits);
+            }
+
+
+
+
+        });
+
+        // Credits
+        let creditsQ = `SELECT * FROM financial_account_balance WHERE dealer_id=${dealer[0].dealer_id} LIMIT 1`;
+        let credits = await sql.query(creditsQ);
+
+        dt = {
+            status: true,
+            dealer_id: dealer[0].dealer_id,
+            dealer_name: dealer[0].dealer_name,
+            dealer_email: dealer[0].dealer_email,
+            link_code: dealer[0].link_code,
+            type: dealer[0].type,
+            account_status: dealer[0].account_status,
+            unlink_status: dealer[0].unlink_status,
+            connected_dealer: dealer[0].connected_dealer,
+            created: dealer[0].created,
+            modified: dealer[0].modified,
+            credits: credits[0].credits,
+            dealer_type: '',
+            last_login: '',
+            connected_devices: 0,
+            parent_dealer: "",
+            parent_dealer_id: "",
+            _0to21,
+            _0to21_dues,
+            _21to30,
+            _21to30_dues,
+            _30to60,
+            _30to60_dues,
+            _60toOnward,
+            _60toOnward_dues,
+
+        };
+
+        if (get_connected_devices && get_connected_devices.length) {
+            dt.connected_devices = get_connected_devices[0].total
+        }
+
+        if (get_parent_dealer && get_parent_dealer.length) {
+            dt.parent_dealer = get_parent_dealer[0].dealer_name;
+            dt.parent_dealer_id = get_parent_dealer[0].dealer_id;
+        }
+
+        if(last_login && last_login.length){
+            dt.last_login = last_login[0].last_login
+        }
+
+        if(dealer_type && dealer_type.length){
+            dt.dealer_type = dealer_type[0].role
+        }
+        
+        return res.send({
+            status: true,
+            dealer: dt
+        })
+    } else {
+        return res.send({
+            status: false,
+            dealer: null
+        })
     }
 }
 
