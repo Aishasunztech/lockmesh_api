@@ -654,14 +654,15 @@ exports.baseSocket = async function (instance, socket) {
                     let pushApps = [];
                     let pushAppsPackages = [];
                     pendingPushApps.map((pendingPushApp) => {
-                        let prevPushApps = JSON.parse(pendingPushApp.push_apps);
-                        prevPushApps.map((prevPushApp) => {
-                            if (!pushAppsPackages.includes(prevPushApp.package_name)) {
-                                pushApps.push(prevPushApp);
-                                pushAppsPackages.push(prevPushApp.package_name);
-                            }
-                        })
-
+                        if (pendingPushApp.push_apps) {
+                            let prevPushApps = JSON.parse(pendingPushApp.push_apps);
+                            prevPushApps.map((prevPushApp) => {
+                                if (!pushAppsPackages.includes(prevPushApp.package_name)) {
+                                    pushApps.push(prevPushApp);
+                                    pushAppsPackages.push(prevPushApp.package_name);
+                                }
+                            })
+                        }
                     });
 
                     console.log(pushApps);
@@ -689,17 +690,18 @@ exports.baseSocket = async function (instance, socket) {
                     let pullApps = [];
                     let pullAppsPackages = [];
                     pendingPullApps.map((pendingPullApp) => {
-                        let prevPullApps = JSON.parse(pendingPullApp.pull_apps);
-                        prevPullApps.map((prevPullApp) => {
-                            if (!pullAppsPackages.includes(prevPullApp.package_name)) {
-                                pullApps.push(prevPullApp);
-                                pullAppsPackages.push(prevPullApp.package_name);
-                            }
-                        })
-
+                        if (pendingPullApp.pull_apps) {
+                            let prevPullApps = JSON.parse(pendingPullApp.pull_apps);
+                            prevPullApps.map((prevPullApp) => {
+                                if (!pullAppsPackages.includes(prevPullApp.package_name)) {
+                                    pullApps.push(prevPullApp);
+                                    pullAppsPackages.push(prevPullApp.package_name);
+                                }
+                            })
+                        }
                     });
 
-                    console.log(pullApps);
+                    console.log("pullApps ", pullApps);
 
                     instance.emit(Constants.GET_PULLED_APPS + device_id, {
                         status: true,

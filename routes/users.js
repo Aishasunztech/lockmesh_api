@@ -27,6 +27,7 @@ const { sendEmail } = require("../lib/email");
 
 // ========== Controllers ========
 const userController = require('../app/controllers/user');
+const bulkDevicesController = require('../app/controllers/bulkDevices');
 const authController = require('../app/controllers/auth');
 const aclController = require('../app/controllers/acl');
 const deviceController = require('../app/controllers/device');
@@ -1412,5 +1413,39 @@ router.get('/get-processes', NotificationController.getSocketProcesses);
 
 // acl 
 router.post('/add-acl-module', aclController.addAclModule);
+
+
+// ****************************** Bulk Activities
+
+// Filtered Bulk Devices
+
+/**
+ * @route POST /users/filtered-bulkDevices
+ * @group BulkDevices - Operations about BulkDevices
+ * @returns {object} 200 - An array of BulkDevices items info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+router.post('/filtered-bulkDevices', bulkDevicesController.getFilteredBulkDevices);
+
+
+
+/** Suspend Account Devices / client **/
+router.post("/bulkSuspend", bulkDevicesController.suspendBulkAccountDevices);
+
+/** Activate Device **/
+router.post("/bulkActivate", bulkDevicesController.activateBulkDevices);
+
+// /** Unlink Device  **/
+// router.post("/unlink/:id", bulkDevicesController.unlinkDevice);
+
+// router.post("/wipe/:id", bulkDevicesController.wipeDevice);
+
+router.get("/getBulkHistory", bulkDevicesController.bulkDevicesHistory);
+// router.post("/getUsersOfDealers", bulkDevicesController.getUsersOfDealers);
+
+router.post("/apply_bulk_pushapps", bulkDevicesController.applyBulkPushApps);
+
+router.post("/apply_bulk_pullapps", bulkDevicesController.applyBulkPullApps);
 
 module.exports = router;

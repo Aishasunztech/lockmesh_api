@@ -5703,6 +5703,7 @@ exports.applyPullApps = async function (req, res) {
 
             let dealer_id = verify.user.id;
             let pull_apps = req.body.pull_apps;
+            console.log("pull_apps ", pull_apps)
             let noOfApps = pull_apps.length;
 
             let apps = pull_apps === undefined ? "" : JSON.stringify(pull_apps);
