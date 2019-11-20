@@ -1391,6 +1391,7 @@ router.post('/reports/hardware', reportingController.generateHardwareReport);
 router.post('/reports/invoice', reportingController.generateInvoiceReport);
 router.post('/reports/payment-history', reportingController.generatePaymentHistoryReport);
 router.post('/reports/sales', reportingController.generateSalesReport);
+router.post('/reports/grace-days', reportingController.generateGraceDaysReport);
 
 
 router.post('/get-latest-payment-history', accountController.getLatestPaymentHistory);
