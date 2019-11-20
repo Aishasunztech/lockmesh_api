@@ -866,63 +866,63 @@ exports.bulkDevicesHistory = async function (req, res) {
 
 
 
-exports.getUsersOfDealers = async function (req, res) {
-    var verify = req.decoded;
-    let userId = verify.user.id;
+// exports.getUsersOfDealers = async function (req, res) {
+//     var verify = req.decoded;
+//     let userId = verify.user.id;
 
 
-    console.log('getUsersOfDealers: =============> ', req.body);
+//     console.log('getUsersOfDealers: =============> ', req.body);
 
-    return;
-    if (verify) {
+//     return;
+//     if (verify) {
 
-        if (verify.user.user_type == "admin") {
+//         if (verify.user.user_type == "admin") {
 
-            let IN_DEALER_ARRAY = [];
-            req.body.forEach((item) => {
-                IN_DEALER_ARRAY.push(item.key);
-            })
+//             let IN_DEALER_ARRAY = [];
+//             req.body.forEach((item) => {
+//                 IN_DEALER_ARRAY.push(item.key);
+//             })
 
-            // var role = await helpers.getuserTypeIDByName(verify.user.user_type);
+//             // var role = await helpers.getuserTypeIDByName(verify.user.user_type);
 
-            let selectUserQuery = "";
-            if (IN_DEALER_ARRAY.length > 0) {
-                selectUserQuery = `SELECT * FROM users WHERE del_status =0 AND dealer_id IN (${IN_DEALER_ARRAY}) ORDER BY created_at DESC`;
-            } else {
-                selectUserQuery = `SELECT * FROM users WHERE del_status =0 ORDER BY created_at DESC`;
-            }
-
-
-            console.log('query is selectUserQuery: ', selectUserQuery)
+//             let selectUserQuery = "";
+//             if (IN_DEALER_ARRAY.length > 0) {
+//                 selectUserQuery = `SELECT * FROM users WHERE del_status =0 AND dealer_id IN (${IN_DEALER_ARRAY}) ORDER BY created_at DESC`;
+//             } else {
+//                 selectUserQuery = `SELECT * FROM users WHERE del_status =0 ORDER BY created_at DESC`;
+//             }
 
 
-            let results = await sql.query(selectUserQuery);
-            console.log('and result is: ', results);
-            if (results.length) {
-                for (let i = 0; i < results.length; i++) {
-                    let data = await helpers.getAllRecordbyUserID(results[i].user_id)
-                    results[i].devicesList = data
-                }
-                // console.log("Devices For user", devicesData);
-                data = {
-                    status: true,
-                    users_list: results,
-                }
-                res.send(data);
-                return;
-            } else {
-                data = {
-                    status: false,
-                    users_list: [],
+//             console.log('query is selectUserQuery: ', selectUserQuery)
 
-                }
-                res.send(data);
-                return;
-            }
-        }
 
-    }
-}
+//             let results = await sql.query(selectUserQuery);
+//             console.log('and result is: ', results);
+//             if (results.length) {
+//                 for (let i = 0; i < results.length; i++) {
+//                     let data = await helpers.getAllRecordbyUserID(results[i].user_id)
+//                     results[i].devicesList = data
+//                 }
+//                 // console.log("Devices For user", devicesData);
+//                 data = {
+//                     status: true,
+//                     users_list: results,
+//                 }
+//                 res.send(data);
+//                 return;
+//             } else {
+//                 data = {
+//                     status: false,
+//                     users_list: [],
+
+//                 }
+//                 res.send(data);
+//                 return;
+//             }
+//         }
+
+//     }
+// }
 
 
 exports.applyBulkPushApps = async function (req, res) {
