@@ -3029,8 +3029,8 @@ exports.cancelExtendedServices = async function (req, res) {
                             update_credits_query = 'update financial_account_balance set credits = credits + ' + totalPrice + ' where dealer_id ="' + dealer_id + '"';
                             await sql.query(update_credits_query);
 
-                            let update_profits_transections = `SELECT * financial_account_transections SET status = 'cancelled' WHERE transection_data LIKE '%transection_type":"profit","service_id": ${service.id}% ' user_dvc_acc_id = ${user_acc_id} AND status = 'transferred' AND type = 'services'`
-                            await sql.query(update_profits_transections)
+                            // let update_profits_transections = `SELECT * financial_account_transections SET status = 'cancelled' WHERE transection_data LIKE '%transection_type":"profit","service_id": ${service.id}% ' user_dvc_acc_id = ${user_acc_id} AND status = 'transferred' AND type = 'services'`
+                            // await sql.query(update_profits_transections)
 
                             service_admin_profit = service_admin_profit - Math.ceil(service_admin_profit * 0.03)
                             service_dealer_profit = service_dealer_profit - Math.ceil(service_dealer_profit * 0.03)

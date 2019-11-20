@@ -1212,6 +1212,8 @@ router.patch("/save-sa-prices", billingController.saveSaPrices);
 
 router.post("/save-package", billingController.savePackage);
 
+router.put("/edit-package", billingController.editPackage);
+
 router.delete("/delete_package/:id", billingController.deletePackage);
 
 router.put("/modify_item_price/:id", billingController.modifyItemPrice);

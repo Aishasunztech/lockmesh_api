@@ -1619,7 +1619,7 @@ module.exports = {
 									pkg.pkg_price = pkg.pkg_price - Math.ceil((pkg.pkg_price * discount))
 									item.pkg_price = item.pkg_price - Math.ceil((item.pkg_price * discount))
 								}
-								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id ,item_id,item_data, item_type, item_term, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package','${pkg.pkg_term}' ,${pkg.pkg_price} , ${item.pkg_price} , 'delivered')`)
+								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id ,item_id,item_data, item_type, item_term, item_sale_price, item_admin_cost,status , retail_price) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package','${pkg.pkg_term}' ,${pkg.pkg_price} , ${item.pkg_price} , 'delivered' , '${pkg.retail_price}')`)
 							}
 						})
 					} else if (item.dealer_type === 'admin') {
@@ -1645,7 +1645,7 @@ module.exports = {
 									pkg.pkg_price = pkg.pkg_price - Math.ceil((pkg.pkg_price * discount))
 									sa_total_price = sa_total_price - Math.ceil((sa_total_price * discount))
 								}
-								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id ,item_id ,  item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id}, '${JSON.stringify(pkg)}','${item.pkg_term}' ,'package', ${pkg.pkg_price} , ${sa_total_price} , 'delivered')`)
+								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id ,item_id ,  item_data, item_term, item_type, item_sale_price, item_admin_cost,status , retail_price) VALUES(${user_acc_id} , ${service_id}, ${pkg.id}, '${JSON.stringify(pkg)}','${item.pkg_term}' ,'package', ${pkg.pkg_price} , ${sa_total_price} , 'delivered' , '${pkg.retail_price}')`)
 							}
 						})
 					}
@@ -1660,7 +1660,7 @@ module.exports = {
 							item.unit_price = item.unit_price - Math.ceil((item.unit_price * discount))
 							adminCostPrice = sa_sim_prices[item.price_term] - Math.ceil((sa_sim_prices[item.price_term] * discount))
 						}
-						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id ,item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${adminCostPrice} , 'delivered')`)
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id ,item_data, item_term, item_type, item_sale_price, item_admin_cost,status , retail_price) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${adminCostPrice} , 'delivered')`)
 					}
 					else if (item.price_for === "SIM ID 2") {
 						let adminCostPrice = sa_sim_prices[item.price_term]
@@ -1668,7 +1668,7 @@ module.exports = {
 							item.unit_price = item.unit_price - Math.ceil((item.unit_price * discount))
 							adminCostPrice = sa_sim_prices[item.price_term] - Math.ceil((sa_sim_prices[item.price_term] * discount))
 						}
-						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id ,item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${adminCostPrice} , 'delivered')`)
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id ,item_data, item_term, item_type, item_sale_price, item_admin_cost,status , retail_price) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${adminCostPrice} , 'delivered' )`)
 					}
 					else if (item.price_for === "chat_id") {
 						let adminCostPrice = sa_chat_prices[item.price_term]
@@ -1886,8 +1886,9 @@ module.exports = {
 					let paid_sale_price = item.item_sale_price - ((item.item_sale_price / prevServiceTotalDays) * serviceRemainingDays).toFixed(2);
 					let paid_admin_cost = item.item_admin_cost - (item.item_admin_cost / prevServiceTotalDays * serviceRemainingDays).toFixed(2);
 					let paid_dealer_cost = item.item_dealer_cost - (item.item_dealer_cost / prevServiceTotalDays * serviceRemainingDays).toFixed(2);
+					let paid_retail_price = item.paid_retail_price - (item.paid_retail_price / prevServiceTotalDays * serviceRemainingDays).toFixed(2);
 					let dateNow = moment().format("YYYY-MM-DD HH:mm:ss")
-					let updateSaleDetails = `UPDATE services_sale SET paid_sale_price = ${paid_sale_price}, paid_admin_cost = ${paid_admin_cost} , paid_dealer_cost = ${paid_dealer_cost} , status = 'returned' , end_date = '${dateNow}' WHERE user_acc_id = ${user_acc_id} AND service_data_id = ${service_id}`
+					let updateSaleDetails = `UPDATE services_sale SET paid_sale_price = ${paid_sale_price}, paid_admin_cost = ${paid_admin_cost} , paid_dealer_cost = ${paid_dealer_cost} , paid_retail_price = ${paid_retail_price} , status = 'returned' , end_date = '${dateNow}' WHERE user_acc_id = ${user_acc_id} AND service_data_id = ${service_id}`
 					sql.query(updateSaleDetails)
 				})
 			}
@@ -1950,6 +1951,7 @@ module.exports = {
 			dealer_profit
 		}
 	},
+
 	updateProfitLoss: async function (admin_profit, dealer_profit, admin_data, connected_dealer, usr_acc_id, loggedDealerType, pay_now, service_id) {
 		let transection_data = {
 			user_acc_id: usr_acc_id,

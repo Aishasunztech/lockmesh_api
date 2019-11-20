@@ -84,7 +84,7 @@ cron.schedule('0 0 0 * * *', async () => {
             if (service_data[0].service_expiry_date <= current_date) {
 
                 await sql.query("UPDATE services_data set end_date = '" + service_data[0].service_expiry_date + "', status = 'completed', paid_credits = " + service_data[0].total_credits + " WHERE id = " + service_data[0].id);
-                await sql.query(`UPDATE user_acc_services SET status = 'expired' , end_date = ${service_data[0].service_expiry_date} WHERE service_id =  ${service_data[0].id}`)
+                await sql.query(`UPDATE user_acc_services SET end_date = ${service_data[0].service_expiry_date} WHERE service_id =  ${service_data[0].id}`)
                 let extended_service = await sql.query(`SELECT * FROM services_data WHERE user_acc_id = ${results[i].id} AND status = 'extended'`)
                 if (extended_service && extended_service.length) {
                     let end_date = current_date.add(moment(extended_service[0].service_term))
