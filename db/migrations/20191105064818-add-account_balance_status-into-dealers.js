@@ -9,7 +9,8 @@ module.exports = {
         'account_balance_status',
         {
           type: Sequelize.ENUM,
-          values: ['active','restricted','suspended']
+          values: ['active', 'restricted', 'suspended'],
+          defaulfValue: 'active'
         }
       ),
 
