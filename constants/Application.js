@@ -139,7 +139,7 @@ module.exports = {
   ACK_UNINSTALLED_APPS: 'ack_uninstalled_apps_',
 
   SEND_JOB_TO_PANEL: 'SEND_JOB_TO_PANEL',
-  
+
   // force update
   FORCE_UPDATE_CHECK: 'force_update_check_',
 
@@ -201,7 +201,7 @@ module.exports = {
     { "key": "dealer_email", "value": "dealer.email.id" },
     { "key": "link_code", "value": "dealer.pin.id" },
     { "key": "connected_devices", "value": "devices" },
-    { "key": "dealer_token", "value": "tokens.id" },
+    { "key": "dealer_create", "value": "credits.id" },
   ],
   sdealerColumns: [
     { "key": "dealer_id", "value": "dealer.id" },
@@ -209,7 +209,7 @@ module.exports = {
     { "key": "dealer_email", "value": "dealer.email.id" },
     { "key": "link_code", "value": "dealer.pin.id" },
     { "key": "connected_devices", "value": "devices" },
-    { "key": "dealer_token", "value": "tokens.id" },
+    { "key": "dealer_create", "value": "credits.id" },
     { "key": "parent_dealer", "value": "parent.dealer.id" },
     { "key": "parent_dealer_id", "value": "parent.dealer.id.id" },
   ],
