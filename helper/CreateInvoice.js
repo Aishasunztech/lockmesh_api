@@ -37,6 +37,11 @@ function generateCustomerInformation(doc, invoice) {
         .fontSize(20)
         .text("INVOICE", 50, 160);
 
+    doc
+        .fillColor("#444444")
+        .fontSize(20)
+        .text(invoice.invoice_status, 400, 160);
+
     generateHr(doc, 185);
 
     const customerInformationTop = 200;
@@ -273,7 +278,7 @@ function generateEditInvoiceTable(doc, invoice, type) {
             "Prev Service Refund",
             "1 Month",
             item.serviceRemainingDays,
-            "-12",
+            "-" + (invoice.prevService.creditsToRefund / item.serviceRemainingDays).toFixed(2),
             "-" + invoice.prevService.creditsToRefund
 
         );
@@ -289,7 +294,7 @@ function generateEditInvoiceTable(doc, invoice, type) {
             "",
             "TOTAL REFUND :",
             "",
-            "-", invoice.prevService.creditsToRefund + " Credits"
+            "-" + invoice.prevService.creditsToRefund + " Credits"
         );
 
 
@@ -466,7 +471,7 @@ function generateTableRow(
         .text(item, 50, y)
         .text(description, 100, y, { width: 150, align: "center" })
         .text(term, 250, y)
-        .text(unitCost, 300, y, { width: 120, align: "right" })
+        .text(unitCost, 300, y, { width: 115, align: "right" })
         .text(quantity, 400, y, { width: 65, align: "right" })
         .text(lineTotal, 0, y, { align: "right" });
 }
