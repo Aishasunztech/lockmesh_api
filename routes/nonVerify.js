@@ -559,7 +559,7 @@ router.get('/create_domains', async function (req, res) {
             domains.push(item.name)
         })
     }
-    
+
     // get existing pgp emails
     let all_pgp_emails = await sql.query("SELECT id, pgp_email from pgp_emails")
 
