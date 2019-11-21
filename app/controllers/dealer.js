@@ -613,7 +613,7 @@ exports.editDealers = async function (req, res) {
         var alreadyAvailable = false;
         var mailGiven = false;
         var enc_pwd = ''
-        if (!empty(dealer_id) && (!empty(name) || !empty(email))) {
+        if (dealer_id && (name || email)) {
 
             // let dealer = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_email = '${email}' AND dealer_id =${dealer_id}`)
             let dealer = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_id =${dealer_id}`)
@@ -626,7 +626,7 @@ exports.editDealers = async function (req, res) {
 
             if (dealer && dealer.length) {
                 // if changed email is provided
-                if (!empty(email)) {
+                if (email && email!== dealer[0].dealer_email) {
 
                     mailGiven = true;
                     let checkMail = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_email='${email}' AND dealer_id !=${dealer_id}`);
@@ -634,9 +634,8 @@ exports.editDealers = async function (req, res) {
                         alreadyAvailable = true;
 
                         data = {
-                            status: true,
+                            status: false,
                             msg: await general_helpers.convertToLang(req.translation[MsgConstants.EMAIL_ALREDY_USED_DEALER], "Email is already in use of other dealer"), // Email is already in use of other dealer
-                            data: row,
                             alreadyAvailable: alreadyAvailable
                         };
                         return res.send(data);
@@ -679,26 +678,15 @@ exports.editDealers = async function (req, res) {
                                 Password : ${dealer_pwd} <br>
                                 Below is the link to login : <br> 
                                 ${app_constants.HOST} <br>`;
-    
-                        sendEmail("Account Registration", html, email, async function (error, response) {
-                            if (error) {
-                                console.log(error)
-                                res.send({
-                                    status: true,
-                                    msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC_EMAIL_NOT_SEND], "Record updated successfully. Email not sent"), // Record updated successfully. Email not sent
-                                    alreadyAvailable: alreadyAvailable
-                                })
-                                return;
-                            } else {
-                                res.send({
-                                    status: true,
-                                    msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC_EMAIL_SEND], "Record updated successfully. Email has been sent"), // Record updated successfully. Email has been sent.
-                                    alreadyAvailable: alreadyAvailable
-                                })
-                                return;
-                            }
-                        });
-    
+                        if(mailGiven){
+                            sendEmail("Account Information Changed", html, email);
+                        }
+
+                        return res.send({
+                            status: true,
+                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record updated successfully"), // Record updated successfully. Email has been sent.
+                            alreadyAvailable: alreadyAvailable
+                        })
                     } else {
                         data = {
                             status: true,
