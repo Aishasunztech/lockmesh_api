@@ -16,7 +16,8 @@ module.exports = {
       }),
       queryInterface.addColumn('services_data', 'status', {
         type: Sequelize.ENUM,
-        values: ['returned', 'cancelled', 'completed', 'extended', 'request_for_cancel', 'deleted', 'active']
+        values: ['returned', 'cancelled', 'completed', 'extended', 'request_for_cancel', 'deleted', 'active'],
+        defaultValue: 'active'
       }),
       queryInterface.removeColumn('services_data', 'del_status')
 

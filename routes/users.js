@@ -1225,6 +1225,8 @@ router.patch("/save-sa-prices", billingController.saveSaPrices);
 
 router.post("/save-package", billingController.savePackage);
 
+router.put("/edit-package", billingController.editPackage);
+
 router.delete("/delete_package/:id", billingController.deletePackage);
 
 router.put("/modify_item_price/:id", billingController.modifyItemPrice);
@@ -1404,6 +1406,7 @@ router.post('/reports/hardware', reportingController.generateHardwareReport);
 router.post('/reports/invoice', reportingController.generateInvoiceReport);
 router.post('/reports/payment-history', reportingController.generatePaymentHistoryReport);
 router.post('/reports/sales', reportingController.generateSalesReport);
+router.post('/reports/grace-days', reportingController.generateGraceDaysReport);
 
 
 router.post('/get-latest-payment-history', accountController.getLatestPaymentHistory);
