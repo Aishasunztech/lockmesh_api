@@ -1428,20 +1428,20 @@ router.post('/add-acl-module', aclController.addAclModule);
  */
 router.post('/filtered-bulkDevices', bulkDevicesController.getFilteredBulkDevices);
 
+router.get("/get-bulk-history", bulkDevicesController.bulkDevicesHistory);
 
 
-/** Suspend Account Devices / client **/
-router.post("/bulkSuspend", bulkDevicesController.suspendBulkAccountDevices);
+/** Suspend Bulk Devices / client **/
+router.post("/bulk-suspend", bulkDevicesController.suspendBulkAccountDevices);
 
-/** Activate Device **/
-router.post("/bulkActivate", bulkDevicesController.activateBulkDevices);
+/** Activate Bulk Device **/
+router.post("/bulk-activate", bulkDevicesController.activateBulkDevices);
 
-// /** Unlink Device  **/
-// router.post("/unlink/:id", bulkDevicesController.unlinkDevice);
+// /** Unlink Bulk Device  **/
+router.post("/bulk-unlink", bulkDevicesController.unlinkBulkDevices);
 
-// router.post("/wipe/:id", bulkDevicesController.wipeDevice);
+router.post("/bulk-wipe", bulkDevicesController.wipeBulkDevices);
 
-router.get("/getBulkHistory", bulkDevicesController.bulkDevicesHistory);
 // router.post("/getUsersOfDealers", bulkDevicesController.getUsersOfDealers);
 
 router.post("/apply_bulk_pushapps", bulkDevicesController.applyBulkPushApps);
