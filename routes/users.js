@@ -401,7 +401,7 @@ router.post("/add/dealer", dealerController.addDealer);
 
 /**
  * This function comment is parsed by doctrine
- * @route GET /users/connect-dealer
+ * @route GET /users/connect-dealer/:dealerId
  * @group Dealer - Operations about Dealers
  * @param {string} dealerId.param.required - dealer name
  * @returns {object} 200 - An array of user info
@@ -410,6 +410,17 @@ router.post("/add/dealer", dealerController.addDealer);
  */
 /*** Add Dealer ***/
 router.get("/connect-dealer/:dealerId", dealerController.connectDealer);
+/**
+ * This function comment is parsed by doctrine
+ * @route GET /users/payment-history/:dealerId
+ * @group Dealer - Operations about Dealers
+ * @param {string} dealerId.param.required - dealer name
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+/*** Add Dealer ***/
+router.get("/payment-history/:dealerId", dealerController.getDealerPaymentHistory);
 
 /**
  * This function comment is parsed by doctrine
