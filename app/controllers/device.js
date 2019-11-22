@@ -374,6 +374,7 @@ exports.acceptDevice = async function (req, res) {
             discounted_price = (total_price + hardwarePrice) - discount
         }
         let invoice_status = pay_now ? "PAID" : "UNPAID"
+        let paid_credits = 0
         // if (pay_now) {
         //     total_price = total_price - (total_price * 0.03);
         // }
@@ -533,7 +534,6 @@ exports.acceptDevice = async function (req, res) {
                                                     }
                                                     else {
                                                         let transection_due_credits = total_price;
-                                                        let paid_credits = 0
                                                         if (dealer_credits_copy > 0) {
                                                             if (dealer_credits_copy < total_price) {
                                                                 transection_due_credits = total_price - dealer_credits_copy
@@ -803,7 +803,8 @@ exports.acceptDevice = async function (req, res) {
                                                             subtotal: invoice_subtotal,
                                                             paid: discounted_price,
                                                             invoice_nr: inv_no,
-                                                            invoice_status: invoice_status
+                                                            invoice_status: invoice_status,
+                                                            paid_credits: paid_credits
                                                         };
 
                                                         let fileName = "invoice-" + inv_no + ".pdf"
@@ -957,6 +958,8 @@ exports.createDeviceProfile = async function (req, res) {
         let discounted_price = total_price + hardwarePrice
         let invoice_subtotal = total_price + hardwarePrice
         let endUser_pay_status = req.body.paid_by_user
+        let paid_credits = 0
+        let transection_due_credits = 0
 
         // console.log(req.body);
         // let services_discounted_price = 0
@@ -1212,7 +1215,8 @@ exports.createDeviceProfile = async function (req, res) {
                                             subtotal: invoice_subtotal,
                                             paid: discounted_price,
                                             invoice_nr: inv_no,
-                                            invoice_status: invoice_status
+                                            invoice_status: invoice_status,
+                                            paid_credits: paid_credits,
                                         };
 
                                         let fileName = "invoice-" + inv_no + ".pdf"
@@ -1437,7 +1441,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                             }
                                                             else {
                                                                 let transection_due_credits = total_price;
-                                                                let paid_credits = 0
+
 
                                                                 if (dealer_credits_copy > 0) {
                                                                     if (dealer_credits_copy < total_price) {
@@ -1611,7 +1615,8 @@ exports.createDeviceProfile = async function (req, res) {
                                                                     subtotal: invoice_subtotal,
                                                                     paid: discounted_price,
                                                                     invoice_nr: inv_no,
-                                                                    invoice_status: invoice_status
+                                                                    invoice_status: invoice_status,
+                                                                    paid_credits: paid_credits
                                                                 };
 
                                                                 let fileName = "invoice-" + inv_no + ".pdf"
@@ -1834,6 +1839,7 @@ exports.editDevices = async function (req, res) {
             let cancelService = req.body.cancelService ? req.body.cancelService : false
             let exp_month = expiry_date
             let sub_total = 0
+            let paid_credits = 0
 
             let invoice_status = pay_now ? "PAID" : "UNPAID"
             let dealer_credits_copy = 0
@@ -2324,7 +2330,6 @@ exports.editDevices = async function (req, res) {
                                 else {
                                     let transection_due_credits = newServicePrice;
                                     dealer_credits_copy += creditsToRefund
-                                    let paid_credits = 0
                                     if (dealer_credits_copy > 0) {
                                         transection_due_credits = newServicePrice - dealer_credits_copy
                                         paid_credits = dealer_credits_copy
@@ -2373,7 +2378,8 @@ exports.editDevices = async function (req, res) {
                                     subtotal: sub_total,
                                     paid: total_price,
                                     invoice_nr: inv_no,
-                                    invoice_status: invoice_status
+                                    invoice_status: invoice_status,
+                                    paid_credits: paid_credits
                                 };
 
                                 let fileName = "invoice-" + inv_no + ".pdf"
@@ -2570,6 +2576,9 @@ exports.extendServices = async function (req, res) {
             let vpnIncluded = false
             let user_id = req.body.user_id
             let exp_month = expiry_date
+            let paid_credits = 0
+            let dealer_credits_copy = 0,
+                invoice_status = (pay_now) ? "PAID" : "UNPAID"
             // let pkg_term = null
             // console.log(expiry_date);
             // return
@@ -2606,6 +2615,7 @@ exports.extendServices = async function (req, res) {
                         let results = await sql.query(user_credits_q)
                         if (results && results.length || !pay_now) {
                             dealer_credits = results[0] ? results[0].credits : 0
+                            dealer_credits_copy = dealer_credits
                             if (packages && packages.length) {
                                 packages.map((item) => {
                                     // pkg_term = item.pkg_term.split(' ')[0]
@@ -2831,9 +2841,24 @@ exports.extendServices = async function (req, res) {
                             transection_status = 'pending'
                         }
 
-                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, service_id: service_id })}' ,${newServicePrice} ,'credit' , '${transection_status}' , 'services' , ${(pay_now) ? newServicePrice : 0} , ${(pay_now) ? 0 : newServicePrice})`
-                        await sql.query(transection_credits)
+                        if (pay_now) {
 
+                            let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, service_id: service_id })}' ,${newServicePrice} ,'credit' , 'transferred' , 'services' , ${newServicePrice} , ${0})`
+                            await sql.query(transection_credits)
+                        }
+                        else {
+                            let transection_due_credits = newServicePrice;
+                            if (dealer_credits_copy > 0) {
+                                transection_due_credits = newServicePrice - dealer_credits_copy
+                                paid_credits = dealer_credits_copy
+                                let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${newServicePrice} ,'credit' , 'pending' , 'services' , ${paid_credits} , ${transection_due_credits})`
+                                await sql.query(transection_credits)
+                                invoice_status = "PARTIALLY PAID"
+                            } else {
+                                let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${newServicePrice} ,'credit' , 'pending' , 'services' , 0 ,${newServicePrice})`
+                                await sql.query(transection_credits)
+                            }
+                        }
 
                         let update_credits_query = 'update financial_account_balance set credits = credits - ' + newServicePrice + ' where dealer_id ="' + dealer_id + '"';
                         await sql.query(update_credits_query);
@@ -2858,7 +2883,9 @@ exports.extendServices = async function (req, res) {
                             quantity: 1,
                             subtotal: (pay_now) ? newServicePrice + Math.ceil(newServicePrice * 0.03) : newServicePrice,
                             paid: total_price,
-                            invoice_nr: inv_no
+                            invoice_nr: inv_no,
+                            paid_credits: paid_credits,
+                            invoice_status: invoice_status
                         };
 
                         let fileName = "invoice-" + inv_no + ".pdf"
