@@ -56,7 +56,7 @@ function generateCustomerInformation(doc, invoice) {
         .text(formatDate(new Date()), 150, customerInformationTop + 15)
         .text("Balance Due:", 50, customerInformationTop + 30)
         .text(
-            invoice.paid + " Credits",
+            ((invoice.pay_now) ? 0 : (invoice.invoice_status === "UNPAID" ? invoice.paid : (invoice.paid - invoice.paid_credits))) + " Credits",
             150,
             customerInformationTop + 30
         )
@@ -211,10 +211,10 @@ function generateInvoiceTable(doc, invoice, type) {
         "",
         "Paid To Date : ",
         "",
-        ((invoice.pay_now) ? invoice.paid : 0) + " Credits"
+        ((invoice.pay_now) ? invoice.paid : (invoice.invoice_status === "UNPAID" ? 0 : invoice.paid_credits)) + " Credits"
     );
 
-    const duePosition = paidToDatePosition + 25;
+    const duePosition = paidToDatePosition + 15;
     doc.font("Helvetica-Bold");
     generateTableRow(
         doc,
@@ -224,7 +224,7 @@ function generateInvoiceTable(doc, invoice, type) {
         "",
         "Balance Due:",
         "",
-        invoice.paid + " Credits"
+        ((invoice.pay_now) ? 0 : (invoice.invoice_status === "UNPAID" ? invoice.paid : (invoice.paid - invoice.paid_credits))) + " Credits"
     );
 
     doc.font("Helvetica-Bold");
@@ -429,12 +429,24 @@ function generateEditInvoiceTable(doc, invoice, type) {
         "",
         "Paid to date:",
         "",
-        (invoice.pay_now) ? invoice.paid : 0 + " Credits"
+        ((invoice.pay_now) ? invoice.paid : invoice.invoice_status ? invoice.paid_price : 0) + " Credits"
+    );
+    const duePosition1 = duePosition + 15;
+    doc.font("Helvetica-Bold");
+    generateTableRow(
+        doc,
+        duePosition1,
+        "",
+        "",
+        "",
+        "Balance Due:",
+        "",
+        ((invoice.pay_now) ? 0 : (invoice.invoice_status === "UNPAID" ? invoice.paid : (invoice.paid - invoice.paid_credits))) + " Credits"
     );
     doc.font("Helvetica-Bold");
     generateTableRow(
         doc,
-        duePosition + 15,
+        duePosition1 + 15,
         "",
         "",
         "",
