@@ -27,7 +27,7 @@ exports.removeSMApps = async function (req, res) {
         result = await sql.query(query)
     }
 
-    console.log("query =========> ", query);
+    // console.log("query =========> ", query);
     console.log(req.body, result, loginDealerId)
 
     if (result.affectedRows) {

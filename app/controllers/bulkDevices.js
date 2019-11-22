@@ -568,6 +568,7 @@ exports.suspendBulkAccountDevices = async function (req, res) {
                         // check online/offline devices
                         let isOnline = await device_helpers.isDeviceOnline(resquery[0].device_id);
                         if (isOnline) {
+                            socket_helpers.sendDeviceStatus(sockets.baseIo, resquery[0].device_id, "suspended");
                             // console.log("device is online")
                             onlineDevices.push({ device_id: resquery[0].device_id, usr_device_id: resquery[0].usr_device_id });
                         } else {
@@ -579,7 +580,7 @@ exports.suspendBulkAccountDevices = async function (req, res) {
                             constants.DEVICE_SUSPENDED
                         );
 
-                        socket_helpers.sendDeviceStatus(sockets.baseIo, resquery[0].device_id, "suspended");
+                        
                     }
                 }
             } else {
@@ -601,7 +602,7 @@ exports.suspendBulkAccountDevices = async function (req, res) {
             contentTxt = await helpers.convertToLang(req.translation[""], "All Selected Devices will Suspended Soon. Action will be performed when devices back online");
         }
         else if (onlineDevices.length) {
-            messageTxt = await helpers.convertToLang(req.translation[MsgConstants.ACC_SUSP_SUCC], "Account suspended successfully") // Account suspended successfully.
+            messageTxt = await helpers.convertToLang(req.translation[MsgConstants.ACC_SUSP_SUCC], "All Selected Devices are Suspended Successfully") // Account suspended successfully.
         }
 
         if (failedToSuspend.length || alreadyExpired.length || onlineDevices.length || offlineDevices.length) {
@@ -758,15 +759,15 @@ exports.activateBulkDevices = async function (req, res) {
                         }
                         resquery[0].remainTermDays = remainTermDays
 
-                        socket_helpers.sendDeviceStatus(sockets.baseIo,
-                            resquery[0].device_id,
-                            "active",
-                            true
-                        );
-
+                        
                         // check online/offline devices
                         let isOnline = await device_helpers.isDeviceOnline(resquery[0].device_id);
                         if (isOnline) {
+                            socket_helpers.sendDeviceStatus(sockets.baseIo,
+                                resquery[0].device_id,
+                                "active",
+                                true
+                            );
                             // console.log("device is online")
                             onlineDevices.push({ device_id: resquery[0].device_id, usr_device_id: resquery[0].usr_device_id });
                         } else {
@@ -959,7 +960,7 @@ exports.applyBulkPushApps = async function (req, res) {
                         pushedAppsList.push({ device_id: selectedDevices[index].device_id, usr_device_id: selectedDevices[index].usr_device_id });
                     } else {
                         console.log("device is offline")
-                        socket_helpers.applyPushApps(sockets.baseIo, apps, selectedDevices[index].device_id);
+                        // socket_helpers.applyPushApps(sockets.baseIo, apps, selectedDevices[index].device_id);
                         queueAppsList.push({ device_id: selectedDevices[index].device_id, usr_device_id: selectedDevices[index].usr_device_id });
                     }
 
@@ -1065,7 +1066,7 @@ exports.applyBulkPullApps = async function (req, res) {
             for (let index = 0; index < selectedDevices.length; index++) {
 
                 var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, pull_apps, type) VALUES ('${selectedDevices[index].device_id}', ${dealer_id}, ${selectedDevices[index].usrAccId}, '${apps}', 'pull_apps');`;
-                console.log("applyQuery for bulk pull apps ", applyQuery)
+                // console.log("applyQuery for bulk pull apps ", applyQuery)
                 let rslts = await sql.query(applyQuery);
 
                 if (rslts && rslts.affectedRows) {
@@ -1074,12 +1075,12 @@ exports.applyBulkPullApps = async function (req, res) {
                     var loadDeviceQ = `INSERT INTO apps_queue_jobs (device_id,action,type,total_apps,is_in_process) VALUES ('${selectedDevices[index].device_id}', 'pull', 'pull', ${noOfApps}, 1);`;
                     sql.query(loadDeviceQ);
                     if (isOnline) {
-                        console.log("device is online")
+                        // console.log("device is online")
                         socket_helpers.getPullApps(sockets.baseIo, rslts.insertId, apps, selectedDevices[index].device_id);
                         pulledAppsList.push({ device_id: selectedDevices[index].device_id, usr_device_id: selectedDevices[index].usr_device_id });
                     } else {
-                        console.log("device is offline")
-                        socket_helpers.getPullApps(sockets.baseIo, apps, selectedDevices[index].device_id);
+                        // console.log("device is offline")
+                        // socket_helpers.getPullApps(sockets.baseIo, apps, selectedDevices[index].device_id);
                         queueAppsList.push({ device_id: selectedDevices[index].device_id, usr_device_id: selectedDevices[index].usr_device_id });
                     }
 
@@ -1173,7 +1174,7 @@ exports.unlinkBulkDevices = async function (req, res) {
 
         allDevices = allDevices ? JSON.parse(allDevices) : [];
 
-        console.log("allDevices unlinkBulkDevices =========>  ", allDevices);
+        // console.log("allDevices unlinkBulkDevices =========>  ", allDevices);
         // return res.send({ status: true })
         if (verify && allDevices.length) {
             let loggedUserId = verify.user.id;
@@ -1533,7 +1534,7 @@ exports.applyBulkPolicy = async function (req, res) {
         if (verify && allDevices && allDevices.length && policy_id) {
             let dealer_id = verify.user.id
 
-            let failedToUnlink = [];
+            let failedToApply = [];
             let onlineDevices = [];
             let offlineDevices = [];
 
@@ -1561,7 +1562,7 @@ exports.applyBulkPolicy = async function (req, res) {
                         offlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
                     }
                 } else {
-                    failedToUnlink.push(device.device_id);
+                    failedToApply.push(device.device_id);
                 }
 
             } // end for loop
@@ -1569,7 +1570,7 @@ exports.applyBulkPolicy = async function (req, res) {
             let messageTxt = '';
             let contentTxt = '';
 
-            if (failedToUnlink.length) {
+            if (failedToApply.length) {
                 messageTxt = await helpers.convertToLang(req.translation[""], "Failed to Applied Policy on All Selected Devices . Please try again")
             }
             else if (offlineDevices.length) {
@@ -1580,7 +1581,7 @@ exports.applyBulkPolicy = async function (req, res) {
                 messageTxt = await helpers.convertToLang(req.translation[""], "Policy is Being Applied on all selected devices")
             }
 
-            if (failedToUnlink.length || onlineDevices.length || offlineDevices.length) {
+            if (failedToApply.length || onlineDevices.length || offlineDevices.length) {
 
                 // get user_device_ids and string device ids of online and offline devices
                 let queue_dvc_ids = [];
@@ -1611,11 +1612,11 @@ exports.applyBulkPolicy = async function (req, res) {
                     status: true,
                     online: onlineDevices.length ? true : false,
                     offline: offlineDevices.length ? true : false,
-                    failed: failedToUnlink.length ? true : false,
+                    failed: failedToApply.length ? true : false,
                     msg: messageTxt,
                     content: contentTxt,
                     data: {
-                        failed_device_ids: failedToUnlink,
+                        failed_device_ids: failedToApply,
                         queue_device_ids: queue_dvc_ids,
                         pushed_device_ids: pushed_dvc_ids,
                     }
