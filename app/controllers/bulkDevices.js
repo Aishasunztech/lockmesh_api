@@ -1521,3 +1521,129 @@ exports.wipeBulkDevices = async function (req, res) {
         res.send(data);
     }
 };
+
+
+// Apply Policy
+exports.applyBulkPolicy = async function (req, res) {
+    try {
+        var verify = req.decoded;
+        let allDevices = req.body.selectedDevices;
+        let policy_id = req.body.policyId;
+
+        if (verify && allDevices && allDevices.length && policy_id) {
+            let dealer_id = verify.user.id
+
+            let failedToUnlink = [];
+            let onlineDevices = [];
+            let offlineDevices = [];
+
+            let getPolicyQ = `SELECT * FROM policy WHERE id=${policy_id}`;
+            let policy = await sql.query(getPolicyQ)
+            policy = await helpers.refactorPolicy(policy);
+
+
+            for (let device of allDevices) {
+                let userAccId = await device_helpers.getUsrAccIDbyDvcId(device.usr_device_id);
+
+                var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES ('" + device.device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
+                let policyApplied = await sql.query(applyQuery);
+
+                if (policyApplied && policyApplied.insertId) {
+                    var loadDeviceQ = "INSERT INTO policy_queue_jobs (policy_id,device_id,is_in_process) " + " VALUES ('" + policy_id + "','" + device.device_id + "',1)"
+                    sql.query(loadDeviceQ)
+
+                    let isOnline = await device_helpers.isDeviceOnline(device.device_id);
+                    if (isOnline) {
+                        socket_helpers.getPolicy(sockets.baseIo, policyApplied.insertId, device.device_id, policy[0]);
+                        onlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
+
+                    } else {
+                        offlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
+                    }
+                } else {
+                    failedToUnlink.push(device.device_id);
+                }
+
+            } // end for loop
+
+            let messageTxt = '';
+            let contentTxt = '';
+
+            if (failedToUnlink.length) {
+                messageTxt = await helpers.convertToLang(req.translation[""], "Failed to Applied Policy on All Selected Devices . Please try again")
+            }
+            else if (offlineDevices.length) {
+                messageTxt = await helpers.convertToLang(req.translation[""], "Warning All Selected Devices Are Offline");
+                contentTxt = await helpers.convertToLang(req.translation[""], "Policy will be Applied Soon on all Selected Devices. Action will be performed when devices back online");
+            }
+            else if (onlineDevices.length) {
+                messageTxt = await helpers.convertToLang(req.translation[""], "Policy is Being Applied on all selected devices")
+            }
+
+            if (failedToUnlink.length || onlineDevices.length || offlineDevices.length) {
+
+                // get user_device_ids and string device ids of online and offline devices
+                let queue_dvc_ids = [];
+                let queue_usr_dvc_ids = [];
+                let pushed_dvc_ids = [];
+                let pushed_usr_dvc_ids = [];
+
+                let all_usr_dvc_ids = [];
+
+                offlineDevices.forEach(item => {
+                    queue_dvc_ids.push(item.device_id);
+                    queue_usr_dvc_ids.push(item.usr_device_id);
+                });
+
+                onlineDevices.forEach(item => {
+                    pushed_dvc_ids.push(item.device_id);
+                    pushed_usr_dvc_ids.push(item.usr_device_id);
+                });
+                all_usr_dvc_ids = [...queue_usr_dvc_ids, ...pushed_usr_dvc_ids];
+
+                req.body["device_ids"] = all_usr_dvc_ids;
+                req.body["action_by"] = dealer_id;
+                req.body["policy"] = policy;
+                // console.log('save bulk history')
+                device_helpers.saveBuklActionHistory(req.body, constants.BULK_PUSHED_POLICY);
+
+                data = {
+                    status: true,
+                    online: onlineDevices.length ? true : false,
+                    offline: offlineDevices.length ? true : false,
+                    failed: failedToUnlink.length ? true : false,
+                    msg: messageTxt,
+                    content: contentTxt,
+                    data: {
+                        failed_device_ids: failedToUnlink,
+                        queue_device_ids: queue_dvc_ids,
+                        pushed_device_ids: pushed_dvc_ids,
+                    }
+                };
+            } else {
+                data = {
+                    status: false,
+                    msg: 'Error while Processing To Unlink Devices'
+                }
+            }
+            // console.log("response data is: ", data)
+            res.send(data);
+        } else {
+            data = {
+                status: false,
+                msg: await helpers.convertToLang(
+                    req.translation[""],
+                    "Invalid Devices"
+                )
+            };
+            res.send(data);
+            return;
+        }
+    } catch (error) {
+        console.log(error)
+        res.send({
+            status: false,
+            msg: 'Error while Processing'
+        })
+    }
+}

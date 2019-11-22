@@ -433,6 +433,8 @@ module.exports = {
         //     type: 'policy'
         // })
 
+        // console.log("get policy =============> socket ", setting_id, device_id, policy)
+        if (policy) {   
         io.emit(Constants.GET_POLICY + device_id, {
             setting_id: setting_id,
             status: true,
@@ -442,6 +444,7 @@ module.exports = {
             push_apps: (policy.push_apps === undefined || policy.push_apps === null || policy.push_apps === '') ? '[]' : policy.push_apps,
             device_id: device_id,
         });
+    }
     },
 
     forceCheckUpdate: async function (io, device_id) {
