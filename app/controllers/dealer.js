@@ -25,7 +25,6 @@ const DEALER = "dealer";
 const SDEALER = "sdealer";
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
 // let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
-let usr_acc_query_text = constants.usr_acc_query_text;
 let dealer_query_text = 'dealer_id, first_name, last_name, dealer_email, connected_dealer, dealer_name, link_code, is_two_factor_auth, type, unlink_status, account_status, created, modified';
 let get_dealer_query_text = 'd.dealer_id, d.first_name, d.last_name, d.dealer_email, d.connected_dealer, d.dealer_name, d.link_code, d.is_two_factor_auth, d.type, d.unlink_status, d.account_status, d.created, d.modified , c.credits';
 
@@ -431,6 +430,49 @@ exports.connectDealer = async function (req, res) {
     }
 }
 
+exports.getDealerPaymentHistory = async function (req, res) {
+    let verify = req.decoded;
+
+    let user_type = verify.user.user_type;
+    let dealer_id = req.params.dealerId;
+
+    if (!dealer_id || user_type === SDEALER) {
+        return res.send({
+            status: false,
+            data: []
+        })
+    }
+
+    // let condition = '';
+
+    // let response = {
+    //     status: false,
+    // };
+
+    // if (transaction_type) {
+    //     condition += ' AND fat.transection_type = "' + transaction_type + '"'
+    // }
+
+    // if (device === Constants.DEVICE_PRE_ACTIVATION) {
+    //     condition += ' AND d.device_id IS NULL'
+    // }
+
+    // if (device && device !== Constants.DEVICE_PRE_ACTIVATION) {
+    //     condition += ' AND d.device_id = "' + device + '"'
+    // }
+    let paymentHistoryQ = `SELECT * FROM financial_account_transections AS fat WHERE type='credits' AND user_id=${dealer_id} ORDER BY fat.id DESC`
+    paymentHistoryData = await sql.query(paymentHistoryQ);
+
+
+    response = {
+        status: true,
+        data: paymentHistoryData,
+    };
+
+    return res.send(response);
+
+}
+
 exports.addDealer = async function (req, res) {
 
     var verify = req.decoded;
@@ -619,7 +661,7 @@ exports.editDealers = async function (req, res) {
 
             // let dealer = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_email = '${email}' AND dealer_id =${dealer_id}`)
             let dealer = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_id =${dealer_id}`)
-            if(!dealer){
+            if (!dealer) {
                 return res.send({
                     status: false,
                     msg: await general_helpers.convertToLang(req.translation[MsgConstants.EMAIL_ALREDY_USED_DEALER], "Email is already in use of other dealer"), // Dealer not found to Update"
@@ -628,7 +670,7 @@ exports.editDealers = async function (req, res) {
 
             if (dealer && dealer.length) {
                 // if changed email is provided
-                if (email && email!== dealer[0].dealer_email) {
+                if (email && email !== dealer[0].dealer_email) {
 
                     mailGiven = true;
                     let checkMail = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_email='${email}' AND dealer_id !=${dealer_id}`);
@@ -661,11 +703,11 @@ exports.editDealers = async function (req, res) {
                         setFields = ` dealer_name='${name}'`;
                     }
                 }
-    
+
                 var query = `UPDATE dealers SET ${setFields} WHERE dealer_id = ${dealer_id}`;
-    
+
                 sql.query(query, async function (error, row) {
-                    if(error){
+                    if (error) {
                         console.log(error)
                         data = {
                             status: true,
@@ -680,7 +722,7 @@ exports.editDealers = async function (req, res) {
                                 Password : ${dealer_pwd} <br>
                                 Below is the link to login : <br> 
                                 ${app_constants.HOST} <br>`;
-                        if(mailGiven){
+                        if (mailGiven) {
                             sendEmail("Account Information Changed", html, email);
                         }
 
