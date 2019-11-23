@@ -457,6 +457,8 @@ exports.getDealerPaymentHistory = async function (req, res) {
 }
 
 exports.getDealerSalesHistory = async function (req, res) {
+    let verify = req.decoded;
+
     let user_type = verify.user.user_type;
     let dealer_id = req.body.dealer_id;
 
@@ -488,14 +490,16 @@ exports.getDealerSalesHistory = async function (req, res) {
         };
 
         return res.send(response);
-    } 
+    }
+
+
 
     let dealer_type = await general_helpers.getUserType(dealer_id);
-    if(dealer_type === Constants.DEALER && user_type == Constants.DEALER){
+    if (dealer_type === Constants.DEALER && user_type == Constants.DEALER) {
         let saleInfo = {
-            'totalCost': totalCost,
-            'totalSale': totalSale,
-            'totalProfitLoss': totalSale - totalCost,
+            totalCost: totalCost,
+            totalSale: totalSale,
+            totalProfitLoss: totalSale - totalCost,
         };
 
         response = {
@@ -507,27 +511,24 @@ exports.getDealerSalesHistory = async function (req, res) {
         return res.send(response);
     }
 
-    if (user_type === Constants.ADMIN) {
-        if (dealer_type === Constants.DEALER) {
+    condition = ` AND ua.dealer_id = ${dealer_id}`
+    hardwareCondition = ` AND hd.dealer_id = ${dealer_id}`
 
-        } else if (dealer_type === Constants.SDEALER) {
-        
+    if (user_type === Constants.ADMIN && dealer_type === Constants.DEALER) {
+        sDealerIds = await generalHelper.getSdealersByDealerId(dealer_id);
+
+        if (sDealerIds.length > 0) {
+            condition = ` AND ua.dealer_id IN (${dealer_id}, ${sDealerIds.join(',')})`
+            hardwareCondition = ` AND hd.dealer_id IN (${dealer_id}, ${sDealerIds.join(',')})`
         }
-        // let sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
-        // if (sDealerIds.length > 0) {
-        //     condition += ' AND ua.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
-        // } else {
-        //     condition += ' AND ua.dealer_id = ' + verify.user.id
-        // }
 
-    } else if (user_type === Constants.DEALER) {
-        // condition += ' AND ua.dealer_id = ' + dealer
     }
+    
 
     let packagesQ = `SELECT ss.*, d.device_id as device_id, ss.status as status, ua.dealer_id as dealer_id, ua.link_code as dealer_pin FROM services_sale as ss
     JOIN usr_acc as ua on ua.id = ss.user_acc_id 
     JOIN devices as d on ua.device_id = d.id
-    WHERE (ss.status != 'cancelled') AND ss.item_type LIKE 'package'  ${condition} ORDER BY ss.id DESC`
+    WHERE (ss.status != 'cancelled') AND ss.item_type LIKE 'package' ${condition} ORDER BY ss.id DESC`
     packages = await sql.query(packagesQ);
 
     packages.map(function (value) {
@@ -654,21 +655,6 @@ exports.getDealerSalesHistory = async function (req, res) {
         }
 
     });
-
-
-
-    // if (dealer === '' && user_type === Constants.DEALER) {
-
-    //     let sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
-    //     if (sDealerIds.length > 0) {
-    //         hardwareCondition += ' AND hd.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
-    //     } else {
-    //         hardwareCondition += ' AND hd.dealer_id = ' + verify.user.id
-    //     }
-
-    // } else if (dealer) {
-    //     hardwareCondition += ' AND hd.dealer_id = ' + dealer
-    // }
 
 
     let salesQ = `SELECT hd.*, d.device_id as device_id, ua.dealer_id as dealer_id, ua.link_code as dealer_pin FROM hardwares_data as hd
