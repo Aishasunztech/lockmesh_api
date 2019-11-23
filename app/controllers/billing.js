@@ -1916,7 +1916,7 @@ exports.getUserCredits = async function (req, res) {
                     data = {
                         "status": true,
                         "credits": result[0].credits,
-                        "due_credits": result[0].due_credits
+                        "credits_limit": result[0].credits_limit
 
                     };
                     res.send(data);
@@ -1925,7 +1925,7 @@ exports.getUserCredits = async function (req, res) {
                     data = {
                         "status": true,
                         "credits": 0,
-                        "due_credits": 0
+                        "credits_limit": 0
                     };
                     res.send(data);
                     return

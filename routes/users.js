@@ -436,6 +436,9 @@ router.get("/payment-history/:dealerId", dealerController.getDealerPaymentHistor
 /** Edit Dealer (Admin panel) **/
 router.put("/edit/dealers", dealerController.editDealers);
 
+/**UPDATE DEALER CREDITS LIMIT**/
+router.put("/set_credits_limit", dealerController.setDealerCreditsLimit);
+
 /**
  * This function comment is parsed by doctrine
  * @route POST /users/dealer/delete

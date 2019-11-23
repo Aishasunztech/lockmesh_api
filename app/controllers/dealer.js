@@ -385,6 +385,7 @@ exports.connectDealer = async function (req, res) {
             created: dealer[0].created,
             modified: dealer[0].modified,
             credits: credits[0].credits,
+            credits_limit: credits[0].credits_limit,
             dealer_type: '',
             last_login: '',
             connected_devices: 0,
@@ -742,6 +743,58 @@ exports.editDealers = async function (req, res) {
 
             }
 
+        } else {
+            data = {
+                status: false,
+                msg: await general_helpers.convertToLang(req.translation[MsgConstants.ENTER_VALID_DETAIL], "Please enter valid details"), // Please enter valid details
+            }
+            return res.send(data);
+        }
+    }
+}
+
+exports.setDealerCreditsLimit = async function (req, res) {
+    var verify = req.decoded;
+    // if (verify.status !== undefined && verify.status == true) {
+    if (verify) {
+        var credits_limit = req.body.credits_limit;
+        var dealer_id = req.body.dealer_id;
+        if (dealer_id && credits_limit) {
+            let dealer = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_id =${dealer_id}`)
+            if (!dealer) {
+                return res.send({
+                    status: false,
+                    msg: await general_helpers.convertToLang(req.translation[""], "Dealer not found to update."), // Dealer not found to Update"
+                });
+            }
+
+            if (dealer && dealer.length) {
+                let updateCreditsLimitQ = `UPDATE financial_account_balance SET credits_limit = ${credits_limit} WHERE dealer_id = ${dealer_id}`
+                sql.query(updateCreditsLimitQ, async function (err, response) {
+                    if (err) {
+                        console.log(err);
+                        data = {
+                            status: false,
+                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.QUERY_ERROR], "Query Error"), // Please enter valid details
+                        }
+                        return res.send(data);
+                    }
+                    if (response && response.affectedRows) {
+                        data = {
+                            status: true,
+                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record Updated Successfully"), // Please enter valid details
+                        }
+                        return res.send(data)
+                    } else {
+                        data = {
+                            status: false,
+                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_NOT_UPD], "Record not Updated."), // Please enter valid details
+                        }
+                        return res.send(data)
+
+                    }
+                })
+            }
         } else {
             data = {
                 status: false,

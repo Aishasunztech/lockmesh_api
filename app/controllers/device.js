@@ -406,6 +406,13 @@ exports.acceptDevice = async function (req, res) {
                 return
             }
             else {
+                if (result[0].credits_limit > (result[0].credits - discounted_price)) {
+                    res.send({
+                        status: false,
+                        msg: "Error: Your Credits limits will exceed after apply this service. Please select other services OR Purchase Credits."
+                    });
+                    return
+                }
                 if (result.length || term === '0' || !pay_now) {
                     let dealer_credits = (result.length) ? result[0].credits : 0
                     let dealer_credits_copy = dealer_credits
@@ -981,6 +988,13 @@ exports.createDeviceProfile = async function (req, res) {
                 return
             }
             else {
+                if (result[0].credits_limit > (result[0].credits - discounted_price)) {
+                    res.send({
+                        status: false,
+                        msg: "Error: Your Credits limits will exceed after apply this service. Please select other services OR Purchase Credits."
+                    });
+                    return
+                }
                 if (result.length || req.body.term === '0' || !pay_now) {
                     let dealer_credits = result.length ? result[0].credits : 0;
                     let dealer_credits_copy = dealer_credits
@@ -1897,6 +1911,13 @@ exports.editDevices = async function (req, res) {
                         if (newService) {
                             let user_credits_q = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
                             let results = await sql.query(user_credits_q)
+                            if (!pay_now && results[0].credits_limit > (results[0].credits - discounted_price)) {
+                                res.send({
+                                    status: false,
+                                    msg: "Error: Your Credits limits will exceed after apply this service. Please select other services OR Purchase Credits."
+                                });
+                                return
+                            }
                             if (results && results.length || expiry_date == 0 || !pay_now) {
                                 dealer_credits = results[0] ? results[0].credits : 0
                                 dealer_credits_copy = dealer_credits
