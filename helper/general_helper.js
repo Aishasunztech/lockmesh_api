@@ -55,16 +55,19 @@ module.exports = {
 		}
 	},
 	getUserType: async function (userId) {
-		var query1 = "SELECT type FROM dealers where dealer_id =" + userId;
+		let query1 =`SELECT d.type as type, roles.role AS role FROM dealers AS d JOIN user_roles AS roles ON (d.type = roles.id) WHERE d.dealer_id=${userId}`
+		// var query1 = "SELECT type FROM dealers where dealer_id =" + userId;
+
 		var user = await sql.query(query1);
 		if (user.length) {
-			var query2 = "SELECT * FROM user_roles where id =" + user[0].type;
-			var role = await sql.query(query2);
-			if (role.length) {
-				return role[0].role;
-			} else {
-				return false;
-			}
+			// var query2 = "SELECT * FROM user_roles where id =" + user[0].type;
+			// var role = await sql.query(query2);
+			// if (role.length) {
+				// return role[0].role;
+				return user[0].role;
+			// } else {
+			// 	return false;
+			// }
 		} else {
 			return false;
 		}
