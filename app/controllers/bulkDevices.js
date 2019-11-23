@@ -927,10 +927,11 @@ exports.activateBulkDevices = async function (req, res) {
 
 // Push Apps
 exports.applyBulkPushApps = async function (req, res) {
+    // console.log('hi applyBulkPushApps')
     try {
         var verify = req.decoded;
         let selectedDevices = req.body.selectedDevices;
-        console.log("applyBulkPushApps req.body::  ", req.body)
+        // console.log("applyBulkPushApps req.body::  ", req.body)
 
         if (verify && selectedDevices && selectedDevices.length && req.body.apps.length) {
             let dealer_id = verify.user.id;
@@ -1050,7 +1051,7 @@ exports.applyBulkPullApps = async function (req, res) {
     try {
         var verify = req.decoded;
         let selectedDevices = req.body.selectedDevices;
-        console.log("applyBulkPullApps req.body::  ", req.body)
+        // console.log("applyBulkPullApps req.body::  ", req.body)
 
         if (verify && selectedDevices && selectedDevices.length && req.body.apps.length) {
             let dealer_id = verify.user.id;
@@ -1350,7 +1351,9 @@ exports.unlinkBulkDevices = async function (req, res) {
 // Wipe Devices
 exports.wipeBulkDevices = async function (req, res) {
     var verify = req.decoded;
+    // console.log("wipeBulkDevices ", req.body);
     let device_ids = req.body.selectedDevices;
+    device_ids = device_ids ? device_ids : [];
 
     if (verify && device_ids.length) {
         let loggedUserId = verify.user.id;
@@ -1544,7 +1547,7 @@ exports.applyBulkPolicy = async function (req, res) {
 
 
             for (let device of allDevices) {
-                let userAccId = await device_helpers.getUsrAccIDbyDvcId(device.usr_device_id);
+                let userAccId = device.usrAccId; // await device_helpers.getUsrAccIDbyDvcId(device.usr_device_id);
 
                 var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES ('" + device.device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
                 let policyApplied = await sql.query(applyQuery);
