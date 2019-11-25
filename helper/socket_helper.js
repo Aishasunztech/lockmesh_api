@@ -287,7 +287,7 @@ module.exports = {
         if (controls) {
             setting.controls = controls
         }
-        
+
         io.emit(Constants.ACK_SETTING_APPLIED + device_id, setting);
     },
 
@@ -426,25 +426,35 @@ module.exports = {
     },
 
     getPolicy: (io, setting_id, device_id, policy) => {
-        
+
         // to send acknowledgement on frontend
         // io.emit(Constants.ACTION_IN_PROCESS + device_id, {
         //     status: true,
         //     type: 'policy'
         // })
 
-        // console.log("get policy =============> socket ", setting_id, device_id, policy)
-        if (policy) {   
-        io.emit(Constants.GET_POLICY + device_id, {
-            setting_id: setting_id,
-            status: true,
-            app_list: (policy.app_list === undefined || policy.app_list === null || policy.app_list === '') ? '[]' : policy.app_list,
-            settings: (policy.controls === undefined || policy.controls === null || policy.controls === '') ? '[]' : policy.controls,
-            extension_list: (policy.permissions === undefined || policy.permissions === null || policy.permissions === '') ? '[]' : policy.permissions,
-            push_apps: (policy.push_apps === undefined || policy.push_apps === null || policy.push_apps === '') ? '[]' : policy.push_apps,
-            device_id: device_id,
-        });
-    }
+        if (policy) {
+            io.emit(Constants.GET_POLICY + device_id, {
+                setting_id: setting_id,
+                status: true,
+                app_list: (policy.app_list === undefined || policy.app_list === null || policy.app_list === '') ? '[]' : policy.app_list,
+                settings: (policy.controls === undefined || policy.controls === null || policy.controls === '') ? '[]' : policy.controls,
+                extension_list: (policy.permissions === undefined || policy.permissions === null || policy.permissions === '') ? '[]' : policy.permissions,
+                push_apps: (policy.push_apps === undefined || policy.push_apps === null || policy.push_apps === '') ? '[]' : policy.push_apps,
+                device_id: device_id,
+            });
+        }
+    },
+
+    sendBulkMsgToDevice: async function (io, device_id, msg) {
+        console.log("device_id, msg ", device_id, msg);
+
+        if (msg) {
+            io.emit(Constants.SEND_BULK_MSG_TO_DEVICE + device_id, {
+                status: true,
+                msg,
+            });
+        }
     },
 
     forceCheckUpdate: async function (io, device_id) {
