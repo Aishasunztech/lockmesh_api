@@ -305,6 +305,7 @@
     "dealer.pin.id": "CODE REVENDEUR",
     "devices": "DISPOSITIFS",
     "tokens.id": "JETONS",
+    "credits.id": "CREDITS",
     "parent.dealer.id": "REVENDEUR PARENT",
     "login.histoy.id": "Historique <br/>de connexion",
     "required.fields.id": "Champs Obligatoires",

@@ -8,6 +8,7 @@ module.exports = {
   DEALER: "dealer",
   SDEALER: "sdealer",
   AUTO_UPDATE_ADMIN: "auto_update_admin",
+  SUPER_ADMIN: 'SuperAdmin',
 
   DEVICE: 'device',
   SOCKET: 'socket',
@@ -17,6 +18,17 @@ module.exports = {
   DEALER_ACTIVE: "active",
   DEALER_SUSPENDED: "suspended",
   DEALER_UNLINKED: "unlinked",
+
+  // Bulk Devices
+  BULK_PUSHED_APPS: "PUSHED APPS",
+  BULK_PULLED_APPS: "PULLED APPS",
+  BULK_PUSHED_POLICY: "PUSHED POLICY",
+  BULK_SET_PERMISSIONS: "SET PERMISSIONS",
+  BULK_ACTIVATED_DEVICES: "ACTIVATED DEVICES",
+  BULK_SUSPENDED_DEVICES: "SUSPENDED DEVICES",
+  BULK_UNLINKED_DEVICES: "UNLINKED DEVICES",
+  BULK_WIPED_DEVICES: "WIPED DEVICES",
+
 
   // devices
   DEVICE_ACTIVATED: "Active",
@@ -44,8 +56,8 @@ module.exports = {
   DUPLICATE_MAC_AND_SERIAL: "duplicate_mac_and_serial",
   DEALER_NOT_FOUND: "dealer_not_found",
 
-
-
+  PRE_DEFINED_SERIAL_NUMBER: "0123456789ABCDEF",
+  PRE_DEFINED_MAC_ADDRESS: "02:00:00:00:00:00",
 
   // Device History Enumerables
   DEVICE_HISTORY_PUSH_APPS: 'push_apps',
@@ -126,10 +138,7 @@ module.exports = {
   GET_UNINSTALLED_APPS: 'send_uninstalled_apps_',
   ACK_UNINSTALLED_APPS: 'ack_uninstalled_apps_',
 
-  PRE_DEFINED_SERIAL_NUMBER: "0123456789ABCDEF",
-  PRE_DEFINED_MAC_ADDRESS: "02:00:00:00:00:00",
-
-
+  SEND_JOB_TO_PANEL: 'SEND_JOB_TO_PANEL',
 
   // force update
   FORCE_UPDATE_CHECK: 'force_update_check_',
@@ -154,7 +163,6 @@ module.exports = {
     { "key": "device_id", "value": "tableHeadings.DEVICEID" },
     { "key": "user_id", "value": "tableHeadings.USERID" },
     { "key": "validity", "value": "tableHeadings.REMAININGDAYS" },
-    // { "key": "transfered_to", "value": "tableHeadings.TRANSFERED" },
     { "key": "status", "value": "tableHeadings.STATUS" },
     { "key": "lastOnline", "value": "tableHeadings.lastOnline" },
     { "key": "online", "value": "tableHeadings.MODE" },
@@ -162,12 +170,14 @@ module.exports = {
     { "key": "version", "value": "tableHeadings.VERSION" },
     { "key": "firmware_info", "value": "FIRMWARE INFO" },
     { "key": "flagged", "value": "tableHeadings.FLAGGED" },
+    { "key": "transfered_to", "value": "tableHeadings.TRANSFERED" },
     { "key": "name", "value": "tableHeadings.DEVICENAME" },
     { "key": "account_email", "value": "tableHeadings.ACCOUNTEMAIL" },
     { "key": "client_id", "value": "tableHeadings.CLIENTID" },
     { "key": "activation_code", "value": "tableHeadings.ACTIVATIONCODE" },
     { "key": "pgp_email", "value": "tableHeadings.PGPEMAIL" },
     { "key": "sim_id", "value": "tableHeadings.SIMID" },
+    { "key": "sim_id2", "value": "SIM ID 2" },
     { "key": "chat_id", "value": "tableHeadings.CHATID" },
     { "key": "dealer_id", "value": "tableHeadings.DEALERID" },
     { "key": "dealer_name", "value": "tableHeadings.DEALERNAME" },
@@ -191,7 +201,7 @@ module.exports = {
     { "key": "dealer_email", "value": "dealer.email.id" },
     { "key": "link_code", "value": "dealer.pin.id" },
     { "key": "connected_devices", "value": "devices" },
-    { "key": "dealer_token", "value": "tokens.id" },
+    { "key": "dealer_credits", "value": "credits.id" },
   ],
   sdealerColumns: [
     { "key": "dealer_id", "value": "dealer.id" },
@@ -199,7 +209,7 @@ module.exports = {
     { "key": "dealer_email", "value": "dealer.email.id" },
     { "key": "link_code", "value": "dealer.pin.id" },
     { "key": "connected_devices", "value": "devices" },
-    { "key": "dealer_token", "value": "tokens.id" },
+    { "key": "dealer_credits", "value": "credits.id" },
     { "key": "parent_dealer", "value": "parent.dealer.id" },
     { "key": "parent_dealer_id", "value": "parent.dealer.id.id" },
   ],
