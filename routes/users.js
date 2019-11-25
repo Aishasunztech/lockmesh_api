@@ -408,8 +408,20 @@ router.post("/add/dealer", dealerController.addDealer);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-/*** Add Dealer ***/
+/*** Connect Dealer ***/
 router.get("/connect-dealer/:dealerId", dealerController.connectDealer);
+
+/**
+ * This function comment is parsed by doctrine
+ * @route GET /users/dealer-domains/:dealerId
+ * @group Dealer - Operations about Dealers
+ * @param {string} dealerId.param.required - dealer name
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+router.get("/dealer-domains/:dealerId", dealerController.dealerDomains)
+
 /**
  * This function comment is parsed by doctrine
  * @route GET /users/payment-history/:dealerId
@@ -419,8 +431,20 @@ router.get("/connect-dealer/:dealerId", dealerController.connectDealer);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-/*** Add Dealer ***/
+/*** Dealer Payment History ***/
 router.get("/payment-history/:dealerId", dealerController.getDealerPaymentHistory);
+
+/**
+ * This function comment is parsed by doctrine
+ * @route GET /users/sales-history/:dealerId
+ * @group Dealer - Operations about Dealers
+ * @param {string} dealerId.param.required - dealer name
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+/*** Dealer Payment History ***/
+router.get("/sales-history/:dealerId", dealerController.getDealerSalesHistory);
 
 /**
  * This function comment is parsed by doctrine
@@ -435,6 +459,9 @@ router.get("/payment-history/:dealerId", dealerController.getDealerPaymentHistor
  */
 /** Edit Dealer (Admin panel) **/
 router.put("/edit/dealers", dealerController.editDealers);
+
+/**UPDATE DEALER CREDITS LIMIT**/
+router.put("/set_credits_limit", dealerController.setDealerCreditsLimit);
 
 /**
  * This function comment is parsed by doctrine
@@ -1442,24 +1469,26 @@ router.post('/add-acl-module', aclController.addAclModule);
  */
 router.post('/filtered-bulkDevices', bulkDevicesController.getFilteredBulkDevices);
 
+router.get("/get-bulk-history", bulkDevicesController.bulkDevicesHistory);
 
 
-/** Suspend Account Devices / client **/
-router.post("/bulkSuspend", bulkDevicesController.suspendBulkAccountDevices);
+/** Suspend Bulk Devices / client **/
+router.post("/bulk-suspend", bulkDevicesController.suspendBulkAccountDevices);
 
-/** Activate Device **/
-router.post("/bulkActivate", bulkDevicesController.activateBulkDevices);
+/** Activate Bulk Device **/
+router.post("/bulk-activate", bulkDevicesController.activateBulkDevices);
 
-// /** Unlink Device  **/
-// router.post("/unlink/:id", bulkDevicesController.unlinkDevice);
+// /** Unlink Bulk Device  **/
+router.post("/bulk-unlink", bulkDevicesController.unlinkBulkDevices);
 
-// router.post("/wipe/:id", bulkDevicesController.wipeDevice);
+router.post("/bulk-wipe", bulkDevicesController.wipeBulkDevices);
 
-router.get("/getBulkHistory", bulkDevicesController.bulkDevicesHistory);
 // router.post("/getUsersOfDealers", bulkDevicesController.getUsersOfDealers);
 
 router.post("/apply_bulk_pushapps", bulkDevicesController.applyBulkPushApps);
 
 router.post("/apply_bulk_pullapps", bulkDevicesController.applyBulkPullApps);
+
+router.post('/apply_bulk_policy', bulkDevicesController.applyBulkPolicy);
 
 module.exports = router;
