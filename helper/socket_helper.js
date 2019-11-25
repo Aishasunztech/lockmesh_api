@@ -2,8 +2,8 @@
 
 // Helpers
 const { sql } = require('../config/database');
-const device_helpers = require('../helper/device_helpers.js');
-const general_helpers = require('../helper/general_helper.js');
+// const device_helpers = require('../helper/device_helpers.js');
+// const general_helpers = require('../helper/general_helper.js');
 
 
 // Constants
@@ -54,7 +54,7 @@ module.exports = {
                             iccids.push(`"${arr[i].iccid}"`);
 
                             // Save action of sim as history
-                            device_helpers.saveSimActionHistory(device_id, "NEW_REGISTERED_SIM", arr[i]);
+                            require('./device_helpers.js').saveSimActionHistory(device_id, "NEW_REGISTERED_SIM", arr[i]);
                         } else {
                             //*********/ Asked abaid to remove ingore from insert query **********//
                             var IQry = `INSERT INTO sims (device_id, iccid, name, note, guest, encrypt, dataLimit, sync, is_changed) 
@@ -62,7 +62,7 @@ module.exports = {
                             await sql.query(IQry);
 
                             // Save action of sim as history
-                            device_helpers.saveSimActionHistory(device_id, "NEW_REGISTERED_SIM", arr[i]);
+                            require('./device_helpers.js').saveSimActionHistory(device_id, "NEW_REGISTERED_SIM", arr[i]);
                         }
 
                         // })
@@ -75,7 +75,7 @@ module.exports = {
                         await sql.query(dQry);
 
                         // Save action of sim as history
-                        device_helpers.saveSimActionHistory(device_id, "DELETE", { device_id, iccid });
+                        require('./device_helpers.js').saveSimActionHistory(device_id, "DELETE", { device_id, iccid });
                     }
                 } else {
                     // delete sims which are not on device
@@ -83,7 +83,7 @@ module.exports = {
                     await sql.query(dQry);
 
                     // Save action of sim as history
-                    device_helpers.saveSimActionHistory(device_id, "DELETE", { device_id });
+                    require('./device_helpers.js').saveSimActionHistory(device_id, "DELETE", { device_id });
                 }
 
                 io.emit(Constants.GET_SYNC_STATUS + device_id, {
@@ -117,7 +117,7 @@ module.exports = {
                 }
 
                 // Save action of sim as history
-                device_helpers.saveSimActionHistory(device_id, "UN_REGISTER", { un_register_guest: arr.unrGuest ? 1 : 0, un_register_encrypt: arr.unrEncrypt ? 1 : 0 });
+                require('./device_helpers.js').saveSimActionHistory(device_id, "UN_REGISTER", { un_register_guest: arr.unrGuest ? 1 : 0, un_register_encrypt: arr.unrEncrypt ? 1 : 0 });
 
 
 
@@ -132,7 +132,7 @@ module.exports = {
                     await sql.query(dQry);
 
                     // Save action of sim as history
-                    device_helpers.saveSimActionHistory(device_id, "DELETE", { device_id, iccid });
+                    require('./device_helpers.js').saveSimActionHistory(device_id, "DELETE", { device_id, iccid });
                 })
             } else {
 
@@ -150,7 +150,7 @@ module.exports = {
                         await sql.query(uQry);
 
                         // Save action of sim as history
-                        device_helpers.saveSimActionHistory(device_id, "UPDATE", arr[i]);
+                        require('./device_helpers.js').saveSimActionHistory(device_id, "UPDATE", arr[i]);
                     } else {
                         // console.log('33')
                         //*********/ Asked abaid to remove ingore from insert query **********//
@@ -158,7 +158,7 @@ module.exports = {
                         await sql.query(IQry);
 
                         // Save action of sim as history
-                        device_helpers.saveSimActionHistory(device_id, "NEW_REGISTERED_SIM", arr[i]);
+                        require('./device_helpers.js').saveSimActionHistory(device_id, "NEW_REGISTERED_SIM", arr[i]);
                     }
                 }
 
@@ -296,7 +296,7 @@ module.exports = {
         // console.log("installedApps()", response);
         let app_list = JSON.parse(response);
 
-        let application = await device_helpers.pushAppProcess(deviceId, dvcId, app_list);
+        let application = await require('./device_helpers.js').pushAppProcess(deviceId, dvcId, app_list);
 
         if (application.length) {
             io.emit(Constants.ACK_INSTALLED_APPS + deviceId, {
@@ -319,7 +319,7 @@ module.exports = {
         // let pushApp = null;
 
         // if(response.status){
-        //     pushApp = await device_helpers.pushAppProcess(deviceId, dvcId, response.packageName);
+        //     pushApp = await require('./device_helpers.js').pushAppProcess(deviceId, dvcId, response.packageName);
 
         // } else {
         //     console.log("app is not pushed successfully")
@@ -350,7 +350,7 @@ module.exports = {
     uninstalledApps: async (io, deviceId, dvcId, response) => {
         console.log("uninstalledApps() ", response);
         let app_list = JSON.parse(response);
-        await device_helpers.pullAppProcess(deviceId, dvcId, app_list);
+        await require('./device_helpers.js').pullAppProcess(deviceId, dvcId, app_list);
 
         io.emit(Constants.ACK_UNINSTALLED_APPS + deviceId, {
             status: true,
@@ -377,7 +377,7 @@ module.exports = {
         //     })
         // }
 
-        // pullApp = await device_helpers.pullAppProcess(deviceId, dvc_id, response.packageName);
+        // pullApp = await require('./device_helpers.js').pullAppProcess(deviceId, dvc_id, response.packageName);
         // } else {
         //     console.log("app is not pulled successfully")
         // }
@@ -433,6 +433,8 @@ module.exports = {
         //     type: 'policy'
         // })
 
+        // console.log("get policy =============> socket ", setting_id, device_id, policy)
+        if (policy) {   
         io.emit(Constants.GET_POLICY + device_id, {
             setting_id: setting_id,
             status: true,
@@ -442,6 +444,7 @@ module.exports = {
             push_apps: (policy.push_apps === undefined || policy.push_apps === null || policy.push_apps === '') ? '[]' : policy.push_apps,
             device_id: device_id,
         });
+    }
     },
 
     forceCheckUpdate: async function (io, device_id) {
