@@ -304,6 +304,8 @@ exports.connectDealer = async function (req, res) {
         })
     }
     let where_con = '';
+
+    // this is for sdealer connect page and logic to be improved
     if (userType === Constants.DEALER) {
         where_con = ` AND connected_dealer= ${userId}`
     }
@@ -431,6 +433,84 @@ exports.connectDealer = async function (req, res) {
     }
 }
 
+exports.dealerDomains = async function (req, res) {
+    var verify = req.decoded;
+    // if (verify.status !== undefined && verify.status == true) {
+
+    let dealer_id = req.params.dealerId;
+    let userType = verify.user.user_type;
+    let userId = verify.user.id;
+
+    if (!dealer_id || userType === Constants.SDEALER) {
+        return res.send({
+            status: false,
+            domains: []
+        })
+    }
+    let where_con = '';
+
+    // if (userType === Constants.DEALER) {
+    //     where_con = ` AND connected_dealer= ${userId}`
+    // }
+    let dealer_type = await general_helpers.getUserType(dealer_id);
+
+    if (dealer_type === Constants.DEALER && userType == Constants.DEALER) {
+    
+        return res.send({
+            status: false,
+            domains: []
+        })
+    }
+
+    if (dealer_type === Constants.DEALER) {
+        where_con = ` OR (dealer_permissions.dealer_id = 0 AND dealer_permissions.dealer_type = 'admin') `
+    } else if (dealer_type === Constants.SDEALER) {
+        let getParentId = await sql.query(`SELECT connected_dealer FROM dealers WHERE dealer_id = ${dealer_id}`);
+        where_con = ` OR (dealer_permissions.dealer_id = 0 AND (dealer_permissions.dealer_type='admin' OR (dealer_permissions.dealer_type='dealer' AND dealer_permissions.permission_by=${getParentId[0].connected_dealer}))) `
+    }
+    selectQ = `SELECT domains.*, dealer_permissions.permission_id, dealer_permissions.dealer_id, dealer_permissions.permission_by, dealer_permissions.dealer_type FROM domains JOIN dealer_permissions ON (dealer_permissions.permission_id = domains.id) WHERE (dealer_permissions.dealer_id = ${dealer_id} ${where_con}) AND permission_type = 'domain';`;
+
+    let selectDomains = await sql.query(selectQ);
+
+    // get all dealers under admin or sdealers under dealer
+    let userDealers = await general_helpers.getUserDealers(dealer_type, dealer_id);
+    // console.log("userDealers ========> ", userDealers);
+    let sdealerList = userDealers.dealerList;
+    let dealerCount = userDealers.dealerCount;
+
+
+
+    let results = selectDomains;
+    // for (var i = 0; i < results.length; i++) {
+    //     let permissionDealers = await general_helpers.getDealersAgainstPermissions(results[i].id, 'domain', dealer_id, sdealerList, dealer_type);
+    //     // let allDealers = [];
+
+    //     results[i].dealers = permissionDealers.allDealers;
+    //     results[i].statusAll = permissionDealers.statusAll;
+
+    //     let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : [];
+
+    //     let permissionCount = (permissions && permissions.length) ? permissions.length : 0;
+        
+    //     let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+    //     results[i].permission_count = permissionC;
+    // }
+
+    if (results && results.length) {
+        return res.send({
+            status: true,
+            domains: results
+        })
+    } else {
+        return res.send({
+            status: true,
+            domains: []
+        })
+    }
+    // let dealerQ = `SELECT ${dealer_query_text} FROM dealers WHERE dealer_id=${dealer_id} ${where_con} LIMIT 1`;
+    // let dealer = await sql.query(dealerQ);
+}
+
 exports.getDealerPaymentHistory = async function (req, res) {
     let verify = req.decoded;
 
@@ -524,7 +604,7 @@ exports.getDealerSalesHistory = async function (req, res) {
         }
 
     }
-    
+
 
     let packagesQ = `SELECT ss.*, d.device_id as device_id, ss.status as status, ua.dealer_id as dealer_id, ua.link_code as dealer_pin FROM services_sale as ss
     JOIN usr_acc as ua on ua.id = ss.user_acc_id 
