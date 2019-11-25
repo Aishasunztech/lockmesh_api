@@ -243,6 +243,46 @@ exports.devices = async function (req, res) {
         });
     }
 };
+/**GET all the devices FOR CONNECT PAGE**/
+exports.getDevicesForConnectPage = async function (req, res) {
+    var verify = req.decoded; // await verifyToken(req, res);
+    var where_con = "";
+    if (verify) {
+        if (verify.user.user_type !== constants.ADMIN) {
+            if (verify.user.user_type === constants.DEALER) {
+                where_con = ` AND (usr_acc.dealer_id =${
+                    verify.user.id
+                    } OR usr_acc.prnt_dlr_id = ${verify.user.id})`;
+            } else {
+                where_con = ` AND usr_acc.dealer_id = ${verify.user.id} `;
+            }
+        }
+
+        let deviceQuery = `SELECT devices.device_id,devices.flagged,usr_acc.user_id,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status, usr_acc.transfer_user_status FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) WHERE devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0  ${where_con} ORDER BY devices.id DESC`;
+        sql.query(deviceQuery, async function (error, results, fields) {
+            data = {
+                status: false,
+                data: []
+            };
+            if (error) {
+                console.log(error);
+            };
+            if (results.length > 0) {
+                for (var i = 0; i < results.length; i++) {
+                    results[i].finalStatus = device_helpers.checkStatus(
+                        results[i]
+                    );
+                }
+                results = results.filter((item) => item.finalStatus !== constants.DEVICE_PENDING_ACTIVATION && item.finalStatus !== constants.DEVICE_PRE_ACTIVATION && item.finalStatus !== constants.DEVICE_UNLINKED)
+                data = {
+                    status: true,
+                    data: results
+                };
+            }
+            return res.send(data);
+        });
+    }
+};
 
 exports.getDevicesForReport = async function (req, res) {
     var verify = req.decoded;

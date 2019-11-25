@@ -239,9 +239,13 @@ router.post("/flagDevice/:id", deviceController.flagDevice);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
+/** Get DeviceS (Connect Page) **/
+router.get("/connect/get-device-list", deviceController.getDevicesForConnectPage);
 
 /** Get Device Details of Dealers (Connect Page) **/
 router.get("/connect/:device_id", deviceController.connectDevice);
+
+
 
 /** Get get App Job Queue  (Connect Page) **/
 router.get(
