@@ -2,6 +2,11 @@ const Constants = require('../../constants/Application');
 const generalHelper = require('../../helper/general_helper');
 const moment = require('moment');
 const { sql } = require("../../config/database");
+const rsaWrapper = require('../../components/rsa-wrapper');
+const aesWrapper = require('../../components/aes-wrapper');
+
+rsaWrapper.initLoadServerKeys(__dirname);
+
 
 let productData = {};
 let invoiceData = {};
@@ -173,7 +178,7 @@ exports.generateInvoiceReport = async function (req, res) {
             data: invoiceData,
             status: true
         };
-
+         rsaWrapper.serverExampleEncrypt(JSON.stringify(invoiceData));
         return res.send(response);
     }
 
