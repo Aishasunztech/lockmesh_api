@@ -112,6 +112,7 @@ exports.acceptRequest = async function (req, res) {
         }
     }
 }
+
 exports.acceptServiceRequest = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
 
@@ -432,6 +433,7 @@ exports.savePrices = async function (req, res) {
         }
     }
 }
+
 exports.saveSaPrices = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
 
@@ -544,12 +546,12 @@ exports.savePackage = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
 
     if (verify) {
-        console.log(verify.user, 'user is the ')
+        // console.log(verify.user, 'user is the ')
         let data = req.body.data;
         let dealer_id = verify.user.dealer_id;
         // console.log(data);
         if (data) {
-            console.log(data, 'data')
+            // console.log(data, 'data')
             // let dealer_id = req.body.data.dealer_id;
             if (dealer_id) {
                 // console.log(dealer_id, 'whitelableid');
@@ -604,8 +606,8 @@ exports.savePackage = async function (req, res) {
                             if (rslt.affectedRows) {
 
                                 // save package price
-                                let insertQ = "INSERT INTO dealer_packages_prices ( package_id,dealer_id , created_by , price) VALUES(" + rslt.insertId + ",'" + dealer_id + "' ,'" + verify.user.user_type + "' , '" + data.pkgPrice + "')";
-                                console.log(insertQ);
+                                let insertQ = "INSERT INTO dealer_packages_prices ( package_id,dealer_id , created_by , price , retail_price) VALUES(" + rslt.insertId + ",'" + dealer_id + "' ,'" + verify.user.user_type + "' , '" + data.pkgPrice + "' , '" + data.retail_price + "')";
+                                // console.log(insertQ);
                                 sql.query(insertQ)
 
                                 insertedRecord = await sql.query("SELECT * FROM packages WHERE dealer_id='" + dealer_id + "' AND id='" + rslt.insertId + "'")
@@ -634,6 +636,109 @@ exports.savePackage = async function (req, res) {
         }
     }
 }
+
+exports.editPackage = async function (req, res) {
+    // console.log('data is', req.body)
+    var verify = req.decoded; // await verifyToken(req, res);
+
+    if (verify) {
+        let data = req.body.data;
+        if (data) {
+            if (data.package_id) {
+                // console.log(data, 'whitelableid');
+                let package_id = data.package_id
+
+                let getPkgData = "SELECT * FROM packages WHERE id = " + package_id;
+                let current_pkg_data = await sql.query(getPkgData);
+                if (current_pkg_data && current_pkg_data.length) {
+
+                    let checkExistingQ = "SELECT pkg_name FROM packages WHERE pkg_name='" + data.pkgName + "' AND id != " + package_id;
+                    let checkExisting = await sql.query(checkExistingQ);
+                    if (checkExisting && checkExisting.length) {
+                        res.send({
+                            status: false,
+                            msg: await helpers.convertToLang(req.translation[''], "Package Name Already Exist, Please change the Pakcage name"), // 'Invalid Dealer'
+                        })
+                        return
+                    } else {
+                        let days = 0;
+                        if (data.pkgTerm) {
+                            if (data.pkgTerm === "trial") {
+                                days = 7;
+                            } else {
+                                stringarray = data.pkgTerm.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
+                                if (stringarray) {
+                                    // console.log(stringarray,'is string lenth', stringarray.length)
+                                    if (stringarray.length) {
+                                        month = stringarray[0];
+                                        // console.log('is month', month, stringarray[1])
+                                        if (month && stringarray[1]) {
+                                            // console.log('sring[1]', stringarray[1])
+                                            if (stringarray[1] == 'month') {
+                                                days = parseInt(month) * 30
+                                            } else if (string[1] == 'year') {
+                                                days = parseInt(month) * 365
+                                            } else {
+                                                days = 30
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        let pkg_features = JSON.stringify(data.pkgFeatures)
+                        let insertQuery = `UPDATE packages SET pkg_name = '${data.pkgName}', pkg_term = '${data.pkgTerm}', pkg_price ='${data.pkgPrice}', pkg_expiry = '${days}', pkg_features  = '${pkg_features}' WHERE id = ${package_id}`;
+                        sql.query(insertQuery, async (err, rslt) => {
+                            if (err) {
+                                console.log(err)
+                                return res.send({
+                                    status: false,
+                                    msg: await helpers.convertToLang(req.translation[""], "Package Not Saved"),
+                                })
+
+                            }
+
+                            if (rslt) {
+                                if (rslt.affectedRows) {
+                                    // save package price
+                                    let insertQ = `UPDATE dealer_packages_prices SET price = ${data.pkgPrice} , retail_price = ${data.retail_price} WHERE dealer_id = ${current_pkg_data[0].dealer_id} AND package_id = ${package_id}`;
+                                    console.log(insertQ);
+                                    sql.query(insertQ)
+                                    UpdatedRecord = await sql.query("SELECT * FROM packages WHERE id='" + package_id + "'")
+                                    res.send({
+                                        status: true,
+                                        msg: await helpers.convertToLang(req.translation[MsgConstants.PACKAGE_SAVED_SUCCESSFULLY], "Package Saved Successfully"), // 'Package Saved Successfully',
+                                        data: UpdatedRecord[0]
+                                    })
+                                }
+                            }
+                        })
+                    }
+
+                } else {
+
+                    res.send({
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[''], "Package Not found. Invalid Request"), // 'Invalid Dealer'
+                    })
+                    return
+
+                }
+            } else {
+                res.send({
+                    status: false,
+                    msg: await helpers.convertToLang(req.translation[""], "Invalid Request"), // 'Invalid Dealer'
+                })
+            }
+        } else {
+            res.send({
+                status: false,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DATA], "Invalid Data"), // 'Invalid Data'
+            })
+        }
+    }
+}
+
 exports.saveSaPackage = async function (req, res) {
 
     var verify = req.decoded; // await verifyToken(req, res);
@@ -730,7 +835,7 @@ exports.saveSaHardware = async function (req, res) {
                 if (rslt) {
                     if (rslt.affectedRows) {
                         let insertQ = "INSERT INTO dealer_hardwares_prices ( hardware_id,dealer_id , created_by , price) VALUES(" + rslt.insertId + ",'" + verify.user[0].dealer_id + "' ,'super_admin' , '" + data.hardwarePrice + "')";
-                        console.log(insertQ);
+                        // console.log(insertQ);
                         sql.query(insertQ)
                         res.send({
                             status: true,
@@ -787,6 +892,7 @@ exports.deletePackage = async function (req, res) {
 
     }
 }
+
 exports.modifyItemPrice = async function (req, res) {
     // console.log('data is', req.body)
     var verify = req.decoded; // await verifyToken(req, res);
@@ -795,9 +901,10 @@ exports.modifyItemPrice = async function (req, res) {
         let id = req.params.id
         let price = req.body.price
         let isModify = req.body.isModify
+        // console.log(verify);
+        let retail_price = req.body.retail_price && verify.user.user_type !== ADMIN ? req.body.retail_price : null
         let user_type = verify.user.user_type
         let type = req.body.type
-        console.log(type);
         if (id) {
             if (type === 'package') {
                 let packageQ = "SELECT * FROM packages WHERE id=" + id + " AND delete_status != 1"
@@ -812,7 +919,8 @@ exports.modifyItemPrice = async function (req, res) {
                     }
                     if (result && result.length) {
                         if (isModify) {
-                            let updatePrice = "UPDATE dealer_packages_prices set price = " + price + " where package_id=" + id + " AND created_by = '" + user_type + "'"
+
+                            let updatePrice = "UPDATE dealer_packages_prices set price = " + price + " , retail_price = " + retail_price + "  where package_id=" + id + " AND created_by = '" + user_type + "'"
                             // console.log(updatePrice);
                             sql.query(updatePrice, function (err, result) {
                                 if (err) {
@@ -830,7 +938,7 @@ exports.modifyItemPrice = async function (req, res) {
                                     })
                                     return
                                 } else {
-                                    let insertQ = "INSERT INTO dealer_packages_prices (package_id,dealer_id,created_by,price) VALUES (" + id + ", " + verify.user.dealer_id + " , '" + user_type + "' , " + price + ") "
+                                    let insertQ = "INSERT INTO dealer_packages_prices (package_id,dealer_id,created_by,price , retail_price) VALUES (" + id + ", " + verify.user.id + " , '" + user_type + "' , " + price + ", " + retail_price + ") "
                                     sql.query(insertQ, function (err, result) {
                                         if (err) {
                                             console.log(err);
@@ -864,7 +972,7 @@ exports.modifyItemPrice = async function (req, res) {
                                 }
                                 if (result && result.affectedRows > 0) {
 
-                                    let updatePrice = "UPDATE dealer_packages_prices set price = " + price + " where id=" + id
+                                    let updatePrice = "UPDATE dealer_packages_prices set price = " + price + " , retail_price = " + retail_price + " where id=" + id
                                     sql.query(updatePrice)
                                     res.send({
                                         status: true,
@@ -900,7 +1008,7 @@ exports.modifyItemPrice = async function (req, res) {
                     }
                     if (result && result.length) {
                         if (isModify) {
-                            let updatePrice = "UPDATE dealer_hardwares_prices set price = " + price + " where hardware_id=" + id + " AND created_by = '" + user_type + "'"
+                            let updatePrice = "UPDATE dealer_hardwares_prices set price = " + price + " , retail_price = " + retail_price + "  where hardware_id=" + id + " AND created_by = '" + user_type + "' AND dealer_id = " + verify.user.id + ""
                             // console.log(updatePrice);
                             sql.query(updatePrice, function (err, result) {
                                 if (err) {
@@ -918,7 +1026,7 @@ exports.modifyItemPrice = async function (req, res) {
                                     })
                                     return
                                 } else {
-                                    let insertQ = "INSERT INTO dealer_hardwares_prices (Hardware_id,dealer_id,created_by,price) VALUES (" + id + ", " + verify.user.dealer_id + " , '" + user_type + "' , " + price + ") "
+                                    let insertQ = "INSERT INTO dealer_hardwares_prices (Hardware_id,dealer_id,created_by,price , retail_price) VALUES (" + id + ", " + verify.user.id + " , '" + user_type + "' , " + price + ", " + retail_price + ") "
                                     sql.query(insertQ, function (err, result) {
                                         if (err) {
                                             console.log(err);
@@ -962,7 +1070,6 @@ exports.modifyItemPrice = async function (req, res) {
 
     }
 }
-
 
 exports.getPrices = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
@@ -1063,7 +1170,7 @@ exports.getPackages = async function (req, res) {
 
     if (verify) {
         // let dealer_id = req.params.dealer_id;
-        let dealer_id = verify.user.dealer_id;
+        let dealer_id = verify.user.id;
         let loggedUserType = verify.user.user_type;
 
         if (dealer_id) {
@@ -1072,7 +1179,12 @@ exports.getPackages = async function (req, res) {
                 selectQuery = "SELECT * FROM packages WHERE (delete_status != 1 OR  delete_status IS NULL)  AND (dealer_id='" + dealer_id + "' OR dealer_type = 'super_admin')";
             }
             else if (loggedUserType === DEALER) {
-                selectQuery = `SELECT dealer_packages_prices.price AS pkg_price, packages.* FROM dealer_packages_prices JOIN packages ON (packages.id = dealer_packages_prices.package_id) WHERE dealer_packages_prices.dealer_id = '${dealer_id}' OR  dealer_packages_prices.created_by = 'admin' AND packages.delete_status != 1`;
+                // selectQuery = `SELECT dealer_packages_prices.price AS pkg_price, dealer_packages_prices.retail_price, packages.* FROM dealer_packages_prices JOIN packages ON (packages.id = dealer_packages_prices.package_id) WHERE dealer_packages_prices.dealer_id = '${dealer_id}' OR  dealer_packages_prices.created_by = 'admin' AND packages.delete_status != 1`;
+                selectQuery = "SELECT * FROM packages WHERE (delete_status != 1 OR  delete_status IS NULL)  AND (dealer_id='" + dealer_id + "' OR dealer_type = 'admin' OR dealer_type = 'super_admin')";
+            }
+            else if (loggedUserType === SDEALER) {
+                // selectQuery = `SELECT dealer_packages_prices.price AS pkg_price, dealer_packages_prices.retail_price, packages.* FROM dealer_packages_prices JOIN packages ON (packages.id = dealer_packages_prices.package_id) WHERE dealer_packages_prices.dealer_id = '${dealer_id}' OR  dealer_packages_prices.created_by = 'admin' AND packages.delete_status != 1`;
+                selectQuery = "SELECT * FROM packages WHERE (delete_status != 1 OR  delete_status IS NULL)  AND (dealer_id='" + dealer_id + "' OR dealer_type = 'admin' OR dealer_type = 'super_admin'  OR dealer_id = " + verify.user.connected_dealer + ")";
             }
 
             console.log('final query is:: ', selectQuery);
@@ -1091,7 +1203,7 @@ exports.getPackages = async function (req, res) {
                     }
 
                     if (reslt && reslt.length) {
-                        console.log('result for get prices are is ', reslt);
+                        // console.log('result for get prices are is ', reslt);
 
                         if (loggedUserType !== ADMIN) {
                             let condition = '';
@@ -1100,7 +1212,7 @@ exports.getPackages = async function (req, res) {
                             }
                             else if (loggedUserType === SDEALER) {
                                 let getParentId = await sql.query(`SELECT connected_dealer FROM dealers WHERE dealer_id = ${dealer_id}`);
-                                condition = ` OR (dealer_id = 0 AND (dealer_type='admin' OR (dealer_type='dealer' AND permission_by=${getParentId[0].connected_dealer}))) `
+                                condition = ` OR (dealer_id = 0 AND ((dealer_type='dealer' AND permission_by=${getParentId[0].connected_dealer}))) `
                                 // condition = `AND (dealer_type = 'admin' OR dealer_type = 'dealer')`
                             }
 
@@ -1108,7 +1220,7 @@ exports.getPackages = async function (req, res) {
                             console.log("selectQ dealer_permissions getPackages :: ", selectQ);
                             let permissionsResults = await sql.query(selectQ);
                             let permissionIds = permissionsResults.map((prm) => prm.permission_id);
-                            console.log("permissionIds get pkgs: ", permissionIds);
+                            // console.log("permissionIds get pkgs: ", permissionIds);
                             let checkPermissions = [];
                             if (permissionIds && permissionIds.length) {
                                 reslt.forEach(item => {
@@ -1126,115 +1238,167 @@ exports.getPackages = async function (req, res) {
                             reslt = checkPermissions;
                         }
 
-                        // console.log('result found ', reslt)
-
                         let packages = [];
                         let dealerCount = 0;
                         let sdealerList = []
-                        if (loggedUserType !== SDEALER) {
-                            // if (loggedUserType === ADMIN) {
-                            //     let dealerRoleId = await helpers.getUserTypeIDByName(DEALER);
-                            //     dealerCount = await helpers.userDealerCount(dealerRoleId);
-                            //     sdealerList = await sql.query(`SELECT * FROM dealers WHERE type!=${dealerRoleId} AND type != 4 AND type !=5 ORDER BY created DESC`);
-                            // }
-                            // else if (loggedUserType === DEALER) {
-                            //     sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
-                            //     dealerCount = sdealerList.length;
-                            // }
-                            // sdealerList = sdealerList.map((dealer) => dealer.dealer_id);
-                            // get all dealers under admin or sdealers under dealer
-                            let userDealers = await helpers.getUserDealers(loggedUserType, dealer_id, 'package');
-                            console.log("userDealers ", userDealers);
-                            sdealerList = userDealers.dealerList;
-                            dealerCount = userDealers.dealerCount;
+                        // if (loggedUserType === ADMIN) {
+                        //     let dealerRoleId = await helpers.getUserTypeIDByName(DEALER);
+                        //     dealerCount = await helpers.userDealerCount(dealerRoleId);
+                        //     sdealerList = await sql.query(`SELECT * FROM dealers WHERE type!=${dealerRoleId} AND type != 4 AND type !=5 ORDER BY created DESC`);
+                        // }
+                        // else if (loggedUserType === DEALER) {
+                        //     sdealerList = await sql.query("select dealer_id from dealers WHERE connected_dealer = '" + verify.user.id + "'")
+                        //     dealerCount = sdealerList.length;
+                        // }
+                        // sdealerList = sdealerList.map((dealer) => dealer.dealer_id);
+                        // get all dealers under admin or sdealers under dealer
+                        let userDealers = await helpers.getUserDealers(loggedUserType, dealer_id, 'package');
+                        // console.log("userDealers ", userDealers);
+                        sdealerList = userDealers.dealerList;
+                        dealerCount = userDealers.dealerCount;
 
-                            for (var i = 0; i < reslt.length; i++) {
-                                if (loggedUserType === ADMIN) {
-                                    if (reslt[i].dealer_type === 'super_admin') {
+                        for (var i = 0; i < reslt.length; i++) {
+                            if (loggedUserType === ADMIN) {
+                                if (reslt[i].dealer_type === 'super_admin') {
+                                    let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'admin' AND package_id = " + reslt[i].id);
+                                    if (result && result.length) {
+                                        reslt[i].pkg_price = result[0].price
+                                        reslt[i].retail_price = result[0].retail_price
+                                    } else {
+                                        reslt[i].retail_price = reslt[i].pkg_price
+                                    }
+                                }
+                            }
+                            else if (loggedUserType === DEALER) {
+                                if (reslt[i].dealer_type === 'super_admin') {
+                                    let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'dealer' AND dealer_id = " + dealer_id + " AND package_id = " + reslt[i].id);
+                                    if (result && result.length) {
+                                        reslt[i].pkg_price = result[0].price
+                                        reslt[i].retail_price = result[0].retail_price
+                                    } else {
                                         let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'admin' AND package_id = " + reslt[i].id);
                                         if (result && result.length) {
                                             reslt[i].pkg_price = result[0].price
+                                            reslt[i].retail_price = result[0].price
+                                        } else {
+                                            reslt[i].retail_price = reslt[i].pkg_price
                                         }
                                     }
+                                } else if (reslt[i].dealer_type === 'admin' || reslt[i].dealer_type === 'dealer') {
+
+                                    let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'dealer' AND dealer_id = " + dealer_id + " AND package_id = " + reslt[i].id);
+                                    // console.log("DEALER PRICE QUERY", "SELECT * from dealer_packages_prices WHERE created_by = 'dealer' AND dealer_id = " + dealer_id + " AND package_id = " + reslt[i].id);
+                                    if (result && result.length) {
+                                        reslt[i].pkg_price = result[0].price
+                                        reslt[i].retail_price = result[0].retail_price
+                                    } else {
+                                        reslt[i].retail_price = reslt[i].pkg_price
+                                    }
                                 }
-                                else if (loggedUserType === DEALER) {
-                                    if (reslt[i].dealer_type === 'super_admin') {
-                                        let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'dealer' AND package_id = " + reslt[i].id);
+                            } else if (loggedUserType === SDEALER) {
+
+                                if (reslt[i].dealer_type === 'super_admin') {
+                                    let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'sdealer' AND dealer_id = " + dealer_id + " AND package_id = " + reslt[i].id);
+                                    if (result && result.length) {
+                                        reslt[i].pkg_price = result[0].price
+                                        reslt[i].retail_price = result[0].retail_price
+                                    } else {
+                                        let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'dealer' AND dealer_id = " + verify.user.connected_dealer + " AND package_id = " + reslt[i].id);
                                         if (result && result.length) {
                                             reslt[i].pkg_price = result[0].price
+                                            reslt[i].retail_price = reslt[i].pkg_price
                                         } else {
                                             let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'admin' AND package_id = " + reslt[i].id);
                                             if (result && result.length) {
                                                 reslt[i].pkg_price = result[0].price
+                                                reslt[i].retail_price = reslt[i].pkg_price
+                                            } else {
+                                                reslt[i].retail_price = reslt[i].pkg_price
                                             }
                                         }
-                                    } else if (reslt[i].dealer_type === 'admin') {
+                                    }
+                                } else if (reslt[i].dealer_type === 'admin' || reslt[i].dealer_type === 'dealer') {
 
-                                        let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'dealer' AND package_id = " + reslt[i].id);
+                                    let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'dealer' AND dealer_id = " + dealer_id + " AND package_id = " + reslt[i].id);
+                                    // console.log("DEALER PRICE QUERY", "SELECT * from dealer_packages_prices WHERE created_by = 'dealer' AND dealer_id = " + dealer_id + " AND package_id = " + reslt[i].id);
+                                    if (result && result.length) {
+                                        reslt[i].pkg_price = result[0].price
+                                        reslt[i].retail_price = result[0].retail_price
+                                    } else {
+                                        let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'dealer' AND dealer_id = " + verify.user.connected_dealer + " AND package_id = " + reslt[i].id);
                                         if (result && result.length) {
                                             reslt[i].pkg_price = result[0].price
+                                            reslt[i].retail_price = reslt[i].pkg_price
+                                        } else {
+                                            let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'admin' AND package_id = " + reslt[i].id);
+                                            if (result && result.length) {
+                                                reslt[i].pkg_price = result[0].price
+                                                reslt[i].retail_price = reslt[i].pkg_price
+                                            } else {
+                                                reslt[i].retail_price = reslt[i].pkg_price
+                                            }
                                         }
                                     }
                                 }
-                                // console.log('push apps', reslt[i].push_apps)
 
-                                let permissionDealers = await helpers.getDealersAgainstPermissions(reslt[i].id, 'package', dealer_id, sdealerList, loggedUserType);
-
-                                reslt[i].dealers = permissionDealers.allDealers;
-                                reslt[i].statusAll = permissionDealers.statusAll;
-
-                                // if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
-
-                                //     let Update_sdealerList = sdealerList.map((dealer) => {
-                                //         return {
-                                //             dealer_id: dealer,
-                                //             dealer_type: permissionDealers[0].dealer_type,
-                                //             permission_by: permissionDealers[0].permission_by
-                                //         }
-                                //     })
-                                //     // let deleteIds = [];
-                                //     // Update_sdealerList.forEach((item) => {
-                                //     //     if (item.dealer_type === "admin") {
-                                //     //         let index = Update_sdealerList.findIndex((sd) => sd.dealer_type === "dealer" && sd.dealer_id === item.dealer_id);
-                                //     //         deleteIds.push(index);
-                                //     //     }
-                                //     // })
-                                //     // console.log("deleteIds index: ", deleteIds);
-                                //     let final_list = Update_sdealerList.filter((item) => item.dealer_id !== dealer_id)
-                                //     reslt[i].dealers = JSON.stringify(final_list);
-                                //     reslt[i].statusAll = true
-                                // } else {
-                                //     if (permissionDealers.length) {
-                                //         permissionDealers = permissionDealers.filter((item) => item.dealer_id !== dealer_id)
-                                //     }
-                                //     reslt[i].dealers = JSON.stringify(permissionDealers);
-                                //     reslt[i].statusAll = false
-                                // }
-
-                                let permissions = (reslt[i].dealers !== undefined && reslt[i].dealers !== null) ? JSON.parse(reslt[i].dealers) : [];
-                                let permissionCount = 0
-                                // if (loggedUserType === constants.DEALER) {
-                                //     permissions = permissions.filter((item) => sdealerList.includes(item))
-                                // }
-                                // if (loggedUserType === DEALER) {
-                                //     permissions = permissions.filter(function (item) {
-                                //         for (let i = 0; i < sdealerList.length; i++) {
-                                //             if (item === sdealerList[i].dealer_id) {
-                                //                 return item
-                                //             }
-                                //         }
-                                //     })
-                                // }
-                                permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
-                                let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
-                                // console.log(permissionC);
-                                // console.log(dealerCount, permissionCount, permissionC);
-                                reslt[i].dealer_permission = permissions;
-                                reslt[i].permission_count = permissionC;
-                                // packages.push(dta);
                             }
+
+                            let permissionDealers = await helpers.getDealersAgainstPermissions(reslt[i].id, 'package', dealer_id, sdealerList, loggedUserType);
+
+                            reslt[i].dealers = permissionDealers.allDealers;
+                            reslt[i].statusAll = permissionDealers.statusAll;
+
+                            // if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
+
+                            //     let Update_sdealerList = sdealerList.map((dealer) => {
+                            //         return {
+                            //             dealer_id: dealer,
+                            //             dealer_type: permissionDealers[0].dealer_type,
+                            //             permission_by: permissionDealers[0].permission_by
+                            //         }
+                            //     })
+                            //     // let deleteIds = [];
+                            //     // Update_sdealerList.forEach((item) => {
+                            //     //     if (item.dealer_type === "admin") {
+                            //     //         let index = Update_sdealerList.findIndex((sd) => sd.dealer_type === "dealer" && sd.dealer_id === item.dealer_id);
+                            //     //         deleteIds.push(index);
+                            //     //     }
+                            //     // })
+                            //     // console.log("deleteIds index: ", deleteIds);
+                            //     let final_list = Update_sdealerList.filter((item) => item.dealer_id !== dealer_id)
+                            //     reslt[i].dealers = JSON.stringify(final_list);
+                            //     reslt[i].statusAll = true
+                            // } else {
+                            //     if (permissionDealers.length) {
+                            //         permissionDealers = permissionDealers.filter((item) => item.dealer_id !== dealer_id)
+                            //     }
+                            //     reslt[i].dealers = JSON.stringify(permissionDealers);
+                            //     reslt[i].statusAll = false
+                            // }
+
+                            let permissions = (reslt[i].dealers !== undefined && reslt[i].dealers !== null) ? JSON.parse(reslt[i].dealers) : [];
+                            let permissionCount = 0
+                            // if (loggedUserType === constants.DEALER) {
+                            //     permissions = permissions.filter((item) => sdealerList.includes(item))
+                            // }
+                            // if (loggedUserType === DEALER) {
+                            //     permissions = permissions.filter(function (item) {
+                            //         for (let i = 0; i < sdealerList.length; i++) {
+                            //             if (item === sdealerList[i].dealer_id) {
+                            //                 return item
+                            //             }
+                            //         }
+                            //     })
+                            // }
+                            permissionCount = (permissions !== undefined && permissions !== null && permissions !== '[]') ? permissions.length : 0;
+                            let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
+                            // console.log(permissionC);
+                            // console.log(dealerCount, permissionCount, permissionC);
+                            reslt[i].dealer_permission = permissions;
+                            reslt[i].permission_count = permissionC;
+                            // packages.push(dta);
                         }
-                        console.log(reslt, 'reslt data of prices')
+                        // console.log(reslt, 'reslt data of prices')
                         res.send({
                             status: true,
                             msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
@@ -1284,12 +1448,13 @@ exports.getHardwares = async function (req, res) {
 
         if (dealer_id) {
             let selectQuery = '';
-            if (verify.user.user_type === ADMIN) {
-                selectQuery = "SELECT * FROM hardwares WHERE (delete_status != 1 OR  delete_status IS NULL)  AND (dealer_id='" + dealer_id + "' OR dealer_type = 'super_admin')";
-            }
-            else if (verify.user.user_type === DEALER) {
-                selectQuery = "select dealer_hardwares_prices.price as hardware_price ,  hardwares.* from dealer_hardwares_prices join hardwares on hardwares.id = dealer_hardwares_prices.hardware_id where dealer_hardwares_prices.dealer_id = '" + dealer_id + "' OR  dealer_hardwares_prices.created_by = 'admin' AND hardwares.delete_status != 1";
-            }
+            // if (verify.user.user_type === ADMIN) {
+            selectQuery = "SELECT * FROM hardwares WHERE (delete_status != 1 OR  delete_status IS NULL)  AND (dealer_id='" + dealer_id + "' OR dealer_type = 'super_admin')";
+            // }
+            // else if (verify.user.user_type === DEALER) {
+            //     selectQuery = "SELECT * FROM hardwares WHERE (delete_status != 1 OR  delete_status IS NULL)  AND (dealer_id='" + dealer_id + "' OR dealer_type = 'super_admin')";
+            //     // selectQuery = "select dealer_hardwares_prices.price as hardware_price ,dealer_hardwares_prices.retail_price   ,  hardwares.* from dealer_hardwares_prices join hardwares on hardwares.id = dealer_hardwares_prices.hardware_id where dealer_hardwares_prices.dealer_id = '" + dealer_id + "' OR  dealer_hardwares_prices.created_by = 'admin' AND hardwares.delete_status != 1";
+            // }
             if (selectQuery) {
                 sql.query(selectQuery, async (err, reslt) => {
                     if (err) {
@@ -1305,37 +1470,64 @@ exports.getHardwares = async function (req, res) {
 
                     if (reslt) {
                         if (reslt.length) {
-                            if (verify.user.user_type !== SDEALER) {
-                                for (var i = 0; i < reslt.length; i++) {
-                                    if (verify.user.user_type === ADMIN) {
-                                        if (reslt[i].dealer_type === 'super_admin') {
+                            // if (verify.user.user_type !== SDEALER) {
+                            for (var i = 0; i < reslt.length; i++) {
+                                if (verify.user.user_type === ADMIN) {
+                                    if (reslt[i].dealer_type === 'super_admin') {
+                                        let result = await sql.query("SELECT * from dealer_hardwares_prices WHERE created_by = 'admin' AND hardware_id = " + reslt[i].id);
+                                        if (result && result.length) {
+                                            reslt[i].hardware_price = result[0].price
+                                        }
+                                    }
+                                }
+                                else if (verify.user.user_type === DEALER) {
+                                    if (reslt[i].dealer_type === 'super_admin') {
+                                        let result = await sql.query("SELECT * from dealer_hardwares_prices WHERE created_by = 'dealer' AND hardware_id = " + reslt[i].id + " AND dealer_id = " + dealer_id + "");
+                                        if (result && result.length) {
+                                            reslt[i].hardware_price = result[0].price
+                                            reslt[i].retail_price = result[0].retail_price
+                                        } else {
                                             let result = await sql.query("SELECT * from dealer_hardwares_prices WHERE created_by = 'admin' AND hardware_id = " + reslt[i].id);
                                             if (result && result.length) {
                                                 reslt[i].hardware_price = result[0].price
+                                                reslt[i].retail_price = result[0].price
+                                            } else {
+                                                reslt[i].retail_price = reslt[i].hardware_price
                                             }
                                         }
                                     }
-                                    else if (verify.user.user_type === DEALER) {
-                                        if (reslt[i].dealer_type === 'super_admin') {
-                                            let result = await sql.query("SELECT * from dealer_hardwares_prices WHERE created_by = 'dealer' AND hardware_id = " + reslt[i].id);
+                                    // else if (reslt[i].dealer_type === 'admin') {
+
+                                    //     let result = await sql.query("SELECT * from dealer_hardwares_prices WHERE created_by = 'dealer' AND hardware_id = " + reslt[i].id + " AND dealer_id = " + dealer_id + "");
+                                    //     if (result && result.length) {
+                                    //         reslt[i].hardware_price = result[0].price
+                                    //     }
+                                    // }
+                                } else {
+                                    if (reslt[i].dealer_type === 'super_admin') {
+                                        let result = await sql.query("SELECT * from dealer_hardwares_prices WHERE created_by = 'sdealer' AND hardware_id = " + reslt[i].id + " AND dealer_id = " + dealer_id + "");
+                                        if (result && result.length) {
+                                            reslt[i].hardware_price = result[0].price
+                                            reslt[i].retail_price = result[0].retail_price
+                                        } else {
+                                            let result = await sql.query("SELECT * from dealer_hardwares_prices WHERE created_by = 'dealer' AND hardware_id = " + reslt[i].id + " AND dealer_id = " + verify.user.connected_dealer + "");
                                             if (result && result.length) {
                                                 reslt[i].hardware_price = result[0].price
+                                                reslt[i].retail_price = result[0].price
                                             } else {
                                                 let result = await sql.query("SELECT * from dealer_hardwares_prices WHERE created_by = 'admin' AND hardware_id = " + reslt[i].id);
                                                 if (result && result.length) {
                                                     reslt[i].hardware_price = result[0].price
+                                                    reslt[i].retail_price = result[0].price
+                                                } else {
+                                                    reslt[i].retail_price = reslt[i].hardware_price
                                                 }
-                                            }
-                                        } else if (reslt[i].dealer_type === 'admin') {
-
-                                            let result = await sql.query("SELECT * from dealer_hardwares_prices WHERE created_by = 'dealer' AND hardware_id = " + reslt[i].id);
-                                            if (result && result.length) {
-                                                reslt[i].hardware_price = result[0].price
                                             }
                                         }
                                     }
                                 }
                             }
+                            // }
                             // console.log(reslt, 'reslt data of prices')
                             res.send({
                                 status: true,
@@ -1377,11 +1569,11 @@ exports.getHardwares = async function (req, res) {
     }
 }
 
-
 exports.getParentPackages = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
 
     if (verify) {
+        // console.log(verify.user);
         let selectQuery = ""
         // console.log(verify.user);
         let loggedUserId = verify.user.dealer_id;
@@ -1399,13 +1591,13 @@ exports.getParentPackages = async function (req, res) {
 
             // selectQuery = "select packages.* from dealer_packages join packages on packages.id = dealer_packages.package_id where dealer_packages.dealer_id = ' " + dealer_id + "' AND packages.delete_status != 1";
             selectQuery = `SELECT packages.* FROM packages JOIN dealer_permissions ON (packages.id = dealer_permissions.permission_id) WHERE (dealer_permissions.dealer_id = '${loggedUserId}' ${condition}) AND packages.delete_status != 1 AND dealer_permissions.permission_type = 'package';`;
-            console.log("selectQuery ", selectQuery)
+            // console.log("selectQuery ", selectQuery)
             sql.query(selectQuery, async (err, reslt) => {
                 if (err) {
                     console.log(err)
                 }
                 if (reslt.length) {
-                    console.log("reslt getParentPackages ", reslt)
+                    // console.log("reslt getParentPackages ", reslt)
 
                     for (let i = 0; i < reslt.length; i++) {
                         if (verify.user.user_type === DEALER) {
@@ -1414,19 +1606,45 @@ exports.getParentPackages = async function (req, res) {
                                 if (result && result.length) {
                                     reslt[i].pkg_price = result[0].price
                                 }
+                                let dealerResult = await sql.query("SELECT * from dealer_packages_prices WHERE dealer_id = " + verify.user.id + " AND package_id = " + reslt[i].id);
+                                if (dealerResult && dealerResult.length) {
+                                    reslt[i].retail_price = dealerResult[0].retail_price
+                                } else {
+                                    if (result && result.length) {
+                                        reslt[i].retail_price = result[0].pkg_price
+                                    } else {
+                                        reslt[i].retail_price = reslt[i].pkg_price
+                                    }
+                                }
+                            } else {
+                                let dealerResult = await sql.query("SELECT * from dealer_packages_prices WHERE dealer_id = " + verify.user.id + " AND package_id = " + reslt[i].id);
+                                if (dealerResult && dealerResult.length) {
+                                    reslt[i].retail_price = dealerResult[0].retail_price
+                                } else {
+                                    reslt[i].retail_price = reslt[i].pkg_price
+                                }
                             }
                         }
                         else if (verify.user.user_type === SDEALER) {
                             if (reslt[i].dealer_type === 'super_admin' || reslt[i].dealer_type === 'admin') {
-                                let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'dealer' AND package_id = " + reslt[i].id);
+                                let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'dealer' AND package_id = " + reslt[i].id + " AND dealer_id = " + verify.user.connected_dealer);
                                 if (result && result.length) {
                                     reslt[i].pkg_price = result[0].price
+                                    reslt[i].retail_price = result[0].retail_price
                                 } else {
                                     let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'admin' AND package_id = " + reslt[i].id);
                                     if (result && result.length) {
                                         reslt[i].pkg_price = result[0].price
+                                        reslt[i].retail_price = result[0].retail_price
+                                    } else {
+                                        reslt[i].retail_price = reslt[i].pkg_price
                                     }
                                 }
+                                let sdealerResult = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'dealer' AND package_id = " + reslt[i].id + " AND dealer_id = " + verify.user.id);
+                                if (sdealerResult && sdealerResult.length) {
+                                    reslt[i].retail_price = sdealerResult[0].retail_price
+                                }
+
                             }
                         }
                     }
@@ -1541,7 +1759,6 @@ exports.getProductPrices = async function (req, res) {
     }
 }
 
-
 exports.getHardwarePrices = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
     if (verify) {
@@ -1633,8 +1850,6 @@ exports.checkPackageName = async function (req, res) {
 
 }
 
-
-
 exports.newRequests = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
 
@@ -1701,7 +1916,7 @@ exports.getUserCredits = async function (req, res) {
                     data = {
                         "status": true,
                         "credits": result[0].credits,
-                        "due_credits": result[0].due_credits
+                        "credits_limit": result[0].credits_limit
 
                     };
                     res.send(data);
@@ -1710,7 +1925,7 @@ exports.getUserCredits = async function (req, res) {
                     data = {
                         "status": true,
                         "credits": 0,
-                        "due_credits": 0
+                        "credits_limit": 0
                     };
                     res.send(data);
                     return
@@ -1845,6 +2060,7 @@ exports.editSaHardware = async function (req, res) {
         }
     }
 }
+
 exports.getCancelServiceRequests = async function (req, res) {
     var verify = req.decoded;
 

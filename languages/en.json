@@ -287,6 +287,7 @@
     "dealer.pin.id": "DEALER PIN",
     "devices": "DEVICES",
     "tokens.id": "TOKENS",
+    "credits.id": "CREDITS",
     "parent.dealer.id": "PARENT DEALER",
     "login.histoy.id": "Login History",
     "required.fields.id": "Required Fields",

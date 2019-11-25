@@ -401,15 +401,39 @@ router.post("/add/dealer", dealerController.addDealer);
 
 /**
  * This function comment is parsed by doctrine
- * @route GET /users/connect-dealer
+ * @route GET /users/connect-dealer/:dealerId
  * @group Dealer - Operations about Dealers
  * @param {string} dealerId.param.required - dealer name
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-/*** Add Dealer ***/
+/*** Connect Dealer ***/
 router.get("/connect-dealer/:dealerId", dealerController.connectDealer);
+
+/**
+ * This function comment is parsed by doctrine
+ * @route GET /users/payment-history/:dealerId
+ * @group Dealer - Operations about Dealers
+ * @param {string} dealerId.param.required - dealer name
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+/*** Dealer Payment History ***/
+router.get("/payment-history/:dealerId", dealerController.getDealerPaymentHistory);
+
+/**
+ * This function comment is parsed by doctrine
+ * @route GET /users/sales-history/:dealerId
+ * @group Dealer - Operations about Dealers
+ * @param {string} dealerId.param.required - dealer name
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+/*** Dealer Payment History ***/
+router.get("/sales-history/:dealerId", dealerController.getDealerSalesHistory);
 
 /**
  * This function comment is parsed by doctrine
@@ -424,6 +448,9 @@ router.get("/connect-dealer/:dealerId", dealerController.connectDealer);
  */
 /** Edit Dealer (Admin panel) **/
 router.put("/edit/dealers", dealerController.editDealers);
+
+/**UPDATE DEALER CREDITS LIMIT**/
+router.put("/set_credits_limit", dealerController.setDealerCreditsLimit);
 
 /**
  * This function comment is parsed by doctrine
@@ -1225,6 +1252,8 @@ router.patch("/save-sa-prices", billingController.saveSaPrices);
 
 router.post("/save-package", billingController.savePackage);
 
+router.put("/edit-package", billingController.editPackage);
+
 router.delete("/delete_package/:id", billingController.deletePackage);
 
 router.put("/modify_item_price/:id", billingController.modifyItemPrice);
@@ -1404,6 +1433,7 @@ router.post('/reports/hardware', reportingController.generateHardwareReport);
 router.post('/reports/invoice', reportingController.generateInvoiceReport);
 router.post('/reports/payment-history', reportingController.generatePaymentHistoryReport);
 router.post('/reports/sales', reportingController.generateSalesReport);
+router.post('/reports/grace-days', reportingController.generateGraceDaysReport);
 
 
 router.post('/get-latest-payment-history', accountController.getLatestPaymentHistory);

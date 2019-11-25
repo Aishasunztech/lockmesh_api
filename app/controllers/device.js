@@ -373,6 +373,8 @@ exports.acceptDevice = async function (req, res) {
             discount = Math.ceil(((total_price + hardwarePrice) * 0.03));
             discounted_price = (total_price + hardwarePrice) - discount
         }
+        let invoice_status = pay_now ? "PAID" : "UNPAID"
+        let paid_credits = 0
         // if (pay_now) {
         //     total_price = total_price - (total_price * 0.03);
         // }
@@ -404,6 +406,13 @@ exports.acceptDevice = async function (req, res) {
                 return
             }
             else {
+                if (result[0].credits_limit > (result[0].credits - discounted_price)) {
+                    res.send({
+                        status: false,
+                        msg: "Error: Your Credits limits will exceed after apply this service. Please select other services OR Purchase Credits."
+                    });
+                    return
+                }
                 if (result.length || term === '0' || !pay_now) {
                     let dealer_credits = (result.length) ? result[0].credits : 0
                     let dealer_credits_copy = dealer_credits
@@ -532,7 +541,6 @@ exports.acceptDevice = async function (req, res) {
                                                     }
                                                     else {
                                                         let transection_due_credits = total_price;
-                                                        let paid_credits = 0
                                                         if (dealer_credits_copy > 0) {
                                                             if (dealer_credits_copy < total_price) {
                                                                 transection_due_credits = total_price - dealer_credits_copy
@@ -545,6 +553,7 @@ exports.acceptDevice = async function (req, res) {
                                                                 let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${total_price} ,'credit' , 'transferred' , 'services' , ${total_price} ,0)`
                                                                 await sql.query(transection_credits)
                                                             }
+                                                            invoice_status = "PARTIALLY PAID"
                                                         } else {
                                                             let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${total_price} ,'credit' , 'pending' , 'services' , 0 ,${total_price})`
                                                             await sql.query(transection_credits)
@@ -800,7 +809,9 @@ exports.acceptDevice = async function (req, res) {
                                                             quantity: 1,
                                                             subtotal: invoice_subtotal,
                                                             paid: discounted_price,
-                                                            invoice_nr: inv_no
+                                                            invoice_nr: inv_no,
+                                                            invoice_status: invoice_status,
+                                                            paid_credits: paid_credits
                                                         };
 
                                                         let fileName = "invoice-" + inv_no + ".pdf"
@@ -954,6 +965,8 @@ exports.createDeviceProfile = async function (req, res) {
         let discounted_price = total_price + hardwarePrice
         let invoice_subtotal = total_price + hardwarePrice
         let endUser_pay_status = req.body.paid_by_user
+        let paid_credits = 0
+        let transection_due_credits = 0
 
         // console.log(req.body);
         // let services_discounted_price = 0
@@ -962,6 +975,7 @@ exports.createDeviceProfile = async function (req, res) {
             discount = Math.ceil(Number(((total_price + hardwarePrice) * 0.03)));
             discounted_price = (total_price + hardwarePrice) - discount
         }
+        let invoice_status = pay_now ? "PAID" : "UNPAID"
         let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
 
         let user_credits = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
@@ -974,6 +988,13 @@ exports.createDeviceProfile = async function (req, res) {
                 return
             }
             else {
+                if (result[0].credits_limit > (result[0].credits - discounted_price)) {
+                    res.send({
+                        status: false,
+                        msg: "Error: Your Credits limits will exceed after apply this service. Please select other services OR Purchase Credits."
+                    });
+                    return
+                }
                 if (result.length || req.body.term === '0' || !pay_now) {
                     let dealer_credits = result.length ? result[0].credits : 0;
                     let dealer_credits_copy = dealer_credits
@@ -1207,7 +1228,9 @@ exports.createDeviceProfile = async function (req, res) {
                                             quantity: duplicate,
                                             subtotal: invoice_subtotal,
                                             paid: discounted_price,
-                                            invoice_nr: inv_no
+                                            invoice_nr: inv_no,
+                                            invoice_status: invoice_status,
+                                            paid_credits: paid_credits,
                                         };
 
                                         let fileName = "invoice-" + inv_no + ".pdf"
@@ -1432,7 +1455,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                             }
                                                             else {
                                                                 let transection_due_credits = total_price;
-                                                                let paid_credits = 0
+
 
                                                                 if (dealer_credits_copy > 0) {
                                                                     if (dealer_credits_copy < total_price) {
@@ -1446,6 +1469,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                                         let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price} ,'credit' , 'transferred' , 'services' , ${total_price} ,0)`
                                                                         await sql.query(transection_credits)
                                                                     }
+                                                                    invoice_status = "PARTIALLY PAID"
                                                                 } else {
                                                                     let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id })}' ,${total_price} ,'credit' , 'pending' , 'services' , 0 ,${total_price})`
                                                                     await sql.query(transection_credits)
@@ -1604,7 +1628,9 @@ exports.createDeviceProfile = async function (req, res) {
                                                                     quantity: 1,
                                                                     subtotal: invoice_subtotal,
                                                                     paid: discounted_price,
-                                                                    invoice_nr: inv_no
+                                                                    invoice_nr: inv_no,
+                                                                    invoice_status: invoice_status,
+                                                                    paid_credits: paid_credits
                                                                 };
 
                                                                 let fileName = "invoice-" + inv_no + ".pdf"
@@ -1826,6 +1852,12 @@ exports.editDevices = async function (req, res) {
             let pay_now = req.body.pay_now
             let cancelService = req.body.cancelService ? req.body.cancelService : false
             let exp_month = expiry_date
+            let sub_total = 0
+            let paid_credits = 0
+
+            let invoice_status = pay_now ? "PAID" : "UNPAID"
+            let dealer_credits_copy = 0
+
             // console.log(expiry_date);
             // return
             // console.log("Cancel Services", user_id);
@@ -1879,8 +1911,16 @@ exports.editDevices = async function (req, res) {
                         if (newService) {
                             let user_credits_q = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
                             let results = await sql.query(user_credits_q)
+                            if (!pay_now && results[0].credits_limit > (results[0].credits - discounted_price)) {
+                                res.send({
+                                    status: false,
+                                    msg: "Error: Your Credits limits will exceed after apply this service. Please select other services OR Purchase Credits."
+                                });
+                                return
+                            }
                             if (results && results.length || expiry_date == 0 || !pay_now) {
                                 dealer_credits = results[0] ? results[0].credits : 0
+                                dealer_credits_copy = dealer_credits
                                 if (dealer_credits < total_price && pay_now) {
                                     res.send({
                                         status: false,
@@ -1962,16 +2002,16 @@ exports.editDevices = async function (req, res) {
                                                 serviceRemainingDays = prevServiceExpiryDate.diff(dateNow, 'days') + 1
                                                 prevServiceTotalDays = prevServiceExpiryDate.diff(prevServiceStartDate, 'days')
                                                 // console.log(serviceRemainingDays, prevServiceTotalDays, preTotalPrice);
-                                                creditsToRefund = ((preTotalPrice / prevServiceTotalDays) * serviceRemainingDays).toFixed(2)
-                                                console.log(creditsToRefund);
+                                                creditsToRefund = Math.ceil((preTotalPrice / prevServiceTotalDays) * serviceRemainingDays)
+                                                // console.log(creditsToRefund);
                                                 // return
                                                 prevServicePaidPrice = preTotalPrice - creditsToRefund
 
                                                 let profitLoss = await helpers.calculateProfitLoss(prevServicePackages, prevServiceProducts, loggedDealerType)
                                                 prev_service_admin_profit = profitLoss.admin_profit
                                                 prev_service_dealer_profit = profitLoss.dealer_profit
-                                                refund_prev_service_admin_profit = (prev_service_admin_profit / prevServiceTotalDays) * serviceRemainingDays
-                                                refund_prev_service_dealer_profit = (prev_service_dealer_profit / prevServiceTotalDays) * serviceRemainingDays
+                                                refund_prev_service_admin_profit = Math.ceil((prev_service_admin_profit / prevServiceTotalDays) * serviceRemainingDays)
+                                                refund_prev_service_dealer_profit = Math.ceil((prev_service_dealer_profit / prevServiceTotalDays) * serviceRemainingDays)
                                             }
                                         }
                                         // console.log(products);
@@ -1985,6 +2025,7 @@ exports.editDevices = async function (req, res) {
                                                 newServicePrice += Number(item.unit_price)
                                             })
                                         }
+                                        sub_total = newServicePrice
                                         // console.log(newServicePrice, prevServicePaidPrice, newServicePrice, creditsToRefund);
                                         if (pay_now) {
                                             newServicePrice = newServicePrice - Math.ceil((newServicePrice * 0.03))
@@ -2174,7 +2215,6 @@ exports.editDevices = async function (req, res) {
                                     service_id = service_data_result.insertId
                                     helpers.saveServiceSalesDetails(JSON.parse(JSON.stringify(packages)), products, loggedDealerType, usr_acc_id, service_data_result.insertId, pay_now)
                                 }
-
                                 if (pgp_email != prevPGP) {
                                     console.log("PGP change");
                                     let updatePgpEmails =
@@ -2300,14 +2340,31 @@ exports.editDevices = async function (req, res) {
                                     transection_status = 'pending'
                                 }
 
-                                let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${newServicePrice} ,'credit' , '${transection_status}' , 'services' , ${(pay_now) ? newServicePrice : 0} , ${(pay_now) ? 0 : newServicePrice})`
-                                await sql.query(transection_credits)
+                                // let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${newServicePrice} ,'credit' , '${transection_status}' , 'services' , ${(pay_now) ? newServicePrice : 0} , ${(pay_now) ? 0 : newServicePrice})`
+                                // await sql.query(transection_credits)
 
-                                if (transection_status === 'pending') {
-                                    update_credits_query = 'update financial_account_balance set credits = credits - ' + newServicePrice + ' where dealer_id ="' + dealer_id + '"';
-                                } else {
-                                    update_credits_query = 'update financial_account_balance set credits = credits - ' + newServicePrice + ' where dealer_id ="' + dealer_id + '"';
+
+                                if (pay_now) {
+                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${newServicePrice} ,'credit' , '${transection_status}' , 'services' , ${newServicePrice} , ${0})`
+                                    await sql.query(transection_credits)
                                 }
+                                else {
+                                    let transection_due_credits = newServicePrice;
+                                    dealer_credits_copy += creditsToRefund
+                                    if (dealer_credits_copy > 0) {
+                                        transection_due_credits = newServicePrice - dealer_credits_copy
+                                        paid_credits = dealer_credits_copy
+                                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${newServicePrice} ,'credit' , '${transection_status}' , 'services' , ${paid_credits} , ${transection_due_credits})`
+                                        await sql.query(transection_credits)
+                                        invoice_status = "PARTIALLY PAID"
+                                    } else {
+                                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${newServicePrice} ,'credit' , 'pending' , 'services' , 0 ,${newServicePrice})`
+                                        await sql.query(transection_credits)
+                                    }
+                                }
+
+                                update_credits_query = 'update financial_account_balance set credits = credits - ' + newServicePrice + ' where dealer_id ="' + dealer_id + '"';
+
                                 await sql.query(update_credits_query);
                                 // if (pay_now) {
                                 //     update_credits_query = 'update financial_account_balance set credits =' + remaining_credits + ' ,due_credits = due_credits - ' + refund_due_credits + '  where dealer_id ="' + dealer_id + '"';
@@ -2339,9 +2396,11 @@ exports.editDevices = async function (req, res) {
                                     discount: (pay_now) ? Math.ceil(newServicePrice * 0.03) : 0,
                                     discountPercent: "3%",
                                     quantity: 1,
-                                    subtotal: pay_now ? newServicePrice + Math.ceil(newServicePrice * 0.03) : newServicePrice,
+                                    subtotal: sub_total,
                                     paid: total_price,
-                                    invoice_nr: inv_no
+                                    invoice_nr: inv_no,
+                                    invoice_status: invoice_status,
+                                    paid_credits: paid_credits
                                 };
 
                                 let fileName = "invoice-" + inv_no + ".pdf"
@@ -2538,6 +2597,9 @@ exports.extendServices = async function (req, res) {
             let vpnIncluded = false
             let user_id = req.body.user_id
             let exp_month = expiry_date
+            let paid_credits = 0
+            let dealer_credits_copy = 0,
+                invoice_status = (pay_now) ? "PAID" : "UNPAID"
             // let pkg_term = null
             // console.log(expiry_date);
             // return
@@ -2574,6 +2636,7 @@ exports.extendServices = async function (req, res) {
                         let results = await sql.query(user_credits_q)
                         if (results && results.length || !pay_now) {
                             dealer_credits = results[0] ? results[0].credits : 0
+                            dealer_credits_copy = dealer_credits
                             if (packages && packages.length) {
                                 packages.map((item) => {
                                     // pkg_term = item.pkg_term.split(' ')[0]
@@ -2799,9 +2862,24 @@ exports.extendServices = async function (req, res) {
                             transection_status = 'pending'
                         }
 
-                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, service_id: service_id })}' ,${newServicePrice} ,'credit' , '${transection_status}' , 'services' , ${(pay_now) ? newServicePrice : 0} , ${(pay_now) ? 0 : newServicePrice})`
-                        await sql.query(transection_credits)
+                        if (pay_now) {
 
+                            let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, service_id: service_id })}' ,${newServicePrice} ,'credit' , 'transferred' , 'services' , ${newServicePrice} , ${0})`
+                            await sql.query(transection_credits)
+                        }
+                        else {
+                            let transection_due_credits = newServicePrice;
+                            if (dealer_credits_copy > 0) {
+                                transection_due_credits = newServicePrice - dealer_credits_copy
+                                paid_credits = dealer_credits_copy
+                                let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${newServicePrice} ,'credit' , 'pending' , 'services' , ${paid_credits} , ${transection_due_credits})`
+                                await sql.query(transection_credits)
+                                invoice_status = "PARTIALLY PAID"
+                            } else {
+                                let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${newServicePrice} ,'credit' , 'pending' , 'services' , 0 ,${newServicePrice})`
+                                await sql.query(transection_credits)
+                            }
+                        }
 
                         let update_credits_query = 'update financial_account_balance set credits = credits - ' + newServicePrice + ' where dealer_id ="' + dealer_id + '"';
                         await sql.query(update_credits_query);
@@ -2826,7 +2904,9 @@ exports.extendServices = async function (req, res) {
                             quantity: 1,
                             subtotal: (pay_now) ? newServicePrice + Math.ceil(newServicePrice * 0.03) : newServicePrice,
                             paid: total_price,
-                            invoice_nr: inv_no
+                            invoice_nr: inv_no,
+                            paid_credits: paid_credits,
+                            invoice_status: invoice_status
                         };
 
                         let fileName = "invoice-" + inv_no + ".pdf"
@@ -3029,8 +3109,8 @@ exports.cancelExtendedServices = async function (req, res) {
                             update_credits_query = 'update financial_account_balance set credits = credits + ' + totalPrice + ' where dealer_id ="' + dealer_id + '"';
                             await sql.query(update_credits_query);
 
-                            let update_profits_transections = `SELECT * financial_account_transections SET status = 'cancelled' WHERE transection_data LIKE '%transection_type":"profit","service_id": ${service.id}% ' user_dvc_acc_id = ${user_acc_id} AND status = 'transferred' AND type = 'services'`
-                            await sql.query(update_profits_transections)
+                            // let update_profits_transections = `SELECT * financial_account_transections SET status = 'cancelled' WHERE transection_data LIKE '%transection_type":"profit","service_id": ${service.id}% ' user_dvc_acc_id = ${user_acc_id} AND status = 'transferred' AND type = 'services'`
+                            // await sql.query(update_profits_transections)
 
                             service_admin_profit = service_admin_profit - Math.ceil(service_admin_profit * 0.03)
                             service_dealer_profit = service_dealer_profit - Math.ceil(service_dealer_profit * 0.03)

@@ -37,6 +37,11 @@ function generateCustomerInformation(doc, invoice) {
         .fontSize(20)
         .text("INVOICE", 50, 160);
 
+    doc
+        .fillColor("#444444")
+        .fontSize(20)
+        .text(invoice.invoice_status, 400, 160);
+
     generateHr(doc, 185);
 
     const customerInformationTop = 200;
@@ -51,7 +56,7 @@ function generateCustomerInformation(doc, invoice) {
         .text(formatDate(new Date()), 150, customerInformationTop + 15)
         .text("Balance Due:", 50, customerInformationTop + 30)
         .text(
-            invoice.paid + " Credits",
+            ((invoice.pay_now) ? 0 : (invoice.invoice_status === "UNPAID" ? invoice.paid : (invoice.paid - invoice.paid_credits))) + " Credits",
             150,
             customerInformationTop + 30
         )
@@ -206,10 +211,10 @@ function generateInvoiceTable(doc, invoice, type) {
         "",
         "Paid To Date : ",
         "",
-        ((invoice.pay_now) ? invoice.paid : 0) + " Credits"
+        ((invoice.pay_now) ? invoice.paid : (invoice.invoice_status === "UNPAID" ? 0 : invoice.paid_credits)) + " Credits"
     );
 
-    const duePosition = paidToDatePosition + 25;
+    const duePosition = paidToDatePosition + 15;
     doc.font("Helvetica-Bold");
     generateTableRow(
         doc,
@@ -219,7 +224,7 @@ function generateInvoiceTable(doc, invoice, type) {
         "",
         "Balance Due:",
         "",
-        invoice.paid + " Credits"
+        ((invoice.pay_now) ? 0 : (invoice.invoice_status === "UNPAID" ? invoice.paid : (invoice.paid - invoice.paid_credits))) + " Credits"
     );
 
     doc.font("Helvetica-Bold");
@@ -273,7 +278,7 @@ function generateEditInvoiceTable(doc, invoice, type) {
             "Prev Service Refund",
             "1 Month",
             item.serviceRemainingDays,
-            "-12",
+            "-" + (invoice.prevService.creditsToRefund / item.serviceRemainingDays).toFixed(2),
             "-" + invoice.prevService.creditsToRefund
 
         );
@@ -289,7 +294,7 @@ function generateEditInvoiceTable(doc, invoice, type) {
             "",
             "TOTAL REFUND :",
             "",
-            "-", invoice.prevService.creditsToRefund + " Credits"
+            "-" + invoice.prevService.creditsToRefund + " Credits"
         );
 
 
@@ -424,12 +429,24 @@ function generateEditInvoiceTable(doc, invoice, type) {
         "",
         "Paid to date:",
         "",
-        (invoice.pay_now) ? invoice.paid : 0 + " Credits"
+        ((invoice.pay_now) ? invoice.paid : invoice.invoice_status ? invoice.paid_price : 0) + " Credits"
+    );
+    const duePosition1 = duePosition + 15;
+    doc.font("Helvetica-Bold");
+    generateTableRow(
+        doc,
+        duePosition1,
+        "",
+        "",
+        "",
+        "Balance Due:",
+        "",
+        ((invoice.pay_now) ? 0 : (invoice.invoice_status === "UNPAID" ? invoice.paid : (invoice.paid - invoice.paid_credits))) + " Credits"
     );
     doc.font("Helvetica-Bold");
     generateTableRow(
         doc,
-        duePosition + 15,
+        duePosition1 + 15,
         "",
         "",
         "",
@@ -466,7 +483,7 @@ function generateTableRow(
         .text(item, 50, y)
         .text(description, 100, y, { width: 150, align: "center" })
         .text(term, 250, y)
-        .text(unitCost, 300, y, { width: 120, align: "right" })
+        .text(unitCost, 300, y, { width: 115, align: "right" })
         .text(quantity, 400, y, { width: 65, align: "right" })
         .text(lineTotal, 0, y, { align: "right" });
 }

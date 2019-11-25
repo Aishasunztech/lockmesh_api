@@ -12,7 +12,8 @@ module.exports = {
       }),
       queryInterface.addColumn('hardwares_data', 'status', {
         type: Sequelize.ENUM,
-        values: ['returned', 'cancelled', 'completed', 'extended', 'request_for_cancel', 'deleted', 'active']
+        values: ['returned', 'delivered'],
+        defaultValue: 'delivered'
       }),
       queryInterface.removeColumn('hardwares_data', 'del_status')
 

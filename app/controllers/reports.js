@@ -7,6 +7,7 @@ let productData = {};
 let invoiceData = {};
 let hardwareData = {};
 let paymentHistoryData = {};
+let graceDaysData = {};
 let salesData = [];
 
 exports.generateProductReport = async function (req, res) {
@@ -305,6 +306,7 @@ exports.generateHardwareReport = async function (req, res) {
 
         response = {
             data: hardwareData,
+            status: true,
         };
 
         return res.send(response);
@@ -370,10 +372,10 @@ exports.generateSalesReport = async function (req, res) {
                 condition += ' AND d.device_id = "' + device + '"'
             }
 
-            packages = await sql.query(`SELECT ss.*, d.device_id as device_id, ua.link_code as dealer_pin FROM services_sale as ss
+            packages = await sql.query(`SELECT ss.*, d.device_id as device_id, ss.status as status, ua.dealer_id as dealer_id, ua.link_code as dealer_pin FROM services_sale as ss
             JOIN usr_acc as ua on ua.id = ss.user_acc_id 
             JOIN devices as d on ua.device_id = d.id
-            WHERE ss.status != 'cancelled' AND ss.item_type LIKE 'package'  ${condition} ORDER BY ss.id DESC`);
+            WHERE (ss.status != 'cancelled') AND ss.item_type LIKE 'package'  ${condition} ORDER BY ss.id DESC`);
 
             packages.map(function (value, index) {
 
@@ -382,10 +384,16 @@ exports.generateSalesReport = async function (req, res) {
                 let sale_price = 0;
                 let profit_loss = 0;
 
-                if (value.item_dealer_cost == 0 && (user_type === Constants.ADMIN || user_type === Constants.SUPER_ADMIN)) {
+                if (value.item_dealer_cost === 0 && (user_type === Constants.ADMIN || user_type === Constants.SUPER_ADMIN)) {
 
-                    cost_price = parseInt(value.item_admin_cost);
-                    sale_price = parseInt(value.item_sale_price);
+                    if (value.status === 'returned'){
+                        cost_price = parseInt(value.paid_admin_cost);
+                        sale_price = parseInt(value.paid_sale_price);
+
+                    }else{
+                        cost_price = parseInt(value.item_admin_cost);
+                        sale_price = parseInt(value.item_sale_price);
+                    }
                     profit_loss = sale_price - cost_price;
 
                     totalCost += cost_price;
@@ -399,14 +407,56 @@ exports.generateSalesReport = async function (req, res) {
                         'cost_price': cost_price,
                         'sale_price': sale_price,
                         'profit_loss': profit_loss,
+                        'status': value.status,
                         'created_at': value.created_at,
                     })
 
                 } else {
 
-                    if (value.item_dealer_cost != 0 && user_type === Constants.DEALER) {
-                        cost_price = parseInt(value.item_dealer_cost);
-                        sale_price = parseInt(value.item_sale_price);
+                    if ((value.item_dealer_cost !== 0 || value.dealer_id == verify.user.id) && user_type === Constants.DEALER) {
+
+
+                        if (value.item_dealer_cost != 0 ){
+
+                            if (value.status === 'returned'){
+                                cost_price = parseInt(value.paid_dealer_cost);
+                                sale_price = parseInt(value.paid_sale_price);
+                            }else{
+                                cost_price = parseInt(value.item_dealer_cost);
+                                sale_price = parseInt(value.item_sale_price);
+                            }
+
+                        }else{
+                            if (value.status === 'returned'){
+                                cost_price = parseInt(value.paid_sale_price);
+                                sale_price = parseInt(value.paid_retail_price);
+                            }else{
+                                cost_price  = parseInt(value.item_sale_price);
+                                sale_price  = parseInt(value.retail_price);
+                            }
+                        }
+
+                        profit_loss = sale_price - cost_price;
+
+                        totalCost += cost_price;
+                        totalSale += sale_price;
+
+                        packagesData.push({
+                            'type': 'Package',
+                            'name': name.replace(/_/g, ' '),
+                            'dealer_pin': value.dealer_pin,
+                            'device_id': value.device_id,
+                            'cost_price': cost_price,
+                            'sale_price': sale_price,
+                            'profit_loss': profit_loss,
+                            'status': value.status,
+                            'created_at': value.created_at,
+                        })
+
+                    } else if (user_type === Constants.ADMIN || user_type === Constants.SUPER_ADMIN) {
+
+                        cost_price = parseInt(value.item_admin_cost);
+                        sale_price = parseInt(value.item_dealer_cost);
                         profit_loss = sale_price - cost_price;
 
                         totalCost += cost_price;
@@ -422,10 +472,16 @@ exports.generateSalesReport = async function (req, res) {
                             'profit_loss': profit_loss,
                             'created_at': value.created_at,
                         })
+                    }else if (user_type === Constants.SDEALER){
 
-                    } else if (user_type === Constants.ADMIN || user_type === Constants.SUPER_ADMIN) {
-                        cost_price = parseInt(value.item_admin_cost);
-                        sale_price = parseInt(value.item_dealer_cost);
+                        if (value.status === 'returned'){
+                            cost_price  = parseInt(value.paid_retail_price);
+                            sale_price  = parseInt(value.paid_dealer_cost);
+                        }else{
+                            cost_price  = parseInt(value.item_sale_price);
+                            sale_price  = parseInt(value.retail_price);
+                        }
+
                         profit_loss = sale_price - cost_price;
 
                         totalCost += cost_price;
@@ -479,13 +535,12 @@ exports.generateSalesReport = async function (req, res) {
                 hardwareCondition += ' AND d.device_id = "' + device + '"'
             }
 
-            let salesQ = `SELECT hd.*, d.device_id as device_id, ua.link_code as dealer_pin FROM hardwares_data as hd
+            let salesQ = `SELECT hd.*, d.device_id as device_id, ua.dealer_id as dealer_id, ua.link_code as dealer_pin FROM hardwares_data as hd
             JOIN usr_acc as ua 
                 on ua.id = hd.user_acc_id 
             JOIN devices as d 
                 on ua.device_id = d.id
             WHERE hd.id IS NOT NULL ${hardwareCondition} AND hd.status != 'returned' ORDER BY hd.id DESC`;
-            console.log(salesQ);
 
             hardwares = await sql.query(salesQ);
 
@@ -516,9 +571,53 @@ exports.generateSalesReport = async function (req, res) {
 
                 } else {
 
-                    if (value.item_dealer_cost != 0 && user_type === Constants.DEALER) {
-                        cost_price = parseInt(value.dealer_cost_credits);
-                        sale_price = parseInt(value.total_credits);
+                    if ((value.dealer_cost_credits !== 0 || value.dealer_id == verify.user.id) && user_type === Constants.DEALER) {
+
+                        if (value.dealer_cost_credits != 0 ){
+
+                            cost_price = parseInt(value.dealer_cost_credits);
+                            sale_price = parseInt(value.total_credits);
+                            profit_loss = sale_price - cost_price;
+
+                            totalCost += cost_price;
+                            totalSale += sale_price;
+
+                            hardwaresData.push({
+                                'type': 'Hardware',
+                                'name': value.hardware_name,
+                                'dealer_pin': value.dealer_pin,
+                                'device_id': value.device_id,
+                                'cost_price': cost_price,
+                                'sale_price': sale_price,
+                                'profit_loss': profit_loss,
+                                'created_at': value.created_at,
+                            })
+
+                        }else{
+
+                            cost_price  = parseInt(value.total_credits);
+                            sale_price  = parseInt(value.retail_price);
+                            profit_loss = sale_price - cost_price;
+
+                            totalCost += cost_price;
+                            totalSale += sale_price;
+
+                            hardwaresData.push({
+                                'type': 'Hardware',
+                                'name': value.hardware_name,
+                                'dealer_pin': value.dealer_pin,
+                                'device_id': value.device_id,
+                                'cost_price': cost_price,
+                                'sale_price': sale_price,
+                                'profit_loss': profit_loss,
+                                'created_at': value.created_at,
+                            })
+                        }
+
+
+                    } else if (user_type === Constants.ADMIN || user_type === Constants.SUPER_ADMIN) {
+                        cost_price = parseInt(value.admin_cost_credits);
+                        sale_price = parseInt(value.dealer_cost_credits);
                         profit_loss = sale_price - cost_price;
 
                         totalCost += cost_price;
@@ -535,9 +634,9 @@ exports.generateSalesReport = async function (req, res) {
                             'created_at': value.created_at,
                         })
 
-                    } else if (user_type === Constants.ADMIN || user_type === Constants.SUPER_ADMIN) {
-                        cost_price = parseInt(value.admin_cost_credits);
-                        sale_price = parseInt(value.dealer_cost_credits);
+                    }else if (user_type === Constants.SDEALER){
+                        cost_price  = parseInt(value.total_credits);
+                        sale_price  = parseInt(value.retail_price);
                         profit_loss = sale_price - cost_price;
 
                         totalCost += cost_price;
@@ -574,7 +673,7 @@ exports.generateSalesReport = async function (req, res) {
             saleInfo,
             status: true,
         };
-        
+
         console.log(response);
 
         return res.send(response);
@@ -583,6 +682,58 @@ exports.generateSalesReport = async function (req, res) {
 
 };
 
+exports.generateGraceDaysReport = async function (req, res) {
+
+    let verify = req.decoded;
+
+    if (verify) {
+
+        let user_type = verify.user.user_type;
+        let dealer = req.body.dealer;
+        let from = req.body.from;
+        let to = req.body.to;
+        let type = req.body.type;
+        let transaction_type = req.body.transaction_type;
+        let device = req.body.device;
+
+        let condition = '';
+
+        let response = {
+            status: false,
+        };
+
+        if (dealer) {
+            condition += ' AND gdh.dealer_id = ' + dealer
+        }
+
+        if (from) {
+            condition += ' AND DATE(gdh.created_at) >= "' + moment(from).format('YYYY-MM-DD') + '"'
+        }
+
+        if (to) {
+            condition += ' AND DATE(gdh.created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
+        }
+
+        if (device) {
+            condition += ' AND d.device_id = "' + device + '"'
+        }
+
+        graceDaysData = await sql.query(`SELECT gdh.*, d.device_id as device_id, ua.link_code as dealer_pin FROM grace_days_histories as gdh 
+            JOIN usr_acc as ua 
+        on ua.id = gdh.user_acc_id 
+            JOIN devices as d 
+        on ua.device_id = d.id
+        WHERE gdh.id IS NOT NULL ${condition} ORDER BY gdh.id DESC`);
+
+        response = {
+            data: graceDaysData,
+            status: true,
+        };
+
+        return res.send(response);
+    }
+
+};
 
 
 // if (productType === 'PRODUCTS' || productType === 'ALL') {
