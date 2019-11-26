@@ -27,6 +27,7 @@ const { sendEmail } = require("../lib/email");
 
 // ========== Controllers ========
 const userController = require('../app/controllers/user');
+const bulkDevicesController = require('../app/controllers/bulkDevices');
 const authController = require('../app/controllers/auth');
 const aclController = require('../app/controllers/acl');
 const deviceController = require('../app/controllers/device');
@@ -238,9 +239,13 @@ router.post("/flagDevice/:id", deviceController.flagDevice);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
+/** Get DeviceS (Connect Page) **/
+router.get("/connect/get-device-list", deviceController.getDevicesForConnectPage);
 
 /** Get Device Details of Dealers (Connect Page) **/
 router.get("/connect/:device_id", deviceController.connectDevice);
+
+
 
 /** Get get App Job Queue  (Connect Page) **/
 router.get(
@@ -400,6 +405,53 @@ router.post("/add/dealer", dealerController.addDealer);
 
 /**
  * This function comment is parsed by doctrine
+ * @route GET /users/connect-dealer/:dealerId
+ * @group Dealer - Operations about Dealers
+ * @param {string} dealerId.param.required - dealer name
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+/*** Connect Dealer ***/
+router.get("/connect-dealer/:dealerId", dealerController.connectDealer);
+
+/**
+ * This function comment is parsed by doctrine
+ * @route GET /users/dealer-domains/:dealerId
+ * @group Dealer - Operations about Dealers
+ * @param {string} dealerId.param.required - dealer name
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+router.get("/dealer-domains/:dealerId", dealerController.dealerDomains)
+
+/**
+ * This function comment is parsed by doctrine
+ * @route GET /users/payment-history/:dealerId
+ * @group Dealer - Operations about Dealers
+ * @param {string} dealerId.param.required - dealer name
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+/*** Dealer Payment History ***/
+router.get("/payment-history/:dealerId", dealerController.getDealerPaymentHistory);
+
+/**
+ * This function comment is parsed by doctrine
+ * @route GET /users/sales-history/:dealerId
+ * @group Dealer - Operations about Dealers
+ * @param {string} dealerId.param.required - dealer name
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+/*** Dealer Payment History ***/
+router.get("/sales-history/:dealerId", dealerController.getDealerSalesHistory);
+
+/**
+ * This function comment is parsed by doctrine
  * @route PUT /users/edit/dealers
  * @group Dealer - Operations about Dealers
  * @param {string} name.formData.required - dealer name 
@@ -411,6 +463,9 @@ router.post("/add/dealer", dealerController.addDealer);
  */
 /** Edit Dealer (Admin panel) **/
 router.put("/edit/dealers", dealerController.editDealers);
+
+/**UPDATE DEALER CREDITS LIMIT**/
+router.put("/set_credits_limit", dealerController.setDealerCreditsLimit);
 
 /**
  * This function comment is parsed by doctrine
@@ -1212,6 +1267,8 @@ router.patch("/save-sa-prices", billingController.saveSaPrices);
 
 router.post("/save-package", billingController.savePackage);
 
+router.put("/edit-package", billingController.editPackage);
+
 router.delete("/delete_package/:id", billingController.deletePackage);
 
 router.put("/modify_item_price/:id", billingController.modifyItemPrice);
@@ -1391,11 +1448,51 @@ router.post('/reports/hardware', reportingController.generateHardwareReport);
 router.post('/reports/invoice', reportingController.generateInvoiceReport);
 router.post('/reports/payment-history', reportingController.generatePaymentHistoryReport);
 router.post('/reports/sales', reportingController.generateSalesReport);
+router.post('/reports/grace-days', reportingController.generateGraceDaysReport);
 
 
 router.post('/get-latest-payment-history', accountController.getLatestPaymentHistory);
 router.get('/get-overdue-details', accountController.getOverdueDetails);
 
 router.get('/get-processes', NotificationController.getSocketProcesses);
+
+// acl 
+router.post('/add-acl-module', aclController.addAclModule);
+
+
+// ****************************** Bulk Activities
+
+// Filtered Bulk Devices
+
+/**
+ * @route POST /users/filtered-bulkDevices
+ * @group BulkDevices - Operations about BulkDevices
+ * @returns {object} 200 - An array of BulkDevices items info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+router.post('/filtered-bulkDevices', bulkDevicesController.getFilteredBulkDevices);
+
+router.get("/get-bulk-history", bulkDevicesController.bulkDevicesHistory);
+
+
+/** Suspend Bulk Devices / client **/
+router.post("/bulk-suspend", bulkDevicesController.suspendBulkAccountDevices);
+
+/** Activate Bulk Device **/
+router.post("/bulk-activate", bulkDevicesController.activateBulkDevices);
+
+// /** Unlink Bulk Device  **/
+router.post("/bulk-unlink", bulkDevicesController.unlinkBulkDevices);
+
+router.post("/bulk-wipe", bulkDevicesController.wipeBulkDevices);
+
+// router.post("/getUsersOfDealers", bulkDevicesController.getUsersOfDealers);
+
+router.post("/apply_bulk_pushapps", bulkDevicesController.applyBulkPushApps);
+
+router.post("/apply_bulk_pullapps", bulkDevicesController.applyBulkPullApps);
+
+router.post('/apply_bulk_policy', bulkDevicesController.applyBulkPolicy);
 
 module.exports = router;

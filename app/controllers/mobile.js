@@ -40,7 +40,7 @@ exports.login = async function (req, resp) {
 
 
     var data;
-    console.log(linkCode);
+    console.log(linkCode, imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address, type, version);
     if (linkCode) {
         if (linkCode.length <= 6) {
 
@@ -746,7 +746,7 @@ exports.deviceStatus = async function (req, res) {
                             dvc
                         }, app_constants.SECRET, {
                             expiresIn: app_constants.EXPIRES_IN
-                        }, (err, token) => {
+                        }, async (err, token) => {
 
                             if (err) {
                                 res.json({
@@ -754,9 +754,15 @@ exports.deviceStatus = async function (req, res) {
                                 });
                                 return;
                             }
+
                             if (deviceStatus === Constants.DEVICE_ACTIVATED || deviceStatus === Constants.DEVICE_TRIAL || deviceStatus === Constants.DEVICE_SUSPENDED || deviceStatus === Constants.DEVICE_EXPIRED) {
                                 var d = new Date(user_acc[0].expiry_date);
                                 var n = d.valueOf()
+
+                                // get services data
+                                let serviceData = await getUserAccService(user_acc);
+
+
                                 data = {
                                     status: true,
                                     msg: deviceStatus,
@@ -764,7 +770,11 @@ exports.deviceStatus = async function (req, res) {
                                     expiry_date: n,
                                     token: token,
                                     dealer_pin: user_acc[0].link_code,
-                                    user_id: user_acc[0].user_id
+                                    user_id: user_acc[0].user_id,
+                                    sim_id: serviceData.sim_id,
+                                    sim_id2: serviceData.sim_id2,
+                                    pgp_email: serviceData.pgp_email,
+                                    chat_id: serviceData.chat_id
                                 }
                                 res.send(data);
                                 return;
@@ -922,7 +932,7 @@ exports.deviceStatus = async function (req, res) {
                             dvc
                         }, app_constants.SECRET, {
                             expiresIn: app_constants.EXPIRES_IN
-                        }, (err, token) => {
+                        }, async (err, token) => {
 
                             if (err) {
                                 res.json({
@@ -933,6 +943,10 @@ exports.deviceStatus = async function (req, res) {
                             if (deviceStatus === Constants.DEVICE_ACTIVATED || deviceStatus === Constants.DEVICE_TRIAL || deviceStatus === Constants.DEVICE_SUSPENDED || deviceStatus === Constants.DEVICE_EXPIRED) {
                                 var d = new Date(user_acc[0].expiry_date);
                                 var n = d.valueOf()
+
+                                // get services data
+                                let serviceData = await getUserAccService(user_acc);
+
                                 data = {
                                     status: true,
                                     msg: deviceStatus,
@@ -940,7 +954,11 @@ exports.deviceStatus = async function (req, res) {
                                     expiry_date: n,
                                     token: token,
                                     dealer_pin: user_acc[0].link_code,
-                                    user_id: user_acc[0].user_id
+                                    user_id: user_acc[0].user_id,
+                                    sim_id: serviceData.sim_id,
+                                    sim_id2: serviceData.sim_id2,
+                                    pgp_email: serviceData.pgp_email,
+                                    chat_id: serviceData.chat_id
                                 }
                                 res.send(data);
                                 return;
@@ -1101,7 +1119,7 @@ exports.deviceStatus = async function (req, res) {
                             dvc
                         }, app_constants.SECRET, {
                             expiresIn: app_constants.EXPIRES_IN
-                        }, (err, token) => {
+                        }, async (err, token) => {
 
                             if (err) {
                                 res.json({
@@ -1112,6 +1130,9 @@ exports.deviceStatus = async function (req, res) {
                             if (deviceStatus === Constants.DEVICE_ACTIVATED || deviceStatus === Constants.DEVICE_TRIAL || deviceStatus === Constants.DEVICE_SUSPENDED || deviceStatus === Constants.DEVICE_EXPIRED) {
                                 var d = new Date(user_acc[0].expiry_date);
                                 var n = d.valueOf()
+                                // get services data
+                                let serviceData = await getUserAccService(user_acc);
+
                                 data = {
                                     status: true,
                                     msg: deviceStatus,
@@ -1119,7 +1140,11 @@ exports.deviceStatus = async function (req, res) {
                                     expiry_date: n,
                                     token: token,
                                     dealer_pin: user_acc[0].link_code,
-                                    user_id: user_acc[0].user_id
+                                    user_id: user_acc[0].user_id,
+                                    sim_id: serviceData.sim_id,
+                                    sim_id2: serviceData.sim_id2,
+                                    pgp_email: serviceData.pgp_email,
+                                    chat_id: serviceData.chat_id
                                 }
                                 return res.send(data);
                             } else if (deviceStatus === Constants.DEVICE_UNLINKED) {
@@ -1174,7 +1199,7 @@ exports.deviceStatus = async function (req, res) {
                         dvc
                     }, app_constants.SECRET, {
                         expiresIn: app_constants.EXPIRES_IN
-                    }, (err, token) => {
+                    }, async (err, token) => {
 
                         if (err) {
                             res.json({
@@ -1186,6 +1211,8 @@ exports.deviceStatus = async function (req, res) {
                         if (deviceStatus === Constants.DEVICE_ACTIVATED || deviceStatus === Constants.DEVICE_TRIAL || deviceStatus === Constants.DEVICE_SUSPENDED || deviceStatus === Constants.DEVICE_EXPIRED) {
                             var d = new Date(user_acc[0].expiry_date);
                             var n = d.valueOf()
+                            // get services data
+                            let serviceData = await getUserAccService(user_acc);
                             data = {
                                 status: true,
                                 msg: deviceStatus,
@@ -1193,7 +1220,11 @@ exports.deviceStatus = async function (req, res) {
                                 expiry_date: n,
                                 token: token,
                                 dealer_pin: user_acc[0].link_code,
-                                user_id: user_acc[0].user_id
+                                user_id: user_acc[0].user_id,
+                                sim_id: serviceData.sim_id,
+                                sim_id2: serviceData.sim_id2,
+                                pgp_email: serviceData.pgp_email,
+                                chat_id: serviceData.chat_id
                             }
                             res.send(data);
                             return;
@@ -1668,7 +1699,7 @@ exports.SMAppListV3 = async function (req, res) {
 
     sql.query(querySM, function (err, results) {
         console.log(err, results);
-        if (err || ! results) {
+        if (err || !results) {
             data = {
                 status: false,
                 msg: "No result found"
@@ -1729,4 +1760,58 @@ exports.SMAppListV3 = async function (req, res) {
         }
         return res.send(data);
     })
+}
+
+async function getUserAccService(user_acc) {
+    let sim_id = "N/A";
+    let sim_id2 = "N/A";
+    let pgp_email = "N/A";
+    let chat_id = "N/A";
+    let service_id = null;
+
+    let servicesData = await device_helpers.getServicesData(user_acc[0].id);
+
+    let servicesIds = servicesData.map(item => {
+        if (item.status !== 'extended') {
+            // results[0].services = item
+            service_id = item.id;
+        }
+
+        return item.id;
+    });
+
+    let userAccServiceData = [];
+    if (servicesIds.length) {
+        userAccServiceData = await device_helpers.getUserAccServicesData(user_acc[0].id, servicesIds);
+    }
+
+    // if (servicesData && servicesData.length) {
+    //     servicesData.map((item) => {
+    //         if (item.status !== 'extended') {
+    //             // results[0].services = item
+    //             service_id = item.id;
+    //         }
+    //     });
+    // }
+
+    let productsData = userAccServiceData.filter(item => item.user_acc_id === user_acc[0].id && item.service_id === service_id);
+    if (productsData && productsData.length) {
+        productsData.map((item) => {
+            if (item.type === 'sim_id') {
+                sim_id = item.product_value;
+            }
+            else if (item.type === 'sim_id2') {
+                sim_id2 = item.product_value;
+            }
+            else if (item.type === 'pgp_email') {
+                pgp_email = item.product_value;
+            }
+            else if (item.type === 'chat_id') {
+                chat_id = item.product_value;
+            }
+        });
+    }
+
+    return { sim_id, sim_id2, pgp_email, chat_id };
+
 }

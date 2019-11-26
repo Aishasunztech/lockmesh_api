@@ -55,16 +55,19 @@ module.exports = {
 		}
 	},
 	getUserType: async function (userId) {
-		var query1 = "SELECT type FROM dealers where dealer_id =" + userId;
+		let query1 =`SELECT d.type as type, roles.role AS role FROM dealers AS d JOIN user_roles AS roles ON (d.type = roles.id) WHERE d.dealer_id=${userId}`
+		// var query1 = "SELECT type FROM dealers where dealer_id =" + userId;
+
 		var user = await sql.query(query1);
 		if (user.length) {
-			var query2 = "SELECT * FROM user_roles where id =" + user[0].type;
-			var role = await sql.query(query2);
-			if (role.length) {
-				return role[0].role;
-			} else {
-				return false;
-			}
+			// var query2 = "SELECT * FROM user_roles where id =" + user[0].type;
+			// var role = await sql.query(query2);
+			// if (role.length) {
+				// return role[0].role;
+				return user[0].role;
+			// } else {
+			// 	return false;
+			// }
 		} else {
 			return false;
 		}
@@ -136,15 +139,17 @@ module.exports = {
 
 		if (componentUri.includes("/connect-device/")) {
 			componentUri = "/connect-device/:deviceId";
+		} else if (componentUri.includes('/connect-dealer/')){
+			componentUri = '/connect-dealer'
 		}
-		// console.log(componentUri);
-
-		var component = await sql.query(
-			"SELECT * FROM acl_modules WHERE uri ='" + componentUri + "' "
-		);
-		// console.log("SELECT * FROM acl_modules WHERE uri ='" + componentUri + "' ");
+		console.log("componentUri:", componentUri);
+		// this query should be based on ComponentName, not on ComponentUri
+		let componentQ = `SELECT * FROM acl_modules WHERE uri LIKE '${componentUri}%'`
+		
+		let component = await sql.query(componentQ);
+		
 		if (component.length) {
-			// console.log("hello", component);
+			
 			return component[0];
 		} else {
 			return false;
@@ -379,44 +384,64 @@ module.exports = {
 				devices_acc_array.push(results[i].id)
 			}
 			let user_acc_ids = devices_acc_array.join()
-			let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
-			let sim_ids = await device_helpers.getSimids(user_acc_ids);
-			let chat_ids = await device_helpers.getChatids(user_acc_ids);
+			// let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
+			// let sim_ids = await device_helpers.getSimids(user_acc_ids);
+			// let chat_ids = await device_helpers.getChatids(user_acc_ids);
 			let servicesData = await device_helpers.getServicesData(user_acc_ids)
-
+			let servicesIds = servicesData.map(item => { return item.id })
+			let userAccServiceData = []
+			if (servicesIds.length) {
+				userAccServiceData = await device_helpers.getUserAccServicesData(user_acc_ids, servicesIds.join())
+			}
 			for (let device of results) {
 				device.finalStatus = device_helpers.checkStatus(device);
-				let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === device.id);
-				if (pgp_email) {
-					device.pgp_email = pgp_email.pgp_email
-				}
-				let sim_idArray = sim_ids.filter(sim_id => sim_id.user_acc_id === device.id);
-				if (sim_idArray && sim_idArray.length) {
-					device.sim_id = sim_idArray[0].sim_id
-					device.sim_id2 = sim_idArray[1] ? sim_idArray[1].sim_id : "N/A"
-				}
-				let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === device.id);
-				if (chat_id) {
-					device.chat_id = chat_id.chat_id
-				}
+				// let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === device.id);
+				// if (pgp_email) {
+				// 	device.pgp_email = pgp_email.pgp_email
+				// }
+				// let sim_idArray = sim_ids.filter(sim_id => sim_id.user_acc_id === device.id);
+				// if (sim_idArray && sim_idArray.length) {
+				// 	device.sim_id = sim_idArray[0].sim_id
+				// 	device.sim_id2 = sim_idArray[1] ? sim_idArray[1].sim_id : "N/A"
+				// }
+				// let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === device.id);
+				// if (chat_id) {
+				// 	device.chat_id = chat_id.chat_id
+				// }
 				// let services = servicesData.find(data => data.user_acc_id === device.id);
 				// if (services) {
 				// 	device.services = services
 				// }
+				let service_id = null
 				let services = servicesData.filter(data => data.user_acc_id === device.id);
 				if (services && services.length) {
-					// if (services.length > 1) {
 					services.map((item) => {
 						if (item.status === 'extended') {
 							device.extended_services = item
 						} else {
 							device.services = item
+							service_id = item.id
 						}
 					})
-					// } else {
-					//     device.services = services[0]
-					// }
 				}
+				let productsData = userAccServiceData.filter(item => item.user_acc_id === device.id && item.service_id === service_id);
+				if (productsData && productsData.length) {
+					productsData.map((item) => {
+						if (item.type === 'sim_id') {
+							device.sim_id = item.product_value
+						}
+						else if (item.type === 'sim_id2') {
+							device.sim_id2 = item.product_value
+						}
+						else if (item.type === 'pgp_email') {
+							device.pgp_email = item.product_value
+						}
+						else if (item.type === 'chat_id') {
+							device.chat_id = item.product_value
+						}
+					})
+				}
+
 			}
 
 			return results;
@@ -551,44 +576,65 @@ module.exports = {
 		);
 
 		if (results.length) {
-			let pgp_emails = await device_helpers.getPgpEmails(results[0].id);
-			let sim_ids = await device_helpers.getSimids(results[0].id);
-			let chat_ids = await device_helpers.getChatids(results[0].id);
+			// let pgp_emails = await device_helpers.getPgpEmails(results[0].id);
+			// let sim_ids = await device_helpers.getSimids(results[0].id);
+			// let chat_ids = await device_helpers.getChatids(results[0].id);
 			let servicesData = await device_helpers.getServicesData(results[0].id);
+			let servicesIds = servicesData.map(item => { return item.id })
+			let userAccServiceData = []
+			if (servicesIds.length) {
+				userAccServiceData = await device_helpers.getUserAccServicesData(results[0].id, servicesIds.join())
+			}
 
 			results[0].finalStatus = device_helpers.checkStatus(results[0]);
-			if (pgp_emails[0] && pgp_emails[0].pgp_email) {
-				results[0].pgp_email = pgp_emails[0].pgp_email
-			} else {
-				results[0].pgp_email = "N/A"
-			}
-			if (sim_ids && sim_ids.length) {
-				results[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
-				results[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
-			}
-			if (chat_ids[0] && chat_ids[0].chat_id) {
-				results[0].chat_id = chat_ids[0].chat_id
-			}
-			else {
-				results[0].chat_id = "N/A"
+			// if (pgp_emails[0] && pgp_emails[0].pgp_email) {
+			// 	results[0].pgp_email = pgp_emails[0].pgp_email
+			// } else {
+			// 	results[0].pgp_email = "N/A"
+			// }
+			// if (sim_ids && sim_ids.length) {
+			// 	results[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
+			// 	results[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
+			// }
+			// if (chat_ids[0] && chat_ids[0].chat_id) {
+			// 	results[0].chat_id = chat_ids[0].chat_id
+			// }
+			// else {
+			// 	results[0].chat_id = "N/A"
 
-			}
+			// }
 			// if (servicesData[0]) {
 			// 	results[0].services = servicesData[0]
 			// }
 			let services = servicesData;
+			let service_id = null
 			if (services && services.length) {
-				// if (services.length > 1) {
 				services.map((item) => {
 					if (item.status === 'extended') {
 						results[0].extended_services = item
 					} else {
 						results[0].services = item
+						service_id = item.id
 					}
 				})
-				// } else {
-				//     results[0].services = services[0]
-				// }
+			}
+
+			let productsData = userAccServiceData.filter(item => item.user_acc_id === results[0].id && item.service_id === service_id);
+			if (productsData && productsData.length) {
+				productsData.map((item) => {
+					if (item.type === 'sim_id') {
+						results[0].sim_id = item.product_value
+					}
+					else if (item.type === 'sim_id2') {
+						results[0].sim_id2 = item.product_value
+					}
+					else if (item.type === 'pgp_email') {
+						results[0].pgp_email = item.product_value
+					}
+					else if (item.type === 'chat_id') {
+						results[0].chat_id = item.product_value
+					}
+				})
 			}
 			return results[0];
 		} else {
@@ -976,42 +1022,58 @@ module.exports = {
 				devices_acc_array.push(results[i].id)
 			}
 			let user_acc_ids = devices_acc_array.join()
-			let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
-			let sim_ids = await device_helpers.getSimids(user_acc_ids);
-			let chat_ids = await device_helpers.getChatids(user_acc_ids);
+			// let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
+			// let sim_ids = await device_helpers.getSimids(user_acc_ids);
+			// let chat_ids = await device_helpers.getChatids(user_acc_ids);
 			let servicesData = await device_helpers.getServicesData(user_acc_ids)
+			let servicesIds = servicesData.map(item => { return item.id })
+			let userAccServiceData = []
+			if (servicesIds.length) {
+				userAccServiceData = await device_helpers.getUserAccServicesData(user_acc_ids, servicesIds.join())
+			}
 			for (var i = 0; i < results.length; i++) {
 				results[i].finalStatus = device_helpers.checkStatus(results[i]);
-				let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === results[i].id);
-				if (pgp_email) {
-					results[i].pgp_email = pgp_email.pgp_email
-				}
-				let sim_idArray = sim_ids.filter(sim_id => sim_id.user_acc_id === results[i].id);
-				if (sim_idArray && sim_idArray.length) {
-					results[i].sim_id = sim_idArray[0].sim_id
-					results[i].sim_id2 = sim_idArray[1] ? sim_idArray[1].sim_id : "N/A"
-				}
-				let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === results[i].id);
-				if (chat_id) {
-					results[i].chat_id = chat_id.chat_id
-				}
-				// let services = servicesData.find(data => data.user_acc_id === results[i].id);
-				// if (services) {
-				// 	results[i].services = services
+				// let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === results[i].id);
+				// if (pgp_email) {
+				// 	results[i].pgp_email = pgp_email.pgp_email
 				// }
+				// let sim_idArray = sim_ids.filter(sim_id => sim_id.user_acc_id === results[i].id);
+				// if (sim_idArray && sim_idArray.length) {
+				// 	results[i].sim_id = sim_idArray[0].sim_id
+				// 	results[i].sim_id2 = sim_idArray[1] ? sim_idArray[1].sim_id : "N/A"
+				// }
+				// let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === results[i].id);
+				// if (chat_id) {
+				// 	results[i].chat_id = chat_id.chat_id
+				// }
+				let service_id = null
 				let services = servicesData.filter(data => data.user_acc_id === results[i].id);
 				if (services && services.length) {
-					// if (services.length > 1) {
 					services.map((item) => {
 						if (item.status === 'extended') {
 							results[i].extended_services = item
 						} else {
 							results[i].services = item
+							service_id = item.id
 						}
 					})
-					// } else {
-					//     results[i].services = services[0]
-					// }
+				}
+				let productsData = userAccServiceData.filter(item => item.user_acc_id === results[i].id && item.service_id === service_id);
+				if (productsData && productsData.length) {
+					productsData.map((item) => {
+						if (item.type === 'sim_id') {
+							results[i].sim_id = item.product_value
+						}
+						else if (item.type === 'sim_id2') {
+							results[i].sim_id2 = item.product_value
+						}
+						else if (item.type === 'pgp_email') {
+							results[i].pgp_email = item.product_value
+						}
+						else if (item.type === 'chat_id') {
+							results[i].chat_id = item.product_value
+						}
+					})
 				}
 			}
 			return results;
@@ -1559,10 +1621,10 @@ module.exports = {
 						packages.map((pkg) => {
 							if (pkg.id === item.id) {
 								if (pay_now) {
-									pkg.pkg_price = pkg.pkg_price - (pkg.pkg_price * discount)
-									item.pkg_price = item.pkg_price - (item.pkg_price * discount)
+									pkg.pkg_price = pkg.pkg_price - Math.ceil((pkg.pkg_price * discount))
+									item.pkg_price = item.pkg_price - Math.ceil((item.pkg_price * discount))
 								}
-								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id ,item_id,item_data, item_type, item_term, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package','${pkg.pkg_term}' ,${pkg.pkg_price} , ${item.pkg_price} , 'delivered')`)
+								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id ,item_id,item_data, item_type, item_term, item_sale_price, item_admin_cost,status , retail_price) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package','${pkg.pkg_term}' ,${pkg.pkg_price} , ${item.pkg_price} , 'delivered' , '${pkg.retail_price}')`)
 							}
 						})
 					} else if (item.dealer_type === 'admin') {
@@ -1585,10 +1647,10 @@ module.exports = {
 									sa_total_price += sa_vpn_prices[item.pkg_term]
 								}
 								if (pay_now) {
-									pkg.pkg_price = pkg.pkg_price - (pkg.pkg_price * discount)
-									sa_total_price = sa_total_price - (sa_total_price * discount)
+									pkg.pkg_price = pkg.pkg_price - Math.ceil((pkg.pkg_price * discount))
+									sa_total_price = sa_total_price - Math.ceil((sa_total_price * discount))
 								}
-								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id ,item_id ,  item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id}, '${JSON.stringify(pkg)}','${item.pkg_term}' ,'package', ${pkg.pkg_price} , ${sa_total_price} , 'delivered')`)
+								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id ,item_id ,  item_data, item_term, item_type, item_sale_price, item_admin_cost,status , retail_price) VALUES(${user_acc_id} , ${service_id}, ${pkg.id}, '${JSON.stringify(pkg)}','${item.pkg_term}' ,'package', ${pkg.pkg_price} , ${sa_total_price} , 'delivered' , '${pkg.retail_price}')`)
 							}
 						})
 					}
@@ -1600,40 +1662,40 @@ module.exports = {
 						// admin_profit += item.unit_price - sa_sim_prices[item.price_term]
 						let adminCostPrice = sa_sim_prices[item.price_term]
 						if (pay_now) {
-							item.unit_price = item.unit_price - (item.unit_price * discount)
-							adminCostPrice = sa_sim_prices[item.price_term] - (sa_sim_prices[item.price_term] * discount)
+							item.unit_price = item.unit_price - Math.ceil((item.unit_price * discount))
+							adminCostPrice = sa_sim_prices[item.price_term] - Math.ceil((sa_sim_prices[item.price_term] * discount))
 						}
-						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id ,item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${adminCostPrice} , 'delivered')`)
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id ,item_data, item_term, item_type, item_sale_price, item_admin_cost,status , retail_price) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${adminCostPrice} , 'delivered')`)
 					}
 					else if (item.price_for === "SIM ID 2") {
 						let adminCostPrice = sa_sim_prices[item.price_term]
 						if (pay_now) {
-							item.unit_price = item.unit_price - (item.unit_price * discount)
-							adminCostPrice = sa_sim_prices[item.price_term] - (sa_sim_prices[item.price_term] * discount)
+							item.unit_price = item.unit_price - Math.ceil((item.unit_price * discount))
+							adminCostPrice = sa_sim_prices[item.price_term] - Math.ceil((sa_sim_prices[item.price_term] * discount))
 						}
-						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id ,item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${adminCostPrice} , 'delivered')`)
+						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id ,item_data, item_term, item_type, item_sale_price, item_admin_cost,status , retail_price) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${adminCostPrice} , 'delivered' )`)
 					}
 					else if (item.price_for === "chat_id") {
 						let adminCostPrice = sa_chat_prices[item.price_term]
 						if (pay_now) {
-							item.unit_price = item.unit_price - (item.unit_price * discount)
-							adminCostPrice = sa_chat_prices[item.price_term] - (sa_chat_prices[item.price_term] * discount)
+							item.unit_price = item.unit_price - Math.ceil((item.unit_price * discount))
+							adminCostPrice = sa_chat_prices[item.price_term] - Math.ceil((sa_chat_prices[item.price_term] * discount))
 						}
 						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id ,item_id , item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${adminCostPrice} , 'delivered')`)
 					}
 					else if (item.price_for === "vpn") {
 						let adminCostPrice = sa_vpn_prices[item.price_term]
 						if (pay_now) {
-							item.unit_price = item.unit_price - (item.unit_price * discount)
-							adminCostPrice = sa_vpn_prices[item.price_term] - (sa_vpn_prices[item.price_term] * discount)
+							item.unit_price = item.unit_price - Math.ceil((item.unit_price * discount))
+							adminCostPrice = sa_vpn_prices[item.price_term] - Math.ceil((sa_vpn_prices[item.price_term] * discount))
 						}
 						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id ,item_id , item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}','${item.price_term}' ,'product', ${item.unit_price} , ${adminCostPrice} , 'delivered')`)
 					}
 					else if (item.price_for === "pgp_email") {
 						let adminCostPrice = sa_pgp_prices[item.price_term]
 						if (pay_now) {
-							item.unit_price = item.unit_price - (item.unit_price * discount)
-							adminCostPrice = sa_pgp_prices[item.price_term] - (sa_pgp_prices[item.price_term] * discount)
+							item.unit_price = item.unit_price - Math.ceil((item.unit_price * discount))
+							adminCostPrice = sa_pgp_prices[item.price_term] - Math.ceil((sa_pgp_prices[item.price_term] * discount))
 						}
 						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id , item_data, item_term, item_type, item_sale_price, item_admin_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}','${item.price_term}','product', ${item.unit_price} , ${adminCostPrice} , 'delivered')`)
 					}
@@ -1673,15 +1735,15 @@ module.exports = {
 								if (adminPrice) {
 									admin_profit += adminPrice - packagesData[i].pkg_price
 									if (pay_now) {
-										pkg.pkg_price = pkg.pkg_price - (pkg.pkg_price * discount)
-										packagesData[i].pkg_price = packagesData[i].pkg_price - (packagesData[i].pkg_price * discount)
+										pkg.pkg_price = pkg.pkg_price - Math.ceil((pkg.pkg_price * discount))
+										packagesData[i].pkg_price = packagesData[i].pkg_price - Math.ceil((packagesData[i].pkg_price * discount))
 										adminPrice = adminPrice - (adminPrice * discount)
 									}
 									sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term,item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package',' ${pkg.pkg_term}', ${pkg.pkg_price} ,${packagesData[i].pkg_price} , ${adminPrice} , 'delivered')`)
 								} else {
 									if (pay_now) {
-										pkg.pkg_price = pkg.pkg_price - (pkg.pkg_price * discount)
-										packagesData[i].pkg_price = packagesData[i].pkg_price - (packagesData[i].pkg_price * discount)
+										pkg.pkg_price = pkg.pkg_price - Math.ceil((pkg.pkg_price * discount))
+										packagesData[i].pkg_price = packagesData[i].pkg_price - Math.ceil((packagesData[i].pkg_price * discount))
 									}
 									sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package', '${pkg.pkg_term}', ${pkg.pkg_price} ,${packagesData[i].pkg_price} , ${packagesData[i].pkg_price} , 'delivered')`)
 								}
@@ -1708,9 +1770,9 @@ module.exports = {
 									sa_total_price += sa_vpn_prices[packagesData[i].pkg_term]
 								}
 								if (pay_now) {
-									pkg.pkg_price = pkg.pkg_price - (pkg.pkg_price * discount)
-									sa_total_price = sa_total_price - (sa_total_price * discount)
-									adminPrice = adminPrice - (adminPrice * discount)
+									pkg.pkg_price = pkg.pkg_price - Math.ceil((pkg.pkg_price * discount))
+									sa_total_price = sa_total_price - Math.ceil((sa_total_price * discount))
+									adminPrice = adminPrice - Math.ceil((adminPrice * discount))
 								}
 								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package', '${pkg.pkg_term}', ${pkg.pkg_price} ,${sa_total_price} , ${adminPrice} , 'delivered')`)
 							}
@@ -1743,9 +1805,9 @@ module.exports = {
 									admin_total_price += admin_vpn_prices[packagesData[i].pkg_term]
 								}
 								if (pay_now) {
-									pkg.pkg_price = pkg.pkg_price - (pkg.pkg_price * discount)
-									sa_total_price = sa_total_price - (sa_total_price * discount)
-									admin_total_price = admin_total_price - (admin_total_price * discount)
+									pkg.pkg_price = pkg.pkg_price - Math.ceil((pkg.pkg_price * discount))
+									sa_total_price = sa_total_price - Math.ceil((sa_total_price * discount))
+									admin_total_price = admin_total_price - Math.ceil((admin_total_price * discount))
 								}
 								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package', '${pkg.pkg_term}', ${pkg.pkg_price} ,${sa_total_price} , ${admin_total_price} , 'delivered')`)
 							}
@@ -1759,9 +1821,9 @@ module.exports = {
 						let adminCostPrice = sa_sim_prices[item.price_term]
 						let dealerCostPrice = admin_sim_prices[item.price_term]
 						if (pay_now) {
-							item.unit_price = item.unit_price - (item.unit_price * discount)
-							adminCostPrice = sa_sim_prices[item.price_term] - (sa_sim_prices[item.price_term] * discount)
-							dealerCostPrice = admin_sim_prices[item.price_term] - (admin_sim_prices[item.price_term] * discount)
+							item.unit_price = item.unit_price - Math.ceil((item.unit_price * discount))
+							adminCostPrice = sa_sim_prices[item.price_term] - Math.ceil((sa_sim_prices[item.price_term] * discount))
+							dealerCostPrice = admin_sim_prices[item.price_term] - Math.ceil((admin_sim_prices[item.price_term] * discount))
 						}
 						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}', 'product', ${item.price_term}, ${item.unit_price} ,${adminCostPrice} , ${dealerCostPrice} , 'delivered')`)
 					}
@@ -1769,9 +1831,9 @@ module.exports = {
 						let adminCostPrice = sa_sim_prices[item.price_term]
 						let dealerCostPrice = admin_sim_prices[item.price_term]
 						if (pay_now) {
-							item.unit_price = item.unit_price - (item.unit_price * discount)
-							adminCostPrice = sa_sim_prices[item.price_term] - (sa_sim_prices[item.price_term] * discount)
-							dealerCostPrice = admin_sim_prices[item.price_term] - (admin_sim_prices[item.price_term] * discount)
+							item.unit_price = item.unit_price - Math.ceil((item.unit_price * discount))
+							adminCostPrice = sa_sim_prices[item.price_term] - Math.ceil((sa_sim_prices[item.price_term] * discount))
+							dealerCostPrice = admin_sim_prices[item.price_term] - Math.ceil((admin_sim_prices[item.price_term] * discount))
 						}
 						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}', 'product', '${item.price_term}', ${item.unit_price} ,${adminCostPrice} , ${dealerCostPrice} , 'delivered')`)
 
@@ -1780,9 +1842,9 @@ module.exports = {
 						let adminCostPrice = sa_chat_prices[item.price_term]
 						let dealerCostPrice = admin_chat_prices[item.price_term]
 						if (pay_now) {
-							item.unit_price = item.unit_price - (item.unit_price * discount)
-							adminCostPrice = sa_chat_prices[item.price_term] - (sa_chat_prices[item.price_term] * discount)
-							dealerCostPrice = admin_chat_prices[item.price_term] - (admin_chat_prices[item.price_term] * discount)
+							item.unit_price = item.unit_price - Math.ceil((item.unit_price * discount))
+							adminCostPrice = sa_chat_prices[item.price_term] - Math.ceil((sa_chat_prices[item.price_term] * discount))
+							dealerCostPrice = admin_chat_prices[item.price_term] - Math.ceil((admin_chat_prices[item.price_term] * discount))
 						}
 						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}', 'product', '${item.price_term}', ${item.unit_price} ,${adminCostPrice} , ${dealerCostPrice} , 'delivered')`)
 
@@ -1791,9 +1853,9 @@ module.exports = {
 						let adminCostPrice = sa_vpn_prices[item.price_term]
 						let dealerCostPrice = admin_vpn_prices[item.price_term]
 						if (pay_now) {
-							item.unit_price = item.unit_price - (item.unit_price * discount)
-							adminCostPrice = sa_vpn_prices[item.price_term] - (sa_vpn_prices[item.price_term] * discount)
-							dealerCostPrice = admin_vpn_prices[item.price_term] - (admin_vpn_prices[item.price_term] * discount)
+							item.unit_price = item.unit_price - Math.ceil((item.unit_price * discount))
+							adminCostPrice = sa_vpn_prices[item.price_term] - Math.ceil((sa_vpn_prices[item.price_term] * discount))
+							dealerCostPrice = admin_vpn_prices[item.price_term] - Math.ceil((admin_vpn_prices[item.price_term] * discount))
 						}
 						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}', 'product', '${item.price_term}', ${item.unit_price} ,${adminCostPrice} , ${dealerCostPrice} , 'delivered')`)
 
@@ -1802,9 +1864,9 @@ module.exports = {
 						let adminCostPrice = sa_pgp_prices[item.price_term]
 						let dealerCostPrice = admin_pgp_prices[item.price_term]
 						if (pay_now) {
-							item.unit_price = item.unit_price - (item.unit_price * discount)
-							adminCostPrice = sa_pgp_prices[item.price_term] - (sa_pgp_prices[item.price_term] * discount)
-							dealerCostPrice = admin_pgp_prices[item.price_term] - (admin_pgp_prices[item.price_term] * discount)
+							item.unit_price = item.unit_price - Math.ceil((item.unit_price * discount))
+							adminCostPrice = sa_pgp_prices[item.price_term] - Math.ceil((sa_pgp_prices[item.price_term] * discount))
+							dealerCostPrice = admin_pgp_prices[item.price_term] - Math.ceil((admin_pgp_prices[item.price_term] * discount))
 						}
 						sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${item.id},'${JSON.stringify(item)}', 'product', '${item.price_term}', ${item.unit_price} ,${adminCostPrice} , ${dealerCostPrice} , 'delivered')`)
 					}
@@ -1829,8 +1891,9 @@ module.exports = {
 					let paid_sale_price = item.item_sale_price - ((item.item_sale_price / prevServiceTotalDays) * serviceRemainingDays).toFixed(2);
 					let paid_admin_cost = item.item_admin_cost - (item.item_admin_cost / prevServiceTotalDays * serviceRemainingDays).toFixed(2);
 					let paid_dealer_cost = item.item_dealer_cost - (item.item_dealer_cost / prevServiceTotalDays * serviceRemainingDays).toFixed(2);
+					let paid_retail_price = item.paid_retail_price - (item.paid_retail_price / prevServiceTotalDays * serviceRemainingDays).toFixed(2);
 					let dateNow = moment().format("YYYY-MM-DD HH:mm:ss")
-					let updateSaleDetails = `UPDATE services_sale SET paid_sale_price = ${paid_sale_price}, paid_admin_cost = ${paid_admin_cost} , paid_dealer_cost = ${paid_dealer_cost} , status = 'returned' , end_date = '${dateNow}' WHERE user_acc_id = ${user_acc_id} AND service_data_id = ${service_id}`
+					let updateSaleDetails = `UPDATE services_sale SET paid_sale_price = ${paid_sale_price}, paid_admin_cost = ${paid_admin_cost} , paid_dealer_cost = ${paid_dealer_cost} , paid_retail_price = ${paid_retail_price} , status = 'returned' , end_date = '${dateNow}' WHERE user_acc_id = ${user_acc_id} AND service_data_id = ${service_id}`
 					sql.query(updateSaleDetails)
 				})
 			}
@@ -1893,6 +1956,7 @@ module.exports = {
 			dealer_profit
 		}
 	},
+
 	updateProfitLoss: async function (admin_profit, dealer_profit, admin_data, connected_dealer, usr_acc_id, loggedDealerType, pay_now, service_id) {
 		let transection_data = {
 			user_acc_id: usr_acc_id,
@@ -2138,7 +2202,7 @@ module.exports = {
 						paid_credits = last_panding_transections[i].due_credits
 						due_credits = 0
 						sql.query(`UPDATE financial_account_transections SET paid_credits = paid_credits + ${paid_credits} , due_credits = ${due_credits} , status = 'transferred' WHERE id = ${last_panding_transections[i].id}`)
-						
+
 
 					} else {
 						due_credits = last_panding_transections[i].due_credits - credits

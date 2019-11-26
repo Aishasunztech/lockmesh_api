@@ -2,7 +2,9 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.changeColumn('device_history', 'status',
+    return Promise.all([
+      // queryInterface.renameColumn('device_history', 'status', 'status1'),
+      queryInterface.addColumn('device_history', 'status',
       {
         type: Sequelize.ENUM(
           'pending', 
@@ -16,6 +18,9 @@ module.exports = {
         defaultValue: 'pending'
       },
     )
+
+    ])
+    
   },
 
   down: (queryInterface, Sequelize) => {

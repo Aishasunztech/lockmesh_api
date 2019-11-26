@@ -2,19 +2,15 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-
     return Promise.all([
-      queryInterface.addColumn(
-        'dealers',
-        'account_balance_status',
-        {
-          type: Sequelize.ENUM,
-          values: ['active', 'restricted', 'suspended'],
-          defaulfValue: 'active'
-        }
-      ),
-
-    ]);
+      queryInterface.renameColumn('services_data', 'service_term_days', 'service_term', {
+        type: Sequelize.STRING,
+      }),
+      queryInterface.addColumn('services_data', 'grace_days', {
+        type: Sequelize.BOOLEAN,
+        defaultValue : 0
+      })
+    ])
   },
 
   down: (queryInterface, Sequelize) => {

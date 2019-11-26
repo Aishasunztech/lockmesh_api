@@ -27,7 +27,7 @@ exports.removeSMApps = async function (req, res) {
         result = await sql.query(query)
     }
 
-    console.log("query =========> ", query);
+    // console.log("query =========> ", query);
     console.log(req.body, result, loginDealerId)
 
     if (result.affectedRows) {
@@ -35,19 +35,20 @@ exports.removeSMApps = async function (req, res) {
         //******************************** fetch latest data **********/ 
         where = '';
         if (verify.user.user_type !== ADMIN) {
-            apklist = await sql.query("SELECT dealer_apks.* ,apk_details.* FROM dealer_apks JOIN apk_details ON (apk_details.id = dealer_apks.apk_id) WHERE dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'")
+            where = `AND (secure_market_apps.dealer_type = 'admin' OR secure_market_apps.dealer_id = '${loginDealerId}')`
+            apklist = await sql.query(`SELECT apk_details.*, dealer_permissions.permission_id, dealer_permissions.dealer_id, dealer_permissions.permission_type FROM apk_details JOIN dealer_permissions ON (apk_details.id = dealer_permissions.permission_id) WHERE (dealer_permissions.dealer_id='${loginDealerId}' OR (dealer_permissions.dealer_id = 0 AND dealer_permissions.dealer_type='admin')) AND apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent' AND dealer_permissions.permission_type = 'apk';`)
         }
         else {
-            apklist = await sql.query("select * from apk_details where delete_status=0 AND apk_type != 'permanent'")
-        }
-        if (verify.user.user_type !== ADMIN) {
-            where = "AND (secure_market_apps.dealer_type = 'admin' OR secure_market_apps.dealer_id = '" + verify.user.id + "')"
+            apklist = await sql.query(`SELECT * FROM apk_details WHERE delete_status=0 AND apk_type != 'permanent';`)
         }
 
         // console.log("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id , secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'" + where + "ORDER BY created_at desc");
         sql.query("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id , secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'" + where + "ORDER BY created_at desc", async function (err, results) {
             if (err) {
                 console.log(err);
+                return res.send({
+                    status: false
+                })
             }
 
             if (results.length) {
@@ -117,7 +118,7 @@ exports.trasnferApps = async function (req, res) {
         let dealer_type = verify.user.user_type;
         let dealer_id = verify.user.id;
         if (dealer_type === ADMIN) {
-            let deleteNotIn = "DELETE FROM secure_market_apps WHERE apk_id NOT IN (" + toDelete + ") AND space_type= '" + spaceType + "'"
+            let deleteNotIn = `DELETE FROM secure_market_apps WHERE apk_id NOT IN ("${toDelete}") AND space_type= '${spaceType}' AND dealer_type = 'admin';`
             // console.log(deleteNotIn);
             await sql.query(deleteNotIn);
         } else {
@@ -179,8 +180,9 @@ exports.trasnferApps = async function (req, res) {
 
         where = '';
         if (verify.user.user_type !== ADMIN) {
-            apklist = await sql.query("select dealer_apks.* ,apk_details.* from dealer_apks join apk_details on apk_details.id = dealer_apks.apk_id where dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'")
-            where = "AND (secure_market_apps.dealer_type = 'admin' OR secure_market_apps.dealer_id = '" + verify.user.id + "')"
+            apklist = await sql.query(`SELECT apk_details.*, dealer_permissions.permission_id, dealer_permissions.dealer_id, dealer_permissions.permission_type FROM apk_details JOIN dealer_permissions ON (apk_details.id = dealer_permissions.permission_id) WHERE (dealer_permissions.dealer_id='${dealer_id}' OR (dealer_permissions.dealer_id = 0 AND dealer_permissions.dealer_type='admin')) AND apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent' AND dealer_permissions.permission_type = 'apk';`)
+            where = `AND (secure_market_apps.dealer_type = 'admin' OR secure_market_apps.dealer_id = '${dealer_id}')`
+
         }
         else {
             apklist = await sql.query("select * from apk_details where delete_status=0 AND apk_type != 'permanent'")
@@ -235,30 +237,106 @@ exports.trasnferApps = async function (req, res) {
     }
 }
 
+// exports.marketApplist = async function (req, res) {
+
+//     var verify = req.decoded;
+
+//     var data = [];
+//     let apklist = []
+//     // if (verify.status !== undefined && verify.status == true) {
+//     if (verify) {
+//         where = '';
+//         if (verify.user.user_type !== ADMIN) {
+//             apklist = await sql.query("SELECT dealer_apks.* ,apk_details.* FROM dealer_apks JOIN apk_details ON (apk_details.id = dealer_apks.apk_id) WHERE dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'")
+//         }
+//         else {
+//             apklist = await sql.query("select * from apk_details where delete_status=0 AND apk_type != 'permanent'")
+//         }
+//         if (verify.user.user_type !== ADMIN) {
+//             where = "AND (secure_market_apps.dealer_type = 'admin' OR secure_market_apps.dealer_id = '" + verify.user.id + "')"
+//         }
+//         // console.log("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 " + where + "ORDER BY created_at desc");
+
+//         // console.log("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id , secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'" + where + "ORDER BY created_at desc");
+//         sql.query("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id , secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'" + where + "ORDER BY created_at desc", async function (err, results) {
+//             if (err) {
+//                 console.log(err);
+//             }
+
+//             if (results.length) {
+//                 let adminApps = results.filter((app) => app.dealer_type === ADMIN);
+
+//                 // console.log(adminApps.length, "adminApps ", adminApps)
+
+//                 let deleteIds = [];
+//                 results.forEach((item, index) => {
+//                     for (let i = 0; i < adminApps.length; i++) {
+//                         // console.log("ids ",item.id , adminApps[i].id, item.id == adminApps[i].id, item.dealer_type !== ADMIN, adminApps[i].space_type === item.space_type)
+//                         if (item.id == adminApps[i].id && item.dealer_type !== ADMIN && adminApps[i].space_type === item.space_type) {
+//                             deleteIds.push(index);
+//                         }
+//                     }
+//                 })
+
+//                 let finalApps = results.filter((app, index) => !deleteIds.includes(index))
+//                 // console.log(finalApps,'final result is: ', deleteIds);
+
+//                 data = {
+//                     status: true,
+//                     data: {
+//                         marketApplist: finalApps,
+//                         availableApps: apklist
+//                     }
+
+//                 }
+//                 res.send(data)
+//             } else {
+//                 data = {
+//                     status: true,
+//                     data: {
+//                         marketApplist: [],
+//                         availableApps: apklist
+//                     }
+//                 }
+//                 res.send(data)
+//             }
+//         })
+//     }
+//     else {
+//         data = {
+//             status: false
+//         }
+//         res.send(data)
+//         return;
+//     }
+// }
+
+
 exports.marketApplist = async function (req, res) {
 
     var verify = req.decoded;
 
     var data = [];
     let apklist = []
-    // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
+        let loggedUserType = verify.user.user_type;
+        let loggedUserId = verify.user.dealer_id;
+
         where = '';
-        if (verify.user.user_type !== ADMIN) {
-            apklist = await sql.query("SELECT dealer_apks.* ,apk_details.* FROM dealer_apks JOIN apk_details ON (apk_details.id = dealer_apks.apk_id) WHERE dealer_apks.dealer_id='" + verify.user.id + "' AND apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'")
+        if (loggedUserType !== ADMIN) {
+            where = `AND (secure_market_apps.dealer_type = 'admin' OR secure_market_apps.dealer_id = '${loggedUserId}')`
+            apklist = await sql.query(`SELECT apk_details.*, dealer_permissions.permission_id, dealer_permissions.dealer_id, dealer_permissions.permission_type FROM apk_details JOIN dealer_permissions ON (apk_details.id = dealer_permissions.permission_id) WHERE (dealer_permissions.dealer_id='${loggedUserId}' OR (dealer_permissions.dealer_id = 0 AND dealer_permissions.dealer_type='admin')) AND apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent' AND dealer_permissions.permission_type = 'apk';`)
         }
         else {
-            apklist = await sql.query("select * from apk_details where delete_status=0 AND apk_type != 'permanent'")
+            apklist = await sql.query(`SELECT * FROM apk_details WHERE delete_status=0 AND apk_type != 'permanent';`)
         }
-        if (verify.user.user_type !== ADMIN) {
-            where = "AND (secure_market_apps.dealer_type = 'admin' OR secure_market_apps.dealer_id = '" + verify.user.id + "')"
-        }
-        // console.log("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 " + where + "ORDER BY created_at desc");
 
-        // console.log("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id , secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'" + where + "ORDER BY created_at desc");
-        sql.query("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id , secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'" + where + "ORDER BY created_at desc", async function (err, results) {
+        sql.query(`SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id , secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent' ${where} ORDER BY created_at desc`, async function (err, results) {
             if (err) {
                 console.log(err);
+                return res.send({
+                    status: false
+                })
             }
 
             if (results.length) {

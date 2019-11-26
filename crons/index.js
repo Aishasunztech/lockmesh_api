@@ -75,21 +75,22 @@ cron.schedule('0 0 0 * * *', async () => {
 /** complete service **/
 cron.schedule('0 0 0 * * *', async () => {
 
-    let service_data = await sql.query(`SELECT * FROM services_data WHERE status = 'active' OR status = 'request_for_cancel'`);
+    var userAccQ = "SELECT * FROM usr_acc WHERE device_status = 1";
+    var results = await sql.query(userAccQ);
+    for (let i = 0; i < results.length; i++) {
+        let service_data = await sql.query(`SELECT * FROM services_data WHERE (status = 'active' OR status = 'request_for_cancel') AND user_acc_id = ${results[i].id} `);
+        if (service_data.length) {
+            let current_date = moment().format('YYYY/MM/DD')
+            if (service_data[0].service_expiry_date <= current_date) {
 
-    if (service_data.length) {
-
-        service_data.map(async (item) => {
-            if (item.service_expiry_date === moment().format('YYYY/MM/DD')) {
-                console.log(item.total_credits, item.service_expiry_date)
-                await sql.query("UPDATE services_data set end_date = '" + item.service_expiry_date + "', status = 'completed', paid_credits = " + item.total_credits + " WHERE id = " + item.id);
+                await sql.query("UPDATE services_data set end_date = '" + service_data[0].service_expiry_date + "', status = 'completed', paid_credits = " + service_data[0].total_credits + " WHERE id = " + service_data[0].id);
+                await sql.query(`UPDATE user_acc_services SET end_date = ${service_data[0].service_expiry_date} WHERE service_id =  ${service_data[0].id}`)
+                let extended_service = await sql.query(`SELECT * FROM services_data WHERE user_acc_id = ${results[i].id} AND status = 'extended'`)
+                if (extended_service && extended_service.length) {
+                    let end_date = current_date.add(moment(extended_service[0].service_term))
+                    await sql.query(`UPDATE services_data SET status = 'active' , start_date = ${current_date} , end_date = ${end_date} WHERE user_acc_id = ${results[i].id} AND status = 'extended'`)
+                }
             }
-
-            // if (duration > 21 && duration <= 60){
-            //     await sql.query("UPDATE dealers set account_balance_status = 'restricted' WHERE dealer_id = "+item.dealer_id);
-            // }else if (duration > 60){
-            //     await sql.query("UPDATE dealers set account_balance_status = 'suspended' WHERE dealer_id = "+item.dealer_id);
-            // }
-        })
+        }
     }
 });

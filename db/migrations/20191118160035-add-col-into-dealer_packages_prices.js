@@ -2,19 +2,24 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-
     return Promise.all([
+     
       queryInterface.addColumn(
-        'dealers',
-        'account_balance_status',
-        {
-          type: Sequelize.ENUM,
-          values: ['active', 'restricted', 'suspended'],
-          defaulfValue: 'active'
-        }
+        'dealer_packages_prices',
+          'retail_price',
+          {
+              type: Sequelize.INTEGER,
+              defaultValue : 0
+          }
       ),
-
     ]);
+    /*
+      Add altering commands here.
+      Return a promise to correctly handle asynchronicity.
+
+      Example:
+      return queryInterface.createTable('users', { id: Sequelize.INTEGER });
+    */
   },
 
   down: (queryInterface, Sequelize) => {

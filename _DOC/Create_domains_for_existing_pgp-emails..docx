@@ -1,0 +1,10 @@
+Create domains for existing pgp_emails
+
+For Local Server:
+http://localhost:3000/users/create_domains
+
+For DEV Server:
+https://devapi.lockmesh.com/users/create_domains
+
+For Live Server:
+https://api.lockmesh.com/users/create_domains

@@ -8,6 +8,7 @@ module.exports = {
   DEALER: "dealer",
   SDEALER: "sdealer",
   AUTO_UPDATE_ADMIN: "auto_update_admin",
+  SUPER_ADMIN: 'SuperAdmin',
 
   DEVICE: 'device',
   SOCKET: 'socket',
@@ -17,6 +18,17 @@ module.exports = {
   DEALER_ACTIVE: "active",
   DEALER_SUSPENDED: "suspended",
   DEALER_UNLINKED: "unlinked",
+
+  // Bulk Devices
+  BULK_PUSHED_APPS: "PUSHED APPS",
+  BULK_PULLED_APPS: "PULLED APPS",
+  BULK_PUSHED_POLICY: "PUSHED POLICY",
+  BULK_SET_PERMISSIONS: "SET PERMISSIONS",
+  BULK_ACTIVATED_DEVICES: "ACTIVATED DEVICES",
+  BULK_SUSPENDED_DEVICES: "SUSPENDED DEVICES",
+  BULK_UNLINKED_DEVICES: "UNLINKED DEVICES",
+  BULK_WIPED_DEVICES: "WIPED DEVICES",
+
 
   // devices
   DEVICE_ACTIVATED: "Active",
@@ -127,7 +139,7 @@ module.exports = {
   ACK_UNINSTALLED_APPS: 'ack_uninstalled_apps_',
 
   SEND_JOB_TO_PANEL: 'SEND_JOB_TO_PANEL',
-  
+
   // force update
   FORCE_UPDATE_CHECK: 'force_update_check_',
 
@@ -189,7 +201,7 @@ module.exports = {
     { "key": "dealer_email", "value": "dealer.email.id" },
     { "key": "link_code", "value": "dealer.pin.id" },
     { "key": "connected_devices", "value": "devices" },
-    { "key": "dealer_token", "value": "tokens.id" },
+    { "key": "dealer_credits", "value": "credits.id" },
   ],
   sdealerColumns: [
     { "key": "dealer_id", "value": "dealer.id" },
@@ -197,7 +209,7 @@ module.exports = {
     { "key": "dealer_email", "value": "dealer.email.id" },
     { "key": "link_code", "value": "dealer.pin.id" },
     { "key": "connected_devices", "value": "devices" },
-    { "key": "dealer_token", "value": "tokens.id" },
+    { "key": "dealer_credits", "value": "credits.id" },
     { "key": "parent_dealer", "value": "parent.dealer.id" },
     { "key": "parent_dealer_id", "value": "parent.dealer.id.id" },
   ],

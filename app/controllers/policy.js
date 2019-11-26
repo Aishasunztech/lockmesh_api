@@ -626,7 +626,7 @@ exports.applyPolicy = async function (req, res) {
                                     msg: await helpers.convertToLang(req.translation[MsgConstants.POLICY_IS_BEING_APPLIED], "Policy is Being applied"), // 'Policy is Being applied,
                                 };
                             } else {
-                                socket_helpers.getPolicy(sockets.baseIo, device_id, policy[0]);
+                                // socket_helpers.getPolicy(sockets.baseIo, device_id, policy[0]);
                                 data = {
                                     status: true,
                                     content: await helpers.convertToLang(req.translation[MsgConstants.POLICY_APPLIED_TO_DEVICE_ON_BACK_ONLINE], "Policy Applied to device. Action will be performed when device is back online"),

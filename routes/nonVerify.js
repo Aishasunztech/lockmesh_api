@@ -546,6 +546,58 @@ router.get("/getFile/:file", async function (req, res) {
 
 // router.get('/languages', languageController.getAll_Languages)
 
+
+router.get('/create_domains', async function (req, res) {
+    let domains = [];
+
+    // get existing domains
+    let all_domains = await sql.query("SELECT name from domains")
+    // console.log("BEFOR: all_domains ", all_domains);
+
+    if (all_domains.length) {
+        all_domains.map((item) => {
+            domains.push(item.name)
+        })
+    }
+
+    // get existing pgp emails
+    let all_pgp_emails = await sql.query("SELECT id, pgp_email from pgp_emails")
+
+    // add new domains
+    let checkDuplicateDomains = [];
+    for (let row of all_pgp_emails) {
+        let domainName = row.pgp_email.split('@').pop().trim();
+        if (!domains.includes(domainName) && !checkDuplicateDomains.includes(domainName)) {
+            if (domainName) {
+                checkDuplicateDomains.push(domainName);
+                let insertQ = `INSERT INTO domains (name) value ('${domainName}')`;
+                await sql.query(insertQ);
+            }
+        }
+    }
+
+    // get latest domains
+    all_domains = await sql.query("SELECT * FROM domains");
+    // console.log("AFTER: all_domains ", all_domains);
+
+    // add domain_id into pgp_emails
+    for (let row of all_pgp_emails) {
+        // console.log("row ", row);
+
+        if (row.pgp_email) {
+            let indexDomain = all_domains.findIndex((dm) => dm.name === row.pgp_email.split('@').pop().trim());
+            // console.log("indexDomain ", indexDomain);
+            let domain_id = (indexDomain > -1) ? all_domains[indexDomain].id : null;
+
+            let insertQ = `UPDATE pgp_emails SET domain_id=${domain_id} WHERE id=${row.id};`;
+            // console.log("update pgp_emails domains ids: insertQ ", insertQ);
+            await sql.query(insertQ);
+        }
+    }
+
+    return res.send({ status: true });
+});
+
 // router.get('/create_lng_file', async function (req, res) {
 //     sql.query("SELECT * FROM languages", async function (err, data) {
 //         if (data.length) {
