@@ -239,9 +239,13 @@ router.post("/flagDevice/:id", deviceController.flagDevice);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
+/** Get DeviceS (Connect Page) **/
+router.get("/connect/get-device-list", deviceController.getDevicesForConnectPage);
 
 /** Get Device Details of Dealers (Connect Page) **/
 router.get("/connect/:device_id", deviceController.connectDevice);
+
+
 
 /** Get get App Job Queue  (Connect Page) **/
 router.get(
@@ -410,6 +414,17 @@ router.post("/add/dealer", dealerController.addDealer);
  */
 /*** Connect Dealer ***/
 router.get("/connect-dealer/:dealerId", dealerController.connectDealer);
+
+/**
+ * This function comment is parsed by doctrine
+ * @route GET /users/dealer-domains/:dealerId
+ * @group Dealer - Operations about Dealers
+ * @param {string} dealerId.param.required - dealer name
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+router.get("/dealer-domains/:dealerId", dealerController.dealerDomains)
 
 /**
  * This function comment is parsed by doctrine
