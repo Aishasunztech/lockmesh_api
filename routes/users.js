@@ -27,6 +27,7 @@ const { sendEmail } = require("../lib/email");
 
 // ========== Controllers ========
 const userController = require('../app/controllers/user');
+const bulkDevicesController = require('../app/controllers/bulkDevices');
 const authController = require('../app/controllers/auth');
 const aclController = require('../app/controllers/acl');
 const deviceController = require('../app/controllers/device');
@@ -40,8 +41,11 @@ const appController = require('../app/controllers/app');
 const languageController = require('../app/controllers/language');
 const simController = require('../app/controllers/sim');
 const agentController = require('../app/controllers/agent');
+const reportingController = require('../app/controllers/reports');
+
 
 const dashboardController = require('../app/controllers/dashboard');
+const NotificationController = require('../app/controllers/notification');
 
 
 // constants
@@ -103,6 +107,7 @@ router.get("/user_type", aclController.getUserType);
 
 /**GET all the devices**/
 router.get("/devices", deviceController.devices);
+router.get("/get-devices-for-report", deviceController.getDevicesForReport);
 
 /**
  * @route PUT /users/new/device
@@ -192,9 +197,20 @@ router.post("/transfer/user", deviceController.transferUser);
 
 router.get("/transfer/history/:device_id", deviceController.transferHistory);
 
+router.get("/getServicesHistory/:usr_acc_id", deviceController.getServicesHistory);
+
 
 /**UPDATE Device details**/
 router.put("/edit/devices", deviceController.editDevices);
+
+/**EXTEND SERVICE**/
+router.put("/edit-device/extendServices", deviceController.extendServices);
+
+/**CANCEL EXTEND SERVICE**/
+router.put("/cancel-extended-services", deviceController.cancelExtendedServices);
+
+/**UPDATE Device details**/
+router.post('/check-service-refund-credits', deviceController.getServiceRefund);
 
 /**Devices record delete**/
 router.put("/delete/:device_id", deviceController.deleteDevice);
@@ -351,6 +367,12 @@ router.post("/resetpwd", dealerController.resetPwd);
 /*Get All Dealers */
 router.get("/dealers", dealerController.getAllDealers);
 
+router.get('/user_dealers', dealerController.getUserDealers);
+
+/*Get All Dealers FOR SUPERADMIN*/
+
+router.get('/get_dealer_list', dealerController.getDealerForSA);
+
 /**
  * This function comment is parsed by doctrine
  * @route GET /users/dealers/{pageName}
@@ -379,6 +401,42 @@ router.post("/add/dealer", dealerController.addDealer);
 
 /**
  * This function comment is parsed by doctrine
+ * @route GET /users/connect-dealer/:dealerId
+ * @group Dealer - Operations about Dealers
+ * @param {string} dealerId.param.required - dealer name
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+/*** Connect Dealer ***/
+router.get("/connect-dealer/:dealerId", dealerController.connectDealer);
+
+/**
+ * This function comment is parsed by doctrine
+ * @route GET /users/payment-history/:dealerId
+ * @group Dealer - Operations about Dealers
+ * @param {string} dealerId.param.required - dealer name
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+/*** Dealer Payment History ***/
+router.get("/payment-history/:dealerId", dealerController.getDealerPaymentHistory);
+
+/**
+ * This function comment is parsed by doctrine
+ * @route GET /users/sales-history/:dealerId
+ * @group Dealer - Operations about Dealers
+ * @param {string} dealerId.param.required - dealer name
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+/*** Dealer Payment History ***/
+router.get("/sales-history/:dealerId", dealerController.getDealerSalesHistory);
+
+/**
+ * This function comment is parsed by doctrine
  * @route PUT /users/edit/dealers
  * @group Dealer - Operations about Dealers
  * @param {string} name.formData.required - dealer name 
@@ -390,6 +448,9 @@ router.post("/add/dealer", dealerController.addDealer);
  */
 /** Edit Dealer (Admin panel) **/
 router.put("/edit/dealers", dealerController.editDealers);
+
+/**UPDATE DEALER CREDITS LIMIT**/
+router.put("/set_credits_limit", dealerController.setDealerCreditsLimit);
 
 /**
  * This function comment is parsed by doctrine
@@ -874,7 +935,7 @@ router.post("/checkApkName", apkController.checkApkName);
  */
 // add apk. endpoints name should be changed
 router.post("/addApk", apkController.addApk);
- 
+
 /**
  * @route POST /users/edit/apk
  * @group APK - All Operations on  apks
@@ -958,6 +1019,10 @@ router.post("/purchase_credits_CC", accountController.purchaseCredits_CC);
 /** Save Policy Permission **/
 router.post('/save_policy_permissions', apkController.savePolicyPermissions);
 
+
+router.post('/save_package_permissions', accountController.savePackagePermissions);
+
+
 /**
  * @route get /users/login_history
  * @group Dealer Profile - test route
@@ -1024,8 +1089,14 @@ router.get("/get_imei_history/:device_id", deviceController.getIMEI_History);
 /*Get All users */
 router.get("/userList", userController.getAllUsers);
 
+//GET User List against device dealer
+router.post("/userListOfDevice", userController.getDealerUsers);
+
 /*Transfer Apps to secure market */
 router.post("/transferApps", appController.trasnferApps);
+
+/*Remove Apps to secure market */
+router.post("/remove_sm_apps", appController.removeSMApps);
 
 /** Get Market app List **/
 
@@ -1177,21 +1248,49 @@ router.post("/authenticate_update_user", async function (req, res) {
 // *****************************  SET AND GET => PRICES & PAKAGES   **************************
 router.patch("/save-prices", billingController.savePrices);
 
+router.patch("/save-sa-prices", billingController.saveSaPrices);
+
 router.post("/save-package", billingController.savePackage);
+
+router.put("/edit-package", billingController.editPackage);
+
+router.delete("/delete_package/:id", billingController.deletePackage);
+
+router.put("/modify_item_price/:id", billingController.modifyItemPrice);
+
+router.post("/save-sa-package", billingController.saveSaPackage);
+
+router.post("/save-sa-hardware", billingController.saveSaHardware);
+
+router.post("/edit-sa-hardware", billingController.editSaHardware);
+
+router.post("/delete-sa-package", billingController.deleteSaPackage);
+
+router.post("/delete-sa-hardware", billingController.deleteSaHardware);
 
 router.get("/get-language", languageController.getLanguage);
 
 router.patch("/save-language", languageController.saveLanguage);
 
+router.get('/get-all-languages', languageController.getAll_Languages);
+
 router.get("/get-prices", billingController.getPrices);
 
 router.get("/get-packages", billingController.getPackages);
+
+router.get("/get-hardwares", billingController.getHardwares);
 
 router.get("/get-parent-packages", billingController.getParentPackages);
 
 router.patch("/check-package-name", billingController.checkPackageName);
 
-router.post("/update_credit", billingController.updateCredit);
+router.get('/get-parent-product-prices', billingController.getProductPrices);
+
+router.get('/get-parent-hardware-prices', billingController.getHardwarePrices);
+
+router.patch('/check-package-name', billingController.checkPackageName);
+
+router.post("/credit-request-ack", accountController.ackCreditRequest);
 
 router.get("/newRequests", billingController.newRequests);
 
@@ -1200,6 +1299,13 @@ router.get("/get_user_credits", billingController.getUserCredits);
 router.put("/delete_request/:id", billingController.deleteRequest);
 
 router.put("/accept_request/:id", billingController.acceptRequest);
+
+router.put("/delete_service_request/:id", billingController.deleteServiceRequest);
+
+router.put("/accept_service_request/:id", billingController.acceptServiceRequest);
+
+router.get("/get-cancel-service-requests", billingController.getCancelServiceRequests);
+
 
 /*** Create Backup ***/
 router.post("/create_backup_DB", backupController.createBackupDB);
@@ -1314,5 +1420,64 @@ router.delete('/agents/:agentID', agentController.deleteAgent);
  * @security JWT
  */
 router.get('/dashboard-data', dashboardController.getDashboardData);
+router.get('/get-domains', accountController.getDomains);
+router.post("/dealer-permissions/:permissionType", dealerController.dealerPermissions);
+
+
+router.get('/getInvoiceId', userController.getInvoiceId);
+
+
+//reporting routes
+router.post('/reports/product', reportingController.generateProductReport);
+router.post('/reports/hardware', reportingController.generateHardwareReport);
+router.post('/reports/invoice', reportingController.generateInvoiceReport);
+router.post('/reports/payment-history', reportingController.generatePaymentHistoryReport);
+router.post('/reports/sales', reportingController.generateSalesReport);
+router.post('/reports/grace-days', reportingController.generateGraceDaysReport);
+
+
+router.post('/get-latest-payment-history', accountController.getLatestPaymentHistory);
+router.get('/get-overdue-details', accountController.getOverdueDetails);
+
+router.get('/get-processes', NotificationController.getSocketProcesses);
+
+// acl 
+router.post('/add-acl-module', aclController.addAclModule);
+
+
+// ****************************** Bulk Activities
+
+// Filtered Bulk Devices
+
+/**
+ * @route POST /users/filtered-bulkDevices
+ * @group BulkDevices - Operations about BulkDevices
+ * @returns {object} 200 - An array of BulkDevices items info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+router.post('/filtered-bulkDevices', bulkDevicesController.getFilteredBulkDevices);
+
+router.get("/get-bulk-history", bulkDevicesController.bulkDevicesHistory);
+
+
+/** Suspend Bulk Devices / client **/
+router.post("/bulk-suspend", bulkDevicesController.suspendBulkAccountDevices);
+
+/** Activate Bulk Device **/
+router.post("/bulk-activate", bulkDevicesController.activateBulkDevices);
+
+// /** Unlink Bulk Device  **/
+router.post("/bulk-unlink", bulkDevicesController.unlinkBulkDevices);
+
+router.post("/bulk-wipe", bulkDevicesController.wipeBulkDevices);
+
+// router.post("/getUsersOfDealers", bulkDevicesController.getUsersOfDealers);
+
+router.post("/apply_bulk_pushapps", bulkDevicesController.applyBulkPushApps);
+
+router.post("/apply_bulk_pullapps", bulkDevicesController.applyBulkPullApps);
+
+router.post('/apply_bulk_policy', bulkDevicesController.applyBulkPolicy);
 
 module.exports = router;

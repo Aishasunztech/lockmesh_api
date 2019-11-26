@@ -5,7 +5,8 @@ var path = require('path');
 var fs = require("fs");
 var mime = require('mime');
 var CryptoJS = require("crypto-js");
-
+var moment = require("moment")
+// const { check, validationResult } = require('express-validator');
 // Custom Libraries
 const { sql } = require('../config/database');
 
@@ -20,7 +21,7 @@ var Policy = require('../app/models/Policy');
 const helpers = require('../helper/general_helper');
 const MsgConstants = require('../constants/MsgConstants');
 const constants = require('../constants/Application');
-
+const { sendEmail } = require("../lib/email");
 /**
  * This function comment is parsed by doctrine
  * @route GET /users/
@@ -32,10 +33,18 @@ const constants = require('../constants/Application');
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
 
-    // let policies = await Policy.findAll();
-    // // console.log(policies)
-    // let policyApps = await policies.getPolicyApps();
-    // res.send(policyApps);
+    let attachment = {
+        fileName: "invoice-PI000045.pdf",
+        file: path.join(__dirname, "../uploads/invoice-PI000045.pdf")
+    }
+    let html = 'Pre-activation device created successfully. Invoice is attached below. <br>';
+    sendEmail("Pre-Activation device creation.", html, 'hamza.dawood007@gmail.com', null, attachment)
+
+
+    // const errors = validationResult(req);
+    // if (!errors.isEmpty()) {
+    //     return res.json({ errors: errors.array() });
+    // }
 
     return res.send("test");
     // let data = {
@@ -493,6 +502,16 @@ router.get('/refactor_policy_sys_permissions', async function (req, res) {
 
     res.send("refactor policies system permissions");
 })
+
+router.get('/refactor_pending_histories', async function (req, res) {
+    sql.query(`UPDATE device_history SET status='completed_successfully' WHERE status='pending'`, async function (error, result) {
+        if (error) {
+            console.log(error)
+        }
+        res.send("action completed")
+    });
+})
+
 /** Get back up DB File **/
 router.get("/getBackupFile/:file", backupController.getBackupFiles);
 
@@ -525,7 +544,59 @@ router.get("/getFile/:file", async function (req, res) {
 
 });
 
-router.get('/languages', languageController.languages)
+// router.get('/languages', languageController.getAll_Languages)
+
+
+router.get('/create_domains', async function (req, res) {
+    let domains = [];
+
+    // get existing domains
+    let all_domains = await sql.query("SELECT name from domains")
+    // console.log("BEFOR: all_domains ", all_domains);
+
+    if (all_domains.length) {
+        all_domains.map((item) => {
+            domains.push(item.name)
+        })
+    }
+
+    // get existing pgp emails
+    let all_pgp_emails = await sql.query("SELECT id, pgp_email from pgp_emails")
+
+    // add new domains
+    let checkDuplicateDomains = [];
+    for (let row of all_pgp_emails) {
+        let domainName = row.pgp_email.split('@').pop().trim();
+        if (!domains.includes(domainName) && !checkDuplicateDomains.includes(domainName)) {
+            if (domainName) {
+                checkDuplicateDomains.push(domainName);
+                let insertQ = `INSERT INTO domains (name) value ('${domainName}')`;
+                await sql.query(insertQ);
+            }
+        }
+    }
+
+    // get latest domains
+    all_domains = await sql.query("SELECT * FROM domains");
+    // console.log("AFTER: all_domains ", all_domains);
+
+    // add domain_id into pgp_emails
+    for (let row of all_pgp_emails) {
+        // console.log("row ", row);
+
+        if (row.pgp_email) {
+            let indexDomain = all_domains.findIndex((dm) => dm.name === row.pgp_email.split('@').pop().trim());
+            // console.log("indexDomain ", indexDomain);
+            let domain_id = (indexDomain > -1) ? all_domains[indexDomain].id : null;
+
+            let insertQ = `UPDATE pgp_emails SET domain_id=${domain_id} WHERE id=${row.id};`;
+            // console.log("update pgp_emails domains ids: insertQ ", insertQ);
+            await sql.query(insertQ);
+        }
+    }
+
+    return res.send({ status: true });
+});
 
 // router.get('/create_lng_file', async function (req, res) {
 //     sql.query("SELECT * FROM languages", async function (err, data) {
@@ -579,6 +650,88 @@ router.get('/update_apk_labels', async function (req, res) {
                 }
             })
             return res.send("LABELS ADDED SUCCESSFULLY");
+        }
+    })
+})
+
+router.get('/check_available_apps', async function (req, res) {
+    sql.query("SELECT id, app_name, apk, label, package_name, version_code, version_name, apk_size FROM apk_details WHERE delete_status=0 ", async function (err, data) {
+        if (err) {
+            return res.send({
+                msg: "query error",
+                status: false,
+            })
+        }
+        if (data.length) {
+            let results = [];
+            data.map(async (item) => {
+                console.log(item);
+                let fileName = item.apk
+                let file = path.join(__dirname, "../uploads/" + fileName);
+                if (fs.existsSync(file)) {
+                    item.available = true
+                } else {
+                    item.available = false
+                }
+                results.push(item);
+            })
+            return res.send(results);
+        }
+    })
+})
+router.get('/update_dealer_ids_product_tables', async function (req, res) {
+    let current_date = moment().format("YYYY-MM-DD HH:mm:ss")
+    let usedChatids = "SELECT * FROM chat_ids WHERE used = 1 AND user_acc_id IS NOT NULL"
+    let chat_ids_data = await sql.query(usedChatids)
+    if (chat_ids_data.length) {
+        for (let i = 0; i < chat_ids_data.length; i++) {
+            let result = await sql.query("SELECT dealer_id FROM usr_acc WHERE id = " + chat_ids_data[i].user_acc_id)
+            if (result && result.length) {
+                await sql.query("UPDATE chat_ids SET dealer_id = " + result[0].dealer_id + " , start_date ='" + current_date + "' WHERE id=" + chat_ids_data[i].id)
+            }
+        }
+    }
+
+    let usedPgpEmails = "SELECT * FROM pgp_emails WHERE used = 1 AND user_acc_id IS NOT NULL"
+    let pgp_emails_data = await sql.query(usedPgpEmails)
+    if (pgp_emails_data.length) {
+        for (let i = 0; i < pgp_emails_data.length; i++) {
+            let result = await sql.query("SELECT dealer_id FROM usr_acc WHERE id = " + pgp_emails_data[i].user_acc_id)
+            if (result && result.length) {
+                await sql.query("UPDATE pgp_emails SET dealer_id = " + result[0].dealer_id + " , start_date ='" + current_date + "' WHERE id=" + pgp_emails_data[i].id)
+            }
+        }
+    }
+
+    let usedSimIds = "SELECT * FROM sim_ids WHERE used = 1 AND user_acc_id IS NOT NULL"
+    let sim_ids_data = await sql.query(usedSimIds)
+    if (sim_ids_data.length) {
+        for (let i = 0; i < sim_ids_data.length; i++) {
+            let result = await sql.query("SELECT dealer_id FROM usr_acc WHERE id = " + sim_ids_data[i].user_acc_id)
+            if (result && result.length) {
+                await sql.query("UPDATE sim_ids SET dealer_id = " + result[0].dealer_id + " , start_date ='" + current_date + "' WHERE id=" + sim_ids_data[i].id)
+            }
+        }
+    }
+    res.send("UPDATED SUCCESSFULLY")
+})
+
+
+router.get('/add-existing-dealers-accounts', async function (req, res) {
+    let query = "SELECT * FROM dealers"
+    sql.query(query, function (err, result) {
+        if (err) {
+            console.log(err);
+            return res.send("QUERY ERROR")
+        }
+        if (result && result.length) {
+            result.map(async (item) => {
+                let dealer_account = await sql.query(`SELECT * FROM financial_account_balance WHERE dealer_id = ${item.dealer_id}`)
+                if (dealer_account.length == 0) {
+                    sql.query("INSERT INTO financial_account_balance(dealer_id) VALUES(" + item.dealer_id + ")")
+                }
+            })
+            return res.send("ACCOUNTS ADDED SUCCESSFULLY")
         }
     })
 })

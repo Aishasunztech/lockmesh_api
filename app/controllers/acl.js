@@ -13,12 +13,67 @@ const device_helpers = require('../../helper/device_helpers');
 const general_helpers = require('../../helper/general_helper');
 const moment = require('moment');
 
+exports.addAclModule = async function (req, res) {
+    let title = req.body.title;
+    let componentName = req.body.componentName;
+    let uri = req.body.uri;
+    let adminAllow = req.body.admin;
+    let dealerAllow = req.body.dealer;
+    let sdealerAllow = req.body.sdealer;
+
+
+    let insertQuery = `INSERT INTO acl_modules (title, component, uri) VALUES ('${title}', '${componentName}', '${uri}');`;
+    console.log("insertQuery ", insertQuery);
+
+    await sql.query(insertQuery, async function (err, result) {
+        if (err) {
+            console.log(err);
+            return res.send({ status: false, msg: "Query error" })
+        }
+
+        if (result.affectedRows) {
+            let componentId = result.insertId;
+            let queryValues = '';
+
+            if (adminAllow) {
+                queryValues = `(1, ${componentId}), `
+            }
+            if (dealerAllow) {
+                queryValues = queryValues + `(2, ${componentId}), `
+            }
+            if (sdealerAllow) {
+                queryValues = queryValues + `(3, ${componentId}) `
+            }
+
+            if (queryValues === '') {
+                return res.send({ status: false, msg: "query value are empty" });
+            } else {
+                insertQuery = `INSERT INTO acl_module_to_user_roles (user_role_id, component_id) VALUES ${queryValues.replace(/,\s*$/, "")}`
+                console.log("insertQuery acl_module_to_user_roles:: ", insertQuery);
+                let sResults = await sql.query(insertQuery);
+
+                console.log("sResults ", sResults);
+
+                if (sResults.affectedRows > 0) {
+                    return res.send({ status: true, msg: "component path and role added successfully" });
+                } else {
+                    return res.send({ status: false, msg: "failed to add acl role" });
+                }
+            }
+
+        } else {
+            return res.send({ status: false, msg: "Error" });
+        }
+    });
+
+};
+
 exports.getAllowedComponents = async function (req, res) {
     // res.setHeader('Content-Type', 'applcation/json');
 
     var verify = req.decoded;
     // if (verify['status'] !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
 
     }
 };
@@ -28,7 +83,7 @@ exports.checkComponent = async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
     var verify = req.decoded;
     // if (verify['status'] !== undefined && verify.status == true) {
-        if (verify) {
+    if (verify) {
         var componentUri = req.body.ComponentUri;
         var userId = verify.user.id;
         var result = await general_helpers.isAllowedComponentByUri(componentUri, userId);
@@ -57,7 +112,8 @@ exports.checkComponent = async function (req, res) {
                 created: user[0].created,
                 modified: user[0].modified,
                 two_factor_auth: user[0].is_two_factor_auth,
-                verified: user[0].verified
+                verified: user[0].verified,
+                account_balance_status: user[0].account_balance_status,
             }
 
             res.json({
