@@ -3,7 +3,7 @@
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return Promise.all([
-      queryInterface.renameColumn('device_history', 'status', 'status1'),
+      // queryInterface.renameColumn('device_history', 'status', 'status1'),
       queryInterface.addColumn('device_history', 'status',
       {
         type: Sequelize.ENUM(
