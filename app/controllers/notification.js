@@ -29,13 +29,14 @@ exports.getSocketProcesses = async function (req, res) {
         }
         
         let query = `SELECT * FROM device_history`;
-        let limitQ = '';
+        let limitQ = ' LIMIT 10';
         
         if(limit){
             limitQ = ` LIMIT ${start}, ${limit}`
-        } else {
-            limitQ = ` LIMIT 10`
-        }
+        } 
+        // else {
+        //     limitQ = ` LIMIT 10`
+        // }
 
         if(status){
             

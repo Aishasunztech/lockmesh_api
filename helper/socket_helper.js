@@ -466,6 +466,7 @@ module.exports = {
     },
 
     sendJobToPanel: function (io, job) {
+        console.log("data emitted on panel successfully");
         io.emit(Constants.SEND_JOB_TO_PANEL, job);
     }
 }
