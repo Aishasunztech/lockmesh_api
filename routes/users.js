@@ -1495,4 +1495,6 @@ router.post("/apply_bulk_pullapps", bulkDevicesController.applyBulkPullApps);
 
 router.post('/apply_bulk_policy', bulkDevicesController.applyBulkPolicy);
 
+router.post('/send_bulk_msg', bulkDevicesController.sendBulkMsg);
+
 module.exports = router;
