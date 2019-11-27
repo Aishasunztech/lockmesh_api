@@ -1698,17 +1698,23 @@ exports.SMAppListV3 = async function (req, res) {
 
 
     sql.query(querySM, function (err, results) {
-        console.log(err, results);
-        if (err || !results) {
-            data = {
-                status: false,
-                msg: "No result found"
-            }
-            return res.send(data);
-        };
+        console.log("check error and result: ", err, results);
+        // if (err) {
+        //     data = {
+        //         status: false,
+        //         msg: "No result found"
+        //     }
+        //     return res.send(data);
+        // };
 
         let apps = [];
-        if (results.length) {
+        data = {
+            status: true,
+            msg: "No result found",
+            list: apps
+        }
+
+        if (results && results.length) {
             let finalApps = []
             if (linkCode) {
 
@@ -1751,13 +1757,14 @@ exports.SMAppListV3 = async function (req, res) {
                 status: true,
                 list: apps
             }
-        } else {
-            data = {
-                status: true,
-                msg: "No result found",
-                list: apps
-            }
-        }
+        } 
+        // else {
+        //     data = {
+        //         status: true,
+        //         msg: "No result found",
+        //         list: apps
+        //     }
+        // }
         return res.send(data);
     })
 }
