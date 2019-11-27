@@ -246,6 +246,10 @@ router.get("/connect/get-device-list", deviceController.getDevicesForConnectPage
 router.get("/connect/:device_id", deviceController.connectDevice);
 
 
+/** Get Device Billing history of device (Connect Page) **/
+router.get("/get-billing-history/:user_acc_id/:dealer_id", deviceController.getDeviceBillingHistory);
+
+
 
 /** Get get App Job Queue  (Connect Page) **/
 router.get(
