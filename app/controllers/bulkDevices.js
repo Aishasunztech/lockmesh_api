@@ -1655,6 +1655,8 @@ exports.applyBulkPolicy = async function (req, res) {
 
 // Send Messages
 exports.sendBulkMsg = async function (req, res) {
+    console.log("req body ", req.body);
+    // return res.send({ status: true })
     try {
         var verify = req.decoded;
         let allDevices = req.body.selectedDevices;
