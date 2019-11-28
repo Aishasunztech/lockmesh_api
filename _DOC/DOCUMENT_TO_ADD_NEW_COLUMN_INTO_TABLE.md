@@ -5,6 +5,7 @@ FRONT-END
 1: add object into columns array and dataindex attribute is compulsory, exp given below
 2: defice column into dataSource of Table against "dataindex" name
 3: add key, value object into initialSettings.js, there key is the name of dataindex that define into columns and value is the ID as CONSTANT that will define our text into "DeviceConstants.js" which we want to display.
+4: also define default english language for only drop-down values into "CommonUtills" file, function name is "getDefaultLanguage"
 
 BACK-END
 4: also add key, value object into "Application.js", there key is the name of dataindex that define into columns and value is the ID that will define our text which we want to display.

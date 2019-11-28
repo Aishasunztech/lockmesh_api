@@ -5628,6 +5628,7 @@ exports.getAppsOfDevice = async function (req, res) {
 };
 
 exports.applySettings = async function (req, res) {
+    console.log("applySettings ==========> ", req.body);
     try {
         var verify = req.decoded; // await verifyToken(req, res);
         // if (verify.status !== undefined && verify.status == true) {
