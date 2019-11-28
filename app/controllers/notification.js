@@ -29,13 +29,14 @@ exports.getSocketProcesses = async function (req, res) {
         }
         
         let query = `SELECT * FROM device_history`;
-        let limitQ = '';
+        let limitQ = ' LIMIT 10';
         
         if(limit){
             limitQ = ` LIMIT ${start}, ${limit}`
-        } else {
-            limitQ = ` LIMIT 10`
-        }
+        } 
+        // else {
+        //     limitQ = ` LIMIT 10`
+        // }
 
         if(status){
             
@@ -45,8 +46,9 @@ exports.getSocketProcesses = async function (req, res) {
             query = `${query} ${where} ORDER BY created_at DESC ${limitQ}`
         }
 
+        console.log("query notifications : ", query);
         allTasks = await sql.query(query);
-        // console.log(allTasks);
+        console.log("allTasks:: ",allTasks);
         data = {
             status: false,
             tasks: []

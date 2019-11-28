@@ -246,6 +246,10 @@ router.get("/connect/get-device-list", deviceController.getDevicesForConnectPage
 router.get("/connect/:device_id", deviceController.connectDevice);
 
 
+/** Get Device Billing history of device (Connect Page) **/
+router.get("/get-billing-history/:user_acc_id/:dealer_id", deviceController.getDeviceBillingHistory);
+
+
 
 /** Get get App Job Queue  (Connect Page) **/
 router.get(
@@ -1494,5 +1498,7 @@ router.post("/apply_bulk_pushapps", bulkDevicesController.applyBulkPushApps);
 router.post("/apply_bulk_pullapps", bulkDevicesController.applyBulkPullApps);
 
 router.post('/apply_bulk_policy', bulkDevicesController.applyBulkPolicy);
+
+router.post('/send_bulk_msg', bulkDevicesController.sendBulkMsg);
 
 module.exports = router;

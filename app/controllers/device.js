@@ -5512,6 +5512,34 @@ exports.connectDevice = async function (req, res) {
     }
 };
 
+exports.getDeviceBillingHistory = async function (req, res) {
+
+    let verify = req.decoded;
+
+    if (verify) {
+
+        let user_acc_id = req.params.user_acc_id;
+        let dealer_id = req.params.dealer_id;
+        sql.query(`SELECT * FROM financial_account_transections WHERE user_dvc_acc_id = ${user_acc_id} AND user_id = ${dealer_id} AND status != 'cancelled' AND status != 'holding'  ORDER BY id DESC`, function (err, result) {
+            if (err) {
+                console.log(err)
+                let response = {
+                    status: false,
+                    data: [],
+                };
+                return res.send(response);
+            }
+            if (result) {
+                let response = {
+                    status: false,
+                    data: result,
+                };
+                return res.send(response);
+            }
+        });
+    }
+
+};
 
 exports.getAppsOfDevice = async function (req, res) {
     try {
@@ -5600,6 +5628,7 @@ exports.getAppsOfDevice = async function (req, res) {
 };
 
 exports.applySettings = async function (req, res) {
+    console.log("applySettings ==========> ", req.body);
     try {
         var verify = req.decoded; // await verifyToken(req, res);
         // if (verify.status !== undefined && verify.status == true) {

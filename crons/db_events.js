@@ -18,7 +18,9 @@ exports.deviceQueue = async function () {
         expression: `${constants.DB_NAME}.device_history`,
         statement: MySQLEvents.STATEMENTS.ALL,
         onEvent: (event) => { 
+            console.log("check device queue event")
             if(event.type === 'INSERT'){
+                console.log("insert condition")
                 socket_helpers.sendJobToPanel(sockets.baseIo, event.affectedRows[0].after);
             } else if (event.type === 'UPDATE'){
                 console.log('device_history updated:', event);

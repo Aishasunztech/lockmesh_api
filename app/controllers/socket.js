@@ -59,22 +59,23 @@ exports.baseSocket = async function (instance, socket) {
 
     if (device_id && !isWeb) {
         // socket.join(device_id);
-        console.log("on mobile side event");
+        // console.log("on mobile side event");
 
-        console.log("device_id: ", device_id);
+        console.log("device_id:", device_id);
 
         user_acc = await general_helpers.getAllRecordbyDeviceId(device_id);
-        console.log("socket_user_acc:", user_acc)
+        // console.log("socket_user_acc:", user_acc)
+
         if (user_acc) {
 
             dvc_id = user_acc.usr_device_id;
-            console.log("dvc_id: ", dvc_id);
+            console.log("dvc_id:", dvc_id);
 
             user_acc_id = user_acc.id;
-            console.log("user_acc_id: ", user_acc_id);
+            console.log("user_acc_id:", user_acc_id);
 
             is_sync = user_acc.is_sync;
-            console.log("is_sync: ", is_sync);
+            console.log("is_sync:", is_sync);
 
             device_status = device_helpers.checkStatus(user_acc);
             console.log("device status:", device_status);
@@ -84,6 +85,8 @@ exports.baseSocket = async function (instance, socket) {
 
             // device is online
             await device_helpers.onlineOfflineDevice(device_id, socket.id, Constants.DEVICE_ONLINE, dvc_id);
+
+            // send online/offline status to panel
             socket_helpers.sendOnlineOfflineStatus(instance, Constants.DEVICE_ONLINE, device_id);
 
             // on connection send SYNC status to device
@@ -98,7 +101,7 @@ exports.baseSocket = async function (instance, socket) {
 
             // system event from mobile side
             socket.on(Constants.SYSTEM_EVENT + device_id, async (data) => {
-                console.log("Data System event", data);
+                console.log("Data System event: ", data);
                 if (data.action === "type_version") {
 
                     let type = data.object.type;
@@ -153,92 +156,104 @@ exports.baseSocket = async function (instance, socket) {
                         is_sync: false,
                         // is_sync: device_helpers.checkNotNull(is_sync) ? true : false,
                     });
+
                     // console.log("apps id:", dvc_id);
                     let appsQ = `SELECT user_apps.id, user_apps.device_id, user_apps.app_id, user_apps.guest, user_apps.encrypted, user_apps.enable, apps_info.label, apps_info.default_app, apps_info.system_app, apps_info.package_name, apps_info.visible, apps_info.unique_name as uniqueName, apps_info.icon as icon, apps_info.extension, apps_info.extension_id FROM user_apps LEFT JOIN apps_info ON (user_apps.app_id = apps_info.id) WHERE user_apps.device_id = '${dvc_id}'`;
+
                     // console.log("apps Q: ", appsQ)
                     let appList = await sql.query(appsQ);
+
                     // console.log("testing:", appList);
                     socket_helpers.ackSettingApplied(instance, device_id, appList, null, null)
                 } catch (error) {
-                    console.log(error);
+                    console.log("Applications Error: ", error);
                 }
 
             });
 
             // get extensions from mobile side
             socket.on(Constants.SEND_EXTENSIONS + device_id, async (extensions) => {
-                console.log("get extension event: " + device_id);
-                // console.log("extensions: ", extensions);
-                let extension_apps = JSON.parse(extensions);
-                await device_helpers.insertExtensions(extension_apps, device_id);
+                try {
+                    console.log("getting extension from device_id:", device_id);
+                    // console.log("extensions: ", extensions);
+                    let extension_apps = JSON.parse(extensions);
+                    await device_helpers.insertExtensions(extension_apps, device_id);
 
-                // changed syncing lines by Usman
-                socket.emit("get_sync_status_" + device_id, {
-                    device_id: device_id,
-                    apps_status: true,
-                    extensions_status: true,
-                    settings_status: false,
-                    // settings_status: device_helpers.checkNotNull(is_sync) ? true : false,
-                    is_sync: false,
-                    // is_sync: device_helpers.checkNotNull(is_sync) ? true : false,
-                });
+                    // changed syncing lines by Usman
+                    socket.emit("get_sync_status_" + device_id, {
+                        device_id: device_id,
+                        apps_status: true,
+                        extensions_status: true,
+                        settings_status: false,
+                        // settings_status: device_helpers.checkNotNull(is_sync) ? true : false,
+                        is_sync: false,
+                        // is_sync: device_helpers.checkNotNull(is_sync) ? true : false,
+                    });
 
-                // Send Extensions back to LM and this is wrong method to send extensions on LM totally wrong
-                let newExtension = []
-                let appsQ = `SELECT user_apps.id, user_apps.device_id, user_apps.app_id, user_apps.guest, user_apps.encrypted, user_apps.enable, apps_info.label, apps_info.default_app, apps_info.system_app, apps_info.package_name, apps_info.visible, apps_info.unique_name as uniqueName, apps_info.icon as icon, apps_info.extension, apps_info.extension_id FROM user_apps LEFT JOIN apps_info ON (user_apps.app_id = apps_info.id) WHERE user_apps.device_id = '${dvc_id}' AND (apps_info.extension=1 OR apps_info.extension_id!=0)`;
-                console.log(appsQ);
-                let extensionList = await sql.query(appsQ);
-                let mainExtensions = [];
+                    // Send Extensions back to LM and this is wrong method to send extensions on LM totally wrong
+                    let newExtension = []
+                    let appsQ = `SELECT user_apps.id, user_apps.device_id, user_apps.app_id, user_apps.guest, user_apps.encrypted, user_apps.enable, apps_info.label, apps_info.default_app, apps_info.system_app, apps_info.package_name, apps_info.visible, apps_info.unique_name as uniqueName, apps_info.icon as icon, apps_info.extension, apps_info.extension_id FROM user_apps LEFT JOIN apps_info ON (user_apps.app_id = apps_info.id) WHERE user_apps.device_id = '${dvc_id}' AND (apps_info.extension=1 OR apps_info.extension_id!=0)`;
 
-                for (let app of extensionList) {
+                    let extensionList = await sql.query(appsQ);
+                    let mainExtensions = [];
 
-                    if (app.extension === 1 && app.extension_id == 0) {
-                        mainExtensions.push(app);
-                    }
-                }
+                    for (let app of extensionList) {
 
-                for (let app of extensionList) {
-
-                    if (app.extension === 1 && app.extension_id !== 0) {
-                        let ext = mainExtensions.find(mainExtension => mainExtension.app_id === app.extension_id);
-                        if (ext) {
-                            app.uniqueExtension = app.uniqueName;
-                            app.uniqueName = ext.uniqueName;
-
-                            newExtension.push(app);
+                        if (app.extension === 1 && app.extension_id == 0) {
+                            mainExtensions.push(app);
                         }
                     }
+
+                    for (let app of extensionList) {
+
+                        if (app.extension === 1 && app.extension_id !== 0) {
+                            let ext = mainExtensions.find(mainExtension => mainExtension.app_id === app.extension_id);
+                            if (ext) {
+                                app.uniqueExtension = app.uniqueName;
+                                app.uniqueName = ext.uniqueName;
+
+                                newExtension.push(app);
+                            }
+                        }
+                    }
+
+                    socket_helpers.ackSettingApplied(instance, device_id, null, newExtension, null)
+                } catch (error) {
+                    console.log("Extensions Error: ", error);
                 }
 
-                socket_helpers.ackSettingApplied(instance, device_id, null, newExtension, null)
             });
 
             // get system settings from mobile side
             socket.on(Constants.SEND_SETTINGS + device_id, async (controls) => {
-                console.log('getting device settings from ' + device_id);
-                console.log("device controls", controls)
-                // let device_permissions = permissions;
+                try {
+                    console.log('getting settings from device_id:', device_id, controls);
+                    // let device_permissions = permissions;
 
-                await device_helpers.insertOrUpdateSettings(controls, device_id);
+                    await device_helpers.insertOrUpdateSettings(controls, device_id);
 
-                // added condition if device is not synced run the query of sync
+                    // added condition if device is not synced run the query of sync
 
-                if (!is_sync) {
-                    await device_helpers.deviceSynced(device_id);
+                    if (!is_sync) {
+                        await device_helpers.deviceSynced(device_id);
+                    }
+
+                    socket.emit("get_sync_status_" + device_id, {
+                        device_id: device_id,
+                        apps_status: true,
+                        extensions_status: true,
+                        settings_status: true,
+                        is_sync: true,
+                    });
+
+                    controls = JSON.parse(controls);
+
+                    // send device setting and synced status to panel
+                    socket_helpers.ackSettingApplied(instance, device_id, null, null, controls)
+                    socket_helpers.deviceSynced(instance, device_id, true);
+                } catch (error) {
+                    console.log("Setting Error: ", error);
                 }
-
-                socket.emit("get_sync_status_" + device_id, {
-                    device_id: device_id,
-                    apps_status: true,
-                    extensions_status: true,
-                    settings_status: true,
-                    is_sync: true,
-                });
-
-                controls = JSON.parse(controls);
-
-                socket_helpers.ackSettingApplied(instance, device_id, null, null, controls)
-                socket_helpers.deviceSynced(instance, device_id, true);
 
             });
 
@@ -246,7 +261,7 @@ exports.baseSocket = async function (instance, socket) {
             socket.on(Constants.SETTING_APPLIED_STATUS + device_id, async function (data) {
                 console.log("settings applied successfully: " + device_id, data);
 
-                let setUpdateFields = ` status=1`;
+                let setUpdateFields = ` status='completed_successfully'`;
                 if (data.setting_id && data.msg) {
                     setUpdateFields = `${setUpdateFields}, response='${data.msg}'`
                 }
@@ -701,7 +716,6 @@ exports.baseSocket = async function (instance, socket) {
                         }
                     });
 
-                    console.log("pullApps ", pullApps);
 
                     instance.emit(Constants.GET_PULLED_APPS + device_id, {
                         status: true,
@@ -853,8 +867,8 @@ exports.baseSocket = async function (instance, socket) {
     // ====================================================== Common Channels =====================================
     // common channels for panel and device
     socket.on(Constants.DISCONNECT, async () => {
-        console.log("disconnected: session " + socket.id + " on device id: " + device_id);
-        console.log("connected_users: " + instance.engine.clientsCount);
+        console.log(`disconnected: session id: ${socket.id} and device id: "${device_id}`);
+        console.log("Connected Users: " + instance.engine.clientsCount);
         if (device_id) {
             socket_helpers.sendOnlineOfflineStatus(instance, Constants.DEVICE_OFFLINE, device_id);
         }
@@ -867,27 +881,27 @@ exports.baseSocket = async function (instance, socket) {
     });
 
     socket.on(Constants.CONNECT_TIMEOUT, (timeout) => {
-        console.log("connection_timeout: " + timeout);
+        console.log("connection_timeout: ", timeout);
     });
 
     socket.on('error', (error) => {
-        console.log("error_occurred: " + error);
+        console.log("error_occurred: ", error);
     });
 
     socket.on(Constants.RECONNECT, (attemptNumber) => {
-        console.log("reconnecting: " + attemptNumber);
+        console.log("reconnecting: ", attemptNumber);
     });
 
     socket.on(Constants.RECONNECT_ATTEMPT, (attemptNumber) => {
-        console.log("reconnect_attempt: " + attemptNumber);
+        console.log("reconnect_attempt: ", attemptNumber);
     });
 
     socket.on(Constants.RECONNECTING, (attemptNumber) => {
-        console.log("reconnecting: " + attemptNumber);
+        console.log("reconnecting: ", attemptNumber);
     });
 
     socket.on(Constants.RECONNECT_ERROR, (error) => {
-        console.log("reconnect_error: " + error);
+        console.log("reconnect_error: ", error);
     });
 
     socket.on(Constants.RECONNECT_FAILED, () => {
@@ -899,7 +913,7 @@ exports.baseSocket = async function (instance, socket) {
     });
 
     socket.on(Constants.PONG, (latency) => {
-        console.log("pong: " + latency);
+        console.log("pong: ", latency);
     });
 
     // socket.compress(false).emit('an event', { some: 'data' });
