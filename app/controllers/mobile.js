@@ -1710,8 +1710,9 @@ exports.SMAppListV3 = async function (req, res) {
         let apps = [];
         data = {
             status: true,
+            success: true,
             msg: "No result found",
-            list: apps
+            list: []
         }
 
         if (results && results.length) {
