@@ -28,6 +28,7 @@ module.exports = {
   BULK_SUSPENDED_DEVICES: "SUSPENDED DEVICES",
   BULK_UNLINKED_DEVICES: "UNLINKED DEVICES",
   BULK_WIPED_DEVICES: "WIPED DEVICES",
+  BULK_SEND_MESSAGE: "SEND MESSAGE",
 
 
   // devices
@@ -131,6 +132,7 @@ module.exports = {
   FINISH_WIPE: 'finish_wipe_',
   FINISH_POLICY_STEP: 'finish_policy_step_',
 
+  SEND_BULK_MSG_TO_DEVICE: 'send_device_msg',
   // INSTALL OR UNINSTALL APPS
   GET_INSTALLED_APPS: 'send_installed_apps_',
   ACK_INSTALLED_APPS: 'ack_installed_apps_',

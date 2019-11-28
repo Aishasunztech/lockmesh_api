@@ -580,7 +580,7 @@ exports.suspendBulkAccountDevices = async function (req, res) {
                             constants.DEVICE_SUSPENDED
                         );
 
-                        
+
                     }
                 }
             } else {
@@ -759,7 +759,7 @@ exports.activateBulkDevices = async function (req, res) {
                         }
                         resquery[0].remainTermDays = remainTermDays
 
-                        
+
                         // check online/offline devices
                         let isOnline = await device_helpers.isDeviceOnline(resquery[0].device_id);
                         if (isOnline) {
@@ -1322,7 +1322,7 @@ exports.unlinkBulkDevices = async function (req, res) {
             } else {
                 data = {
                     status: false,
-                    msg: 'Error while Processing To Unlink Devices'
+                    msg: 'Error while Processing'
                 }
             }
             // console.log("response data is: ", data)
@@ -1343,7 +1343,7 @@ exports.unlinkBulkDevices = async function (req, res) {
         console.log(error);
         res.send({
             status: false,
-            msg: await helpers.convertToLang(req.translation["MsgConstants.ERROR_PROC"], "Error while Processing To Unlink Devices"),
+            msg: await helpers.convertToLang(req.translation["MsgConstants.ERROR_PROC"], "Error while Processing"),
         });
     }
 };
@@ -1627,7 +1627,7 @@ exports.applyBulkPolicy = async function (req, res) {
             } else {
                 data = {
                     status: false,
-                    msg: 'Error while Processing To Unlink Devices'
+                    msg: 'Error while Processing'
                 }
             }
             // console.log("response data is: ", data)
@@ -1643,6 +1643,120 @@ exports.applyBulkPolicy = async function (req, res) {
             res.send(data);
             return;
         }
+    } catch (error) {
+        console.log(error)
+        res.send({
+            status: false,
+            msg: 'Error while Processing'
+        })
+    }
+}
+
+
+// Send Messages
+exports.sendBulkMsg = async function (req, res) {
+    console.log("req body ", req.body);
+    // return res.send({ status: true })
+    try {
+        var verify = req.decoded;
+        let allDevices = req.body.selectedDevices;
+        let txtMsg = req.body.txtMsg;
+
+        if (verify && allDevices && allDevices.length && txtMsg) {
+            let loggedUserId = verify.user.id
+
+            // let failedToApply = [];
+            let onlineDevices = [];
+            let offlineDevices = [];
+
+            for (let device of allDevices) {
+                let isOnline = await device_helpers.isDeviceOnline(device.device_id);
+                if (isOnline) {
+                    socket_helpers.sendBulkMsgToDevice(sockets.baseIo, device.device_id, txtMsg);
+                    onlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
+
+                } else {
+                    offlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
+                }
+
+            }
+
+            let messageTxt = '';
+            let contentTxt = '';
+
+            // if (failedToApply.length) {
+            //     messageTxt = await helpers.convertToLang(req.translation[""], "Failed to Applied Policy on All Selected Devices . Please try again")
+            // }
+            // else 
+            if (offlineDevices.length) {
+                messageTxt = await helpers.convertToLang(req.translation[""], "Warning All Selected Devices Are Offline");
+                contentTxt = await helpers.convertToLang(req.translation[""], "Message will be Send Soon on all Selected Devices. Action will be performed when devices back online");
+            }
+            else if (onlineDevices.length) {
+                messageTxt = await helpers.convertToLang(req.translation[""], "Message successfully send on all selected devices")
+            }
+
+            if (onlineDevices.length || offlineDevices.length) {
+
+                // get user_device_ids and string device ids of online and offline devices
+                let queue_dvc_ids = [];
+                let queue_usr_dvc_ids = [];
+                let pushed_dvc_ids = [];
+                let pushed_usr_dvc_ids = [];
+
+                let all_usr_dvc_ids = [];
+
+                offlineDevices.forEach(item => {
+                    queue_dvc_ids.push(item.device_id);
+                    queue_usr_dvc_ids.push(item.usr_device_id);
+                });
+
+                onlineDevices.forEach(item => {
+                    pushed_dvc_ids.push(item.device_id);
+                    pushed_usr_dvc_ids.push(item.usr_device_id);
+                });
+                all_usr_dvc_ids = [...queue_usr_dvc_ids, ...pushed_usr_dvc_ids];
+
+                req.body["device_ids"] = all_usr_dvc_ids;
+                req.body["action_by"] = loggedUserId;
+                req.body["msg"] = txtMsg;
+                // console.log('save bulk history')
+                device_helpers.saveBuklActionHistory(req.body, constants.BULK_SEND_MESSAGE, true);
+
+                data = {
+                    status: true,
+                    online: onlineDevices.length ? true : false,
+                    offline: offlineDevices.length ? true : false,
+                    // failed: failedToApply.length ? true : false,
+                    msg: messageTxt,
+                    content: contentTxt,
+                    data: {
+                        failed_device_ids: [], // failedToApply,
+                        queue_device_ids: queue_dvc_ids,
+                        pushed_device_ids: pushed_dvc_ids,
+                    }
+                };
+            } else {
+                data = {
+                    status: false,
+                    msg: 'Error while Processing'
+                }
+            }
+            // console.log("response data is: ", data)
+            res.send(data);
+
+        } else {
+            data = {
+                status: false,
+                msg: await helpers.convertToLang(
+                    req.translation[""],
+                    "Invalid Devices"
+                )
+            };
+            res.send(data);
+            return;
+        }
+
     } catch (error) {
         console.log(error)
         res.send({
