@@ -297,10 +297,30 @@ exports.getFilteredBulkDevices = async function (req, res) {
 
 
             if (where_in_dealer != "" || where_in_user != "") {
+                let unlinkQ = '';
+                if (verify.user.user_type !== constants.ADMIN) {
+                    if (verify.user.user_type === constants.DEALER) {
+                        where_con = ` AND (usr_acc.dealer_id =${
+                            verify.user.id
+                            } OR usr_acc.prnt_dlr_id = ${verify.user.id})`;
+                        unlinkQ = `SELECT * From acc_action_history WHERE action = 'UNLINKED' AND dealer_id = ${
+                            verify.user.id
+                            } AND del_status IS NULL`;
+
+                    } else {
+                        where_con = ` AND usr_acc.dealer_id = ${verify.user.id} `;
+                        unlinkQ = `SELECT * From acc_action_history WHERE action = 'UNLINKED' AND dealer_id = ${
+                            verify.user.id
+                            } AND del_status IS NULL`;
+                    }
+                } else {
+                    unlinkQ = `SELECT * From acc_action_history WHERE action = 'UNLINKED' AND del_status IS NULL `;
+                }
+                newArray = await sql.query(unlinkQ);
 
                 // AND  usr_acc.dealer_id IN (${IN_DEALER_ARRAY}) OR usr_acc.user_id IN (${IN_USER_ARRAY})
                 let query = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) 
-            WHERE devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 AND usr_acc.transfer_status = 0 AND usr_acc.device_status != 0 ${where_in_dealer} ${where_in_user} ORDER BY devices.id DESC`;
+            WHERE devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 AND usr_acc.device_status != 0 ${where_in_dealer} ${where_in_user} ${where_con} ORDER BY devices.id DESC`;
                 console.log('query is: ', query);
 
                 sql.query(query, async function (error, results, fields) {
