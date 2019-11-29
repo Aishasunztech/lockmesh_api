@@ -556,7 +556,7 @@ exports.savePackage = async function (req, res) {
             if (dealer_id) {
                 // console.log(dealer_id, 'whitelableid');
 
-                let checkExistingQ = "SELECT pkg_name FROM packages WHERE pkg_name='" + data.pkgName + "'";
+                let checkExistingQ = `SELECT pkg_name FROM packages WHERE pkg_name='${data.pkgName}' AND delete_status = 0;`;
                 let checkExisting = await sql.query(checkExistingQ);
                 if (checkExisting && checkExisting.length) {
                     res.send({
@@ -611,6 +611,7 @@ exports.savePackage = async function (req, res) {
                                 sql.query(insertQ)
 
                                 insertedRecord = await sql.query("SELECT * FROM packages WHERE dealer_id='" + dealer_id + "' AND id='" + rslt.insertId + "'")
+                                console.log("insertedRecord ========================> ", insertedRecord)
                                 res.send({
                                     status: true,
                                     msg: await helpers.convertToLang(req.translation[MsgConstants.PACKAGE_SAVED_SUCCESSFULLY], "Package Saved Successfully"), // 'Package Saved Successfully',
