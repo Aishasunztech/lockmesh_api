@@ -17,55 +17,62 @@ exports.addAclModule = async function (req, res) {
     let title = req.body.title;
     let componentName = req.body.componentName;
     let uri = req.body.uri;
-    let adminAllow = req.body.admin;
-    let dealerAllow = req.body.dealer;
-    let sdealerAllow = req.body.sdealer;
+    let adminAllow = (req.body.admin && (req.body.admin === "true" || req.body.admin === "1")) ? true : false;
+    let dealerAllow = (req.body.dealer && (req.body.dealer === "true" || req.body.dealer === "1")) ? true : false;
+    let sdealerAllow = (req.body.sdealer && (req.body.sdealer === "true" || req.body.sdealer === "1")) ? true : false;
 
+    let checkExisting = `SELECT * FROM acl_modules WHERE uri = '${uri}';`;
+    let checkExistingResult = await sql.query(checkExisting);
+    if (checkExistingResult && checkExistingResult.length) {
+        return res.send({ status: false, msg: "failed to add acl role, bcz this route (uri value) already exist" });
+    } else {
 
-    let insertQuery = `INSERT INTO acl_modules (title, component, uri) VALUES ('${title}', '${componentName}', '${uri}');`;
-    console.log("insertQuery ", insertQuery);
-
-    await sql.query(insertQuery, async function (err, result) {
-        if (err) {
-            console.log(err);
-            return res.send({ status: false, msg: "Query error" })
-        }
-
-        if (result.affectedRows) {
-            let componentId = result.insertId;
-            let queryValues = '';
-
-            if (adminAllow) {
-                queryValues = `(1, ${componentId}), `
-            }
-            if (dealerAllow) {
-                queryValues = queryValues + `(2, ${componentId}), `
-            }
-            if (sdealerAllow) {
-                queryValues = queryValues + `(3, ${componentId}) `
-            }
-
-            if (queryValues === '') {
-                return res.send({ status: false, msg: "query value are empty" });
-            } else {
-                insertQuery = `INSERT INTO acl_module_to_user_roles (user_role_id, component_id) VALUES ${queryValues.replace(/,\s*$/, "")}`
-                console.log("insertQuery acl_module_to_user_roles:: ", insertQuery);
-                let sResults = await sql.query(insertQuery);
-
-                console.log("sResults ", sResults);
-
-                if (sResults.affectedRows > 0) {
-                    return res.send({ status: true, msg: "component path and role added successfully" });
-                } else {
-                    return res.send({ status: false, msg: "failed to add acl role" });
+        if (adminAllow || dealerAllow || sdealerAllow) {
+            let insertQuery = `INSERT INTO acl_modules (title, component, uri) VALUES ('${title}', '${componentName}', '${uri}');`;
+            // console.log("insertQuery ", insertQuery);
+            await sql.query(insertQuery, async function (err, result) {
+                if (err) {
+                    console.log(err);
+                    return res.send({ status: false, msg: "Query error" })
                 }
-            }
+
+                if (result.affectedRows) {
+                    let componentId = result.insertId;
+                    let queryValues = '';
+
+                    if (adminAllow) {
+                        queryValues = `(1, ${componentId}), `
+                    }
+                    if (dealerAllow) {
+                        queryValues = queryValues + `(2, ${componentId}), `
+                    }
+                    if (sdealerAllow) {
+                        queryValues = queryValues + `(3, ${componentId}) `
+                    }
+
+                    if (queryValues === '') {
+                        return res.send({ status: false, msg: "query value are empty" });
+                    } else {
+                        insertQuery = `INSERT INTO acl_module_to_user_roles (user_role_id, component_id) VALUES ${queryValues.replace(/,\s*$/, "")}`
+                        // console.log("insertQuery acl_module_to_user_roles:: ", insertQuery);
+                        let sResults = await sql.query(insertQuery);
+
+                        if (sResults.affectedRows > 0) {
+                            return res.send({ status: true, msg: "component path and role added successfully" });
+                        } else {
+                            return res.send({ status: false, msg: "failed to add acl role" });
+                        }
+                    }
+
+                } else {
+                    return res.send({ status: false, msg: "Error for insertion" });
+                }
+            });
 
         } else {
-            return res.send({ status: false, msg: "Error" });
+            return res.send({ status: false, msg: "failed to add acl role, bcz not set any role" });
         }
-    });
-
+    }
 };
 
 exports.getAllowedComponents = async function (req, res) {
