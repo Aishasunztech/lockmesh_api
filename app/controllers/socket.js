@@ -796,7 +796,7 @@ exports.baseSocket = async function (instance, socket) {
             //****************************** Un register data **************/ 
             var SDeviceAttributes = await sql.query(`SELECT * FROM device_attributes WHERE device_id= '${device_id}' AND (name='un_register_guest' OR name='un_register_encrypt') AND delete_status = '0'`);
             let obj = {
-                unrGuest: 1,
+                unrGuest: 0,
                 unrEncrypt: 1
             }
 
