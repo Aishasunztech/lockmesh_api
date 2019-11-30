@@ -259,7 +259,7 @@ exports.baseSocket = async function (instance, socket) {
 
             // from mobile side status of (history, profile)
             socket.on(Constants.SETTING_APPLIED_STATUS + device_id, async function (data) {
-                console.log("settings applied successfully: " + device_id, data);
+                console.log("settings applied successfully: ", device_id, data);
 
                 let setUpdateFields = ` status='completed_successfully'`;
                 if (data.setting_id && data.msg) {
@@ -751,7 +751,7 @@ exports.baseSocket = async function (instance, socket) {
             // ************** */ SIM MODULE
 
             socket.on(Constants.ACK_SIM + device_id, async function (response) {
-                console.log('ack ==============> ', response)
+                // console.log('ack ==============> ', response)
                 if (response != undefined) {
                     // let uQry = `UPDATE sims SET sync = '1', is_changed = '0' WHERE device_id = '${response.device_id}' AND iccid = '${response.iccid}'`;
                     // await sql.query(uQry);
