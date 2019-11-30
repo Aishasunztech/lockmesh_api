@@ -904,7 +904,7 @@ module.exports = {
 
             if (date_now < expiry_date && finalStatus === Constants.DEVICE_EXPIRED) {
                 // console.log(device);
-                require('./socket_helper').sendDeviceStatus(sockets.baseIo,
+                require('./socket_helper').sendDeviceStatus(require("../routes/sockets").baseIo,
                     device_id,
                     "active",
                     true
