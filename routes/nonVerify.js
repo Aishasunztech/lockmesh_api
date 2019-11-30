@@ -739,6 +739,7 @@ router.get('/add-existing-dealers-accounts', async function (req, res) {
 
 router.get('/create-services-for-existing-devices', async function (req, res) {
     let query = "SELECT user_acc_id FROM services_data"
+    let package = [{ id: 0, pkg_features: { chat_id: false, sim_id: false, sim_id2: false, pgp_email: true, vpn: false }, pkg_price: 0, pkg_dealer_type: "admin", pkg_name: "temp", pkg_term: "1 month", retail_price: 0 }]
     sql.query(query, function (err, result) {
         if (err) {
             console.log(err);
@@ -771,7 +772,7 @@ router.get('/create-services-for-existing-devices', async function (req, res) {
 
                         pgpData.map(item => {
                             let device = devices.find(device => device.id == item.user_acc_id)
-                            let insertServiceQ = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages , total_credits, start_date, service_expiry_date , service_term , is_temp) VALUES (${item.user_acc_id},${device.dealer_id}, '[]','[]',0,'${device.start_date}',  '${device.expiry_date}' ,0 , 1 )`
+                            let insertServiceQ = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages , total_credits, start_date, service_expiry_date , service_term , is_temp) VALUES (${item.user_acc_id},${device.dealer_id}, '[]','${JSON.stringify(package)}',0,'${device.start_date}',  '${device.expiry_date}' ,0 , 1 )`
                             sql.query(insertServiceQ, function (err, insertedData) {
                                 if (err) {
                                     console.log(err);

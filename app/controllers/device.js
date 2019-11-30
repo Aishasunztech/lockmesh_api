@@ -1951,7 +1951,7 @@ exports.editDevices = async function (req, res) {
                         if (newService) {
                             let user_credits_q = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
                             let results = await sql.query(user_credits_q)
-                            if (!pay_now && results[0].credits_limit > (results[0].credits - discounted_price)) {
+                            if (!pay_now && results[0].credits_limit > (results[0].credits - total_price)) {
                                 res.send({
                                     status: false,
                                     msg: "Error: Your Credits limits will exceed after apply this service. Please select other services OR Purchase Credits."
