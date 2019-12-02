@@ -867,7 +867,7 @@ exports.baseSocket = async function (instance, socket) {
     // ====================================================== Common Channels =====================================
     // common channels for panel and device
     socket.on(Constants.DISCONNECT, async () => {
-        console.log(`disconnected: session id: ${socket.id} and device id: "${device_id}`);
+        console.log(`disconnected: session id: ${socket.id} and device id: ${device_id}`);
         console.log("Connected Users: " + instance.engine.clientsCount);
         if (device_id) {
             socket_helpers.sendOnlineOfflineStatus(instance, Constants.DEVICE_OFFLINE, device_id);
