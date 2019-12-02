@@ -2067,7 +2067,7 @@ module.exports = {
 		console.log("selectDealerQ ", selectDealerQ)
 		let results = await sql.query(selectDealerQ);
 
-		console.log("permittedDealers results:: ", results);
+		// console.log("permittedDealers results:: ", results);
 
 		if (results.length > 0) {
 			for (let i = 0; i < results.length; i++) {
@@ -2087,7 +2087,7 @@ module.exports = {
 				}
 			}
 		}
-		console.log("finalDealers", finalDealers);
+		// console.log("finalDealers", finalDealers);
 
 
 		if (loggedUserType !== "admin") {
