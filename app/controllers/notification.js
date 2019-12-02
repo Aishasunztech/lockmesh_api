@@ -48,7 +48,7 @@ exports.getSocketProcesses = async function (req, res) {
 
         console.log("query notifications : ", query);
         allTasks = await sql.query(query);
-        console.log("allTasks:: ",allTasks);
+        // console.log("allTasks:: ",allTasks);
         data = {
             status: false,
             tasks: []
