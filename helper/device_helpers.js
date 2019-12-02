@@ -163,7 +163,7 @@ module.exports = {
         } else {
 
             var insertQuery = `INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (${deviceId}, ${appId}, ${guest}, ${encrypted}, ${enable})`;
-            console.log(insertQuery);
+            // console.log(insertQuery);
             let insertApp = await sql.query(insertQuery);
         }
 

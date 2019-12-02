@@ -1,5 +1,5 @@
 // Libraries
-
+const socketioAuth = require("socketio-auth");
 // Helpers
 const { sql } = require('../config/database');
 const device_helpers = require('../helper/device_helpers.js');
@@ -18,13 +18,29 @@ const app_constants = require('../config/constants');
 let io;
 // let dealerIo;
 
+const authenticate = async (client, data, callback) => {
+    const { token } = data;
+    try {
+        console.log(token);
+        // const user = await User.findOne({ username });
+        // callback(null);
+    } catch (error) {
+        callback(error);
+    }
+};
+
+const postAuthenticate = client => {
+    client.on("poke", () => client.emit("poked"));
+    client.on("tickle", () => client.emit("tickled"));
+};
+
 module.exports = {
-    baseIo:io,
-    baseSocket : function (socketIo) {
+    baseIo: io,
+    baseSocket: function (socketIo) {
         this.baseIo = socketIo;
         // socket configuration options
         // io.path('/api')
-    
+
         // {
         //    path: '/socket.io',
         //    serveClient: false,
@@ -32,40 +48,41 @@ module.exports = {
         //    pingTimeout: 5000,
         //    cookie: false
         // }
-    
-    
+
+
         // io = socket({
         //     pingTimeout :100
         // });
-    
-    
-        
-    
+
+
+
+
         // io.set('transports', ['websocket']);
-    
+
         // ===============================================================================
         // io.of('/') is for middleware not for path/namespace/endpoint 
         // ===============================================================================
-    
+
         // ===============================================================================
         // io.of('dynamic of for device_id') for dynamic/namespace/endpoint
         // ===============================================================================
         // const dynamicNsp = io.of(/^\/\d+$/).on('connect', (socket) => {
         //     const newNamespace = socket.nsp; // newNamespace.name === '/dynamic-101'
-    
+
         //     // broadcast to all clients in the given sub-namespace
         //     newNamespace.emit('hello');
         // });
-    
-    
+
+
         // middleware for socket incoming and outgoing requests
-        socketIo.use(socketMiddleware);
-    
-    
-        socketIo.sockets.on('connection', async function(socket){
+        // socketIo.use(socketMiddleware);
+
+        socketioAuth(socketIo, { authenticate, postAuthenticate });
+
+        socketIo.sockets.on('connection', async function (socket) {
             await socketController.baseSocket(socketIo, socket)
         });
-        
+
     },
 
     // dealerIo: dealerIo,
