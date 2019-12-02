@@ -55,6 +55,7 @@
     "sequelize": "^6.0.0",
     "sequelize-cli": "^5.5.1",
     "socket.io": "^2.2.0",
+    "socketio-auth": "^0.1.1",
     "stackify-logger": "^3.0.0",
     "stackify-node-apm": "^1.6.1",
     "stripe": "^7.4.0",
