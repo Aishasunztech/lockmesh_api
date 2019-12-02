@@ -23,7 +23,7 @@ module.exports = {
         let query = "";
         if (deviceId) {
             console.log("device online")
-            query = `UPDATE devices SET session_id='${sessionId}', online='${status}' , last_login = '${moment().format("YYYY/MM/DD HH:mm:ss")}' WHERE device_id='${deviceId}'`;
+            query = `UPDATE devices SET session_id='${sessionId}', online='${status}' , last_login = '${moment().format("MM/DD/YYYY HH:mm:ss")}' WHERE device_id='${deviceId}'`;
         } else {
             console.log("device offline")
             query = `UPDATE devices SET online = '${status}', session_id=null WHERE session_id='${sessionId.replace(/['"]+/g, '')}'`;
@@ -836,7 +836,7 @@ module.exports = {
     saveBuklActionHistory: async (data, action, is_in_process = false) => {
         console.log('saveBuklActionHistory ', action, data);
 
-        let InsertQuery = `INSERT INTO bulk_device_history (action, dealer_ids, user_ids, device_ids, apps, policy, action_by, is_in_process) VALUES ('${action}', '${JSON.stringify(data.dealer_ids)}', '${JSON.stringify(data.user_ids)}', '${JSON.stringify(data.device_ids)}', '${data.apps ? JSON.stringify(data.apps) : "[]"}', '${data.policy ? JSON.stringify(data.policy) : null}', '${data.msg ? JSON.stringify(data.msg) : ""}', '${data.action_by}', ${is_in_process});`;
+        let InsertQuery = `INSERT INTO bulk_device_history (action, dealer_ids, user_ids, device_ids, apps, policy, action_by) VALUES ('${action}', '${JSON.stringify(data.dealer_ids)}', '${JSON.stringify(data.user_ids)}', '${JSON.stringify(data.device_ids)}', '${data.apps ? JSON.stringify(data.apps) : "[]"}', '${data.policy ? JSON.stringify(data.policy) : null}', '${data.action_by}');`;
         console.log(InsertQuery);
         await sql.query(InsertQuery);
     },
