@@ -23,7 +23,7 @@ module.exports = {
         let query = "";
         if (deviceId) {
             console.log("device online")
-            query = `UPDATE devices SET session_id='${sessionId}', online='${status}' , last_login = '${moment().format("MM/DD/YYYY HH:mm:ss")}' WHERE device_id='${deviceId}'`;
+            query = `UPDATE devices SET session_id='${sessionId}', online='${status}' , last_login = '${moment().format("YYYY/MM/DD HH:mm:ss")}' WHERE device_id='${deviceId}'`;
         } else {
             console.log("device offline")
             query = `UPDATE devices SET online = '${status}', session_id=null WHERE session_id='${sessionId.replace(/['"]+/g, '')}'`;
