@@ -16,7 +16,6 @@ const app_constants = require('../../config/constants');
 
 exports.baseSocket = async function (instance, socket) {
 
-
     // get device id on connection
     let session_id = socket.id;
     let device_id = null;
@@ -907,7 +906,10 @@ exports.baseSocket = async function (instance, socket) {
     socket.on(Constants.RECONNECT_FAILED, () => {
         console.log("reconnect_failed: ");
     });
-
+    socket.on('packet', function (packet) {
+        console.log('packet:', packet)
+        if (packet.type === 'ping') console.log('received ping');
+    })
     socket.on(Constants.PING, () => {
         console.log("ping: ");
     });
@@ -917,4 +919,20 @@ exports.baseSocket = async function (instance, socket) {
     });
 
     // socket.compress(false).emit('an event', { some: 'data' });
+}
+
+exports.baseSocketDisconnect = async function (instance, socket) {
+    let isWeb = socket.handshake.query['isWeb'];
+    let device_id = socket.handshake.query['device_id'];
+  
+
+    socket.on(Constants.DISCONNECT, async () => {
+        console.log(`disconnected: session id: ${socket.id} and device id: ${device_id}`);
+        console.log("Connected Users: " + instance.engine.clientsCount);
+        if (device_id) {
+            socket_helpers.sendOnlineOfflineStatus(instance, Constants.DEVICE_OFFLINE, device_id);
+        }
+        // await device_helpers.onlineOfflineDevice(null, socket.id, Constants.DEVICE_OFFLINE);
+
+    });
 }

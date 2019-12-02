@@ -18,21 +18,6 @@ const app_constants = require('../config/constants');
 let io;
 // let dealerIo;
 
-const authenticate = async (client, data, callback) => {
-    const { token } = data;
-    try {
-        console.log(token);
-        // const user = await User.findOne({ username });
-        // callback(null);
-    } catch (error) {
-        callback(error);
-    }
-};
-
-const postAuthenticate = client => {
-    client.on("poke", () => client.emit("poked"));
-    client.on("tickle", () => client.emit("tickled"));
-};
 
 module.exports = {
     baseIo: io,
@@ -77,11 +62,42 @@ module.exports = {
         // middleware for socket incoming and outgoing requests
         // socketIo.use(socketMiddleware);
 
-        socketioAuth(socketIo, { authenticate, postAuthenticate });
 
-        socketIo.sockets.on('connection', async function (socket) {
-            await socketController.baseSocket(socketIo, socket)
-        });
+        socketioAuth(socketIo, {
+            authenticate: socketMiddleware,
+            postAuthenticate: async (socket) => {
+                // console.log(`Socket ${socket.id} authenticated.`);
+                // socket.conn.on('packet', async (packet) => {
+                //     if (socket.auth && packet.type === 'ping') {
+                //         //   await redis.setAsync(`users:${socket.user.id}`, socket.id, 'XX', 'EX', 30);
+                //     }
+                // });
+                await socketController.baseSocket(socketIo, socket)
+                // socket.on('connection', async function (socket) {
+
+                //     await socketController.baseSocket(socketIo, socket)
+                //     // console.log(socket);
+                //     // if (socket.validated) {
+                //     // } else {
+                //     //     socket.disconnect()
+                //     // }
+                // });
+            },
+            disconnect: (socket) => {
+                socketController.baseSocketDisconnect(socketIo, socket);
+            },
+            timeout: 2000
+        })
+
+        // socketIo.sockets.on('connection', async function (socket) {
+
+        //     await socketController.baseSocket(socketIo, socket)
+        //     // console.log(socket);
+        //     // if (socket.validated) {
+        //     // } else {
+        //     //     socket.disconnect()
+        //     // }
+        // });
 
     },
 

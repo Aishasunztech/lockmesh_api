@@ -14,6 +14,7 @@ const verifyToken = function (token) {
     if (device_helpers.checkNotNull(token)) {
         // verifies secret and checks exp
         return jwt.verify(token.replace(/['"]+/g, ''), app_constants.SECRET, function (err, decoded) {
+        // return jwt.verify(token, app_constants.SECRET, function (err, decoded) {
             if (err) {
                 return false;
             } else {
@@ -47,11 +48,13 @@ const verifySession = async (deviceId, sessionId, isWeb = false, dealerId = null
     }
 }
 
-module.exports = async (socket, next) => {
-    let token = socket.handshake.query.token;
-    
-    if (verifyToken(token)) {
-        next();
+module.exports = async (socket, data, next) => {
+    let {token} = data;
+    console.log("token:",token);
+    let verify =await verifyToken(token);
+
+    if (verify) {
+        return next(null, true);
 
         // let session_id = socket.id;
 
