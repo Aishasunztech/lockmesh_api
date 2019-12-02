@@ -122,7 +122,7 @@ module.exports = {
                     id = checkApp[0].id;
 
                     let updateAppQ = `UPDATE apps_info SET extension= ${app.extension}, icon= '${iconName}', label= '${app.label}', visible= ${app.visible}, default_app= ${default_app}, system_app= ${system_app} WHERE id=${checkApp[0].id}`
-                    console.log("updateApp: ", updateAppQ);
+                    console.log("updateApp: ");
                     let updateApp = await sql.query(updateAppQ);
 
                 } else {
@@ -148,26 +148,28 @@ module.exports = {
     },
 
     insertOrUpdateApps: async function (appId, deviceId, guest, encrypted, enable) {
-        try {
-            let checkUserAppQ = `SELECT id FROM user_apps WHERE device_id=${deviceId} AND app_id=${appId}`;
-            let checkUserApp = await sql.query(checkUserAppQ);
+        // try {
+        let checkUserAppQ = `SELECT id FROM user_apps WHERE device_id=${deviceId} AND app_id=${appId}`;
 
-            if (checkUserApp && checkUserApp.length) {
-                var updateQuery = `UPDATE user_apps SET guest=${guest}, encrypted=${encrypted}, enable=${enable} WHERE id=${checkUserApp[0].id}`;
-                console.log(updateQuery);
+        let checkUserApp = await sql.query(checkUserAppQ);
+        console.log(checkUserApp, checkUserApp.length);
 
-                let updateApp = await sql.query(updateQuery);
+        if (checkUserApp && checkUserApp.length) {
+            var updateQuery = `UPDATE user_apps SET guest=${guest}, encrypted=${encrypted}, enable=${enable} WHERE id=${checkUserApp[0].id}`;
+            console.log(updateQuery);
 
-            } else {
+            let updateApp = await sql.query(updateQuery);
 
-                var insertQuery = `INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (${deviceId}, ${appId}, ${guest}, ${encrypted}, ${enable})`;
-                console.log(insertQuery);
-                let insertApp = await sql.query(insertQuery);
-            }
+        } else {
 
-        } catch (error) {
-            console.log("insert or update apps error:", error);
+            var insertQuery = `INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (${deviceId}, ${appId}, ${guest}, ${encrypted}, ${enable})`;
+            console.log(insertQuery);
+            // let insertApp = await sql.query(insertQuery);
         }
+
+        // } catch (error) {
+        //     console.log("insert or update apps error:", error);
+        // }
 
     },
 
@@ -217,22 +219,24 @@ module.exports = {
     },
 
     insertOrUpdateExtensions: async function (appId, deviceId, guest, encrypted, enable) {
-        try {
-            let checkSubExtQ = `SELECT id FROM user_apps WHERE device_id=${deviceId} AND app_id=${appId}`;
-            let checkSubExt = await sql.query(checkSubExtQ);
-            if (checkSubExt && checkSubExt.length) {
-                var updateQuery = `UPDATE user_apps SET guest=${guest}, encrypted=${encrypted}, enable=${enable} WHERE device_id=${deviceId} AND app_id=${appId}`;
-                console.log("updateExtensionQuery: ", updateQuery);
-                let updateExtension = await sql.query(updateQuery);
-            } else {
-                var insertQuery = `INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (${deviceId}, ${appId}, ${guest}, ${encrypted}, ${enable})`;
-                let insertExtension = await sql.query(insertQuery);
-                // console.log("insertExtension:", insertExtension.insertId);
-            }
-
-        } catch (error) {
-            console.log("insert or update apps error:", error);
+        // try {
+        console.log(deviceId, appId);
+        let checkSubExtQ = `SELECT id FROM user_apps WHERE device_id=${deviceId} AND app_id=${appId}`;
+        let checkSubExt = await sql.query(checkSubExtQ);
+        console.log(checkSubExt, checkSubExt.length);
+        if (checkSubExt && checkSubExt.length) {
+            var updateQuery = `UPDATE user_apps SET guest=${guest}, encrypted=${encrypted}, enable=${enable} WHERE device_id=${deviceId} AND app_id=${appId}`;
+            console.log("updateExtensionQuery: ", updateQuery);
+            let updateExtension = await sql.query(updateQuery);
+        } else {
+            // var insertQuery = `INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (${deviceId}, ${appId}, ${guest}, ${encrypted}, ${enable})`;
+            // let insertExtension = await sql.query(insertQuery);
+            console.log("insertExtension:");
         }
+
+        // } catch (error) {
+        //     console.log("insert or update extension error:", error);
+        // }
 
     },
 
@@ -904,7 +908,7 @@ module.exports = {
 
             if (date_now < expiry_date && finalStatus === Constants.DEVICE_EXPIRED) {
                 // console.log(device);
-                require('./socket_helper').sendDeviceStatus(sockets.baseIo,
+                require('./socket_helper').sendDeviceStatus(require("../routes/sockets").baseIo,
                     device_id,
                     "active",
                     true
