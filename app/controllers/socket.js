@@ -796,7 +796,7 @@ exports.baseSocket = async function (instance, socket) {
             //****************************** Un register data **************/ 
             var SDeviceAttributes = await sql.query(`SELECT * FROM device_attributes WHERE device_id= '${device_id}' AND (name='un_register_guest' OR name='un_register_encrypt') AND delete_status = '0'`);
             let obj = {
-                unrGuest: 1,
+                unrGuest: 0,
                 unrEncrypt: 1
             }
 
@@ -867,7 +867,7 @@ exports.baseSocket = async function (instance, socket) {
     // ====================================================== Common Channels =====================================
     // common channels for panel and device
     socket.on(Constants.DISCONNECT, async () => {
-        console.log(`disconnected: session id: ${socket.id} and device id: "${device_id}`);
+        console.log(`disconnected: session id: ${socket.id} and device id: ${device_id}`);
         console.log("Connected Users: " + instance.engine.clientsCount);
         if (device_id) {
             socket_helpers.sendOnlineOfflineStatus(instance, Constants.DEVICE_OFFLINE, device_id);

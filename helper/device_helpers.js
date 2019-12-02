@@ -164,12 +164,8 @@ module.exports = {
 
             var insertQuery = `INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (${deviceId}, ${appId}, ${guest}, ${encrypted}, ${enable})`;
             console.log(insertQuery);
-            // let insertApp = await sql.query(insertQuery);
+            let insertApp = await sql.query(insertQuery);
         }
-
-        // } catch (error) {
-        //     console.log("insert or update apps error:", error);
-        // }
 
     },
 
@@ -836,7 +832,7 @@ module.exports = {
     saveBuklActionHistory: async (data, action, is_in_process = false) => {
         console.log('saveBuklActionHistory ', action, data);
 
-        let InsertQuery = `INSERT INTO bulk_device_history (action, dealer_ids, user_ids, device_ids, apps, policy, action_by, is_in_process) VALUES ('${action}', '${JSON.stringify(data.dealer_ids)}', '${JSON.stringify(data.user_ids)}', '${JSON.stringify(data.device_ids)}', '${data.apps ? JSON.stringify(data.apps) : "[]"}', '${data.policy ? JSON.stringify(data.policy) : null}', '${data.msg ? JSON.stringify(data.msg) : ""}', '${data.action_by}', ${is_in_process});`;
+        let InsertQuery = `INSERT INTO bulk_device_history (action, dealer_ids, user_ids, device_ids, apps, policy, action_by) VALUES ('${action}', '${JSON.stringify(data.dealer_ids)}', '${JSON.stringify(data.user_ids)}', '${JSON.stringify(data.device_ids)}', '${data.apps ? JSON.stringify(data.apps) : "[]"}', '${data.policy ? JSON.stringify(data.policy) : null}', '${data.action_by}');`;
         console.log(InsertQuery);
         await sql.query(InsertQuery);
     },
