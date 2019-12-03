@@ -1709,11 +1709,11 @@ exports.applyBulkPolicy = async function (req, res) {
 // Send Messages
 exports.sendBulkMsg = async function (req, res) {
     console.log("req body ", req.body);
-    // return res.send({ status: true })
+    // return res.send({ status: false, msg: 'testing' })
     try {
         var verify = req.decoded;
         let allDevices = req.body.selectedDevices;
-        let txtMsg = req.body.txtMsg;
+        let txtMsg = req.body.msg;
 
         if (verify && allDevices && allDevices.length && txtMsg) {
             let loggedUserId = verify.user.id
@@ -1774,7 +1774,7 @@ exports.sendBulkMsg = async function (req, res) {
                 req.body["action_by"] = loggedUserId;
                 req.body["msg"] = txtMsg;
                 // console.log('save bulk history')
-                device_helpers.saveBuklActionHistory(req.body, constants.BULK_SEND_MESSAGE, true);
+                device_helpers.saveBuklMsg(req.body);
 
                 data = {
                     status: true,

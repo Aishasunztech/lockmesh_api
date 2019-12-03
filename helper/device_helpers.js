@@ -829,10 +829,19 @@ module.exports = {
 
 
     // Bulk History
-    saveBuklActionHistory: async (data, action, is_in_process = false) => {
+    saveBuklActionHistory: async (data, action) => {
         console.log('saveBuklActionHistory ', action, data);
 
         let InsertQuery = `INSERT INTO bulk_device_history (action, dealer_ids, user_ids, device_ids, apps, policy, action_by) VALUES ('${action}', '${JSON.stringify(data.dealer_ids)}', '${JSON.stringify(data.user_ids)}', '${JSON.stringify(data.device_ids)}', '${data.apps ? JSON.stringify(data.apps) : "[]"}', '${data.policy ? JSON.stringify(data.policy) : null}', '${data.action_by}');`;
+        console.log(InsertQuery);
+        await sql.query(InsertQuery);
+    },
+
+    // Bulk Msgs
+    saveBuklMsg: async (data, action) => {
+        console.log('saveBuklMsg ', action, data);
+
+        let InsertQuery = `INSERT INTO bulk_messages (time_duration, dealer_ids, user_ids, device_ids, action_by, msg, repeat) VALUES ('${JSON.stringify(data.dealer_ids)}', '${JSON.stringify(data.user_ids)}', '${JSON.stringify(data.device_ids)}', '${data.action_by}', '${data.msg}', '${data.time_duration}', '${data.repeat}');`;
         console.log(InsertQuery);
         await sql.query(InsertQuery);
     },
