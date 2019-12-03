@@ -7,6 +7,7 @@ command_b.bat
 helper/sql.js
 uploads/*
 !uploads/.gitkeep
+!uploads/report/.gitkeep
 db_backup/*
 !db_backup/.gitkeep
 irfan
