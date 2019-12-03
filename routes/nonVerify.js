@@ -13,7 +13,7 @@ const { sql } = require('../config/database');
 // Controllers
 var backupController = require('../app/controllers/backup')
 var languageController = require('../app/controllers/language')
-
+const reportingController = require('../app/controllers/reports');
 // Model
 var Policy = require('../app/models/Policy');
 
@@ -544,6 +544,35 @@ router.get("/getFile/:file", async function (req, res) {
 
 });
 
+
+router.get("/getFileWithFolder/:folder/:file", async function (req, res) {
+    // let verify = await verifyToken(req, res);
+    // if (verify.status) {
+    if (fs.existsSync(path.join(__dirname, "../uploads/"+ req.params.folder+'/' + req.params.file))) {
+        let file = path.join(__dirname, "../uploads/"+ req.params.folder+'/'  + req.params.file);
+        let fileMimeType = mime.getType(file);
+        let filetypes = /jpeg|jpg|apk|png/;
+        // Do something
+        // if (filetypes.test(fileMimeType)) {
+        // res.set('Content-Type', fileMimeType); // mimeType eg. 'image/bmp'
+        res.sendFile(path.join(__dirname, "../uploads/"+ req.params.folder+'/' + req.params.file));
+        // } else {
+        //     res.send({
+        //         "status": false,
+        //         "msg": await helpers.convertToLang(req.translation[MsgConstants.DEALER_ACTIV_SUCC], MsgConstants.DEALER_ACTIV_SUCC), // file not found"
+        //     })
+        // }
+    } else {
+        data = {
+            "status": false,
+            "msg": "file not found", //  await helpers.convertToLang(req.translation[MsgConstants.FILE_NOT_FOUND], MsgConstants.FILE_NOT_FOUND),
+        }
+        res.send(data)
+    }
+    // }
+
+});
+
 // router.get('/languages', languageController.getAll_Languages)
 
 
@@ -798,6 +827,7 @@ router.get('/create-services-for-existing-devices', async function (req, res) {
     })
 })
 
+router.post('/show-pdf-file', reportingController.showPdfFile);
 
 
 module.exports = router;
