@@ -386,8 +386,8 @@ exports.connectDealer = async function (req, res) {
             connected_dealer: dealer[0].connected_dealer,
             created: dealer[0].created,
             modified: dealer[0].modified,
-            // credits: credits[0].credits,
-            // credits_limit: credits[0].credits_limit,
+            credits: credits[0].credits,
+            credits_limit: credits[0].credits_limit,
             dealer_type: '',
             last_login: '',
             connected_devices: 0,
@@ -403,14 +403,6 @@ exports.connectDealer = async function (req, res) {
             _60toOnward_dues,
 
         };
-
-        if (credits[0] && credits[0].credits_limit) {
-            dt.credits = credits[0].credits_limit
-        }
-
-        if (credits[0] && credits[0].credits) {
-            dt.credits_limit = credits[0].credits
-        }
 
         if (get_connected_devices && get_connected_devices.length) {
             dt.connected_devices = get_connected_devices[0].total
