@@ -12,7 +12,6 @@ exports.getDashboardData = async function (req, res) {
     // var where_con = "";
     let dashboardData = {};
 
-    console.log(verify.user.user_type, 'user type is')
     if (verify) {
         let loggedUserType = verify.user.user_type;
 
@@ -159,9 +158,9 @@ exports.getDashboardData = async function (req, res) {
             else {
                 query = "select count(*) as total_policies from policy where dealer_id='" + verify.user.id + "' AND delete_status=0"
             }
-            console.log(query)
+            
             let policies = await sql.query(query);
-            console.log(policies, 'polices are')
+            
             if (policies && policies.length) {
                 dashboardData.policies = policies[0].total_policies;
             }
@@ -209,8 +208,6 @@ exports.getDashboardData = async function (req, res) {
             }
         }
 
-
-        console.log('dashboard data', dashboardData)
         res.send({
             status: true,
             msg: "Data found",

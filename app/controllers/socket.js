@@ -859,7 +859,7 @@ exports.baseSocket = async function (instance, socket) {
         //     // socket.to('testRoom').emit('hello_web', "hello web");
         //     socket.emit('hello_web', "hello web");
         // }, 1000);
-        // socket.emit('hello_web', "hello web");
+        socket.emit('hello_web', "hello web");
     }
 
 
@@ -870,6 +870,8 @@ exports.baseSocket = async function (instance, socket) {
         console.log("Connected Users: " + instance.engine.clientsCount);
         if (device_id) {
             socket_helpers.sendOnlineOfflineStatus(instance, Constants.DEVICE_OFFLINE, device_id);
+        } else {
+
         }
         await device_helpers.onlineOfflineDevice(null, socket.id, Constants.DEVICE_OFFLINE);
 
@@ -925,14 +927,11 @@ exports.baseSocketDisconnect = async function (instance, socket) {
     let isWeb = socket.handshake.query['isWeb'];
     let device_id = socket.handshake.query['device_id'];
   
-
-    socket.on(Constants.DISCONNECT, async () => {
-        console.log(`disconnected: session id: ${socket.id} and device id: ${device_id}`);
-        console.log("Connected Users: " + instance.engine.clientsCount);
-        if (device_id) {
-            socket_helpers.sendOnlineOfflineStatus(instance, Constants.DEVICE_OFFLINE, device_id);
-        }
+    console.log(`disconnected: session id: ${socket.id} and device id: ${device_id}`);
+    console.log("Connected Users: " + instance.engine.clientsCount);
+    if (device_id) {
+        socket_helpers.sendOnlineOfflineStatus(instance, Constants.DEVICE_OFFLINE, device_id);
+    }
         // await device_helpers.onlineOfflineDevice(null, socket.id, Constants.DEVICE_OFFLINE);
 
-    });
 }

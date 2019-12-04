@@ -83,7 +83,7 @@ module.exports = {
                 //     // }
                 // });
             },
-            disconnect: (socket) => {
+            disconnect: async (socket) => {
                 socketController.baseSocketDisconnect(socketIo, socket);
             },
             timeout: 2000
