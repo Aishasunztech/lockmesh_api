@@ -1,6 +1,8 @@
 const Constants = require('../../constants/Application');
 const generalHelper = require('../../helper/general_helper');
 const moment = require('moment');
+const fs    = require('fs');
+const path  = require("path");
 const { sql } = require("../../config/database");
 
 let productData = {};
@@ -735,6 +737,21 @@ exports.generateGraceDaysReport = async function (req, res) {
 
 };
 
+exports.showPdfFile = async function (req, res) {
+
+    var findRemoveSync = require('find-remove');
+    findRemoveSync(path.join(__dirname, "../../uploads/report/"), {age: {seconds: 3600}, extensions: '.pdf', limit: 100});
+
+    var buf = new Buffer(req.body.blob, 'base64');
+    let filePath = path.join(__dirname, "../../uploads/report/" + req.body.fileName);
+    fs.writeFile(filePath, buf, function(err) {
+        if(err) {
+            return res.send({'status': false});
+        } else {
+            return res.send({'status': true});
+        }
+    });
+};
 
 // if (productType === 'PRODUCTS' || productType === 'ALL') {
 
