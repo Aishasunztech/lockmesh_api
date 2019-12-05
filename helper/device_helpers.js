@@ -3,12 +3,13 @@ const { sql } = require('../config/database');
 var moment = require("moment-strftime");
 var fs = require("fs");
 var path = require('path');
-var { getAllRecordbyDeviceId } = require('./general_helper')
+var { getAllRecordbyDeviceId, checkValue } = require('./general_helper')
 var socket_helpers = require('./socket_helper')
 
 // let usr_acc_query_text = "usr_acc.id,usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name";
 
 var Constants = require('../constants/Application');
+let usr_acc_query_text = Constants.usr_acc_query_text;
 
 module.exports = {
     checkNotNull: function (value) {
@@ -838,10 +839,10 @@ module.exports = {
     },
 
     // Bulk Msgs
-    saveBuklMsg: async (data, action) => {
-        console.log('saveBuklMsg ', action, data);
+    saveBuklMsg: async (data) => {
+        console.log('saveBuklMsg ', data);
 
-        let InsertQuery = `INSERT INTO bulk_messages (time_duration, dealer_ids, user_ids, device_ids, action_by, msg, repeat) VALUES ('${JSON.stringify(data.dealer_ids)}', '${JSON.stringify(data.user_ids)}', '${JSON.stringify(data.device_ids)}', '${data.action_by}', '${data.msg}', '${data.time_duration}', '${data.repeat}');`;
+        let InsertQuery = `INSERT INTO bulk_messages (repeat_duration, dealer_ids, user_ids, device_ids, action_by, msg, sending_time) VALUES ('${data.repeat}', '${JSON.stringify(data.dealer_ids)}', '${JSON.stringify(data.user_ids)}', '${JSON.stringify(data.device_ids)}', '${data.action_by}', '${data.msg}', '${data.date}');`;
         console.log(InsertQuery);
         await sql.query(InsertQuery);
     },
@@ -1030,6 +1031,163 @@ module.exports = {
         }
 
         return data
+    },
+
+    // get device detail
+    getCompleteDetailOfDevice: async function (device_ids) {
+        if (!device_ids) {
+            return [];
+        }
+        let query = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers ON (usr_acc.dealer_id = dealers.dealer_id) 
+                WHERE devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.device_id IN (${device_ids}) ORDER BY devices.id DESC`;
+        console.log('query is: ', query);
+
+        let results = await sql.query(query);
+        // console.log('result is: ', results)
+
+        if (results.length) {
+            let devices_acc_array = [];
+            let usr_device_ids_array = []
+            for (let i = 0; i < results.length; i++) {
+                devices_acc_array.push(results[i].id)
+                usr_device_ids_array.push(results[i].usr_device_id)
+            }
+            let user_acc_ids = devices_acc_array.join()
+            let usr_device_ids = usr_device_ids_array.join()
+            let loginHistoryData = await this.getLastLoginDetail(usr_device_ids)
+            let servicesData = await this.getServicesData(user_acc_ids)
+            let servicesIds = servicesData.map(item => { return item.id })
+            let userAccServiceData = []
+            if (servicesIds.length) {
+                userAccServiceData = await this.getUserAccServicesData(user_acc_ids, servicesIds)
+            }
+
+            for (var i = 0; i < results.length; i++) {
+                results[i].sim_id = "N/A"
+                results[i].sim_id2 = "N/A"
+                results[i].pgp_email = "N/A"
+                results[i].chat_id = "N/A"
+
+                let service_id = null
+                let services = servicesData.filter(data => data.user_acc_id === results[i].id);
+                if (services && services.length) {
+                    services.map((item) => {
+                        if (item.status === 'extended') {
+                            results[i].extended_services = item
+                        } else {
+                            results[i].services = item
+                            service_id = item.id
+                        }
+                    })
+                }
+                let productsData = userAccServiceData.filter(item => item.user_acc_id === results[i].id && item.service_id === service_id);
+                if (productsData && productsData.length) {
+                    productsData.map((item) => {
+                        if (item.type === 'sim_id') {
+                            results[i].sim_id = item.product_value
+                        }
+                        else if (item.type === 'sim_id2') {
+                            results[i].sim_id2 = item.product_value
+                        }
+                        else if (item.type === 'pgp_email') {
+                            results[i].pgp_email = item.product_value
+                        }
+                        else if (item.type === 'chat_id') {
+                            results[i].chat_id = item.product_value
+                        }
+                    })
+                }
+
+                let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
+                if (lastOnline) {
+                    results[i].lastOnline = lastOnline.created_at
+                }
+                results[i].finalStatus = this.checkStatus(
+                    results[i]
+                );
+                results[i].validity = await this.checkRemainDays(
+                    results[i].created_at,
+                    results[i].validity
+                );
+            }
+
+            let finalResult = [...results];
+            let checkValue = await helpers.checkValue;
+            for (let device of finalResult) {
+
+                let remainTermDays = "N/A"
+
+                if (device.expiry_date !== null) {
+                    let startDate = moment(new Date())
+                    let expiray_date = new Date(device.expiry_date)
+                    let endDate = moment(expiray_date)
+                    remainTermDays = endDate.diff(startDate, 'days')
+                }
+                device.remainTermDays = remainTermDays
+                device.account_email = checkValue(device.account_email);
+                device.firmware_info = checkValue(device.firmware_info);
+                device.account_name = checkValue(device.account_name);
+                device.account_status = checkValue(device.account_status);
+                device.activation_code = checkValue(device.activation_code);
+                device.activation_status = checkValue(
+                    device.activation_status
+                );
+                device.batch_no = checkValue(device.batch_no);
+                device.chat_id = checkValue(device.chat_id);
+                device.client_id = checkValue(device.client_id);
+                device.connected_dealer = checkValue(
+                    device.connected_dealer
+                );
+                device.created_at = checkValue(device.created_at);
+                device.dealer_id = checkValue(device.dealer_id);
+                device.dealer_name = checkValue(device.dealer_name);
+                device.del_status = checkValue(device.del_status);
+                device.device_id = checkValue(device.device_id);
+                device.device_status = checkValue(device.device_status);
+                device.expiry_date = checkValue(device.expiry_date);
+                device.expiry_months = checkValue(device.expiry_months);
+                device.fcm_token = checkValue(device.fcm_token);
+                device.finalStatus = checkValue(device.finalStatus);
+                device.flagged = checkValue(device.flagged);
+                device.id = checkValue(device.id);
+                device.imei = checkValue(device.imei);
+                device.imei2 = checkValue(device.imei2);
+                device.ip_address = checkValue(device.ip_address);
+                device.is_push_apps = checkValue(device.is_push_apps);
+                device.is_sync = checkValue(device.is_sync);
+                device.link_code = checkValue(device.link_code);
+                device.mac_address = checkValue(device.mac_address);
+                device.model = checkValue(device.model);
+                device.name = checkValue(device.name);
+                device.note = checkValue(device.note);
+                device.online = checkValue(device.online);
+                device.pgp_email = checkValue(device.pgp_email);
+                device.prnt_dlr_id = checkValue(device.prnt_dlr_id);
+                device.prnt_dlr_name = checkValue(device.prnt_dlr_name);
+                device.reject_status = checkValue(device.reject_status);
+                device.screen_start_date = checkValue(
+                    device.screen_start_date
+                );
+                device.serial_number = checkValue(device.serial_number);
+                device.session_id = checkValue(device.session_id);
+                device.sim_id = checkValue(device.sim_id);
+                device.sim_id2 = checkValue(device.sim_id2)
+                device.simno = checkValue(device.simno);
+                device.simno2 = checkValue(device.simno2);
+                device.start_date = checkValue(device.start_date);
+                device.status = checkValue(device.status);
+                device.transfer_status = checkValue(device.transfer_status);
+                device.unlink_status = checkValue(device.unlink_status);
+                device.updated_at = checkValue(device.updated_at);
+                device.user_id = checkValue(device.user_id);
+                device.usr_device_id = checkValue(device.usr_device_id);
+                device.validity = checkValue(device.validity);
+            }
+
+            return finalResult;
+        } else {
+            return [];
+        }
     }
 }
 
