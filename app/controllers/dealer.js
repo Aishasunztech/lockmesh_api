@@ -1631,6 +1631,10 @@ exports.getDropdownSelectedItems = async function (req, res) {
     }
 }
 
+exports.changeDealerStatus = async function (req, res){
+    
+}
+
 exports.dropDown = async function (req, res) {
     var verify = req.decoded;
     var loggedInuid = verify.user.id;

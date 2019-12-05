@@ -55,7 +55,6 @@ const AUTO_UPDATE_ADMIN = "auto_update_admin";
 router.post("/two_factor_auth", dealerController.twoFactorAuth);
 
 /**
- * This function comment is parsed by doctrine
  * @route GET /users/get_allowed_components
  * @group ACL - Admin Control List Actions
  * @returns {object} 200 - An array of user info
@@ -65,7 +64,6 @@ router.post("/two_factor_auth", dealerController.twoFactorAuth);
 router.get('/get_allowed_components', aclController.getAllowedComponents);
 
 /**
- * This function comment is parsed by doctrine
  * @route POST /users/check_component
  * @group ACL - Admin Control List Actions
  * @param {string} ComponentUri.formData.required - component url
@@ -231,7 +229,6 @@ router.post("/UnflagDevice/:id", deviceController.unflagDevice);
 router.post("/flagDevice/:id", deviceController.flagDevice);
 
 /**
- * This function comment is parsed by doctrine
  * @route GET /users/connect/{device_id}
  * @group Device - Operation about Devices
  * @param {string} device_id.path.required - agent email
@@ -279,7 +276,6 @@ router.get("/dealer/update_dealer_pins", dealerController.updateDealerPins);
 // ====================== Users ==================== //
 
 /**
- * This function comment is parsed by doctrine
  * @route POST /users/add/user
  * @group Dealer User - Dealer Users Operations
  * @param {string} name.formData.required - user name
@@ -293,7 +289,6 @@ router.get("/dealer/update_dealer_pins", dealerController.updateDealerPins);
 router.post("/add/user", userController.addUser);
 
 /**
- * This function comment is parsed by doctrine
  * @route POST /users/edit/user
  * @group Dealer User - Dealer Users Operations
  * @param {string} name.formData.required - user name
@@ -307,7 +302,6 @@ router.post("/add/user", userController.addUser);
 router.post('/edit/user', userController.editUser);
 
 /**
- * This function comment is parsed by doctrine
  * @route PUT /users/delete_user/{user_id}
  * @group Dealer User - Dealer Users Operations
  * @param {string} user_id.path.required - user id 
@@ -320,7 +314,6 @@ router.post('/edit/user', userController.editUser);
 router.put("/delete_user/:user_id", userController.deleteUser);
 
 /**
- * This function comment is parsed by doctrine
  * @route PUT /users/undo_delete_user/{user_id}
  * @group Dealer User - Dealer Users Operations
  * @param {string} user_id.path.required - user id 
@@ -331,8 +324,10 @@ router.put("/delete_user/:user_id", userController.deleteUser);
 /***UNDO DELETE User ***/
 router.put('/undo_delete_user/:user_id', userController.undoDeleteUser);
 
+
+// =================== Profiles ================= //
+
 /**
- * This function comment is parsed by doctrine
  * @route PUT /users/updateProfile/{id}
  * @group Dealer User - Dealer Users Operations
  * @param {string} name.formData.required - dealer name
@@ -346,7 +341,6 @@ router.put('/undo_delete_user/:user_id', userController.undoDeleteUser);
 router.put('/updateProfile/:id', userController.updateProfile);
 
 /**
- * This function comment is parsed by doctrine
  * @route POST /users/resetpwd
  * @group Dealer User - Dealer Users Operations
  * @param {string} pageName.formData.required - page name 
@@ -356,16 +350,23 @@ router.put('/updateProfile/:id', userController.updateProfile);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-
-
 /** Reset password dealers (Admin Panel) **/
 router.post("/resetpwd", dealerController.resetPwd);
+
+/**
+ * @route GET /users/get-info
+ * @group Dealer - Operations about Dealers
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+/** Dealer and S Dealer Info **/
+router.get("/get-info", dealerController.getInfo);
 
 
 // =================== Dealers ================= //
 
 /**
- * This function comment is parsed by doctrine
  * @route GET /users/dealers
  * @group Dealer - Operations about Dealers
  * @returns {object} 200 - An array of user info
@@ -375,14 +376,20 @@ router.post("/resetpwd", dealerController.resetPwd);
 /*Get All Dealers */
 router.get("/dealers", dealerController.getAllDealers);
 
+/**
+ * @route GET /users/user_dealers
+ * @group Dealer - Operations about Dealers
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+/*Get User Dealers */
 router.get('/user_dealers', dealerController.getUserDealers);
 
-/*Get All Dealers FOR SUPERADMIN*/
-
+/*Get All Dealers FOR SUPER_ADMIN*/
 router.get('/get_dealer_list', dealerController.getDealerForSA);
 
 /**
- * This function comment is parsed by doctrine
  * @route GET /users/dealers/{pageName}
  * @group Dealer - Operations about Dealers
  * @param {string} pageName.path.required - page name
@@ -394,7 +401,6 @@ router.get('/get_dealer_list', dealerController.getDealerForSA);
 router.get("/dealers/:pageName", dealerController.getDealers);
 
 /**
- * This function comment is parsed by doctrine
  * @route POST /users/add/dealer
  * @group Dealer - Operations about Dealers
  * @param {string} name.formData.required - dealer name
@@ -404,58 +410,11 @@ router.get("/dealers/:pageName", dealerController.getDealers);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
+
 /*** Add Dealer ***/
 router.post("/add/dealer", dealerController.addDealer);
 
 /**
- * This function comment is parsed by doctrine
- * @route GET /users/connect-dealer/:dealerId
- * @group Dealer - Operations about Dealers
- * @param {string} dealerId.param.required - dealer name
- * @returns {object} 200 - An array of user info
- * @returns {Error}  default - Unexpected error
- * @security JWT
- */
-/*** Connect Dealer ***/
-router.get("/connect-dealer/:dealerId", dealerController.connectDealer);
-
-/**
- * This function comment is parsed by doctrine
- * @route GET /users/dealer-domains/:dealerId
- * @group Dealer - Operations about Dealers
- * @param {string} dealerId.param.required - dealer name
- * @returns {object} 200 - An array of user info
- * @returns {Error}  default - Unexpected error
- * @security JWT
- */
-router.get("/dealer-domains/:dealerId", dealerController.dealerDomains)
-
-/**
- * This function comment is parsed by doctrine
- * @route GET /users/payment-history/:dealerId
- * @group Dealer - Operations about Dealers
- * @param {string} dealerId.param.required - dealer name
- * @returns {object} 200 - An array of user info
- * @returns {Error}  default - Unexpected error
- * @security JWT
- */
-/*** Dealer Payment History ***/
-router.get("/payment-history/:dealerId", dealerController.getDealerPaymentHistory);
-
-/**
- * This function comment is parsed by doctrine
- * @route GET /users/sales-history/:dealerId
- * @group Dealer - Operations about Dealers
- * @param {string} dealerId.param.required - dealer name
- * @returns {object} 200 - An array of user info
- * @returns {Error}  default - Unexpected error
- * @security JWT
- */
-/*** Dealer Payment History ***/
-router.get("/sales-history/:dealerId", dealerController.getDealerSalesHistory);
-
-/**
- * This function comment is parsed by doctrine
  * @route PUT /users/edit/dealers
  * @group Dealer - Operations about Dealers
  * @param {string} name.formData.required - dealer name 
@@ -465,14 +424,11 @@ router.get("/sales-history/:dealerId", dealerController.getDealerSalesHistory);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
+
 /** Edit Dealer (Admin panel) **/
 router.put("/edit/dealers", dealerController.editDealers);
 
-/**UPDATE DEALER CREDITS LIMIT**/
-router.put("/set_credits_limit", dealerController.setDealerCreditsLimit);
-
 /**
- * This function comment is parsed by doctrine
  * @route POST /users/dealer/delete
  * @group Dealer - Operations about Dealers
  * @param {string} dealer_id.formData.required - dealer id  
@@ -483,7 +439,6 @@ router.put("/set_credits_limit", dealerController.setDealerCreditsLimit);
 /** Delete Dealer from admin Panel**/
 router.post("/dealer/delete/", dealerController.deleteDealer);
 /**
- * This function comment is parsed by doctrine
  * @route POST /users/dealer/undo
  * @group Dealer - Operations about Dealers
  * @param {string} dealer_id.formData.required - dealer id  
@@ -495,7 +450,6 @@ router.post("/dealer/delete/", dealerController.deleteDealer);
 router.post("/dealer/undo", dealerController.undoDealer);
 
 /**
- * This function comment is parsed by doctrine
  * @route POST /users/dealer/suspend
  * @group Dealer - Operations about Dealers
  * @param {string} dealer_id.formData.required - dealer id   
@@ -507,7 +461,6 @@ router.post("/dealer/undo", dealerController.undoDealer);
 router.post("/dealer/suspend", dealerController.suspendDealer);
 
 /**
- * This function comment is parsed by doctrine
  * @route POST /users/dealer/activate
  * @group Dealer - Operations about Dealers
  * @param {string} dealer_id.formData.required - dealer id    
@@ -517,70 +470,8 @@ router.post("/dealer/suspend", dealerController.suspendDealer);
  */
 /** Activate Dealer **/
 router.post("/dealer/activate", dealerController.activateDealer);
+
 /**
- * This function comment is parsed by doctrine
- * @route GET /users/dealer/gtdropdown/{dropdownType}
- * @group Dealer - Operations about Dealers
- * @param {string} dropdownType.path.required - dropdown type
- * @returns {object} 200 - An array of user info
- * @returns {Error}  default - Unexpected error
- * @security JWT
- */
-/** Get Dropdown Selected Items **/
-router.get(
-	"/dealer/gtdropdown/:dropdownType",
-	dealerController.getDropdownSelectedItems
-);
-/**
- * This function comment is parsed by doctrine
- * @route POST /users/dealer/dropdown
- * @group Dealer - Operations about Dealers
- * @param {string} pageName.formData.required - page name
- * @param {Array} selected_items.formData.required - Dropdown value
- * @returns {object} 200 - An array of user info
- * @returns {Error}  default - Unexpected error
- * @security JWT
- */
-/** post Dealer Dropdown Selected Items **/
-router.post("/dealer/dropdown", dealerController.dropDown);
-/**
- * This function comment is parsed by doctrine
- * @route GET /users/dealer/getPagination/{dropdownType}
- * @group Dealer - Operations about Dealers
- * @param {string} dropdownType.path.required - page name
- * @returns {object} 200 - An array of user info
- * @returns {Error}  default - Unexpected error
- * @security JWT
- */
-/** Get pagination **/
-router.get(
-	"/dealer/getPagination/:dropdownType",
-	dealerController.getPagination
-);
-/**
- * This function comment is parsed by doctrine
- * @route POST /users/dealer/postPagination/{dropdownType}
- * @group Dealer - Operations about Dealers
- * @param {string} pageName.formData.required - page name
- * @param {object} selectedValue.formData.required - pagination value
- * @returns {object} 200 - An array of user info
- * @returns {Error}  default - Unexpected error
- * @security JWT
- */
-/** post Dealer Pagination **/
-router.post("/dealer/postPagination", dealerController.postPagination);
-/**
- * This function comment is parsed by doctrine
- * @route GET /users/getinfo
- * @group Dealer - Operations about Dealers
- * @returns {object} 200 - An array of user info
- * @returns {Error}  default - Unexpected error
- * @security JWT
- */
-/** Dealer and S Dealer Info **/
-router.get("/getinfo", dealerController.getInfo);
-/**
- * This function comment is parsed by doctrine
  * @route GET /users/get_dealer_apps
  * @group Dealer - Operations about Dealers
  * @returns {object} 200 - An array of user info
@@ -591,7 +482,6 @@ router.get("/getinfo", dealerController.getInfo);
 
 router.get('/get_dealer_apps', dealerController.getLoggedDealerApps);
 /**
- * This function comment is parsed by doctrine
  * @route GET /users/get_usr_acc_id/{device_id}
  * @group Dealer - Operations about Dealers
  * @param {string} device_id.path.required - device id
@@ -617,6 +507,117 @@ router.get('/get_usr_acc_id/:device_id', async function (req, res) {
 		})
 	}
 })
+
+
+// =================== Connect Dealer ================= //
+
+/**
+ * @route GET /users/connect-dealer/:dealerId
+ * @group Dealer - Operations about Dealers
+ * @param {string} dealerId.param.required - dealer name
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+/*** Connect Dealer ***/
+router.get("/connect-dealer/:dealerId", dealerController.connectDealer);
+
+/**
+ * @route GET /users/dealer-domains/:dealerId
+ * @group Dealer - Operations about Dealers
+ * @param {string} dealerId.param.required - dealer name
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+router.get("/dealer-domains/:dealerId", dealerController.dealerDomains)
+
+/**
+ * @route GET /users/payment-history/:dealerId
+ * @group Dealer - Operations about Dealers
+ * @param {string} dealerId.param.required - dealer name
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+/*** Dealer Payment History ***/
+router.get("/payment-history/:dealerId", dealerController.getDealerPaymentHistory);
+
+/**
+ * @route GET /users/sales-history/:dealerId
+ * @group Dealer - Operations about Dealers
+ * @param {string} dealerId.param.required - dealer name
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+/*** Dealer Payment History ***/
+router.get("/sales-history/:dealerId", dealerController.getDealerSalesHistory);
+
+
+/**UPDATE DEALER CREDITS LIMIT**/
+router.put("/set_credits_limit", dealerController.setDealerCreditsLimit);
+
+/**
+ * @route PUT /users/dealer-status
+ * @group Dealer - Operations about Dealers
+ * @param {string} dealerId.param.required - dealer name
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+//** dealer account balance status */
+router.put('/dealer-status/:dealerId', dealerController.changeDealerStatus);
+
+
+// =================== General Routes ================= //
+
+/**
+ * @route GET /users/dealer/gtdropdown/{dropdownType}
+ * @group Dealer - Operations about Dealers
+ * @param {string} dropdownType.path.required - dropdown type
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+/** Get Dropdown Selected Items **/
+router.get("/dealer/gtdropdown/:dropdownType", dealerController.getDropdownSelectedItems);
+
+
+/**
+ * @route POST /users/dealer/dropdown
+ * @group Dealer - Operations about Dealers
+ * @param {string} pageName.formData.required - page name
+ * @param {Array} selected_items.formData.required - Dropdown value
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+/** post Dealer Dropdown Selected Items **/
+router.post("/dealer/dropdown", dealerController.dropDown);
+/**
+ * @route GET /users/dealer/getPagination/{dropdownType}
+ * @group Dealer - Operations about Dealers
+ * @param {string} dropdownType.path.required - page name
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+
+/** Get pagination **/
+router.get("/dealer/getPagination/:dropdownType", dealerController.getPagination);
+
+/**
+ * @route POST /users/dealer/postPagination/{dropdownType}
+ * @group Dealer - Operations about Dealers
+ * @param {string} pageName.formData.required - page name
+ * @param {object} selectedValue.formData.required - pagination value
+ * @returns {object} 200 - An array of user info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+/** post Dealer Pagination **/
+router.post("/dealer/postPagination", dealerController.postPagination);
 
 
 // =========== Policy ============= //
