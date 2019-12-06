@@ -124,6 +124,8 @@ exports.login = async function (req, res) {
 							created: users[0].created,
 							modified: users[0].modified,
 							account_balance_status: users[0].account_balance_status,
+							demos: users[0].demos,
+							remaining_demos: users[0].remaining_demos,
 						}
 
 						jwt.sign(
@@ -195,81 +197,83 @@ exports.verifyCode = async function (req, res) {
 				})
 			}
 
-            if (response && response.affectedRows) {
-                let dealerStatus = helpers.getDealerStatus(checkRes[0]);
-                if (dealerStatus === app_constants.DEALER_SUSPENDED) {
-                    data = {
-                        status: false,
-                        msg:  'Your account is suspended', // await helpers.convertToLang(req.translation[MsgConstants.YOUR_ACCOUNT_IS_SUSPENDED], MsgConstants.YOUR_ACCOUNT_IS_SUSPENDED),
-                        data: null
-                    }
-                    res.send(data);
-                    return;
-                } else if (dealerStatus === app_constants.DEALER_UNLINKED) {
-                    data = {
-                        status: false,
-                        msg:  'Your account is deleted', // await helpers.convertToLang(req.translation[MsgConstants.YOUR_ACCOUNT_IS_DELETED], MsgConstants.YOUR_ACCOUNT_IS_DELETED),
-                        data: null
-                    }
-                    res.status(200).send(data);
-                    return;
-                } else {
-                    var userType = await helpers.getUserType(checkRes[0].dealer_id);
+			if (response && response.affectedRows) {
+				let dealerStatus = helpers.getDealerStatus(checkRes[0]);
+				if (dealerStatus === app_constants.DEALER_SUSPENDED) {
+					data = {
+						status: false,
+						msg: 'Your account is suspended', // await helpers.convertToLang(req.translation[MsgConstants.YOUR_ACCOUNT_IS_SUSPENDED], MsgConstants.YOUR_ACCOUNT_IS_SUSPENDED),
+						data: null
+					}
+					res.send(data);
+					return;
+				} else if (dealerStatus === app_constants.DEALER_UNLINKED) {
+					data = {
+						status: false,
+						msg: 'Your account is deleted', // await helpers.convertToLang(req.translation[MsgConstants.YOUR_ACCOUNT_IS_DELETED], MsgConstants.YOUR_ACCOUNT_IS_DELETED),
+						data: null
+					}
+					res.status(200).send(data);
+					return;
+				} else {
+					var userType = await helpers.getUserType(checkRes[0].dealer_id);
 
-                    var get_connected_devices = await sql.query(`SELECT count(*) AS total FROm usr_acc WHERE dealer_id='${checkRes[0].dealer_id}'`);
-                    var ip = req.header('x-real-ip') || req.connection.remoteAddress
+					var get_connected_devices = await sql.query(`SELECT count(*) AS total FROm usr_acc WHERE dealer_id='${checkRes[0].dealer_id}'`);
+					var ip = req.header('x-real-ip') || req.connection.remoteAddress
 
-                    const user = {
-                        id: checkRes[0].dealer_id,
-                        dealer_id: checkRes[0].dealer_id,
-                        email: checkRes[0].dealer_email,
-                        lastName: checkRes[0].last_name,
-                        name: checkRes[0].dealer_name,
-                        firstName: checkRes[0].first_name,
-                        dealer_name: checkRes[0].dealer_name,
-                        dealer_email: checkRes[0].dealer_email,
-                        link_code: checkRes[0].link_code,
-                        connected_dealer: checkRes[0].connected_dealer,
-                        connected_devices: get_connected_devices,
-                        account_status: checkRes[0].account_status,
-                        user_type: userType,
-                        created: checkRes[0].created,
-                        modified: checkRes[0].modified,
-                        two_factor_auth: checkRes[0].is_two_factor_auth,
-                        ip_address: ip,
+					const user = {
+						id: checkRes[0].dealer_id,
+						dealer_id: checkRes[0].dealer_id,
+						email: checkRes[0].dealer_email,
+						lastName: checkRes[0].last_name,
+						name: checkRes[0].dealer_name,
+						firstName: checkRes[0].first_name,
+						dealer_name: checkRes[0].dealer_name,
+						dealer_email: checkRes[0].dealer_email,
+						link_code: checkRes[0].link_code,
+						connected_dealer: checkRes[0].connected_dealer,
+						connected_devices: get_connected_devices,
+						account_status: checkRes[0].account_status,
+						user_type: userType,
+						created: checkRes[0].created,
+						modified: checkRes[0].modified,
+						two_factor_auth: checkRes[0].is_two_factor_auth,
+						ip_address: ip,
 						account_balance_status: checkRes[0].account_balance_status,
-                    }
+						demos: checkRes[0].demos,
+						remaining_demos: checkRes[0].remaining_demos,
+					}
 
-                    jwt.sign({
-                        user
-                    }, constants.SECRET, {
-                            expiresIn: constants.DASHBOARD_EXPIRES_IN
-                        }, async function (err, token) {
-                            if (err) {
-                                return res.send({
-									'err': err,
-									status: false,
-								});
-                            } else {
-                                user.expiresIn = constants.DASHBOARD_EXPIRES_IN;
-                                user.verified = checkRes[0].verified;
-                                user.token = token;
-                                helpers.saveLogin(user, userType, app_constants.TOKEN, 1);
+					jwt.sign({
+						user
+					}, constants.SECRET, {
+						expiresIn: constants.DASHBOARD_EXPIRES_IN
+					}, async function (err, token) {
+						if (err) {
+							return res.send({
+								'err': err,
+								status: false,
+							});
+						} else {
+							user.expiresIn = constants.DASHBOARD_EXPIRES_IN;
+							user.verified = checkRes[0].verified;
+							user.token = token;
+							helpers.saveLogin(user, userType, app_constants.TOKEN, 1);
 
-                                return res.send({
-                                    token: token,
-                                    status: true,
-                                    msg: 'User loged in Successfully', //  expiresIn: constants.EXPIRES_IN, // await helpers.convertToLang(req.translation[MsgConstants.USER_LOGED_IN_SUCCESSFULLY], MsgConstants.USER_LOGED_IN_SUCCESSFULLY),
-                                    user
-								});
-                            }
-                        });
-                }
-            } else {
-                return res.send({
-                    status: false,
-                    msg:  'Invalid verification code', // await helpers.convertToLang(req.translation[MsgConstants.INVALID_VERIFICATION_CODE], MsgConstants.INVALID_VERIFICATION_CODE),
-                    data: null
+							return res.send({
+								token: token,
+								status: true,
+								msg: 'User loged in Successfully', //  expiresIn: constants.EXPIRES_IN, // await helpers.convertToLang(req.translation[MsgConstants.USER_LOGED_IN_SUCCESSFULLY], MsgConstants.USER_LOGED_IN_SUCCESSFULLY),
+								user
+							});
+						}
+					});
+				}
+			} else {
+				return res.send({
+					status: false,
+					msg: 'Invalid verification code', // await helpers.convertToLang(req.translation[MsgConstants.INVALID_VERIFICATION_CODE], MsgConstants.INVALID_VERIFICATION_CODE),
+					data: null
 				})
 			}
 		});
@@ -314,7 +318,7 @@ exports.superAdminLogin = async function (req, res) {
 						user_type: userType
 					},
 					user_type: userType
-	
+
 				},
 				constants.SECRET,
 				{

@@ -436,6 +436,8 @@ exports.acceptDevice = async function (req, res) {
             expiry_date = helpers.getExpDateByMonth(start_date, term)
         }
 
+
+
         let user_credits = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
         sql.query(user_credits, async function (err, result) {
             if (err) {
@@ -481,7 +483,15 @@ exports.acceptDevice = async function (req, res) {
 
                                 let checkDealer = "SELECT * FROM dealers where dealer_id =" + dealer_id;
                                 let dealer = await sql.query(checkDealer);
-
+                                if (term == 0) {
+                                    if (dealer[0].remaining_demos <= 0) {
+                                        res.send({
+                                            status: false,
+                                            msg: await helpers.convertToLang(req.translation[""], "Your Demos Limit has been exceeded, you cannot use Trial Packages. Please Contact with you admin."), // "New Device Not Added Please try Again"
+                                        });
+                                        return;
+                                    }
+                                }
                                 // let connected = await sql.query(checkConnectedDealer);
                                 if (loggedDealerType === constants.SDEALER) {
                                     checkDevice = checkDevice + " AND usr_acc.dealer_id = " + loggedDealerId;
@@ -739,7 +749,9 @@ exports.acceptDevice = async function (req, res) {
                                                         })
                                                     }
 
-
+                                                    if (term == 0) {
+                                                        sql.query(`UPDATE dealers SET remaining_demos = remaining_demos - 1 WHERE dealer_id = ${dealer_id}`)
+                                                    }
 
                                                     var slctquery = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) WHERE devices.device_id = '${device_id}'`;
                                                     // console.log(slctquery);
@@ -974,18 +986,30 @@ exports.createDeviceProfile = async function (req, res) {
         var start_date = moment().format("YYYY/MM/DD");
         var exp_month = req.body.term
         var expiry_date = '';
+        var dealer_id = verify.user.dealer_id;
+        var duplicate = req.body.duplicate ? req.body.duplicate : 0;
+
         if (exp_month === '0') {
             var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
             expiry_date = moment(trailDate).format("YYYY/MM/DD")
+            let checkDealer = "SELECT * FROM dealers where dealer_id =" + dealer_id;
+            let dealer = await sql.query(checkDealer);
+            if (dealer[0].remaining_demos <= 0 || dealer[0].remaining_demos < duplicate) {
+                res.send({
+                    status: false,
+                    msg: await helpers.convertToLang(req.translation[""], "Your Demos Limit has been exceeded, you cannot use Trial Packages. Please Contact with you admin."), // "New Device Not Added Please try Again"
+                });
+                return;
+            }
+
         } else {
             expiry_date = helpers.getExpDateByMonth(start_date, exp_month)
         }
 
         var note = req.body.note;
         var validity = req.body.validity;
-        var duplicate = req.body.duplicate ? req.body.duplicate : 0;
+
         var link_code = verify.user.link_code
-        var dealer_id = verify.user.dealer_id;
         var sim_id = req.body.sim_id ? req.body.sim_id : '';
         var sim_id2 = req.body.sim_id2 ? req.body.sim_id2 : '';
         var loggedUserId = verify.user.id;
@@ -1286,10 +1310,13 @@ exports.createDeviceProfile = async function (req, res) {
 
                                         html = 'Amount of activation codes : ' + activationCodes.length + '<br> ' + 'Activation Codes are following : <br>' + activationCodes.join("<br>") + '.<br> Invoice is attached below. <br>';
 
-                                        sendEmail("Activation codes successfuly generated.", html, verify.user.dealer_email, null, attachment);
+                                        sendEmail("Activation codes successfully generated.", html, verify.user.dealer_email, null, attachment);
                                     } else {
                                         html = 'Amount of activation codes : ' + activationCodes.length + '<br> ' + 'Activation Codes are following : <br>' + activationCodes.join("<br>");
-                                        sendEmail("Activation codes successfuly generated.", html, verify.user.dealer_email, null, null);
+                                        sendEmail("Activation codes successfully generated.", html, verify.user.dealer_email, null, null);
+                                    }
+                                    if (exp_month == 0) {
+                                        sql.query(`UPDATE dealers SET remaining_demos = remaining_demos - ${duplicate} WHERE dealer_id = ${dealer_id}`)
                                     }
 
                                     let user_credits = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
@@ -1688,6 +1715,9 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 sql.query(`INSERT INTO invoices (inv_no,user_acc_id,dealer_id,file_name ,end_user_payment_status) VALUES('${inv_no}',${user_acc_id},${dealer_id}, '${fileName}' , '${endUser_pay_status}')`)
                                                             }
 
+                                                            if (exp_month == 0) {
+                                                                sql.query(`UPDATE dealers SET remaining_demos = remaining_demos - 1 WHERE dealer_id = ${dealer_id}`)
+                                                            }
                                                             let user_credits = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
                                                             let account_balance = await sql.query(user_credits)
 
@@ -1945,6 +1975,7 @@ exports.editDevices = async function (req, res) {
             if (loggedDealerType === constants.ADMIN) {
                 let response = await device_helpers.editDeviceAdmin(req.body, verify)
                 res.send(response)
+                return
             } else {
                 sql.query(checkDevice, async function (error, rows) {
                     if (rows.length) {
@@ -2413,7 +2444,11 @@ exports.editDevices = async function (req, res) {
                                 // }
 
                                 await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, usr_acc_id, loggedDealerType, pay_now, service_id)
-
+                                if (exp_month == 0 && prevService.service_term != 0) {
+                                    sql.query(`UPDATE dealers SET remaining_demos = remaining_demos - 1 WHERE dealer_id = ${dealer_id}`)
+                                } else if (prevService.service_term == 0 && exp_month != 0) {
+                                    sql.query(`UPDATE dealers SET remaining_demos = remaining_demos + 1 WHERE dealer_id = ${dealer_id}`)
+                                }
 
                                 let inv_no = await helpers.getInvoiceId()
                                 const invoice = {
@@ -6049,10 +6084,14 @@ exports.deleteUnlinkDevice = async function (req, res) {
                     let dealer_hardware_profit = 0
                     let admin_hardware_profit = 0
                     let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
+                    let deletedDemos = 0
                     for (let device of req.body.devices) {
                         let statusChangeQuery = "UPDATE usr_acc SET del_status='" + 1 + "' WHERE device_id='" + device.usr_device_id + "'";
                         let resp = await sql.query(statusChangeQuery)
                         if (resp.affectedRows) {
+                            if (device.expiry_months == 0) {
+                                deletedDemos++
+                            }
                             await sql.query("UPDATE pgp_emails set user_acc_id = null , used = 0 , start_date = null where pgp_email ='" + device.pgp_email + "'")
                             await sql.query("UPDATE chat_ids set user_acc_id = null , used = 0 , start_date = null where chat_id ='" + device.chat_id + "'")
                             await sql.query("UPDATE sim_ids set user_acc_id = null , used = 0 , start_date = null where sim_id ='" + device.sim_id + "' OR sim_id ='" + device.sim_id2 + "'")
@@ -6202,6 +6241,10 @@ exports.deleteUnlinkDevice = async function (req, res) {
                     if (refundedCredits !== 0) {
                         let updateCredits = "UPDATE financial_account_balance set credits = " + Number(refundedCredits) + " WHERE dealer_id = " + verify.user.dealer_id
                         await sql.query(updateCredits);
+                    }
+
+                    if (deletedDemos > 0) {
+                        sql.query(`UPDATE dealers SET remaining_demos = remaining_demos + ${deletedDemos} WHERE dealer_id = ${verify.user.dealer_id}`)
                     }
                     if (deleteError === 0) {
                         data = {

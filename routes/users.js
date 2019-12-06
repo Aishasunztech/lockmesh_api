@@ -471,6 +471,9 @@ router.put("/edit/dealers", dealerController.editDealers);
 /**UPDATE DEALER CREDITS LIMIT**/
 router.put("/set_credits_limit", dealerController.setDealerCreditsLimit);
 
+/**UPDATE DEALER DEMOS LIMIT**/
+router.put("/set_demos_limit", dealerController.setDealerDemosLimit);
+
 /**
  * This function comment is parsed by doctrine
  * @route POST /users/dealer/delete
