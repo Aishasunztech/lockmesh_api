@@ -123,6 +123,14 @@ exports.checkComponent = async function (req, res) {
                 account_balance_status: user[0].account_balance_status,
                 demos: user[0].demos,
                 remaining_demos: user[0].remaining_demos,
+                company_name: user[0].company_name,
+                company_address: user[0].company_address,
+                city: user[0].city,
+                state: user[0].state,
+                country: user[0].country,
+                postal_code: user[0].postal_code,
+                tel_no: user[0].tel_no,
+                website: user[0].website,
             }
 
             res.json({

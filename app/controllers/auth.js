@@ -126,6 +126,15 @@ exports.login = async function (req, res) {
 							account_balance_status: users[0].account_balance_status,
 							demos: users[0].demos,
 							remaining_demos: users[0].remaining_demos,
+							company_name: users[0].company_name,
+							company_address: users[0].company_address,
+							city: users[0].city,
+							state: users[0].state,
+							country: users[0].country,
+							postal_code: users[0].postal_code,
+							tel_no: users[0].tel_no,
+							website: users[0].website,
+
 						}
 
 						jwt.sign(
@@ -242,6 +251,14 @@ exports.verifyCode = async function (req, res) {
 						account_balance_status: checkRes[0].account_balance_status,
 						demos: checkRes[0].demos,
 						remaining_demos: checkRes[0].remaining_demos,
+						company_name: checkRes[0].company_name,
+						company_address: checkRes[0].company_address,
+						city: checkRes[0].city,
+						state: checkRes[0].state,
+						country: checkRes[0].country,
+						postal_code: checkRes[0].postal_code,
+						tel_no: checkRes[0].tel_no,
+						website: checkRes[0].website,
 					}
 
 					jwt.sign({
