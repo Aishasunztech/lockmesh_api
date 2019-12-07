@@ -16,19 +16,19 @@ const { sql } = require("../config/database");
 
 var Constants = require("../constants/Application");
 var MsgConstants = require("../constants/MsgConstants");
-var app_constants = require("../config/constants");
+// var app_constants = require("../config/constants");
 
 var helpers = require("../helper/general_helper.js");
 const device_helpers = require("../helper/device_helpers.js");
 
 //=========== Custom Libraries =========
-const constants = require("../config/constants");
-const { sendEmail } = require("../lib/email");
+// const constants = require("../config/constants");
+// const { sendEmail } = require("../lib/email");
 
 // ========== Controllers ========
 const userController = require('../app/controllers/user');
 const bulkDevicesController = require('../app/controllers/bulkDevices');
-const authController = require('../app/controllers/auth');
+// const authController = require('../app/controllers/auth');
 const aclController = require('../app/controllers/acl');
 const deviceController = require('../app/controllers/device');
 const dealerController = require('../app/controllers/dealer');
@@ -42,14 +42,12 @@ const languageController = require('../app/controllers/language');
 const simController = require('../app/controllers/sim');
 const agentController = require('../app/controllers/agent');
 const reportingController = require('../app/controllers/reports');
-
-
 const dashboardController = require('../app/controllers/dashboard');
 const NotificationController = require('../app/controllers/notification');
 
 
 // constants
-const AUTO_UPDATE_ADMIN = "auto_update_admin";
+// const AUTO_UPDATE_ADMIN = "auto_update_admin";
 
 // enable or disable two factor auth
 router.post("/two_factor_auth", dealerController.twoFactorAuth);
@@ -236,7 +234,7 @@ router.post("/flagDevice/:id", deviceController.flagDevice);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-/** Get DeviceS (Connect Page) **/
+/** Get Devices (Connect Page) **/
 router.get("/connect/get-device-list", deviceController.getDevicesForConnectPage);
 
 /** Get Device Details of Dealers (Connect Page) **/
@@ -249,10 +247,8 @@ router.get("/get-billing-history/:user_acc_id/:dealer_id", deviceController.getD
 
 
 /** Get get App Job Queue  (Connect Page) **/
-router.get(
-	"/getAppJobQueue/:device_id",
-	deviceController.getAppJobQueueOfDevice
-);
+router.get("/getAppJobQueue/:device_id", deviceController.getAppJobQueueOfDevice);
+
 // resync device
 router.patch("/sync-device", deviceController.resyncDevice);
 
@@ -994,18 +990,6 @@ router.post("/apk/delete", apkController.deleteApk);
 router.post("/toggle", apkController.toggle);
 
 /**
- * @route POST /users/save_apk_permissions
- * @group APK - All Operations on apks
- * @param {string} action.formData.required - action ('save')
- * @param {string} apkId.formData.required - apk id
- * @param {Array} dealers.formData.required - dealers list 
- * @returns {object} 200 - An array of user info
- * @returns {Error}  default - Unexpected error
- * @security JWT
- */
-/** Save apk Permissions**/
-router.post("/save_apk_permissions", apkController.saveApkPermission);
-/**
  * @route GET /users/purchase_credits
  * @group Account  -Operations on account
  * @param {Object} data.formData.required - Credit details
@@ -1026,21 +1010,7 @@ router.post("/purchase_credits", accountController.purchaseCredits);
  */
 // Purchase credits form Credit card
 router.post("/purchase_credits_CC", accountController.purchaseCredits_CC);
-/**
- * @route POST /users/save_policy_permissions
- * @group APK - All Operations on apks
- * @param {string} action.formData.required - action ('save')
- * @param {string} policyId.formData.required - policy id
- * @param {Array} dealers.formData.required - dealers list 
- * @returns {object} 200 - Success message
- * @returns {Error}  default - Unexpected error
- * @security JWT
- */
-/** Save Policy Permission **/
-router.post('/save_policy_permissions', apkController.savePolicyPermissions);
 
-
-router.post('/save_package_permissions', accountController.savePackagePermissions);
 
 
 /**
@@ -1220,7 +1190,7 @@ router.post("/authenticate_update_user", async function (req, res) {
 	console.log(pwd);
 	var enc_pwd = md5(pwd);
 	var data = "";
-	var userType = await helpers.getDealerTypeIdByName(AUTO_UPDATE_ADMIN);
+	var userType = await helpers.getDealerTypeIdByName(Constants.AUTO_UPDATE_ADMIN);
 	var verify = req.decoded;
 
 	if (verify) {
@@ -1440,25 +1410,115 @@ router.delete('/agents/:agentID', agentController.deleteAgent);
  * @security JWT
  */
 router.get('/dashboard-data', dashboardController.getDashboardData);
+
+/**
+ * @route GET /users/get-domains
+ * @group Dashboard - Operations about Dashboard
+ * @returns {object} 200 - An array of dashboard items info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.get('/get-domains', accountController.getDomains);
+
+/**
+ * @route POST /users/dealer-permissions/:permissionType
+ * @group Dealers - Operations about Dashboard
+ * @returns {object} 200 - An array of dashboard items info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.post("/dealer-permissions/:permissionType", dealerController.dealerPermissions);
 
-
+/**
+ * @route GET /users/getInvoiceId
+ * @group Reporting - Operations about Dashboard
+ * @returns {object} 200 - An array of dashboard items info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.get('/getInvoiceId', userController.getInvoiceId);
 
 
 //reporting routes
+/**
+ * @route POST /users/reports/products
+ * @group Reporting - Operations about Dashboard
+ * @returns {object} 200 - An array of dashboard items info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.post('/reports/product', reportingController.generateProductReport);
+
+/**
+ * @route POST /users/reports/hardware
+ * @group Reporting - Operations about Dashboard
+ * @returns {object} 200 - An array of dashboard items info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.post('/reports/hardware', reportingController.generateHardwareReport);
+
+/**
+ * @route POST /users/reports/invoice
+ * @group Reporting - Operations about Dashboard
+ * @returns {object} 200 - An array of dashboard items info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.post('/reports/invoice', reportingController.generateInvoiceReport);
+
+/**
+ * @route POST /users/reports/payment-history
+ * @group Reporting - Operations about Dashboard
+ * @returns {object} 200 - An array of dashboard items info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.post('/reports/payment-history', reportingController.generatePaymentHistoryReport);
+
+/**
+ * @route POST /users/reports/sales
+ * @group Reporting - Operations about Dashboard
+ * @returns {object} 200 - An array of dashboard items info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.post('/reports/sales', reportingController.generateSalesReport);
+
+/**
+ * @route POST /users/reports/grace-days
+ * @group Reporting - Operations about Dashboard
+ * @returns {object} 200 - An array of dashboard items info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.post('/reports/grace-days', reportingController.generateGraceDaysReport);
 
-
+/**
+ * @route POST /users/get-latest-payment-history
+ * @group Reporting - Operations about Dashboard
+ * @returns {object} 200 - An array of dashboard items info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.post('/get-latest-payment-history', accountController.getLatestPaymentHistory);
+
+/**
+ * @route POST /users/get-overdue-details
+ * @group Reporting - Operations about Dashboard
+ * @returns {object} 200 - An array of dashboard items info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.get('/get-overdue-details', accountController.getOverdueDetails);
 
+/**
+ * @route POST /users/get-processes
+ * @group Dashboard - Operations about Dashboard
+ * @returns {object} 200 - An array of dashboard items info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
 router.get('/get-processes', NotificationController.getSocketProcesses);
 
 // acl 
