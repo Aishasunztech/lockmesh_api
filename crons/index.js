@@ -11,6 +11,9 @@ const sockets = require('../routes/sockets');
 const device_helpers = require('../helper/device_helpers.js');
 const socket_helpers = require('../helper/socket_helper');
 
+// constants
+const constants = require('../constants/Application');
+
 /** Cron for device expiry date **/
 cron.schedule('0 0 0 * * *', async () => {
     var tod_dat = datetime.create();
@@ -51,22 +54,40 @@ cron.schedule('0 0 0 * * *', async () => {
 
     if (allDealers.length) {
         allDealers.map(async (item) => {
-            let getTransaction = await sql.query("SELECT * FROM financial_account_transections " +
-                "WHERE user_id = " + item.dealer_id + " AND status = 'pending' AND DATE(created_at) >= " + getDate + " LIMIT 1");
+
+            let getTransaction = await sql.query(`SELECT * FROM financial_account_transections 
+            WHERE user_id = ${item.dealer_id} AND status = 'pending' AND DATE(created_at) >= ${getDate} LIMIT 1`);
+            
             if (getTransaction.length) {
 
                 let now = moment();
                 let end = moment(getTransaction[0].created_at).format('YYYY-MM-DD');
                 let duration = now.diff(end, 'days');
+                
+                /**
+                 * @author Usman Hafeez
+                 * @description added condition if restriction mode is settled by Admin then don't change any level 
+                 */
 
-                if (duration > 21 && duration <= 60) {
-                    await sql.query("UPDATE dealers set account_balance_status = 'restricted' WHERE dealer_id = " + item.dealer_id);
-                } else if (duration > 60) {
-                    await sql.query("UPDATE dealers set account_balance_status = 'suspended' WHERE dealer_id = " + item.dealer_id);
+                if(item.account_balance_status_by !== constants.ADMIN || (item.account_balance_status_by==constants.ADMIN && item.account_balance_status=='active')){
+
+                    if (duration > 21 && duration <= 60) {
+                        await sql.query("UPDATE dealers set account_balance_status = 'restricted', account_balance_status_by = 'due_credits' WHERE dealer_id = " + item.dealer_id);
+                    } else if (duration > 60) {
+                        await sql.query("UPDATE dealers set account_balance_status = 'suspended', account_balance_status_by = 'due_credits' WHERE dealer_id = " + item.dealer_id);
+                    }
                 }
-            }
-            else {
-                await sql.query("UPDATE dealers set account_balance_status = 'active' WHERE dealer_id = " + item.dealer_id);
+                
+            } else {
+
+                /**
+                 * @author Usman Hafeez
+                 * @description added condition if restriction mode is settled by Admin then don't change any level 
+                 */
+
+                if(item.account_balance_status_by !== constants.ADMIN){
+                    await sql.query("UPDATE dealers set account_balance_status = 'active', account_balance_status_by = 'due_credits' WHERE dealer_id = " + item.dealer_id);
+                }
             }
         })
     }
