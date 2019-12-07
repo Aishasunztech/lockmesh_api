@@ -8,7 +8,7 @@ module.exports = {
         defaultValue: ''
       }),
       queryInterface.addColumn('dealers', 'company_address', {
-        type: Sequelize.STRING,
+        type: Sequelize.TEXT,
         defaultValue: ''
       }),
       queryInterface.addColumn('dealers', 'city', {
