@@ -204,6 +204,7 @@ module.exports = {
     { "key": "link_code", "value": "dealer.pin.id" },
     { "key": "connected_devices", "value": "devices" },
     { "key": "dealer_credits", "value": "credits.id" },
+    { "key": "last_login", "value": "LAST LOGIN" },
   ],
   sdealerColumns: [
     { "key": "dealer_id", "value": "dealer.id" },
@@ -214,6 +215,8 @@ module.exports = {
     { "key": "dealer_credits", "value": "credits.id" },
     { "key": "parent_dealer", "value": "parent.dealer.id" },
     { "key": "parent_dealer_id", "value": "parent.dealer.id.id" },
+    { "key": "last_login", "value": "LAST LOGIN" },
+
   ],
   apkColumns: [
     { "key": "permission", "value": 'permission.id' },

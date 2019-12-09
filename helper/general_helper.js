@@ -2251,5 +2251,9 @@ module.exports = {
 				}
 			}
 		}
+	},
+	updateDealerLastLogin: async function(dealerId ) {
+		let updateLastLoginQ = `UPDATE dealers SET last_login = '${moment().format("YYYY/MM/DD HH:mm:ss")}' WHERE dealer_id=${dealerId}`;
+		await sql.query(updateLastLoginQ);
 	}
 }

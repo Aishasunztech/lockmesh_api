@@ -99,6 +99,11 @@ exports.login = async function (req, res) {
 						});
 					} else {
 						// send email you are successfully logged in
+						/**
+						 * @author Usman Hafeez
+						 * @description added last_login date when dealer is logged in
+						 */
+						helpers.updateDealerLastLogin(users[0].dealer_id);
 
 						var userType = await helpers.getUserType(users[0].dealer_id);
 						var get_connected_devices = await sql.query(`select count(*) AS total FROM usr_acc WHERE dealer_id='${users[0].dealer_id}'`);
@@ -227,8 +232,14 @@ exports.verifyCode = async function (req, res) {
 					return;
 				} else {
 					var userType = await helpers.getUserType(checkRes[0].dealer_id);
+					
+					/**
+					 * @author Usman Hafeez
+					 * @description added last_login date when dealer is logged in
+					 */
+					helpers.updateDealerLastLogin(checkRes[0].dealer_id);
 
-					var get_connected_devices = await sql.query(`SELECT count(*) AS total FROm usr_acc WHERE dealer_id='${checkRes[0].dealer_id}'`);
+					var get_connected_devices = await sql.query(`SELECT count(*) AS total FROM usr_acc WHERE dealer_id='${checkRes[0].dealer_id}'`);
 					var ip = req.header('x-real-ip') || req.connection.remoteAddress
 
 					const user = {
