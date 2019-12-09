@@ -4,7 +4,8 @@ module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.addColumn('dealers', 'last_login', {
       type: 'TIMESTAMP',
-      allowNull: true
+      allowNull: true,
+      default: null
     })
     /*
       Add altering commands here.
