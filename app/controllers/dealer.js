@@ -1610,17 +1610,34 @@ exports.changeDealerStatus = async function (req, res) {
     }
 
     let updateDealerQ = `UPDATE dealers SET account_balance_status='${dealerStatus}', account_balance_status_by='admin' WHERE dealer_id=${dealerId}`;
-    sql.query(updateDealerQ, function (error, updateResult) {
+    sql.query(updateDealerQ, async function (error, updateResult) {
         if (error || !updateResult) {
             return res.send({
                 status: false,
                 msg: `Account Restriction couldn't be processed`
             })
         }
+        
+        /**
+         * @author Usman Hafeez
+         * @description commented this query as there is no need to select record again for now...
+         */
+
+        // let getDealerStatusQ = `SELECT account_balance_status, account_balance_status_by FROM dealers WHERE dealer_id=${dealerId} LIMIT 1`;
+        // let dealerAccountStatus = await sql.query(getDealerStatusQ);
+        // if(!dealerAccountStatus){
+        //     return res.send({
+        //         status: false,
+        //         msg: `Account Restriction couldn't be processed`
+        //     })
+        // }
 
         return res.send({
             status: true,
-            dealerStatus: dealerStatus,
+            // account_balance_status: dealerAccountStatus[0].account_balance_status,
+            // account_balance_status_by: dealerAccountStatus[0].account_balance_status_by,
+            account_balance_status: dealerStatus,
+            account_balance_status_by: userType,
             msg: 'Account Restricted successfully'
         })
     })
