@@ -124,6 +124,7 @@ exports.login = async function (req, res) {
 							created: users[0].created,
 							modified: users[0].modified,
 							account_balance_status: users[0].account_balance_status,
+							account_balance_status_by: users[0].account_balance_status_by
 						}
 
 						jwt.sign(
@@ -238,6 +239,7 @@ exports.verifyCode = async function (req, res) {
                         two_factor_auth: checkRes[0].is_two_factor_auth,
                         ip_address: ip,
 						account_balance_status: checkRes[0].account_balance_status,
+						account_balance_status: checkRes[0].account_balance_status_by
                     }
 
                     jwt.sign({
