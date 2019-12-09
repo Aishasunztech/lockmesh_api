@@ -55,7 +55,7 @@ module.exports = {
 		}
 	},
 	getUserType: async function (userId) {
-		let query1 =`SELECT d.type as type, roles.role AS role FROM dealers AS d JOIN user_roles AS roles ON (d.type = roles.id) WHERE d.dealer_id=${userId}`
+		let query1 = `SELECT d.type as type, roles.role AS role FROM dealers AS d JOIN user_roles AS roles ON (d.type = roles.id) WHERE d.dealer_id=${userId}`
 		// var query1 = "SELECT type FROM dealers where dealer_id =" + userId;
 
 		var user = await sql.query(query1);
@@ -63,8 +63,8 @@ module.exports = {
 			// var query2 = "SELECT * FROM user_roles where id =" + user[0].type;
 			// var role = await sql.query(query2);
 			// if (role.length) {
-				// return role[0].role;
-				return user[0].role;
+			// return role[0].role;
+			return user[0].role;
 			// } else {
 			// 	return false;
 			// }
@@ -139,17 +139,17 @@ module.exports = {
 
 		if (componentUri.includes("/connect-device/")) {
 			componentUri = "/connect-device/:deviceId";
-		} else if (componentUri.includes('/connect-dealer/')){
+		} else if (componentUri.includes('/connect-dealer/')) {
 			componentUri = '/connect-dealer'
 		}
 		console.log("componentUri:", componentUri);
 		// this query should be based on ComponentName, not on ComponentUri
 		let componentQ = `SELECT * FROM acl_modules WHERE uri LIKE '${componentUri}%'`
-		
+
 		let component = await sql.query(componentQ);
-		
+
 		if (component.length) {
-			
+
 			return component[0];
 		} else {
 			return false;
@@ -2214,7 +2214,7 @@ module.exports = {
 					break
 				}
 			}
-			let allDealers = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_id = ${dealerId}`);
+			let allDealers = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_id = ${dealerId} LIMIT 1`);
 			if (allDealers.length) {
 				let item = allDealers[0]
 				let getDate = moment().subtract(22, 'day').format('YYYY-MM-DD');
@@ -2225,13 +2225,29 @@ module.exports = {
 					let end = moment(getTransaction[0].created_at).format('YYYY-MM-DD');
 					let duration = now.diff(end, 'days');
 
-					if (duration > 21 && duration <= 60) {
-						await sql.query("UPDATE dealers set account_balance_status = 'restricted' WHERE dealer_id = " + item.dealer_id);
-					} else if (duration > 60) {
-						await sql.query("UPDATE dealers set account_balance_status = 'suspended' WHERE dealer_id = " + item.dealer_id);
+					/**
+					 * @author Usman Hafeez
+					 * @description added condition if restriction mode is settled by Admin then don't change any level 
+					 */
+					if (item.account_balance_status_by !== Constants.ADMIN || (item.account_balance_status_by == Constants.ADMIN && item.account_balance_status == 'active')) {
+
+						if (duration > 21 && duration <= 60) {
+							await sql.query("UPDATE dealers set account_balance_status = 'restricted' WHERE dealer_id = " + item.dealer_id);
+						} else if (duration > 60) {
+							await sql.query("UPDATE dealers set account_balance_status = 'suspended' WHERE dealer_id = " + item.dealer_id);
+						}
 					}
+
 				} else {
-					await sql.query("UPDATE dealers set account_balance_status = 'active' WHERE dealer_id = " + item.dealer_id);
+					/**
+					 * @author Usman Hafeez
+					 * @description added condition if restriction mode is settled by Admin then don't change any level 
+					 */
+
+					if (item.account_balance_status_by !== Constants.ADMIN) {
+
+						await sql.query("UPDATE dealers set account_balance_status = 'active' WHERE dealer_id = " + item.dealer_id);
+					}
 				}
 			}
 		}

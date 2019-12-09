@@ -222,12 +222,12 @@ module.exports = {
         console.log(checkSubExt, checkSubExt.length);
         if (checkSubExt && checkSubExt.length) {
             var updateQuery = `UPDATE user_apps SET guest=${guest}, encrypted=${encrypted}, enable=${enable} WHERE device_id=${deviceId} AND app_id=${appId}`;
-            console.log("updateExtensionQuery: ", updateQuery);
+            console.log("updateExtensionQuery: ");
             let updateExtension = await sql.query(updateQuery);
         } else {
-            // var insertQuery = `INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (${deviceId}, ${appId}, ${guest}, ${encrypted}, ${enable})`;
-            // let insertExtension = await sql.query(insertQuery);
+            var insertQuery = `INSERT INTO user_apps (device_id, app_id, guest, encrypted, enable) VALUES (${deviceId}, ${appId}, ${guest}, ${encrypted}, ${enable})`;
             console.log("insertExtension:");
+            let insertExtension = await sql.query(insertQuery);
         }
 
         // } catch (error) {
