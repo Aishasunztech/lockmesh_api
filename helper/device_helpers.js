@@ -878,11 +878,12 @@ module.exports = {
         let rows = await sql.query(checkDevice)
         if (rows && rows.length) {
             let service_id = null
+            if (service) {
+                service_id = service.id
+            }
             if (expiry_date !== rows[0].expiry_date) {
                 // console.log(service);
-                if (service) {
-                    service_id = service.id
-                } else {
+                if (!service_id) {
                     let serviceData = await sql.query(`SELECT * FROM services_data WHERE user_acc_id = ${usr_acc_id} ORDER BY created_at DESC LIMIT 1`)
                     if (serviceData && serviceData.length) {
                         service_id = serviceData[0].id
@@ -1011,6 +1012,120 @@ module.exports = {
                     } else {
                         data.msg = "Expiry Date Updated but services not updated"
                     }
+                }
+
+                if (pgp_email != prevPGP && prevPGP != 'N/A') {
+                    console.log("PGP change");
+                    let updatePgpEmails =
+                        'update pgp_emails set user_acc_id = "' +
+                        usr_acc_id +
+                        '",  used=1 , start_date = "' + date_now + '" , dealer_id = "' + dealer_id + '"  where pgp_email ="' +
+                        pgp_email +
+                        '"';
+                    await sql.query(updatePgpEmails);
+
+                    if (
+                        finalStatus ===
+                        Constants.DEVICE_PRE_ACTIVATION
+                    ) {
+                        let updatePrevPgp =
+                            'update pgp_emails set user_acc_id = null,  used=0 , start_date = NULL , dealer_id = null where pgp_email ="' +
+                            prevPGP +
+                            '"';
+                        await sql.query(updatePrevPgp);
+                    } else {
+                        let updatePrevPgp =
+                            'update pgp_emails set end_date = "' + date_now + '" where pgp_email ="' +
+                            prevPGP +
+                            '"';
+                        await sql.query(updatePrevPgp);
+                    }
+                    sql.query(`UPDATE user_acc_services SET product_value = ${pgp_email} WHERE service_id= ${service_id} AND product_value = '${prevPGP}'`)
+
+                }
+                if (chat_id != prevChatID && prevChatID != 'N/A') {
+                    console.log("Chat change");
+                    let updateChatIds =
+                        'update chat_ids set user_acc_id = "' +
+                        usr_acc_id +
+                        '", used=1 , start_date = "' + date_now + '" , dealer_id = "' + dealer_id + '" where chat_id ="' +
+                        chat_id +
+                        '"';
+                    await sql.query(updateChatIds);
+                    if (
+                        finalStatus ===
+                        Constants.DEVICE_PRE_ACTIVATION
+                    ) {
+                        let updatePrevChat =
+                            'update chat_ids set user_acc_id = null,  used=0 , start_date = NULL , dealer_id = null where chat_id ="' +
+                            prevChatID +
+                            '"';
+                        await sql.query(updatePrevChat);
+                    } else {
+                        let updatePrevChat =
+                            'update chat_ids set end_date = "' + date_now + '" where chat_id ="' +
+                            prevChatID +
+                            '"';
+                        await sql.query(updatePrevChat);
+                    }
+                    sql.query(`UPDATE user_acc_services SET product_value = ${chat_id} WHERE service_id= ${service_id} AND product_value = '${prevChatID}'`)
+
+                }
+                if (sim_id != prevSimId && prevSimId != 'N/A') {
+                    console.log("sim change");
+                    let updateSimIds =
+                        'update sim_ids set user_acc_id = "' +
+                        usr_acc_id +
+                        '",  used=1 , start_date = "' + date_now + '" , dealer_id = "' + dealer_id + '" where sim_id ="' +
+                        sim_id +
+                        '"';
+                    await sql.query(updateSimIds);
+                    if (
+                        finalStatus ===
+                        Constants.DEVICE_PRE_ACTIVATION
+                    ) {
+                        let updatePrevSim =
+                            'update sim_ids set user_acc_id = null,  used=0 , start_date = NULL , dealer_id = null where sim_id ="' +
+                            prevSimId +
+                            '"';
+                        await sql.query(updatePrevSim);
+                    } else {
+                        let updatePrevSim =
+                            'update sim_ids set expiry_date = "' + date_now + '" where sim_id ="' +
+                            prevSimId +
+                            '"';
+                        await sql.query(updatePrevSim);
+                    }
+                    sql.query(`UPDATE user_acc_services SET product_value = ${sim_id} WHERE service_id= ${service_id} AND product_value = '${prevSimId}'`)
+
+                }
+                if (sim_id2 != prevSimId2 && prevSimId2 != 'N/A') {
+                    console.log("sim2 change");
+                    let updateSimIds =
+                        'update sim_ids set user_acc_id = "' +
+                        usr_acc_id +
+                        '",  used=1 , start_date = "' + date_now + '" , dealer_id = "' + dealer_id + '" where sim_id ="' +
+                        sim_id +
+                        '"';
+                    await sql.query(updateSimIds);
+                    if (
+                        finalStatus ===
+                        Constants.DEVICE_PRE_ACTIVATION
+                    ) {
+                        let updatePrevSim =
+                            'update sim_ids set user_acc_id = null,  used=0 , start_date = NULL , dealer_id = null where sim_id ="' +
+                            prevSimId +
+                            '"';
+                        await sql.query(updatePrevSim);
+                    } else {
+                        let updatePrevSim =
+                            'update sim_ids set expiry_date = "' + date_now + '" where sim_id ="' +
+                            prevSimId +
+                            '"';
+                        await sql.query(updatePrevSim);
+                    }
+                    sql.query(`UPDATE user_acc_services SET product_value = ${sim_id2} WHERE service_id= ${service_id} AND product_value = '${prevSimId2}'`)
+
                 }
                 // console.log(device_id);
                 let deviceData = await require('./general_helper').getAllRecordbyDeviceId(device_id)
