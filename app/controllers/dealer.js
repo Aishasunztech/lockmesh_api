@@ -25,8 +25,8 @@ const DEALER = "dealer";
 const SDEALER = "sdealer";
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
 // let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
-let dealer_query_text = 'dealer_id, first_name, last_name, dealer_email, connected_dealer, dealer_name, link_code, is_two_factor_auth, type, unlink_status, account_status, created, modified , demos , remaining_demos ,company_name , company_address , city , state , country , postal_code , tel_no , website ';
-let get_dealer_query_text = 'd.dealer_id, d.first_name, d.last_name, d.dealer_email, d.connected_dealer, d.dealer_name, d.link_code, d.is_two_factor_auth, d.type, d.unlink_status, d.account_status, d.created, d.modified , c.credits , d.demos , d.remaining_demos, d.company_name , d.company_address , d.city , d.state , d.country , d.postal_code , d.tel_no , d.website ';
+let dealer_query_text = 'dealer_id, first_name, last_name, dealer_email, connected_dealer, dealer_name, link_code, is_two_factor_auth, type, unlink_status, account_status, created, modified, last_login, demos, remaining_demos, company_name, company_address , city , state , country , postal_code , tel_no , website ';
+let get_dealer_query_text = 'd.dealer_id, d.first_name, d.last_name, d.dealer_email, d.connected_dealer, d.dealer_name, d.link_code, d.is_two_factor_auth, d.last_login, d.type, d.unlink_status, d.account_status, d.created, d.modified , c.credits , d.demos , d.remaining_demos, d.company_name , d.company_address , d.city , d.state , d.country , d.postal_code , d.tel_no , d.website ';
 
 exports.getAllDealers = async function (req, res) {
     var verify = req.decoded;
@@ -291,6 +291,8 @@ exports.getDealers = async function (req, res) {
                     }
                     var get_connected_devices = await sql.query(`SELECT count(*) AS total FROM usr_acc WHERE dealer_id=${results[i].dealer_id}`);
 
+                    // var last_login = await sql.query(`SELECT MAX(created_at) AS last_login FROM login_history WHERE dealer_id=${dealer[0].dealer_id} AND type='token' LIMIT 1`)
+
                     dt = {
                         status: true,
                         dealer_id: results[i].dealer_id,
@@ -315,6 +317,10 @@ exports.getDealers = async function (req, res) {
                         tel_no: results[i].tel_no,
                         website: results[i].website,
                     };
+
+                    // if (last_login && last_login.length) {
+                    //     dt.last_login = last_login[0].last_login
+                    // }
 
                     if (get_parent_dealer != undefined && get_parent_dealer.length > 0) {
                         dt.parent_dealer = get_parent_dealer[0].dealer_name;
@@ -1043,7 +1049,7 @@ exports.connectDealer = async function (req, res) {
         var get_connected_devices = await sql.query(`SELECT COUNT(*) AS total FROM usr_acc WHERE dealer_id='${dealer[0].dealer_id}'`);
 
         // last login
-        var last_login = await sql.query(`SELECT MAX(created_at) AS last_login FROM login_history WHERE dealer_id=${dealer[0].dealer_id} AND type='token' LIMIT 1`)
+        // var last_login = await sql.query(`SELECT MAX(created_at) AS last_login FROM login_history WHERE dealer_id=${dealer[0].dealer_id} AND type='token' LIMIT 1`)
 
         // Dealer Type
         let dealer_type = await sql.query(`SELECT role FROM user_roles WHERE id = ${dealer[0].type} LIMIT 1`)
@@ -1098,7 +1104,7 @@ exports.connectDealer = async function (req, res) {
             credits: credits[0].credits,
             credits_limit: credits[0].credits_limit,
             dealer_type: '',
-            last_login: '',
+            last_login: dealer[0].last_login,
             connected_devices: 0,
             parent_dealer: "",
             parent_dealer_id: "",
@@ -1131,9 +1137,9 @@ exports.connectDealer = async function (req, res) {
             dt.parent_dealer_id = get_parent_dealer[0].dealer_id;
         }
 
-        if (last_login && last_login.length) {
-            dt.last_login = last_login[0].last_login
-        }
+        // if (last_login && last_login.length) {
+        //     dt.last_login = last_login[0].last_login
+        // }
 
         if (dealer_type && dealer_type.length) {
             dt.dealer_type = dealer_type[0].role
