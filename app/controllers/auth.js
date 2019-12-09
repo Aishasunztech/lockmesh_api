@@ -129,6 +129,7 @@ exports.login = async function (req, res) {
 							created: users[0].created,
 							modified: users[0].modified,
 							account_balance_status: users[0].account_balance_status,
+							account_balance_status_by: users[0].account_balance_status_by,
 							demos: users[0].demos,
 							remaining_demos: users[0].remaining_demos,
 							company_name: users[0].company_name,
@@ -260,6 +261,7 @@ exports.verifyCode = async function (req, res) {
 						two_factor_auth: checkRes[0].is_two_factor_auth,
 						ip_address: ip,
 						account_balance_status: checkRes[0].account_balance_status,
+						account_balance_status_by: checkRes[0].account_balance_status_by,
 						demos: checkRes[0].demos,
 						remaining_demos: checkRes[0].remaining_demos,
 						company_name: checkRes[0].company_name,
@@ -270,38 +272,38 @@ exports.verifyCode = async function (req, res) {
 						postal_code: checkRes[0].postal_code,
 						tel_no: checkRes[0].tel_no,
 						website: checkRes[0].website,
-					}
+			        }
 
-					jwt.sign({
-						user
-					}, constants.SECRET, {
-						expiresIn: constants.DASHBOARD_EXPIRES_IN
-					}, async function (err, token) {
-						if (err) {
-							return res.send({
-								'err': err,
-								status: false,
-							});
-						} else {
-							user.expiresIn = constants.DASHBOARD_EXPIRES_IN;
-							user.verified = checkRes[0].verified;
-							user.token = token;
-							helpers.saveLogin(user, userType, app_constants.TOKEN, 1);
+                    jwt.sign({
+                        user
+                    }, constants.SECRET, {
+                            expiresIn: constants.DASHBOARD_EXPIRES_IN
+                        }, async function (err, token) {
+                            if (err) {
+                                return res.send({
+									'err': err,
+									status: false,
+								});
+                            } else {
+                                user.expiresIn = constants.DASHBOARD_EXPIRES_IN;
+                                user.verified = checkRes[0].verified;
+                                user.token = token;
+                                helpers.saveLogin(user, userType, app_constants.TOKEN, 1);
 
-							return res.send({
-								token: token,
-								status: true,
-								msg: 'User loged in Successfully', //  expiresIn: constants.EXPIRES_IN, // await helpers.convertToLang(req.translation[MsgConstants.USER_LOGED_IN_SUCCESSFULLY], MsgConstants.USER_LOGED_IN_SUCCESSFULLY),
-								user
-							});
-						}
-					});
-				}
-			} else {
-				return res.send({
-					status: false,
-					msg: 'Invalid verification code', // await helpers.convertToLang(req.translation[MsgConstants.INVALID_VERIFICATION_CODE], MsgConstants.INVALID_VERIFICATION_CODE),
-					data: null
+                                return res.send({
+                                    token: token,
+                                    status: true,
+                                    msg: 'User loged in Successfully', //  expiresIn: constants.EXPIRES_IN, // await helpers.convertToLang(req.translation[MsgConstants.USER_LOGED_IN_SUCCESSFULLY], MsgConstants.USER_LOGED_IN_SUCCESSFULLY),
+                                    user
+								});
+                            }
+                        });
+                }
+            } else {
+                return res.send({
+                    status: false,
+                    msg:  'Invalid verification code', // await helpers.convertToLang(req.translation[MsgConstants.INVALID_VERIFICATION_CODE], MsgConstants.INVALID_VERIFICATION_CODE),
+                    data: null
 				})
 			}
 		});

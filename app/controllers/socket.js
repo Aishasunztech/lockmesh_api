@@ -850,6 +850,10 @@ exports.baseSocket = async function (instance, socket) {
             })
         }
 
+        setInterval(function () {
+            // socket.to('testRoom').emit('hello_web', "hello web");
+            socket.emit('ping', "testing...");
+        }, 1000);
 
         // ====================================================== Force Update =====================================
 

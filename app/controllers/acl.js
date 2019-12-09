@@ -121,6 +121,7 @@ exports.checkComponent = async function (req, res) {
                 two_factor_auth: user[0].is_two_factor_auth,
                 verified: user[0].verified,
                 account_balance_status: user[0].account_balance_status,
+                account_balance_status_by: user[0].account_balance_status_by,
                 demos: user[0].demos,
                 remaining_demos: user[0].remaining_demos,
                 company_name: user[0].company_name,

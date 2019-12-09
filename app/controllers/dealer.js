@@ -25,8 +25,8 @@ const DEALER = "dealer";
 const SDEALER = "sdealer";
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
 // let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
-let dealer_query_text = 'dealer_id, first_name, last_name, dealer_email, connected_dealer, dealer_name, link_code, is_two_factor_auth, type, unlink_status, account_status, created, modified, last_login, demos, remaining_demos, company_name, company_address , city , state , country , postal_code , tel_no , website ';
-let get_dealer_query_text = 'd.dealer_id, d.first_name, d.last_name, d.dealer_email, d.connected_dealer, d.dealer_name, d.link_code, d.is_two_factor_auth, d.last_login, d.type, d.unlink_status, d.account_status, d.created, d.modified , c.credits , d.demos , d.remaining_demos, d.company_name , d.company_address , d.city , d.state , d.country , d.postal_code , d.tel_no , d.website ';
+let dealer_query_text = 'dealer_id, first_name, last_name, dealer_email, connected_dealer, dealer_name, link_code, is_two_factor_auth, type, unlink_status, account_status, last_login , account_balance_status, account_balance_status_by, created, modified , demos , remaining_demos ,company_name , company_address , city , state , country , postal_code , tel_no , website ';
+let get_dealer_query_text = 'd.dealer_id, d.first_name, d.last_name, d.dealer_email, d.connected_dealer, d.dealer_name, d.link_code, d.is_two_factor_auth, d.type, d.unlink_status, d.last_login, d.account_status, d.created, d.modified , c.credits , d.demos , d.remaining_demos, d.company_name , d.company_address , d.city , d.state , d.country , d.postal_code , d.tel_no , d.website ';
 
 exports.getAllDealers = async function (req, res) {
     var verify = req.decoded;
@@ -1100,6 +1100,8 @@ exports.connectDealer = async function (req, res) {
             account_status: dealer[0].account_status,
             unlink_status: dealer[0].unlink_status,
             connected_dealer: dealer[0].connected_dealer,
+            account_balance_status: dealer[0].account_balance_status,
+            account_balance_status_by: dealer[0].account_balance_status_by,
             created: dealer[0].created,
             modified: dealer[0].modified,
             credits: credits[0].credits,
@@ -1615,7 +1617,7 @@ exports.changeDealerStatus = async function (req, res) {
     }
 
     let updateDealerQ = `UPDATE dealers SET account_balance_status='${dealerStatus}', account_balance_status_by='admin' WHERE dealer_id=${dealerId}`;
-    sql.query(updateDealerQ, function (error, updateResult) {
+    sql.query(updateDealerQ, async function (error, updateResult) {
         if (error || !updateResult) {
             return res.send({
                 status: false,
@@ -1623,9 +1625,26 @@ exports.changeDealerStatus = async function (req, res) {
             })
         }
 
+        /**
+         * @author Usman Hafeez
+         * @description commented this query as there is no need to select record again for now...
+         */
+
+        // let getDealerStatusQ = `SELECT account_balance_status, account_balance_status_by FROM dealers WHERE dealer_id=${dealerId} LIMIT 1`;
+        // let dealerAccountStatus = await sql.query(getDealerStatusQ);
+        // if(!dealerAccountStatus){
+        //     return res.send({
+        //         status: false,
+        //         msg: `Account Restriction couldn't be processed`
+        //     })
+        // }
+
         return res.send({
             status: true,
-            dealerStatus: dealerStatus,
+            // account_balance_status: dealerAccountStatus[0].account_balance_status,
+            // account_balance_status_by: dealerAccountStatus[0].account_balance_status_by,
+            account_balance_status: dealerStatus,
+            account_balance_status_by: userType,
             msg: 'Account Restricted successfully'
         })
     })
