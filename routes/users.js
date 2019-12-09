@@ -528,6 +528,8 @@ router.get("/connect-dealer/:dealerId", dealerController.connectDealer);
  */
 router.get("/dealer-domains/:dealerId", dealerController.dealerDomains)
 
+router.post("/dealer-domain-permissions", dealerController.connectDealerDomainsPermissions);
+
 /**
  * @route GET /users/payment-history/:dealerId
  * @group Dealer - Operations about Dealers
