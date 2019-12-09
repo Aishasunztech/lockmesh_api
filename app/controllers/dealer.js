@@ -25,8 +25,8 @@ const DEALER = "dealer";
 const SDEALER = "sdealer";
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
 // let usr_acc_query_text = "usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
-let dealer_query_text = 'dealer_id, first_name, last_name, dealer_email, connected_dealer, dealer_name, link_code, is_two_factor_auth, type, unlink_status, account_status, created, modified';
-let get_dealer_query_text = 'd.dealer_id, d.first_name, d.last_name, d.dealer_email, d.connected_dealer, d.dealer_name, d.link_code, d.is_two_factor_auth, d.type, d.unlink_status, d.account_status, d.created, d.modified , c.credits';
+let dealer_query_text = 'dealer_id, first_name, last_name, dealer_email, connected_dealer, dealer_name, link_code, is_two_factor_auth, type, unlink_status, account_status, created, modified , demos , remaining_demos ,company_name , company_address , city , state , country , postal_code , tel_no , website ';
+let get_dealer_query_text = 'd.dealer_id, d.first_name, d.last_name, d.dealer_email, d.connected_dealer, d.dealer_name, d.link_code, d.is_two_factor_auth, d.type, d.unlink_status, d.account_status, d.created, d.modified , c.credits , d.demos , d.remaining_demos, d.company_name , d.company_address , d.city , d.state , d.country , d.postal_code , d.tel_no , d.website ';
 
 exports.getAllDealers = async function (req, res) {
     var verify = req.decoded;
@@ -66,7 +66,17 @@ exports.getAllDealers = async function (req, res) {
                         connected_dealer: results[i].connected_dealer,
                         created: results[i].created,
                         modified: results[i].modified,
-                        connected_devices: get_connected_devices
+                        connected_devices: get_connected_devices,
+                        demos: results[i].demos,
+                        remaining_demos: results[i].remaining_demos,
+                        company_name: results[i].company_name,
+                        company_address: results[i].company_address,
+                        city: results[i].city,
+                        state: results[i].state,
+                        country: results[i].country,
+                        postal_code: results[i].postal_code,
+                        tel_no: results[i].tel_no,
+                        website: results[i].website,
                     };
 
                     if (get_parent_dealer != undefined && get_parent_dealer.length > 0) {
@@ -111,6 +121,16 @@ exports.getAllDealers = async function (req, res) {
                         modified: results[i].modified,
                         connected_devices: get_connected_devices,
                         connected_dealer: results[i].connected_dealer,
+                        demos: results[i].demos,
+                        remaining_demos: results[i].remaining_demos,
+                        company_name: results[i].company_name,
+                        company_address: results[i].company_address,
+                        city: results[i].city,
+                        state: results[i].state,
+                        country: results[i].country,
+                        postal_code: results[i].postal_code,
+                        tel_no: results[i].tel_no,
+                        website: results[i].website,
                     };
                     data.push(dt);
 
@@ -161,7 +181,17 @@ exports.getUserDealers = async function (req, res) {
                         connected_dealer: results[i].connected_dealer,
                         created: results[i].created,
                         modified: results[i].modified,
-                        connected_devices: get_connected_devices
+                        connected_devices: get_connected_devices,
+                        demos: results[i].demos,
+                        remaining_demos: results[i].remaining_demos,
+                        company_name: results[i].company_name,
+                        company_address: results[i].company_address,
+                        city: results[i].city,
+                        state: results[i].state,
+                        country: results[i].country,
+                        postal_code: results[i].postal_code,
+                        tel_no: results[i].tel_no,
+                        website: results[i].website,
                     };
 
                     if (get_parent_dealer != undefined && get_parent_dealer.length > 0) {
@@ -206,6 +236,16 @@ exports.getUserDealers = async function (req, res) {
                         modified: results[i].modified,
                         connected_devices: get_connected_devices,
                         connected_dealer: results[i].connected_dealer,
+                        demos: results[i].demos,
+                        remaining_demos: results[i].remaining_demos,
+                        company_name: results[i].company_name,
+                        company_address: results[i].company_address,
+                        city: results[i].city,
+                        state: results[i].state,
+                        country: results[i].country,
+                        postal_code: results[i].postal_code,
+                        tel_no: results[i].tel_no,
+                        website: results[i].website,
                     };
                     data.push(dt);
 
@@ -263,7 +303,17 @@ exports.getDealers = async function (req, res) {
                         modified: results[i].modified,
                         connected_devices: get_connected_devices,
                         devicesList: await general_helpers.getAllRecordByDealerID(results[i].dealer_id),
-                        dealer_credits: results[i].credits
+                        dealer_credits: results[i].credits,
+                        demos: results[i].demos,
+                        remaining_demos: results[i].remaining_demos,
+                        company_name: results[i].company_name,
+                        company_address: results[i].company_address,
+                        city: results[i].city,
+                        state: results[i].state,
+                        country: results[i].country,
+                        postal_code: results[i].postal_code,
+                        tel_no: results[i].tel_no,
+                        website: results[i].website,
                     };
 
                     if (get_parent_dealer != undefined && get_parent_dealer.length > 0) {
@@ -406,7 +456,6 @@ exports.addDealer = async function (req, res) {
 
                                 if (prnt_dealer && prnt_dealer.length) {
                                     dealer[0].parent_dealer = prnt_dealer[0].dealer_name;
-
                                     dealer[0].parent_dealer_id = prnt_dealer[0].dealer_id;
                                 }
                             }
@@ -1061,8 +1110,17 @@ exports.connectDealer = async function (req, res) {
             _30to60_dues,
             _60toOnward,
             _60toOnward_dues,
-
-        };
+            demos: dealer[0].demos,
+            remaining_demos: dealer[0].remaining_demos,
+            company_name: dealer[0].company_name,
+            company_address: dealer[0].company_address,
+            city: dealer[0].city,
+            state: dealer[0].state,
+            country: dealer[0].country,
+            postal_code: dealer[0].postal_code,
+            tel_no: dealer[0].tel_no,
+            website: dealer[0].website,
+        }
 
         if (get_connected_devices && get_connected_devices.length) {
             dt.connected_devices = get_connected_devices[0].total
@@ -1264,7 +1322,6 @@ exports.getDealerSalesHistory = async function (req, res) {
         }
 
     }
-
 
     let packagesQ = `SELECT ss.*, d.device_id as device_id, ss.status as status, ua.dealer_id as dealer_id, ua.link_code as dealer_pin FROM services_sale as ss
     JOIN usr_acc as ua on ua.id = ss.user_acc_id 
@@ -2352,5 +2409,66 @@ exports.dealerPermissions = async function (req, res) {
         })
     }
 
+}
+
+exports.setDealerDemosLimit = async function (req, res) {
+    var verify = req.decoded;
+    // if (verify.status !== undefined && verify.status == true) {
+    if (verify) {
+        var demos = req.body.demos;
+        var dealer_id = req.body.dealer_id;
+        if (dealer_id && demos) {
+            let dealer = await sql.query(`SELECT * FROM dealers WHERE dealer_id =${dealer_id}`)
+            if (!dealer) {
+                return res.send({
+                    status: false,
+                    msg: await general_helpers.convertToLang(req.translation[""], "Dealer not found to update."), // Dealer not found to Update"
+                });
+            }
+            if (dealer && dealer.length) {
+                let updateDemosLimitQ = ''
+                if (dealer[0].demos == 0) {
+                    updateDemosLimitQ = `UPDATE dealers SET demos = ${demos} , remaining_demos = ${demos} WHERE dealer_id = ${dealer_id}`
+                } else {
+                    let used_demos = dealer[0].demos - dealer[0].remaining_demos
+                    let remaining_demos = demos - used_demos
+                    remaining_demos = remaining_demos > 0 ? remaining_demos : 0
+                    updateDemosLimitQ = `UPDATE dealers SET demos = ${demos} , remaining_demos = ${remaining_demos} WHERE dealer_id = ${dealer_id}`
+                }
+                sql.query(updateDemosLimitQ, async function (err, response) {
+                    if (err) {
+                        console.log(err);
+                        data = {
+                            status: false,
+                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.QUERY_ERROR], "Query Error"), // Please enter valid details
+                        }
+                        return res.send(data);
+                    }
+                    if (response && response.affectedRows) {
+                        let updatedRecord = await sql.query(`SELECT * FROM dealers WHERE dealer_id = ${dealer_id}`)
+                        data = {
+                            status: true,
+                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record Updated Successfully"), // Please enter valid details
+                            data: updatedRecord[0]
+                        }
+                        return res.send(data)
+                    } else {
+                        data = {
+                            status: false,
+                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_NOT_UPD], "Record not Updated."), // Please enter valid details
+                        }
+                        return res.send(data)
+
+                    }
+                })
+            }
+        } else {
+            data = {
+                status: false,
+                msg: await general_helpers.convertToLang(req.translation[MsgConstants.ENTER_VALID_DETAIL], "Please enter valid details"), // Please enter valid details
+            }
+            return res.send(data);
+        }
+    }
 }
 

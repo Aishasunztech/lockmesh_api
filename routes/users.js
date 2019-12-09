@@ -467,6 +467,9 @@ router.post("/dealer/suspend", dealerController.suspendDealer);
 /** Activate Dealer **/
 router.post("/dealer/activate", dealerController.activateDealer);
 
+/**UPDATE DEALER DEMOS LIMIT**/
+router.put("/set_demos_limit", dealerController.setDealerDemosLimit);
+
 /**
  * @route GET /users/get_dealer_apps
  * @group Dealer - Operations about Dealers
