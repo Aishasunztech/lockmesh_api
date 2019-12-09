@@ -2418,6 +2418,222 @@ exports.dealerPermissions = async function (req, res) {
 
 }
 
+
+exports.connectDealerDomainsPermissions = async function (req, res) {
+    var verify = req.decoded;
+    let loggedUserId = verify.user.dealer_id;
+    let loggedUserType = verify.user.user_type;
+    let permissionType = 'domain' // req.params.permissionType;
+    console.log(req.body, "permissionType ", permissionType)
+    let action = req.body.action // save, delete, 
+    let permissionIds = req.body.permissionIds;
+    let permitDealer = req.body.dealers;
+    let statusAll = req.body.statusAll;
+
+    let prevPermissionsQ = ''
+    let prevParsDealers = [];
+    let allDealers = [];
+
+    let failedToAdd = [];
+    let failedToRemove = [];
+    let permissionAdded = [];
+    let permissionRemoved = [];
+    let ActionNotDefined = [];
+
+    for (let permissionId of permissionIds) {
+
+        prevPermissionsQ = `SELECT dealer_id FROM dealer_permissions WHERE permission_id = ${permissionId} AND permission_type ='${permissionType}' AND permission_by = ${loggedUserId}`;
+        // console.log("prevPermissionsQ ", prevPermissionsQ)
+
+        let getPermissionDealers = await sql.query(prevPermissionsQ);
+        // console.log("getPermissionDealers ", getPermissionDealers)
+
+        if (getPermissionDealers.length > 0) {
+            if (getPermissionDealers[0].dealer_id == 0) {
+                prevParsDealers = 0;
+
+                let dealerData = await general_helpers.getUserDealers(loggedUserType, loggedUserId, permissionType);
+                allDealers = dealerData.dealerList;
+
+            } else {
+                prevParsDealers = getPermissionDealers.map((prm) => prm.dealer_id);
+            }
+        }
+        // console.log("prevParsDelaer", prevParsDealers);
+
+        // console.log("selected", dealers);
+        let newDealers = permitDealer; // dealers from client side to permit
+
+        if (prevParsDealers === 0) {
+            if (action === 'delete') {
+
+                let deleteNotIn = `DELETE FROM dealer_permissions WHERE permission_id = ${permissionId} AND permission_type='${permissionType}' AND permission_by=${loggedUserId}`;
+                // console.log("deleteNotIn: ", deleteNotIn);
+                let deleteDealers = await sql.query(deleteNotIn);
+
+                if (deleteDealers.affectedRows) {
+                    // console.log("allDealers ", allDealers);
+                    prevParsDealers = allDealers.filter((dealerId) => !newDealers.includes(dealerId))
+                    // console.log("prevParsDelaer delete func for all dealers: ", prevParsDealers);
+
+                    if (prevParsDealers.length) {
+
+                        let responseData = await general_helpers.savePermission(getPermissionDealers, prevParsDealers, permissionType, permissionId, loggedUserId, loggedUserType)
+                        // console.log("responseData ", responseData);
+                        if (responseData.status) {
+                            permissionRemoved.push(permissionId);
+                        } else {
+                            failedToRemove.push(permissionId);
+                        }
+                    } else {
+                        permissionRemoved.push(permissionId);
+                    }
+                } else {
+                    failedToRemove.push(permissionId);
+                }
+
+
+            } else {
+                ActionNotDefined.push(permissionId);
+            }
+        } else {
+
+            if (action === 'save') {
+                console.log('save action')
+
+                // if selected all dealers
+                if (!statusAll) {
+                    // console.log('save action not all');
+
+                    if (prevParsDealers.length) {
+                        // console.log('previous exist')
+                        for (let i = 0; i < newDealers.length; i++) {
+                            if (prevParsDealers.indexOf(newDealers[i]) === -1) {
+                                prevParsDealers.push(newDealers[i])
+                            }
+                        }
+                    } else {
+                        // console.log('previous not exist')
+                        prevParsDealers = newDealers
+                    }
+                    // console.log(typeof (prevParsDealers), "prevParsDelaer updated", prevParsDealers);
+
+                    if (prevParsDealers.length) {
+                        // delete dealers that are not in new permissions
+                        let deleteNotIn = `DELETE FROM dealer_permissions WHERE dealer_id NOT IN (${prevParsDealers}) AND permission_id = ${permissionId} AND permission_type='${permissionType}' AND permission_by= ${loggedUserId}`;
+                        let deleteDealers = await sql.query(deleteNotIn);
+                        // console.log("deleteDealers: ", deleteDealers);
+                    }
+
+                    let responseData = await general_helpers.savePermission(getPermissionDealers, prevParsDealers, permissionType, permissionId, loggedUserId, loggedUserType)
+                    // console.log("responseData ", responseData);
+                    // return res.send(responseData);
+                    if (responseData.status) {
+                        permissionAdded.push(permissionId);
+                    } else {
+                        failedToAdd.push(permissionId);
+                    }
+                }
+
+            } else if (action === 'delete') {
+                console.log('delete dealers:');
+
+                if (!statusAll) {
+                    dealers = permitDealer;
+
+                    if (prevParsDealers !== 0) {
+                        for (let i = 0; i < dealers.length; i++) {
+                            var index = prevParsDealers.indexOf(dealers[i]);
+                            if (index > -1) {
+                                prevParsDealers.splice(index, 1);
+                            }
+                        }
+                        // console.log("prevParsDealers ", prevParsDealers);
+
+                        // delete dealers that are not in new permissions
+                        let deleteNotIn = '';
+                        if (prevParsDealers.length) {
+                            deleteNotIn = `DELETE FROM dealer_permissions WHERE dealer_id NOT IN (${prevParsDealers.join()}) AND permission_id = ${permissionId} AND permission_type='${permissionType}' AND permission_by=${loggedUserId}`;
+                        } else {
+                            deleteNotIn = `DELETE FROM dealer_permissions WHERE dealer_id IN (${dealers}) AND permission_id = ${permissionId} AND permission_type='${permissionType}' AND permission_by=${loggedUserId}`;
+                        }
+                        console.log("deleteNotIn: ", deleteNotIn);
+                        let deleteDealers = await sql.query(deleteNotIn);
+                        // console.log("deleteDealers: ", deleteDealers);
+
+                        if (deleteDealers.affectedRows) {
+                            await sql.query(`DELETE FROM dealer_permissions WHERE permission_id = ${permissionId} AND permission_type='${permissionType}' AND permission_by IN (${dealers})`);
+
+                            permissionRemoved.push(permissionId);
+                        } else {
+                            failedToRemove.push(permissionId);
+                        }
+                    } else {
+                        failedToRemove.push(permissionId);
+                    }
+                }
+
+            } else {
+                ActionNotDefined.push(permissionId);
+            }
+        }
+    }; // end for loop
+
+    // console.log("permissionAdded: ", permissionAdded, "failedToAdd:: ", failedToAdd, "permissionRemoved: ", permissionRemoved, "failedToRemove: ", failedToRemove, "ActionNotDefined: ", ActionNotDefined);
+
+    // handle all responses
+    if (permissionAdded.length > 0 && failedToAdd.length === 0) {
+        data = {
+            status: true,
+            msg: permissionAdded.length > 1 ? 'Domains Added successfully' : 'Domain Add successfully'
+        }
+    }
+    else if (permissionAdded.length === 0 && failedToAdd.length > 0) {
+        data = {
+            status: false,
+            msg: 'Failed to add domains'
+        }
+    }
+    else if (permissionAdded.length > 0 && failedToAdd.length > 0) {
+        data = {
+            status: true,
+            msg: 'Some domains added successfully but others failed to add!'
+        }
+    }
+    else if (permissionRemoved.length > 0 && failedToRemove.length === 0) {
+        data = {
+            status: true,
+            msg: 'Domain remove successfully'
+        }
+    }
+    else if (permissionRemoved.length === 0 && failedToRemove.length > 0) {
+        data = {
+            status: false,
+            msg: 'Failed to remove'
+        }
+    }
+    else if (permissionRemoved.length > 0 && failedToRemove.length > 0) {
+        data = {
+            status: true,
+            msg: 'Some domains remove successfully but others failed to remove!'
+        }
+    }
+    else if (ActionNotDefined.length > 0) {
+        data = {
+            status: false,
+            msg: 'Action not define'
+        }
+    }
+    else {
+        data = {
+            status: false,
+            msg: 'Error while processing'
+        }
+    }
+    // console.log("response data is: ", data)
+    res.send(data);
+}
+
 exports.setDealerDemosLimit = async function (req, res) {
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
