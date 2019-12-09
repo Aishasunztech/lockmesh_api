@@ -301,6 +301,7 @@ exports.getDealers = async function (req, res) {
                         link_code: results[i].link_code,
                         account_status: results[i].account_status,
                         unlink_status: results[i].unlink_status,
+                        last_login: results[i].last_login,
                         created: results[i].created,
                         modified: results[i].modified,
                         connected_devices: get_connected_devices,
