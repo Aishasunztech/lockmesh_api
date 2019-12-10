@@ -47,7 +47,7 @@ exports.devices = async function (req, res) {
                     verify.user.id
                     } OR usr_acc.prnt_dlr_id = ${verify.user.id})`;
                 query = `SELECT * From acc_action_history WHERE action = 'UNLINKED' AND dealer_id = ${
-                    verify.user.id
+                    verify.user.id  
                     } AND del_status IS NULL`;
 
             } else {
@@ -3512,7 +3512,7 @@ exports.unlinkDevice = async function (req, res) {
                         }
                     }
 
-
+console.log("unlink devices data: req.body.device: ", req.body.device)
                     device_helpers.saveActionHistory(
                         req.body.device,
                         constants.DEVICE_UNLINKED
@@ -3533,6 +3533,7 @@ exports.unlinkDevice = async function (req, res) {
                                         linkToWL: false,
                                         device_id: dvcId
                                     };
+                                    console.log("for SA DATA is:: ", data);
                                     axios.put(
                                         app_constants.UPDATE_DEVICE_SUPERADMIN_URL,
                                         data,

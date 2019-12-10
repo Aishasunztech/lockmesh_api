@@ -1225,7 +1225,7 @@ exports.unlinkBulkDevices = async function (req, res) {
                         // console.log("device is offline")
                         offlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
                     }
-
+                    console.log("bulk unlink device data: ", device);
                     device_helpers.saveActionHistory(device, constants.DEVICE_UNLINKED);
 
                     try {
@@ -1242,6 +1242,7 @@ exports.unlinkBulkDevices = async function (req, res) {
                                         linkToWL: false,
                                         device_id: device.device_id
                                     };
+                                    console.log("for SA DATA is:: ", data);
                                     axios.put(
                                         app_constants.UPDATE_DEVICE_SUPERADMIN_URL,
                                         data,
@@ -1714,6 +1715,7 @@ exports.sendBulkMsg = async function (req, res) {
         var verify = req.decoded;
         let allDevices = req.body.selectedDevices;
         let txtMsg = req.body.msg;
+        let timer = req.body.timer;
 
         if (verify && allDevices && allDevices.length && txtMsg) {
             let loggedUserId = verify.user.id
@@ -1725,7 +1727,7 @@ exports.sendBulkMsg = async function (req, res) {
             for (let device of allDevices) {
                 let userAccId = device.usrAccId;
 
-                var applyQuery = `INSERT INTO queue_bulk_messages (repeat_duration, device_id, action_by, msg, sending_time, is_in_process) VALUES ('${req.body.repeat}', '${device.device_id}', '${loggedUserId}', '${req.body.msg}', '${req.body.date}', 1);`;
+                var applyQuery = `INSERT INTO queue_bulk_messages (repeat_duration, timer_status, device_id, action_by, msg, sending_time, is_in_process) VALUES ('${req.body.repeat}', '${timer ? timer : ''}', '${device.device_id}', '${loggedUserId}', '${req.body.msg}', '${req.body.date}', 1);`;
                 console.log("applyQuery ", applyQuery);
                 let saveDeviceMsg = await sql.query(applyQuery);
 
@@ -1783,9 +1785,10 @@ exports.sendBulkMsg = async function (req, res) {
                 all_usr_dvc_ids = [...queue_usr_dvc_ids, ...pushed_usr_dvc_ids];
                 all_dvc_ids = [...queue_dvc_ids, ...pushed_dvc_ids];
 
-                req.body["device_ids"] = all_dvc_ids;
+                req.body["device_ids"] = all_usr_dvc_ids;
                 req.body["action_by"] = loggedUserId;
                 req.body["msg"] = txtMsg;
+                req.body["timer"] = timer;
                 // console.log('save bulk history')
                 device_helpers.saveBuklMsg(req.body);
 
@@ -1839,14 +1842,28 @@ exports.getBulkMsgsList = async function (req, res) {
         var verify = req.decoded;
         let loggedUserId = verify.user.id;
 
-        console.log('at getBulkMsgsList:')
+        // console.log('at getBulkMsgsList:')
         if (verify) {
 
             var selectQuery = `SELECT * FROM bulk_messages WHERE action_by = '${loggedUserId}' AND delete_status = 0;`;
             var result = await sql.query(selectQuery);
             console.log("result ", result)
 
-            if (result.length) {
+            if (result && result.length) {
+
+                for (let msgData of result) {
+                    let deviceIds = msgData.device_ids ? JSON.parse(msgData.device_ids) : [];
+                    // console.log("deviceIds before get detail: ", deviceIds);
+                    if (deviceIds && deviceIds.length) {
+                        let device_detail = await device_helpers.getCompleteDetailOfDevice(deviceIds);
+                        msgData["data"] = JSON.stringify(device_detail);
+                    } else {
+                        msgData["data"] = "[]";
+                    }
+
+                }
+
+                // console.log("final data: ", result);
                 res.send({
                     status: true,
                     data: result
