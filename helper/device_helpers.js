@@ -3,12 +3,13 @@ const { sql } = require('../config/database');
 var moment = require("moment-strftime");
 var fs = require("fs");
 var path = require('path');
-var { getAllRecordbyDeviceId } = require('./general_helper')
+var general_helpers = require('./general_helper')
 var socket_helpers = require('./socket_helper')
 
 // let usr_acc_query_text = "usr_acc.id,usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name";
 
 var Constants = require('../constants/Application');
+let usr_acc_query_text = Constants.usr_acc_query_text;
 
 module.exports = {
     checkNotNull: function (value) {
@@ -585,9 +586,9 @@ module.exports = {
         let query = "INSERT INTO acc_action_history (action, device_id, device_name, session_id, model, ip_address, simno, imei, simno2, imei2, serial_number, mac_address, fcm_token, online, is_sync, flagged, screen_start_date, reject_status, account_email, dealer_id, prnt_dlr_id, link_code, client_id, start_date, expiry_months, expiry_date, activation_code, status, device_status, activation_status, wipe_status, account_status, unlink_status, transfer_status, transfer_user_status, transfered_from, transfered_to, user_transfered_from, user_transfered_to, dealer_name, prnt_dlr_name, user_acc_id, pgp_email, chat_id, sim_id, finalStatus) VALUES "
         let finalQuery = ''
         if (action === Constants.DEVICE_UNLINKED || action === Constants.UNLINK_DEVICE_DELETE) {
-            finalQuery = query + "('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','offline','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + device.prnt_dlr_id + "','" + device.link_code + "','" + device.client_id + "','', '" + device.expiry_months + "','','" + device.activation_code + "','',0,null,'" + device.wipe_status + "','" + device.account_status + "',1,'" + device.transfer_status + "','" + device.transfer_user_status + "','" + device.transfered_from + "','" + device.transfered_to + "','" + device.user_transfered_from + "','" + device.user_transfered_to + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','Unlinked')"
+            finalQuery = query + "('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','offline','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + device.prnt_dlr_id + "','" + device.link_code + "','" + device.client_id + "','', '" + device.expiry_months + "','','" + device.activation_code + "','',0,null,'" + device.wipe_status + "','" + (device.account_status === 'suspended') ? device.account_status : '' + "',1,'" + device.transfer_status + "','" + device.transfer_user_status + "','" + device.transfered_from + "','" + device.transfered_to + "','" + device.user_transfered_from + "','" + device.user_transfered_to + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','Unlinked')"
         } else {
-            finalQuery = query + "('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','" + device.online + "','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + device.prnt_dlr_id + "','" + device.link_code + "', '" + device.client_id + "', '" + device.start_date + "', '" + device.expiry_months + "', '" + device.expiry_date + "','" + device.activation_code + "','" + device.status + "','" + device.device_status + "',0,'" + device.wipe_status + "','" + device.account_status + "','" + device.unlink_status + "','" + device.transfer_status + "','" + device.transfer_user_status + "','" + device.transfered_from + "','" + device.transfered_to + "','" + device.user_transfered_from + "','" + device.user_transfered_to + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','" + device.finalStatus + "')"
+            finalQuery = query + "('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','" + device.online + "','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + device.prnt_dlr_id + "','" + device.link_code + "', '" + device.client_id + "', '" + device.start_date + "', '" + device.expiry_months + "', '" + device.expiry_date + "','" + device.activation_code + "','" + device.status + "','" + device.device_status + "',0,'" + device.wipe_status + "','" + (device.account_status === 'suspended') ? device.account_status : '' + "','" + device.unlink_status + "','" + device.transfer_status + "','" + device.transfer_user_status + "','" + device.transfered_from + "','" + device.transfered_to + "','" + device.user_transfered_from + "','" + device.user_transfered_to + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','" + device.finalStatus + "')"
         }
         // console.log(finalQuery);
         await sql.query(finalQuery)
@@ -829,10 +830,19 @@ module.exports = {
 
 
     // Bulk History
-    saveBuklActionHistory: async (data, action, is_in_process = false) => {
+    saveBuklActionHistory: async (data, action) => {
         console.log('saveBuklActionHistory ', action, data);
 
         let InsertQuery = `INSERT INTO bulk_device_history (action, dealer_ids, user_ids, device_ids, apps, policy, action_by) VALUES ('${action}', '${JSON.stringify(data.dealer_ids)}', '${JSON.stringify(data.user_ids)}', '${JSON.stringify(data.device_ids)}', '${data.apps ? JSON.stringify(data.apps) : "[]"}', '${data.policy ? JSON.stringify(data.policy) : null}', '${data.action_by}');`;
+        console.log(InsertQuery);
+        await sql.query(InsertQuery);
+    },
+
+    // Bulk Msgs
+    saveBuklMsg: async (data) => {
+        console.log('saveBuklMsg ', data);
+
+        let InsertQuery = `INSERT INTO bulk_messages (repeat_duration, timer_status, dealer_ids, user_ids, device_ids, action_by, msg, sending_time) VALUES ('${data.repeat}', '${data.timer ? data.timer : ''}', '${JSON.stringify(data.dealer_ids)}', '${JSON.stringify(data.user_ids)}', '${JSON.stringify(data.device_ids)}', '${data.action_by}', '${data.msg}', '${data.date}');`;
         console.log(InsertQuery);
         await sql.query(InsertQuery);
     },
@@ -1136,6 +1146,183 @@ module.exports = {
         }
 
         return data
+    },
+    checkValue: value => {
+		if (
+			value !== undefined &&
+			value !== "" &&
+			value !== null &&
+			value !== "undefined" &&
+			value !== "Undefined" &&
+			value !== "UNDEFINED" &&
+			value !== "null" &&
+			value !== "Null" &&
+			value !== "NULL"
+		) {
+			return value;
+		} else {
+			return "N/A";
+		}
+	},
+
+    // get device detail
+    getCompleteDetailOfDevice: async function (device_ids) {
+        // console.log("device_ids callback func ", device_ids);
+        try {
+            let query = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers ON (usr_acc.dealer_id = dealers.dealer_id) 
+                WHERE devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.device_id IN (${device_ids.join()}) ORDER BY devices.id DESC`;
+            console.log('query is: ', query);
+
+            let results = await sql.query(query);
+            // console.log('result is: ', results)
+
+            if (results.length) {
+                let devices_acc_array = [];
+                let usr_device_ids_array = []
+                for (let i = 0; i < results.length; i++) {
+                    devices_acc_array.push(results[i].id)
+                    usr_device_ids_array.push(results[i].usr_device_id)
+                }
+                let user_acc_ids = devices_acc_array.join()
+                let usr_device_ids = usr_device_ids_array.join()
+                let loginHistoryData = await this.getLastLoginDetail(usr_device_ids)
+                let servicesData = await this.getServicesData(user_acc_ids)
+                let servicesIds = servicesData.map(item => { return item.id })
+                let userAccServiceData = []
+                if (servicesIds.length) {
+                    userAccServiceData = await this.getUserAccServicesData(user_acc_ids, servicesIds)
+                }
+
+                for (var i = 0; i < results.length; i++) {
+                    results[i].sim_id = "N/A"
+                    results[i].sim_id2 = "N/A"
+                    results[i].pgp_email = "N/A"
+                    results[i].chat_id = "N/A"
+
+                    let service_id = null
+                    let services = servicesData.filter(data => data.user_acc_id === results[i].id);
+                    if (services && services.length) {
+                        services.map((item) => {
+                            if (item.status === 'extended') {
+                                results[i].extended_services = item
+                            } else {
+                                results[i].services = item
+                                service_id = item.id
+                            }
+                        })
+                    }
+                    let productsData = userAccServiceData.filter(item => item.user_acc_id === results[i].id && item.service_id === service_id);
+                    if (productsData && productsData.length) {
+                        productsData.map((item) => {
+                            if (item.type === 'sim_id') {
+                                results[i].sim_id = item.product_value
+                            }
+                            else if (item.type === 'sim_id2') {
+                                results[i].sim_id2 = item.product_value
+                            }
+                            else if (item.type === 'pgp_email') {
+                                results[i].pgp_email = item.product_value
+                            }
+                            else if (item.type === 'chat_id') {
+                                results[i].chat_id = item.product_value
+                            }
+                        })
+                    }
+
+                    let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
+                    if (lastOnline) {
+                        results[i].lastOnline = lastOnline.created_at
+                    }
+                    results[i].finalStatus = await this.checkStatus(
+                        results[i]
+                    );
+                    results[i].validity = await this.checkRemainDays(
+                        results[i].created_at,
+                        results[i].validity
+                    );
+                }
+
+                let finalResult = [...results];
+                // let checkValue = await this.checkValue;
+                for (let device of finalResult) {
+
+                    let remainTermDays = "N/A"
+
+                    if (device.expiry_date !== null) {
+                        let startDate = moment(new Date())
+                        let expiray_date = new Date(device.expiry_date)
+                        let endDate = moment(expiray_date)
+                        remainTermDays = endDate.diff(startDate, 'days')
+                    }
+                    device.remainTermDays = remainTermDays
+                    device.account_email = await this.checkValue(device.account_email);
+                    device.firmware_info = await this.checkValue(device.firmware_info);
+                    device.account_name = await this.checkValue(device.account_name);
+                    device.account_status = await this.checkValue(device.account_status);
+                    device.activation_code = await this.checkValue(device.activation_code);
+                    device.activation_status = await this.checkValue(
+                        device.activation_status
+                    );
+                    device.batch_no = await this.checkValue(device.batch_no);
+                    device.chat_id = await this.checkValue(device.chat_id);
+                    device.client_id = await this.checkValue(device.client_id);
+                    device.connected_dealer = await this.checkValue(
+                        device.connected_dealer
+                    );
+                    device.created_at = await this.checkValue(device.created_at);
+                    device.dealer_id = await this.checkValue(device.dealer_id);
+                    device.dealer_name = await this.checkValue(device.dealer_name);
+                    device.del_status = await this.checkValue(device.del_status);
+                    device.device_id = await this.checkValue(device.device_id);
+                    device.device_status = await this.checkValue(device.device_status);
+                    device.expiry_date = await this.checkValue(device.expiry_date);
+                    device.expiry_months = await this.checkValue(device.expiry_months);
+                    device.fcm_token = await this.checkValue(device.fcm_token);
+                    device.finalStatus = await this.checkValue(device.finalStatus);
+                    device.flagged = await this.checkValue(device.flagged);
+                    device.id = await this.checkValue(device.id);
+                    device.imei = await this.checkValue(device.imei);
+                    device.imei2 = await this.checkValue(device.imei2);
+                    device.ip_address = await this.checkValue(device.ip_address);
+                    device.is_push_apps = await this.checkValue(device.is_push_apps);
+                    device.is_sync = await this.checkValue(device.is_sync);
+                    device.link_code = await this.checkValue(device.link_code);
+                    device.mac_address = await this.checkValue(device.mac_address);
+                    device.model = await this.checkValue(device.model);
+                    device.name = await this.checkValue(device.name);
+                    device.note = await this.checkValue(device.note);
+                    device.online = await this.checkValue(device.online);
+                    device.pgp_email = await this.checkValue(device.pgp_email);
+                    device.prnt_dlr_id = await this.checkValue(device.prnt_dlr_id);
+                    device.prnt_dlr_name = await this.checkValue(device.prnt_dlr_name);
+                    device.reject_status = await this.checkValue(device.reject_status);
+                    device.screen_start_date = await this.checkValue(
+                        device.screen_start_date
+                    );
+                    device.serial_number = await this.checkValue(device.serial_number);
+                    device.session_id = await this.checkValue(device.session_id);
+                    device.sim_id = await this.checkValue(device.sim_id);
+                    device.sim_id2 = await this.checkValue(device.sim_id2)
+                    device.simno = await this.checkValue(device.simno);
+                    device.simno2 = await this.checkValue(device.simno2);
+                    device.start_date = await this.checkValue(device.start_date);
+                    device.status = await this.checkValue(device.status);
+                    device.transfer_status = await this.checkValue(device.transfer_status);
+                    device.unlink_status = await this.checkValue(device.unlink_status);
+                    device.updated_at = await this.checkValue(device.updated_at);
+                    device.user_id = await this.checkValue(device.user_id);
+                    device.usr_device_id = await this.checkValue(device.usr_device_id);
+                    device.validity = await this.checkValue(device.validity);
+                }
+
+                return finalResult;
+            } else {
+                return [];
+            }
+        } catch (error) {
+            console.log("error: ", error);
+            return [];
+        }
     }
 }
 

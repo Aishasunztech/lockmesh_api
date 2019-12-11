@@ -1567,4 +1567,8 @@ router.post('/apply_bulk_policy', bulkDevicesController.applyBulkPolicy);
 
 router.post('/send_bulk_msg', bulkDevicesController.sendBulkMsg);
 
+router.get('/get_bulk_msgs', bulkDevicesController.getBulkMsgsList);
+
+router.get('/delete_bulk_msg/:id', bulkDevicesController.deleteBulkMsg);
+
 module.exports = router;
