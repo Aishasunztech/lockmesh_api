@@ -1885,6 +1885,7 @@ exports.editDevices = async function (req, res) {
             let prevPGP = req.body.prevPGP;
             let prevChatID = req.body.prevChatID;
             let prevSimId = req.body.prevSimId;
+            let prevSimId2 = req.body.prevSimId2;
             let finalStatus = req.body.finalStatus;
             var note = req.body.note;
             var validity = req.body.validity;
