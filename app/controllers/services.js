@@ -100,7 +100,13 @@ exports.createServiceProduct = async function (req, res) {
             })
         }
 
-
+        else{
+            res.send({
+                status: false,
+                msg: "ERROR: Information not provided."
+            })
+            return
+        }
 
     }
 
