@@ -132,6 +132,7 @@ exports.checkComponent = async function (req, res) {
                 postal_code: user[0].postal_code,
                 tel_no: user[0].tel_no,
                 website: user[0].website,
+                timezone: user[0].timezone,
             }
 
             res.json({

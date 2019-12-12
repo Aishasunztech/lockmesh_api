@@ -349,6 +349,8 @@ router.put('/updateProfile/:id', userController.updateProfile);
 /** Reset password dealers (Admin Panel) **/
 router.post("/resetpwd", dealerController.resetPwd);
 
+router.post("/set-timezone", dealerController.setTimeZone);
+
 /**
  * @route GET /users/get-info
  * @group Dealer - Operations about Dealers
