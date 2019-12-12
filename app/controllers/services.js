@@ -62,7 +62,8 @@ exports.createServiceProduct = async function (req, res) {
                                     if (results && results.insertId) {
                                         res.send({
                                             status: true,
-                                            msg: "Pgp Email has been created Successfully."
+                                            msg: "Pgp Email has been created Successfully.",
+                                            product: response.data.product
                                         })
                                         return
                                     } else {
