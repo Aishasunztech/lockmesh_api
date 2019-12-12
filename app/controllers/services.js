@@ -50,7 +50,7 @@ exports.createServiceProduct = async function (req, res) {
                     axios.post(app_constants.CREATE_SERVICE_PRODUCT, data, { headers: { authorization: response.data.user.token } }).then(async function (response) {
                         if (response.data.status) {
                             if (type === 'pgp_email') {
-                                sql.query(`INSERT INTO pgp_emails (pgp_email) VALUES ('${product_data.pgp_email}')`, function (err, results) {
+                                sql.query(`INSERT INTO pgp_emails (pgp_email) VALUES ('${response.data.product}')`, function (err, results) {
                                     if (err) {
                                         console.log(err);
                                         res.send({
