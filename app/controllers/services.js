@@ -17,7 +17,7 @@ exports.createServiceProduct = async function (req, res) {
         let auto_generated = req.body.auto_generated
         let product_data = req.body.product_data
         let type = req.body.type
-        if (type && auto_generated && product_data) {
+        if (type && product_data) {
             if (type === 'pgp_email' && !product_data.auto_generated) {
                 let pgp_email = product_data.username + '@' + product_data.domain
                 console.log(pgp_email);
@@ -99,8 +99,7 @@ exports.createServiceProduct = async function (req, res) {
                 return
             })
         }
-
-        else{
+        else {
             res.send({
                 status: false,
                 msg: "ERROR: Information not provided."
