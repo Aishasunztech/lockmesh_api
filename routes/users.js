@@ -1571,7 +1571,7 @@ router.post('/send_bulk_msg', bulkDevicesController.sendBulkMsg);
 
 // ============== SERVICES ============ //
 
-router.post('/create-service-product', ServicesController.createPgpEmail);
+router.post('/create-service-product', ServicesController.createServiceProduct);
 
 
 module.exports = router;

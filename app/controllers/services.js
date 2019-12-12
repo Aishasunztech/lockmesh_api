@@ -11,7 +11,7 @@ const SDEALER = "sdealer";
 
 let data;
 
-exports.createPgpEmail = async function (req, res) {
+exports.createServiceProduct = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
         let auto_generated = req.body.auto_generated
