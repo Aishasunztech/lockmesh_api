@@ -73,6 +73,7 @@ exports.login = async function (req, res) {
                             link_code: dealer[0].link_code,
                             dealer_pin: dealer[0].link_code,
                             connected_dealer: dealer[0].connected_dealer,
+                            timezone: dealer[0].timezone,
 
                             user_type: userType,
                             ip_address: ip,
@@ -196,6 +197,7 @@ exports.verifyCode = async function (req, res) {
                         dealer_email: checkRes[0].dealer_email,
                         link_code: checkRes[0].link_code,
                         connected_dealer: checkRes[0].connected_dealer,
+                        timezone: checkRes[0].timezone,
                         connected_devices: get_connected_devices,
                         account_status: checkRes[0].account_status,
                         user_type: userType,
