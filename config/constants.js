@@ -1,5 +1,5 @@
 const HOST_NAME = process.env.HOST_NAME;
-let APP_TITLE = "LockMesh";
+let APP_TITLE = "LockMesh Dev";
 let URL = "http://localhost:3000";
 let SUPERADMIN_URL = "http://localhost:8042";
 let SUPERADMIN_URL_API = "http://localhost:8042";
