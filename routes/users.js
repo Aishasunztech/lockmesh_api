@@ -44,6 +44,7 @@ const agentController = require('../app/controllers/agent');
 const reportingController = require('../app/controllers/reports');
 const dashboardController = require('../app/controllers/dashboard');
 const NotificationController = require('../app/controllers/notification');
+const ServicesController = require('../app/controllers/services');
 
 
 // constants
@@ -1566,5 +1567,11 @@ router.post("/apply_bulk_pullapps", bulkDevicesController.applyBulkPullApps);
 router.post('/apply_bulk_policy', bulkDevicesController.applyBulkPolicy);
 
 router.post('/send_bulk_msg', bulkDevicesController.sendBulkMsg);
+
+
+// ============== SERVICES ============ //
+
+router.post('/create-service-product', ServicesController.createPgpEmail);
+
 
 module.exports = router;

@@ -203,6 +203,11 @@ module.exports = {
 	ADD_CREDITS_SALE_RECORD: `${
 		this.SUPERADMIN_URL_API
 		}/api/v1/users/add_credits_sale_record`,
+
+	CREATE_SERVICE_PRODUCT: `${
+		this.SUPERADMIN_URL_API
+		}/api/v1/users/create-service-product`,
+
 	REQUEST_FOR_CREDITS: `${
 		this.SUPERADMIN_URL_API
 		}/api/v1/users/request_for_credits`,
