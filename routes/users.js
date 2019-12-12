@@ -1428,6 +1428,17 @@ router.get('/dashboard-data', dashboardController.getDashboardData);
 router.get('/get-domains', accountController.getDomains);
 
 /**
+ * @route GET /users/domains-domains
+ * @group ACCOUNT - Operations about accounts
+ * @returns {object} 200 - An array of accounts items info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+router.post('/add-domain', accountController.addDomain);
+
+router.put('/edit-domain', accountController.editDomain);
+
+/**
  * @route POST /users/dealer-permissions/:permissionType
  * @group Dealers - Operations about Dashboard
  * @returns {object} 200 - An array of dashboard items info
