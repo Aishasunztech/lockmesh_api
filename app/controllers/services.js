@@ -18,7 +18,7 @@ exports.createServiceProduct = async function (req, res) {
         let product_data = req.body.product_data
         let type = req.body.type
         if (type && product_data) {
-            if (type === 'pgp_email' && !product_data.auto_generated) {
+            if (type === 'pgp_email' && !auto_generated) {
                 let pgp_email = product_data.username + '@' + product_data.domain
                 console.log(pgp_email);
                 if (helpers.validateEmail(pgp_email)) {
