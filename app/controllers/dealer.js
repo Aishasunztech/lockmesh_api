@@ -2714,7 +2714,7 @@ exports.setDealerDemosLimit = async function (req, res) {
     }
 }
 
-exports.setTimeZone = async function (req, res) {
+exports.setTimeZone = async function (req, res) { 
     try {
         var verify = req.decoded;
         console.log("setTimeZone :: ", req.body.data);
