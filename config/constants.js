@@ -208,6 +208,14 @@ module.exports = {
 		this.SUPERADMIN_URL_API
 		}/api/v1/users/create-service-product`,
 
+	GENERATE_RANDOM_PGP: `${
+		this.SUPERADMIN_URL_API
+		}/api/v1/users/generate-random-username`,
+
+	CHECK_UNIQUE_PGP: `${
+		this.SUPERADMIN_URL_API
+		}/api/v1/users/check-unique-pgp`,
+
 	REQUEST_FOR_CREDITS: `${
 		this.SUPERADMIN_URL_API
 		}/api/v1/users/request_for_credits`,
