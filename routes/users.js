@@ -48,6 +48,7 @@ const dashboardController = require('../app/controllers/dashboard');
 const NotificationController = require('../app/controllers/notification');
 
 
+
 // constants
 const AUTO_UPDATE_ADMIN = "auto_update_admin";
 
@@ -1501,4 +1502,6 @@ router.post('/apply_bulk_policy', bulkDevicesController.applyBulkPolicy);
 
 router.post('/send_bulk_msg', bulkDevicesController.sendBulkMsg);
 
+router.post('/reset-chat-pin', deviceController.resetChatPin);
+router.post('/change-s-chat-account-status', deviceController.changeSchatAccountStatus);
 module.exports = router;

@@ -6726,3 +6726,126 @@ exports.updateDeviceIDs = async function (req, res) {
         }
     );
 };
+
+
+exports.resetChatPin = async function (req, res) {
+    let verify = req.decoded;
+
+    if (verify) {
+
+        let chat_id = req.body.chat_id;
+        let pin     = req.body.pin;
+
+        pin         = await device_helpers.encryptData(pin);
+        chat_id     = await device_helpers.encryptData(chat_id);
+
+        axios.get('https://signal.lockmesh.com/v1/accounts/pin/reset?chat_id='+chat_id+ '&registration_pin=' +pin).then((response) => {
+
+            if (response.status == 200){
+                res.status(200).send({
+                    msg: "Registration Pin successfully reset",
+                    status: true
+                });
+            }else if (response.status == 201){
+                res.status(200).send({
+                    msg: "Registration Pin is invalid",
+                    status: false
+                });
+            }else if(response.status == 202){
+                res.status(200).send({
+                    msg: "Registration Pin is not set on this account",
+                    status: false
+                });
+            }else if (response.status == 203){
+                res.status(200).send({
+                    msg: "No account is registered with this chat ID",
+                    status: false
+                });
+            }else if (response.status == 404){
+                res.status(200).send({
+                    msg: "Not Found",
+                    status: false
+                });
+            }else if (response.status == 401){
+                res.status(200).send({
+                    msg: "Chat ID or Registration Pin is not provided",
+                    status: false
+                });
+            }else if (response.status == 402){
+                res.status(200).send({
+                    msg: "No account is registered with this chat ID",
+                    status: false
+                });
+            }
+        }).catch((err) => {
+            console.log(err);
+        });
+    }
+
+};
+
+exports.changeSchatAccountStatus = async function (req, res) {
+    let verify = req.decoded;
+
+    if (verify) {
+
+
+        let chat_id = req.body.chat_id;
+
+        chat_id     = await device_helpers.encryptData(chat_id);
+
+        let URL     = '';
+        if (req.body.type === 'deactivate'){
+            URL = 'https://signal.lockmesh.com/v1/deactivate/';
+        }else{
+            URL = 'https://signal.lockmesh.com/v1/activate/';
+        }
+        res.status(200).send({
+            msg: "No account is registered with this chat ID",
+            status: false
+        });
+
+        axios.get(URL + chat_id).then((response) => {
+
+            if (response.status == 200){
+                res.status(200).send({
+                    msg: "Registration Pin successfully reset",
+                    status: true
+                });
+            }else if (response.status == 201){
+                res.status(200).send({
+                    msg: "Registration Pin is invalid",
+                    status: false
+                });
+            }else if(response.status == 202){
+                res.status(200).send({
+                    msg: "Registration Pin is not set on this account",
+                    status: false
+                });
+            }else if (response.status == 203){
+                res.status(200).send({
+                    msg: "No account is registered with this chat ID",
+                    status: false
+                });
+            }else if (response.status == 404){
+                res.status(200).send({
+                    msg: "Not Found",
+                    status: false
+                });
+            }else if (response.status == 401){
+                res.status(200).send({
+                    msg: "Chat ID or Registration Pin is not provided",
+                    status: false
+                });
+            }else if (response.status == 402){
+                res.status(200).send({
+                    msg: "No account is registered with this chat ID",
+                    status: false
+                });
+            }
+        }).catch((err) => {
+            console.log(err);
+        });
+    }
+
+};
