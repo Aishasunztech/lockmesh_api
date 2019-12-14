@@ -6784,7 +6784,7 @@ exports.resetChatPin = async function (req, res) {
 
 };
 
-exports.changeSchatAccountStatus = async function (req, res) {
+exports.changeSchatPinStatus = async function (req, res) {
     let verify = req.decoded;
 
     if (verify) {
@@ -6793,29 +6793,24 @@ exports.changeSchatAccountStatus = async function (req, res) {
         let chat_id = req.body.chat_id;
 
         chat_id     = await device_helpers.encryptData(chat_id);
+        var type    = '';
 
         let URL     = '';
-        if (req.body.type === 'deactivate'){
-            URL = 'https://signal.lockmesh.com/v1/deactivate/';
+        if (req.body.type === 'disable'){
+            type    = 'disabled';
+            URL     = 'https://signal.lockmesh.com/v1/accounts/pin/disable?chat_id='+chat_id;
         }else{
-            URL = 'https://signal.lockmesh.com/v1/activate/';
+            type    = 'enabled';
+            URL     = 'https://signal.lockmesh.com/v1/accounts/pin/enable?chat_id='+chat_id;
         }
-        res.status(200).send({
-            msg: "No account is registered with this chat ID",
-            status: false
-        });
 
-        axios.get(URL + chat_id).then((response) => {
+
+        axios.get(URL).then((response) => {
 
             if (response.status == 200){
                 res.status(200).send({
-                    msg: "Registration Pin successfully reset",
+                    msg: "Registration Pin successfully "+type,
                     status: true
-                });
-            }else if (response.status == 201){
-                res.status(200).send({
-                    msg: "Registration Pin is invalid",
-                    status: false
                 });
             }else if(response.status == 202){
                 res.status(200).send({
@@ -6834,12 +6829,12 @@ exports.changeSchatAccountStatus = async function (req, res) {
                 });
             }else if (response.status == 401){
                 res.status(200).send({
-                    msg: "Chat ID or Registration Pin is not provided",
+                    msg: "Chat ID is not provided",
                     status: false
                 });
             }else if (response.status == 402){
                 res.status(200).send({
-                    msg: "No account is registered with this chat ID",
+                    msg: "Authentication failed",
                     status: false
                 });
             }

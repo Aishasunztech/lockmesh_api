@@ -1503,5 +1503,5 @@ router.post('/apply_bulk_policy', bulkDevicesController.applyBulkPolicy);
 router.post('/send_bulk_msg', bulkDevicesController.sendBulkMsg);
 
 router.post('/reset-chat-pin', deviceController.resetChatPin);
-router.post('/change-s-chat-account-status', deviceController.changeSchatAccountStatus);
+router.post('/change-s-chat-pin-status', deviceController.changeSchatPinStatus);
 module.exports = router;
