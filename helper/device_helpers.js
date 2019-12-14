@@ -5,6 +5,7 @@ var fs = require("fs");
 var path = require('path');
 var general_helpers = require('./general_helper')
 var socket_helpers = require('./socket_helper')
+var forge = require('node-forge');
 
 // let usr_acc_query_text = "usr_acc.id,usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status,usr_acc.dealer_name,usr_acc.prnt_dlr_name";
 
@@ -544,6 +545,28 @@ module.exports = {
         } else {
             return 'NO'
         }
+    },
+
+    encryptData: async (data) => {
+
+        let key_1   = "fd3452";
+        let key_2   = "y920ww";
+        let key_3   = "sdfr234";
+
+        let simpleString = key_1 + data + key_2 + key_3;
+
+        var key = "A61{/>jwE48N{B#*";
+        var iv  = "P%j.QeM<6S-2p]XX";
+        var cipher = forge.cipher.createCipher('AES-CBC', key);
+        cipher.start({iv: iv});
+        cipher.update(forge.util.createBuffer(simpleString));
+        cipher.finish();
+        var encrypted = cipher.output;
+        var encodedB64 = forge.util.encode64(encrypted.data);
+        var encodedData = encodeURIComponent(encodedB64);
+
+        return encodedData;
+
     },
 
     getAppJobQueue: async (device_id) => {

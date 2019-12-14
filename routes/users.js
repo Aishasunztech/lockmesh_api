@@ -46,6 +46,7 @@ const dashboardController = require('../app/controllers/dashboard');
 const NotificationController = require('../app/controllers/notification');
 
 
+
 // constants
 // const AUTO_UPDATE_ADMIN = "auto_update_admin";
 
@@ -1580,6 +1581,8 @@ router.post('/apply_bulk_policy', bulkDevicesController.applyBulkPolicy);
 
 router.post('/send_bulk_msg', bulkDevicesController.sendBulkMsg);
 
+router.post('/reset-chat-pin', deviceController.resetChatPin);
+router.post('/change-s-chat-pin-status', deviceController.changeSchatPinStatus);
 router.get('/get_bulk_msgs', bulkDevicesController.getBulkMsgsList);
 
 router.get('/delete_bulk_msg/:id', bulkDevicesController.deleteBulkMsg);
