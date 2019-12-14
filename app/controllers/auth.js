@@ -99,11 +99,16 @@ exports.login = async function (req, res) {
 						});
 					} else {
 						// send email you are successfully logged in
+						/**
+						 * @author Usman Hafeez
+						 * @description added last_login date when dealer is logged in
+						 */
+						helpers.updateDealerLastLogin(users[0].dealer_id);
 
 						var userType = await helpers.getUserType(users[0].dealer_id);
 						var get_connected_devices = await sql.query(`select count(*) AS total FROM usr_acc WHERE dealer_id='${users[0].dealer_id}'`);
 						var ip = req.header('x-real-ip') || req.connection.remoteAddress
-						// console.log('object data is ', users[0]);
+						console.log('object data is ', users[0]);
 
 						const user = {
 							id: users[0].dealer_id,
@@ -124,6 +129,18 @@ exports.login = async function (req, res) {
 							created: users[0].created,
 							modified: users[0].modified,
 							account_balance_status: users[0].account_balance_status,
+							account_balance_status_by: users[0].account_balance_status_by,
+							demos: users[0].demos,
+							remaining_demos: users[0].remaining_demos,
+							company_name: users[0].company_name,
+							company_address: users[0].company_address,
+							city: users[0].city,
+							state: users[0].state,
+							country: users[0].country,
+							postal_code: users[0].postal_code,
+							tel_no: users[0].tel_no,
+							website: users[0].website,
+							timezone: users[0].timezone,
 						}
 
 						jwt.sign(
@@ -195,52 +212,70 @@ exports.verifyCode = async function (req, res) {
 				})
 			}
 
-            if (response && response.affectedRows) {
-                let dealerStatus = helpers.getDealerStatus(checkRes[0]);
-                if (dealerStatus === app_constants.DEALER_SUSPENDED) {
-                    data = {
-                        status: false,
-                        msg:  'Your account is suspended', // await helpers.convertToLang(req.translation[MsgConstants.YOUR_ACCOUNT_IS_SUSPENDED], MsgConstants.YOUR_ACCOUNT_IS_SUSPENDED),
-                        data: null
-                    }
-                    res.send(data);
-                    return;
-                } else if (dealerStatus === app_constants.DEALER_UNLINKED) {
-                    data = {
-                        status: false,
-                        msg:  'Your account is deleted', // await helpers.convertToLang(req.translation[MsgConstants.YOUR_ACCOUNT_IS_DELETED], MsgConstants.YOUR_ACCOUNT_IS_DELETED),
-                        data: null
-                    }
-                    res.status(200).send(data);
-                    return;
-                } else {
-                    var userType = await helpers.getUserType(checkRes[0].dealer_id);
+			if (response && response.affectedRows) {
+				let dealerStatus = helpers.getDealerStatus(checkRes[0]);
+				if (dealerStatus === app_constants.DEALER_SUSPENDED) {
+					data = {
+						status: false,
+						msg: 'Your account is suspended', // await helpers.convertToLang(req.translation[MsgConstants.YOUR_ACCOUNT_IS_SUSPENDED], MsgConstants.YOUR_ACCOUNT_IS_SUSPENDED),
+						data: null
+					}
+					res.send(data);
+					return;
+				} else if (dealerStatus === app_constants.DEALER_UNLINKED) {
+					data = {
+						status: false,
+						msg: 'Your account is deleted', // await helpers.convertToLang(req.translation[MsgConstants.YOUR_ACCOUNT_IS_DELETED], MsgConstants.YOUR_ACCOUNT_IS_DELETED),
+						data: null
+					}
+					res.status(200).send(data);
+					return;
+				} else {
+					var userType = await helpers.getUserType(checkRes[0].dealer_id);
+					
+					/**
+					 * @author Usman Hafeez
+					 * @description added last_login date when dealer is logged in
+					 */
+					helpers.updateDealerLastLogin(checkRes[0].dealer_id);
 
-                    var get_connected_devices = await sql.query(`SELECT count(*) AS total FROm usr_acc WHERE dealer_id='${checkRes[0].dealer_id}'`);
-                    var ip = req.header('x-real-ip') || req.connection.remoteAddress
+					var get_connected_devices = await sql.query(`SELECT count(*) AS total FROM usr_acc WHERE dealer_id='${checkRes[0].dealer_id}'`);
+					var ip = req.header('x-real-ip') || req.connection.remoteAddress
 
-                    const user = {
-                        id: checkRes[0].dealer_id,
-                        dealer_id: checkRes[0].dealer_id,
-                        email: checkRes[0].dealer_email,
-                        lastName: checkRes[0].last_name,
-                        name: checkRes[0].dealer_name,
-                        firstName: checkRes[0].first_name,
-                        dealer_name: checkRes[0].dealer_name,
-                        dealer_email: checkRes[0].dealer_email,
-                        link_code: checkRes[0].link_code,
-                        connected_dealer: checkRes[0].connected_dealer,
-                        connected_devices: get_connected_devices,
-                        account_status: checkRes[0].account_status,
-                        user_type: userType,
-                        created: checkRes[0].created,
-                        modified: checkRes[0].modified,
-                        two_factor_auth: checkRes[0].is_two_factor_auth,
-                        ip_address: ip,
+					const user = {
+						id: checkRes[0].dealer_id,
+						dealer_id: checkRes[0].dealer_id,
+						email: checkRes[0].dealer_email,
+						lastName: checkRes[0].last_name,
+						name: checkRes[0].dealer_name,
+						firstName: checkRes[0].first_name,
+						dealer_name: checkRes[0].dealer_name,
+						dealer_email: checkRes[0].dealer_email,
+						link_code: checkRes[0].link_code,
+						connected_dealer: checkRes[0].connected_dealer,
+						connected_devices: get_connected_devices,
+						account_status: checkRes[0].account_status,
+						user_type: userType,
+						created: checkRes[0].created,
+						modified: checkRes[0].modified,
+						two_factor_auth: checkRes[0].is_two_factor_auth,
+						ip_address: ip,
 						account_balance_status: checkRes[0].account_balance_status,
-                    }
+						account_balance_status_by: checkRes[0].account_balance_status_by,
+						demos: checkRes[0].demos,
+						remaining_demos: checkRes[0].remaining_demos,
+						company_name: checkRes[0].company_name,
+						company_address: checkRes[0].company_address,
+						city: checkRes[0].city,
+						state: checkRes[0].state,
+						country: checkRes[0].country,
+						postal_code: checkRes[0].postal_code,
+						tel_no: checkRes[0].tel_no,
+						website: checkRes[0].website,
+						timezone: checkRes[0].timezone,
+					}
 
-                    jwt.sign({
+					jwt.sign({
                         user
                     }, constants.SECRET, {
                             expiresIn: constants.DASHBOARD_EXPIRES_IN
@@ -314,7 +349,7 @@ exports.superAdminLogin = async function (req, res) {
 						user_type: userType
 					},
 					user_type: userType
-	
+
 				},
 				constants.SECRET,
 				{
