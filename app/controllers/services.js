@@ -39,49 +39,56 @@ exports.createServiceProduct = async function (req, res) {
                     return
                 }
             }
-            else {
-                res.send({
-                    status: false,
-                    msg: "ERROR: Invalid request."
-                })
-                return
-            }
             axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
                 if (response.data.status) {
                     let data = {
                         auto_generated,
                         product_data,
                         type,
-                        label: app_constants.APP_TITLE
+                        label: app_constants.APP_TITLE,
+                        uploaded_by: verify.user.user_type,
+                        uploaded_by_id: verify.user.id,
                     }
                     axios.post(app_constants.CREATE_SERVICE_PRODUCT, data, { headers: { authorization: response.data.user.token } }).then(async function (response) {
                         if (response.data.status) {
+                            let query = ''
                             if (type === 'pgp_email') {
-                                sql.query(`INSERT INTO pgp_emails (pgp_email) VALUES ('${response.data.product}')`, function (err, results) {
-                                    if (err) {
-                                        console.log(err);
-                                        res.send({
-                                            status: false,
-                                            msg: "ERROR: Internal Server Error. Please Try again."
-                                        })
-                                        return
-                                    }
-                                    if (results && results.insertId) {
-                                        res.send({
-                                            status: true,
-                                            msg: "Pgp Email has been created Successfully.",
-                                            product: response.data.product
-                                        })
-                                        return
-                                    } else {
-                                        res.send({
-                                            status: false,
-                                            msg: "Pgp Email not created. Please Try again."
-                                        })
-                                        return
-                                    }
-                                })
+                                query = `INSERT INTO pgp_emails (pgp_email , uploaded_by , uploaded_by_id) VALUES ('${response.data.product}' , '${verify.user.user_type}' , '${verify.user.id}')`
                             }
+
+                            else if (type === 'chat_id') {
+                                query = `INSERT INTO chat_ids (chat_id , uploaded_by , uploaded_by_id) VALUES ('${response.data.product}' , '${verify.user.user_type}' , '${verify.user.id}')`
+                            } else {
+                                res.send({
+                                    status: false,
+                                    msg: "ERROR: Invalid Request"
+                                })
+                                return
+                            }
+                            sql.query(query, function (err, results) {
+                                if (err) {
+                                    console.log(err);
+                                    res.send({
+                                        status: false,
+                                        msg: "ERROR: Internal Server Error. Please Try again."
+                                    })
+                                    return
+                                }
+                                if (results && results.insertId) {
+                                    res.send({
+                                        status: true,
+                                        msg: "Product has been created Successfully.",
+                                        product: response.data.product
+                                    })
+                                    return
+                                } else {
+                                    res.send({
+                                        status: false,
+                                        msg: "Product not created. Please Try again."
+                                    })
+                                    return
+                                }
+                            })
                         } else {
                             res.send({
                                 status: false,
@@ -221,7 +228,7 @@ exports.checkUniquePgp = async function (req, res) {
             return
         }
         axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
-            console.log(response.data.status);
+            // console.log(response.data.status);
             if (response.data.status) {
                 let data = {
                     label: app_constants.APP_TITLE
