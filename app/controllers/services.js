@@ -52,20 +52,26 @@ exports.createServiceProduct = async function (req, res) {
                     axios.post(app_constants.CREATE_SERVICE_PRODUCT, data, { headers: { authorization: response.data.user.token } }).then(async function (response) {
                         if (response.data.status) {
                             let query = ''
+                            let getQuery = ''
                             if (type === 'pgp_email') {
-                                query = `INSERT INTO pgp_emails (pgp_email , uploaded_by , uploaded_by_id) VALUES ('${response.data.product}' , '${verify.user.user_type}' , '${verify.user.id}')`
+                                query = `INSERT INTO pgp_emails (pgp_email , uploaded_by , uploaded_by_id , domain_id) VALUES ('${response.data.product}' , '${verify.user.user_type}' , '${verify.user.id}' , ${product_data.domain_id})`
+                                getQuery = `SELECT * FROM pgp_emails WHERE id = `
                             }
-
                             else if (type === 'chat_id') {
                                 query = `INSERT INTO chat_ids (chat_id , uploaded_by , uploaded_by_id) VALUES ('${response.data.product}' , '${verify.user.user_type}' , '${verify.user.id}')`
-                            } else {
+                                getQuery = `SELECT * FROM chat_ids WHERE id = `
+                            }
+                            // else if (type === 'sim_id') {
+                            //     query = `INSERT INTO sim_ids (sim_id , uploaded_by , uploaded_by_id) VALUES ('${response.data.product}' , '${verify.user.user_type}' , '${verify.user.id}')`
+                            // }
+                            else {
                                 res.send({
                                     status: false,
                                     msg: "ERROR: Invalid Request"
                                 })
                                 return
                             }
-                            sql.query(query, function (err, results) {
+                            sql.query(query, async function (err, results) {
                                 if (err) {
                                     console.log(err);
                                     res.send({
@@ -75,10 +81,11 @@ exports.createServiceProduct = async function (req, res) {
                                     return
                                 }
                                 if (results && results.insertId) {
+                                    let insertData = await sql.query(getQuery + results.insertId)
                                     res.send({
                                         status: true,
                                         msg: "Product has been created Successfully.",
-                                        product: response.data.product
+                                        product: insertData[0]
                                     })
                                     return
                                 } else {
