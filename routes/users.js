@@ -1575,7 +1575,7 @@ router.post('/create-service-product', ServicesController.createServiceProduct);
 
 router.get('/generate-random-username', ServicesController.generateRandomUsername);
 
-router.get('/check-unique-pgp', ServicesController.generateRandomUsername);
+router.post('/check-unique-pgp', ServicesController.checkUniquePgp);
 
 
 module.exports = router;

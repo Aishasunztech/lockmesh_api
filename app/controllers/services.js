@@ -180,7 +180,6 @@ exports.checkUniquePgp = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
         let pgp_email = req.body.pgp_email
-        console.log(pgp_email);
         if (helpers.validateEmail(pgp_email)) {
             let checkExisted = await sql.query(`SELECT * FROM pgp_emails WHERE pgp_email = '${pgp_email}'`)
             if (checkExisted && checkExisted.length) {
@@ -234,42 +233,6 @@ exports.checkUniquePgp = async function (req, res) {
             })
             return
         }
-        axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
-            // console.log(response.data.status);
-            if (response.data.status) {
-                let data = {
-                    label: app_constants.APP_TITLE
-                }
-                axios.post(app_constants.GENERATE_RANDOM_PGP, data, { headers: { authorization: response.data.user.token } }).then(async function (response) {
-                    if (response.data.status) {
-                        res.send({
-                            status: true,
-                            username: response.data.username
-                        })
-                    } else {
-                        res.send({
-                            status: false,
-                            msg: response.data.msg
-                        })
-                        return
-                    }
-                }).catch((err) => {
-                    console.log(err);
-                    res.send({
-                        status: false,
-                        msg: "ERROR: Superadmin server not responding please try again later."
-                    })
-                    return
-                })
-            }
-        }).catch((err) => {
-            console.log(err);
-            res.send({
-                status: false,
-                msg: "ERROR: Superadmin server not responding please try again later."
-            })
-            return
-        })
     }
 
 }
