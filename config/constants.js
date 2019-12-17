@@ -1,5 +1,5 @@
 const HOST_NAME = process.env.HOST_NAME;
-let APP_TITLE = "LockMesh";
+let APP_TITLE = "LockMesh Dev";
 let URL = "http://localhost:3000";
 let SUPERADMIN_URL = "http://localhost:8042";
 let SUPERADMIN_URL_API = "http://localhost:8042";
@@ -203,6 +203,19 @@ module.exports = {
 	ADD_CREDITS_SALE_RECORD: `${
 		this.SUPERADMIN_URL_API
 		}/api/v1/users/add_credits_sale_record`,
+
+	CREATE_SERVICE_PRODUCT: `${
+		this.SUPERADMIN_URL_API
+		}/api/v1/users/create-service-product`,
+
+	GENERATE_RANDOM_PGP: `${
+		this.SUPERADMIN_URL_API
+		}/api/v1/users/generate-random-username`,
+
+	CHECK_UNIQUE_PGP: `${
+		this.SUPERADMIN_URL_API
+		}/api/v1/users/check-unique-pgp`,
+
 	REQUEST_FOR_CREDITS: `${
 		this.SUPERADMIN_URL_API
 		}/api/v1/users/request_for_credits`,

@@ -44,6 +44,7 @@ const agentController = require('../app/controllers/agent');
 const reportingController = require('../app/controllers/reports');
 const dashboardController = require('../app/controllers/dashboard');
 const NotificationController = require('../app/controllers/notification');
+const ServicesController = require('../app/controllers/services');
 
 
 
@@ -1582,9 +1583,19 @@ router.post('/apply_bulk_policy', bulkDevicesController.applyBulkPolicy);
 router.post('/send_bulk_msg', bulkDevicesController.sendBulkMsg);
 
 router.post('/reset-chat-pin', deviceController.resetChatPin);
+
 router.post('/change-s-chat-pin-status', deviceController.changeSchatPinStatus);
+
 router.get('/get_bulk_msgs', bulkDevicesController.getBulkMsgsList);
 
 router.get('/delete_bulk_msg/:id', bulkDevicesController.deleteBulkMsg);
+
+// ============== SERVICES ============ //
+
+router.post('/create-service-product', ServicesController.createServiceProduct);
+
+router.get('/generate-random-username', ServicesController.generateRandomUsername);
+
+router.post('/check-unique-pgp', ServicesController.checkUniquePgp);
 
 module.exports = router;
