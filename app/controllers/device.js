@@ -47,7 +47,7 @@ exports.devices = async function (req, res) {
                     verify.user.id
                     } OR usr_acc.prnt_dlr_id = ${verify.user.id})`;
                 query = `SELECT * From acc_action_history WHERE action = 'UNLINKED' AND dealer_id = ${
-                    verify.user.id  
+                    verify.user.id
                     } AND del_status IS NULL`;
 
             } else {
@@ -2445,9 +2445,9 @@ exports.editDevices = async function (req, res) {
                                 // }
 
                                 await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, usr_acc_id, loggedDealerType, pay_now, service_id)
-                                if (exp_month == 0 && prevService.service_term != 0) {
+                                if (exp_month == 0 && prevService && prevService.service_term != 0) {
                                     sql.query(`UPDATE dealers SET remaining_demos = remaining_demos - 1 WHERE dealer_id = ${dealer_id}`)
-                                } else if (prevService.service_term == 0 && exp_month != 0) {
+                                } else if (prevService && prevService.service_term == 0 && exp_month != 0) {
                                     sql.query(`UPDATE dealers SET remaining_demos = remaining_demos + 1 WHERE dealer_id = ${dealer_id}`)
                                 }
 
@@ -3664,7 +3664,7 @@ exports.unlinkDevice = async function (req, res) {
                         }
                     }
 
-console.log("unlink devices data: req.body.device: ", req.body.device)
+                    console.log("unlink devices data: req.body.device: ", req.body.device)
                     device_helpers.saveActionHistory(
                         req.body.device,
                         constants.DEVICE_UNLINKED
@@ -6895,44 +6895,44 @@ exports.resetChatPin = async function (req, res) {
     if (verify) {
 
         let chat_id = req.body.chat_id;
-        let pin     = req.body.pin;
+        let pin = req.body.pin;
 
-        pin         = await device_helpers.encryptData(pin);
-        chat_id     = await device_helpers.encryptData(chat_id);
+        pin = await device_helpers.encryptData(pin);
+        chat_id = await device_helpers.encryptData(chat_id);
 
-        axios.get('https://signal.lockmesh.com/v1/accounts/pin/reset?chat_id='+chat_id+ '&registration_pin=' +pin).then((response) => {
+        axios.get('https://signal.lockmesh.com/v1/accounts/pin/reset?chat_id=' + chat_id + '&registration_pin=' + pin).then((response) => {
 
-            if (response.status == 200){
+            if (response.status == 200) {
                 res.status(200).send({
                     msg: "Registration Pin successfully reset",
                     status: true
                 });
-            }else if (response.status == 201){
+            } else if (response.status == 201) {
                 res.status(200).send({
                     msg: "Registration Pin is invalid",
                     status: false
                 });
-            }else if(response.status == 202){
+            } else if (response.status == 202) {
                 res.status(200).send({
                     msg: "Registration Pin is not set on this account",
                     status: false
                 });
-            }else if (response.status == 203){
+            } else if (response.status == 203) {
                 res.status(200).send({
                     msg: "No account is registered with this chat ID",
                     status: false
                 });
-            }else if (response.status == 404){
+            } else if (response.status == 404) {
                 res.status(200).send({
                     msg: "Not Found",
                     status: false
                 });
-            }else if (response.status == 401){
+            } else if (response.status == 401) {
                 res.status(200).send({
                     msg: "Chat ID or Registration Pin is not provided",
                     status: false
                 });
-            }else if (response.status == 402){
+            } else if (response.status == 402) {
                 res.status(200).send({
                     msg: "No account is registered with this chat ID",
                     status: false
@@ -6953,47 +6953,47 @@ exports.changeSchatPinStatus = async function (req, res) {
 
         let chat_id = req.body.chat_id;
 
-        chat_id     = await device_helpers.encryptData(chat_id);
-        var type    = '';
+        chat_id = await device_helpers.encryptData(chat_id);
+        var type = '';
 
-        let URL     = '';
-        if (req.body.type === 'disable'){
-            type    = 'disabled';
-            URL     = 'https://signal.lockmesh.com/v1/accounts/pin/disable?chat_id='+chat_id;
-        }else{
-            type    = 'enabled';
-            URL     = 'https://signal.lockmesh.com/v1/accounts/pin/enable?chat_id='+chat_id;
+        let URL = '';
+        if (req.body.type === 'disable') {
+            type = 'disabled';
+            URL = 'https://signal.lockmesh.com/v1/accounts/pin/disable?chat_id=' + chat_id;
+        } else {
+            type = 'enabled';
+            URL = 'https://signal.lockmesh.com/v1/accounts/pin/enable?chat_id=' + chat_id;
         }
 
 
         axios.get(URL).then((response) => {
 
-            if (response.status == 200){
+            if (response.status == 200) {
                 res.status(200).send({
-                    msg: "Registration Pin successfully "+type,
+                    msg: "Registration Pin successfully " + type,
                     status: true
                 });
-            }else if(response.status == 202){
+            } else if (response.status == 202) {
                 res.status(200).send({
                     msg: "Registration Pin is not set on this account",
                     status: false
                 });
-            }else if (response.status == 203){
+            } else if (response.status == 203) {
                 res.status(200).send({
                     msg: "No account is registered with this chat ID",
                     status: false
                 });
-            }else if (response.status == 404){
+            } else if (response.status == 404) {
                 res.status(200).send({
                     msg: "Not Found",
                     status: false
                 });
-            }else if (response.status == 401){
+            } else if (response.status == 401) {
                 res.status(200).send({
                     msg: "Chat ID is not provided",
                     status: false
                 });
-            }else if (response.status == 402){
+            } else if (response.status == 402) {
                 res.status(200).send({
                     msg: "Authentication failed",
                     status: false

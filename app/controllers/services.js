@@ -61,9 +61,9 @@ exports.createServiceProduct = async function (req, res) {
                                 query = `INSERT INTO chat_ids (chat_id , uploaded_by , uploaded_by_id) VALUES ('${response.data.product}' , '${verify.user.user_type}' , '${verify.user.id}')`
                                 getQuery = `SELECT * FROM chat_ids WHERE id = `
                             }
-                            // else if (type === 'sim_id') {
-                            //     query = `INSERT INTO sim_ids (sim_id , uploaded_by , uploaded_by_id) VALUES ('${response.data.product}' , '${verify.user.user_type}' , '${verify.user.id}')`
-                            // }
+                            else if (type === 'sim_id') {
+                                query = `INSERT INTO sim_ids (sim_id , uploaded_by , uploaded_by_id) VALUES ('${response.data.product}' , '${verify.user.user_type}' , '${verify.user.id}')`
+                            }
                             else {
                                 res.send({
                                     status: false,
