@@ -1225,7 +1225,7 @@ exports.unlinkBulkDevices = async function (req, res) {
                         // console.log("device is offline")
                         offlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
                     }
-
+                    console.log("bulk unlink device databulk: ", device);
                     device_helpers.saveActionHistory(device, constants.DEVICE_UNLINKED);
 
                     try {
@@ -1242,6 +1242,7 @@ exports.unlinkBulkDevices = async function (req, res) {
                                         linkToWL: false,
                                         device_id: device.device_id
                                     };
+                                    console.log("for SA DATA is:: ", data);
                                     axios.put(
                                         app_constants.UPDATE_DEVICE_SUPERADMIN_URL,
                                         data,
@@ -1708,46 +1709,58 @@ exports.applyBulkPolicy = async function (req, res) {
 
 // Send Messages
 exports.sendBulkMsg = async function (req, res) {
-    console.log("req body ", req.body);
-    // return res.send({ status: true })
+    console.log("req body ", req.body, moment(new Date("2018-11-02")).format('YYYY/MM/DD HH:mm:ss'));
+    // return res.send({ status: false, msg: 'testing' })
     try {
         var verify = req.decoded;
         let allDevices = req.body.selectedDevices;
-        let txtMsg = req.body.txtMsg;
+        let txtMsg = req.body.msg;
+        let timer = req.body.timer;
 
         if (verify && allDevices && allDevices.length && txtMsg) {
             let loggedUserId = verify.user.id
 
-            // let failedToApply = [];
+            let failedToApply = [];
             let onlineDevices = [];
             let offlineDevices = [];
 
             for (let device of allDevices) {
-                let isOnline = await device_helpers.isDeviceOnline(device.device_id);
-                if (isOnline) {
-                    socket_helpers.sendBulkMsgToDevice(sockets.baseIo, device.device_id, txtMsg);
-                    onlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
+                let userAccId = device.usrAccId;
 
+                var applyQuery = `INSERT INTO queue_bulk_messages (repeat_duration, timer_status, device_id, action_by, msg, sending_time, is_in_process) VALUES ('${req.body.repeat}', '${timer ? timer : ''}', '${device.device_id}', '${loggedUserId}', '${req.body.msg}', '${req.body.date}', 1);`;
+                console.log("applyQuery ", applyQuery);
+                let saveDeviceMsg = await sql.query(applyQuery);
+
+                if (saveDeviceMsg && saveDeviceMsg.insertId) {
+
+                    let isOnline = await device_helpers.isDeviceOnline(device.device_id);
+                    if (isOnline) {
+                        socket_helpers.sendBulkMsgToDevice(sockets.baseIo, device.device_id, txtMsg);
+                        onlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
+
+                    } else {
+                        offlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
+                    }
                 } else {
-                    offlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
+                    failedToApply.push(device.device_id);
                 }
 
-            }
+            } // end for loop
 
             let messageTxt = '';
             let contentTxt = '';
 
-            // if (failedToApply.length) {
-            //     messageTxt = await helpers.convertToLang(req.translation[""], "Failed to Applied Policy on All Selected Devices . Please try again")
-            // }
-            // else 
-            if (offlineDevices.length) {
-                messageTxt = await helpers.convertToLang(req.translation[""], "Warning All Selected Devices Are Offline");
-                contentTxt = await helpers.convertToLang(req.translation[""], "Message will be Send Soon on all Selected Devices. Action will be performed when devices back online");
+            if (failedToApply.length) {
+                messageTxt = await helpers.convertToLang(req.translation[""], "Failed to Applied Policy on All Selected Devices . Please try again")
             }
-            else if (onlineDevices.length) {
-                messageTxt = await helpers.convertToLang(req.translation[""], "Message successfully send on all selected devices")
-            }
+            else
+                if (offlineDevices.length) {
+                    messageTxt = await helpers.convertToLang(req.translation[""], "Warning All Selected Devices Are Offline");
+                    contentTxt = await helpers.convertToLang(req.translation[""], "Message will be Send Soon on all Selected Devices. Action will be performed when devices back online");
+                }
+                else if (onlineDevices.length) {
+                    messageTxt = await helpers.convertToLang(req.translation[""], "Message successfully send on all selected devices")
+                }
 
             if (onlineDevices.length || offlineDevices.length) {
 
@@ -1758,6 +1771,7 @@ exports.sendBulkMsg = async function (req, res) {
                 let pushed_usr_dvc_ids = [];
 
                 let all_usr_dvc_ids = [];
+                let all_dvc_ids = [];
 
                 offlineDevices.forEach(item => {
                     queue_dvc_ids.push(item.device_id);
@@ -1769,22 +1783,24 @@ exports.sendBulkMsg = async function (req, res) {
                     pushed_usr_dvc_ids.push(item.usr_device_id);
                 });
                 all_usr_dvc_ids = [...queue_usr_dvc_ids, ...pushed_usr_dvc_ids];
+                all_dvc_ids = [...queue_dvc_ids, ...pushed_dvc_ids];
 
                 req.body["device_ids"] = all_usr_dvc_ids;
                 req.body["action_by"] = loggedUserId;
                 req.body["msg"] = txtMsg;
+                req.body["timer"] = timer;
                 // console.log('save bulk history')
-                device_helpers.saveBuklActionHistory(req.body, constants.BULK_SEND_MESSAGE, true);
+                device_helpers.saveBuklMsg(req.body);
 
                 data = {
                     status: true,
                     online: onlineDevices.length ? true : false,
                     offline: offlineDevices.length ? true : false,
-                    // failed: failedToApply.length ? true : false,
+                    failed: failedToApply.length ? true : false,
                     msg: messageTxt,
                     content: contentTxt,
                     data: {
-                        failed_device_ids: [], // failedToApply,
+                        failed_device_ids: failedToApply,
                         queue_device_ids: queue_dvc_ids,
                         pushed_device_ids: pushed_dvc_ids,
                     }
@@ -1816,5 +1832,79 @@ exports.sendBulkMsg = async function (req, res) {
             status: false,
             msg: 'Error while Processing'
         })
+    }
+}
+
+
+// get Bulk messages
+exports.getBulkMsgsList = async function (req, res) {
+    try {
+        var verify = req.decoded;
+        let loggedUserId = verify.user.id;
+
+        // console.log('at getBulkMsgsList:')
+        if (verify) {
+
+            var selectQuery = `SELECT * FROM bulk_messages WHERE action_by = '${loggedUserId}' AND delete_status = 0;`;
+            var result = await sql.query(selectQuery);
+            console.log("result ", result)
+
+            if (result && result.length) {
+
+                for (let msgData of result) {
+                    let deviceIds = msgData.device_ids ? JSON.parse(msgData.device_ids) : [];
+                    // console.log("deviceIds before get detail: ", deviceIds);
+                    if (deviceIds && deviceIds.length) {
+                        let device_detail = await device_helpers.getCompleteDetailOfDevice(deviceIds);
+                        msgData["data"] = JSON.stringify(device_detail);
+                    } else {
+                        msgData["data"] = "[]";
+                    }
+
+                }
+
+                // console.log("final data: ", result);
+                res.send({
+                    status: true,
+                    data: result
+                });
+            } else {
+                res.send({ status: false });
+            }
+
+        }
+    } catch (err) {
+        console.log(err);
+        res.send({ status: false })
+    }
+}
+
+
+// delete Bulk message
+exports.deleteBulkMsg = async function (req, res) {
+    try {
+        var verify = req.decoded;
+        let loggedUserId = verify.user.id;
+        let msgId = req.params.id;
+        console.log('at deleteBulkMsg: msgId', msgId)
+        if (verify) {
+
+            var selectQuery = `UPDATE bulk_messages SET delete_status = 1 WHERE id=${msgId};`;
+            var result = await sql.query(selectQuery);
+            console.log("result ", result)
+
+            if (result && result.affectedRows) {
+                res.send({
+                    status: true,
+                    msg: "Message Delete Successfully"
+                });
+            } else {
+                res.send({ status: false, msg: 'Failded to delete message' });
+            }
+
+        }
+    } catch (err) {
+        console.log(err);
+        res.send({ status: false, msg: 'Failded to delete message' })
     }
 }

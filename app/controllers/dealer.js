@@ -2714,3 +2714,26 @@ exports.setDealerDemosLimit = async function (req, res) {
     }
 }
 
+exports.setTimeZone = async function (req, res) { 
+    try {
+        var verify = req.decoded;
+        console.log("setTimeZone :: ", req.body.data);
+        // return res.send({ status: true, msg: "done" });
+
+        if (verify) {
+            let updateQ = `UPDATE dealers SET timezone = '${req.body.data}' WHERE dealer_id = ${verify.user.id};`;
+            console.log("updateQ ", updateQ);
+            let result = await sql.query(updateQ);
+
+            if (result && result.affectedRows) {
+                res.send({ status: true, msg: "Timezone Successfully Updated" });
+            } else {
+                res.send({ status: false, msg: "Failed to Update timezone" });
+            }
+
+        }
+    } catch (err) {
+        console.log(err);
+        res.send({ status: false, msg: "Error While Processing" });
+    }
+}

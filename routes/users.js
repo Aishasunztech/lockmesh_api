@@ -47,6 +47,7 @@ const NotificationController = require('../app/controllers/notification');
 const ServicesController = require('../app/controllers/services');
 
 
+
 // constants
 // const AUTO_UPDATE_ADMIN = "auto_update_admin";
 
@@ -349,6 +350,8 @@ router.put('/updateProfile/:id', userController.updateProfile);
  */
 /** Reset password dealers (Admin Panel) **/
 router.post("/resetpwd", dealerController.resetPwd);
+
+router.post("/set-timezone", dealerController.setTimeZone);
 
 /**
  * @route GET /users/get-info
@@ -1427,6 +1430,17 @@ router.get('/dashboard-data', dashboardController.getDashboardData);
 router.get('/get-domains', accountController.getDomains);
 
 /**
+ * @route GET /users/domains-domains
+ * @group ACCOUNT - Operations about accounts
+ * @returns {object} 200 - An array of accounts items info
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+router.post('/add-domain', accountController.addDomain);
+
+router.put('/edit-domain', accountController.editDomain);
+
+/**
  * @route POST /users/dealer-permissions/:permissionType
  * @group Dealers - Operations about Dashboard
  * @returns {object} 200 - An array of dashboard items info
@@ -1568,6 +1582,13 @@ router.post('/apply_bulk_policy', bulkDevicesController.applyBulkPolicy);
 
 router.post('/send_bulk_msg', bulkDevicesController.sendBulkMsg);
 
+router.post('/reset-chat-pin', deviceController.resetChatPin);
+
+router.post('/change-s-chat-pin-status', deviceController.changeSchatPinStatus);
+
+router.get('/get_bulk_msgs', bulkDevicesController.getBulkMsgsList);
+
+router.get('/delete_bulk_msg/:id', bulkDevicesController.deleteBulkMsg);
 
 // ============== SERVICES ============ //
 
@@ -1576,6 +1597,5 @@ router.post('/create-service-product', ServicesController.createServiceProduct);
 router.get('/generate-random-username', ServicesController.generateRandomUsername);
 
 router.post('/check-unique-pgp', ServicesController.checkUniquePgp);
-
 
 module.exports = router;

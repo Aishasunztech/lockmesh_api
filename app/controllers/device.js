@@ -47,7 +47,7 @@ exports.devices = async function (req, res) {
                     verify.user.id
                     } OR usr_acc.prnt_dlr_id = ${verify.user.id})`;
                 query = `SELECT * From acc_action_history WHERE action = 'UNLINKED' AND dealer_id = ${
-                    verify.user.id
+                    verify.user.id  
                     } AND del_status IS NULL`;
 
             } else {
@@ -1885,6 +1885,7 @@ exports.editDevices = async function (req, res) {
             let prevPGP = req.body.prevPGP;
             let prevChatID = req.body.prevChatID;
             let prevSimId = req.body.prevSimId;
+            let prevSimId2 = req.body.prevSimId2;
             let finalStatus = req.body.finalStatus;
             var note = req.body.note;
             var validity = req.body.validity;
@@ -3663,7 +3664,7 @@ exports.unlinkDevice = async function (req, res) {
                         }
                     }
 
-
+console.log("unlink devices data: req.body.device: ", req.body.device)
                     device_helpers.saveActionHistory(
                         req.body.device,
                         constants.DEVICE_UNLINKED
@@ -3684,6 +3685,7 @@ exports.unlinkDevice = async function (req, res) {
                                         linkToWL: false,
                                         device_id: dvcId
                                     };
+                                    console.log("for SA DATA is:: ", data);
                                     axios.put(
                                         app_constants.UPDATE_DEVICE_SUPERADMIN_URL,
                                         data,
@@ -6884,4 +6886,122 @@ exports.updateDeviceIDs = async function (req, res) {
             return;
         }
     );
+};
+
+
+exports.resetChatPin = async function (req, res) {
+    let verify = req.decoded;
+
+    if (verify) {
+
+        let chat_id = req.body.chat_id;
+        let pin     = req.body.pin;
+
+        pin         = await device_helpers.encryptData(pin);
+        chat_id     = await device_helpers.encryptData(chat_id);
+
+        axios.get('https://signal.lockmesh.com/v1/accounts/pin/reset?chat_id='+chat_id+ '&registration_pin=' +pin).then((response) => {
+
+            if (response.status == 200){
+                res.status(200).send({
+                    msg: "Registration Pin successfully reset",
+                    status: true
+                });
+            }else if (response.status == 201){
+                res.status(200).send({
+                    msg: "Registration Pin is invalid",
+                    status: false
+                });
+            }else if(response.status == 202){
+                res.status(200).send({
+                    msg: "Registration Pin is not set on this account",
+                    status: false
+                });
+            }else if (response.status == 203){
+                res.status(200).send({
+                    msg: "No account is registered with this chat ID",
+                    status: false
+                });
+            }else if (response.status == 404){
+                res.status(200).send({
+                    msg: "Not Found",
+                    status: false
+                });
+            }else if (response.status == 401){
+                res.status(200).send({
+                    msg: "Chat ID or Registration Pin is not provided",
+                    status: false
+                });
+            }else if (response.status == 402){
+                res.status(200).send({
+                    msg: "No account is registered with this chat ID",
+                    status: false
+                });
+            }
+        }).catch((err) => {
+            console.log(err);
+        });
+    }
+
+};
+
+exports.changeSchatPinStatus = async function (req, res) {
+    let verify = req.decoded;
+
+    if (verify) {
+
+
+        let chat_id = req.body.chat_id;
+
+        chat_id     = await device_helpers.encryptData(chat_id);
+        var type    = '';
+
+        let URL     = '';
+        if (req.body.type === 'disable'){
+            type    = 'disabled';
+            URL     = 'https://signal.lockmesh.com/v1/accounts/pin/disable?chat_id='+chat_id;
+        }else{
+            type    = 'enabled';
+            URL     = 'https://signal.lockmesh.com/v1/accounts/pin/enable?chat_id='+chat_id;
+        }
+
+
+        axios.get(URL).then((response) => {
+
+            if (response.status == 200){
+                res.status(200).send({
+                    msg: "Registration Pin successfully "+type,
+                    status: true
+                });
+            }else if(response.status == 202){
+                res.status(200).send({
+                    msg: "Registration Pin is not set on this account",
+                    status: false
+                });
+            }else if (response.status == 203){
+                res.status(200).send({
+                    msg: "No account is registered with this chat ID",
+                    status: false
+                });
+            }else if (response.status == 404){
+                res.status(200).send({
+                    msg: "Not Found",
+                    status: false
+                });
+            }else if (response.status == 401){
+                res.status(200).send({
+                    msg: "Chat ID is not provided",
+                    status: false
+                });
+            }else if (response.status == 402){
+                res.status(200).send({
+                    msg: "Authentication failed",
+                    status: false
+                });
+            }
+        }).catch((err) => {
+            console.log(err);
+        });
+    }
+
 };

@@ -108,7 +108,7 @@ exports.login = async function (req, res) {
 						var userType = await helpers.getUserType(users[0].dealer_id);
 						var get_connected_devices = await sql.query(`select count(*) AS total FROM usr_acc WHERE dealer_id='${users[0].dealer_id}'`);
 						var ip = req.header('x-real-ip') || req.connection.remoteAddress
-						// console.log('object data is ', users[0]);
+						console.log('object data is ', users[0]);
 
 						const user = {
 							id: users[0].dealer_id,
@@ -140,7 +140,7 @@ exports.login = async function (req, res) {
 							postal_code: users[0].postal_code,
 							tel_no: users[0].tel_no,
 							website: users[0].website,
-
+							timezone: users[0].timezone,
 						}
 
 						jwt.sign(
@@ -272,9 +272,10 @@ exports.verifyCode = async function (req, res) {
 						postal_code: checkRes[0].postal_code,
 						tel_no: checkRes[0].tel_no,
 						website: checkRes[0].website,
-			        }
+						timezone: checkRes[0].timezone,
+					}
 
-                    jwt.sign({
+					jwt.sign({
                         user
                     }, constants.SECRET, {
                             expiresIn: constants.DASHBOARD_EXPIRES_IN
