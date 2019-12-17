@@ -24,6 +24,7 @@ let socketRoutes = require('../routes/sockets');
 //     // cookie: false
 // });
 let io= socket();
+io.set('origins', '*:*');
 io.attach(server);
 socketRoutes.baseSocket(io);
 
