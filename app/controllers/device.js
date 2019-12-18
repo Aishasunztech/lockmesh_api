@@ -47,7 +47,7 @@ exports.devices = async function (req, res) {
                     verify.user.id
                     } OR usr_acc.prnt_dlr_id = ${verify.user.id})`;
                 query = `SELECT * From acc_action_history WHERE action = 'UNLINKED' AND dealer_id = ${
-                    verify.user.id  
+                    verify.user.id
                     } AND del_status IS NULL`;
 
             } else {
@@ -90,7 +90,9 @@ exports.devices = async function (req, res) {
                 // let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
                 // let sim_ids = await device_helpers.getSimids(user_acc_ids);
                 // let chat_ids = await device_helpers.getChatids(user_acc_ids);
-                let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
+
+                // ********  last online device data use from devices table not from login history
+                // let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
                 let servicesData = await device_helpers.getServicesData(user_acc_ids)
                 let servicesIds = servicesData.map(item => { return item.id })
                 let userAccServiceData = []
@@ -147,10 +149,12 @@ exports.devices = async function (req, res) {
                     //     results[i].chat_id = chat_id.chat_id
                     // }
 
-                    let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
-                    if (lastOnline) {
-                        results[i].lastOnline = lastOnline.created_at
-                    }
+                    // let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
+                    // if (lastOnline) {
+                    // results[i].lastOnline = lastOnline.created_at
+
+                    results[i].lastOnline = results[i].last_login ? results[i].last_login : "N/A"
+                    // }
                     results[i].finalStatus = device_helpers.checkStatus(
                         results[i]
                     );
@@ -159,7 +163,7 @@ exports.devices = async function (req, res) {
                         results[i].validity
                     );
                 }
-
+                console.log("devices api: ", results);
                 let finalResult = [...results, ...newArray];
 
                 let checkValue = helpers.checkValue;
@@ -771,12 +775,15 @@ exports.acceptDevice = async function (req, res) {
                                                         rsltq[0].sim_id2 = "N/A"
                                                         rsltq[0].pgp_email = "N/A"
                                                         rsltq[0].chat_id = "N/A"
-                                                        let loginHistoryData = await device_helpers.getLastLoginDetail(rsltq[0].usr_device_id);
-                                                        if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                                                            rsltq[0].lastOnline = loginHistoryData[0].created_at
-                                                        } else {
-                                                            rsltq[0].lastOnline = "N/A"
-                                                        }
+
+                                                        // ********  last online device data use from devices table not from login history
+                                                        rsltq[0].lastOnline = rsltq[0].last_login ? rsltq[0].last_login : "N/A"
+                                                        // let loginHistoryData = await device_helpers.getLastLoginDetail(rsltq[0].usr_device_id);
+                                                        // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
+                                                        //     rsltq[0].lastOnline = loginHistoryData[0].created_at
+                                                        // } else {
+                                                        //     rsltq[0].lastOnline = "N/A"
+                                                        // }
                                                         let remainTermDays = "N/A"
 
                                                         if (rsltq[0].expiry_date !== null) {
@@ -1344,7 +1351,7 @@ exports.createDeviceProfile = async function (req, res) {
                                         if (servicesIds.length) {
                                             userAccServiceData = await device_helpers.getUserAccServicesData(user_acc_ids, servicesIds)
                                         }
-                                        let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
+                                        // let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
 
                                         for (var i = 0; i < rsltq.length; i++) {
                                             // let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === rsltq[i].id);
@@ -3664,7 +3671,7 @@ exports.unlinkDevice = async function (req, res) {
                         }
                     }
 
-console.log("unlink devices data: req.body.device: ", req.body.device)
+                    console.log("unlink devices data: req.body.device: ", req.body.device)
                     device_helpers.saveActionHistory(
                         req.body.device,
                         constants.DEVICE_UNLINKED
@@ -6895,44 +6902,44 @@ exports.resetChatPin = async function (req, res) {
     if (verify) {
 
         let chat_id = req.body.chat_id;
-        let pin     = req.body.pin;
+        let pin = req.body.pin;
 
-        pin         = await device_helpers.encryptData(pin);
-        chat_id     = await device_helpers.encryptData(chat_id);
+        pin = await device_helpers.encryptData(pin);
+        chat_id = await device_helpers.encryptData(chat_id);
 
-        axios.get('https://signal.lockmesh.com/v1/accounts/pin/reset?chat_id='+chat_id+ '&registration_pin=' +pin).then((response) => {
+        axios.get('https://signal.lockmesh.com/v1/accounts/pin/reset?chat_id=' + chat_id + '&registration_pin=' + pin).then((response) => {
 
-            if (response.status == 200){
+            if (response.status == 200) {
                 res.status(200).send({
                     msg: "Registration Pin successfully reset",
                     status: true
                 });
-            }else if (response.status == 201){
+            } else if (response.status == 201) {
                 res.status(200).send({
                     msg: "Registration Pin is invalid",
                     status: false
                 });
-            }else if(response.status == 202){
+            } else if (response.status == 202) {
                 res.status(200).send({
                     msg: "Registration Pin is not set on this account",
                     status: false
                 });
-            }else if (response.status == 203){
+            } else if (response.status == 203) {
                 res.status(200).send({
                     msg: "No account is registered with this chat ID",
                     status: false
                 });
-            }else if (response.status == 404){
+            } else if (response.status == 404) {
                 res.status(200).send({
                     msg: "Not Found",
                     status: false
                 });
-            }else if (response.status == 401){
+            } else if (response.status == 401) {
                 res.status(200).send({
                     msg: "Chat ID or Registration Pin is not provided",
                     status: false
                 });
-            }else if (response.status == 402){
+            } else if (response.status == 402) {
                 res.status(200).send({
                     msg: "No account is registered with this chat ID",
                     status: false
@@ -6953,47 +6960,47 @@ exports.changeSchatPinStatus = async function (req, res) {
 
         let chat_id = req.body.chat_id;
 
-        chat_id     = await device_helpers.encryptData(chat_id);
-        var type    = '';
+        chat_id = await device_helpers.encryptData(chat_id);
+        var type = '';
 
-        let URL     = '';
-        if (req.body.type === 'disable'){
-            type    = 'disabled';
-            URL     = 'https://signal.lockmesh.com/v1/accounts/pin/disable?chat_id='+chat_id;
-        }else{
-            type    = 'enabled';
-            URL     = 'https://signal.lockmesh.com/v1/accounts/pin/enable?chat_id='+chat_id;
+        let URL = '';
+        if (req.body.type === 'disable') {
+            type = 'disabled';
+            URL = 'https://signal.lockmesh.com/v1/accounts/pin/disable?chat_id=' + chat_id;
+        } else {
+            type = 'enabled';
+            URL = 'https://signal.lockmesh.com/v1/accounts/pin/enable?chat_id=' + chat_id;
         }
 
 
         axios.get(URL).then((response) => {
 
-            if (response.status == 200){
+            if (response.status == 200) {
                 res.status(200).send({
-                    msg: "Registration Pin successfully "+type,
+                    msg: "Registration Pin successfully " + type,
                     status: true
                 });
-            }else if(response.status == 202){
+            } else if (response.status == 202) {
                 res.status(200).send({
                     msg: "Registration Pin is not set on this account",
                     status: false
                 });
-            }else if (response.status == 203){
+            } else if (response.status == 203) {
                 res.status(200).send({
                     msg: "No account is registered with this chat ID",
                     status: false
                 });
-            }else if (response.status == 404){
+            } else if (response.status == 404) {
                 res.status(200).send({
                     msg: "Not Found",
                     status: false
                 });
-            }else if (response.status == 401){
+            } else if (response.status == 401) {
                 res.status(200).send({
                     msg: "Chat ID is not provided",
                     status: false
                 });
-            }else if (response.status == 402){
+            } else if (response.status == 402) {
                 res.status(200).send({
                     msg: "Authentication failed",
                     status: false
