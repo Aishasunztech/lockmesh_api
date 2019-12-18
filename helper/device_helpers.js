@@ -549,16 +549,16 @@ module.exports = {
 
     encryptData: async (data) => {
 
-        let key_1   = "fd3452";
-        let key_2   = "y920ww";
-        let key_3   = "sdfr234";
+        let key_1 = "fd3452";
+        let key_2 = "y920ww";
+        let key_3 = "sdfr234";
 
         let simpleString = key_1 + data + key_2 + key_3;
 
         var key = "A61{/>jwE48N{B#*";
-        var iv  = "P%j.QeM<6S-2p]XX";
+        var iv = "P%j.QeM<6S-2p]XX";
         var cipher = forge.cipher.createCipher('AES-CBC', key);
-        cipher.start({iv: iv});
+        cipher.start({ iv: iv });
         cipher.update(forge.util.createBuffer(simpleString));
         cipher.finish();
         var encrypted = cipher.output;
