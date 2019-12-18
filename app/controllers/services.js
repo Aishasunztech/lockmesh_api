@@ -250,9 +250,11 @@ exports.validateSimId = async function (req, res) {
                 })
                 return
             } else {
-                let selectSimQ = `SELECT * FROM sim_ids WHERE sim_id = '${sim_id}' AND activated = 1 AND delete_status = 0`
+                let selectSimQ = `SELECT * FROM sim_ids WHERE sim_id = '${sim_id}' AND activated = '1' AND delete_status = '0'`
+                console.log(selectSimQ);
                 let simFound = await sql.query(selectSimQ)
                 if (simFound && simFound.length) {
+                    console.log("sdasd");
                     res.send({
                         status: false,
                         msg: "ERROR: THIS ICCID IS IN USE, PLEASE TRY ANOTHER ONE"
@@ -268,10 +270,7 @@ exports.validateSimId = async function (req, res) {
                     }
                     axios.post(app_constants.VALIDATE_SIM_ID, data, { headers: { authorization: response.data.user.token } }).then(async function (response) {
                         if (response.data.status) {
-                            res.send({
-                                status: true,
-                                valid: response.data.valid
-                            })
+                            res.send(response.data)
                         } else {
                             res.send({
                                 status: false,
