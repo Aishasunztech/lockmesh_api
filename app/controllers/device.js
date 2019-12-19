@@ -2452,9 +2452,9 @@ exports.editDevices = async function (req, res) {
                                 // }
 
                                 await helpers.updateProfitLoss(admin_profit, dealer_profit, admin_data, verify.user.connected_dealer, usr_acc_id, loggedDealerType, pay_now, service_id)
-                                if (exp_month == 0 && prevService.service_term != 0) {
+                                if (exp_month == 0 && prevService && prevService.service_term != 0) {
                                     sql.query(`UPDATE dealers SET remaining_demos = remaining_demos - 1 WHERE dealer_id = ${dealer_id}`)
-                                } else if (prevService.service_term == 0 && exp_month != 0) {
+                                } else if (prevService && prevService.service_term == 0 && exp_month != 0) {
                                     sql.query(`UPDATE dealers SET remaining_demos = remaining_demos + 1 WHERE dealer_id = ${dealer_id}`)
                                 }
 
