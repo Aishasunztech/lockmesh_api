@@ -163,7 +163,7 @@ exports.devices = async function (req, res) {
                         results[i].validity
                     );
                 }
-                console.log("devices api: ", results);
+                // console.log("devices api: ", results);
                 let finalResult = [...results, ...newArray];
 
                 let checkValue = helpers.checkValue;
