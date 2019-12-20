@@ -250,7 +250,7 @@ exports.validateSimId = async function (req, res) {
                 })
                 return
             } else {
-                let selectSimQ = `SELECT * FROM sim_ids WHERE sim_id = '${sim_id}' AND activated = '1' AND delete_status = '0'`
+                let selectSimQ = `SELECT * FROM sim_ids WHERE sim_id = '${sim_id}' AND delete_status = '0'`
                 console.log(selectSimQ);
                 let simFound = await sql.query(selectSimQ)
                 if (simFound && simFound.length) {

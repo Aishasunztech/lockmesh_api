@@ -515,7 +515,19 @@ module.exports = {
     },
 
     getUserAccServicesData: async (ids, servicesIds) => {
-        let query = "SELECT * FROM user_acc_services WHERE user_acc_id IN (" + ids + ") AND service_id IN (" + servicesIds + ") "
+        let query = "SELECT * FROM user_acc_services WHERE user_acc_id IN (" + ids + ") AND service_id IN (" + servicesIds + ")"
+        // console.log(query);
+        let results = await sql.query(query);
+        if (results.length) {
+            return results
+        } else {
+            return []
+        }
+    },
+
+    /** GET DATA PLAN PACKAGES FOR DEVICE LIST */
+    getDataPlans: async (servicesIds) => {
+        let query = "SELECT * FROM sim_data_plans WHERE service_id IN (" + servicesIds + ") AND status = 'active'"
         // console.log(query);
         let results = await sql.query(query);
         if (results.length) {
@@ -617,7 +629,7 @@ module.exports = {
         } else {
             finalQuery = query + "('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','" + device.online + "','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + device.prnt_dlr_id + "','" + device.link_code + "', '" + device.client_id + "', '" + device.start_date + "', '" + device.expiry_months + "', '" + device.expiry_date + "','" + device.activation_code + "','" + device.status + "','" + device.device_status + "',0,'" + device.wipe_status + "','" + accountStatus + "','" + device.unlink_status + "','" + device.transfer_status + "','" + device.transfer_user_status + "','" + device.transfered_from + "','" + device.transfered_to + "','" + device.user_transfered_from + "','" + device.user_transfered_to + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','" + device.finalStatus + "')"
         }
-        console.log("saveActionHistory:: ", finalQuery);
+        // console.log("saveActionHistory:: ", finalQuery);
         await sql.query(finalQuery)
 
     },

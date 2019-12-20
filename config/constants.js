@@ -3,6 +3,9 @@ let APP_TITLE = "LockMesh Dev";
 let URL = "http://localhost:3000";
 let SUPERADMIN_URL = "http://localhost:8042";
 let SUPERADMIN_URL_API = "http://localhost:8042";
+const accountSid = 'AC2383c4b776efb51c86cc6f9a5cdb4e89';
+const authToken = '8f09f2ebc98338bff27e0ac73ea71a23';
+let twilioClient = require('twilio')(accountSid, authToken);
 
 // Database
 let DB_HOST = "localhost";
@@ -188,7 +191,7 @@ module.exports = {
 
 	STAFF_ID_SYSTEM_LETTER,
 	STAFF_ID_SYSTEM_LETTER_INDEX,
-
+	twilioClient: twilioClient,
 	// Fixer API key
 	FIXER_API_KEY: "96035c5c5b46baea5a96b84930eaed79",
 	BASE_CURRENCY: "USD",
@@ -232,4 +235,5 @@ module.exports = {
 		email: "whiteLabelAdmin!786@gmial.com",
 		password: "whiteLabel@Admin!786"
 	}
+
 };

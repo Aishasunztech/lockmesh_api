@@ -2252,8 +2252,31 @@ module.exports = {
 			}
 		}
 	},
-	updateDealerLastLogin: async function(dealerId ) {
+	updateDealerLastLogin: async function (dealerId) {
 		let updateLastLoginQ = `UPDATE dealers SET last_login = '${moment().format("YYYY/MM/DD HH:mm:ss")}' WHERE dealer_id=${dealerId}`;
 		await sql.query(updateLastLoginQ);
-	}
+	},
+	updateSimStatus: (sim_id, status) => {
+		app_constants.twilioClient.wireless.sims.list({ iccid: sim_id }).then(response => {
+			if (response && response.length) {
+				app_constants.twilioClient.wireless.sims(response[0].sid).update({ status: status }).then(response => {
+					// console.log(response);
+					if (response) {
+						if (status === 'active') {
+							sql.query(`UPDATE sim_ids SET activated = 1 WHERE sim_id = '${sim_id}' AND delete_status = '0'`)
+						}
+						else if (status === 'deactivated') {
+							sql.query(`UPDATE sim_ids SET activated = 0 WHERE sim_id = '${sim_id}' AND delete_status = '1'`)
+						}
+
+					}
+				}).catch(err => {
+					console.log(err);
+				})
+			}
+		}).catch(err => {
+			console.log(err);
+		})
+
+	},
 }

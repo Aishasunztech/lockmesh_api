@@ -94,8 +94,10 @@ exports.devices = async function (req, res) {
                 let servicesData = await device_helpers.getServicesData(user_acc_ids)
                 let servicesIds = servicesData.map(item => { return item.id })
                 let userAccServiceData = []
+                let data_plans = []
                 if (servicesIds.length) {
                     userAccServiceData = await device_helpers.getUserAccServicesData(user_acc_ids, servicesIds)
+                    data_plans = await device_helpers.getDataPlans(servicesIds)
                 }
 
                 for (var i = 0; i < results.length; i++) {
@@ -121,9 +123,14 @@ exports.devices = async function (req, res) {
                         productsData.map((item) => {
                             if (item.type === 'sim_id') {
                                 results[i].sim_id = item.product_value
+                                let sim_id_data_plan = data_plans.filter((item) => item.service_id == service_id && item.sim_type == 'sim_id')
+                                results[i].sim_id_data_plan = sim_id_data_plan[0]
                             }
                             else if (item.type === 'sim_id2') {
                                 results[i].sim_id2 = item.product_value
+                                results[i].sim_id2_data_plan = data_plans.filter((item) => item.service_id == service_id && item.sim_type == 'sim_id2')
+                                let sim_id2_data_plan = data_plans.filter((item) => item.service_id == service_id && item.sim_type == 'sim_id')
+                                results[i].sim_id2_data_plan = sim_id2_data_plan[0]
                             }
                             else if (item.type === 'pgp_email') {
                                 results[i].pgp_email = item.product_value
@@ -408,6 +415,12 @@ exports.acceptDevice = async function (req, res) {
         let hardwarePrice = req.body.hardwarePrice ? req.body.hardwarePrice : 0
         let discounted_price = total_price + hardwarePrice
         let invoice_subtotal = total_price + hardwarePrice
+        var basic_data_plan = {
+            data_limit: 2000,
+            price: 0,
+            term: term
+        }
+        var data_plans = req.body.data_plans ? req.body.data_plans : {}
 
         if (pay_now) {
             discount = Math.ceil(((total_price + hardwarePrice) * 0.03));
@@ -575,7 +588,7 @@ exports.acceptDevice = async function (req, res) {
                                                         hardwarePrice = hardwarePrice - Math.ceil(Number((hardwarePrice * 0.03)))
                                                     }
 
-                                                    let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages , total_credits, start_date, service_expiry_date , service_term) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${total_price} ,'${start_date}',  '${expiry_date}' ,'${term}' )`
+                                                    let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages , total_credits, start_date, service_expiry_date , service_term ) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${total_price} ,'${start_date}',  '${expiry_date}' ,'${term}' )`
 
                                                     let service_data_result = await sql.query(service_billing);
                                                     let service_id = null
@@ -711,23 +724,34 @@ exports.acceptDevice = async function (req, res) {
                                                             }
                                                         })
                                                     }
-                                                    let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + usr_acc_id + '" , start_date = "' + start_date + '" where sim_id ="' + sim_id + '"';
-                                                    let simIdUpdateResult = await sql.query(updateSimIds)
-                                                    if (simIdUpdateResult.affectedRows) {
-                                                        let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id + "'"
-                                                        sql.query(getsimID, function (err, result) {
-                                                            if (result && result.length) {
-                                                                let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id,product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].sim_id}' , 'sim_id' , '${start_date}')`
-                                                                sql.query(insertAccService)
-                                                            }
-                                                        })
+                                                    if (sim_id) {
+                                                        let insertSimIds = `INSERT INTO sim_ids (sim_id , user_acc_id , start_date , dealer_id , used , uploaded_by , uploaded_by_id) VALUES ('${sim_id}' , ${usr_acc_id} , '${start_date}' , ${dealer_id} , 1 , '${verify.user.user_type}' , '${verify.user.id}')`;
+                                                        let simIdInsertResult = await sql.query(insertSimIds)
+                                                        if (simIdInsertResult.affectedRows) {
+                                                            helpers.updateSimStatus(sim_id, 'active')
+                                                            let data_plan_package = data_plans.sim_id ? data_plans.sim_id : basic_data_plan
+                                                            let data_package_plan = `INSERT INTO sim_data_plans ( service_id , data_plan_package , total_data , sim_type , start_date) VALUES( ${service_id} , '${JSON.stringify(data_plan_package)}' , '${data_plan_package.data_limit}' , 'sim_id' , '${start_date}')`
+                                                            sql.query(data_package_plan)
+                                                            let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id + "'"
+                                                            sql.query(getsimID, function (err, result) {
+                                                                if (result && result.length) {
+                                                                    let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id,product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].sim_id}' , 'sim_id' , '${start_date}')`
+                                                                    sql.query(insertAccService)
+
+                                                                }
+                                                            })
+                                                        }
                                                     }
 
                                                     if (sim_id2) {
-                                                        let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + usr_acc_id + '" , start_date = "' + start_date + '" where sim_id ="' + sim_id2 + '"';
-                                                        let simIdUpdateResult = await sql.query(updateSimIds)
-                                                        if (simIdUpdateResult.affectedRows) {
-                                                            let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id + "'"
+                                                        let insertSimId2 = `INSERT INTO sim_ids (sim_id , user_acc_id , start_date , dealer_id , used , uploaded_by , uploaded_by_id) VALUES ('${sim_id2}' , ${usr_acc_id} , '${start_date}' , ${dealer_id} , 1 , '${verify.user.user_type}' , '${verify.user.id}')`;
+                                                        let simId2InsertResult = await sql.query(insertSimId2)
+                                                        if (simId2InsertResult.affectedRows) {
+                                                            helpers.updateSimStatus(sim_id2, 'active')
+                                                            let data_plan_package = data_plans.sim_id2 ? data_plans.sim_id2 : basic_data_plan
+                                                            let data_package_plan = `INSERT INTO sim_data_plans ( service_id , data_plan_package , total_data , sim_type , start_date) VALUES( ${service_id} , '${JSON.stringify(data_plan_package)}' , '${data_plan_package.data_limit}' , 'sim_id2' , '${start_date}')`
+                                                            sql.query(data_package_plan)
+                                                            let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id2 + "'"
                                                             sql.query(getsimID, function (err, result) {
                                                                 if (result && result.length) {
                                                                     let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id,product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].sim_id}' ,'sim_id' , '${start_date}')`
@@ -982,13 +1006,18 @@ exports.createDeviceProfile = async function (req, res) {
 
         var name = userData[0].user_name;
         var email = userData[0].email;
-        var pgp_email = req.body.pgp_email;
+        var pgp_email = req.body.pgp_email ? req.body.pgp_email : '';
         var start_date = moment().format("YYYY/MM/DD");
         var exp_month = req.body.term
         var expiry_date = '';
         var dealer_id = verify.user.dealer_id;
         var duplicate = req.body.duplicate ? req.body.duplicate : 0;
-
+        var basic_data_plan = {
+            data_limit: 2000,
+            price: 0,
+            term: exp_month
+        }
+        var data_plans = req.body.data_plans ? req.body.data_plans : {}
         if (exp_month === '0') {
             var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
             expiry_date = moment(trailDate).format("YYYY/MM/DD")
@@ -1508,7 +1537,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 hardwarePrice = hardwarePrice - Math.ceil(Number((hardwarePrice * 0.03)))
                                                             }
 
-                                                            let service_data = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date, total_credits ,service_expiry_date , service_term) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price} , '${expiry_date}' , '${exp_month}')`
+                                                            let service_data = `INSERT INTO services_data(user_acc_id, dealer_id, products, packages, start_date, total_credits ,service_expiry_date , service_term ) VALUES(${user_acc_id}, ${dealer_id}, '${JSON.stringify(products)}', '${JSON.stringify(packages)}', '${start_date}', ${total_price} , '${expiry_date}' , '${exp_month}')`
                                                             let service_data_result = await sql.query(service_data);
                                                             let service_id = null
                                                             if (service_data_result.affectedRows) {
@@ -1632,22 +1661,36 @@ exports.createDeviceProfile = async function (req, res) {
                                                                     }
                                                                 })
                                                             }
-                                                            let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + user_acc_id + '" ,start_date = "' + start_date + '" , dealer_id  = "' + dealer_id + '"  where sim_id ="' + sim_id + '"';
-                                                            let simIdUpdateResult = await sql.query(updateSimIds)
-                                                            if (simIdUpdateResult.affectedRows) {
-                                                                let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id + "'"
-                                                                sql.query(getsimID, function (err, result) {
-                                                                    if (result && result.length) {
-                                                                        let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, product_value, type , start_date) VALUES(${user_acc_id} , ${service_id} , ${result[0].id} , '${result[0].sim_id}' , 'sim_id' , '${start_date}')`
-                                                                        sql.query(insertAccService)
-                                                                    }
-                                                                })
+                                                            if (sim_id) {
+                                                                let insertSimIds = `INSERT INTO sim_ids (sim_id , user_acc_id , start_date , dealer_id , used , uploaded_by , uploaded_by_id) VALUES ('${sim_id}' , ${user_acc_id} , '${start_date}' , ${dealer_id} , 1 , '${verify.user.user_type}' , '${verify.user.id}')`;
+                                                                // let insertSimIds = 'update sim_ids set used=1, user_acc_id="' + user_acc_id + '" ,start_date = "' + start_date + '" , dealer_id  = "' + dealer_id + '"  where sim_id ="' + sim_id + '"';
+                                                                let simIdInsertResult = await sql.query(insertSimIds)
+                                                                if (simIdInsertResult.affectedRows) {
+                                                                    // helpers.updateSimStatus(sim_id, 'active')
+                                                                    let data_plan_package = data_plans.sim_id2 ? data_plans.sim_id2 : basic_data_plan
+                                                                    let data_package_plan = `INSERT INTO sim_data_plans ( service_id , data_plan_package , total_data , sim_type , start_date) VALUES( ${service_id} , '${JSON.stringify(data_plan_package)}' , '${data_plan_package.data_limit}' , 'sim_id' , '${start_date}')`
+                                                                    sql.query(data_package_plan)
+
+                                                                    let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id + "'"
+                                                                    sql.query(getsimID, function (err, result) {
+                                                                        if (result && result.length) {
+                                                                            let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, product_value, type , start_date) VALUES(${user_acc_id} , ${service_id} , ${result[0].id} , '${result[0].sim_id}' , 'sim_id' , '${start_date}')`
+                                                                            sql.query(insertAccService)
+                                                                        }
+                                                                    })
+                                                                }
                                                             }
 
                                                             if (sim_id2) {
-                                                                let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + user_acc_id + '" , start_date = "' + start_date + '" , dealer_id  = "' + dealer_id + '" where sim_id ="' + sim_id2 + '"';
-                                                                let simIdUpdateResult = await sql.query(updateSimIds)
-                                                                if (simIdUpdateResult.affectedRows) {
+                                                                let insertSimId2 = `INSERT INTO sim_ids (sim_id , user_acc_id , start_date , dealer_id , used , uploaded_by , uploaded_by_id) VALUES ('${sim_id2}' , ${user_acc_id} , '${start_date}' , ${dealer_id} , 1, '${verify.user.user_type}' , '${verify.user.id}')`;
+                                                                // let updateSimIds = 'update sim_ids set used=1, user_acc_id="' + user_acc_id + '" , start_date = "' + start_date + '" , dealer_id  = "' + dealer_id + '" where sim_id ="' + sim_id2 + '"';
+                                                                let simIdInsertResult = await sql.query(insertSimId2)
+                                                                if (simIdInsertResult.affectedRows) {
+                                                                    // helpers.updateSimStatus(sim_id, 'active')
+                                                                    let data_plan_package = data_plans.sim_id2 ? data_plans.sim_id2 : basic_data_plan
+                                                                    let data_package_plan = `INSERT INTO sim_data_plans ( service_id , data_plan_package , total_data , sim_type , start_date) VALUES( ${service_id} , '${JSON.stringify(data_plan_package)}' , '${data_plan_package.data_limit}' , 'sim_id2' , '${start_date}')`
+                                                                    sql.query(data_package_plan)
+
                                                                     let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id2 + "'"
                                                                     sql.query(getsimID, function (err, result) {
                                                                         if (result && result.length) {
@@ -2289,6 +2332,7 @@ exports.editDevices = async function (req, res) {
                                 }
                                 if (pgp_email != prevPGP) {
                                     console.log("PGP change");
+
                                     let updatePgpEmails =
                                         'update pgp_emails set user_acc_id = "' +
                                         usr_acc_id +
@@ -2308,7 +2352,7 @@ exports.editDevices = async function (req, res) {
                                         await sql.query(updatePrevPgp);
                                     } else {
                                         let updatePrevPgp =
-                                            'update pgp_emails set   used=1 ,  end_date = "' + date_now + '" where pgp_email ="' +
+                                            'update pgp_emails set used=1 ,  end_date = "' + date_now + '"  where pgp_email ="' +
                                             prevPGP +
                                             '"';
                                         await sql.query(updatePrevPgp);
@@ -2342,13 +2386,61 @@ exports.editDevices = async function (req, res) {
                                 }
                                 if (sim_id != prevSimId) {
                                     console.log("sim change");
-                                    let updateSimIds =
-                                        'update sim_ids set user_acc_id = "' +
-                                        usr_acc_id +
-                                        '",  used=1 , start_date = "' + date_now + '" , dealer_id = "' + dealer_id + '" where sim_id ="' +
-                                        sim_id +
-                                        '"';
-                                    await sql.query(updateSimIds);
+                                    let insertSimIds = `INSERT INTO sim_ids (sim_id , user_acc_id , start_date , dealer_id , used , uploaded_by , uploaded_by_id) VALUES ('${sim_id}' , ${usr_acc_id} , '${date_now}' , ${dealer_id} , 1 , '${verify.user.user_type}' , '${verify.user.id}')`;
+
+                                    // let insertSimIds =
+                                    //     'update sim_ids set user_acc_id = "' +
+                                    //     usr_acc_id +
+                                    //     '",  used=1 , start_date = "' + date_now + '" , dealer_id = "' + dealer_id + '" where sim_id ="' +
+                                    //     sim_id +
+                                    //     '"';
+                                    sql.query(insertSimIds, function (err, result) {
+                                        if (result && result.insertId) {
+                                            if (finalStatus != constants.DEVICE_PRE_ACTIVATION) {
+                                                helpers.updateSimStatus(sim_id, 'active')
+                                            }
+                                        }
+                                    });
+                                    if (
+                                        finalStatus ===
+                                        constants.DEVICE_PRE_ACTIVATION
+                                    ) {
+                                        let updatePrevSim =
+                                            'update sim_ids set user_acc_id = null,  used=0 , start_date = NULL , dealer_id = null , delete_status = 1 where sim_id ="' +
+                                            prevSimId +
+                                            '"';
+                                        await sql.query(updatePrevSim);
+                                    } else {
+                                        let updatePrevSim =
+                                            'update sim_ids set used=1 , expiry_date = "' + date_now + '" , delete_status = 1 where sim_id ="' +
+                                            prevSimId +
+                                            '"';
+                                        await sql.query(updatePrevSim);
+
+                                        if (finalStatus != constants.DEVICE_PRE_ACTIVATION) {
+                                            helpers.updateSimStatus(sim_id, 'deactivated')
+                                        }
+
+
+                                    }
+                                }
+                                if (sim_id2 != prevSimId2) {
+                                    console.log("sim id 2 change");
+                                    let insertSimIds = `INSERT INTO sim_ids (sim_id , user_acc_id , start_date , dealer_id , used ,uploaded_by , uploaded_by_id) VALUES ('${sim_id}' , ${usr_acc_id} , '${date_now}' , ${dealer_id} , 1 , '${verify.user.user_type}' , '${verify.user.id}')`;
+
+                                    // let insertSimIds =
+                                    //     'update sim_ids set user_acc_id = "' +
+                                    //     usr_acc_id +
+                                    //     '",  used=1 , start_date = "' + date_now + '" , dealer_id = "' + dealer_id + '" where sim_id ="' +
+                                    //     sim_id +
+                                    //     '"';
+                                    sql.query(insertSimIds, function (err, result) {
+                                        if (result && result.insertId) {
+                                            if (finalStatus != constants.DEVICE_PRE_ACTIVATION) {
+                                                helpers.updateSimStatus(sim_id, 'active')
+                                            }
+                                        }
+                                    });
                                     if (
                                         finalStatus ===
                                         constants.DEVICE_PRE_ACTIVATION
@@ -2360,10 +2452,13 @@ exports.editDevices = async function (req, res) {
                                         await sql.query(updatePrevSim);
                                     } else {
                                         let updatePrevSim =
-                                            'update sim_ids set used=1 , expiry_date = "' + date_now + '" where sim_id ="' +
+                                            'update sim_ids set used=1 , expiry_date = "' + date_now + '" , delete_status = 1 where sim_id ="' +
                                             prevSimId +
                                             '"';
                                         await sql.query(updatePrevSim);
+                                        if (finalStatus != constants.DEVICE_PRE_ACTIVATION) {
+                                            helpers.updateSimStatus(sim_id, 'deactivated')
+                                        }
                                     }
                                 }
 
@@ -6212,7 +6307,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
                             }
                             await sql.query("UPDATE pgp_emails set user_acc_id = null , used = 0 , start_date = null where pgp_email ='" + device.pgp_email + "'")
                             await sql.query("UPDATE chat_ids set user_acc_id = null , used = 0 , start_date = null where chat_id ='" + device.chat_id + "'")
-                            await sql.query("UPDATE sim_ids set user_acc_id = null , used = 0 , start_date = null where sim_id ='" + device.sim_id + "' OR sim_id ='" + device.sim_id2 + "'")
+                            await sql.query("UPDATE sim_ids set user_acc_id = null , used = 0 , start_date = null , delete_status = 1 where sim_id ='" + device.sim_id + "' OR sim_id ='" + device.sim_id2 + "'")
                             let deleteHistoryQuery = "UPDATE acc_action_history SET del_status='1' WHERE user_acc_id='" + device.id + "' AND dealer_id = '" + verify.user.id + "' AND action = 'PRE-ACTIVATED'";
                             await sql.query(deleteHistoryQuery)
                             deletedDevices.push(device.id);
@@ -6230,8 +6325,10 @@ exports.deleteUnlinkDevice = async function (req, res) {
 
                                 let currentDate = moment().format("YYYY/MM/DD");
                                 let updateBilling = "UPDATE services_data set status = 'deleted' ,paid_credits = 0 , end_date = '" + currentDate + "' WHERE user_acc_id = " + user_acc_id;
-
                                 await sql.query(updateBilling);
+
+                                sql.query("UPDATE sim_data_plans set status = 'deleted' WHERE service_id = " + bills[0].id);
+
                                 let updateSeviceSaleQuery = `UPDATE services_sale SET status = 'cancelled' WHERE user_acc_id = ${user_acc_id} AND service_data_id = ${bills[0].id}`
                                 sql.query(updateSeviceSaleQuery)
 
