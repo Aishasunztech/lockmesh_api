@@ -1709,15 +1709,48 @@ exports.applyBulkPolicy = async function (req, res) {
 
 // Send Messages
 exports.sendBulkMsg = async function (req, res) {
-    console.log("req body ", req.body, moment(new Date("2018-11-02")).format('YYYY/MM/DD HH:mm:ss'));
+    console.log("req body sendBulkMsg ==> ", req.body);
     // return res.send({ status: false, msg: 'testing' })
     try {
         var verify = req.decoded;
-        let allDevices = req.body.selectedDevices;
+        let allDevices = req.body.devices;
         let txtMsg = req.body.msg;
         let timer = req.body.timer;
+        let repeat = req.body.repeat; // daily, weekly, etc...
+        let dateTime = req.body.dateTime;
+        let weekDay = req.body.weekDay;
+        let monthDate = req.body.monthDate; // 1 - 31
+        let monthName = req.body.monthName; // for 12 months
+        let time = req.body.time;
 
-        if (verify && allDevices && allDevices.length && txtMsg) {
+        let valid_conditions = true;
+
+        // Form data Validations
+        if (timer === "NOW") { // 01
+            dateTime = '';
+            repeat = "NONE";
+        }
+        else if (timer === "DATE/TIME") { // 02
+            repeat = "NONE";
+            if (!dateTime) valid_conditions = false;
+        }
+        else if (timer === "REPEAT") { // 03
+            if (repeat === "DAILY") {
+                if (!time) valid_conditions = false;
+            } else if (repeat === "WEEKLY") {
+                if (!time && !weekDay) valid_conditions = false;
+            } else if (repeat === "MONTHLY" || repeat === "3 MONTHS" || repeat === "6 MONTHS") {
+                if (!time && !weekDay && !monthDate) valid_conditions = false;
+            } else if (repeat === "12 MONTHS") {
+                if (!time && !weekDay && !monthName) valid_conditions = false;
+            }
+        }
+        else { // 04
+            valid_conditions = false;
+        }
+        // end validation process
+
+        if (verify && allDevices && allDevices.length && txtMsg && valid_conditions) {
             let loggedUserId = verify.user.id
 
             let failedToApply = [];
@@ -1727,11 +1760,12 @@ exports.sendBulkMsg = async function (req, res) {
             for (let device of allDevices) {
                 let userAccId = device.usrAccId;
 
-                var applyQuery = `INSERT INTO queue_bulk_messages (repeat_duration, timer_status, device_id, action_by, msg, sending_time, is_in_process) VALUES ('${req.body.repeat}', '${timer ? timer : ''}', '${device.device_id}', '${loggedUserId}', '${req.body.msg}', '${req.body.date}', 1);`;
+                var applyQuery = `INSERT INTO queue_bulk_messages (repeat, timer_status, device_id, action_by, msg, sending_time, is_in_process) VALUES ('${repeat}', '${timer}', '${device.device_id}', '${loggedUserId}', '${txtMsg}', '${dateTime}', 1);`;
                 console.log("applyQuery ", applyQuery);
-                let saveDeviceMsg = await sql.query(applyQuery);
+                // let saveDeviceMsg = await sql.query(applyQuery);
 
-                if (saveDeviceMsg && saveDeviceMsg.insertId) {
+                // if (saveDeviceMsg && saveDeviceMsg.insertId) {
+                if (true) {
 
                     let isOnline = await device_helpers.isDeviceOnline(device.device_id);
                     if (isOnline) {
@@ -1817,10 +1851,7 @@ exports.sendBulkMsg = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(
-                    req.translation[""],
-                    "Invalid Devices"
-                )
+                msg: "Error while Processing"
             };
             res.send(data);
             return;

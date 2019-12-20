@@ -549,16 +549,16 @@ module.exports = {
 
     encryptData: async (data) => {
 
-        let key_1   = "fd3452";
-        let key_2   = "y920ww";
-        let key_3   = "sdfr234";
+        let key_1 = "fd3452";
+        let key_2 = "y920ww";
+        let key_3 = "sdfr234";
 
         let simpleString = key_1 + data + key_2 + key_3;
 
         var key = "A61{/>jwE48N{B#*";
-        var iv  = "P%j.QeM<6S-2p]XX";
+        var iv = "P%j.QeM<6S-2p]XX";
         var cipher = forge.cipher.createCipher('AES-CBC', key);
-        cipher.start({iv: iv});
+        cipher.start({ iv: iv });
         cipher.update(forge.util.createBuffer(simpleString));
         cipher.finish();
         var encrypted = cipher.output;
@@ -869,7 +869,8 @@ module.exports = {
     saveBuklMsg: async (data) => {
         console.log('saveBuklMsg ', data);
 
-        let InsertQuery = `INSERT INTO bulk_messages (repeat_duration, timer_status, dealer_ids, user_ids, device_ids, action_by, msg, sending_time) VALUES ('${data.repeat}', '${data.timer ? data.timer : ''}', '${JSON.stringify(data.dealer_ids)}', '${JSON.stringify(data.user_ids)}', '${JSON.stringify(data.device_ids)}', '${data.action_by}', '${data.msg}', '${data.date}');`;
+        let InsertQuery = `INSERT INTO bulk_messages (repeat, timer_status, dealer_ids, user_ids, device_ids, action_by, msg, dateTime, weekDay, monthDate, monthName, time) 
+        VALUES ('${data.repeat}', '${data.timer}', '${JSON.stringify(data.dealer_ids)}', '${JSON.stringify(data.user_ids)}', '${JSON.stringify(data.device_ids)}', '${data.action_by}', '${data.msg}', '${data.dateTime}', '${data.weekDay}', '${data.monthDate}', '${data.monthName}', '${data.time}');`;
         console.log(InsertQuery);
         await sql.query(InsertQuery);
     },
