@@ -183,7 +183,7 @@ exports.acceptServiceRequest = async function (req, res) {
                                     await sql.query(update_profits_transections)
 
                                     if (prevServicePaidPrice > 0) {
-                                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dvc_dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service charges" })}',${prevServicePaidPrice} ,'credit','pending' , 'services' , 0 , ${prevServicePaidPrice})`
+                                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dvc_dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service charges", service_id: prevService.id })}',${prevServicePaidPrice} ,'credit','pending' , 'services' , 0 , ${prevServicePaidPrice})`
                                         await sql.query(transection_credits)
 
                                         update_credits_query = 'update financial_account_balance set credits = credits - ' + prevServicePaidPrice + ' where dealer_id ="' + dvc_dealer_id + '"';
@@ -193,18 +193,18 @@ exports.acceptServiceRequest = async function (req, res) {
                                         let dealer_holding_profit = prev_service_dealer_profit - refund_prev_service_dealer_profit
 
                                         if (admin_holding_profit > 0) {
-                                            let admin_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${verify.user.id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service holding profit" })}',${admin_holding_profit} ,'debit','holding' , 'services')`
+                                            let admin_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${verify.user.id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service holding profit", service_id: prevService.id })}',${admin_holding_profit} ,'debit','holding' , 'services')`
                                             await sql.query(admin_profit_transection)
                                         }
 
                                         if (dealer_holding_profit > 0) {
-                                            let dealer_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${deviceData[0].prnt_dlr_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service holding profit" })}',${dealer_holding_profit} ,'debit','holding' , 'services')`
+                                            let dealer_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${deviceData[0].prnt_dlr_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service holding profit", service_id: prevService.id })}',${dealer_holding_profit} ,'debit','holding' , 'services')`
                                             await sql.query(dealer_profit_transection)
                                         }
                                     }
 
                                 } else {
-                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dvc_dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, details: "REFUND SERVICES CREITS" })}' ,${creditsToRefund} ,'debit' , 'transferred' , 'services')`
+                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dvc_dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, details: "REFUND SERVICES CREITS", service_id: prevService.id })}' ,${creditsToRefund} ,'debit' , 'transferred' , 'services')`
                                     await sql.query(transection_credits)
                                     update_credits_query = 'update financial_account_balance set credits = credits + ' + creditsToRefund + ' where dealer_id ="' + dvc_dealer_id + '"';
                                     await sql.query(update_credits_query);
@@ -218,11 +218,11 @@ exports.acceptServiceRequest = async function (req, res) {
 
                                         if (admin_prev_service_profit > 0) {
 
-                                            let admin_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${verify.user.id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service refund profit" })}',${admin_prev_service_profit} ,'credit','transferred' , 'services')`
+                                            let admin_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${verify.user.id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service refund profit", service_id: prevService.id })}',${admin_prev_service_profit} ,'credit','transferred' , 'services')`
                                             await sql.query(admin_profit_transection)
                                         }
                                         if (dealer_prev_service_profit > 0) {
-                                            let dealer_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${deviceData[0].prnt_dlr_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service refund profit" })}',${dealer_prev_service_profit} ,'credit','transferred' , 'services')`
+                                            let dealer_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${deviceData[0].prnt_dlr_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service refund profit", service_id: prevService.id })}',${dealer_prev_service_profit} ,'credit','transferred' , 'services')`
                                             await sql.query(dealer_profit_transection)
                                         }
                                     }

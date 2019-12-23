@@ -3,7 +3,10 @@ const { sql } = require('../../config/database');
 const helpers = require('../../helper/general_helper');
 const constants = require('../../constants/Application');
 var app_constants = require('../../config/constants');
+const device_helpers = require("../../helper/device_helpers");
 var axios = require('axios');
+var moment = require('moment')
+var MsgConstants = require("../../constants/MsgConstants");
 // constants
 const ADMIN = "admin";
 const DEALER = "dealer";
@@ -309,6 +312,209 @@ exports.validateSimId = async function (req, res) {
             })
             return
         }
+    }
+
+}
+
+exports.addNewDataLimitsPlans = async function (req, res) {
+    var verify = req.decoded;
+    if (verify) {
+        if (req.body.usr_device_id) {
+            // let device_id = req.body.device_id;
+            let loggedDealerId = verify.user.id;
+            let loggedDealerType = verify.user.user_type;
+            let user_acc_id = req.body.user_acc_id
+            let usr_device_id = req.body.usr_device_id;
+            let finalStatus = req.body.finalStatus;
+            var date_now = moment(new Date()).format('YYYY/MM/DD')
+            let pay_now = req.body.pay_now
+            let invoice_status = pay_now ? "PAID" : "UNPAID"
+            let dealer_credits_copy = 0
+            let data_plan_package_id = req.body.data_plan_package_id
+            let sim_type = req.body.sim_type
+
+            var checkDevice =
+                "SELECT start_date ,expiry_date from usr_acc WHERE device_id = '" +
+                usr_device_id +
+                "'";
+            if (loggedDealerType === constants.SDEALER) {
+                checkDevice =
+                    checkDevice + " AND dealer_id = " + loggedDealerId;
+            } else if (loggedDealerType === constants.DEALER) {
+                checkDevice =
+                    checkDevice +
+                    " AND (dealer_id = " +
+                    loggedDealerId +
+                    " OR prnt_dlr_id = " +
+                    loggedDealerId +
+                    " )";
+            } else if (loggedDealerType === constants.ADMIN) {
+                checkDevice = checkDevice;
+            } else {
+                res.send({
+                    status: false,
+                    msg: ""
+                });
+                return;
+            }
+
+            sql.query(checkDevice, async function (error, rows) {
+                if (error) {
+                    res.send({
+                        status: false,
+                        msg: "ERROR: Internal Server error."
+                    })
+                    return
+                }
+                if (rows.length) {
+                    sql.query(`SELECT * FROM packages WHERE id = ${data_plan_package_id} AND package_type = 'data_plan'`, async function (err, data_plan_res) {
+                        if (err) {
+                            res.send({
+                                status: false,
+                                msg: await helpers.convertToLang(
+                                    req.translation[""],
+                                    "ERROR: Internal Server Error."
+                                )
+                            });
+                            return
+                        }
+                        if (data_plan_res && data_plan_res.length) {
+                            let data_plan = data_plan_res[0]
+                            let package_price = data_plan.pkg_price
+                            let dealer_credits_data = await sql.query(`SELECT * FROM financial_account_balance WHERE dealer_id = ${verify.user.id}`)
+                            if (dealer_credits_data && dealer_credits_data.length || loggedDealerType === 'admin') {
+                                let dealer_credits = dealer_credits_data[0]
+                                if (dealer_credits >= package_price || !pay_now || loggedDealerType === 'admin') {
+                                    if (!pay_now && dealer_credits.credits_limit > (dealer_credits.credits - package_price && loggedDealerType !== 'admin')) {
+                                        res.send({
+                                            status: false,
+                                            msg: "Error: Your Credits limits will exceed after apply this service. Please select other services OR Purchase Credits."
+                                        });
+                                        return
+                                    }
+                                    let service_data_result = await device_helpers.getServicesData(user_acc_id);
+                                    if (service_data_result && service_data_result.length) {
+                                        let activeService = service_data_result.filter(service => service.status == 'active' || service.status == 'request_for_cancel')
+                                        if (activeService && activeService.length) {
+                                            let service = activeService[0]
+                                            let service_id = service.id
+                                            if (loggedDealerType !== 'admin') {
+                                                var transection_status = 'transferred'
+                                                if (!pay_now) {
+                                                    transection_status = 'pending'
+                                                } else {
+                                                    package_price = package_price - Math.ceil(Number(package_price * 0.03))
+                                                }
+
+                                                let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${verify.user.id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id, description: "Data Plan Changed", service_id: service_id })}', ${package_price} ,'credit' , '${transection_status}' , 'services' , ${pay_now ? total_price : 0} , ${pay_now ? 0 : total_price})`
+                                                await sql.query(transection_credits)
+
+                                                await sql.query(`UPDATE financial_account_balance SET credits = credits - ${package_price} WHERE dealer_id = ${loggedDealerId}`)
+                                            }
+
+
+                                            let insertDataPlan = ''
+
+                                            let currentDataPlan = await sql.query(`SELECT * FROM sim_data_plans WHERE service_id = ${service_id} AND sim_type = '${sim_type}' AND status = 'active'`)
+                                            if (currentDataPlan && currentDataPlan.length) {
+                                                let updateCurrentPlan = `UPDATE sim_data_plans SET status = 'deleted' WHERE id= ${currentDataPlan[0].id}`
+                                                let updatedPlan = sql.query(updateCurrentPlan)
+                                                if (updatedPlan && updatedPlan.length) {
+                                                    insertDataPlan = `INSERT INTO sim_data_plans (service_id , data_plan_package , sim_type , total_data , used_data , start_date ) VALUES(${service_id} , '${data_plan}' , '${sim_type}' , ${data_plan.data_limit} , '${currentDataPlan[0].used_data}' ,'${date_now}')`
+                                                }
+                                            } else {
+                                                insertDataPlan = `INSERT INTO sim_data_plans (service_id , data_plan_package , sim_type , total_data , start_date ) VALUES(${service_id} , '${data_plan}' , '${sim_type}' , ${data_plan.data_limit}  ,'${date_now}')`
+                                            }
+                                            await sql.query(insertDataPlan)
+
+                                            res.send({
+                                                status: true,
+                                                msg: await helpers.convertToLang(
+                                                    req.translation[""],
+                                                    "Data Plan added successfully."
+                                                )
+                                            });
+                                            return
+                                        } else {
+                                            res.send({
+                                                status: false,
+                                                msg: await helpers.convertToLang(
+                                                    req.translation[""],
+                                                    "Active Service not found on this device. Please add a service first on this device."
+                                                )
+                                            });
+                                            return
+                                        }
+                                    } else {
+
+                                        res.send({
+                                            status: false,
+                                            msg: await helpers.convertToLang(
+                                                req.translation[""],
+                                                "Services not found on this device. Please add a service first on this device."
+                                            )
+                                        });
+                                        return
+
+                                    }
+
+                                } else {
+                                    res.send({
+                                        status: false,
+                                        msg: await helpers.convertToLang(
+                                            req.translation[""],
+                                            "ERROR: Dealer Credits are not enough. Please Choose another Data Plan or Purchase Credits."
+                                        )
+                                    });
+                                    return
+                                }
+                            } else {
+                                res.send({
+                                    status: false,
+                                    msg: await helpers.convertToLang(
+                                        req.translation[""],
+                                        "ERROR: Dealer Balance Account not Found."
+                                    )
+                                });
+                                return
+                            }
+
+                        } else {
+                            res.send({
+                                status: false,
+                                msg: await helpers.convertToLang(
+                                    req.translation[""],
+                                    "ERROR: Data plan not found on server. Please Choose another plan."
+                                )
+                            });
+                            return
+                        }
+                    })
+                    if (loggedDealerType === constants.ADMIN) {
+                        // let response = await device_helpers.editDeviceAdmin(req.body, verify)
+                        // res.send(response)
+                        // return
+                    } else {
+
+                    }
+
+
+                } else {
+                    res.send({
+                        status: false,
+                        msg: await helpers.convertToLang(
+                            req.translation[MsgConstants.DEVICE_NOT_FOUND],
+                            "No Device found"
+                        )
+                    });
+                }
+            });
+        }
+    } else {
+        res.send({
+            status: false,
+            msg: ""
+        });
     }
 
 }

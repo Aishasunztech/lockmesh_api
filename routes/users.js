@@ -1600,4 +1600,6 @@ router.post('/check-unique-pgp', ServicesController.checkUniquePgp);
 
 router.post('/validate_sim_id', ServicesController.validateSimId);
 
+router.post('/add-data-plans', ServicesController.addNewDataLimitsPlans);
+
 module.exports = router;
