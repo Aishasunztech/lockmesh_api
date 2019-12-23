@@ -421,7 +421,7 @@ exports.acceptDevice = async function (req, res) {
         let invoice_subtotal = total_price + hardwarePrice
         var basic_data_plan = {
             data_limit: 2000,
-            price: 0,
+            pkg_price: 0,
             term: term
         }
         var data_plans = req.body.data_plans ? req.body.data_plans : {}
@@ -741,7 +741,6 @@ exports.acceptDevice = async function (req, res) {
                                                                 if (result && result.length) {
                                                                     let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id,product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].sim_id}' , 'sim_id' , '${start_date}')`
                                                                     sql.query(insertAccService)
-
                                                                 }
                                                             })
                                                         }
@@ -1021,7 +1020,7 @@ exports.createDeviceProfile = async function (req, res) {
         var duplicate = req.body.duplicate ? req.body.duplicate : 0;
         var basic_data_plan = {
             data_limit: 2000,
-            price: 0,
+            pkg_price: 0,
             term: exp_month
         }
         var data_plans = req.body.data_plans ? req.body.data_plans : {}

@@ -406,7 +406,7 @@ exports.addNewDataLimitsPlans = async function (req, res) {
                                                     package_price = package_price - Math.ceil(Number(package_price * 0.03))
                                                 }
 
-                                                let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${verify.user.id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id, description: "Data Plan Changed", service_id: service_id })}', ${package_price} ,'credit' , '${transection_status}' , 'services' , ${pay_now ? total_price : 0} , ${pay_now ? 0 : total_price})`
+                                                let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${verify.user.id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id, description: "Data Plan Changed", service_id: service_id })}', ${package_price} ,'credit' , '${transection_status}' , 'services' , ${pay_now ? package_price : 0} , ${pay_now ? 0 : package_price})`
                                                 await sql.query(transection_credits)
 
                                                 await sql.query(`UPDATE financial_account_balance SET credits = credits - ${package_price} WHERE dealer_id = ${loggedDealerId}`)
@@ -418,12 +418,12 @@ exports.addNewDataLimitsPlans = async function (req, res) {
                                             let currentDataPlan = await sql.query(`SELECT * FROM sim_data_plans WHERE service_id = ${service_id} AND sim_type = '${sim_type}' AND status = 'active'`)
                                             if (currentDataPlan && currentDataPlan.length) {
                                                 let updateCurrentPlan = `UPDATE sim_data_plans SET status = 'deleted' WHERE id= ${currentDataPlan[0].id}`
-                                                let updatedPlan = sql.query(updateCurrentPlan)
-                                                if (updatedPlan && updatedPlan.length) {
-                                                    insertDataPlan = `INSERT INTO sim_data_plans (service_id , data_plan_package , sim_type , total_data , used_data , start_date ) VALUES(${service_id} , '${data_plan}' , '${sim_type}' , ${data_plan.data_limit} , '${currentDataPlan[0].used_data}' ,'${date_now}')`
+                                                let updatedPlan = await sql.query(updateCurrentPlan)
+                                                if (updatedPlan && updatedPlan.affectedRows) {
+                                                    insertDataPlan = `INSERT INTO sim_data_plans (service_id , data_plan_package , sim_type , total_data , used_data , start_date ) VALUES(${service_id} , '${JSON.stringify(data_plan)}' , '${sim_type}' , ${data_plan.data_limit} , '${currentDataPlan[0].used_data}' ,'${date_now}')`
                                                 }
                                             } else {
-                                                insertDataPlan = `INSERT INTO sim_data_plans (service_id , data_plan_package , sim_type , total_data , start_date ) VALUES(${service_id} , '${data_plan}' , '${sim_type}' , ${data_plan.data_limit}  ,'${date_now}')`
+                                                insertDataPlan = `INSERT INTO sim_data_plans (service_id , data_plan_package , sim_type , total_data , start_date ) VALUES(${service_id} , '${JSON.stringify(data_plan)}' , '${sim_type}' , ${data_plan.data_limit}  ,'${date_now}')`
                                             }
                                             await sql.query(insertDataPlan)
 
