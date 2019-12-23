@@ -1787,7 +1787,7 @@ exports.sendBulkMsg = async function (req, res) {
             let contentTxt = '';
 
             if (failedToApply.length) {
-                messageTxt = await helpers.convertToLang(req.translation[""], "Failed to Applied Policy on All Selected Devices . Please try again")
+                messageTxt = await helpers.convertToLang(req.translation[""], "Failed to send message on All Selected Devices . Please try again")
             }
             else
                 if (offlineDevices.length) {
@@ -1854,6 +1854,181 @@ exports.sendBulkMsg = async function (req, res) {
                     },
                     devices: device_detail ? JSON.stringify(device_detail) : '[]',
                     lastMsg: (resultLastInsertMsg && resultLastInsertMsg.length) ? resultLastInsertMsg[0] : {}
+                };
+            } else {
+                data = {
+                    status: false,
+                    msg: 'Error while Processing'
+                }
+            }
+            // console.log("response data is: ", data)
+            res.send(data);
+
+        } else {
+            data = {
+                status: false,
+                msg: "Invalid Data"
+            };
+            res.send(data);
+            return;
+        }
+
+    } catch (error) {
+        console.log(error)
+        res.send({
+            status: false,
+            msg: 'Error while Processing'
+        })
+    }
+}
+
+// Update Messages
+exports.updateBulkMsg = async function (req, res) {
+    console.log("req body updateBulkMsg ==> ", req.body);
+    // return res.send({ status: true, msg: 'testing' })
+    try {
+        var verify = req.decoded;
+        // let allDevices = req.body.devices;
+        // let dealerIds = req.body.dealer_ids;
+        // let userIds = req.body.user_ids;
+        let txtMsg = req.body.msg ? req.body.msg : '';
+        let timer = req.body.timer ? req.body.timer : '';
+        let repeat = req.body.repeat ? req.body.repeat : ''; // daily, weekly, etc...
+        let dateTime = req.body.dateTime;
+        let weekDay = req.body.weekDay ? req.body.weekDay : 0;
+        let monthDate = req.body.monthDate ? req.body.monthDate : 0; // 1 - 31
+        let monthName = req.body.monthName ? req.body.monthName : 0; // for 12 months
+        let time = req.body.time;
+
+        let valid_conditions = true;
+
+        // Form data Validations
+        if (timer === "NOW") { // 01
+            dateTime = '';
+            repeat = "NONE";
+        }
+        else if (timer === "DATE/TIME") { // 02
+            repeat = "NONE";
+            if (!dateTime) valid_conditions = false;
+        }
+        else if (timer === "REPEAT") { // 03
+            if (repeat === "DAILY") {
+                if (!time) valid_conditions = false;
+            } else if (repeat === "WEEKLY") {
+                if (!time && !weekDay) valid_conditions = false;
+            } else if (repeat === "MONTHLY" || repeat === "3 MONTHS" || repeat === "6 MONTHS") {
+                if (!time && !weekDay && !monthDate) valid_conditions = false;
+            } else if (repeat === "12 MONTHS") {
+                if (!time && !weekDay && !monthName) valid_conditions = false;
+            }
+        }
+        else { // 04
+            valid_conditions = false;
+        }
+        // end validation process
+
+        if (verify && allDevices && allDevices.length && txtMsg && valid_conditions) {
+            let loggedUserId = verify.user.id
+
+            let failedToApply = [];
+            let onlineDevices = [];
+            let offlineDevices = [];
+
+            for (let device of allDevices) {
+                let userAccId = device.usrAccId;
+
+                // var applyQuery = `INSERT INTO queue_bulk_messages (repeat, timer_status, device_id, action_by, msg, sending_time, is_in_process) VALUES ('${repeat}', '${timer}', '${device.device_id}', '${loggedUserId}', '${txtMsg}', '${dateTime}', 1);`;
+                // console.log("applyQuery ", applyQuery);
+                // let saveDeviceMsg = await sql.query(applyQuery);
+
+                // if (saveDeviceMsg && saveDeviceMsg.insertId) {
+                if (true) {
+
+                    let isOnline = await device_helpers.isDeviceOnline(device.device_id);
+                    if (isOnline) {
+                        // socket_helpers.sendBulkMsgToDevice(sockets.baseIo, device.device_id, txtMsg);
+                        onlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
+
+                    } else {
+                        offlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
+                    }
+                } else {
+                    failedToApply.push(device.device_id);
+                }
+
+            } // end for loop
+
+            let messageTxt = '';
+            let contentTxt = '';
+
+            if (failedToApply.length) {
+                messageTxt = await helpers.convertToLang(req.translation[""], "Failed to update message setting. Please try again")
+            }
+            else
+                if (offlineDevices.length) {
+                    messageTxt = await helpers.convertToLang(req.translation[""], "Warning All Selected Devices Are Offline");
+                    contentTxt = await helpers.convertToLang(req.translation[""], "Message will be update Soon. Action will be performed when devices back online");
+                }
+                else if (onlineDevices.length) {
+                    messageTxt = await helpers.convertToLang(req.translation[""], "Message successfully update")
+                }
+
+            if (onlineDevices.length || offlineDevices.length) {
+
+                // get user_device_ids and string device ids of online and offline devices
+                let queue_dvc_ids = [];
+                let queue_usr_dvc_ids = [];
+                let pushed_dvc_ids = [];
+                let pushed_usr_dvc_ids = [];
+
+                let all_usr_dvc_ids = [];
+                let all_dvc_ids = [];
+
+                offlineDevices.forEach(item => {
+                    queue_dvc_ids.push(item.device_id);
+                    queue_usr_dvc_ids.push(item.usr_device_id);
+                });
+
+                onlineDevices.forEach(item => {
+                    pushed_dvc_ids.push(item.device_id);
+                    pushed_usr_dvc_ids.push(item.usr_device_id);
+                });
+                all_usr_dvc_ids = [...queue_usr_dvc_ids, ...pushed_usr_dvc_ids];
+                all_dvc_ids = [...queue_dvc_ids, ...pushed_dvc_ids];
+
+                // let dataObj = {
+                //     action_by: loggedUserId,
+                //     device_ids: all_usr_dvc_ids,
+                //     dealer_ids: dealerIds,
+                //     user_ids: userIds,
+                //     msg: txtMsg,
+                //     timer,
+                //     repeat,
+                //     dateTime,
+                //     weekDay,
+                //     monthDate,
+                //     monthName,
+                //     time
+                // }
+
+                let updateMsgQuery = `UPDATE bulk_messages SET msg='${txtMsg}', timer_status = '${timer}', repeat_duration='${repeat}',  date_time='${dateTime}', week_day=${weekDay}, month_date=${monthDate}, month_name= ${monthName}, time='${time}'`
+
+                // let result = await sql.query(updateMsgQuery);
+
+                data = {
+                    status: true,
+                    online: onlineDevices.length ? true : false,
+                    offline: offlineDevices.length ? true : false,
+                    failed: failedToApply.length ? true : false,
+                    msg: messageTxt,
+                    content: contentTxt,
+                    data: {
+                        failed_device_ids: failedToApply,
+                        queue_device_ids: queue_dvc_ids,
+                        pushed_device_ids: pushed_dvc_ids,
+                    },
+                    // devices: device_detail ? JSON.stringify(device_detail) : '[]',
+                    // lastMsg: (resultLastInsertMsg && resultLastInsertMsg.length) ? resultLastInsertMsg[0] : {}
                 };
             } else {
                 data = {
