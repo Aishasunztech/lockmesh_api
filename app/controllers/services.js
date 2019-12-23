@@ -39,6 +39,7 @@ exports.createServiceProduct = async function (req, res) {
                     return
                 }
             }
+
             axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
                 if (response.data.status) {
                     let data = {
@@ -230,6 +231,81 @@ exports.checkUniquePgp = async function (req, res) {
             res.send({
                 status: false,
                 msg: "ERROR: Invalid pgp email."
+            })
+            return
+        }
+    }
+
+}
+
+exports.validateSimId = async function (req, res) {
+    var verify = req.decoded;
+    if (verify) {
+        let sim_id = req.body.sim_id
+        if (sim_id) {
+            if (sim_id.length < 19 || sim_id.length > 20) {
+                res.send({
+                    status: false,
+                    msg: "ERROR: ICCID MUST BE 19 OR 20 DIGITS LONG"
+                })
+                return
+            } else {
+                let selectSimQ = `SELECT * FROM sim_ids WHERE sim_id = '${sim_id}' AND activated = '1' AND delete_status = '0'`
+                console.log(selectSimQ);
+                let simFound = await sql.query(selectSimQ)
+                if (simFound && simFound.length) {
+                    console.log("sdasd");
+                    res.send({
+                        status: false,
+                        msg: "ERROR: THIS ICCID IS IN USE, PLEASE TRY ANOTHER ONE"
+                    })
+                    return
+                }
+            }
+            axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
+                if (response.data.status) {
+                    let data = {
+                        label: app_constants.APP_TITLE,
+                        sim_id,
+                    }
+                    axios.post(app_constants.VALIDATE_SIM_ID, data, { headers: { authorization: response.data.user.token } }).then(async function (response) {
+                        if (response.data.status) {
+                            res.send(response.data)
+                        } else {
+                            res.send({
+                                status: false,
+                                msg: response.data.msg
+                            })
+                            return
+                        }
+                    }).catch((err) => {
+                        console.log(err);
+                        res.send({
+                            status: false,
+                            msg: "ERROR: Superadmin server not responding."
+                        })
+                        return
+                    })
+                } else {
+                    console.log(err);
+                    res.send({
+                        status: false,
+                        msg: "ERROR: Unauthorized Access."
+                    })
+                    return
+                }
+            }).catch((err) => {
+                console.log(err);
+                res.send({
+                    status: false,
+                    msg: "ERROR: Superadmin server not responding."
+                })
+                return
+            })
+        } else {
+            res.send({
+                status: false,
+                msg: "ERROR: Invalid Sim ID."
             })
             return
         }

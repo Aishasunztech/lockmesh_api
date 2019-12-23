@@ -216,6 +216,10 @@ module.exports = {
 		this.SUPERADMIN_URL_API
 		}/api/v1/users/check-unique-pgp`,
 
+	VALIDATE_SIM_ID: `${
+		this.SUPERADMIN_URL_API
+		}/api/v1/users/validate_sim_id`,
+
 	REQUEST_FOR_CREDITS: `${
 		this.SUPERADMIN_URL_API
 		}/api/v1/users/request_for_credits`,
