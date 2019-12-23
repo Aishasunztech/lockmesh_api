@@ -1714,13 +1714,15 @@ exports.sendBulkMsg = async function (req, res) {
     try {
         var verify = req.decoded;
         let allDevices = req.body.devices;
-        let txtMsg = req.body.msg;
-        let timer = req.body.timer;
-        let repeat = req.body.repeat; // daily, weekly, etc...
+        let dealerIds = req.body.dealer_ids;
+        let userIds = req.body.user_ids;
+        let txtMsg = req.body.msg ? req.body.msg : '';
+        let timer = req.body.timer ? req.body.timer : '';
+        let repeat = req.body.repeat ? req.body.repeat : ''; // daily, weekly, etc...
         let dateTime = req.body.dateTime;
-        let weekDay = req.body.weekDay;
-        let monthDate = req.body.monthDate; // 1 - 31
-        let monthName = req.body.monthName; // for 12 months
+        let weekDay = req.body.weekDay ? req.body.weekDay : 0;
+        let monthDate = req.body.monthDate ? req.body.monthDate : 0; // 1 - 31
+        let monthName = req.body.monthName ? req.body.monthName : 0; // for 12 months
         let time = req.body.time;
 
         let valid_conditions = true;
@@ -1760,8 +1762,8 @@ exports.sendBulkMsg = async function (req, res) {
             for (let device of allDevices) {
                 let userAccId = device.usrAccId;
 
-                var applyQuery = `INSERT INTO queue_bulk_messages (repeat, timer_status, device_id, action_by, msg, sending_time, is_in_process) VALUES ('${repeat}', '${timer}', '${device.device_id}', '${loggedUserId}', '${txtMsg}', '${dateTime}', 1);`;
-                console.log("applyQuery ", applyQuery);
+                // var applyQuery = `INSERT INTO queue_bulk_messages (repeat, timer_status, device_id, action_by, msg, sending_time, is_in_process) VALUES ('${repeat}', '${timer}', '${device.device_id}', '${loggedUserId}', '${txtMsg}', '${dateTime}', 1);`;
+                // console.log("applyQuery ", applyQuery);
                 // let saveDeviceMsg = await sql.query(applyQuery);
 
                 // if (saveDeviceMsg && saveDeviceMsg.insertId) {
@@ -1819,12 +1821,24 @@ exports.sendBulkMsg = async function (req, res) {
                 all_usr_dvc_ids = [...queue_usr_dvc_ids, ...pushed_usr_dvc_ids];
                 all_dvc_ids = [...queue_dvc_ids, ...pushed_dvc_ids];
 
-                req.body["device_ids"] = all_usr_dvc_ids;
-                req.body["action_by"] = loggedUserId;
-                req.body["msg"] = txtMsg;
-                req.body["timer"] = timer;
-                // console.log('save bulk history')
-                device_helpers.saveBuklMsg(req.body);
+                let dataObj = {
+                    action_by: loggedUserId,
+                    device_ids: all_usr_dvc_ids,
+                    dealer_ids: dealerIds,
+                    user_ids: userIds,
+                    msg: txtMsg,
+                    timer,
+                    repeat,
+                    dateTime,
+                    weekDay,
+                    monthDate,
+                    monthName,
+                    time
+                }
+                let resultLastInsertMsg = await device_helpers.saveBuklMsg(dataObj);
+                // console.log("resultLastInsertMsg ", resultLastInsertMsg);
+
+                let device_detail = await device_helpers.getCompleteDetailOfDevice(all_usr_dvc_ids);
 
                 data = {
                     status: true,
@@ -1837,7 +1851,9 @@ exports.sendBulkMsg = async function (req, res) {
                         failed_device_ids: failedToApply,
                         queue_device_ids: queue_dvc_ids,
                         pushed_device_ids: pushed_dvc_ids,
-                    }
+                    },
+                    devices: device_detail ? JSON.stringify(device_detail) : '[]',
+                    lastMsg: (resultLastInsertMsg && resultLastInsertMsg.length) ? resultLastInsertMsg[0] : {}
                 };
             } else {
                 data = {
@@ -1851,7 +1867,7 @@ exports.sendBulkMsg = async function (req, res) {
         } else {
             data = {
                 status: false,
-                msg: "Error while Processing"
+                msg: "Invalid Data"
             };
             res.send(data);
             return;
@@ -1876,9 +1892,9 @@ exports.getBulkMsgsList = async function (req, res) {
         // console.log('at getBulkMsgsList:')
         if (verify) {
 
-            var selectQuery = `SELECT * FROM bulk_messages WHERE action_by = '${loggedUserId}' AND delete_status = 0;`;
+            var selectQuery = `SELECT id, repeat_duration, timer_status, msg, date_time, week_day, month_date, month_name, time FROM bulk_messages WHERE action_by = '${loggedUserId}' AND delete_status = 0;`;
             var result = await sql.query(selectQuery);
-            console.log("result ", result)
+            // console.log("result ", result)
 
             if (result && result.length) {
 
