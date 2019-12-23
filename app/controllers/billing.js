@@ -747,9 +747,16 @@ exports.saveSaPackage = async function (req, res) {
     if (verify) {
 
         let data = req.body.data;
-        if (data) {
-            console.log(verify.user[0].dealer_id);
-            // console.log(dealer_id, 'whitelableid');
+        if (data && data.package_type) {
+            let package_type = data.package_type;
+            
+            if(package_type!=='services' && package_type !=='data_plan'){
+                return res.send({
+                    status: false,
+                    msg: 'Invalid Data'
+                })
+            }
+ 
             let days = 0;
             if (data.pkgTerm) {
                 if (data.pkgTerm === "trial") {
@@ -776,22 +783,28 @@ exports.saveSaPackage = async function (req, res) {
                 }
             }
 
-            let pkg_features = JSON.stringify(data.pkgFeatures)
-            let insertQuery = "INSERT INTO packages (dealer_id , dealer_type , pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features , dealers) VALUES('" + verify.user[0].dealer_id + "' ,'super_admin' , '" + data.pkgName + "', '" + data.pkgTerm + "', '" + data.pkgPrice + "','" + days + "', '" + pkg_features + "' , '[]')";
-            console.log(insertQuery);
+            let pkg_features = '{}';
+            let insertQuery = '';
+            if(package_type==='services'){
+                let pkg_features = JSON.stringify(data.pkgFeatures)
+                insertQuery = `INSERT INTO packages (dealer_id, dealer_type, pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, dealers, package_type ) VALUES('${verify.user[0].dealer_id}', 'super_admin', '${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}' , '[]', '${package_type}')`;
+            } else if ( package_type === 'data_plan') {
+                insertQuery = `INSERT INTO packages (dealer_id, dealer_type, pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, data_limit, dealers, package_type ) VALUES('${verify.user[0].dealer_id}', 'super_admin', '${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}', ${data.data_limit}, '[]', '${package_type}')`;
+            }
+
+            // console.log(insertQuery);
 
             sql.query(insertQuery, async (err, rslt) => {
                 if (err) {
                     console.log(err)
-                    res.send({
+                    return res.send({
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[""], "Package Not Saved. Whitelabel Server Error"), // 'Package Saved Successfully',
+                        msg: await helpers.convertToLang(req.translation[""], "Package Not Saved. WhiteLabel Server Error"), // 'Package Saved Successfully',
                     })
-                    return
                 }
                 if (rslt) {
                     if (rslt.affectedRows) {
-                        let insertQ = "INSERT INTO dealer_packages_prices ( package_id,dealer_id , created_by , price) VALUES(" + rslt.insertId + ",'" + verify.user[0].dealer_id + "' ,'super_admin' , '" + data.pkgPrice + "')";
+                        let insertQ = `INSERT INTO dealer_packages_prices (package_id, dealer_id, created_by, price) VALUES(${rslt.insertId}, '${verify.user[0].dealer_id}', 'super_admin', '${data.pkgPrice}')`;
                         console.log(insertQ);
                         sql.query(insertQ)
                         res.send({
@@ -804,11 +817,10 @@ exports.saveSaPackage = async function (req, res) {
             })
 
         } else {
-            res.send({
+            return res.send({
                 status: false,
                 msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DATA], "Invalid Data"), // 'Invalid Data'
             })
-            return
         }
     }
 }
