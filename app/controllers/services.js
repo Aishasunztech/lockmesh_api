@@ -7,10 +7,16 @@ const device_helpers = require("../../helper/device_helpers");
 var axios = require('axios');
 var moment = require('moment')
 var MsgConstants = require("../../constants/MsgConstants");
+var path = require("path");
+
+const { createInvoice } = require('../../helper/CreateInvoice')
+const { sendEmail } = require("../../lib/email");
+
 // constants
 const ADMIN = "admin";
 const DEALER = "dealer";
 const SDEALER = "sdealer";
+
 
 let data;
 
@@ -320,18 +326,18 @@ exports.addNewDataLimitsPlans = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
         if (req.body.usr_device_id) {
-            // let device_id = req.body.device_id;
+            let device_id = req.body.device_id;
             let loggedDealerId = verify.user.id;
             let loggedDealerType = verify.user.user_type;
             let user_acc_id = req.body.user_acc_id
             let usr_device_id = req.body.usr_device_id;
+            let user_id = req.body.user_id
             let finalStatus = req.body.finalStatus;
             var date_now = moment(new Date()).format('YYYY/MM/DD')
             let pay_now = req.body.pay_now
-            let invoice_status = pay_now ? "PAID" : "UNPAID"
-            let dealer_credits_copy = 0
             let data_plan_package_id = req.body.data_plan_package_id
             let sim_type = req.body.sim_type
+            let endUser_pay_status = req.body.paid_by_user
 
             var checkDevice =
                 "SELECT start_date ,expiry_date from usr_acc WHERE device_id = '" +
@@ -381,9 +387,19 @@ exports.addNewDataLimitsPlans = async function (req, res) {
                         if (data_plan_res && data_plan_res.length) {
                             let data_plan = data_plan_res[0]
                             let package_price = data_plan.pkg_price
+                            let discounted_price = package_price
+                            let invoice_subtotal = package_price
+                            if (pay_now) {
+                                discount = Math.ceil(((package_price) * 0.03));
+                                discounted_price = (package_price) - discount
+                            }
+                            let invoice_status = pay_now ? "PAID" : "UNPAID"
+                            let paid_credits = 0
+
                             let dealer_credits_data = await sql.query(`SELECT * FROM financial_account_balance WHERE dealer_id = ${verify.user.id}`)
                             if (dealer_credits_data && dealer_credits_data.length || loggedDealerType === 'admin') {
                                 let dealer_credits = dealer_credits_data[0]
+                                let dealer_credits_copy = dealer_credits
                                 if (dealer_credits >= package_price || !pay_now || loggedDealerType === 'admin') {
                                     if (!pay_now && dealer_credits.credits_limit > (dealer_credits.credits - package_price && loggedDealerType !== 'admin')) {
                                         res.send({
@@ -406,9 +422,23 @@ exports.addNewDataLimitsPlans = async function (req, res) {
                                                     package_price = package_price - Math.ceil(Number(package_price * 0.03))
                                                 }
 
-                                                let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${verify.user.id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id, description: "Data Plan Changed", service_id: service_id })}', ${package_price} ,'credit' , '${transection_status}' , 'services' , ${pay_now ? package_price : 0} , ${pay_now ? 0 : package_price})`
-                                                await sql.query(transection_credits)
-
+                                                if (pay_now) {
+                                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${verify.user.id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id, description: "Data Plan Changed", service_id: service_id })}', ${package_price} ,'credit' , '${transection_status}' , 'services' , ${package_price} , ${0})`
+                                                    await sql.query(transection_credits)
+                                                }
+                                                else {
+                                                    let transection_due_credits = package_price;
+                                                    if (dealer_credits_copy > 0) {
+                                                        transection_due_credits = package_price - dealer_credits_copy
+                                                        paid_credits = dealer_credits_copy
+                                                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, service_id: service_id })}' ,${package_price} ,'credit' , '${transection_status}' , 'services' , ${paid_credits} , ${transection_due_credits})`
+                                                        await sql.query(transection_credits)
+                                                        invoice_status = "PARTIALLY PAID"
+                                                    } else {
+                                                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, service_id: service_id })}' ,${package_price} ,'credit' , 'pending' , 'services' , 0 ,${package_price})`
+                                                        await sql.query(transection_credits)
+                                                    }
+                                                }
                                                 await sql.query(`UPDATE financial_account_balance SET credits = credits - ${package_price} WHERE dealer_id = ${loggedDealerId}`)
                                             }
 
@@ -425,14 +455,55 @@ exports.addNewDataLimitsPlans = async function (req, res) {
                                             } else {
                                                 insertDataPlan = `INSERT INTO sim_data_plans (service_id , data_plan_package , sim_type , total_data , start_date ) VALUES(${service_id} , '${JSON.stringify(data_plan)}' , '${sim_type}' , ${data_plan.data_limit}  ,'${date_now}')`
                                             }
-                                            await sql.query(insertDataPlan)
 
+
+                                            await sql.query(insertDataPlan)
+                                            if (loggedDealerType !== ADMIN) {
+                                                let inv_no = await helpers.getInvoiceId()
+                                                const invoice = {
+                                                    shipping: {
+                                                        name: verify.user.dealer_name,
+                                                        device_id: device_id,
+                                                        dealer_pin: verify.user.link_code,
+                                                        user_id: user_id
+                                                    },
+                                                    packages: [data_plan],
+                                                    hardwares: [],
+                                                    products: [],
+                                                    pay_now: pay_now,
+                                                    discount: discount,
+                                                    discountPercent: "3%",
+                                                    quantity: 1,
+                                                    subtotal: invoice_subtotal,
+                                                    paid: discounted_price,
+                                                    invoice_nr: inv_no,
+                                                    invoice_status: invoice_status,
+                                                    paid_credits: paid_credits
+                                                };
+
+                                                let fileName = "invoice-" + inv_no + ".pdf"
+                                                let filePath = path.join(__dirname, "../../uploads/" + fileName)
+                                                await createInvoice(invoice, filePath)
+
+                                                let attachment = {
+                                                    fileName: fileName,
+                                                    file: filePath
+                                                }
+                                                // console.log(verify.user.dealer_email)
+                                                sql.query(`INSERT INTO invoices (inv_no,user_acc_id,dealer_id,file_name ,end_user_payment_status) VALUES('${inv_no}',${user_acc_id},${loggedDealerId}, '${fileName}' , '${endUser_pay_status}')`)
+
+                                                html = 'Your data plan has been updated of ' + device_id + '.<br>Your Invoice is attached below. <br>';
+
+                                                sendEmail("CHNAGE DATA PLAN.", html, verify.user.dealer_email, null, attachment);
+                                            }
+                                            let updatedCredits = await sql.query(`SELECT * FROM financial_account_balance WHERE dealer_id = ${loggedDealerId}`)
                                             res.send({
                                                 status: true,
                                                 msg: await helpers.convertToLang(
                                                     req.translation[""],
                                                     "Data Plan added successfully."
-                                                )
+                                                ),
+                                                credits: updatedCredits[0] ? updatedCredits[0].credits : 0
                                             });
                                             return
                                         } else {

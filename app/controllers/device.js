@@ -419,19 +419,21 @@ exports.acceptDevice = async function (req, res) {
         let hardwarePrice = req.body.hardwarePrice ? req.body.hardwarePrice : 0
         let discounted_price = total_price + hardwarePrice
         let invoice_subtotal = total_price + hardwarePrice
-        var basic_data_plan = {
-            data_limit: 2000,
-            pkg_price: 0,
-            term: term
-        }
-        var data_plans = req.body.data_plans ? req.body.data_plans : {}
-
         if (pay_now) {
             discount = Math.ceil(((total_price + hardwarePrice) * 0.03));
             discounted_price = (total_price + hardwarePrice) - discount
         }
         let invoice_status = pay_now ? "PAID" : "UNPAID"
         let paid_credits = 0
+
+        var basic_data_plan = {
+            data_limit: 2000,
+            pkg_price: 0,
+            term: term
+        }
+
+        var data_plans = req.body.data_plans ? req.body.data_plans : basic_data_plan
+
         // if (pay_now) {
         //     total_price = total_price - (total_price * 0.03);
         // }
@@ -1023,7 +1025,7 @@ exports.createDeviceProfile = async function (req, res) {
             pkg_price: 0,
             term: exp_month
         }
-        var data_plans = req.body.data_plans ? req.body.data_plans : {}
+        var data_plans = req.body.data_plans ? req.body.data_plans : basic_data_plan
         if (exp_month === '0') {
             var trailDate = moment(start_date, "YYYY/MM/DD").add(7, 'days');
             expiry_date = moment(trailDate).format("YYYY/MM/DD")
@@ -1071,8 +1073,8 @@ exports.createDeviceProfile = async function (req, res) {
         // let services_discounted_price = 0
         // let hardwares_discounted_price = 0
         if (pay_now) {
-            discount = Math.ceil(Number(((total_price + hardwarePrice) * 0.03)));
-            discounted_price = (total_price + hardwarePrice) - discount
+            discount = Math.ceil(Number(((discounted_price) * 0.03)));
+            discounted_price = (discounted_price) - discount
         }
         let invoice_status = pay_now ? "PAID" : "UNPAID"
         let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
@@ -1673,7 +1675,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 let simIdInsertResult = await sql.query(insertSimIds)
                                                                 if (simIdInsertResult.affectedRows) {
                                                                     // helpers.updateSimStatus(sim_id, 'active')
-                                                                    let data_plan_package = data_plans.sim_id2 ? data_plans.sim_id2 : basic_data_plan
+                                                                    let data_plan_package = data_plans.sim_id ? data_plans.sim_id : basic_data_plan
                                                                     let data_package_plan = `INSERT INTO sim_data_plans ( service_id , data_plan_package , total_data , sim_type , start_date) VALUES( ${service_id} , '${JSON.stringify(data_plan_package)}' , '${data_plan_package.data_limit}' , 'sim_id' , '${start_date}')`
                                                                     sql.query(data_package_plan)
 
