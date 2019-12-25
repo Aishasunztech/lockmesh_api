@@ -566,7 +566,7 @@ module.exports = {
 		}
 	},
 	getAllRecordbyDeviceId: async function (device_id) {
-		// console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.id = ' + device_id)
+		// console.log(device_id)
 		let results = await sql.query(
 			"select devices.*  ," +
 			usr_acc_query_text +
@@ -576,9 +576,6 @@ module.exports = {
 		);
 
 		if (results.length) {
-			// let pgp_emails = await device_helpers.getPgpEmails(results[0].id);
-			// let sim_ids = await device_helpers.getSimids(results[0].id);
-			// let chat_ids = await device_helpers.getChatids(results[0].id);
 			let servicesData = await device_helpers.getServicesData(results[0].id);
 			let servicesIds = servicesData.map(item => { return item.id })
 			let userAccServiceData = []
@@ -587,25 +584,6 @@ module.exports = {
 			}
 
 			results[0].finalStatus = device_helpers.checkStatus(results[0]);
-			// if (pgp_emails[0] && pgp_emails[0].pgp_email) {
-			// 	results[0].pgp_email = pgp_emails[0].pgp_email
-			// } else {
-			// 	results[0].pgp_email = "N/A"
-			// }
-			// if (sim_ids && sim_ids.length) {
-			// 	results[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
-			// 	results[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
-			// }
-			// if (chat_ids[0] && chat_ids[0].chat_id) {
-			// 	results[0].chat_id = chat_ids[0].chat_id
-			// }
-			// else {
-			// 	results[0].chat_id = "N/A"
-
-			// }
-			// if (servicesData[0]) {
-			// 	results[0].services = servicesData[0]
-			// }
 			let services = servicesData;
 			let service_id = null
 			if (services && services.length) {
@@ -638,7 +616,71 @@ module.exports = {
 			}
 			return results[0];
 		} else {
-			return [];
+			return {};
+		}
+	},
+
+	getAllRecordbyUserAccId: async function (user_acc_id) {
+		// console.log(device_id)
+		let results = await sql.query(
+			"select devices.*  ," +
+			usr_acc_query_text +
+			', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.id = "' +
+			user_acc_id +
+			'"'
+		);
+
+		if (results.length) {
+			let servicesData = await device_helpers.getServicesData(results[0].id);
+			let servicesIds = servicesData.map(item => { return item.id })
+			let userAccServiceData = []
+			if (servicesIds.length) {
+				userAccServiceData = await device_helpers.getUserAccServicesData(results[0].id, servicesIds.join())
+			}
+
+			results[0].finalStatus = device_helpers.checkStatus(results[0]);
+			let services = servicesData;
+			let service_id = null
+			if (services && services.length) {
+				services.map((item) => {
+					if (item.status === 'extended') {
+						results[0].extended_services = item
+					} else {
+						results[0].services = item
+						service_id = item.id
+					}
+				})
+			}
+
+			let productsData = userAccServiceData.filter(item => item.user_acc_id === results[0].id && item.service_id === service_id);
+			if (productsData && productsData.length) {
+				productsData.map((item) => {
+					if (item.type === 'sim_id') {
+						results[0].sim_id = item.product_value
+					}
+					else if (item.type === 'sim_id2') {
+						results[0].sim_id2 = item.product_value
+					}
+					else if (item.type === 'pgp_email') {
+						results[0].pgp_email = item.product_value
+					}
+					else if (item.type === 'chat_id') {
+						results[0].chat_id = item.product_value
+					}
+				})
+			}
+			results[0].lastOnline = results[0].last_login ? results[0].last_login : "N/A"
+			// }
+			results[0].finalStatus = device_helpers.checkStatus(
+				results[0]
+			);
+			results[0].validity = await device_helpers.checkRemainDays(
+				results[0].created_at,
+				results[0].validity
+			)
+			return results[0];
+		} else {
+			return {};
 		}
 	},
 
@@ -2252,7 +2294,7 @@ module.exports = {
 			}
 		}
 	},
-	updateDealerLastLogin: async function(dealerId ) {
+	updateDealerLastLogin: async function (dealerId) {
 		let updateLastLoginQ = `UPDATE dealers SET last_login = '${moment().format("YYYY/MM/DD HH:mm:ss")}' WHERE dealer_id=${dealerId}`;
 		await sql.query(updateLastLoginQ);
 	}
