@@ -2,9 +2,8 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return Promise.all([
-      queryInterface.dropTable('bulk_messages'),
-      queryInterface.createTable('bulk_messages', {
+    return queryInterface.dropTable('bulk_messages').then(function () {
+      return queryInterface.createTable('bulk_messages', {
         id: {
           type: Sequelize.INTEGER,
           primaryKey: true,
@@ -75,7 +74,7 @@ module.exports = {
         },
 
       })
-    ])
+    })
   },
 
   down: (queryInterface, Sequelize) => {
