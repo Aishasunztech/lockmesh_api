@@ -940,9 +940,9 @@ module.exports = {
                     }
                 }
             }
-            if (finalStatus === Constants.DEVICE_PRE_ACTIVATION) {
+            if (finalStatus == Constants.DEVICE_PRE_ACTIVATION) {
                 var status = "";
-            } else if (finalStatus === Constants.DEVICE_EXPIRED) {
+            } else if (finalStatus == Constants.DEVICE_EXPIRED) {
                 var status = "expired";
             } else {
                 var status = "active";
@@ -1173,13 +1173,13 @@ module.exports = {
 
                 }
                 // console.log(device_id);
-                let deviceData = await require('./general_helper').getAllRecordbyDeviceId(device_id)
+                let deviceData = await require('./general_helper').getAllRecordbyUserAccId(usr_acc_id)
                 // console.log(deviceData);
                 data.data = [deviceData]
                 // console.log(data);
             }
         }
-
+        // console.log(data)
         return data
     },
     checkValue: value => {
