@@ -1582,6 +1582,8 @@ router.post('/apply_bulk_policy', bulkDevicesController.applyBulkPolicy);
 
 router.post('/send_bulk_msg', bulkDevicesController.sendBulkMsg);
 
+router.post('/update_bulk_msg', bulkDevicesController.updateBulkMsg);
+
 router.post('/reset-chat-pin', deviceController.resetChatPin);
 
 router.post('/change-s-chat-pin-status', deviceController.changeSchatPinStatus);

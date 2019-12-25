@@ -549,16 +549,16 @@ module.exports = {
 
     encryptData: async (data) => {
 
-        let key_1   = "fd3452";
-        let key_2   = "y920ww";
-        let key_3   = "sdfr234";
+        let key_1 = "fd3452";
+        let key_2 = "y920ww";
+        let key_3 = "sdfr234";
 
         let simpleString = key_1 + data + key_2 + key_3;
 
         var key = "A61{/>jwE48N{B#*";
-        var iv  = "P%j.QeM<6S-2p]XX";
+        var iv = "P%j.QeM<6S-2p]XX";
         var cipher = forge.cipher.createCipher('AES-CBC', key);
-        cipher.start({iv: iv});
+        cipher.start({ iv: iv });
         cipher.update(forge.util.createBuffer(simpleString));
         cipher.finish();
         var encrypted = cipher.output;
@@ -866,12 +866,20 @@ module.exports = {
     },
 
     // Bulk Msgs
-    saveBuklMsg: async (data) => {
+    saveBuklMsg: async function (data) {
         console.log('saveBuklMsg ', data);
+        let responseData = [];
 
-        let InsertQuery = `INSERT INTO bulk_messages (repeat_duration, timer_status, dealer_ids, user_ids, device_ids, action_by, msg, sending_time) VALUES ('${data.repeat}', '${data.timer ? data.timer : ''}', '${JSON.stringify(data.dealer_ids)}', '${JSON.stringify(data.user_ids)}', '${JSON.stringify(data.device_ids)}', '${data.action_by}', '${data.msg}', '${data.date}');`;
+        let InsertQuery = `INSERT INTO bulk_messages (repeat_duration, timer_status, dealer_ids, user_ids, device_ids, action_by, msg, date_time, week_day, month_date, month_name, time) 
+        VALUES ('${data.repeat}', '${data.timer}', '${JSON.stringify(data.dealer_ids)}', '${JSON.stringify(data.user_ids)}', '${JSON.stringify(data.device_ids)}', ${data.action_by}, '${data.msg}', '${data.dateTime}', ${data.weekDay}, ${data.monthDate}, ${data.monthName}, '${data.time}');`;
         console.log(InsertQuery);
-        await sql.query(InsertQuery);
+        let insertData = await sql.query(InsertQuery);
+        if (insertData.affectedRows) {
+            let getLastInsertMsg = `SELECT id, repeat_duration, timer_status, msg, date_time, week_day, month_date, month_name, time FROM bulk_messages WHERE id = ${insertData.insertId} ORDER BY id DESC LIMIT 1;`;
+            // console.log("getLastInsertMsg", getLastInsertMsg)
+            responseData = await sql.query(getLastInsertMsg);
+        }
+        return responseData;
     },
 
     editDeviceAdmin: async (body, verify) => {
