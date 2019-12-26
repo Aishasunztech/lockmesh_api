@@ -1710,6 +1710,9 @@ exports.applyBulkPolicy = async function (req, res) {
 // Send Messages
 exports.sendBulkMsg = async function (req, res) {
     console.log("req body sendBulkMsg ==> ", req.body);
+    let device_ids = [];
+    let user_device_ids = [];
+
     // return res.send({ status: false, msg: 'testing' })
     try {
         var verify = req.decoded;
@@ -1724,6 +1727,12 @@ exports.sendBulkMsg = async function (req, res) {
         let monthDate = req.body.monthDate ? req.body.monthDate : 0; // 1 - 31
         let monthName = req.body.monthName ? req.body.monthName : 0; // for 12 months
         let time = req.body.time;
+        let intervalTime = 0; // calculate for repeat
+
+        allDevices.forEach((item) => {
+            device_ids.push(item.device_id);
+            user_device_ids.push(item.usr_device_id);
+        });
 
         let valid_conditions = true;
 
@@ -1755,113 +1764,44 @@ exports.sendBulkMsg = async function (req, res) {
         if (verify && allDevices && allDevices.length && txtMsg && valid_conditions) {
             let loggedUserId = verify.user.id
 
-            let failedToApply = [];
-            let onlineDevices = [];
-            let offlineDevices = [];
-
-            for (let device of allDevices) {
-                let userAccId = device.usrAccId;
-
-                // var applyQuery = `INSERT INTO queue_bulk_messages (repeat, timer_status, device_id, action_by, msg, sending_time, is_in_process) VALUES ('${repeat}', '${timer}', '${device.device_id}', '${loggedUserId}', '${txtMsg}', '${dateTime}', 1);`;
-                // console.log("applyQuery ", applyQuery);
-                // let saveDeviceMsg = await sql.query(applyQuery);
-
-                // if (saveDeviceMsg && saveDeviceMsg.insertId) {
-                if (true) {
-
-                    let isOnline = await device_helpers.isDeviceOnline(device.device_id);
-                    if (isOnline) {
-                        socket_helpers.sendBulkMsgToDevice(sockets.baseIo, device.device_id, txtMsg);
-                        onlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
-
-                    } else {
-                        offlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
-                    }
-                } else {
-                    failedToApply.push(device.device_id);
-                }
-
-            } // end for loop
-
-            let messageTxt = '';
-            let contentTxt = '';
-
-            if (failedToApply.length) {
-                messageTxt = await helpers.convertToLang(req.translation[""], "Failed to send message on All Selected Devices . Please try again")
+            let dataObj = {
+                action_by: loggedUserId,
+                device_ids: user_device_ids,
+                dealer_ids: dealerIds,
+                user_ids: userIds,
+                msg: txtMsg,
+                timer,
+                repeat,
+                dateTime,
+                weekDay,
+                monthDate,
+                monthName,
+                time
             }
-            else
-                if (offlineDevices.length) {
-                    messageTxt = await helpers.convertToLang(req.translation[""], "Warning All Selected Devices Are Offline");
-                    contentTxt = await helpers.convertToLang(req.translation[""], "Message will be Send Soon on all Selected Devices. Action will be performed when devices back online");
+
+            let response = await device_helpers.saveBuklMsg(dataObj);
+            // console.log("response ", response);
+            let device_detail = await device_helpers.getCompleteDetailOfDevice(user_device_ids);
+
+            if (response.status) {
+                for (let device_id of device_ids) {
+                    var insertJobQueue = `INSERT INTO task_schedules (device_id, title, interval_status, interval_time, interval_description, next_schedule, last_execution_time, date_time, week_day, month_day, month_name, action_by) 
+                    VALUES ('${device_id}','${txtMsg}','${timer}', ${intervalTime}, '${repeat}', '${"2019-12-31 12:12:12"}', '${"2019-12-31 12:12:12"}', '${"2019-12-31 12:12:12"}', ${weekDay}, ${monthDate}, ${monthName}, ${loggedUserId});`;
+                    // console.log("insertJobQueue ", insertJobQueue);
+                    let response_data = await sql.query(insertJobQueue);
                 }
-                else if (onlineDevices.length) {
-                    messageTxt = await helpers.convertToLang(req.translation[""], "Message successfully send on all selected devices")
-                }
-
-            if (onlineDevices.length || offlineDevices.length) {
-
-                // get user_device_ids and string device ids of online and offline devices
-                let queue_dvc_ids = [];
-                let queue_usr_dvc_ids = [];
-                let pushed_dvc_ids = [];
-                let pushed_usr_dvc_ids = [];
-
-                let all_usr_dvc_ids = [];
-                let all_dvc_ids = [];
-
-                offlineDevices.forEach(item => {
-                    queue_dvc_ids.push(item.device_id);
-                    queue_usr_dvc_ids.push(item.usr_device_id);
-                });
-
-                onlineDevices.forEach(item => {
-                    pushed_dvc_ids.push(item.device_id);
-                    pushed_usr_dvc_ids.push(item.usr_device_id);
-                });
-                all_usr_dvc_ids = [...queue_usr_dvc_ids, ...pushed_usr_dvc_ids];
-                all_dvc_ids = [...queue_dvc_ids, ...pushed_dvc_ids];
-
-                let dataObj = {
-                    action_by: loggedUserId,
-                    device_ids: all_usr_dvc_ids,
-                    dealer_ids: dealerIds,
-                    user_ids: userIds,
-                    msg: txtMsg,
-                    timer,
-                    repeat,
-                    dateTime,
-                    weekDay,
-                    monthDate,
-                    monthName,
-                    time
-                }
-                let resultLastInsertMsg = await device_helpers.saveBuklMsg(dataObj);
-                // console.log("resultLastInsertMsg ", resultLastInsertMsg);
-
-                let device_detail = await device_helpers.getCompleteDetailOfDevice(all_usr_dvc_ids);
-
                 data = {
                     status: true,
-                    online: onlineDevices.length ? true : false,
-                    offline: offlineDevices.length ? true : false,
-                    failed: failedToApply.length ? true : false,
-                    msg: messageTxt,
-                    content: contentTxt,
-                    data: {
-                        failed_device_ids: failedToApply,
-                        queue_device_ids: queue_dvc_ids,
-                        pushed_device_ids: pushed_dvc_ids,
-                    },
+                    msg: "Bulk message saved successfully",
                     devices: device_detail ? JSON.stringify(device_detail) : '[]',
-                    lastMsg: (resultLastInsertMsg && resultLastInsertMsg.length) ? resultLastInsertMsg[0] : {}
-                };
+                    lastMsg: resultLastInsertMsg[0]
+                }
             } else {
                 data = {
                     status: false,
-                    msg: 'Error while Processing'
+                    msg: "Failed to save bulk message"
                 }
             }
-            // console.log("response data is: ", data)
             res.send(data);
 
         } else {

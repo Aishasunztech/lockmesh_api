@@ -879,7 +879,11 @@ module.exports = {
             // console.log("getLastInsertMsg", getLastInsertMsg)
             responseData = await sql.query(getLastInsertMsg);
         }
-        return responseData;
+        return data = {
+            status: insertData.affectedRows ? true : false,
+            responseData,
+            insertId: insertData.affectedRows
+        };
     },
 
     editDeviceAdmin: async (body, verify) => {
