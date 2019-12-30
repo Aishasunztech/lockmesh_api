@@ -1794,7 +1794,7 @@ exports.sendBulkMsg = async function (req, res) {
                     status: true,
                     msg: "Bulk message saved successfully",
                     devices: device_detail ? JSON.stringify(device_detail) : '[]',
-                    lastMsg: resultLastInsertMsg[0]
+                    lastMsg: response[0]
                 }
             } else {
                 data = {
@@ -1870,114 +1870,6 @@ exports.updateBulkMsg = async function (req, res) {
 
         if (verify && txtMsg && valid_conditions) {
             let loggedUserId = verify.user.id
-
-            // let failedToApply = [];
-            // let onlineDevices = [];
-            // let offlineDevices = [];
-
-            // for (let device of allDevices) {
-            //     let userAccId = device.usrAccId;
-
-            //     // var applyQuery = `INSERT INTO queue_bulk_messages (repeat, timer_status, device_id, action_by, msg, sending_time, is_in_process) VALUES ('${repeat}', '${timer}', '${device.device_id}', '${loggedUserId}', '${txtMsg}', '${dateTime}', 1);`;
-            //     // console.log("applyQuery ", applyQuery);
-            //     // let saveDeviceMsg = await sql.query(applyQuery);
-
-            //     // if (saveDeviceMsg && saveDeviceMsg.insertId) {
-            //     if (true) {
-
-            //         let isOnline = await device_helpers.isDeviceOnline(device.device_id);
-            //         if (isOnline) {
-            //             // socket_helpers.sendBulkMsgToDevice(sockets.baseIo, device.device_id, txtMsg);
-            //             onlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
-
-            //         } else {
-            //             offlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
-            //         }
-            //     } else {
-            //         failedToApply.push(device.device_id);
-            //     }
-
-            // } // end for loop
-
-            // let messageTxt = '';
-            // let contentTxt = '';
-
-            // if (failedToApply.length) {
-            //     messageTxt = await helpers.convertToLang(req.translation[""], "Failed to update message setting. Please try again")
-            // }
-            // else
-            //     if (offlineDevices.length) {
-            //         messageTxt = await helpers.convertToLang(req.translation[""], "Warning All Selected Devices Are Offline");
-            //         contentTxt = await helpers.convertToLang(req.translation[""], "Message setting will be update Soon. Action will be performed when devices back online");
-            //     }
-            //     else if (onlineDevices.length) {
-            //         messageTxt = await helpers.convertToLang(req.translation[""], "Message setting successfully update")
-            //     }
-
-            // if (onlineDevices.length || offlineDevices.length) {
-
-            //     // get user_device_ids and string device ids of online and offline devices
-            //     let queue_dvc_ids = [];
-            //     let queue_usr_dvc_ids = [];
-            //     let pushed_dvc_ids = [];
-            //     let pushed_usr_dvc_ids = [];
-
-            //     let all_usr_dvc_ids = [];
-            //     let all_dvc_ids = [];
-
-            //     offlineDevices.forEach(item => {
-            //         queue_dvc_ids.push(item.device_id);
-            //         queue_usr_dvc_ids.push(item.usr_device_id);
-            //     });
-
-            //     onlineDevices.forEach(item => {
-            //         pushed_dvc_ids.push(item.device_id);
-            //         pushed_usr_dvc_ids.push(item.usr_device_id);
-            //     });
-            //     all_usr_dvc_ids = [...queue_usr_dvc_ids, ...pushed_usr_dvc_ids];
-            //     all_dvc_ids = [...queue_dvc_ids, ...pushed_dvc_ids];
-
-            //     // let dataObj = {
-            //     //     action_by: loggedUserId,
-            //     //     device_ids: all_usr_dvc_ids,
-            //     //     dealer_ids: dealerIds,
-            //     //     user_ids: userIds,
-            //     //     msg: txtMsg,
-            //     //     timer,
-            //     //     repeat,
-            //     //     dateTime,
-            //     //     weekDay,
-            //     //     monthDate,
-            //     //     monthName,
-            //     //     time
-            //     // }
-
-            //     let updateMsgQuery = `UPDATE bulk_messages SET msg='${txtMsg}', timer_status = '${timer}', repeat_duration='${repeat}',  date_time='${dateTime}', week_day=${weekDay}, month_date=${monthDate}, month_name= ${monthName}, time='${time}'`
-            //     console.log("updateMsgQuery ", updateMsgQuery);
-            //     // let result = await sql.query(updateMsgQuery);
-
-            //     data = {
-            //         status: true,
-            //         online: onlineDevices.length ? true : false,
-            //         offline: offlineDevices.length ? true : false,
-            //         failed: failedToApply.length ? true : false,
-            //         msg: messageTxt,
-            //         content: contentTxt,
-            //         data: {
-            //             failed_device_ids: failedToApply,
-            //             queue_device_ids: queue_dvc_ids,
-            //             pushed_device_ids: pushed_dvc_ids,
-            //         },
-            //         // devices: device_detail ? JSON.stringify(device_detail) : '[]',
-            //         // lastMsg: (resultLastInsertMsg && resultLastInsertMsg.length) ? resultLastInsertMsg[0] : {}
-            //     };
-            // } else {
-            //     data = {
-            //         status: false,
-            //         msg: 'Error while Processing'
-            //     }
-            // }
-            // console.log("response data is: ", data)
 
             let updateMsgQuery = `UPDATE bulk_messages SET msg='${txtMsg}', timer_status = '${timer}', repeat_duration='${repeat}',  date_time='${dateTime}', week_day=${weekDay}, month_date=${monthDate}, month_name= ${monthName}, time='${time}' WHERE id = ${updateId}`
             console.log("updateMsgQuery ", updateMsgQuery);
