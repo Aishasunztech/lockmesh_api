@@ -322,14 +322,15 @@ exports.validateSimId = async function (req, res) {
 
 }
 
-exports.addNewDataLimitsPlans = async function (req, res) {
+exports.changeDataLimitsPlans = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
         if (req.body.usr_device_id) {
+            console.log(req.body);
             let device_id = req.body.device_id;
             let loggedDealerId = verify.user.id;
             let loggedDealerType = verify.user.user_type;
-            let user_acc_id = req.body.user_acc_id
+            let user_acc_id = req.body.usr_acc_id
             let usr_device_id = req.body.usr_device_id;
             let user_id = req.body.user_id
             let finalStatus = req.body.finalStatus;

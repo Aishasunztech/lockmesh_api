@@ -505,6 +505,7 @@ module.exports = {
      * String ids of usr_acc table
      */
     getServicesData: async (ids) => {
+        console.log(ids);
         let query = "SELECT * FROM services_data WHERE user_acc_id IN (" + ids + ") AND (end_date IS NULL OR end_date = '') AND (status = 'active' OR status = 'request_for_cancel' OR status = 'extended') "
         let results = await sql.query(query);
         if (results.length) {
@@ -527,6 +528,7 @@ module.exports = {
 
     /** GET DATA PLAN PACKAGES FOR DEVICE LIST */
     getDataPlans: async (servicesIds) => {
+        // console.log(servicesIds);
         let query = "SELECT * FROM sim_data_plans WHERE service_id IN (" + servicesIds + ") AND status = 'active'"
         // console.log(query);
         let results = await sql.query(query);

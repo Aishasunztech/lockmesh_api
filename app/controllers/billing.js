@@ -749,14 +749,14 @@ exports.saveSaPackage = async function (req, res) {
         let data = req.body.data;
         if (data && data.package_type) {
             let package_type = data.package_type;
-            
-            if(package_type!=='services' && package_type !=='data_plan'){
+
+            if (package_type !== 'services' && package_type !== 'data_plan') {
                 return res.send({
                     status: false,
                     msg: 'Invalid Data'
                 })
             }
- 
+
             let days = 0;
             if (data.pkgTerm) {
                 if (data.pkgTerm === "trial") {
@@ -785,10 +785,10 @@ exports.saveSaPackage = async function (req, res) {
 
             let pkg_features = '{}';
             let insertQuery = '';
-            if(package_type==='services'){
+            if (package_type === 'services') {
                 let pkg_features = JSON.stringify(data.pkgFeatures)
                 insertQuery = `INSERT INTO packages (dealer_id, dealer_type, pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, dealers, package_type ) VALUES('${verify.user[0].dealer_id}', 'super_admin', '${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}' , '[]', '${package_type}')`;
-            } else if ( package_type === 'data_plan') {
+            } else if (package_type === 'data_plan') {
                 insertQuery = `INSERT INTO packages (dealer_id, dealer_type, pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, data_limit, dealers, package_type ) VALUES('${verify.user[0].dealer_id}', 'super_admin', '${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}', ${data.data_limit}, '[]', '${package_type}')`;
             }
 
@@ -1661,6 +1661,7 @@ exports.getParentPackages = async function (req, res) {
                             }
                         }
                     }
+                    // console.log(reslt)
                     res.send({
                         status: true,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
