@@ -6,7 +6,8 @@ var mime = require("mime");
 var XLSX = require("xlsx");
 var empty = require("is-empty");
 const axios = require("axios");
-var moment = require("moment-strftime");
+// var moment = require("moment-strftime");
+var moment = require('moment');
 var randomize = require("randomatic");
 var datetime = require("node-datetime");
 
@@ -1725,7 +1726,7 @@ exports.sendBulkMsg = async function (req, res) {
         let dateTime = req.body.dateTime;
         let weekDay = req.body.weekDay ? req.body.weekDay : 0;
         let monthDate = req.body.monthDate ? req.body.monthDate : 0; // 1 - 31
-        let monthName = req.body.monthName ? req.body.monthName : 0; // for 12 months
+        let monthName = req.body.monthName ? req.body.monthName : 0; // for 12 months e.g February
         let time = req.body.time;
         let intervalTime = 0; // calculate for repeat
 
@@ -1738,7 +1739,7 @@ exports.sendBulkMsg = async function (req, res) {
 
         // Form data Validations
         if (timer === "NOW") { // 01
-            dateTime = '';
+            // dateTime = '';
             repeat = "NONE";
         }
         else if (timer === "DATE/TIME") { // 02
@@ -1747,13 +1748,28 @@ exports.sendBulkMsg = async function (req, res) {
         }
         else if (timer === "REPEAT") { // 03
             if (repeat === "DAILY") {
-                if (!time) valid_conditions = false;
+                if (!time) {
+                    valid_conditions = false;
+                    intervalTime = 1440;
+                }
             } else if (repeat === "WEEKLY") {
-                if (!time && !weekDay) valid_conditions = false;
+                if (!time && !weekDay) {
+                    valid_conditions = false;
+                    intervalTime = 10080;
+                }
             } else if (repeat === "MONTHLY" || repeat === "3 MONTHS" || repeat === "6 MONTHS") {
-                if (!time && !weekDay && !monthDate) valid_conditions = false;
+                if (!time && !weekDay && !monthDate) {
+                    valid_conditions = false;
+
+                    if (repeat === "MONTHLY") intervalTime = 43829;
+                    if (repeat === "3 MONTHS") intervalTime = 131487;
+                    if (repeat === "6 MONTHS") intervalTime = 262975;
+                }
             } else if (repeat === "12 MONTHS") {
-                if (!time && !weekDay && !monthName) valid_conditions = false;
+                if (!time && !weekDay && !monthName) {
+                    valid_conditions = false;
+                    intervalTime = 525949;
+                }
             }
         }
         else { // 04
@@ -1762,7 +1778,18 @@ exports.sendBulkMsg = async function (req, res) {
         // end validation process
 
         if (verify && allDevices && allDevices.length && txtMsg && valid_conditions) {
-            let loggedUserId = verify.user.id
+            let loggedUserId = verify.user.id;
+
+            let getDealerTimeZone = `SELECT timezone FROM dealers WHERE dealer_id = ${loggedUserId};`;
+            let dealerTZ = await sql.query(getDealerTimeZone);
+            console.log("getDealerTimeZone ", getDealerTimeZone, "result", dealerTZ[0].timezone);
+
+            // let timeZone = moment.tz.guess(); // 2019-12-31 14:23:42 // "02:00"
+
+            if (time) {
+                dateTime = moment().tz(dealerTZ[0].timezone).set("02:00", 'HH:mm').format('YYYY-MM-DD HH:mm:ss');
+            }
+            console.log("convert time to dateTime:: ", dateTime);
 
             let dataObj = {
                 action_by: loggedUserId,
@@ -1776,7 +1803,7 @@ exports.sendBulkMsg = async function (req, res) {
                 weekDay,
                 monthDate,
                 monthName,
-                time
+                // time
             }
 
             let response = await device_helpers.saveBuklMsg(dataObj);
@@ -1785,8 +1812,8 @@ exports.sendBulkMsg = async function (req, res) {
 
             if (response.status) {
                 for (let device_id of device_ids) {
-                    var insertJobQueue = `INSERT INTO task_schedules (device_id, title, interval_status, interval_time, interval_description, next_schedule, last_execution_time, date_time, week_day, month_day, month_name, action_by) 
-                    VALUES ('${device_id}','${txtMsg}','${timer}', ${intervalTime}, '${repeat}', '${"2019-12-31 12:12:12"}', '${"2019-12-31 12:12:12"}', '${"2019-12-31 12:12:12"}', ${weekDay}, ${monthDate}, ${monthName}, ${loggedUserId});`;
+                    var insertJobQueue = `INSERT INTO task_schedules (task_id, device_id, title, interval_status, interval_time, interval_description, next_schedule, week_day, month_day, month_name, action_by) 
+                    VALUES (${response.insertId}, '${device_id}','${txtMsg}','${timer}', ${intervalTime}, '${repeat}', '${dateTime}', ${weekDay}, ${monthDate}, ${monthName}, ${loggedUserId});`;
                     // console.log("insertJobQueue ", insertJobQueue);
                     let response_data = await sql.query(insertJobQueue);
                 }
@@ -1794,7 +1821,7 @@ exports.sendBulkMsg = async function (req, res) {
                     status: true,
                     msg: "Bulk message saved successfully",
                     devices: device_detail ? JSON.stringify(device_detail) : '[]',
-                    lastMsg: response[0]
+                    lastMsg: response.responseData[0]
                 }
             } else {
                 data = {
@@ -1840,12 +1867,13 @@ exports.updateBulkMsg = async function (req, res) {
         let monthDate = req.body.month_date ? req.body.month_date : 0; // 1 - 31
         let monthName = req.body.month_name ? req.body.month_name : 0; // for 12 months
         let time = req.body.time;
+        let intervalTime = 0; // calculate for repeat
 
         let valid_conditions = true;
 
         // Form data Validations
         if (timer === "NOW") { // 01
-            dateTime = '';
+            // dateTime = '';
             repeat = "NONE";
         }
         else if (timer === "DATE/TIME") { // 02
@@ -1854,13 +1882,28 @@ exports.updateBulkMsg = async function (req, res) {
         }
         else if (timer === "REPEAT") { // 03
             if (repeat === "DAILY") {
-                if (!time) valid_conditions = false;
+                if (!time) {
+                    valid_conditions = false;
+                    intervalTime = 1440;
+                }
             } else if (repeat === "WEEKLY") {
-                if (!time && !weekDay) valid_conditions = false;
+                if (!time && !weekDay) {
+                    valid_conditions = false;
+                    intervalTime = 10080;
+                }
             } else if (repeat === "MONTHLY" || repeat === "3 MONTHS" || repeat === "6 MONTHS") {
-                if (!time && !weekDay && !monthDate) valid_conditions = false;
+                if (!time && !weekDay && !monthDate) {
+                    valid_conditions = false;
+
+                    if (repeat === "MONTHLY") intervalTime = 43829;
+                    if (repeat === "3 MONTHS") intervalTime = 131487;
+                    if (repeat === "6 MONTHS") intervalTime = 262975;
+                }
             } else if (repeat === "12 MONTHS") {
-                if (!time && !weekDay && !monthName) valid_conditions = false;
+                if (!time && !weekDay && !monthName) {
+                    valid_conditions = false;
+                    intervalTime = 525949;
+                }
             }
         }
         else { // 04
@@ -1876,6 +1919,12 @@ exports.updateBulkMsg = async function (req, res) {
             let result = await sql.query(updateMsgQuery);
 
             if (result && result.affectedRows) {
+
+                // Update task Scheduling data
+                var updateJobQueue = `UPDATE task_schedules SET title = '${txtMsg}', interval_status = '${timer}', interval_time = ${intervalTime}, interval_description = '${repeat}', next_schedule = '${dateTime}', week_day = ${weekDay}, month_day = ${monthDate}, month_name = ${monthName} WHERE task_id = ${updateId} AND action_by = ${loggedUserId};`;
+                console.log("updateJobQueue ", updateJobQueue);
+                let response_data = await sql.query(updateJobQueue);
+
                 data = {
                     status: true,
                     msg: "Message Setting update Successfully."
@@ -1913,10 +1962,17 @@ exports.getBulkMsgsList = async function (req, res) {
         var verify = req.decoded;
         let loggedUserId = verify.user.id;
 
+        // let getDealerTimeZone = `SELECT timezone FROM dealers WHERE dealer_id = ${loggedUserId};`;
+        // let dealerTZ = await sql.query(getDealerTimeZone);
+        // console.log("getDealerTimeZone ", getDealerTimeZone, "result", dealerTZ[0].timezone);
+
+        // // let timeZone = moment.tz.guess(); // 2019-12-31 14:23:42 // "02:00"
+        // console.log("convert time to dateTime:: ", "timeZone", moment().format('YYYY-MM-DD HH:mm:ss'), dealerTZ[0].timezone, moment().tz(dealerTZ[0].timezone).set({ h: 02, m: 11 }).format('YYYY-MM-DD HH:mm:ss'));
+
         // console.log('at getBulkMsgsList:')
         if (verify) {
 
-            var selectQuery = `SELECT id, device_ids, repeat_duration, timer_status, msg, date_time, week_day, month_date, month_name, time FROM bulk_messages WHERE action_by = '${loggedUserId}' AND delete_status = 0;`;
+            var selectQuery = `SELECT id, device_ids, repeat_duration, timer_status, msg, date_time, week_day, month_date, month_name, time, created_at FROM bulk_messages WHERE action_by = '${loggedUserId}' AND delete_status = 0;`;
             var result = await sql.query(selectQuery);
             // console.log("result ", result)
 
@@ -1954,17 +2010,26 @@ exports.getBulkMsgsList = async function (req, res) {
 // delete Bulk message
 exports.deleteBulkMsg = async function (req, res) {
     try {
+        console.log("req body deleteBulkMsg ==> ", req.body);
+
         var verify = req.decoded;
         let loggedUserId = verify.user.id;
         let msgId = req.params.id;
         console.log('at deleteBulkMsg: msgId', msgId)
-        if (verify) {
+        if (verify && msgId) {
 
             var selectQuery = `UPDATE bulk_messages SET delete_status = 1 WHERE id=${msgId};`;
             var result = await sql.query(selectQuery);
             console.log("result ", result)
 
             if (result && result.affectedRows) {
+
+                let deleteJobQueue = `DELETE FROM task_schedules WHERE task_id = ${msgId};`;
+                console.log("delete api deleteJobQueue ", deleteJobQueue);
+                sql.query(deleteJobQueue);
+                // let updateJobQueue = `UPDATE task_schedules SET delete_status = 1, sorting_order = 0 WHERE task_id = ${msgId} AND action_by = ${loggedUserId};`;
+                // await sql.query(updateJobQueue);
+
                 res.send({
                     status: true,
                     msg: "Message Delete Successfully"

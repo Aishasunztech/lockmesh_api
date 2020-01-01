@@ -446,13 +446,14 @@ module.exports = {
         }
     },
 
-    sendBulkMsgToDevice: async function (io, device_id, msg) {
-        console.log("device_id, msg ", device_id, msg);
+    sendMsgToDevice: async function (io, job_id, device_id, msg) {
+        // console.log("device_id, msg ", device_id, msg);
 
         if (msg) {
-            io.emit(Constants.SEND_BULK_MSG_TO_DEVICE + device_id, {
+            io.emit(Constants.SEND_MSG_TO_DEVICE + device_id, {
                 status: true,
                 msg,
+                job_id
             });
         }
     },
