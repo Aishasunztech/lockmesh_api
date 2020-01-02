@@ -991,7 +991,8 @@ module.exports = {
                     status: true,
                     msg: "Record Updated Successfully."
                 }
-                if (expiry_date !== rows[0].expiry_date) {
+                console.log(expiry_date, rows[0].expiry_date);
+                if (expiry_date != rows[0].expiry_date) {
                     let grace_days = moment(new Date(expiry_date)).diff(moment(new Date(rows[0].expiry_date)), 'days')
                     let alreadyGraced = await sql.query(`SELECT * FROM grace_days_histories WHERE user_acc_id = ${usr_acc_id} AND service_id = ${service_id}`)
                     let grace_day_query = ''
