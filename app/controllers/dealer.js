@@ -1757,49 +1757,6 @@ exports.getLoggedDealerApps = async function (req, res) {
     }
 }
 
-exports.getDropdownSelectedItems = async function (req, res) {
-    var verify = req.decoded;
-    // console.log('done or not');
-    // if (verify.status !== undefined && verify.status == true) {
-    if (verify) {
-        var loggedInuid = verify.user.id;
-        // console.log('data from req', req.params.dropdownType);
-        let dealer_id = verify.user.id;
-        let dropdownType = req.params.dropdownType;
-        sql.query("select * from dealer_dropdown_list where dealer_id = " + dealer_id + " AND type = '" + dropdownType + "'", async function (err, rslts) {
-            if (err) {
-                console.log(err)
-            }
-
-            if (rslts.length == 0) {
-                data = {
-                    "status": false,
-                    "msg": await general_helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // No data found",
-                    "data": '[]'
-                };
-                res.send(data);
-            } else {
-                if (rslts[0].selected_items != '' && rslts[0].selected_items != null) {
-                    var str = rslts[0].selected_items;
-
-                    data = {
-                        "status": true,
-                        "data": str
-                    };
-                    res.send(data);
-                } else {
-                    data = {
-                        "status": false,
-                        "msg": await general_helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // No data found",
-                        "data": '[]'
-                    };
-                    res.send(data);
-                }
-            }
-        });
-    }
-}
-
 
 exports.getInfo = async function (req, res) {
     var verify = req.decoded;
@@ -1869,49 +1826,101 @@ exports.getDealerForSA = async function (req, res) {
     }
 }
 
-exports.dropDown = async function (req, res) {
+exports.getDropdownSelectedItems = async function (req, res) {
     var verify = req.decoded;
-    var loggedInuid = verify.user.id;
+    // console.log('done or not');
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
+        var loggedInuid = verify.user.id;
+        // console.log('data from req', req.params.dropdownType);
+        let dealer_id = verify.user.id;
+        let dropdownType = req.params.dropdownType;
+        sql.query("select * from dealer_dropdown_list where dealer_id = " + dealer_id + " AND type = '" + dropdownType + "'", async function (err, rslts) {
+            if (err) {
+                console.log(err)
+            }
 
-        var selected_items = req.body.selected_items;
-        var dropdownType = req.body.pageName;
-        var dealer_id = verify.user.id;
-        var squery = "select * from dealer_dropdown_list where dealer_id = " + dealer_id + " AND type ='" + dropdownType + "'";
-        // console.log('query', squery);
-        var srslt = await sql.query(squery);
-        // console.log('query result', srslt);
-
-        if (srslt.length == 0) {
-            var squery = sql.query("insert into dealer_dropdown_list (dealer_id, selected_items, type) values (" + dealer_id + ", '" + selected_items + "', '" + dropdownType + "')", async function (err, rslts) {
+            if (rslts.length == 0) {
                 data = {
-                    "status": true,
-                    "msg": await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_ADDED], "Items Added"), // Items Added.
-                    "data": rslts
+                    "status": false,
+                    "msg": await general_helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // No data found",
+                    "data": '[]'
                 };
                 res.send(data);
-            });
-        } else {
+            } else {
+                if (rslts[0].selected_items != '' && rslts[0].selected_items != null) {
+                    var str = rslts[0].selected_items;
 
-            sql.query("update dealer_dropdown_list set selected_items = '" + selected_items + "' where type='" + dropdownType + "' AND dealer_id='" + dealer_id + "'", async function (err, row) {
-                // console.log('squery data ', 'rowws', row);
-                if (row.affectedRows != 0) {
                     data = {
                         "status": true,
-                        "msg": await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_UP], "Items Updated"), // Items Updated.',
-                        "data": row
+                        "data": str
                     };
                     res.send(data);
                 } else {
                     data = {
                         "status": false,
-                        "msg": await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_NOT_UP], "Items Not Updated"), // Items Not Updated.',
-                        "data": row
+                        "msg": await general_helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // No data found",
+                        "data": '[]'
                     };
                     res.send(data);
-
                 }
+            }
+        });
+    }
+}
+
+exports.saveDropDown = async function (req, res) {
+    var verify = req.decoded;
+    if (verify) {
+
+        var selected_items = req.body.selected_items;
+        var dropdownType = req.body.pageName;
+        var dealer_id = verify.user.id;
+        var sQuery = `SELECT * FROM dealer_dropdown_list WHERE dealer_id = ${dealer_id} AND type ='${dropdownType}'`;
+        
+        var sResult = await sql.query(sQuery);
+        
+        if (sResult.length == 0) {
+            sql.query(`insert into dealer_dropdown_list (dealer_id, selected_items, type) values (${dealer_id}, '${selected_items}', '${dropdownType}')`, async function (err, rslts) {
+                if(err){
+                    return res.send({
+                        status: false,
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_NOT_UP], "Items Not Updated"),
+                    })
+                }
+
+                data = {
+                    status: true,
+                    msg: await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_ADDED], "Items Added"), // Items Added.
+                    data: selected_items
+                };
+                return res.send(data);
+            });
+        } else {
+
+            sql.query(`UPDATE dealer_dropdown_list SET selected_items = '${selected_items}' WHERE type='${dropdownType}' AND dealer_id=${dealer_id}`, async function (err, row) {
+                if(err){
+                    return res.send({
+                        status: false,
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_NOT_UP], "Items Not Updated"),
+                    })
+                }
+
+                if (row.affectedRows != 0) {
+                    data = {
+                        status: true,
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_UP], "Items Updated"), // Items Updated.',
+                        data: selected_items
+                    };
+                    res.send(data);
+                } else {
+                    data = {
+                        status: false,
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_NOT_UP], "Items Not Updated"), // Items Not Updated.',
+                    };
+                    
+                }
+                return res.send(data);
             });
         }
     }

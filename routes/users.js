@@ -600,7 +600,7 @@ router.get("/dealer/gtdropdown/:dropdownType", dealerController.getDropdownSelec
  * @security JWT
  */
 /** post Dealer Dropdown Selected Items **/
-router.post("/dealer/dropdown", dealerController.dropDown);
+router.post("/dealer/dropdown", dealerController.saveDropDown);
 /**
  * @route GET /users/dealer/getPagination/{dropdownType}
  * @group Dealer - Operations about Dealers
