@@ -429,7 +429,7 @@ function generateEditInvoiceTable(doc, invoice, type) {
         "",
         "Paid to date:",
         "",
-        ((invoice.pay_now) ? invoice.paid : invoice.invoice_status ? invoice.paid_price : 0) + " Credits"
+        ((invoice.pay_now) ? invoice.paid : (invoice.invoice_status === "UNPAID" ? 0 : invoice.paid_credits)) + " Credits"
     );
     const duePosition1 = duePosition + 15;
     doc.font("Helvetica-Bold");
