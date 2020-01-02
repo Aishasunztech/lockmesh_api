@@ -1166,7 +1166,7 @@ module.exports = {
                 }
                 if (pgp_email && pgp_email !== '') {
                     console.log("dasdsa", service_id, usr_acc_id);
-                    let getPgpEmail = "SELECT * FROM pgp_emails WHERE pgp_email = '" + pgp_email + "' AND delete_status = '0' AND used = '0'"
+                    let getPgpEmail = "SELECT * FROM pgp_emails WHERE pgp_email = '" + pgp_email + "'"
                     console.log(getPgpEmail);
                     sql.query(getPgpEmail, function (err, result) {
                         if (result && result.length) {
