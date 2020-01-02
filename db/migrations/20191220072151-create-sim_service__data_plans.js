@@ -25,7 +25,8 @@ module.exports = {
         },
         used_data: {
           type: Sequelize.STRING,
-          allowNull: false
+          allowNull: false,
+          defaultValue: '0'
         },
         start_date: {
           type: Sequelize.STRING,

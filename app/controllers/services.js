@@ -251,6 +251,7 @@ exports.validateSimId = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
         let sim_id = req.body.sim_id
+        let user_acc_id = req.body.user_acc_id ? req.body.user_acc_id : null
         if (sim_id) {
             if (sim_id.length < 19 || sim_id.length > 20) {
                 res.send({
@@ -259,7 +260,7 @@ exports.validateSimId = async function (req, res) {
                 })
                 return
             } else {
-                let selectSimQ = `SELECT * FROM sim_ids WHERE sim_id = '${sim_id}' AND delete_status = '0'`
+                let selectSimQ = `SELECT * FROM sim_ids WHERE sim_id = '${sim_id}' AND delete_status = '0' AND user_acc_id  !=${user_acc_id}`
                 console.log(selectSimQ);
                 let simFound = await sql.query(selectSimQ)
                 if (simFound && simFound.length) {
@@ -333,7 +334,6 @@ exports.changeDataLimitsPlans = async function (req, res) {
             let user_acc_id = req.body.usr_acc_id
             let usr_device_id = req.body.usr_device_id;
             let user_id = req.body.user_id
-            let finalStatus = req.body.finalStatus;
             var date_now = moment(new Date()).format('YYYY/MM/DD')
             let pay_now = req.body.pay_now
             let data_plan_package_id = req.body.data_plan_package_id
@@ -448,7 +448,7 @@ exports.changeDataLimitsPlans = async function (req, res) {
 
                                             let currentDataPlan = await sql.query(`SELECT * FROM sim_data_plans WHERE service_id = ${service_id} AND sim_type = '${sim_type}' AND status = 'active'`)
                                             if (currentDataPlan && currentDataPlan.length) {
-                                                let updateCurrentPlan = `UPDATE sim_data_plans SET status = 'deleted' WHERE id= ${currentDataPlan[0].id}`
+                                                let updateCurrentPlan = `UPDATE sim_data_plans SET status = 'deleted' , end_date = '${date_now}' WHERE id= ${currentDataPlan[0].id}`
                                                 let updatedPlan = await sql.query(updateCurrentPlan)
                                                 if (updatedPlan && updatedPlan.affectedRows) {
                                                     insertDataPlan = `INSERT INTO sim_data_plans (service_id , data_plan_package , sim_type , total_data , used_data , start_date ) VALUES(${service_id} , '${JSON.stringify(data_plan)}' , '${sim_type}' , ${data_plan.data_limit} , '${currentDataPlan[0].used_data}' ,'${date_now}')`

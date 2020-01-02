@@ -1272,12 +1272,15 @@ exports.getPackages = async function (req, res) {
 
                         for (var i = 0; i < reslt.length; i++) {
                             if (loggedUserType === ADMIN) {
+                                // console.log(reslt);
                                 if (reslt[i].dealer_type === 'super_admin') {
                                     let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'admin' AND package_id = " + reslt[i].id);
+                                    // console.log(result);
                                     if (result && result.length) {
                                         reslt[i].pkg_price = result[0].price
                                         reslt[i].retail_price = result[0].retail_price
                                     } else {
+                                        console.log(reslt[i.pkg_price]);
                                         reslt[i].retail_price = reslt[i].pkg_price
                                     }
                                 }

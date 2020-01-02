@@ -1094,6 +1094,7 @@ exports.createDeviceProfile = async function (req, res) {
         let endUser_pay_status = req.body.paid_by_user
         let paid_credits = 0
         let transection_due_credits = 0
+        let data_plan_price
 
         // console.log(req.body);
         // let services_discounted_price = 0
@@ -2008,7 +2009,22 @@ exports.editDevices = async function (req, res) {
 
             let invoice_status = pay_now ? "PAID" : "UNPAID"
             let dealer_credits_copy = 0
-
+            var basic_data_plan = {
+                sim_id:
+                {
+                    data_limit: 2000,
+                    pkg_price: 0,
+                    term: exp_month
+                },
+                sim_id2:
+                {
+                    data_limit: 2000,
+                    pkg_price: 0,
+                    term: exp_month
+                }
+            }
+            // console.log(req.body.data_plans)
+            var data_plans = req.body.data_plans ? req.body.data_plans : basic_data_plan
             // console.log(expiry_date);
             // return
             // console.log("Cancel Services", user_id);
@@ -2016,6 +2032,19 @@ exports.editDevices = async function (req, res) {
             //     total_price = total_price - (total_price * 0.03);
             // }
 
+            let sim_id_included = false
+            let sim_id2_included = false
+
+            if (packages.length) {
+                packages.map((item) => {
+                    if (item.pkg_features.sim_id) {
+                        sim_id_included = true
+                    }
+                    if (item.pkg_features.sim_id2) {
+                        sim_id2_included = true
+                    }
+                })
+            }
 
             if (expiry_date == "" || expiry_date === null) {
                 var status = "expired";
@@ -2281,7 +2310,7 @@ exports.editDevices = async function (req, res) {
                             if (newService) {
 
                                 let update_credits_query = '';
-
+                                let prev_data_packages = []
                                 if (prevService) {
                                     let update_prev_service_billing = `UPDATE services_data set status = 'returned',paid_credits = ${prevServicePaidPrice}, end_date = '${date_now}' WHERE id = ${prevService.id} `
                                     await sql.query(update_prev_service_billing);
@@ -2355,9 +2384,9 @@ exports.editDevices = async function (req, res) {
                                             updateAdminProfit = 'update financial_account_balance set credits = credits - ' + refund_prev_service_dealer_profit + ' where dealer_id ="' + verify.user.connected_dealer + '"';
                                             await sql.query(updateAdminProfit);
                                         }
-
-
                                     }
+                                    prev_data_packages = await sql.query(`SELECT * FROM sim_data_plans WHERE service_id = ${prevService.id} AND status = 'active'`)
+
                                 }
 
                                 let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date , service_term) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice} ,'${date_now}' ,'${expiry_date}' , '${exp_month}')`
@@ -2367,6 +2396,7 @@ exports.editDevices = async function (req, res) {
                                     service_id = service_data_result.insertId
                                     helpers.saveServiceSalesDetails(JSON.parse(JSON.stringify(packages)), products, loggedDealerType, usr_acc_id, service_data_result.insertId, pay_now)
                                 }
+
                                 if (pgp_email != prevPGP) {
                                     console.log("PGP change");
 
@@ -2508,6 +2538,7 @@ exports.editDevices = async function (req, res) {
                                         }
                                     })
                                 }
+
                                 if (sim_id && sim_id !== '') {
                                     let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id + "'"
                                     sql.query(getsimID, function (err, result) {
@@ -2526,7 +2557,9 @@ exports.editDevices = async function (req, res) {
                                             sql.query(insertAccService)
                                         }
                                     })
+
                                 }
+
                                 if (pgp_email && pgp_email !== '') {
                                     let getsimID = "SELECT * FROM pgp_emails WHERE pgp_email = '" + pgp_email + "'"
                                     sql.query(getsimID, function (err, result) {
@@ -2537,16 +2570,40 @@ exports.editDevices = async function (req, res) {
                                     })
                                 }
 
+                                if (sim_id_included) {
+                                    let used_data = 0
+                                    if (prev_data_packages && prev_data_packages.length) {
+                                        let sim_id_data_plan = prev_data_packages.find(item => item.sim_type === 'sim_id')
+                                        if (sim_id_data_plan) {
+                                            used_data = sim_id_data_plan.used_data
+                                            await sql.query(`UPDATE sim_data_plans SET status = 'deleted' , end_date = '${date_now}' WHERE id = ${sim_id_data_plan.id}`)
+                                        }
+
+                                    }
+                                    let data_plan_package = data_plans.sim_id
+                                    let data_package_plan = `INSERT INTO sim_data_plans ( service_id , data_plan_package , total_data , sim_type , used_data , start_date) VALUES( ${service_id} , '${JSON.stringify(data_plan_package)}' , '${data_plan_package.data_limit}' , 'sim_id' , ${used_data} , '${date_now}')`
+                                    sql.query(data_package_plan)
+                                }
+
+                                if (sim_id2_included) {
+                                    let used_data = 0
+                                    if (prev_data_packages && prev_data_packages.length) {
+                                        let sim_id2_data_plan = prev_data_packages.find(item => item.sim_type === 'sim_id')
+                                        if (sim_id2_data_plan) {
+                                            used_data = sim_id2_data_plan.used_data
+                                            await sql.query(`UPDATE sim_data_plans SET status = 'deleted' , end_date = '${date_now}' WHERE id = ${sim_id2_data_plan.id}`)
+                                        }
+                                    }
+                                    let data_plan_package2 = data_plans.sim_id2
+                                    let data_package_plan2 = `INSERT INTO sim_data_plans ( service_id , data_plan_package , total_data , sim_type , used_data , start_date) VALUES( ${service_id} , '${JSON.stringify(data_plan_package2)}' , '${data_plan_package2.data_limit}' , 'sim_id2' , ${used_data} , '${date_now}')`
+                                    sql.query(data_package_plan2)
+                                }
 
                                 let transection_status = 'transferred'
 
                                 if (!pay_now) {
                                     transection_status = 'pending'
                                 }
-
-                                // let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id })}' ,${newServicePrice} ,'credit' , '${transection_status}' , 'services' , ${(pay_now) ? newServicePrice : 0} , ${(pay_now) ? 0 : newServicePrice})`
-                                // await sql.query(transection_credits)
-
 
                                 if (pay_now) {
                                     let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, service_id: service_id })}' ,${newServicePrice} ,'credit' , '${transection_status}' , 'services' , ${newServicePrice} , ${0})`
