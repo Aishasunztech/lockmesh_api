@@ -1163,7 +1163,7 @@ module.exports = {
                     })
                 }
                 if (pgp_email && pgp_email !== '') {
-                    let getPgpEmail = "SELECT * FROM pgp_emails WHERE pgp_email = '" + pgp_email + "' AND delete_status = 0 AND used = 0"
+                    let getPgpEmail = "SELECT * FROM pgp_emails WHERE pgp_email = '" + pgp_email + "' AND delete_status = '0' AND used = '0'"
                     sql.query(getPgpEmail, function (err, result) {
                         if (result && result.length) {
                             let updateAccService = `UPDATE user_acc_services SET product_value = '${result[0].pgp_email}' , product_id = ${result[0].id} WHERE user_acc_id = ${usr_acc_id} AND service_id = ${service_id} AND type = 'pgp_email'`
