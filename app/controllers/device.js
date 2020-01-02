@@ -2638,8 +2638,8 @@ exports.extendServices = async function (req, res) {
             let user_id = req.body.user_id
             let exp_month = expiry_date
             let paid_credits = 0
-            let dealer_credits_copy = 0,
-                invoice_status = (pay_now) ? "PAID" : "UNPAID"
+            let dealer_credits_copy = 0
+            let invoice_status = (pay_now) ? "PAID" : "UNPAID"
             // let pkg_term = null
             // console.log(expiry_date);
             // return
