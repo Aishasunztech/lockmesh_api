@@ -1,5 +1,6 @@
 const fs = require("fs");
 const PDFDocument = require("pdfkit");
+const moment = require('moment')
 
 function createInvoice(invoice, path, type = null) {
 
@@ -53,12 +54,18 @@ function generateCustomerInformation(doc, invoice) {
         .text(invoice.invoice_nr, 150, customerInformationTop)
         .font("Helvetica")
         .text("Invoice Date:", 50, customerInformationTop + 15)
-        .text(formatDate(new Date()), 150, customerInformationTop + 15)
-        .text("Balance Due:", 50, customerInformationTop + 30)
+        .text(moment().format('YYYY/MM/DD'), 150, customerInformationTop + 15)
+        .text("Expiry Date:", 50, customerInformationTop + 30)
+        .text(
+            invoice.expiry_date,
+            150,
+            customerInformationTop + 30
+        )
+        .text("Balance Due:", 50, customerInformationTop + 45)
         .text(
             ((invoice.pay_now) ? 0 : (invoice.invoice_status === "UNPAID" ? invoice.paid : (invoice.paid - invoice.paid_credits))) + " Credits",
             150,
-            customerInformationTop + 30
+            customerInformationTop + 45
         )
 
         .font("Helvetica")
