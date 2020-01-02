@@ -145,6 +145,55 @@ exports.getAllDealers = async function (req, res) {
     }
 }
 
+exports.getAllToAllDealers = async function (req, res){
+    var verify = req.decoded;
+
+    if (verify) {
+        sql.query(`SELECT ${dealer_query_text} FROM dealers WHERE type != 4 AND type !=5 ORDER BY created DESC`, async function (error, results) {
+            if (error) {
+                console.log(error);
+                res.send({
+                    status: false,
+                    msg: error
+                });
+                return;
+            }
+            console.log(results)
+            var data = [];
+
+            for (var i = 0; i < results.length; i++) {
+
+                dt = {
+                    status: true,
+                    dealer_id: results[i].dealer_id,
+                    dealer_name: results[i].dealer_name,
+                    dealer_email: results[i].dealer_email,
+                    link_code: results[i].link_code,
+                    account_status: results[i].account_status,
+                    unlink_status: results[i].unlink_status,
+                    created: results[i].created,
+                    modified: results[i].modified,
+                    demos: results[i].demos,
+                    remaining_demos: results[i].remaining_demos,
+                    company_name: results[i].company_name,
+                    company_address: results[i].company_address,
+                    city: results[i].city,
+                    state: results[i].state,
+                    country: results[i].country,
+                    postal_code: results[i].postal_code,
+                    tel_no: results[i].tel_no,
+                    website: results[i].website,
+                    timezone: results[i].timezone
+                };
+
+                data.push(dt);
+            }
+            res.send(data);
+            return;
+        });
+    }
+};
+
 exports.getUserDealers = async function (req, res) {
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
@@ -1965,7 +2014,7 @@ exports.postPagination = async function (req, res) {
  * Update Dealer PINs of all existing dealers
  * http://localhost:3000/users/dealer/update_dealer_pins
  * one time useage - menual end point
- * 
+ *
  *
  * By Muhammad Irfan Afzal - mi3afzal
  * 02-08-2019
@@ -1999,7 +2048,7 @@ exports.updateDealerPins = async function (req, res) {
                 if (oldDealerPin != newDealerPin) {
                     await sql.query(
                         `UPDATE dealers SET link_code = '${newDealerPin}' WHERE dealer_id = ${
-                        results[i].dealer_id
+                            results[i].dealer_id
                         } `
                     );
                     await sql.query(
@@ -2037,7 +2086,7 @@ exports.updateDealerPins = async function (req, res) {
 
 
 /**
- * 
+ *
  */
 exports.twoFactorAuth = async function (req, res) {
     var verify = req.decoded;
@@ -2091,7 +2140,7 @@ exports.twoFactorAuth = async function (req, res) {
 /**
  * save dealer permissions with new structure
  * @author Usman Hafeez
- * 
+ *
  */
 exports.dealerPermissions = async function (req, res) {
     var verify = req.decoded;
@@ -2729,7 +2778,7 @@ exports.setDealerDemosLimit = async function (req, res) {
     }
 }
 
-exports.setTimeZone = async function (req, res) { 
+exports.setTimeZone = async function (req, res) {
     try {
         var verify = req.decoded;
         console.log("setTimeZone :: ", req.body.data);
