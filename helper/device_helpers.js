@@ -865,6 +865,7 @@ module.exports = {
         let pgp_email = body.pgp_email;
         let service = body.prevService
         let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
+        console.log(body.expiry_date);
         var expiry_date = moment(body.expiry_date).format("YYYY/MM/DD")
         var date_now = moment(new Date()).format('YYYY/MM/DD')
         // console.log(expiry_date, chat_id, pgp_email, sim_id, sim_id2, prevService);
@@ -1164,10 +1165,13 @@ module.exports = {
                     })
                 }
                 if (pgp_email && pgp_email !== '') {
+                    console.log("dasdsa", service_id, usr_acc_id);
                     let getPgpEmail = "SELECT * FROM pgp_emails WHERE pgp_email = '" + pgp_email + "' AND delete_status = '0' AND used = '0'"
+                    console.log(getPgpEmail);
                     sql.query(getPgpEmail, function (err, result) {
                         if (result && result.length) {
                             let updateAccService = `UPDATE user_acc_services SET product_value = '${result[0].pgp_email}' , product_id = ${result[0].id} WHERE user_acc_id = ${usr_acc_id} AND service_id = ${service_id} AND type = 'pgp_email'`
+                            console.log(updateAccService);
                             sql.query(updateAccService, function (err, updatedResult) {
                                 if (updatedResult && updatedResult.affectedRows < 1) {
                                     let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].pgp_email}' , 'pgp_email' , '${date_now}')`
