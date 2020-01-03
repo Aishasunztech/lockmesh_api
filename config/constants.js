@@ -1,8 +1,11 @@
 const HOST_NAME = process.env.HOST_NAME;
+
+// App Info
 let APP_TITLE = "LockMesh Dev";
 let URL = "http://localhost:3000";
 let SUPERADMIN_URL = "http://localhost:8042";
 let SUPERADMIN_URL_API = "http://localhost:8042";
+let TIME_ZONE = "Asia/Karachi";
 
 // Database
 let DB_HOST = "localhost";
@@ -28,13 +31,15 @@ if (HOST_NAME) {
 	APP_TITLE = HOST_NAME;
 	switch (HOST_NAME) {
 		case "":
-		case "localhost":
+		case "localhost": {
 			break;
+		}
 
-		case "LockMesh Dev":
+		case "LockMesh Dev": {
 			URL = "https://dev.lockmesh.com";
 			SUPERADMIN_URL = "https://dev.meshguard.co";
 			SUPERADMIN_URL_API = "https://devapi.meshguard.co"
+			TIME_ZONE = 'Europe/Berlin';
 
 			DB_USERNAME = "web";
 			DB_PASSWORD = "Alibaba@40C#";
@@ -43,10 +48,13 @@ if (HOST_NAME) {
 			SMTP_FROM_EMAIL = "admin@lockmesh.com";
 			SMTP_FROM_NAME = "Admin";
 			break;
-		case "PreDev":
+		}
+
+		case "PreDev": {
 			URL = "https://predev.lockmesh.com";
 			SUPERADMIN_URL = "https://dev.meshguard.co";
 			SUPERADMIN_URL_API = "https://devapi.meshguard.co"
+			TIME_ZONE = 'Europe/Berlin';
 
 			DB_USERNAME = "web";
 			DB_PASSWORD = "Alibaba@40C#";
@@ -55,11 +63,13 @@ if (HOST_NAME) {
 			SMTP_FROM_EMAIL = "admin@lockmesh.com";
 			SMTP_FROM_NAME = "Admin";
 			break;
+		}
 
-		case "LoadTester":
+		case "LoadTester": {
 			URL = "https://loadtester.lockmesh.com";
 			SUPERADMIN_URL = "https://dev.meshguard.co";
 			SUPERADMIN_URL_API = "https://devapi.meshguard.co"
+			TIME_ZONE = 'Europe/Berlin';
 
 			DB_USERNAME = "web";
 			DB_PASSWORD = "Alibaba@40C#";
@@ -68,14 +78,13 @@ if (HOST_NAME) {
 			SMTP_FROM_EMAIL = "admin@lockmesh.com";
 			SMTP_FROM_NAME = "Admin";
 			break;
+		}
 
-
-
-
-		case "LockMesh":
+		case "LockMesh": {
 			URL = "https://lockmesh.com";
 			SUPERADMIN_URL = "https://meshguard.co";
 			SUPERADMIN_URL_API = "https://api.meshguard.co"
+			TIME_ZONE = 'Europe/Berlin';
 
 			// Database
 			// DB_HOST = "localhost";
@@ -87,11 +96,13 @@ if (HOST_NAME) {
 			SMTP_FROM_EMAIL = "admin@lockmesh.com";
 			SMTP_FROM_NAME = "Admin";
 			break;
+		}
 
-		case "TitanLocker":
+		case "TitanLocker": {
 			URL = "https://titansecureserver.com";
 			SUPERADMIN_URL = "https://meshguard.co";
 			SUPERADMIN_URL_API = "https://api.meshguard.co"
+			TIME_ZONE = 'Europe/Berlin';
 
 			// DB_HOST = "localhost";
 			// DB_NAME = 'lockmesh_db'
@@ -106,8 +117,9 @@ if (HOST_NAME) {
 			DEALER_PIN_SYSTEM_LETTER = "5";
 			STAFF_ID_SYSTEM_LETTER = '2';
 			break;
+		}
 
-		case "CryptPhoneC":
+		case "CryptPhoneC": {
 			URL = "https://cryptc.lockmesh.com";
 			SUPERADMIN_URL = "https://meshguard.co";
 
@@ -124,8 +136,9 @@ if (HOST_NAME) {
 			DEALER_PIN_SYSTEM_LETTER = "4";
 			STAFF_ID_SYSTEM_LETTER = '3';
 			break;
+		}
 
-		case "CryptPhoneK":
+		case "CryptPhoneK": {
 			URL = "https://cryptk.lockmesh.com";
 			SUPERADMIN_URL = "https://meshguard.co";
 
@@ -142,25 +155,27 @@ if (HOST_NAME) {
 			DEALER_PIN_SYSTEM_LETTER = "3";
 			STAFF_ID_SYSTEM_LETTER = '4';
 			break;
+		}
 
 		default:
 			break;
 	}
 }
-// else {
-// 	// APP_TITLE = 'LockMesh'
-// }
 
 module.exports.SUPERADMIN_URL = SUPERADMIN_URL
 module.exports.SUPERADMIN_URL_API = SUPERADMIN_URL_API
 module.exports = {
+	// APP INFO Constants
 	APP_TITLE: APP_TITLE,
+	TIME_ZONE: TIME_ZONE,
 	HOST: URL,
 	PORT: "",
 	SECRET: "kepitsecretwithauth!@#",
 	EXPIRES_IN: "86400s", // 24 Hours
 	DASHBOARD_EXPIRES_IN: '10800s', //3 Hours
 	MOBILE_EXPIRES_IN: '10800s', //3 Hours
+
+	// BASIC AUTH Constants
 	BASIC_AUTH_USER: "web",
 	BASIC_AUTH_PASSWORD: "Google!@#1",
 

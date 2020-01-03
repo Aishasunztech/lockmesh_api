@@ -33,6 +33,9 @@ const { sendEmail } = require("../lib/email");
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
 
+    let d = moment().format('YYYY-MM-DD H:m:s');
+    console.log("Date Time:", d)
+
     let attachment = {
         fileName: "invoice-PI000045.pdf",
         file: path.join(__dirname, "../uploads/invoice-PI000045.pdf")
@@ -548,14 +551,14 @@ router.get("/getFile/:file", async function (req, res) {
 router.get("/getFileWithFolder/:folder/:file", async function (req, res) {
     // let verify = await verifyToken(req, res);
     // if (verify.status) {
-    if (fs.existsSync(path.join(__dirname, "../uploads/"+ req.params.folder+'/' + req.params.file))) {
-        let file = path.join(__dirname, "../uploads/"+ req.params.folder+'/'  + req.params.file);
+    if (fs.existsSync(path.join(__dirname, "../uploads/" + req.params.folder + '/' + req.params.file))) {
+        let file = path.join(__dirname, "../uploads/" + req.params.folder + '/' + req.params.file);
         let fileMimeType = mime.getType(file);
         let filetypes = /jpeg|jpg|apk|png/;
         // Do something
         // if (filetypes.test(fileMimeType)) {
         // res.set('Content-Type', fileMimeType); // mimeType eg. 'image/bmp'
-        res.sendFile(path.join(__dirname, "../uploads/"+ req.params.folder+'/' + req.params.file));
+        res.sendFile(path.join(__dirname, "../uploads/" + req.params.folder + '/' + req.params.file));
         // } else {
         //     res.send({
         //         "status": false,
