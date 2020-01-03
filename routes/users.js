@@ -542,7 +542,7 @@ router.get(
  * @security JWT
  */
 /** post Dealer Dropdown Selected Items **/
-router.post("/dealer/dropdown", dealerController.dropDown);
+router.post("/dealer/dropdown", dealerController.saveDropDown);
 /**
  * This function comment is parsed by doctrine
  * @route GET /users/dealer/getPagination/{dropdownType}
