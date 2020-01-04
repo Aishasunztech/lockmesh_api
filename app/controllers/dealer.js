@@ -1674,7 +1674,6 @@ exports.saveDropDown = async function (req, res) {
                         msg: await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_UP], "Items Updated"), // Items Updated.',
                         data: selected_items
                     };
-                    res.send(data);
                 } else {
                     data = {
                         status: false,
