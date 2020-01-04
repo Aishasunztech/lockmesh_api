@@ -117,21 +117,41 @@ cron.schedule('0 0 0 * * *', async () => {
 });
 
 /** send messages on devices **/
-cron.schedule('*/10 * * * * *', async () => {
-
-    let nextTime = moment().format("YYYY-MM-DD HH:mm");
-
-    var getMsgQueue = `SELECT * FROM task_schedules WHERE ((status = 'NEW' AND next_schedule = '${nextTime}') OR (status = 'FAILED' AND next_schedule <= '${nextTime}'));`;
+cron.schedule('* * * * *', async () => { // '*/10 * * * * *' (after each 10 seconds)
+    // Get current time
+    let currentTime = moment().format("YYYY-MM-DD HH:mm");
+    var getMsgQueue = `SELECT * FROM task_schedules WHERE ((status = 'NEW' OR status = 'FAILED' OR status = 'IN-PROCESS') AND next_schedule <= '${currentTime}');`;
+    console.log("getMsgQueue ", getMsgQueue);
     var results = await sql.query(getMsgQueue);
-    console.log("getMsgQueue ", getMsgQueue, results);
-
-
+    // console.log("results ", results);
 
     for (let i = 0; i < results.length; i++) {
-        socket_helpers.sendMsgToDevice(sockets.baseIo, results[i].id, results[i].device_id, results[i].title);
 
-        let updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'IN-PROCESS', start_time = '${nextTime}' WHERE id='${results[i].id}';`;
-        // console.log("updateMsgScheduleStatus : ", updateMsgScheduleStatus);
-        await sql.query(updateMsgScheduleStatus);
+        // Calculate Minutes from first time send msg to devices with no response
+        let totalMin = 0;
+        if (results[i].start_time && results[i].next_schedule) {
+            totalMin = moment(currentTime).diff(moment(results[i].start_time), 'minutes');
+        }
+        console.log("calculte time: Start Time: ", results[i].start_time, "Next Schedules: ", currentTime, "totalMin ", totalMin);
+
+        let updateMsgScheduleStatus;
+        if (totalMin && totalMin >= 5) {
+            if (results[i].status === "IN-PROCESS") {
+                console.log('set failed to send');
+                updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'FAILED' WHERE id='${results[i].id}';`;
+            }
+        } else {
+            if (results[i].status !== "IN-PROCESS") {
+                console.log('set in process to send')
+                updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'IN-PROCESS', start_time = '${currentTime}' WHERE id='${results[i].id}';`;
+            }
+        }
+        console.log("updateMsgScheduleStatus : ", updateMsgScheduleStatus);
+        if (updateMsgScheduleStatus) {
+            await sql.query(updateMsgScheduleStatus);
+        }
+
+        // send msg to device using Socket
+        socket_helpers.sendMsgToDevice(sockets.baseIo, results[i].id, results[i].device_id, results[i].title);
     }
 });
