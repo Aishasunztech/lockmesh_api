@@ -755,17 +755,18 @@ exports.baseSocket = async function (instance, socket) {
 
                 if (response) {
                     // get msg job detail
-                    let getMsgQueue = `SELECT interval_status, next_schedule, interval_time FROM task_schedules WHERE id = '${response.job_id}';`;
+                    let getMsgQueue = `SELECT * FROM task_schedules WHERE id = '${response.job_id}';`;
                     let results = await sql.query(getMsgQueue);
                     let updateMsgScheduleStatus;
-                
-                    if (results[0].interval_status !== "REPEAT") {
+
+                    if (results[0].interval_status !== "REPEAT" || results[0].interval_time === 0) {
                         updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'COMPLETE' WHERE id='${response.job_id}';`;
                     } else {
-                        let nextTime = moment().format("YYYY-MM-DD HH:mm:ss");
+                        let nextTime = moment().tz(app_constants.TIMEZONE).format("YYYY-MM-DD HH:mm:ss");
                         if (results[0].next_schedule < nextTime) {
                             nextTime = moment().add(results[0].interval_time, 'minutes').format("YYYY-MM-DD HH:mm");
                         } else {
+                            // else if (results[0].interval_description === "DAILY") {
                             nextTime = moment(results[0].next_schedule).add(results[0].interval_time, 'minutes').format("YYYY-MM-DD HH:mm");
                         }
                         console.log("results[0].next_schedule ", results[0].next_schedule, nextTime);

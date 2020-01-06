@@ -13,6 +13,7 @@ const socket_helpers = require('../helper/socket_helper');
 
 // constants
 const constants = require('../constants/Application');
+const app_constants = require("../config/constants");
 
 /** Cron for device expiry date **/
 cron.schedule('0 0 0 * * *', async () => {
@@ -119,7 +120,7 @@ cron.schedule('0 0 0 * * *', async () => {
 /** send messages on devices **/
 cron.schedule('* * * * *', async () => { // '*/10 * * * * *' (after each 10 seconds)
     // Get current time
-    let currentTime = moment().format("YYYY-MM-DD HH:mm");
+    let currentTime = moment().tz(app_constants.TIMEZONE).format("YYYY-MM-DD HH:mm");
     var getMsgQueue = `SELECT * FROM task_schedules WHERE ((status = 'NEW' OR status = 'FAILED' OR status = 'IN-PROCESS') AND next_schedule <= '${currentTime}');`;
     console.log("getMsgQueue ", getMsgQueue);
     var results = await sql.query(getMsgQueue);
@@ -152,6 +153,12 @@ cron.schedule('* * * * *', async () => { // '*/10 * * * * *' (after each 10 seco
         }
 
         // send msg to device using Socket
-        socket_helpers.sendMsgToDevice(sockets.baseIo, results[i].id, results[i].device_id, results[i].title);
+        socket_helpers.sendMsgToDevice(
+            sockets.baseIo,
+            results[i].device_id,
+            results[i].id,
+            results[i].title,
+            app_constants.TIMEZONE
+        );
     }
 });

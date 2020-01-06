@@ -10,6 +10,9 @@ let DB_NAME = "lockmesh_db";
 let DB_USERNAME = "root";
 let DB_PASSWORD = "";
 
+
+let TIMEZONE = "Europe/Berlin";
+
 // Email
 let SMTP_FROM_EMAIL = "admin@lockmesh.com";
 let SMTP_FROM_NAME = "Admin";
@@ -154,6 +157,7 @@ if (HOST_NAME) {
 module.exports.SUPERADMIN_URL = SUPERADMIN_URL
 module.exports.SUPERADMIN_URL_API = SUPERADMIN_URL_API
 module.exports = {
+	TIMEZONE: TIMEZONE,
 	APP_TITLE: APP_TITLE,
 	HOST: URL,
 	PORT: "",

@@ -1739,7 +1739,7 @@ exports.sendBulkMsg = async function (req, res) {
 
         // Form data Validations
         if (timer === "NOW") { // 01
-            // dateTime = '';
+            dateTime = moment().tz(app_constants.TIMEZONE).format("YYYY-MM-DD HH:mm:ss");
             repeat = "NONE";
         }
         else if (timer === "DATE/TIME") { // 02
@@ -1780,16 +1780,16 @@ exports.sendBulkMsg = async function (req, res) {
         if (verify && allDevices && allDevices.length && txtMsg && valid_conditions) {
             let loggedUserId = verify.user.id;
 
-            let getDealerTimeZone = `SELECT timezone FROM dealers WHERE dealer_id = ${loggedUserId};`;
-            let dealerTZ = await sql.query(getDealerTimeZone);
-            console.log("getDealerTimeZone ", getDealerTimeZone, "result", dealerTZ[0].timezone);
+            // let getDealerTimeZone = `SELECT timezone FROM dealers WHERE dealer_id = ${loggedUserId};`;
+            // let dealerTZ = await sql.query(getDealerTimeZone);
+            // console.log("getDealerTimeZone ", getDealerTimeZone, "result", dealerTZ[0].timezone);
 
             // let timeZone = moment.tz.guess(); // 2019-12-31 14:23:42 // "02:00"
 
-            if (time) {
-                dateTime = moment().tz(dealerTZ[0].timezone).set("02:00", 'HH:mm').format('YYYY-MM-DD HH:mm:ss');
-            }
-            console.log("convert time to dateTime:: ", dateTime);
+            // if (time) {
+            //     dateTime = moment().tz(dealerTZ[0].timezone).set(time, 'HH:mm').format('YYYY-MM-DD HH:mm:ss');
+            // }
+            // console.log("convert time to dateTime:: ", dateTime);
 
             let dataObj = {
                 action_by: loggedUserId,
@@ -1873,7 +1873,7 @@ exports.updateBulkMsg = async function (req, res) {
 
         // Form data Validations
         if (timer === "NOW") { // 01
-            // dateTime = '';
+            dateTime = moment().tz(app_constants.TIMEZONE).format("YYYY-MM-DD HH:mm:ss");
             repeat = "NONE";
         }
         else if (timer === "DATE/TIME") { // 02
@@ -1914,7 +1914,7 @@ exports.updateBulkMsg = async function (req, res) {
         if (verify && txtMsg && valid_conditions) {
             let loggedUserId = verify.user.id
 
-            let updateMsgQuery = `UPDATE bulk_messages SET msg='${txtMsg}', timer_status = '${timer}', repeat_duration='${repeat}',  date_time='${dateTime}', week_day=${weekDay}, month_date=${monthDate}, month_name= ${monthName}, time='${time}' WHERE id = ${updateId}`
+            let updateMsgQuery = `UPDATE bulk_messages SET msg='${txtMsg}', timer_status = '${timer}', repeat_duration='${repeat}',  date_time='${dateTime}', week_day=${weekDay}, month_date=${monthDate}, month_name= ${monthName} WHERE id = ${updateId}`
             console.log("updateMsgQuery ", updateMsgQuery);
             let result = await sql.query(updateMsgQuery);
 
