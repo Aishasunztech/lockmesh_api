@@ -778,7 +778,7 @@ exports.acceptDevice = async function (req, res) {
                                                             let simIdInsertResult = await sql.query(insertSimIds)
                                                             if (simIdInsertResult.affectedRows) {
                                                                 helpers.updateSimStatus(sim_id, 'active')
-                                                                
+
                                                                 let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id + "'"
                                                                 sql.query(getsimID, function (err, result) {
                                                                     if (result && result.length) {
@@ -3085,8 +3085,31 @@ exports.extendServices = async function (req, res) {
             let user_id = req.body.user_id
             let exp_month = expiry_date
             let paid_credits = 0
-            let dealer_credits_copy = 0,
-                invoice_status = (pay_now) ? "PAID" : "UNPAID"
+            let dealer_credits_copy = 0
+            let invoice_status = (pay_now) ? "PAID" : "UNPAID"
+
+            var basic_data_plan = {
+                sim_id:
+                {
+                    data_limit: 2000,
+                    pkg_price: 0,
+                    term: exp_month,
+                    added_date: date_now
+                },
+                sim_id2:
+                {
+                    data_limit: 2000,
+                    pkg_price: 0,
+                    term: exp_month,
+                    added_date: date_now
+
+                }
+            }
+            // console.log(req.body.data_plans)
+            var data_plans = req.body.data_plans ? req.body.data_plans : basic_data_plan
+
+            let data_plan_price = 0
+
             // let pkg_term = null
             // console.log(expiry_date);
             // return
@@ -3254,7 +3277,22 @@ exports.extendServices = async function (req, res) {
                     sql.query(common_Query, async function (error, row) {
                         await sql.query(usr_acc_Query);
 
-                        let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date , status , service_term) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice} ,'${rows[0].expiry_date}' ,'${expiry_date}' , 'extended' , '${exp_month}')`
+                        if (data_plans.sim_id) {
+                            let discount = 0
+                            if (pay_now) {
+                                discount = Math.ceil(Number((Number(data_plans.sim_id.pkg_price) * 0.03)))
+                            }
+                            data_plan_price += (Number(data_plans.sim_id.pkg_price) - discount)
+                        }
+                        if (data_plans.sim_id2) {
+                            let discount = 0
+                            if (pay_now) {
+                                discount = Math.ceil(Number((Number(data_plans.sim_id2.pkg_price) * 0.03)))
+                            }
+                            data_plan_price += (Number(data_plans.sim_id2.pkg_price) - discount)
+                        }
+
+                        let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date , status , service_term) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice - data_plan_price} ,'${rows[0].expiry_date}' ,'${expiry_date}' , 'extended' , '${exp_month}')`
                         let service_data_result = await sql.query(service_billing);
                         let service_id = null
                         if (service_data_result.affectedRows) {
@@ -3323,6 +3361,19 @@ exports.extendServices = async function (req, res) {
                                     let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id,product_value, type , start_date , status) VALUES(${usr_acc_id} , ${service_id} , ${simData[0].id} , '${simData[0].sim_id}' ,'sim_id' , '${date_now}' , 'extended')`
                                     sql.query(insertAccService)
                                 }
+
+                                let data_plan_package = [basic_data_plan.sim_id]
+                                let data_plan_price = 0
+                                let data_limit = basic_data_plan.sim_id.data_limit
+                                if (data_plans.sim_id) {
+                                    data_plans.sim_id.added_date = date_now
+                                    data_plan_package.push(data_plans.sim_id)
+                                    data_plan_price = data_plan_price + Number(data_plans.sim_id.pkg_price)
+                                    data_limit = data_limit + Number(data_plans.sim_id.data_limit)
+
+                                }
+                                let data_package_plan = `INSERT INTO sim_data_plans ( service_id , data_plan_package , total_price , total_data , sim_type , start_date) VALUES( ${service_id} , '${JSON.stringify(data_plan_package)}' , '${data_plan_price}' , '${data_limit}' , 'sim_id' , '${date_now}')`
+                                sql.query(data_package_plan)
                             }
                             if (sim2Included) {
                                 if (sim_id2 != prevSimId2) {
@@ -3340,6 +3391,17 @@ exports.extendServices = async function (req, res) {
                                     let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, product_value,type , start_date , status) VALUES(${usr_acc_id} , ${service_id} , ${simData[0].id} , '${simData[0].sim_id}' , 'sim_id2' , '${date_now}' , 'extended')`
                                     sql.query(insertAccService)
                                 }
+                                let data_plan_package2 = [basic_data_plan.sim_id2]
+                                let data_plan_price = 0
+                                let data_limit = basic_data_plan.sim_id2.data_limit
+                                if (data_plans.sim_id2) {
+                                    data_plans.sim_id2.added_date = date_now
+                                    data_plan_package2.push(data_plans.sim_id2)
+                                    data_plan_price = data_plan_price + Number(data_plans.sim_id2.pkg_price)
+                                    data_limit = data_limit + Number(data_plans.sim_id2.data_limit)
+                                }
+                                let data_package_plan2 = `INSERT INTO sim_data_plans ( service_id , data_plan_package ,  total_price, total_data , sim_type , start_date) VALUES( ${service_id} , '${JSON.stringify(data_plan_package2)}' , '${data_plan_price}' , '${data_limit}' , 'sim_id2' , '${date_now}')`
+                                sql.query(data_package_plan2)
                             }
                         }
 
