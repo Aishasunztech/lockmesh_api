@@ -13,6 +13,7 @@ const socket_helpers = require('../helper/socket_helper');
 
 // constants
 const constants = require('../constants/Application');
+const app_constants = require("../config/constants");
 
 /** Cron for device expiry date **/
 cron.schedule('0 0 0 * * *', async () => {
@@ -117,24 +118,47 @@ cron.schedule('0 0 0 * * *', async () => {
 });
 
 /** send messages on devices **/
-cron.schedule('0 0 0 * * *', async () => {
+cron.schedule('* * * * *', async () => { // '*/10 * * * * *' (after each 10 seconds)
+    // Get current time
+    let currentTime = moment().tz(app_constants.TIME_ZONE).format("YYYY-MM-DD HH:mm");
+    var getMsgQueue = `SELECT * FROM task_schedules WHERE ((status = 'NEW' OR status = 'FAILED' OR status = 'IN-PROCESS') AND next_schedule <= '${currentTime}');`;
+    console.log("getMsgQueue ", getMsgQueue);
+    var results = await sql.query(getMsgQueue);
+    // console.log("results ", results);
 
-    var userAccQ = "SELECT * FROM usr_acc WHERE device_status = 1";
-    var results = await sql.query(userAccQ);
     for (let i = 0; i < results.length; i++) {
-        let service_data = await sql.query(`SELECT * FROM services_data WHERE (status = 'active' OR status = 'request_for_cancel') AND user_acc_id = ${results[i].id} `);
-        if (service_data.length) {
-            let current_date = moment().format('YYYY/MM/DD')
-            if (service_data[0].service_expiry_date <= current_date) {
 
-                await sql.query("UPDATE services_data set end_date = '" + service_data[0].service_expiry_date + "', status = 'completed', paid_credits = " + service_data[0].total_credits + " WHERE id = " + service_data[0].id);
-                await sql.query(`UPDATE user_acc_services SET end_date = ${service_data[0].service_expiry_date} WHERE service_id =  ${service_data[0].id}`)
-                let extended_service = await sql.query(`SELECT * FROM services_data WHERE user_acc_id = ${results[i].id} AND status = 'extended'`)
-                if (extended_service && extended_service.length) {
-                    let end_date = current_date.add(moment(extended_service[0].service_term))
-                    await sql.query(`UPDATE services_data SET status = 'active' , start_date = ${current_date} , end_date = ${end_date} WHERE user_acc_id = ${results[i].id} AND status = 'extended'`)
-                }
+        // Calculate Minutes from first time send msg to devices with no response
+        let totalMin = 0;
+        if (results[i].start_time && results[i].next_schedule) {
+            totalMin = moment(currentTime).diff(moment(results[i].start_time), 'minutes');
+        }
+        console.log("calculte time: Start Time: ", results[i].start_time, "Next Schedules: ", currentTime, "totalMin ", totalMin);
+
+        let updateMsgScheduleStatus;
+        if (totalMin && totalMin >= 5) {
+            if (results[i].status === "IN-PROCESS") {
+                console.log('set failed to send');
+                updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'FAILED' WHERE id='${results[i].id}';`;
+            }
+        } else {
+            if (results[i].status !== "IN-PROCESS") {
+                console.log('set in process to send')
+                updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'IN-PROCESS', start_time = '${currentTime}' WHERE id='${results[i].id}';`;
             }
         }
+        console.log("updateMsgScheduleStatus : ", updateMsgScheduleStatus);
+        if (updateMsgScheduleStatus) {
+            await sql.query(updateMsgScheduleStatus);
+        }
+
+        // send msg to device using Socket
+        socket_helpers.sendMsgToDevice(
+            sockets.baseIo,
+            results[i].device_id,
+            results[i].id,
+            results[i].title,
+            app_constants.TIME_ZONE
+        );
     }
 });

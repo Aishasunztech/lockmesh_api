@@ -5,13 +5,15 @@ let APP_TITLE = "LockMesh Dev";
 let URL = "http://localhost:3000";
 let SUPERADMIN_URL = "http://localhost:8042";
 let SUPERADMIN_URL_API = "http://localhost:8042";
-let TIME_ZONE = "Asia/Karachi";
+// set default utc-1 timezone for testing
+let TIME_ZONE = "Europe/Berlin"; // "Asia/Karachi";
 
 // Database
 let DB_HOST = "localhost";
 let DB_NAME = "lockmesh_db";
 let DB_USERNAME = "root";
 let DB_PASSWORD = "";
+
 
 // Email
 let SMTP_FROM_EMAIL = "admin@lockmesh.com";
