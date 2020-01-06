@@ -145,7 +145,7 @@ exports.getAllDealers = async function (req, res) {
     }
 }
 
-exports.getAllToAllDealers = async function (req, res){
+exports.getAllToAllDealers = async function (req, res) {
     var verify = req.decoded;
 
     if (verify) {
@@ -1086,12 +1086,20 @@ exports.connectDealer = async function (req, res) {
 
         let _0to21 = 0;
         let _0to21_dues = 0;
+        let _0to21_dues_history = [];
+
         let _21to30 = 0;
         let _21to30_dues = 0;
+        let _21to30_dues_history = [];
+
+
         let _30to60 = 0;
         let _30to60_dues = 0;
+        let _30to60_dues_history = [];
+
         let _60toOnward = 0;
         let _60toOnward_dues = 0;
+        let _60toOnward_history = [];
 
         // get parent dealer
         let get_parent_dealer = null;
@@ -1113,7 +1121,7 @@ exports.connectDealer = async function (req, res) {
         paymentHistoryData = await sql.query(`SELECT * FROM financial_account_transections WHERE user_id = ${dealer[0].dealer_id} AND status = 'pending'`);
 
         paymentHistoryData.map(item => {
-
+            console.log("hello:", item);
             let now = moment();
             let end = moment(item.created_at).format('YYYY-MM-DD');
             let duration = now.diff(end, 'days');
@@ -1121,22 +1129,23 @@ exports.connectDealer = async function (req, res) {
             if (duration >= 0 && duration <= 21) {
                 ++_0to21;
                 _0to21_dues += parseInt(item.due_credits);
+                _0to21_dues_history.push(item);
 
             } else if (duration > 21 && duration <= 30) {
                 ++_21to30;
                 _21to30_dues += parseInt(item.due_credits);
+                _21to30_dues_history.push(item);
 
             } else if (duration > 30 && duration <= 60) {
                 ++_30to60;
                 _30to60_dues += parseInt(item.due_credits);
+                _30to60_dues_history.push(item);
 
             } else if (duration > 60) {
                 ++_60toOnward;
                 _60toOnward_dues += parseInt(item.due_credits);
+                _60toOnward_history.push(item)
             }
-
-
-
 
         });
 
@@ -1165,14 +1174,22 @@ exports.connectDealer = async function (req, res) {
             connected_devices: 0,
             parent_dealer: "",
             parent_dealer_id: "",
-            _0to21,
-            _0to21_dues,
-            _21to30,
-            _21to30_dues,
-            _30to60,
-            _30to60_dues,
-            _60toOnward,
-            _60toOnward_dues,
+            _0to21: _0to21,
+            _0to21_dues: _0to21_dues,
+            _0to21_dues_history: _0to21_dues_history,
+
+            _21to30: _21to30,
+            _21to30_dues: _21to30_dues,
+            _21to30_dues_history: _21to30_dues_history,
+
+            _30to60: _30to60,
+            _30to60_dues: _30to60_dues,
+            _30to60_dues_history: _30to60_dues_history,
+
+            _60toOnward: _60toOnward,
+            _60toOnward_dues: _60toOnward_dues,
+            _60toOnward_history: _60toOnward_history,
+
             demos: dealer[0].demos,
             remaining_demos: dealer[0].remaining_demos,
             company_name: dealer[0].company_name,
@@ -1308,7 +1325,7 @@ exports.getDealerPaymentHistory = async function (req, res) {
         })
     }
     let paymentHistoryQ = `SELECT * FROM financial_account_transections AS fat WHERE user_id=${dealer_id}`;
-    
+
     if (status) {
         condition = ` AND status = '${status}'`
     } else {
@@ -1887,12 +1904,12 @@ exports.saveDropDown = async function (req, res) {
         var dropdownType = req.body.pageName;
         var dealer_id = verify.user.id;
         var sQuery = `SELECT * FROM dealer_dropdown_list WHERE dealer_id = ${dealer_id} AND type ='${dropdownType}'`;
-        
+
         var sResult = await sql.query(sQuery);
-        
+
         if (sResult.length == 0) {
             sql.query(`insert into dealer_dropdown_list (dealer_id, selected_items, type) values (${dealer_id}, '${selected_items}', '${dropdownType}')`, async function (err, rslts) {
-                if(err){
+                if (err) {
                     return res.send({
                         status: false,
                         msg: await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_NOT_UP], "Items Not Updated"),
@@ -1909,7 +1926,7 @@ exports.saveDropDown = async function (req, res) {
         } else {
 
             sql.query(`UPDATE dealer_dropdown_list SET selected_items = '${selected_items}' WHERE type='${dropdownType}' AND dealer_id=${dealer_id}`, async function (err, row) {
-                if(err){
+                if (err) {
                     return res.send({
                         status: false,
                         msg: await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_NOT_UP], "Items Not Updated"),
@@ -1927,7 +1944,7 @@ exports.saveDropDown = async function (req, res) {
                         status: false,
                         msg: await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_NOT_UP], "Items Not Updated"), // Items Not Updated.',
                     };
-                    
+
                 }
                 return res.send(data);
             });
@@ -2057,7 +2074,7 @@ exports.updateDealerPins = async function (req, res) {
                 if (oldDealerPin != newDealerPin) {
                     await sql.query(
                         `UPDATE dealers SET link_code = '${newDealerPin}' WHERE dealer_id = ${
-                            results[i].dealer_id
+                        results[i].dealer_id
                         } `
                     );
                     await sql.query(
