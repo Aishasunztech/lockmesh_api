@@ -1298,6 +1298,8 @@ exports.getDealerPaymentHistory = async function (req, res) {
 
     let user_type = verify.user.user_type;
     let dealer_id = req.params.dealerId;
+    let condition = '';
+    let status = req.body.status;
 
     if (!dealer_id || user_type === Constants.SDEALER) {
         return res.send({
@@ -1305,8 +1307,16 @@ exports.getDealerPaymentHistory = async function (req, res) {
             data: []
         })
     }
+    let paymentHistoryQ = `SELECT * FROM financial_account_transections AS fat WHERE user_id=${dealer_id}`;
+    
+    if (status) {
+        condition = ` AND status = '${status}'`
+    } else {
+        condition = ` AND type='credits'`
+    }
 
-    let paymentHistoryQ = `SELECT * FROM financial_account_transections AS fat WHERE type='credits' AND user_id=${dealer_id} ORDER BY fat.id DESC`
+    paymentHistoryQ = `${paymentHistoryQ} ${condition} ORDER BY id DESC`
+
     paymentHistoryData = await sql.query(paymentHistoryQ);
 
 
