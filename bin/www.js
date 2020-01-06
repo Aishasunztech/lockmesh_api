@@ -1,23 +1,43 @@
+// libraries
 require("dotenv").config();
 require("stackify-node-apm");
-
-var app = require("../app");
+var momentTz = require("moment-timezone");
+var moment = require('moment');
 var debug = require("debug")("webportalbackend:server");
 var http = require("http");
 let socket = require('socket.io');
+var datetime = require("node-datetime");
 
+// custom libraries
+var app = require("../app");
+require("../config/database");
+var events = require('../crons/db_events');
+let socketRoutes = require('../routes/sockets');
+require("../crons/index");
 
-var Constants = require("../constants/Application");
-const { sql } = require("../config/database");
+// constants
+const constants = require('../config/constants');
+
+// ======================Configurations================== //
+
+// => Set timezone for moment Library
+momentTz.tz.setDefault(constants.TIME_ZONE);
+let d = moment().format('YYYY-MM-DD H:m:s');
+console.log("Moment Date Time:",d)
+
+// => set timezone for dateTime Library
+var today_date = datetime.create();
+
+// => set timezone for default date function
+
+// => set timezone for database
 
 var port = normalizePort(process.env.PORT || "3000");
 app.set("port", port);
-var events = require('../crons/db_events');
 /**
  * Create HTTP server.
  */
 var server = http.createServer(app);
-let socketRoutes = require('../routes/sockets');
 // io.attach(server, {
 //     // pingInterval: 60000,
 //     // pingTimeout: 120000,
@@ -35,6 +55,7 @@ socketRoutes.baseSocket(io);
 // socketRoutes.dealerSocket(dealerIo);
 
 // events.deviceQueue()
+
 /**
  * Listen on provided port, on all network interfaces.
  */
@@ -43,7 +64,6 @@ server.listen(port);
 server.on("error", onError);
 server.on("listening", onListening);
 
-require("../crons/index");
 // events.deviceQueue()
 // 	.then(() => console.log('Waiting for database events...'))
 // 	.catch(console.error);

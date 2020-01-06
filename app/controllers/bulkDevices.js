@@ -1739,7 +1739,7 @@ exports.sendBulkMsg = async function (req, res) {
 
         // Form data Validations
         if (timer === "NOW") { // 01
-            dateTime = moment().tz(app_constants.TIMEZONE).format("YYYY-MM-DD HH:mm:ss");
+            dateTime = moment().tz(app_constants.TIME_ZONE).format("YYYY-MM-DD HH:mm:ss");
             repeat = "NONE";
         }
         else if (timer === "DATE/TIME") { // 02
@@ -1873,7 +1873,7 @@ exports.updateBulkMsg = async function (req, res) {
 
         // Form data Validations
         if (timer === "NOW") { // 01
-            dateTime = moment().tz(app_constants.TIMEZONE).format("YYYY-MM-DD HH:mm:ss");
+            dateTime = moment().tz(app_constants.TIME_ZONE).format("YYYY-MM-DD HH:mm:ss");
             repeat = "NONE";
         }
         else if (timer === "DATE/TIME") { // 02

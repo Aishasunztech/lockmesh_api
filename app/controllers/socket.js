@@ -762,7 +762,7 @@ exports.baseSocket = async function (instance, socket) {
                     if (results[0].interval_status !== "REPEAT" || results[0].interval_time === 0) {
                         updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'COMPLETE' WHERE id='${response.job_id}';`;
                     } else {
-                        let nextTime = moment().tz(app_constants.TIMEZONE).format("YYYY-MM-DD HH:mm:ss");
+                        let nextTime = moment().tz(app_constants.TIME_ZONE).format("YYYY-MM-DD HH:mm:ss");
                         if (results[0].next_schedule < nextTime) {
                             nextTime = moment().add(results[0].interval_time, 'minutes').format("YYYY-MM-DD HH:mm");
                         } else {

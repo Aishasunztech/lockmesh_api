@@ -145,6 +145,55 @@ exports.getAllDealers = async function (req, res) {
     }
 }
 
+exports.getAllToAllDealers = async function (req, res) {
+    var verify = req.decoded;
+
+    if (verify) {
+        sql.query(`SELECT ${dealer_query_text} FROM dealers WHERE type != 4 AND type !=5 ORDER BY created DESC`, async function (error, results) {
+            if (error) {
+                console.log(error);
+                res.send({
+                    status: false,
+                    msg: error
+                });
+                return;
+            }
+            console.log(results)
+            var data = [];
+
+            for (var i = 0; i < results.length; i++) {
+
+                dt = {
+                    status: true,
+                    dealer_id: results[i].dealer_id,
+                    dealer_name: results[i].dealer_name,
+                    dealer_email: results[i].dealer_email,
+                    link_code: results[i].link_code,
+                    account_status: results[i].account_status,
+                    unlink_status: results[i].unlink_status,
+                    created: results[i].created,
+                    modified: results[i].modified,
+                    demos: results[i].demos,
+                    remaining_demos: results[i].remaining_demos,
+                    company_name: results[i].company_name,
+                    company_address: results[i].company_address,
+                    city: results[i].city,
+                    state: results[i].state,
+                    country: results[i].country,
+                    postal_code: results[i].postal_code,
+                    tel_no: results[i].tel_no,
+                    website: results[i].website,
+                    timezone: results[i].timezone
+                };
+
+                data.push(dt);
+            }
+            res.send(data);
+            return;
+        });
+    }
+};
+
 exports.getUserDealers = async function (req, res) {
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
@@ -1037,12 +1086,20 @@ exports.connectDealer = async function (req, res) {
 
         let _0to21 = 0;
         let _0to21_dues = 0;
+        let _0to21_dues_history = [];
+
         let _21to30 = 0;
         let _21to30_dues = 0;
+        let _21to30_dues_history = [];
+
+
         let _30to60 = 0;
         let _30to60_dues = 0;
+        let _30to60_dues_history = [];
+
         let _60toOnward = 0;
         let _60toOnward_dues = 0;
+        let _60toOnward_history = [];
 
         // get parent dealer
         let get_parent_dealer = null;
@@ -1064,7 +1121,7 @@ exports.connectDealer = async function (req, res) {
         paymentHistoryData = await sql.query(`SELECT * FROM financial_account_transections WHERE user_id = ${dealer[0].dealer_id} AND status = 'pending'`);
 
         paymentHistoryData.map(item => {
-
+            console.log("hello:", item);
             let now = moment();
             let end = moment(item.created_at).format('YYYY-MM-DD');
             let duration = now.diff(end, 'days');
@@ -1072,22 +1129,23 @@ exports.connectDealer = async function (req, res) {
             if (duration >= 0 && duration <= 21) {
                 ++_0to21;
                 _0to21_dues += parseInt(item.due_credits);
+                _0to21_dues_history.push(item);
 
             } else if (duration > 21 && duration <= 30) {
                 ++_21to30;
                 _21to30_dues += parseInt(item.due_credits);
+                _21to30_dues_history.push(item);
 
             } else if (duration > 30 && duration <= 60) {
                 ++_30to60;
                 _30to60_dues += parseInt(item.due_credits);
+                _30to60_dues_history.push(item);
 
             } else if (duration > 60) {
                 ++_60toOnward;
                 _60toOnward_dues += parseInt(item.due_credits);
+                _60toOnward_history.push(item)
             }
-
-
-
 
         });
 
@@ -1116,14 +1174,22 @@ exports.connectDealer = async function (req, res) {
             connected_devices: 0,
             parent_dealer: "",
             parent_dealer_id: "",
-            _0to21,
-            _0to21_dues,
-            _21to30,
-            _21to30_dues,
-            _30to60,
-            _30to60_dues,
-            _60toOnward,
-            _60toOnward_dues,
+            _0to21: _0to21,
+            _0to21_dues: _0to21_dues,
+            _0to21_dues_history: _0to21_dues_history,
+
+            _21to30: _21to30,
+            _21to30_dues: _21to30_dues,
+            _21to30_dues_history: _21to30_dues_history,
+
+            _30to60: _30to60,
+            _30to60_dues: _30to60_dues,
+            _30to60_dues_history: _30to60_dues_history,
+
+            _60toOnward: _60toOnward,
+            _60toOnward_dues: _60toOnward_dues,
+            _60toOnward_history: _60toOnward_history,
+
             demos: dealer[0].demos,
             remaining_demos: dealer[0].remaining_demos,
             company_name: dealer[0].company_name,
@@ -1249,6 +1315,8 @@ exports.getDealerPaymentHistory = async function (req, res) {
 
     let user_type = verify.user.user_type;
     let dealer_id = req.params.dealerId;
+    let condition = '';
+    let status = req.body.status;
 
     if (!dealer_id || user_type === Constants.SDEALER) {
         return res.send({
@@ -1256,8 +1324,16 @@ exports.getDealerPaymentHistory = async function (req, res) {
             data: []
         })
     }
+    let paymentHistoryQ = `SELECT * FROM financial_account_transections AS fat WHERE user_id=${dealer_id}`;
 
-    let paymentHistoryQ = `SELECT * FROM financial_account_transections AS fat WHERE type='credits' AND user_id=${dealer_id} ORDER BY fat.id DESC`
+    if (status) {
+        condition = ` AND status = '${status}'`
+    } else {
+        condition = ` AND type='credits'`
+    }
+
+    paymentHistoryQ = `${paymentHistoryQ} ${condition} ORDER BY id DESC`
+
     paymentHistoryData = await sql.query(paymentHistoryQ);
 
 
@@ -1708,49 +1784,6 @@ exports.getLoggedDealerApps = async function (req, res) {
     }
 }
 
-exports.getDropdownSelectedItems = async function (req, res) {
-    var verify = req.decoded;
-    // console.log('done or not');
-    // if (verify.status !== undefined && verify.status == true) {
-    if (verify) {
-        var loggedInuid = verify.user.id;
-        // console.log('data from req', req.params.dropdownType);
-        let dealer_id = verify.user.id;
-        let dropdownType = req.params.dropdownType;
-        sql.query("select * from dealer_dropdown_list where dealer_id = " + dealer_id + " AND type = '" + dropdownType + "'", async function (err, rslts) {
-            if (err) {
-                console.log(err)
-            }
-
-            if (rslts.length == 0) {
-                data = {
-                    "status": false,
-                    "msg": await general_helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // No data found",
-                    "data": '[]'
-                };
-                res.send(data);
-            } else {
-                if (rslts[0].selected_items != '' && rslts[0].selected_items != null) {
-                    var str = rslts[0].selected_items;
-
-                    data = {
-                        "status": true,
-                        "data": str
-                    };
-                    res.send(data);
-                } else {
-                    data = {
-                        "status": false,
-                        "msg": await general_helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // No data found",
-                        "data": '[]'
-                    };
-                    res.send(data);
-                }
-            }
-        });
-    }
-}
-
 
 exports.getInfo = async function (req, res) {
     var verify = req.decoded;
@@ -1820,49 +1853,100 @@ exports.getDealerForSA = async function (req, res) {
     }
 }
 
-exports.dropDown = async function (req, res) {
+exports.getDropdownSelectedItems = async function (req, res) {
     var verify = req.decoded;
-    var loggedInuid = verify.user.id;
+    // console.log('done or not');
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
+        var loggedInuid = verify.user.id;
+        // console.log('data from req', req.params.dropdownType);
+        let dealer_id = verify.user.id;
+        let dropdownType = req.params.dropdownType;
+        sql.query("select * from dealer_dropdown_list where dealer_id = " + dealer_id + " AND type = '" + dropdownType + "'", async function (err, rslts) {
+            if (err) {
+                console.log(err)
+            }
 
-        var selected_items = req.body.selected_items;
-        var dropdownType = req.body.pageName;
-        var dealer_id = verify.user.id;
-        var squery = "select * from dealer_dropdown_list where dealer_id = " + dealer_id + " AND type ='" + dropdownType + "'";
-        // console.log('query', squery);
-        var srslt = await sql.query(squery);
-        // console.log('query result', srslt);
-
-        if (srslt.length == 0) {
-            var squery = sql.query("insert into dealer_dropdown_list (dealer_id, selected_items, type) values (" + dealer_id + ", '" + selected_items + "', '" + dropdownType + "')", async function (err, rslts) {
+            if (rslts.length == 0) {
                 data = {
-                    "status": true,
-                    "msg": await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_ADDED], "Items Added"), // Items Added.
-                    "data": rslts
+                    "status": false,
+                    "msg": await general_helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // No data found",
+                    "data": '[]'
                 };
                 res.send(data);
-            });
-        } else {
+            } else {
+                if (rslts[0].selected_items != '' && rslts[0].selected_items != null) {
+                    var str = rslts[0].selected_items;
 
-            sql.query("update dealer_dropdown_list set selected_items = '" + selected_items + "' where type='" + dropdownType + "' AND dealer_id='" + dealer_id + "'", async function (err, row) {
-                // console.log('squery data ', 'rowws', row);
-                if (row.affectedRows != 0) {
                     data = {
                         "status": true,
-                        "msg": await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_UP], "Items Updated"), // Items Updated.',
-                        "data": row
+                        "data": str
                     };
                     res.send(data);
                 } else {
                     data = {
                         "status": false,
-                        "msg": await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_NOT_UP], "Items Not Updated"), // Items Not Updated.',
-                        "data": row
+                        "msg": await general_helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // No data found",
+                        "data": '[]'
                     };
                     res.send(data);
+                }
+            }
+        });
+    }
+}
+
+exports.saveDropDown = async function (req, res) {
+    var verify = req.decoded;
+    if (verify) {
+
+        var selected_items = req.body.selected_items;
+        var dropdownType = req.body.pageName;
+        var dealer_id = verify.user.id;
+        var sQuery = `SELECT * FROM dealer_dropdown_list WHERE dealer_id = ${dealer_id} AND type ='${dropdownType}'`;
+
+        var sResult = await sql.query(sQuery);
+
+        if (sResult.length == 0) {
+            sql.query(`insert into dealer_dropdown_list (dealer_id, selected_items, type) values (${dealer_id}, '${selected_items}', '${dropdownType}')`, async function (err, rslts) {
+                if (err) {
+                    return res.send({
+                        status: false,
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_NOT_UP], "Items Not Updated"),
+                    })
+                }
+
+                data = {
+                    status: true,
+                    msg: await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_ADDED], "Items Added"), // Items Added.
+                    data: selected_items
+                };
+                return res.send(data);
+            });
+        } else {
+
+            sql.query(`UPDATE dealer_dropdown_list SET selected_items = '${selected_items}' WHERE type='${dropdownType}' AND dealer_id=${dealer_id}`, async function (err, row) {
+                if (err) {
+                    return res.send({
+                        status: false,
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_NOT_UP], "Items Not Updated"),
+                    })
+                }
+
+                if (row.affectedRows != 0) {
+                    data = {
+                        status: true,
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_UP], "Items Updated"), // Items Updated.',
+                        data: selected_items
+                    };
+                } else {
+                    data = {
+                        status: false,
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_NOT_UP], "Items Not Updated"), // Items Not Updated.',
+                    };
 
                 }
+                return res.send(data);
             });
         }
     }
@@ -1956,7 +2040,7 @@ exports.postPagination = async function (req, res) {
  * Update Dealer PINs of all existing dealers
  * http://localhost:3000/users/dealer/update_dealer_pins
  * one time useage - menual end point
- * 
+ *
  *
  * By Muhammad Irfan Afzal - mi3afzal
  * 02-08-2019
@@ -2028,7 +2112,7 @@ exports.updateDealerPins = async function (req, res) {
 
 
 /**
- * 
+ *
  */
 exports.twoFactorAuth = async function (req, res) {
     var verify = req.decoded;
@@ -2082,7 +2166,7 @@ exports.twoFactorAuth = async function (req, res) {
 /**
  * save dealer permissions with new structure
  * @author Usman Hafeez
- * 
+ *
  */
 exports.dealerPermissions = async function (req, res) {
     var verify = req.decoded;
@@ -2720,7 +2804,7 @@ exports.setDealerDemosLimit = async function (req, res) {
     }
 }
 
-exports.setTimeZone = async function (req, res) { 
+exports.setTimeZone = async function (req, res) {
     try {
         var verify = req.decoded;
         console.log("setTimeZone :: ", req.body.data);
