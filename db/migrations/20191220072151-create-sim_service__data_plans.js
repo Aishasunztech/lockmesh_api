@@ -15,6 +15,10 @@ module.exports = {
         data_plan_package: {
           type: Sequelize.TEXT
         },
+        pkg_price: {
+          type: Sequelize.INTEGER,
+          defaultValue: 0
+        },
         sim_type: {
           type: Sequelize.ENUM,
           values: ['sim_id', 'sim_id2'],

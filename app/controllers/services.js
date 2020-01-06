@@ -323,7 +323,7 @@ exports.validateSimId = async function (req, res) {
 
 }
 
-exports.changeDataLimitsPlans = async function (req, res) {
+exports.addDataLimitsPlans = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
         if (req.body.usr_device_id) {
@@ -444,21 +444,26 @@ exports.changeDataLimitsPlans = async function (req, res) {
                                             }
 
 
-                                            let insertDataPlan = ''
-
+                                            let updateDataPlan = ''
+                                            data_plan.added_date = date_now
                                             let currentDataPlan = await sql.query(`SELECT * FROM sim_data_plans WHERE service_id = ${service_id} AND sim_type = '${sim_type}' AND status = 'active'`)
                                             if (currentDataPlan && currentDataPlan.length) {
-                                                let updateCurrentPlan = `UPDATE sim_data_plans SET status = 'deleted' , end_date = '${date_now}' WHERE id= ${currentDataPlan[0].id}`
-                                                let updatedPlan = await sql.query(updateCurrentPlan)
-                                                if (updatedPlan && updatedPlan.affectedRows) {
-                                                    insertDataPlan = `INSERT INTO sim_data_plans (service_id , data_plan_package , sim_type , total_data , used_data , start_date ) VALUES(${service_id} , '${JSON.stringify(data_plan)}' , '${sim_type}' , ${data_plan.data_limit} , '${currentDataPlan[0].used_data}' ,'${date_now}')`
-                                                }
+
+                                                let data_limit = Number(currentDataPlan[0].total_data) + Number(data_plan.data_limit)
+                                                let total_price = Number(currentDataPlan[0].total_price) + Number(data_plan.pkg_price)
+                                                let data_plan_packages = JSON.parse(currentDataPlan[0].data_plan_package)
+                                                console.log(data_plan_packages);
+                                                data_plan_packages.push(data_plan)
+                                                updateDataPlan = `UPDATE sim_data_plans SET total_data = ${data_limit} , total_price = ${total_price} , data_plan_package = '${JSON.stringify(data_plan_packages)}' WHERE id= ${currentDataPlan[0].id}`
+                                                // let updatedPlan = await sql.query(updateCurrentPlan)
+                                                // if (updatedPlan && updatedPlan.affectedRows) {
+                                                //     updateDataPlan = `INSERT INTO sim_data_plans (service_id , data_plan_package , sim_type , total_data , used_data , start_date ) VALUES(${service_id} , '${JSON.stringify(data_plan)}' , '${sim_type}' , ${data_plan.data_limit} , '${currentDataPlan[0].used_data}' ,'${date_now}')`
+                                                // }
                                             } else {
-                                                insertDataPlan = `INSERT INTO sim_data_plans (service_id , data_plan_package , sim_type , total_data , start_date ) VALUES(${service_id} , '${JSON.stringify(data_plan)}' , '${sim_type}' , ${data_plan.data_limit}  ,'${date_now}')`
+                                                updateDataPlan = `INSERT INTO sim_data_plans (service_id , data_plan_package , sim_type , total_data , start_date ) VALUES(${service_id} , '${JSON.stringify([data_plan])}' , '${sim_type}' , ${data_plan.data_limit}  ,'${date_now}')`
                                             }
-
-
-                                            await sql.query(insertDataPlan)
+                                            console.log(updateDataPlan);
+                                            await sql.query(updateDataPlan)
                                             if (loggedDealerType !== ADMIN) {
                                                 let inv_no = await helpers.getInvoiceId()
                                                 const invoice = {
@@ -498,13 +503,16 @@ exports.changeDataLimitsPlans = async function (req, res) {
                                                 sendEmail("CHNAGE DATA PLAN.", html, verify.user.dealer_email, null, attachment);
                                             }
                                             let updatedCredits = await sql.query(`SELECT * FROM financial_account_balance WHERE dealer_id = ${loggedDealerId}`)
+                                            let deviceData = await require('./general_helper').getAllRecordbyDeviceId(device_id)
+
                                             res.send({
                                                 status: true,
                                                 msg: await helpers.convertToLang(
                                                     req.translation[""],
                                                     "Data Plan added successfully."
                                                 ),
-                                                credits: updatedCredits[0] ? updatedCredits[0].credits : 0
+                                                credits: updatedCredits[0] ? updatedCredits[0].credits : 0,
+                                                data: deviceData
                                             });
                                             return
                                         } else {
