@@ -522,10 +522,10 @@ exports.addDataLimitsPlans = async function (req, res) {
                                             let servicesData = await device_helpers.getServicesData(rsltq[0].id);
                                             let servicesIds = servicesData.map(item => { return item.id })
                                             let userAccServiceData = []
-                                            let data_plans = []
+                                            let dataPlans = []
                                             if (servicesIds.length) {
                                                 userAccServiceData = await device_helpers.getUserAccServicesData(rsltq[0].id, servicesIds)
-                                                data_plans = await device_helpers.getDataPlans(servicesIds)
+                                                dataPlans = await device_helpers.getDataPlans(servicesIds)
                                             }
 
                                             if (rsltq.length) {
@@ -583,9 +583,9 @@ exports.addDataLimitsPlans = async function (req, res) {
                                                 // if (servicesData[0]) {
                                                 //     rsltq[0].services = servicesData[0]
                                                 // }
-                                                let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                                                let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
                                                 rsltq[0].sim_id_data_plan = sim_id_data_plan[0]
-                                                let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                                                let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
                                                 rsltq[0].sim_id2_data_plan = sim_id2_data_plan[0]
 
                                                 if (rsltq[0].expiry_date !== null) {

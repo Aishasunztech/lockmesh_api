@@ -96,10 +96,10 @@ exports.devices = async function (req, res) {
                 let servicesData = await device_helpers.getServicesData(user_acc_ids)
                 let servicesIds = servicesData.map(item => { return item.id })
                 let userAccServiceData = []
-                let data_plans = []
+                let dataPlans = []
                 if (servicesIds.length) {
                     userAccServiceData = await device_helpers.getUserAccServicesData(user_acc_ids, servicesIds)
-                    data_plans = await device_helpers.getDataPlans(servicesIds)
+                    dataPlans = await device_helpers.getDataPlans(servicesIds)
                 }
 
                 for (var i = 0; i < results.length; i++) {
@@ -139,9 +139,9 @@ exports.devices = async function (req, res) {
                             }
                         })
                     }
-                    let sim_id_data_plan = data_plans.filter((item) => item.service_id == service_id && item.sim_type == 'sim_id')
+                    let sim_id_data_plan = dataPlans.filter((item) => item.service_id == service_id && item.sim_type == 'sim_id')
                     results[i].sim_id_data_plan = sim_id_data_plan[0]
-                    let sim_id2_data_plan = data_plans.filter((item) => item.service_id == service_id && item.sim_type == 'sim_id2')
+                    let sim_id2_data_plan = dataPlans.filter((item) => item.service_id == service_id && item.sim_type == 'sim_id2')
                     results[i].sim_id2_data_plan = sim_id2_data_plan[0]
                     // let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === results[i].id);
                     // if (pgp_email) {
@@ -865,10 +865,10 @@ exports.acceptDevice = async function (req, res) {
                                                         let servicesData = await device_helpers.getServicesData(rsltq[0].id);
                                                         let servicesIds = servicesData.map(item => { return item.id })
                                                         let userAccServiceData = []
-                                                        let data_plans = []
+                                                        let dataPlans = []
                                                         if (servicesIds.length) {
                                                             userAccServiceData = await device_helpers.getUserAccServicesData(rsltq[0].id, servicesIds)
-                                                            data_plans = await device_helpers.getDataPlans(servicesIds)
+                                                            dataPlans = await device_helpers.getDataPlans(servicesIds)
                                                         }
                                                         rsltq[0].finalStatus = device_helpers.checkStatus(rsltq[0]);
                                                         rsltq[0].sim_id = "N/A"
@@ -941,9 +941,9 @@ exports.acceptDevice = async function (req, res) {
                                                             })
                                                         }
 
-                                                        let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                                                        let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
                                                         results[0].sim_id_data_plan = sim_id_data_plan[0]
-                                                        let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                                                        let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
                                                         results[0].sim_id2_data_plan = sim_id2_data_plan[0]
                                                         // rsltq[0].vpn = await device_helpers.getVpn(rsltq[0])
                                                     }
@@ -1488,10 +1488,10 @@ exports.createDeviceProfile = async function (req, res) {
                                         let servicesData = await device_helpers.getServicesData(user_acc_ids)
                                         let servicesIds = servicesData.map(item => { return item.id })
                                         let userAccServiceData = []
-                                        let data_plans = []
+                                        let dataPlans = []
                                         if (servicesIds.length) {
                                             userAccServiceData = await device_helpers.getUserAccServicesData(user_acc_ids, servicesIds)
-                                            data_plans = await device_helpers.getDataPlans(servicesIds)
+                                            dataPlans = await device_helpers.getDataPlans(servicesIds)
                                         }
                                         // let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
 
@@ -1550,9 +1550,9 @@ exports.createDeviceProfile = async function (req, res) {
                                                 })
                                             }
 
-                                            let sim_id_data_plan = data_plans.filter((item) => item.service_id == service_id && item.sim_type == 'sim_id')
+                                            let sim_id_data_plan = dataPlans.filter((item) => item.service_id == service_id && item.sim_type == 'sim_id')
                                             rsltq[i].sim_id_data_plan = sim_id_data_plan[0]
-                                            let sim_id2_data_plan = data_plans.filter((item) => item.service_id == service_id && item.sim_type == 'sim_id2')
+                                            let sim_id2_data_plan = dataPlans.filter((item) => item.service_id == service_id && item.sim_type == 'sim_id2')
                                             rsltq[i].sim_id2_data_plan = sim_id2_data_plan[0]
                                             // let services = servicesData.find(data => data.user_acc_id === rsltq[i].id);
                                             // if (services && services.length) {
@@ -1935,10 +1935,10 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 let servicesData = await device_helpers.getServicesData(results[0].id);
                                                                 let servicesIds = servicesData.map(item => { return item.id })
                                                                 let userAccServiceData = []
-                                                                let data_plans = []
+                                                                let dataPlans = []
                                                                 if (servicesIds.length) {
                                                                     userAccServiceData = await device_helpers.getUserAccServicesData(results[0].id, servicesIds)
-                                                                    data_plans = await device_helpers.getDataPlans(servicesIds)
+                                                                    dataPlans = await device_helpers.getDataPlans(servicesIds)
                                                                 }
                                                                 // if (pgp_emails[0] && pgp_emails[0].pgp_email) {
                                                                 //     results[0].pgp_email = pgp_emails[0].pgp_email
@@ -1989,9 +1989,9 @@ exports.createDeviceProfile = async function (req, res) {
                                                                         }
                                                                     })
                                                                 }
-                                                                let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                                                                let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
                                                                 results[0].sim_id_data_plan = sim_id_data_plan[0]
-                                                                let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                                                                let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
                                                                 results[0].sim_id2_data_plan = sim_id2_data_plan[0]
                                                                 // if (servicesData[0]) {
                                                                 //     results[0].services = servicesData[0]
@@ -2950,10 +2950,10 @@ exports.editDevices = async function (req, res) {
                             let servicesData = await device_helpers.getServicesData(rsltq[0].id);
                             let servicesIds = servicesData.map(item => { return item.id })
                             let userAccServiceData = []
-                            let data_plans = []
+                            let dataPlans = []
                             if (servicesIds.length) {
                                 userAccServiceData = await device_helpers.getUserAccServicesData(rsltq[0].id, servicesIds)
-                                data_plans = await device_helpers.getDataPlans(servicesIds)
+                                dataPlans = await device_helpers.getDataPlans(servicesIds)
 
                             }
 
@@ -3012,9 +3012,9 @@ exports.editDevices = async function (req, res) {
                                 // if (servicesData[0]) {
                                 //     rsltq[0].services = servicesData[0]
                                 // }
-                                let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                                let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
                                 rsltq[0].sim_id_data_plan = sim_id_data_plan[0]
-                                let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                                let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
                                 rsltq[0].sim_id2_data_plan = sim_id2_data_plan[0]
 
                                 if (rsltq[0].expiry_date !== null) {
@@ -3519,10 +3519,10 @@ exports.extendServices = async function (req, res) {
                         let servicesData = await device_helpers.getServicesData(rsltq[0].id);
                         let servicesIds = servicesData.map(item => { return item.id })
                         let userAccServiceData = []
-                        let data_plans = []
+                        let dataPlans = []
                         if (servicesIds.length) {
                             userAccServiceData = await device_helpers.getUserAccServicesData(rsltq[0].id, servicesIds)
-                            data_plans = await device_helpers.getDataPlans(servicesIds)
+                            dataPlans = await device_helpers.getDataPlans(servicesIds)
                         }
                         if (rsltq.length) {
                             rsltq[0].sim_id = "N/A"
@@ -3577,9 +3577,9 @@ exports.extendServices = async function (req, res) {
                                 })
                             }
 
-                            let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                            let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
                             rsltq[0].sim_id_data_plan = sim_id_data_plan[0]
-                            let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                            let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
                             rsltq[0].sim_id2_data_plan = sim_id2_data_plan[0]
 
                             if (rsltq[0].expiry_date !== null) {
@@ -3754,10 +3754,10 @@ exports.cancelExtendedServices = async function (req, res) {
                                     let servicesData = await device_helpers.getServicesData(results[0].id);
                                     let servicesIds = servicesData.map(item => { return item.id })
                                     let userAccServiceData = []
-                                    let data_plans = []
+                                    let dataPlans = []
                                     if (servicesIds.length) {
                                         userAccServiceData = await device_helpers.getUserAccServicesData(results[0].id, servicesIds)
-                                        data_plans = await device_helpers.getDataPlans(servicesIds)
+                                        dataPlans = await device_helpers.getDataPlans(servicesIds)
                                     }
                                     results[0].sim_id = "N/A"
                                     results[0].sim_id2 = "N/A"
@@ -3810,9 +3810,9 @@ exports.cancelExtendedServices = async function (req, res) {
                                         })
                                     }
 
-                                    let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                                    let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
                                     results[0].sim_id_data_plan = sim_id_data_plan[0]
-                                    let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                                    let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
                                     results[0].sim_id2_data_plan = sim_id2_data_plan[0]
                                     results[0].lastOnline = results[0].last_login ? results[0].last_login : "N/A"
                                     let device_data = results[0]
@@ -4176,11 +4176,11 @@ exports.unflagDevice = async function (req, res) {
                             resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
                             let servicesData = await device_helpers.getServicesData(resquery[0].id);
                             let servicesIds = servicesData.map(item => { return item.id })
-                            let data_plans = []
+                            let dataPlans = []
                             let userAccServiceData = []
                             if (servicesIds.length) {
                                 userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
-                                data_plans = await device_helpers.getDataPlans(servicesIds)
+                                dataPlans = await device_helpers.getDataPlans(servicesIds)
                             }
                             resquery[0].sim_id = "N/A"
                             resquery[0].sim_id2 = "N/A"
@@ -4232,9 +4232,9 @@ exports.unflagDevice = async function (req, res) {
                                 })
                             }
 
-                            let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                            let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
                             resquery[0].sim_id_data_plan = sim_id_data_plan[0]
-                            let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                            let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
                             resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
 
                             // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id);
@@ -4344,10 +4344,10 @@ exports.flagDevice = async function (req, res) {
                         let servicesData = await device_helpers.getServicesData(resquery[0].id);
                         let servicesIds = servicesData.map(item => { return item.id })
                         let userAccServiceData = []
-                        let data_plans = []
+                        let dataPlans = []
                         if (servicesIds.length) {
                             userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
-                            data_plans = await device_helpers.getDataPlans(servicesIds)
+                            dataPlans = await device_helpers.getDataPlans(servicesIds)
                         }
                         // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id);
                         // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
@@ -4416,9 +4416,9 @@ exports.flagDevice = async function (req, res) {
                             })
                         }
 
-                        let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                        let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
                         results[0].sim_id_data_plan = sim_id_data_plan[0]
-                        let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                        let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
                         results[0].sim_id2_data_plan = sim_id2_data_plan[0]
                         // if (servicesData[0]) {
                         //     resquery[0].services = servicesData[0]
@@ -4501,11 +4501,11 @@ exports.transferUser = async function (req, res) {
                     resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
                     let servicesData = await device_helpers.getServicesData(resquery[0].id);
                     let servicesIds = servicesData.map(item => { return item.id })
-                    let data_plans = []
+                    let dataPlans = []
                     let userAccServiceData = []
                     if (servicesIds.length) {
                         userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
-                        data_plans = await device_helpers.getDataPlans(servicesIds)
+                        dataPlans = await device_helpers.getDataPlans(servicesIds)
                     }
                     resquery[0].sim_id = "N/A"
                     resquery[0].sim_id2 = "N/A"
@@ -4557,9 +4557,9 @@ exports.transferUser = async function (req, res) {
                         })
                     }
 
-                    let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                    let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
                     resquery[0].sim_id_data_plan = sim_id_data_plan[0]
-                    let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                    let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
                     resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
                     // if (servicesData[0]) {
                     //     resquery[0].services = servicesData[0]
@@ -4763,10 +4763,10 @@ exports.transferDeviceProfile = async function (req, res) {
                                     let servicesData = await device_helpers.getServicesData(resquery[0].id);
                                     let servicesIds = servicesData.map(item => { return item.id })
                                     let userAccServiceData = []
-                                    let data_plans = []
+                                    let dataPlans = []
                                     if (servicesIds.length) {
                                         userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
-                                        data_plans = await device_helpers.getDataPlans(servicesIds)
+                                        dataPlans = await device_helpers.getDataPlans(servicesIds)
                                     }
                                     resquery[0].sim_id = "N/A"
                                     resquery[0].sim_id2 = "N/A"
@@ -4819,9 +4819,9 @@ exports.transferDeviceProfile = async function (req, res) {
                                         })
                                     }
 
-                                    let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                                    let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
                                     resquery[0].sim_id_data_plan = sim_id_data_plan[0]
-                                    let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                                    let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
                                     resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
                                     // if (servicesData[0]) {
                                     //     resquery[0].services = servicesData[0]
@@ -5240,10 +5240,10 @@ exports.suspendAccountDevices = async function (req, res) {
                                     let servicesData = await device_helpers.getServicesData(resquery[0].id);
                                     let servicesIds = servicesData.map(item => { return item.id })
                                     let userAccServiceData = []
-                                    let data_plans = []
+                                    let dataPlans = []
                                     if (servicesIds.length) {
                                         userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
-                                        data_plans = await device_helpers.getDataPlans(servicesIds)
+                                        dataPlans = await device_helpers.getDataPlans(servicesIds)
                                     }
                                     resquery[0].sim_id = "N/A"
                                     resquery[0].sim_id2 = "N/A"
@@ -5297,9 +5297,9 @@ exports.suspendAccountDevices = async function (req, res) {
                                         })
                                     }
 
-                                    let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                                    let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
                                     resquery[0].sim_id_data_plan = sim_id_data_plan[0]
-                                    let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                                    let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
                                     resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
                                     // if (servicesData[0]) {
                                     //     resquery[0].services = servicesData[0]
@@ -5385,10 +5385,10 @@ exports.suspendAccountDevices = async function (req, res) {
                                         let servicesData = await device_helpers.getServicesData(resquery[0].id);
                                         let servicesIds = servicesData.map(item => { return item.id })
                                         let userAccServiceData = []
-                                        let data_plans
+                                        let dataPlans = []
                                         if (servicesIds.length) {
                                             userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
-                                            data_plans = await device_helpers.getDataPlans(servicesIds)
+                                            dataPlans = await device_helpers.getDataPlans(servicesIds)
                                         }
                                         resquery[0].sim_id = "N/A"
                                         resquery[0].sim_id2 = "N/A"
@@ -5441,9 +5441,9 @@ exports.suspendAccountDevices = async function (req, res) {
                                             })
                                         }
 
-                                        let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                                        let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
                                         resquery[0].sim_id_data_plan = sim_id_data_plan[0]
-                                        let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                                        let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
                                         resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
                                         // if (servicesData[0]) {
                                         //     resquery[0].services = servicesData[0]
@@ -5565,10 +5565,10 @@ exports.activateDevice = async function (req, res) {
                                     let servicesData = await device_helpers.getServicesData(resquery[0].id);
                                     let servicesIds = servicesData.map(item => { return item.id })
                                     let userAccServiceData = []
-                                    let data_plans = []
+                                    let dataPlans = []
                                     if (servicesIds.length) {
                                         userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
-                                        data_plans = await device_helpers.getDataPlans(servicesIds)
+                                        dataPlans = await device_helpers.getDataPlans(servicesIds)
                                     }
                                     resquery[0].sim_id = "N/A"
                                     resquery[0].sim_id2 = "N/A"
@@ -5621,9 +5621,9 @@ exports.activateDevice = async function (req, res) {
                                         })
                                     }
 
-                                    let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                                    let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
                                     resquery[0].sim_id_data_plan = sim_id_data_plan[0]
-                                    let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                                    let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
                                     resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
 
                                     resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
@@ -5704,10 +5704,10 @@ exports.activateDevice = async function (req, res) {
                                         let servicesData = await device_helpers.getServicesData(resquery[0].id);
                                         let servicesIds = servicesData.map(item => { return item.id })
                                         let userAccServiceData = []
-                                        let data_plans = []
+                                        let dataPlans = []
                                         if (servicesIds.length) {
                                             userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
-                                            data_plans = await device_helpers.getDataPlans(servicesIds)
+                                            dataPlans = await device_helpers.getDataPlans(servicesIds)
                                         }
                                         resquery[0].sim_id = "N/A"
                                         resquery[0].sim_id2 = "N/A"
@@ -5760,9 +5760,9 @@ exports.activateDevice = async function (req, res) {
                                             })
                                         }
 
-                                        let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                                        let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
                                         resquery[0].sim_id_data_plan = sim_id_data_plan[0]
-                                        let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                                        let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
                                         resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
                                         // if (servicesData[0]) {
                                         //     resquery[0].services = servicesData[0]
@@ -5913,10 +5913,10 @@ exports.wipeDevice = async function (req, res) {
                     let servicesData = await device_helpers.getServicesData(resquery[0].id);
                     let servicesIds = servicesData.map(item => { return item.id })
                     let userAccServiceData = []
-                    let data_plans = []
+                    let dataPlans = []
                     if (servicesIds.length) {
                         userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
-                        data_plans = await device_helpers.getDataPlans(servicesIds)
+                        dataPlans = await device_helpers.getDataPlans(servicesIds)
                     }
                     resquery[0].sim_id = "N/A"
                     resquery[0].sim_id2 = "N/A"
@@ -5967,9 +5967,9 @@ exports.wipeDevice = async function (req, res) {
                             }
                         })
                     }
-                    let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                    let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
                     resquery[0].sim_id_data_plan = sim_id_data_plan[0]
-                    let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                    let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
                     resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
 
                     device_helpers.saveActionHistory(
@@ -6050,10 +6050,10 @@ exports.connectDevice = async function (req, res) {
                         let servicesData = await device_helpers.getServicesData(results[0].id);
                         let servicesIds = servicesData.map(item => { return item.id })
                         let userAccServiceData = []
-                        let data_plans = []
+                        let dataPlans = []
                         if (servicesIds.length) {
                             userAccServiceData = await device_helpers.getUserAccServicesData(results[0].id, servicesIds)
-                            data_plans = await device_helpers.getDataPlans(servicesIds)
+                            dataPlans = await device_helpers.getDataPlans(servicesIds)
                         }
                         results[0].sim_id = "N/A"
                         results[0].sim_id2 = "N/A"
@@ -6107,9 +6107,9 @@ exports.connectDevice = async function (req, res) {
                             })
                         }
 
-                        let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                        let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
                         results[0].sim_id_data_plan = sim_id_data_plan[0]
-                        let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                        let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
                         results[0].sim_id2_data_plan = sim_id2_data_plan[0]
                         // if (servicesData[0]) {
                         //     results[0].services = servicesData[0]
