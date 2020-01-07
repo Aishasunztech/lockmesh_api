@@ -3640,6 +3640,9 @@ exports.cancelExtendedServices = async function (req, res) {
                         let updateSaleDetails = `UPDATE services_sale SET paid_sale_price =0, paid_admin_cost = 0 , paid_dealer_cost = 0 , status = 'returned' , end_date = '${date_now}' WHERE user_acc_id = ${user_acc_id} AND service_data_id = ${service.id}`
                         sql.query(updateSaleDetails)
 
+                        let updateDataPlans = `UPDATE sim_data_plans SET status ='deleted' WHERE service_id = ${service.id}`
+                        sql.query(updateDataPlans)
+
 
                         let transection_record = `SELECT * from financial_account_transections where transection_data LIKE '%service_id":${service.id}%' AND  user_dvc_acc_id = ${user_acc_id} AND user_id = '${verify.user.id}' AND type = 'services' ORDER BY id DESC LIMIT 1`
                         let transection_record_data = await sql.query(transection_record)
@@ -3662,7 +3665,7 @@ exports.cancelExtendedServices = async function (req, res) {
                             let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dealer_id},${user_acc_id} ,'${JSON.stringify({ user_acc_id: user_acc_id, details: "REFUND SERVICES CREITS", service_id: service.id })}' ,${totalPrice} ,'debit' , 'transferred' , 'services')`
                             await sql.query(transection_credits)
 
-                            update_credits_query = 'update financial_account_balance set credits = credits + ' + totalPrice + ' where dealer_id ="' + dealer_id + '"';
+                            update_credits_query = 'update financial_account_balance set credits = credits + ' + transection_record_data[0].credits + ' where dealer_id ="' + dealer_id + '"';
                             await sql.query(update_credits_query);
 
                             // let update_profits_transections = `SELECT * financial_account_transections SET status = 'cancelled' WHERE transection_data LIKE '%transection_type":"profit","service_id": ${service.id}% ' user_dvc_acc_id = ${user_acc_id} AND status = 'transferred' AND type = 'services'`
