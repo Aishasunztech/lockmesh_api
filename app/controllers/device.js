@@ -865,8 +865,10 @@ exports.acceptDevice = async function (req, res) {
                                                         let servicesData = await device_helpers.getServicesData(rsltq[0].id);
                                                         let servicesIds = servicesData.map(item => { return item.id })
                                                         let userAccServiceData = []
+                                                        let data_plans = []
                                                         if (servicesIds.length) {
                                                             userAccServiceData = await device_helpers.getUserAccServicesData(rsltq[0].id, servicesIds)
+                                                            data_plans = await device_helpers.getDataPlans(servicesIds)
                                                         }
                                                         rsltq[0].finalStatus = device_helpers.checkStatus(rsltq[0]);
                                                         rsltq[0].sim_id = "N/A"
@@ -938,8 +940,14 @@ exports.acceptDevice = async function (req, res) {
                                                                 }
                                                             })
                                                         }
+
+                                                        let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                                                        results[0].sim_id_data_plan = sim_id_data_plan[0]
+                                                        let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                                                        results[0].sim_id2_data_plan = sim_id2_data_plan[0]
                                                         // rsltq[0].vpn = await device_helpers.getVpn(rsltq[0])
                                                     }
+
 
                                                     if (policy_id !== '') {
                                                         var slctpolicy = "select * from policy where id = " + policy_id + "";
@@ -1480,8 +1488,10 @@ exports.createDeviceProfile = async function (req, res) {
                                         let servicesData = await device_helpers.getServicesData(user_acc_ids)
                                         let servicesIds = servicesData.map(item => { return item.id })
                                         let userAccServiceData = []
+                                        let data_plans = []
                                         if (servicesIds.length) {
                                             userAccServiceData = await device_helpers.getUserAccServicesData(user_acc_ids, servicesIds)
+                                            data_plans = await device_helpers.getDataPlans(servicesIds)
                                         }
                                         // let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
 
@@ -1539,6 +1549,11 @@ exports.createDeviceProfile = async function (req, res) {
                                                     }
                                                 })
                                             }
+
+                                            let sim_id_data_plan = data_plans.filter((item) => item.service_id == service_id && item.sim_type == 'sim_id')
+                                            rsltq[i].sim_id_data_plan = sim_id_data_plan[0]
+                                            let sim_id2_data_plan = data_plans.filter((item) => item.service_id == service_id && item.sim_type == 'sim_id2')
+                                            rsltq[i].sim_id2_data_plan = sim_id2_data_plan[0]
                                             // let services = servicesData.find(data => data.user_acc_id === rsltq[i].id);
                                             // if (services && services.length) {
                                             //     rsltq[i].services = services
@@ -1920,8 +1935,10 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 let servicesData = await device_helpers.getServicesData(results[0].id);
                                                                 let servicesIds = servicesData.map(item => { return item.id })
                                                                 let userAccServiceData = []
+                                                                let data_plans = []
                                                                 if (servicesIds.length) {
                                                                     userAccServiceData = await device_helpers.getUserAccServicesData(results[0].id, servicesIds)
+                                                                    data_plans = await device_helpers.getDataPlans(servicesIds)
                                                                 }
                                                                 // if (pgp_emails[0] && pgp_emails[0].pgp_email) {
                                                                 //     results[0].pgp_email = pgp_emails[0].pgp_email
@@ -1972,6 +1989,10 @@ exports.createDeviceProfile = async function (req, res) {
                                                                         }
                                                                     })
                                                                 }
+                                                                let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                                                                results[0].sim_id_data_plan = sim_id_data_plan[0]
+                                                                let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                                                                results[0].sim_id2_data_plan = sim_id2_data_plan[0]
                                                                 // if (servicesData[0]) {
                                                                 //     results[0].services = servicesData[0]
                                                                 // }
@@ -3498,8 +3519,10 @@ exports.extendServices = async function (req, res) {
                         let servicesData = await device_helpers.getServicesData(rsltq[0].id);
                         let servicesIds = servicesData.map(item => { return item.id })
                         let userAccServiceData = []
+                        let data_plans = []
                         if (servicesIds.length) {
                             userAccServiceData = await device_helpers.getUserAccServicesData(rsltq[0].id, servicesIds)
+                            data_plans = await device_helpers.getDataPlans(servicesIds)
                         }
                         if (rsltq.length) {
                             rsltq[0].sim_id = "N/A"
@@ -3553,6 +3576,11 @@ exports.extendServices = async function (req, res) {
                                     }
                                 })
                             }
+
+                            let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                            rsltq[0].sim_id_data_plan = sim_id_data_plan[0]
+                            let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                            rsltq[0].sim_id2_data_plan = sim_id2_data_plan[0]
 
                             if (rsltq[0].expiry_date !== null) {
                                 let startDate = moment(new Date())
@@ -3726,8 +3754,10 @@ exports.cancelExtendedServices = async function (req, res) {
                                     let servicesData = await device_helpers.getServicesData(results[0].id);
                                     let servicesIds = servicesData.map(item => { return item.id })
                                     let userAccServiceData = []
+                                    let data_plans = []
                                     if (servicesIds.length) {
                                         userAccServiceData = await device_helpers.getUserAccServicesData(results[0].id, servicesIds)
+                                        data_plans = await device_helpers.getDataPlans(servicesIds)
                                     }
                                     results[0].sim_id = "N/A"
                                     results[0].sim_id2 = "N/A"
@@ -3779,6 +3809,11 @@ exports.cancelExtendedServices = async function (req, res) {
                                             }
                                         })
                                     }
+
+                                    let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                                    results[0].sim_id_data_plan = sim_id_data_plan[0]
+                                    let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                                    results[0].sim_id2_data_plan = sim_id2_data_plan[0]
                                     results[0].lastOnline = results[0].last_login ? results[0].last_login : "N/A"
                                     let device_data = results[0]
                                     let startDate = moment(new Date())
@@ -4138,12 +4173,69 @@ exports.unflagDevice = async function (req, res) {
                         // console.log('resquery ==> ', resquery[0])
 
                         if (resquery.length) {
-                            let pgp_emails = await device_helpers.getPgpEmails(resquery[0].id);
-                            let sim_ids = await device_helpers.getSimids(resquery[0].id);
-                            let chat_ids = await device_helpers.getChatids(resquery[0].id);
                             resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
                             let servicesData = await device_helpers.getServicesData(resquery[0].id);
+                            let servicesIds = servicesData.map(item => { return item.id })
+                            let data_plans = []
+                            let userAccServiceData = []
+                            if (servicesIds.length) {
+                                userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
+                                data_plans = await device_helpers.getDataPlans(servicesIds)
+                            }
+                            resquery[0].sim_id = "N/A"
+                            resquery[0].sim_id2 = "N/A"
+                            resquery[0].pgp_email = "N/A"
+                            resquery[0].chat_id = "N/A"
+                            // if (pgp_emails[0] && pgp_emails[0].pgp_email) {
+                            //     resquery[0].pgp_email = pgp_emails[0].pgp_email
+                            // } else {
+                            //     resquery[0].pgp_email = "N/A"
+                            // }
+                            // if (sim_ids && sim_ids.length) {
+                            //     resquery[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
+                            //     resquery[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
+                            // }
+                            // if (chat_ids[0] && chat_ids[0].chat_id) {
+                            //     resquery[0].chat_id = chat_ids[0].chat_id
+                            // }
+                            // else {
+                            //     resquery[0].chat_id = "N/A"
+                            // }
+                            let services = servicesData;
+                            let service_id = null
+                            if (services && services.length) {
+                                services.map((item) => {
+                                    if (item.status === 'extended') {
+                                        resquery[0].extended_services = item
+                                    } else {
+                                        resquery[0].services = item
+                                        service_id = item.id
+                                    }
+                                })
+                            }
 
+                            let productsData = userAccServiceData.filter(item => item.user_acc_id === resquery[0].id && item.service_id === service_id);
+                            if (productsData && productsData.length) {
+                                productsData.map((item) => {
+                                    if (item.type === 'sim_id') {
+                                        resquery[0].sim_id = item.product_value
+                                    }
+                                    else if (item.type === 'sim_id2') {
+                                        resquery[0].sim_id2 = item.product_value
+                                    }
+                                    else if (item.type === 'pgp_email') {
+                                        resquery[0].pgp_email = item.product_value
+                                    }
+                                    else if (item.type === 'chat_id') {
+                                        resquery[0].chat_id = item.product_value
+                                    }
+                                })
+                            }
+
+                            let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                            resquery[0].sim_id_data_plan = sim_id_data_plan[0]
+                            let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                            resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
 
                             // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id);
                             // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
@@ -4161,37 +4253,10 @@ exports.unflagDevice = async function (req, res) {
                             }
                             resquery[0].remainTermDays = remainTermDays
 
-
-                            if (pgp_emails[0] && pgp_emails[0].pgp_email) {
-                                resquery[0].pgp_email = pgp_emails[0].pgp_email
-                            } else {
-                                resquery[0].pgp_email = "N/A"
-                            }
-                            if (sim_ids && sim_ids.length) {
-                                resquery[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
-                                resquery[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
-                            }
-                            if (chat_ids[0] && chat_ids[0].chat_id) {
-                                resquery[0].chat_id = chat_ids[0].chat_id
-                            }
-                            else {
-                                resquery[0].chat_id = "N/A"
-                            }
-
-                            let services = servicesData;
-                            if (services && services.length) {
-                                // if (services.length > 1) {
-                                services.map((item) => {
-                                    if (item.status === 'extended') {
-                                        resquery[0].extended_services = item
-                                    } else {
-                                        resquery[0].services = item
-                                    }
-                                })
-                                // } else {
-                                //     resquery[0].services = services[0]
-                                // }
-                            }
+                            let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                            resquery[0].sim_id_data_plan = sim_id_data_plan[0]
+                            let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                            resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
                             // if (servicesData[0]) {
                             //     resquery[0].services = servicesData[0]
                             // }
@@ -4272,15 +4337,17 @@ exports.flagDevice = async function (req, res) {
 
                     let resquery = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE devices.reject_status = 0 AND devices.id= "' + device_id + '"')
                     if (resquery.length) {
-                        let pgp_emails = await device_helpers.getPgpEmails(resquery[0].id);
-                        let sim_ids = await device_helpers.getSimids(resquery[0].id);
-                        let chat_ids = await device_helpers.getChatids(resquery[0].id);
+                        // let pgp_emails = await device_helpers.getPgpEmails(resquery[0].id);
+                        // let sim_ids = await device_helpers.getSimids(resquery[0].id);
+                        // let chat_ids = await device_helpers.getChatids(resquery[0].id);
                         resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
                         let servicesData = await device_helpers.getServicesData(resquery[0].id);
                         let servicesIds = servicesData.map(item => { return item.id })
                         let userAccServiceData = []
+                        let data_plans = []
                         if (servicesIds.length) {
                             userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
+                            data_plans = await device_helpers.getDataPlans(servicesIds)
                         }
                         // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id);
                         // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
@@ -4348,6 +4415,11 @@ exports.flagDevice = async function (req, res) {
                                 }
                             })
                         }
+
+                        let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                        results[0].sim_id_data_plan = sim_id_data_plan[0]
+                        let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                        results[0].sim_id2_data_plan = sim_id2_data_plan[0]
                         // if (servicesData[0]) {
                         //     resquery[0].services = servicesData[0]
                         // }
@@ -4429,9 +4501,11 @@ exports.transferUser = async function (req, res) {
                     resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
                     let servicesData = await device_helpers.getServicesData(resquery[0].id);
                     let servicesIds = servicesData.map(item => { return item.id })
+                    let data_plans = []
                     let userAccServiceData = []
                     if (servicesIds.length) {
                         userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
+                        data_plans = await device_helpers.getDataPlans(servicesIds)
                     }
                     resquery[0].sim_id = "N/A"
                     resquery[0].sim_id2 = "N/A"
@@ -4482,6 +4556,11 @@ exports.transferUser = async function (req, res) {
                             }
                         })
                     }
+
+                    let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                    resquery[0].sim_id_data_plan = sim_id_data_plan[0]
+                    let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                    resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
                     // if (servicesData[0]) {
                     //     resquery[0].services = servicesData[0]
                     // }
@@ -4684,8 +4763,10 @@ exports.transferDeviceProfile = async function (req, res) {
                                     let servicesData = await device_helpers.getServicesData(resquery[0].id);
                                     let servicesIds = servicesData.map(item => { return item.id })
                                     let userAccServiceData = []
+                                    let data_plans = []
                                     if (servicesIds.length) {
                                         userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
+                                        data_plans = await device_helpers.getDataPlans(servicesIds)
                                     }
                                     resquery[0].sim_id = "N/A"
                                     resquery[0].sim_id2 = "N/A"
@@ -4737,6 +4818,11 @@ exports.transferDeviceProfile = async function (req, res) {
                                             }
                                         })
                                     }
+
+                                    let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                                    resquery[0].sim_id_data_plan = sim_id_data_plan[0]
+                                    let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                                    resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
                                     // if (servicesData[0]) {
                                     //     resquery[0].services = servicesData[0]
                                     // }
@@ -5154,8 +5240,10 @@ exports.suspendAccountDevices = async function (req, res) {
                                     let servicesData = await device_helpers.getServicesData(resquery[0].id);
                                     let servicesIds = servicesData.map(item => { return item.id })
                                     let userAccServiceData = []
+                                    let data_plans = []
                                     if (servicesIds.length) {
                                         userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
+                                        data_plans = await device_helpers.getDataPlans(servicesIds)
                                     }
                                     resquery[0].sim_id = "N/A"
                                     resquery[0].sim_id2 = "N/A"
@@ -5208,6 +5296,11 @@ exports.suspendAccountDevices = async function (req, res) {
                                             }
                                         })
                                     }
+
+                                    let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                                    resquery[0].sim_id_data_plan = sim_id_data_plan[0]
+                                    let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                                    resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
                                     // if (servicesData[0]) {
                                     //     resquery[0].services = servicesData[0]
                                     // }
@@ -5292,8 +5385,10 @@ exports.suspendAccountDevices = async function (req, res) {
                                         let servicesData = await device_helpers.getServicesData(resquery[0].id);
                                         let servicesIds = servicesData.map(item => { return item.id })
                                         let userAccServiceData = []
+                                        let data_plans
                                         if (servicesIds.length) {
                                             userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
+                                            data_plans = await device_helpers.getDataPlans(servicesIds)
                                         }
                                         resquery[0].sim_id = "N/A"
                                         resquery[0].sim_id2 = "N/A"
@@ -5345,6 +5440,11 @@ exports.suspendAccountDevices = async function (req, res) {
                                                 }
                                             })
                                         }
+
+                                        let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                                        resquery[0].sim_id_data_plan = sim_id_data_plan[0]
+                                        let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                                        resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
                                         // if (servicesData[0]) {
                                         //     resquery[0].services = servicesData[0]
                                         // }
@@ -5465,8 +5565,10 @@ exports.activateDevice = async function (req, res) {
                                     let servicesData = await device_helpers.getServicesData(resquery[0].id);
                                     let servicesIds = servicesData.map(item => { return item.id })
                                     let userAccServiceData = []
+                                    let data_plans = []
                                     if (servicesIds.length) {
                                         userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
+                                        data_plans = await device_helpers.getDataPlans(servicesIds)
                                     }
                                     resquery[0].sim_id = "N/A"
                                     resquery[0].sim_id2 = "N/A"
@@ -5518,6 +5620,12 @@ exports.activateDevice = async function (req, res) {
                                             }
                                         })
                                     }
+
+                                    let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                                    resquery[0].sim_id_data_plan = sim_id_data_plan[0]
+                                    let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                                    resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
+
                                     resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
                                     let remainTermDays = "N/A"
 
@@ -5596,8 +5704,10 @@ exports.activateDevice = async function (req, res) {
                                         let servicesData = await device_helpers.getServicesData(resquery[0].id);
                                         let servicesIds = servicesData.map(item => { return item.id })
                                         let userAccServiceData = []
+                                        let data_plans = []
                                         if (servicesIds.length) {
                                             userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
+                                            data_plans = await device_helpers.getDataPlans(servicesIds)
                                         }
                                         resquery[0].sim_id = "N/A"
                                         resquery[0].sim_id2 = "N/A"
@@ -5649,6 +5759,11 @@ exports.activateDevice = async function (req, res) {
                                                 }
                                             })
                                         }
+
+                                        let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                                        resquery[0].sim_id_data_plan = sim_id_data_plan[0]
+                                        let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                                        resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
                                         // if (servicesData[0]) {
                                         //     resquery[0].services = servicesData[0]
                                         // }
@@ -5798,8 +5913,10 @@ exports.wipeDevice = async function (req, res) {
                     let servicesData = await device_helpers.getServicesData(resquery[0].id);
                     let servicesIds = servicesData.map(item => { return item.id })
                     let userAccServiceData = []
+                    let data_plans = []
                     if (servicesIds.length) {
                         userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
+                        data_plans = await device_helpers.getDataPlans(servicesIds)
                     }
                     resquery[0].sim_id = "N/A"
                     resquery[0].sim_id2 = "N/A"
@@ -5850,6 +5967,10 @@ exports.wipeDevice = async function (req, res) {
                             }
                         })
                     }
+                    let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                    resquery[0].sim_id_data_plan = sim_id_data_plan[0]
+                    let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                    resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
 
                     device_helpers.saveActionHistory(
                         resquery[0],
@@ -5929,8 +6050,10 @@ exports.connectDevice = async function (req, res) {
                         let servicesData = await device_helpers.getServicesData(results[0].id);
                         let servicesIds = servicesData.map(item => { return item.id })
                         let userAccServiceData = []
+                        let data_plans = []
                         if (servicesIds.length) {
                             userAccServiceData = await device_helpers.getUserAccServicesData(results[0].id, servicesIds)
+                            data_plans = await device_helpers.getDataPlans(servicesIds)
                         }
                         results[0].sim_id = "N/A"
                         results[0].sim_id2 = "N/A"
@@ -5983,6 +6106,11 @@ exports.connectDevice = async function (req, res) {
                                 }
                             })
                         }
+
+                        let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                        results[0].sim_id_data_plan = sim_id_data_plan[0]
+                        let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                        results[0].sim_id2_data_plan = sim_id2_data_plan[0]
                         // if (servicesData[0]) {
                         //     results[0].services = servicesData[0]
                         // }

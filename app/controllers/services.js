@@ -526,7 +526,6 @@ exports.addDataLimitsPlans = async function (req, res) {
                                             if (servicesIds.length) {
                                                 userAccServiceData = await device_helpers.getUserAccServicesData(rsltq[0].id, servicesIds)
                                                 data_plans = await device_helpers.getDataPlans(servicesIds)
-
                                             }
 
                                             if (rsltq.length) {

@@ -390,8 +390,10 @@ module.exports = {
 			let servicesData = await device_helpers.getServicesData(user_acc_ids)
 			let servicesIds = servicesData.map(item => { return item.id })
 			let userAccServiceData = []
+			let data_plans = []
 			if (servicesIds.length) {
 				userAccServiceData = await device_helpers.getUserAccServicesData(user_acc_ids, servicesIds.join())
+				data_plans = await device_helpers.getDataPlans(servicesIds)
 			}
 			for (let device of results) {
 				device.finalStatus = device_helpers.checkStatus(device);
@@ -441,6 +443,11 @@ module.exports = {
 						}
 					})
 				}
+
+				let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+				device.sim_id_data_plan = sim_id_data_plan[0]
+				let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+				device.sim_id2_data_plan = sim_id2_data_plan[0]
 
 			}
 
@@ -582,8 +589,10 @@ module.exports = {
 			let servicesData = await device_helpers.getServicesData(results[0].id);
 			let servicesIds = servicesData.map(item => { return item.id })
 			let userAccServiceData = []
+			let data_plans = []
 			if (servicesIds.length) {
 				userAccServiceData = await device_helpers.getUserAccServicesData(results[0].id, servicesIds.join())
+				data_plans = await device_helpers.getDataPlans(servicesIds)
 			}
 
 			results[0].finalStatus = device_helpers.checkStatus(results[0]);
@@ -636,6 +645,13 @@ module.exports = {
 					}
 				})
 			}
+
+			let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+			results[0].sim_id_data_plan = sim_id_data_plan[0]
+			let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+			results[0].sim_id2_data_plan = sim_id2_data_plan[0]
+
+
 			return results[0];
 		} else {
 			return [];
@@ -1028,8 +1044,10 @@ module.exports = {
 			let servicesData = await device_helpers.getServicesData(user_acc_ids)
 			let servicesIds = servicesData.map(item => { return item.id })
 			let userAccServiceData = []
+			let data_plans = []
 			if (servicesIds.length) {
 				userAccServiceData = await device_helpers.getUserAccServicesData(user_acc_ids, servicesIds.join())
+				data_plans = await device_helpers.getDataPlans(servicesIds)
 			}
 			for (var i = 0; i < results.length; i++) {
 				results[i].finalStatus = device_helpers.checkStatus(results[i]);
@@ -1075,6 +1093,11 @@ module.exports = {
 						}
 					})
 				}
+
+				let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+				results[i].sim_id_data_plan = sim_id_data_plan[0]
+				let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+				results[i].sim_id2_data_plan = sim_id2_data_plan[0]
 			}
 			return results;
 		} else {
