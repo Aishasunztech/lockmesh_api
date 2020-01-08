@@ -2619,7 +2619,7 @@ exports.editDevices = async function (req, res) {
                                 }
                                 if (sim_id2 != prevSimId2) {
                                     console.log("sim id 2 change");
-                                    let insertSimIds = `INSERT INTO sim_ids (sim_id , user_acc_id , start_date , dealer_id , used ,uploaded_by , uploaded_by_id) VALUES ('${sim_id}' , ${usr_acc_id} , '${date_now}' , ${dealer_id} , 1 , '${verify.user.user_type}' , '${verify.user.id}')`;
+                                    let insertSimIds = `INSERT INTO sim_ids (sim_id , user_acc_id , start_date , dealer_id , used ,uploaded_by , uploaded_by_id) VALUES ('${sim_id2}' , ${usr_acc_id} , '${date_now}' , ${dealer_id} , 1 , '${verify.user.user_type}' , '${verify.user.id}')`;
 
                                     // let insertSimIds =
                                     //     'update sim_ids set user_acc_id = "' +
@@ -2630,7 +2630,7 @@ exports.editDevices = async function (req, res) {
                                     sql.query(insertSimIds, function (err, result) {
                                         if (result && result.insertId) {
                                             if (finalStatus != constants.DEVICE_PRE_ACTIVATION) {
-                                                helpers.updateSimStatus(sim_id, 'active')
+                                                helpers.updateSimStatus(sim_id2, 'active')
                                             }
                                         }
                                     });
@@ -2871,13 +2871,23 @@ exports.editDevices = async function (req, res) {
                                     }
                                     if (sim_id != prevSimId && prevSimId != 'N/A') {
                                         console.log("sim change");
-                                        let updateSimIds =
-                                            'update sim_ids set user_acc_id = "' +
-                                            usr_acc_id +
-                                            '",  used=1 , start_date = "' + date_now + '" , dealer_id = "' + dealer_id + '" where sim_id ="' +
-                                            sim_id +
-                                            '"';
-                                        await sql.query(updateSimIds);
+                                        // console.log("sim id 2 change");
+                                        let insertSimIds = `INSERT INTO sim_ids (sim_id , user_acc_id , start_date , dealer_id , used ,uploaded_by , uploaded_by_id) VALUES ('${sim_id}' , ${usr_acc_id} , '${date_now}' , ${dealer_id} , 1 , '${verify.user.user_type}' , '${verify.user.id}')`;
+
+                                        // let insertSimIds =
+                                        //     'update sim_ids set user_acc_id = "' +
+                                        //     usr_acc_id +
+                                        //     '",  used=1 , start_date = "' + date_now + '" , dealer_id = "' + dealer_id + '" where sim_id ="' +
+                                        //     sim_id +
+                                        //     '"';
+                                        sql.query(insertSimIds, function (err, result) {
+                                            if (result && result.insertId) {
+                                                if (finalStatus != constants.DEVICE_PRE_ACTIVATION) {
+                                                    helpers.updateSimStatus(sim_id, 'active')
+                                                }
+                                            }
+                                        });
+
                                         if (
                                             finalStatus ===
                                             constants.DEVICE_PRE_ACTIVATION
@@ -2897,15 +2907,25 @@ exports.editDevices = async function (req, res) {
                                         sql.query(`UPDATE user_acc_services SET product_value = ${sim_id} WHERE service_id= ${service_id} AND product_value = '${prevSimId}'`)
 
                                     }
+
                                     if (sim_id2 != prevSimId2 && prevSimId2 != 'N/A') {
-                                        console.log("sim2 change");
-                                        let updateSimIds =
-                                            'update sim_ids set user_acc_id = "' +
-                                            usr_acc_id +
-                                            '",  used=1 , start_date = "' + date_now + '" , dealer_id = "' + dealer_id + '" where sim_id ="' +
-                                            sim_id +
-                                            '"';
-                                        await sql.query(updateSimIds);
+                                        console.log("sim id 2 change");
+                                        let insertSimIds = `INSERT INTO sim_ids (sim_id , user_acc_id , start_date , dealer_id , used ,uploaded_by , uploaded_by_id) VALUES ('${sim_id2}' , ${usr_acc_id} , '${date_now}' , ${dealer_id} , 1 , '${verify.user.user_type}' , '${verify.user.id}')`;
+
+                                        // let insertSimIds =
+                                        //     'update sim_ids set user_acc_id = "' +
+                                        //     usr_acc_id +
+                                        //     '",  used=1 , start_date = "' + date_now + '" , dealer_id = "' + dealer_id + '" where sim_id ="' +
+                                        //     sim_id +
+                                        //     '"';
+                                        sql.query(insertSimIds, function (err, result) {
+                                            if (result && result.insertId) {
+                                                if (finalStatus != constants.DEVICE_PRE_ACTIVATION) {
+                                                    helpers.updateSimStatus(sim_id2, 'active')
+                                                }
+                                            }
+                                        });
+
                                         if (
                                             finalStatus ===
                                             constants.DEVICE_PRE_ACTIVATION
@@ -4252,11 +4272,6 @@ exports.unflagDevice = async function (req, res) {
                                 remainTermDays = endDate.diff(startDate, 'days')
                             }
                             resquery[0].remainTermDays = remainTermDays
-
-                            let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
-                            resquery[0].sim_id_data_plan = sim_id_data_plan[0]
-                            let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
-                            resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
                             // if (servicesData[0]) {
                             //     resquery[0].services = servicesData[0]
                             // }

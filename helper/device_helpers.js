@@ -1124,13 +1124,31 @@ module.exports = {
                 }
                 if (sim_id != prevSimId && prevSimId != 'N/A') {
                     console.log("sim change");
-                    let updateSimIds =
-                        'update sim_ids set user_acc_id = "' +
-                        usr_acc_id +
-                        '",  used=1 , start_date = "' + date_now + '" , dealer_id = "' + dealer_id + '" where sim_id ="' +
-                        sim_id +
-                        '"';
-                    await sql.query(updateSimIds);
+
+                    // console.log("sim id 2 change");
+                    let insertSimIds = `INSERT INTO sim_ids (sim_id , user_acc_id , start_date , dealer_id , used ,uploaded_by , uploaded_by_id) VALUES ('${sim_id}' , ${usr_acc_id} , '${date_now}' , ${dealer_id} , 1 , '${verify.user.user_type}' , '${verify.user.id}')`;
+
+                    // let insertSimIds =
+                    //     'update sim_ids set user_acc_id = "' +
+                    //     usr_acc_id +
+                    //     '",  used=1 , start_date = "' + date_now + '" , dealer_id = "' + dealer_id + '" where sim_id ="' +
+                    //     sim_id +
+                    //     '"';
+                    sql.query(insertSimIds, function (err, result) {
+                        if (result && result.insertId) {
+                            if (finalStatus != constants.DEVICE_PRE_ACTIVATION) {
+                                general_helpers.updateSimStatus(sim_id, 'active')
+                            }
+                        }
+                    });
+
+                    // let updateSimIds =
+                    //     'update sim_ids set user_acc_id = "' +
+                    //     usr_acc_id +
+                    //     '",  used=1 , start_date = "' + date_now + '" , dealer_id = "' + dealer_id + '" where sim_id ="' +
+                    //     sim_id +
+                    //     '"';
+                    // await sql.query(updateSimIds);
                     if (
                         finalStatus ===
                         Constants.DEVICE_PRE_ACTIVATION
@@ -1152,13 +1170,23 @@ module.exports = {
                 }
                 if (sim_id2 != prevSimId2 && prevSimId2 != 'N/A') {
                     console.log("sim2 change");
-                    let updateSimIds =
-                        'update sim_ids set user_acc_id = "' +
-                        usr_acc_id +
-                        '",  used=1 , start_date = "' + date_now + '" , dealer_id = "' + dealer_id + '" where sim_id ="' +
-                        sim_id +
-                        '"';
-                    await sql.query(updateSimIds);
+
+                    let insertSimIds = `INSERT INTO sim_ids (sim_id , user_acc_id , start_date , dealer_id , used ,uploaded_by , uploaded_by_id) VALUES ('${sim_id2}' , ${usr_acc_id} , '${date_now}' , ${dealer_id} , 1 , '${verify.user.user_type}' , '${verify.user.id}')`;
+                    sql.query(insertSimIds, function (err, result) {
+                        if (result && result.insertId) {
+                            if (finalStatus != constants.DEVICE_PRE_ACTIVATION) {
+                                general_helpers.updateSimStatus(sim_id2, 'active')
+                            }
+                        }
+                    });
+
+                    // let updateSimIds =
+                    //     'update sim_ids set user_acc_id = "' +
+                    //     usr_acc_id +
+                    //     '",  used=1 , start_date = "' + date_now + '" , dealer_id = "' + dealer_id + '" where sim_id ="' +
+                    //     sim_id +
+                    //     '"';
+                    // await sql.query(updateSimIds);
                     if (
                         finalStatus ===
                         Constants.DEVICE_PRE_ACTIVATION
@@ -1178,6 +1206,13 @@ module.exports = {
                     sql.query(`UPDATE user_acc_services SET product_value = ${sim_id2} WHERE service_id= ${service_id} AND product_value = '${prevSimId2}'`)
 
                 }
+
+
+
+
+
+
+
                 // console.log(device_id);
                 let deviceData = await require('./general_helper').getAllRecordbyDeviceId(device_id)
                 // console.log(deviceData);
