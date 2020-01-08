@@ -1862,7 +1862,7 @@ exports.updateBulkMsg = async function (req, res) {
         let txtMsg = req.body.msg ? req.body.msg : '';
         let timer = req.body.timer_status ? req.body.timer_status : '';
         let repeat = req.body.repeat_duration ? req.body.repeat_duration : ''; // daily, weekly, etc...
-        let dateTime = req.body.date_time;
+        let dateTime = req.body.date_time && req.body.date_time !== "N/A" ? req.body.date_time : '';
         let weekDay = req.body.week_day ? req.body.week_day : 0;
         let monthDate = req.body.month_date ? req.body.month_date : 0; // 1 - 31
         let monthName = req.body.month_name ? req.body.month_name : 0; // for 12 months
@@ -1873,7 +1873,7 @@ exports.updateBulkMsg = async function (req, res) {
 
         // Form data Validations
         if (timer === "NOW") { // 01
-            dateTime = moment().tz(app_constants.TIME_ZONE).format("YYYY-MM-DD HH:mm:ss");
+            // dateTime = moment().tz(app_constants.TIME_ZONE).format("YYYY-MM-DD HH:mm:ss");
             repeat = "NONE";
         }
         else if (timer === "DATE/TIME") { // 02
