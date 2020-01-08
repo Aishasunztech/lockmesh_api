@@ -547,7 +547,7 @@ router.post("/dealer-domain-permissions", dealerController.connectDealerDomainsP
  * @security JWT
  */
 /*** Dealer Payment History ***/
-router.get("/payment-history/:dealerId", dealerController.getDealerPaymentHistory);
+router.post("/payment-history/:dealerId", dealerController.getDealerPaymentHistory);
 
 /**
  * @route GET /users/sales-history/:dealerId
