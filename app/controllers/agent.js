@@ -1,5 +1,5 @@
 var empty = require('is-empty');
-const bcrypt = require('bcrypt-nodejs');
+const bcrypt = require('bcryptjs');
 var randomize = require('randomatic');
 var generator = require('generate-password');
 

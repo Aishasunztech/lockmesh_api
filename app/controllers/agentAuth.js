@@ -1,5 +1,5 @@
 // libraries
-const bcrypt = require('bcrypt-nodejs');
+const bcrypt = require('bcryptjs');
 var empty = require('is-empty');
 var jwt = require('jsonwebtoken');
 var randomize = require('randomatic');
