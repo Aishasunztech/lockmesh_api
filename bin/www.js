@@ -44,7 +44,8 @@ var server = http.createServer(app);
 //     // cookie: false
 // });
 let io= socket();
-io.set('origins', '*:*');
+// origin all commented
+// io.set('origins', '*:*');
 io.attach(server);
 socketRoutes.baseSocket(io);
 
