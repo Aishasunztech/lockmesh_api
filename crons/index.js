@@ -13,6 +13,7 @@ const socket_helpers = require('../helper/socket_helper');
 
 // constants
 const constants = require('../constants/Application');
+const app_constants = require("../config/constants");
 
 /** Cron for device expiry date **/
 cron.schedule('0 0 0 * * *', async () => {
@@ -57,19 +58,19 @@ cron.schedule('0 0 0 * * *', async () => {
 
             let getTransaction = await sql.query(`SELECT * FROM financial_account_transections 
             WHERE user_id = ${item.dealer_id} AND status = 'pending' AND DATE(created_at) >= ${getDate} LIMIT 1`);
-            
+
             if (getTransaction.length) {
 
                 let now = moment();
                 let end = moment(getTransaction[0].created_at).format('YYYY-MM-DD');
                 let duration = now.diff(end, 'days');
-                
+
                 /**
                  * @author Usman Hafeez
                  * @description added condition if restriction mode is settled by Admin then don't change any level 
                  */
 
-                if(item.account_balance_status_by !== constants.ADMIN || (item.account_balance_status_by==constants.ADMIN && item.account_balance_status=='active')){
+                if (item.account_balance_status_by !== constants.ADMIN || (item.account_balance_status_by == constants.ADMIN && item.account_balance_status == 'active')) {
 
                     if (duration > 21 && duration <= 60) {
                         await sql.query("UPDATE dealers set account_balance_status = 'restricted', account_balance_status_by = 'due_credits' WHERE dealer_id = " + item.dealer_id);
@@ -77,7 +78,7 @@ cron.schedule('0 0 0 * * *', async () => {
                         await sql.query("UPDATE dealers set account_balance_status = 'suspended', account_balance_status_by = 'due_credits' WHERE dealer_id = " + item.dealer_id);
                     }
                 }
-                
+
             } else {
 
                 /**
@@ -85,7 +86,7 @@ cron.schedule('0 0 0 * * *', async () => {
                  * @description added condition if restriction mode is settled by Admin then don't change any level 
                  */
 
-                if(item.account_balance_status_by !== constants.ADMIN){
+                if (item.account_balance_status_by !== constants.ADMIN) {
                     await sql.query("UPDATE dealers set account_balance_status = 'active', account_balance_status_by = 'due_credits' WHERE dealer_id = " + item.dealer_id);
                 }
             }
@@ -113,5 +114,51 @@ cron.schedule('0 0 0 * * *', async () => {
                 }
             }
         }
+    }
+});
+
+/** send messages on devices **/
+cron.schedule('* * * * *', async () => { // '*/10 * * * * *' (after each 10 seconds)
+    // Get current time
+    let currentTime = moment().tz(app_constants.TIME_ZONE).format("YYYY-MM-DD HH:mm");
+    var getMsgQueue = `SELECT * FROM task_schedules WHERE ((status = 'NEW' OR status = 'FAILED' OR status = 'IN-PROCESS') AND next_schedule <= '${currentTime}');`;
+    console.log("getMsgQueue ", getMsgQueue);
+    var results = await sql.query(getMsgQueue);
+    // console.log("results ", results);
+
+    for (let i = 0; i < results.length; i++) {
+
+        // Calculate Minutes from first time send msg to devices with no response
+        let totalMin = 0;
+        if (results[i].start_time && results[i].next_schedule) {
+            totalMin = moment(currentTime).diff(moment(results[i].start_time), 'minutes');
+        }
+        console.log("calculte time: Start Time: ", results[i].start_time, "Next Schedules: ", currentTime, "totalMin ", totalMin);
+
+        let updateMsgScheduleStatus;
+        if (totalMin && totalMin >= 5) {
+            if (results[i].status === "IN-PROCESS") {
+                console.log('set failed to send');
+                updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'FAILED' WHERE id='${results[i].id}';`;
+            }
+        } else {
+            if (results[i].status !== "IN-PROCESS") {
+                console.log('set in process to send')
+                updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'IN-PROCESS', start_time = '${currentTime}' WHERE id='${results[i].id}';`;
+            }
+        }
+        console.log("updateMsgScheduleStatus : ", updateMsgScheduleStatus);
+        if (updateMsgScheduleStatus) {
+            await sql.query(updateMsgScheduleStatus);
+        }
+
+        // send msg to device using Socket
+        socket_helpers.sendMsgToDevice(
+            sockets.baseIo,
+            results[i].device_id,
+            results[i].id,
+            results[i].title,
+            app_constants.TIME_ZONE
+        );
     }
 });

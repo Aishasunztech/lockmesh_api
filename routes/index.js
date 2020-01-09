@@ -6,6 +6,8 @@ var agentAuthMiddleware = require('../middlewares/agentAuth');
 // routes
 // var authRoutes = require('./auth');
 var userRoutes = require('./users');
+var MircroServiceAuthentication = require('./MircroServiceAuthentication');
+var MircroServiceSocketAuthentication = require('./MircroServiceSocketAuthentication');
 var mobileRoutes = require('./mobile');
 var signalRoutes = require('./signal');
 var mobileV2Routes = require('./mobile_v2');
@@ -22,6 +24,13 @@ module.exports = function (app) {
 
 	app.use('/users', authRoutes);
 	app.use('/users', nonVerifyRoutes);
+
+	app.use('/microservice-authentication',
+		authMiddleware,
+		MircroServiceAuthentication);
+
+	app.use('/microservice-socket-authentication',
+		MircroServiceSocketAuthentication);
 
 	app.use('/users',
 		authMiddleware,

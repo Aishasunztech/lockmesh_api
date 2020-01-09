@@ -10,7 +10,7 @@ var moment = require('moment-strftime');
 var randomize = require('randomatic');
 var datetime = require('node-datetime');
 var generator = require('generate-password');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 // custom Libraries
 const { sendEmail } = require('../../lib/email');

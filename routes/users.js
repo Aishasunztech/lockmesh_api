@@ -399,6 +399,7 @@ router.get('/get_dealer_list', dealerController.getDealerForSA);
  */
 /*Get dealers*/
 router.get("/dealers/:pageName", dealerController.getDealers);
+router.get("/get-all-dealers", dealerController.getAllToAllDealers);
 
 /**
  * @route POST /users/add/dealer
@@ -546,7 +547,7 @@ router.post("/dealer-domain-permissions", dealerController.connectDealerDomainsP
  * @security JWT
  */
 /*** Dealer Payment History ***/
-router.get("/payment-history/:dealerId", dealerController.getDealerPaymentHistory);
+router.post("/payment-history/:dealerId", dealerController.getDealerPaymentHistory);
 
 /**
  * @route GET /users/sales-history/:dealerId
@@ -599,7 +600,7 @@ router.get("/dealer/gtdropdown/:dropdownType", dealerController.getDropdownSelec
  * @security JWT
  */
 /** post Dealer Dropdown Selected Items **/
-router.post("/dealer/dropdown", dealerController.dropDown);
+router.post("/dealer/dropdown", dealerController.saveDropDown);
 /**
  * @route GET /users/dealer/getPagination/{dropdownType}
  * @group Dealer - Operations about Dealers
@@ -1581,6 +1582,8 @@ router.post("/apply_bulk_pullapps", bulkDevicesController.applyBulkPullApps);
 router.post('/apply_bulk_policy', bulkDevicesController.applyBulkPolicy);
 
 router.post('/send_bulk_msg', bulkDevicesController.sendBulkMsg);
+
+router.post('/update_bulk_msg', bulkDevicesController.updateBulkMsg);
 
 router.post('/reset-chat-pin', deviceController.resetChatPin);
 

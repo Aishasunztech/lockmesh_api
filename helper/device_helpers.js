@@ -880,12 +880,25 @@ module.exports = {
     },
 
     // Bulk Msgs
-    saveBuklMsg: async (data) => {
+    saveBuklMsg: async function (data) {
         console.log('saveBuklMsg ', data);
+        let responseData = [];
 
-        let InsertQuery = `INSERT INTO bulk_messages (repeat_duration, timer_status, dealer_ids, user_ids, device_ids, action_by, msg, sending_time) VALUES ('${data.repeat}', '${data.timer ? data.timer : ''}', '${JSON.stringify(data.dealer_ids)}', '${JSON.stringify(data.user_ids)}', '${JSON.stringify(data.device_ids)}', '${data.action_by}', '${data.msg}', '${data.date}');`;
+        let InsertQuery = `INSERT INTO bulk_messages (repeat_duration, timer_status, dealer_ids, user_ids, device_ids, action_by, msg, date_time, week_day, month_date, month_name) 
+        VALUES ('${data.repeat}', '${data.timer}', '${JSON.stringify(data.dealer_ids)}', '${JSON.stringify(data.user_ids)}', '${JSON.stringify(data.device_ids)}', ${data.action_by}, '${data.msg}', '${data.dateTime}', ${data.weekDay}, ${data.monthDate}, ${data.monthName});`;
         console.log(InsertQuery);
-        await sql.query(InsertQuery);
+        let insertData = await sql.query(InsertQuery);
+        if (insertData.affectedRows) {
+            let getLastInsertMsg = `SELECT id, repeat_duration, timer_status, msg, date_time, week_day, month_date, month_name, time, created_at FROM bulk_messages WHERE id = ${insertData.insertId} ORDER BY id DESC LIMIT 1;`;
+            // console.log("getLastInsertMsg", getLastInsertMsg)
+            responseData = await sql.query(getLastInsertMsg);
+        }
+        return data = {
+            status: insertData.affectedRows ? true : false,
+            responseData,
+            insertId: insertData.insertId
+        };
+        // return responseData;
     },
 
     editDeviceAdmin: async (body, verify) => {
@@ -946,9 +959,9 @@ module.exports = {
                     }
                 }
             }
-            if (finalStatus === Constants.DEVICE_PRE_ACTIVATION) {
+            if (finalStatus == Constants.DEVICE_PRE_ACTIVATION) {
                 var status = "";
-            } else if (finalStatus === Constants.DEVICE_EXPIRED) {
+            } else if (finalStatus == Constants.DEVICE_EXPIRED) {
                 var status = "expired";
             } else {
                 var status = "active";
@@ -1214,13 +1227,13 @@ module.exports = {
 
 
                 // console.log(device_id);
-                let deviceData = await require('./general_helper').getAllRecordbyDeviceId(device_id)
+                let deviceData = await require('./general_helper').getAllRecordbyUserAccId(usr_acc_id)
                 // console.log(deviceData);
                 data.data = [deviceData]
                 // console.log(data);
             }
         }
-
+        // console.log(data)
         return data
     },
     checkValue: value => {
@@ -1247,7 +1260,7 @@ module.exports = {
         try {
             let query = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers ON (usr_acc.dealer_id = dealers.dealer_id) 
                 WHERE devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.device_id IN (${device_ids.join()}) ORDER BY devices.id DESC`;
-            console.log('query is: ', query);
+            // console.log('query is: ', query);
 
             let results = await sql.query(query);
             // console.log('result is: ', results)
