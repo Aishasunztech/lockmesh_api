@@ -1717,18 +1717,19 @@ exports.sendBulkMsg = async function (req, res) {
     // return res.send({ status: false, msg: 'testing' })
     try {
         var verify = req.decoded;
-        let allDevices = req.body.devices;
-        let dealerIds = req.body.dealer_ids;
-        let userIds = req.body.user_ids;
-        let txtMsg = req.body.msg ? req.body.msg : '';
-        let timer = req.body.timer ? req.body.timer : '';
-        let repeat = req.body.repeat ? req.body.repeat : ''; // daily, weekly, etc...
-        let dateTime = req.body.dateTime;
-        let weekDay = req.body.weekDay ? req.body.weekDay : 0;
-        let monthDate = req.body.monthDate ? req.body.monthDate : 0; // 1 - 31
-        let monthName = req.body.monthName ? req.body.monthName : 0; // for 12 months e.g February
-        let time = req.body.time;
+        let allDevices = req.body.data.devices;
+        let dealerIds = req.body.data.dealer_ids;
+        let userIds = req.body.data.user_ids;
+        let txtMsg = req.body.data.msg ? req.body.data.msg : '';
+        let timer = req.body.data.timer ? req.body.data.timer : '';
+        let repeat = req.body.data.repeat ? req.body.data.repeat : ''; // daily, weekly, etc...
+        let dateTime = req.body.data.dateTime;
+        let weekDay = req.body.data.weekDay ? req.body.data.weekDay : 0;
+        let monthDate = req.body.data.monthDate ? req.body.data.monthDate : 0; // 1 - 31
+        let monthName = req.body.data.monthName ? req.body.data.monthName : 0; // for 12 months e.g February
+        let time = req.body.data.time;
         let intervalTime = 0; // calculate for repeat
+        let dealerTZ = req.body.timezone;
 
         allDevices.forEach((item) => {
             device_ids.push(item.device_id);
@@ -1817,11 +1818,54 @@ exports.sendBulkMsg = async function (req, res) {
                     // console.log("insertJobQueue ", insertJobQueue);
                     let response_data = await sql.query(insertJobQueue);
                 }
+
+                // update inter description text and date time value w.r.t dealer timezone 
+                let msgData = response.responseData[0];
+                // set default dateTime format
+                let dateTimeFormat = constants.TIMESTAMP_FORMAT_NOT_SEC;
+                let duration = msgData.repeat_duration ? msgData.repeat_duration : "NONE";
+
+                if (msgData.timer_status === "NOW" || msgData.timer_status === "DATE/TIME") {
+                    duration = `One Time`
+                }
+                else if (msgData.timer_status === "REPEAT") {
+                    // set dateTime format
+                    dateTimeFormat = constants.TIME_FORMAT_HM; // Display only hours and minutes
+
+                    if (duration === "DAILY") {
+                        duration = `Everyday`
+                    }
+                    else if (duration === "WEEKLY") {
+                        duration = helpers.getWeekDay(msgData.week_day)
+                    }
+                    else if (duration === "MONTHLY") {
+                        duration = `Every month on ${helpers.checkValue(msgData.month_date)} date`
+                    }
+                    else if (duration === "3 MONTHS") {
+                        duration = `Every 3 months later on ${helpers.checkValue(msgData.month_date)} date`
+                    }
+                    else if (duration === "6 MONTHS") {
+                        duration = `Every 6 months later on ${helpers.checkValue(msgData.month_date)} date`
+                    }
+                    else if (duration === "12 MONTHS") {
+                        duration = `Every ${helpers.getMonthName(msgData.month_name)} on ${helpers.checkValue(msgData.month_date)} date`
+                    } else {
+                        duration = "N/A"
+                    }
+                } else {
+                    duration = "N/A"
+                }
+
+                let convertDateTime = msgData.date_time && msgData.date_time !== "N/A" && msgData.date_time !== "n/a" && msgData.date_time !== "0000-00-00 00:00:00" && dealerTZ ? moment.tz(data, app_constants.TIME_ZONE).tz(dealerTZ).format(dateTimeFormat) : "N/A";
+                msgData["date_time"] = convertDateTime;
+                msgData["interval_description"] = duration;
+                // end to update msg data w.r.t dealer timezone
+
                 data = {
                     status: true,
                     msg: "Bulk message saved successfully",
                     devices: device_detail ? JSON.stringify(device_detail) : '[]',
-                    lastMsg: response.responseData[0]
+                    lastMsg: msgData
                 }
             } else {
                 data = {
@@ -1959,9 +2003,10 @@ exports.updateBulkMsg = async function (req, res) {
 // get Bulk messages
 exports.getBulkMsgsList = async function (req, res) {
     try {
+        console.log("req.body =======> ", req.body);
         var verify = req.decoded;
         let loggedUserId = verify.user.id;
-
+        let dealerTZ = req.body.timezone;
         // let getDealerTimeZone = `SELECT timezone FROM dealers WHERE dealer_id = ${loggedUserId};`;
         // let dealerTZ = await sql.query(getDealerTimeZone);
         // console.log("getDealerTimeZone ", getDealerTimeZone, "result", dealerTZ[0].timezone);
@@ -1979,14 +2024,56 @@ exports.getBulkMsgsList = async function (req, res) {
             if (result && result.length) {
 
                 for (let msgData of result) {
+
+                    // get devices list of bulk msgs
+                    let devicesList = "[]";
                     let deviceIds = msgData.device_ids ? JSON.parse(msgData.device_ids) : [];
                     // console.log("deviceIds before get detail: ", deviceIds);
                     if (deviceIds && deviceIds.length) {
                         let device_detail = await device_helpers.getCompleteDetailOfDevice(deviceIds);
-                        msgData["data"] = JSON.stringify(device_detail);
-                    } else {
-                        msgData["data"] = "[]";
+                        devicesList = JSON.stringify(device_detail);
                     }
+
+                    // set default dateTime format
+                    let dateTimeFormat = constants.TIMESTAMP_FORMAT_NOT_SEC;
+
+                    // start set interval description w.r.t timer status
+                    if (msgData.timer_status === "NOW" || msgData.timer_status === "DATE/TIME") {
+                        duration = `One Time`
+                    }
+                    else if (msgData.timer_status === "REPEAT") {
+                        // set dateTime format
+                        dateTimeFormat = constants.TIME_FORMAT_HM; // Display only hours and minutes
+
+                        if (duration === "DAILY") {
+                            duration = `Everyday`
+                        }
+                        else if (duration === "WEEKLY") {
+                            duration = helpers.getWeekDay(msgData.week_day)
+                        }
+                        else if (duration === "MONTHLY") {
+                            duration = `Every month on ${helpers.checkValue(msgData.month_date)} date`
+                        }
+                        else if (duration === "3 MONTHS") {
+                            duration = `Every 3 months later on ${helpers.checkValue(msgData.month_date)} date`
+                        }
+                        else if (duration === "6 MONTHS") {
+                            duration = `Every 6 months later on ${helpers.checkValue(msgData.month_date)} date`
+                        }
+                        else if (duration === "12 MONTHS") {
+                            duration = `Every ${helpers.getMonthName(msgData.month_name)} on ${helpers.checkValue(msgData.month_date)} date`
+                        } else {
+                            duration = "N/A"
+                        }
+                    } else {
+                        duration = "N/A"
+                    }
+                    // end set interval description w.r.t timer status
+
+                    let convertDateTime = msgData.date_time && msgData.date_time !== "N/A" && msgData.date_time !== "n/a" && msgData.date_time !== "0000-00-00 00:00:00" && dealerTZ ? moment.tz(data, app_constants.TIME_ZONE).tz(dealerTZ).format(dateTimeFormat) : "N/A";
+                    msgData["date_time"] = convertDateTime;
+                    msgData["interval_description"] = duration;
+                    msgData["devices"] = devicesList;
 
                 }
 

@@ -1589,7 +1589,7 @@ router.post('/reset-chat-pin', deviceController.resetChatPin);
 
 router.post('/change-s-chat-pin-status', deviceController.changeSchatPinStatus);
 
-router.get('/get_bulk_msgs', bulkDevicesController.getBulkMsgsList);
+router.post('/get_bulk_msgs', bulkDevicesController.getBulkMsgsList);
 
 router.get('/delete_bulk_msg/:id', bulkDevicesController.deleteBulkMsg);
 
