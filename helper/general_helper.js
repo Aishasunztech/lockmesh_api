@@ -2106,7 +2106,7 @@ module.exports = {
 			}
 		}
 		let selectDealerQ = `SELECT dealer_id, dealer_type, permission_by FROM dealer_permissions WHERE permission_id= ${permission_id} AND permission_type ='${permission_type}' AND (permission_by=${loggedUserId} ${condition})`; // dealer_id = ${loggedUserId} OR 
-		console.log("selectDealerQ ", selectDealerQ)
+		// console.log("selectDealerQ ", selectDealerQ)
 		let results = await sql.query(selectDealerQ);
 
 		// console.log("permittedDealers results:: ", results);

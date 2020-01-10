@@ -47,8 +47,8 @@ app.set("port", port);
 // } else {
 
 	// var server = https.createServer({ 
-	// 	// key: fs.readFileSync('privkey.pem'),
-	// 	// cert: fs.readFileSync('fullchain.pem') 
+	// 	// key: fs.readFileSync('privateKey.pem'),
+	// 	// cert: fs.readFileSync('fullChain.pem') 
 	//  },app);
 // }
 
