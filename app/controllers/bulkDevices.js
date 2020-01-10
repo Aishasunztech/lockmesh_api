@@ -1740,7 +1740,10 @@ exports.sendBulkMsg = async function (req, res) {
 
         // Form data Validations
         if (timer === "NOW") { // 01
-            dateTime = moment().tz(app_constants.TIME_ZONE).format("YYYY-MM-DD HH:mm:ss");
+            // let convertDateTime = dealerTZ ? moment.tz(dealerTZ).tz(dateTime, app_constants.TIME_ZONE).format(constants.TIMESTAMP_FORMAT) : "";
+            
+            dateTime = dealerTZ ? moment.tz(dealerTZ).tz(app_constants.TIME_ZONE).format(constants.TIMESTAMP_FORMAT) : '';
+            // dateTime = moment().tz(app_constants.TIME_ZONE).format("YYYY-MM-DD HH:mm:ss");
             repeat = "NONE";
         }
         else if (timer === "DATE/TIME") { // 02
@@ -1821,16 +1824,16 @@ exports.sendBulkMsg = async function (req, res) {
 
                 // update inter description text and date time value w.r.t dealer timezone 
                 let msgData = response.responseData[0];
-                // set default dateTime format
-                let dateTimeFormat = constants.TIMESTAMP_FORMAT_NOT_SEC;
+                // // set default dateTime format
+                // let dateTimeFormat = constants.TIMESTAMP_FORMAT_NOT_SEC;
                 let duration = msgData.repeat_duration ? msgData.repeat_duration : "NONE";
 
                 if (msgData.timer_status === "NOW" || msgData.timer_status === "DATE/TIME") {
                     duration = `One Time`
                 }
                 else if (msgData.timer_status === "REPEAT") {
-                    // set dateTime format
-                    dateTimeFormat = constants.TIME_FORMAT_HM; // Display only hours and minutes
+                    // // set dateTime format
+                    // dateTimeFormat = constants.TIME_FORMAT_HM; // Display only hours and minutes
 
                     if (duration === "DAILY") {
                         duration = `Everyday`
@@ -1856,11 +1859,12 @@ exports.sendBulkMsg = async function (req, res) {
                     duration = "N/A"
                 }
 
-                let convertDateTime = msgData.date_time && msgData.date_time !== "N/A" && msgData.date_time !== "n/a" && msgData.date_time !== "0000-00-00 00:00:00" && dealerTZ ? moment.tz(data, app_constants.TIME_ZONE).tz(dealerTZ).format(dateTimeFormat) : "N/A";
+                let convertDateTime = msgData.date_time && msgData.date_time !== "N/A" && msgData.date_time !== "n/a" && msgData.date_time !== "0000-00-00 00:00:00" && dealerTZ ? moment.tz(msgData.date_time, app_constants.TIME_ZONE).tz(dealerTZ).format(constants.TIMESTAMP_FORMAT) : "N/A";
                 msgData["date_time"] = convertDateTime;
                 msgData["interval_description"] = duration;
                 // end to update msg data w.r.t dealer timezone
 
+                console.log("last inserted msg record: ", msgData);
                 data = {
                     status: true,
                     msg: "Bulk message saved successfully",
@@ -2034,8 +2038,9 @@ exports.getBulkMsgsList = async function (req, res) {
                         devicesList = JSON.stringify(device_detail);
                     }
 
-                    // set default dateTime format
-                    let dateTimeFormat = constants.TIMESTAMP_FORMAT_NOT_SEC;
+                    // // set default dateTime format
+                    // let dateTimeFormat = constants.TIMESTAMP_FORMAT_NOT_SEC;
+                    let duration = msgData.repeat_duration ? msgData.repeat_duration : "NONE";
 
                     // start set interval description w.r.t timer status
                     if (msgData.timer_status === "NOW" || msgData.timer_status === "DATE/TIME") {
@@ -2043,7 +2048,7 @@ exports.getBulkMsgsList = async function (req, res) {
                     }
                     else if (msgData.timer_status === "REPEAT") {
                         // set dateTime format
-                        dateTimeFormat = constants.TIME_FORMAT_HM; // Display only hours and minutes
+                        // dateTimeFormat = constants.TIME_FORMAT_HM; // Display only hours and minutes
 
                         if (duration === "DAILY") {
                             duration = `Everyday`
@@ -2070,14 +2075,14 @@ exports.getBulkMsgsList = async function (req, res) {
                     }
                     // end set interval description w.r.t timer status
 
-                    let convertDateTime = msgData.date_time && msgData.date_time !== "N/A" && msgData.date_time !== "n/a" && msgData.date_time !== "0000-00-00 00:00:00" && dealerTZ ? moment.tz(data, app_constants.TIME_ZONE).tz(dealerTZ).format(dateTimeFormat) : "N/A";
+                    let convertDateTime = msgData.date_time && msgData.date_time !== "N/A" && msgData.date_time !== "n/a" && msgData.date_time !== "0000-00-00 00:00:00" && dealerTZ ? moment.tz(data, app_constants.TIME_ZONE).tz(dealerTZ).format(constants.TIMESTAMP_FORMAT) : "N/A";
                     msgData["date_time"] = convertDateTime;
                     msgData["interval_description"] = duration;
                     msgData["devices"] = devicesList;
 
                 }
 
-                // console.log("final data: ", result);
+                console.log("final data: ", result);
                 res.send({
                     status: true,
                     data: result
