@@ -1714,7 +1714,6 @@ exports.sendBulkMsg = async function (req, res) {
     let device_ids = [];
     let user_device_ids = [];
 
-    // return res.send({ status: false, msg: 'testing' })
     try {
         var verify = req.decoded;
         let allDevices = req.body.data.devices;
@@ -1740,10 +1739,7 @@ exports.sendBulkMsg = async function (req, res) {
 
         // Form data Validations
         if (timer === "NOW") { // 01
-            // let convertDateTime = dealerTZ ? moment.tz(dealerTZ).tz(dateTime, app_constants.TIME_ZONE).format(constants.TIMESTAMP_FORMAT) : "";
-            
             dateTime = dealerTZ ? moment.tz(dealerTZ).tz(app_constants.TIME_ZONE).format(constants.TIMESTAMP_FORMAT) : '';
-            // dateTime = moment().tz(app_constants.TIME_ZONE).format("YYYY-MM-DD HH:mm:ss");
             repeat = "NONE";
         }
         else if (timer === "DATE/TIME") { // 02
@@ -1784,17 +1780,6 @@ exports.sendBulkMsg = async function (req, res) {
         if (verify && allDevices && allDevices.length && txtMsg && valid_conditions) {
             let loggedUserId = verify.user.id;
 
-            // let getDealerTimeZone = `SELECT timezone FROM dealers WHERE dealer_id = ${loggedUserId};`;
-            // let dealerTZ = await sql.query(getDealerTimeZone);
-            // console.log("getDealerTimeZone ", getDealerTimeZone, "result", dealerTZ[0].timezone);
-
-            // let timeZone = moment.tz.guess(); // 2019-12-31 14:23:42 // "02:00"
-
-            // if (time) {
-            //     dateTime = moment().tz(dealerTZ[0].timezone).set(time, 'HH:mm').format('YYYY-MM-DD HH:mm:ss');
-            // }
-            // console.log("convert time to dateTime:: ", dateTime);
-
             let dataObj = {
                 action_by: loggedUserId,
                 device_ids: user_device_ids,
@@ -1822,19 +1807,14 @@ exports.sendBulkMsg = async function (req, res) {
                     let response_data = await sql.query(insertJobQueue);
                 }
 
-                // update inter description text and date time value w.r.t dealer timezone 
+                //************************** update inter description text and date time value w.r.t dealer timezone  *************/ 
                 let msgData = response.responseData[0];
-                // // set default dateTime format
-                // let dateTimeFormat = constants.TIMESTAMP_FORMAT_NOT_SEC;
                 let duration = msgData.repeat_duration ? msgData.repeat_duration : "NONE";
 
                 if (msgData.timer_status === "NOW" || msgData.timer_status === "DATE/TIME") {
                     duration = `One Time`
                 }
                 else if (msgData.timer_status === "REPEAT") {
-                    // // set dateTime format
-                    // dateTimeFormat = constants.TIME_FORMAT_HM; // Display only hours and minutes
-
                     if (duration === "DAILY") {
                         duration = `Everyday`
                     }
@@ -1864,7 +1844,7 @@ exports.sendBulkMsg = async function (req, res) {
                 msgData["interval_description"] = duration;
                 // end to update msg data w.r.t dealer timezone
 
-                console.log("last inserted msg record: ", msgData);
+                // console.log("last inserted msg record: ", msgData);
                 data = {
                     status: true,
                     msg: "Bulk message saved successfully",
@@ -1900,12 +1880,8 @@ exports.sendBulkMsg = async function (req, res) {
 // Update Messages
 exports.updateBulkMsg = async function (req, res) {
     console.log("req body updateBulkMsg ==> ", req.body);
-    // return res.send({ status: true, msg: 'testing' })
     try {
         var verify = req.decoded;
-        // let allDevices = req.body.devices;
-        // let dealerIds = req.body.dealer_ids;
-        // let userIds = req.body.user_ids;
         let updateId = req.body.id;
         let txtMsg = req.body.msg ? req.body.msg : '';
         let timer = req.body.timer_status ? req.body.timer_status : '';
@@ -1921,7 +1897,6 @@ exports.updateBulkMsg = async function (req, res) {
 
         // Form data Validations
         if (timer === "NOW") { // 01
-            // dateTime = moment().tz(app_constants.TIME_ZONE).format("YYYY-MM-DD HH:mm:ss");
             repeat = "NONE";
         }
         else if (timer === "DATE/TIME") { // 02
@@ -2011,14 +1986,7 @@ exports.getBulkMsgsList = async function (req, res) {
         var verify = req.decoded;
         let loggedUserId = verify.user.id;
         let dealerTZ = req.body.timezone;
-        // let getDealerTimeZone = `SELECT timezone FROM dealers WHERE dealer_id = ${loggedUserId};`;
-        // let dealerTZ = await sql.query(getDealerTimeZone);
-        // console.log("getDealerTimeZone ", getDealerTimeZone, "result", dealerTZ[0].timezone);
-
-        // // let timeZone = moment.tz.guess(); // 2019-12-31 14:23:42 // "02:00"
-        // console.log("convert time to dateTime:: ", "timeZone", moment().format('YYYY-MM-DD HH:mm:ss'), dealerTZ[0].timezone, moment().tz(dealerTZ[0].timezone).set({ h: 02, m: 11 }).format('YYYY-MM-DD HH:mm:ss'));
-
-        // console.log('at getBulkMsgsList:')
+      
         if (verify) {
 
             var selectQuery = `SELECT id, device_ids, repeat_duration, timer_status, msg, date_time, week_day, month_date, month_name, time, created_at FROM bulk_messages WHERE action_by = '${loggedUserId}' AND delete_status = 0;`;
@@ -2038,8 +2006,6 @@ exports.getBulkMsgsList = async function (req, res) {
                         devicesList = JSON.stringify(device_detail);
                     }
 
-                    // // set default dateTime format
-                    // let dateTimeFormat = constants.TIMESTAMP_FORMAT_NOT_SEC;
                     let duration = msgData.repeat_duration ? msgData.repeat_duration : "NONE";
 
                     // start set interval description w.r.t timer status
@@ -2047,9 +2013,6 @@ exports.getBulkMsgsList = async function (req, res) {
                         duration = `One Time`
                     }
                     else if (msgData.timer_status === "REPEAT") {
-                        // set dateTime format
-                        // dateTimeFormat = constants.TIME_FORMAT_HM; // Display only hours and minutes
-
                         if (duration === "DAILY") {
                             duration = `Everyday`
                         }
@@ -2075,14 +2038,13 @@ exports.getBulkMsgsList = async function (req, res) {
                     }
                     // end set interval description w.r.t timer status
 
-                    let convertDateTime = msgData.date_time && msgData.date_time !== "N/A" && msgData.date_time !== "n/a" && msgData.date_time !== "0000-00-00 00:00:00" && dealerTZ ? moment.tz(data, app_constants.TIME_ZONE).tz(dealerTZ).format(constants.TIMESTAMP_FORMAT) : "N/A";
+                    let convertDateTime = msgData.date_time && msgData.date_time !== "N/A" && msgData.date_time !== "n/a" && msgData.date_time !== "0000-00-00 00:00:00" && dealerTZ ? moment.tz(msgData.date_time, app_constants.TIME_ZONE).tz(dealerTZ).format(constants.TIMESTAMP_FORMAT) : "N/A";
                     msgData["date_time"] = convertDateTime;
                     msgData["interval_description"] = duration;
                     msgData["devices"] = devicesList;
-
                 }
 
-                console.log("final data: ", result);
+                // console.log("final data: ", result);
                 res.send({
                     status: true,
                     data: result
@@ -2112,16 +2074,13 @@ exports.deleteBulkMsg = async function (req, res) {
 
             var selectQuery = `UPDATE bulk_messages SET delete_status = 1 WHERE id=${msgId};`;
             var result = await sql.query(selectQuery);
-            console.log("result ", result)
+            // console.log("result ", result)
 
             if (result && result.affectedRows) {
 
                 let deleteJobQueue = `DELETE FROM task_schedules WHERE task_id = ${msgId};`;
-                console.log("delete api deleteJobQueue ", deleteJobQueue);
+                // console.log("delete api deleteJobQueue ", deleteJobQueue);
                 sql.query(deleteJobQueue);
-                // let updateJobQueue = `UPDATE task_schedules SET delete_status = 1, sorting_order = 0 WHERE task_id = ${msgId} AND action_by = ${loggedUserId};`;
-                // await sql.query(updateJobQueue);
-
                 res.send({
                     status: true,
                     msg: "Message Delete Successfully"
