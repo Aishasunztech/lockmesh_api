@@ -1,4 +1,5 @@
-const HOST_NAME = process.env.HOST_NAME;
+let HOST_NAME = process.env.HOST_NAME;
+let APP_ENV = process.env.APP_ENV;
 
 // App Info
 let APP_TITLE = "LockMesh Dev";
@@ -167,13 +168,19 @@ if (HOST_NAME) {
 		default:
 			break;
 	}
+} else {
+	HOST_NAME = 'localhost',
+	APP_ENV = 'local'
 }
+
 
 module.exports.SUPERADMIN_URL = SUPERADMIN_URL
 module.exports.SUPERADMIN_URL_API = SUPERADMIN_URL_API
 module.exports = {
 	// APP INFO Constants
+	HOST_NAME: HOST_NAME,
 	APP_TITLE: APP_TITLE,
+	APP_ENV: APP_ENV,
 	TIME_ZONE: TIME_ZONE,
 	HOST: URL,
 	PORT: "",

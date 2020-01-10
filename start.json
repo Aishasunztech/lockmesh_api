@@ -7,30 +7,37 @@
             "__instances" : "max",
             "__exec_mode" : "cluster",
             "env": {
-                "HOST_NAME": "localhost"
+                "HOST_NAME": "localhost",
+                "APP_ENV": "local"
             },
             "env_dev_lockmesh": {
-                "HOST_NAME": "LockMesh Dev"
+                "HOST_NAME": "LockMesh Dev",
+                "APP_ENV": "development"
+
             },
             "env_predev": {
-                "HOST_NAME": "PreDev"
+                "HOST_NAME": "PreDev",
+                "APP_ENV": "development"
             },
             "env_loadtester": {
-                "HOST_NAME": "LoadTester"
+                "HOST_NAME": "LoadTester",
+                "APP_ENV": "development"
             },
-
-            
             "env_lockmesh": {
-                "HOST_NAME": "LockMesh"
+                "HOST_NAME": "LockMesh",
+                "APP_ENV": "production"
             },
             "env_titanlocker": {
-                "HOST_NAME": "TitanLocker"
+                "HOST_NAME": "TitanLocker",
+                "APP_ENV": "production"
             },
             "env_cpc": {
-                "HOST_NAME": "CryptPhoneC"
+                "HOST_NAME": "CryptPhoneC",
+                "APP_ENV": "production"
             },
             "env_cpk": {
-                "HOST_NAME": "CryptPhoneK"
+                "HOST_NAME": "CryptPhoneK",
+                "APP_ENV": "production"
             }
         }
     ]

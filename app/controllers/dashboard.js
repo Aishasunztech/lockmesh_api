@@ -208,9 +208,8 @@ exports.getDashboardData = async function (req, res) {
                 dashboardData.link_requests = link_requests[0].link_requests;
             }
         }
-
-
-        console.log('dashboard data', dashboardData)
+        
+        // console.log('dashboard data', dashboardData)
         res.send({
             status: true,
             msg: "Data found",
