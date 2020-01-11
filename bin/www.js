@@ -1,10 +1,14 @@
 // libraries
 require("dotenv").config();
 require("stackify-node-apm");
+var fs = require( 'fs' );
 var momentTz = require("moment-timezone");
 var moment = require('moment');
 var debug = require("debug")("webportalbackend:server");
+
 var http = require("http");
+var https = require('https');
+
 let socket = require('socket.io');
 var datetime = require("node-datetime");
 
@@ -23,7 +27,7 @@ const constants = require('../config/constants');
 // => Set timezone for moment Library
 momentTz.tz.setDefault(constants.TIME_ZONE);
 let d = moment().format('YYYY-MM-DD H:m:s');
-console.log("Moment Date Time:",d)
+console.log("Moment Date Time:", d)
 
 // => set timezone for dateTime Library
 var today_date = datetime.create();
@@ -32,19 +36,31 @@ var today_date = datetime.create();
 
 // => set timezone for database
 
-var port = normalizePort(process.env.PORT || "3000");
-app.set("port", port);
 /**
  * Create HTTP server.
  */
-var server = http.createServer(app);
+var port = normalizePort(process.env.PORT || "3000");
+app.set("port", port);
+
+// if(constants.APP_ENV === 'local'){
+	var server = http.createServer(app);
+// } else {
+
+	// var server = https.createServer({ 
+	// 	// key: fs.readFileSync('privateKey.pem'),
+	// 	// cert: fs.readFileSync('fullChain.pem') 
+	//  },app);
+// }
+
+
 // io.attach(server, {
 //     // pingInterval: 60000,
 //     // pingTimeout: 120000,
 //     // cookie: false
 // });
-let io= socket();
-io.set('origins', '*:*');
+let io = socket();
+// origin all commented
+// io.set('origins', '*:*');
 io.attach(server);
 socketRoutes.baseSocket(io);
 
