@@ -33,6 +33,14 @@ const { sendEmail } = require("../lib/email");
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
 
+
+    // helpers.updateSimStatus('8901260852293382529', 'deactivated')
+    // let attachment = {
+    //     fileName: "invoice-PI000045.pdf",
+    //     file: path.join(__dirname, "../uploads/invoice-PI000045.pdf")
+    // }
+    // let html = 'Pre-activation device created successfully. Invoice is attached below. <br>';
+    // sendEmail("Pre-Activation device creation.", html, 'hamza.dawood007@gmail.com', null, attachment)
     let d = moment().format('YYYY-MM-DD H:m:s');
     console.log("Date Time:", d)
 

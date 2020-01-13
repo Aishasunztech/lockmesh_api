@@ -447,8 +447,10 @@ module.exports = {
 			let servicesData = await device_helpers.getServicesData(user_acc_ids)
 			let servicesIds = servicesData.map(item => { return item.id })
 			let userAccServiceData = []
+			let dataPlans = []
 			if (servicesIds.length) {
 				userAccServiceData = await device_helpers.getUserAccServicesData(user_acc_ids, servicesIds.join())
+				dataPlans = await device_helpers.getDataPlans(servicesIds)
 			}
 			for (let device of results) {
 				device.finalStatus = device_helpers.checkStatus(device);
@@ -498,6 +500,11 @@ module.exports = {
 						}
 					})
 				}
+
+				let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
+				device.sim_id_data_plan = sim_id_data_plan[0]
+				let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
+				device.sim_id2_data_plan = sim_id2_data_plan[0]
 
 			}
 
@@ -636,8 +643,10 @@ module.exports = {
 			let servicesData = await device_helpers.getServicesData(results[0].id);
 			let servicesIds = servicesData.map(item => { return item.id })
 			let userAccServiceData = []
+			let dataPlans = []
 			if (servicesIds.length) {
 				userAccServiceData = await device_helpers.getUserAccServicesData(results[0].id, servicesIds.join())
+				dataPlans = await device_helpers.getDataPlans(servicesIds)
 			}
 
 			results[0].finalStatus = device_helpers.checkStatus(results[0]);
@@ -726,6 +735,13 @@ module.exports = {
 					}
 				})
 			}
+
+			let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
+			results[0].sim_id_data_plan = sim_id_data_plan[0]
+			
+			let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
+			results[0].sim_id2_data_plan = sim_id2_data_plan[0]
+
 			results[0].lastOnline = results[0].last_login ? results[0].last_login : "N/A"
 			// }
 			results[0].finalStatus = device_helpers.checkStatus(
@@ -1127,8 +1143,10 @@ module.exports = {
 			let servicesData = await device_helpers.getServicesData(user_acc_ids)
 			let servicesIds = servicesData.map(item => { return item.id })
 			let userAccServiceData = []
+			let dataPlans = []
 			if (servicesIds.length) {
 				userAccServiceData = await device_helpers.getUserAccServicesData(user_acc_ids, servicesIds.join())
+				dataPlans = await device_helpers.getDataPlans(servicesIds)
 			}
 			for (var i = 0; i < results.length; i++) {
 				results[i].finalStatus = device_helpers.checkStatus(results[i]);
@@ -1174,6 +1192,11 @@ module.exports = {
 						}
 					})
 				}
+
+				let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
+				results[i].sim_id_data_plan = sim_id_data_plan[0]
+				let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
+				results[i].sim_id2_data_plan = sim_id2_data_plan[0]
 			}
 			return results;
 		} else {
@@ -2354,5 +2377,28 @@ module.exports = {
 	updateDealerLastLogin: async function (dealerId) {
 		let updateLastLoginQ = `UPDATE dealers SET last_login = '${moment().format("YYYY/MM/DD HH:mm:ss")}' WHERE dealer_id=${dealerId}`;
 		await sql.query(updateLastLoginQ);
-	}
+	},
+	updateSimStatus: (sim_id, status) => {
+		app_constants.twilioClient.wireless.sims.list({ iccid: sim_id }).then(response => {
+			if (response && response.length) {
+				app_constants.twilioClient.wireless.sims(response[0].sid).update({ status: status }).then(response => {
+					// console.log(response);
+					if (response) {
+						if (status === 'active') {
+							sql.query(`UPDATE sim_ids SET activated = 1 WHERE sim_id = '${sim_id}' AND delete_status = '0'`)
+						}
+						else if (status === 'deactivated') {
+							sql.query(`UPDATE sim_ids SET activated = 0 WHERE sim_id = '${sim_id}' AND delete_status = '1'`)
+						}
+
+					}
+				}).catch(err => {
+					console.log(err);
+				})
+			}
+		}).catch(err => {
+			console.log(err);
+		})
+
+	},
 }

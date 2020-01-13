@@ -1601,4 +1601,8 @@ router.get('/generate-random-username', ServicesController.generateRandomUsernam
 
 router.post('/check-unique-pgp', ServicesController.checkUniquePgp);
 
+router.post('/validate_sim_id', ServicesController.validateSimId);
+
+router.put('/add-data-plans', ServicesController.addDataLimitsPlans);
+
 module.exports = router;
