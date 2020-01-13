@@ -746,6 +746,22 @@ exports.baseSocket = async function (instance, socket) {
                     //     device_id: device_id,
                     // });
                 }
+
+                if (!policyResult && !setting_res) {
+                    /**
+                     * @author Usman Hafeez
+                     * @description do not remove this code
+                     */
+                    socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
+                        device_id: device_id,
+                        status: false
+                    });
+                }
+            } else {
+                socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
+                    device_id: device_id,
+                    status: false
+                });
             }
 
             // ************** */ SIM MODULE
