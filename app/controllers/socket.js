@@ -601,14 +601,7 @@ exports.baseSocket = async function (instance, socket) {
                         // let historyUpdate = `UPDATE device_history SET status='completed_successfully' WHERE user_acc_id=${user_acc_id} AND (type='history' OR type = 'profile')`;
                         // await sql.query(historyUpdate);
                         socket_helpers.sendEmit(socket, setting_res.id, setting_res.app_list, '{}', setting_res.controls, setting_res.permissions, device_id);
-                        // socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
-                        //     device_id: device_id,
-                        //     app_list: (setting_res.app_list === undefined || setting_res.app_list === null || setting_res.app_list === '') ? '[]' : setting_res.app_list,
-                        //     passwords: '{}',
-                        //     settings: (setting_res.controls === undefined || setting_res.controls === null || setting_res.controls === '') ? '[]' : setting_res.controls,
-                        //     extension_list: (setting_res.permissions === undefined || setting_res.permissions === null || setting_res.permissions === '') ? '[]' : setting_res.permissions,
-                        //     status: true
-                        // });
+
                     } else {
                         let pwdObject = { "admin_password": null, "guest_password": null, "encrypted_password": null, "duress_password": null }
 
@@ -746,6 +739,28 @@ exports.baseSocket = async function (instance, socket) {
                     //     device_id: device_id,
                     // });
                 }
+
+                /**
+                 * @author Usman Hafeez
+                 * @description Do not remove this code. 
+                 */
+                if (!policyResult && !setting_res) {
+
+                    socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
+                        device_id: device_id,
+                        status: false
+                    });
+                }
+            } else {
+                
+                /**
+                 * @author Usman Hafeez
+                 * @description Do not remove this code. 
+                 */
+                socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
+                    device_id: device_id,
+                    status: false
+                });
             }
 
             // ************** */ ACK SEND MSG TO DEVICE
