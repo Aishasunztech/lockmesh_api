@@ -158,7 +158,7 @@ exports.getAllToAllDealers = async function (req, res) {
                 });
                 return;
             }
-            console.log(results)
+            // console.log(results)
             var data = [];
 
             for (var i = 0; i < results.length; i++) {

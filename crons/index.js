@@ -119,8 +119,23 @@ cron.schedule('0 0 0 * * *', async () => {
 
 /** send messages on devices **/
 cron.schedule('* * * * *', async () => { // '*/10 * * * * *' (after each 10 seconds)
+
+    //**************************** local testing  ******************/ 
+    // let job_id = Math.floor(Math.random() * 1000) + 1;
+    // console.log("send msg on socket ", job_id)
+    // socket_helpers.sendMsgToDevice(
+    //     sockets.baseIo,
+    //     "ELDB929541",
+    //     job_id,
+    //     "testing msg, blah blah blah...",
+    //     app_constants.TIME_ZONE
+    // );
+
+    //**************************** local testing  ******************/ 
+
+
     // Get current time
-    let currentTime = moment().tz(app_constants.TIME_ZONE).format("YYYY-MM-DD HH:mm");
+    let currentTime = moment().tz(app_constants.TIME_ZONE).format(constants.TIMESTAMP_FORMAT);
     var getMsgQueue = `SELECT * FROM task_schedules WHERE ((status = 'NEW' OR status = 'FAILED' OR status = 'IN-PROCESS' OR status = 'SUCCESS') AND next_schedule <= '${currentTime}');`;
     // console.log("getMsgQueue ", getMsgQueue);
     var results = await sql.query(getMsgQueue);

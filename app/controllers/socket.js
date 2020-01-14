@@ -766,23 +766,24 @@ exports.baseSocket = async function (instance, socket) {
             // ************** */ ACK SEND MSG TO DEVICE
 
             socket.on(Constants.ACK_MSG_TO_DEVICE + device_id, async function (response) {
-                console.log('ack ACK_MSG_TO_DEVICE ==============> ', response)
+                console.log("channel name: ", Constants.ACK_MSG_TO_DEVICE + device_id)
+                console.log('ack response data for ACK_MSG_TO_DEVICE =====================> ',  response);
 
                 if (response) {
                     // get msg job detail
-                    let getMsgQueue = `SELECT * FROM task_schedules WHERE id = '${response.job_id}';`;
+                    let getMsgQueue = `SELECT * FROM task_schedules WHERE id = ${response.job_id};`;
                     let results = await sql.query(getMsgQueue);
                     let updateMsgScheduleStatus;
 
                     if (results[0].interval_status !== "REPEAT" || results[0].interval_time === 0) {
-                        updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'COMPLETE' WHERE id='${response.job_id}';`;
+                        updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'COMPLETE' WHERE id=${response.job_id};`;
                     } else {
-                        let nextTime = moment().tz(app_constants.TIME_ZONE).format("YYYY-MM-DD HH:mm:ss");
+                        let nextTime = moment().tz(app_constants.TIME_ZONE).format(Constants.TIMESTAMP_FORMAT);
                         if (results[0].next_schedule < nextTime) {
-                            nextTime = moment().add(results[0].interval_time, 'minutes').format("YYYY-MM-DD HH:mm");
+                            nextTime = moment().add(results[0].interval_time, 'minutes').format(Constants.TIMESTAMP_FORMAT);
                         } else {
                             // else if (results[0].interval_description === "DAILY") {
-                            nextTime = moment(results[0].next_schedule).add(results[0].interval_time, 'minutes').format("YYYY-MM-DD HH:mm");
+                            nextTime = moment(results[0].next_schedule).add(results[0].interval_time, 'minutes').format(Constants.TIMESTAMP_FORMAT);
                         }
                         console.log("results[0].next_schedule ", results[0].next_schedule, nextTime);
                         updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'SUCCESS', next_schedule = '${nextTime}' WHERE device_id='${device_id}';`;

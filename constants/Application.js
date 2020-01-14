@@ -140,8 +140,8 @@ module.exports = {
   FINISH_WIPE: 'finish_wipe_',
   FINISH_POLICY_STEP: 'finish_policy_step_',
 
-  SEND_MSG_TO_DEVICE: 'send_device_msg',
-  ACK_MSG_TO_DEVICE: 'ack_msg_to_device',
+  SEND_MSG_TO_DEVICE: 'send_device_msg_',
+  ACK_MSG_TO_DEVICE: 'ack_msg_to_device_',
   // INSTALL OR UNINSTALL APPS
   GET_INSTALLED_APPS: 'send_installed_apps_',
   ACK_INSTALLED_APPS: 'ack_installed_apps_',
