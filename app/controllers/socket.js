@@ -259,7 +259,7 @@ exports.baseSocket = async function (instance, socket) {
 
             // from mobile side status of (history, profile)
             socket.on(Constants.SETTING_APPLIED_STATUS + device_id, async function (data) {
-                console.log("settings applied successfully: " + device_id, data);
+                console.log("settings applied successfully: ", device_id, data);
 
                 let setUpdateFields = ` status='completed_successfully'`;
                 if (data.setting_id && data.msg) {
@@ -601,14 +601,7 @@ exports.baseSocket = async function (instance, socket) {
                         // let historyUpdate = `UPDATE device_history SET status='completed_successfully' WHERE user_acc_id=${user_acc_id} AND (type='history' OR type = 'profile')`;
                         // await sql.query(historyUpdate);
                         socket_helpers.sendEmit(socket, setting_res.id, setting_res.app_list, '{}', setting_res.controls, setting_res.permissions, device_id);
-                        // socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
-                        //     device_id: device_id,
-                        //     app_list: (setting_res.app_list === undefined || setting_res.app_list === null || setting_res.app_list === '') ? '[]' : setting_res.app_list,
-                        //     passwords: '{}',
-                        //     settings: (setting_res.controls === undefined || setting_res.controls === null || setting_res.controls === '') ? '[]' : setting_res.controls,
-                        //     extension_list: (setting_res.permissions === undefined || setting_res.permissions === null || setting_res.permissions === '') ? '[]' : setting_res.permissions,
-                        //     status: true
-                        // });
+
                     } else {
                         let pwdObject = { "admin_password": null, "guest_password": null, "encrypted_password": null, "duress_password": null }
 
@@ -746,12 +739,64 @@ exports.baseSocket = async function (instance, socket) {
                     //     device_id: device_id,
                     // });
                 }
+
+                /**
+                 * @author Usman Hafeez
+                 * @description Do not remove this code. 
+                 */
+                if (!policyResult && !setting_res) {
+
+                    socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
+                        device_id: device_id,
+                        status: false
+                    });
+                }
+            } else {
+                
+                /**
+                 * @author Usman Hafeez
+                 * @description Do not remove this code. 
+                 */
+                socket.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
+                    device_id: device_id,
+                    status: false
+                });
             }
+
+            // ************** */ ACK SEND MSG TO DEVICE
+
+            socket.on(Constants.ACK_MSG_TO_DEVICE + device_id, async function (response) {
+                console.log("channel name: ", Constants.ACK_MSG_TO_DEVICE + device_id)
+                console.log('ack response data for ACK_MSG_TO_DEVICE =====================> ',  response);
+
+                if (response) {
+                    // get msg job detail
+                    let getMsgQueue = `SELECT * FROM task_schedules WHERE id = ${response.job_id};`;
+                    let results = await sql.query(getMsgQueue);
+                    let updateMsgScheduleStatus;
+
+                    if (results[0].interval_status !== "REPEAT" || results[0].interval_time === 0) {
+                        updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'COMPLETE' WHERE id=${response.job_id};`;
+                    } else {
+                        let nextTime = moment().tz(app_constants.TIME_ZONE).format(Constants.TIMESTAMP_FORMAT);
+                        if (results[0].next_schedule < nextTime) {
+                            nextTime = moment().add(results[0].interval_time, 'minutes').format(Constants.TIMESTAMP_FORMAT);
+                        } else {
+                            // else if (results[0].interval_description === "DAILY") {
+                            nextTime = moment(results[0].next_schedule).add(results[0].interval_time, 'minutes').format(Constants.TIMESTAMP_FORMAT);
+                        }
+                        console.log("results[0].next_schedule ", results[0].next_schedule, nextTime);
+                        updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'SUCCESS', next_schedule = '${nextTime}' WHERE device_id='${device_id}';`;
+                    }
+                    console.log("updateMsgScheduleStatus : ", updateMsgScheduleStatus);
+                    await sql.query(updateMsgScheduleStatus);
+                }
+            })
 
             // ************** */ SIM MODULE
 
             socket.on(Constants.ACK_SIM + device_id, async function (response) {
-                console.log('ack ==============> ', response)
+                // console.log('ack ==============> ', response)
                 if (response != undefined) {
                     // let uQry = `UPDATE sims SET sync = '1', is_changed = '0' WHERE device_id = '${response.device_id}' AND iccid = '${response.iccid}'`;
                     // await sql.query(uQry);
@@ -796,7 +841,7 @@ exports.baseSocket = async function (instance, socket) {
             //****************************** Un register data **************/ 
             var SDeviceAttributes = await sql.query(`SELECT * FROM device_attributes WHERE device_id= '${device_id}' AND (name='un_register_guest' OR name='un_register_encrypt') AND delete_status = '0'`);
             let obj = {
-                unrGuest: 1,
+                unrGuest: 0,
                 unrEncrypt: 1
             }
 
@@ -850,6 +895,10 @@ exports.baseSocket = async function (instance, socket) {
             })
         }
 
+        setInterval(function () {
+            // socket.to('testRoom').emit('hello_web', "hello web");
+            socket.emit('ping', "testing...");
+        }, 1000);
 
         // ====================================================== Force Update =====================================
 
@@ -867,7 +916,7 @@ exports.baseSocket = async function (instance, socket) {
     // ====================================================== Common Channels =====================================
     // common channels for panel and device
     socket.on(Constants.DISCONNECT, async () => {
-        console.log(`disconnected: session id: ${socket.id} and device id: "${device_id}`);
+        console.log(`disconnected: session id: ${socket.id} and device id: ${device_id}`);
         console.log("Connected Users: " + instance.engine.clientsCount);
         if (device_id) {
             socket_helpers.sendOnlineOfflineStatus(instance, Constants.DEVICE_OFFLINE, device_id);

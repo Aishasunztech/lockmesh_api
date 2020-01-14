@@ -3,7 +3,15 @@ using postman
 
 1: send request:
 
+For Local Server:
 path: http://localhost:3000/users/add-acl-module
+
+For DEV Server:
+https://devapi.lockmesh.com/users/add-acl-module
+
+For Live Server:
+https://api.lockmesh.com/users/add-acl-module
+
 method: POST
 
 Sample data

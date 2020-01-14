@@ -23,6 +23,63 @@ const device_helpers = require("./device_helpers");
 let usr_acc_query_text = Constants.usr_acc_query_text;
 
 module.exports = {
+
+	getWeekDay: async function (key) {
+
+		switch (key) {
+			case 1:
+				return "Every Monday";
+			case 2:
+				return "Every Tuesday";
+			case 3:
+				return "Every Wednesday";
+			case 4:
+				return "Every Thursday";
+			case 5:
+				return "Every Friday";
+			case 6:
+				return "Every Saturday";
+			case 7:
+				return "Every Sunday";
+	
+			default:
+				return "N/A";
+		}
+	},
+	
+	getMonthName: async function (key) {
+	
+		switch (key) {
+			case 1:
+				return "January";
+			case 2:
+				return "February";
+			case 3:
+				return "March";
+			case 4:
+				return "April";
+			case 5:
+				return "May";
+			case 6:
+				return "June";
+			case 7:
+				return "July";
+			case 8:
+				return "August";
+			case 9:
+				return "September";
+			case 10:
+				return "October";
+			case 11:
+				return "November";
+			case 12:
+				return "December";
+	
+			default:
+				return "N/A";
+		}
+	},
+
 	convertToLang: async function (lngWord, constant) {
 		if (lngWord !== undefined && lngWord !== "" && lngWord !== null) {
 			return lngWord;
@@ -55,7 +112,7 @@ module.exports = {
 		}
 	},
 	getUserType: async function (userId) {
-		let query1 =`SELECT d.type as type, roles.role AS role FROM dealers AS d JOIN user_roles AS roles ON (d.type = roles.id) WHERE d.dealer_id=${userId}`
+		let query1 = `SELECT d.type as type, roles.role AS role FROM dealers AS d JOIN user_roles AS roles ON (d.type = roles.id) WHERE d.dealer_id=${userId}`
 		// var query1 = "SELECT type FROM dealers where dealer_id =" + userId;
 
 		var user = await sql.query(query1);
@@ -63,8 +120,8 @@ module.exports = {
 			// var query2 = "SELECT * FROM user_roles where id =" + user[0].type;
 			// var role = await sql.query(query2);
 			// if (role.length) {
-				// return role[0].role;
-				return user[0].role;
+			// return role[0].role;
+			return user[0].role;
 			// } else {
 			// 	return false;
 			// }
@@ -139,17 +196,17 @@ module.exports = {
 
 		if (componentUri.includes("/connect-device/")) {
 			componentUri = "/connect-device/:deviceId";
-		} else if (componentUri.includes('/connect-dealer/')){
+		} else if (componentUri.includes('/connect-dealer/')) {
 			componentUri = '/connect-dealer'
 		}
 		console.log("componentUri:", componentUri);
 		// this query should be based on ComponentName, not on ComponentUri
 		let componentQ = `SELECT * FROM acl_modules WHERE uri LIKE '${componentUri}%'`
-		
+
 		let component = await sql.query(componentQ);
-		
+
 		if (component.length) {
-			
+
 			return component[0];
 		} else {
 			return false;
@@ -390,8 +447,10 @@ module.exports = {
 			let servicesData = await device_helpers.getServicesData(user_acc_ids)
 			let servicesIds = servicesData.map(item => { return item.id })
 			let userAccServiceData = []
+			let dataPlans = []
 			if (servicesIds.length) {
 				userAccServiceData = await device_helpers.getUserAccServicesData(user_acc_ids, servicesIds.join())
+				dataPlans = await device_helpers.getDataPlans(servicesIds)
 			}
 			for (let device of results) {
 				device.finalStatus = device_helpers.checkStatus(device);
@@ -441,6 +500,11 @@ module.exports = {
 						}
 					})
 				}
+
+				let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
+				device.sim_id_data_plan = sim_id_data_plan[0]
+				let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
+				device.sim_id2_data_plan = sim_id2_data_plan[0]
 
 			}
 
@@ -566,7 +630,7 @@ module.exports = {
 		}
 	},
 	getAllRecordbyDeviceId: async function (device_id) {
-		// console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.id = ' + device_id)
+		// console.log(device_id)
 		let results = await sql.query(
 			"select devices.*  ," +
 			usr_acc_query_text +
@@ -576,36 +640,16 @@ module.exports = {
 		);
 
 		if (results.length) {
-			// let pgp_emails = await device_helpers.getPgpEmails(results[0].id);
-			// let sim_ids = await device_helpers.getSimids(results[0].id);
-			// let chat_ids = await device_helpers.getChatids(results[0].id);
 			let servicesData = await device_helpers.getServicesData(results[0].id);
 			let servicesIds = servicesData.map(item => { return item.id })
 			let userAccServiceData = []
+			let dataPlans = []
 			if (servicesIds.length) {
 				userAccServiceData = await device_helpers.getUserAccServicesData(results[0].id, servicesIds.join())
+				dataPlans = await device_helpers.getDataPlans(servicesIds)
 			}
 
 			results[0].finalStatus = device_helpers.checkStatus(results[0]);
-			// if (pgp_emails[0] && pgp_emails[0].pgp_email) {
-			// 	results[0].pgp_email = pgp_emails[0].pgp_email
-			// } else {
-			// 	results[0].pgp_email = "N/A"
-			// }
-			// if (sim_ids && sim_ids.length) {
-			// 	results[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
-			// 	results[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
-			// }
-			// if (chat_ids[0] && chat_ids[0].chat_id) {
-			// 	results[0].chat_id = chat_ids[0].chat_id
-			// }
-			// else {
-			// 	results[0].chat_id = "N/A"
-
-			// }
-			// if (servicesData[0]) {
-			// 	results[0].services = servicesData[0]
-			// }
 			let services = servicesData;
 			let service_id = null
 			if (services && services.length) {
@@ -638,7 +682,78 @@ module.exports = {
 			}
 			return results[0];
 		} else {
-			return [];
+			return {};
+		}
+	},
+
+	getAllRecordbyUserAccId: async function (user_acc_id) {
+		// console.log(device_id)
+		let results = await sql.query(
+			"select devices.*  ," +
+			usr_acc_query_text +
+			', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.id = "' +
+			user_acc_id +
+			'"'
+		);
+
+		if (results.length) {
+			let servicesData = await device_helpers.getServicesData(results[0].id);
+			let servicesIds = servicesData.map(item => { return item.id })
+			let userAccServiceData = []
+			if (servicesIds.length) {
+				userAccServiceData = await device_helpers.getUserAccServicesData(results[0].id, servicesIds.join())
+			}
+
+			results[0].finalStatus = device_helpers.checkStatus(results[0]);
+			let services = servicesData;
+			let service_id = null
+			if (services && services.length) {
+				services.map((item) => {
+					if (item.status === 'extended') {
+						results[0].extended_services = item
+					} else {
+						results[0].services = item
+						service_id = item.id
+					}
+				})
+			}
+
+			let productsData = userAccServiceData.filter(item => item.user_acc_id === results[0].id && item.service_id === service_id);
+			if (productsData && productsData.length) {
+				productsData.map((item) => {
+					if (item.type === 'sim_id') {
+						results[0].sim_id = item.product_value
+					}
+					else if (item.type === 'sim_id2') {
+						results[0].sim_id2 = item.product_value
+					}
+					else if (item.type === 'pgp_email') {
+						results[0].pgp_email = item.product_value
+					}
+					else if (item.type === 'chat_id') {
+						results[0].chat_id = item.product_value
+					}
+				})
+			}
+
+			let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
+			results[0].sim_id_data_plan = sim_id_data_plan[0]
+			
+			let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
+			results[0].sim_id2_data_plan = sim_id2_data_plan[0]
+
+			results[0].lastOnline = results[0].last_login ? results[0].last_login : "N/A"
+			// }
+			results[0].finalStatus = device_helpers.checkStatus(
+				results[0]
+			);
+			results[0].validity = await device_helpers.checkRemainDays(
+				results[0].created_at,
+				results[0].validity
+			)
+			return results[0];
+		} else {
+			return {};
 		}
 	},
 
@@ -1028,8 +1143,10 @@ module.exports = {
 			let servicesData = await device_helpers.getServicesData(user_acc_ids)
 			let servicesIds = servicesData.map(item => { return item.id })
 			let userAccServiceData = []
+			let dataPlans = []
 			if (servicesIds.length) {
 				userAccServiceData = await device_helpers.getUserAccServicesData(user_acc_ids, servicesIds.join())
+				dataPlans = await device_helpers.getDataPlans(servicesIds)
 			}
 			for (var i = 0; i < results.length; i++) {
 				results[i].finalStatus = device_helpers.checkStatus(results[i]);
@@ -1075,6 +1192,11 @@ module.exports = {
 						}
 					})
 				}
+
+				let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
+				results[i].sim_id_data_plan = sim_id_data_plan[0]
+				let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
+				results[i].sim_id2_data_plan = sim_id2_data_plan[0]
 			}
 			return results;
 		} else {
@@ -2064,10 +2186,10 @@ module.exports = {
 			}
 		}
 		let selectDealerQ = `SELECT dealer_id, dealer_type, permission_by FROM dealer_permissions WHERE permission_id= ${permission_id} AND permission_type ='${permission_type}' AND (permission_by=${loggedUserId} ${condition})`; // dealer_id = ${loggedUserId} OR 
-		console.log("selectDealerQ ", selectDealerQ)
+		// console.log("selectDealerQ ", selectDealerQ)
 		let results = await sql.query(selectDealerQ);
 
-		console.log("permittedDealers results:: ", results);
+		// console.log("permittedDealers results:: ", results);
 
 		if (results.length > 0) {
 			for (let i = 0; i < results.length; i++) {
@@ -2087,7 +2209,7 @@ module.exports = {
 				}
 			}
 		}
-		console.log("finalDealers", finalDealers);
+		// console.log("finalDealers", finalDealers);
 
 
 		if (loggedUserType !== "admin") {
@@ -2214,7 +2336,7 @@ module.exports = {
 					break
 				}
 			}
-			let allDealers = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_id = ${dealerId}`);
+			let allDealers = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_id = ${dealerId} LIMIT 1`);
 			if (allDealers.length) {
 				let item = allDealers[0]
 				let getDate = moment().subtract(22, 'day').format('YYYY-MM-DD');
@@ -2225,15 +2347,58 @@ module.exports = {
 					let end = moment(getTransaction[0].created_at).format('YYYY-MM-DD');
 					let duration = now.diff(end, 'days');
 
-					if (duration > 21 && duration <= 60) {
-						await sql.query("UPDATE dealers set account_balance_status = 'restricted' WHERE dealer_id = " + item.dealer_id);
-					} else if (duration > 60) {
-						await sql.query("UPDATE dealers set account_balance_status = 'suspended' WHERE dealer_id = " + item.dealer_id);
+					/**
+					 * @author Usman Hafeez
+					 * @description added condition if restriction mode is settled by Admin then don't change any level 
+					 */
+					if (item.account_balance_status_by !== Constants.ADMIN || (item.account_balance_status_by == Constants.ADMIN && item.account_balance_status == 'active')) {
+
+						if (duration > 21 && duration <= 60) {
+							await sql.query("UPDATE dealers set account_balance_status = 'restricted' WHERE dealer_id = " + item.dealer_id);
+						} else if (duration > 60) {
+							await sql.query("UPDATE dealers set account_balance_status = 'suspended' WHERE dealer_id = " + item.dealer_id);
+						}
 					}
+
 				} else {
-					await sql.query("UPDATE dealers set account_balance_status = 'active' WHERE dealer_id = " + item.dealer_id);
+					/**
+					 * @author Usman Hafeez
+					 * @description added condition if restriction mode is settled by Admin then don't change any level 
+					 */
+
+					if (item.account_balance_status_by !== Constants.ADMIN) {
+
+						await sql.query("UPDATE dealers set account_balance_status = 'active' WHERE dealer_id = " + item.dealer_id);
+					}
 				}
 			}
 		}
-	}
+	},
+	updateDealerLastLogin: async function (dealerId) {
+		let updateLastLoginQ = `UPDATE dealers SET last_login = '${moment().format("YYYY/MM/DD HH:mm:ss")}' WHERE dealer_id=${dealerId}`;
+		await sql.query(updateLastLoginQ);
+	},
+	updateSimStatus: (sim_id, status) => {
+		app_constants.twilioClient.wireless.sims.list({ iccid: sim_id }).then(response => {
+			if (response && response.length) {
+				app_constants.twilioClient.wireless.sims(response[0].sid).update({ status: status }).then(response => {
+					// console.log(response);
+					if (response) {
+						if (status === 'active') {
+							sql.query(`UPDATE sim_ids SET activated = 1 WHERE sim_id = '${sim_id}' AND delete_status = '0'`)
+						}
+						else if (status === 'deactivated') {
+							sql.query(`UPDATE sim_ids SET activated = 0 WHERE sim_id = '${sim_id}' AND delete_status = '1'`)
+						}
+
+					}
+				}).catch(err => {
+					console.log(err);
+				})
+			}
+		}).catch(err => {
+			console.log(err);
+		})
+
+	},
 }

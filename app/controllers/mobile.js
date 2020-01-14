@@ -151,10 +151,7 @@ exports.login = async function (req, resp) {
                                     msg: 'Dealer Suspended, Contact Admin'
                                 }
                                 return resp.send(data);
-
                             } else {
-
-
                                 let status = 'active'
                                 // console.log("this is info ", { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address });
                                 let checkedDeviceId = await helpers.getDeviceId(serial_number, mac_address)
@@ -174,6 +171,21 @@ exports.login = async function (req, resp) {
 
                                 // var updateAccount = "UPDATE usr_acc set activation_status=1, type = '" + type + "', version = '" + version + "', status='" + status + "', expiry_date='" + expiry_date + "', start_date='" + start_date + "', device_status=1, unlink_status = 0 WHERE id = " + usrAcc[0].id;
                                 // await sql.query(updateAccount);
+
+                                let servicesData = await device_helpers.getServicesData(usrAcc[0].id)
+                                let userAccServiceData = []
+                                userAccServiceData = await device_helpers.getUserAccServicesData(usrAcc[0].id, servicesData[0].id)
+                                let productsData = userAccServiceData[0];
+                                if (productsData && productsData.length) {
+                                    productsData.map((item) => {
+                                        if (item.type === 'sim_id') {
+                                            helpers.updateSimStatus(item.product_value, 'active')
+                                        }
+                                        else if (item.type === 'sim_id2') {
+                                            helpers.updateSimStatus(item.product_value, 'active')
+                                        }
+                                    })
+                                }
 
                                 device_helpers.saveImeiHistory(checkedDeviceId, serial_number, mac_address, imei1, imei2)
                                 let device_id = await device_helpers.getDvcIDByDeviceID(usrAcc[0].device_id)
@@ -1758,7 +1770,7 @@ exports.SMAppListV3 = async function (req, res) {
                 status: true,
                 list: apps
             }
-        } 
+        }
         // else {
         //     data = {
         //         status: true,

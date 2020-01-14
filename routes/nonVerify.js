@@ -13,7 +13,7 @@ const { sql } = require('../config/database');
 // Controllers
 var backupController = require('../app/controllers/backup')
 var languageController = require('../app/controllers/language')
-
+const reportingController = require('../app/controllers/reports');
 // Model
 var Policy = require('../app/models/Policy');
 
@@ -32,6 +32,17 @@ const { sendEmail } = require("../lib/email");
 
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
+
+
+    // helpers.updateSimStatus('8901260852293382529', 'deactivated')
+    // let attachment = {
+    //     fileName: "invoice-PI000045.pdf",
+    //     file: path.join(__dirname, "../uploads/invoice-PI000045.pdf")
+    // }
+    // let html = 'Pre-activation device created successfully. Invoice is attached below. <br>';
+    // sendEmail("Pre-Activation device creation.", html, 'hamza.dawood007@gmail.com', null, attachment)
+    let d = moment().format('YYYY-MM-DD H:m:s');
+    console.log("Date Time:", d)
 
     let attachment = {
         fileName: "invoice-PI000045.pdf",
@@ -544,6 +555,35 @@ router.get("/getFile/:file", async function (req, res) {
 
 });
 
+
+router.get("/getFileWithFolder/:folder/:file", async function (req, res) {
+    // let verify = await verifyToken(req, res);
+    // if (verify.status) {
+    if (fs.existsSync(path.join(__dirname, "../uploads/" + req.params.folder + '/' + req.params.file))) {
+        let file = path.join(__dirname, "../uploads/" + req.params.folder + '/' + req.params.file);
+        let fileMimeType = mime.getType(file);
+        let filetypes = /jpeg|jpg|apk|png/;
+        // Do something
+        // if (filetypes.test(fileMimeType)) {
+        // res.set('Content-Type', fileMimeType); // mimeType eg. 'image/bmp'
+        res.sendFile(path.join(__dirname, "../uploads/" + req.params.folder + '/' + req.params.file));
+        // } else {
+        //     res.send({
+        //         "status": false,
+        //         "msg": await helpers.convertToLang(req.translation[MsgConstants.DEALER_ACTIV_SUCC], MsgConstants.DEALER_ACTIV_SUCC), // file not found"
+        //     })
+        // }
+    } else {
+        data = {
+            "status": false,
+            "msg": "file not found", //  await helpers.convertToLang(req.translation[MsgConstants.FILE_NOT_FOUND], MsgConstants.FILE_NOT_FOUND),
+        }
+        res.send(data)
+    }
+    // }
+
+});
+
 // router.get('/languages', languageController.getAll_Languages)
 
 
@@ -736,6 +776,69 @@ router.get('/add-existing-dealers-accounts', async function (req, res) {
     })
 })
 
+
+router.get('/create-services-for-existing-devices', async function (req, res) {
+    let query = "SELECT user_acc_id FROM services_data"
+    let package = [{ id: 0, pkg_features: { chat_id: false, sim_id: false, sim_id2: false, pgp_email: true, vpn: false }, pkg_price: 0, pkg_dealer_type: "admin", pkg_name: "temp", pkg_term: "1 month", retail_price: 0 }]
+    sql.query(query, function (err, result) {
+        if (err) {
+            console.log(err);
+            return res.send("QUERY ERROR")
+        }
+        let alreadyCreated = []
+        if (result && result.length) {
+            alreadyCreated = result.map(item => item.user_acc_id)
+        }
+
+        let where = ''
+        if (alreadyCreated.length) {
+            where = `AND id NOT IN (${alreadyCreated.join()})`
+        }
+        let devicesWithOutServices = `SELECT * FROM usr_acc WHERE unlink_status = 0 AND del_status = 0  ${where}`
+        sql.query(devicesWithOutServices, function (err, devices) {
+            if (err) {
+                console.log(err);
+                return res.send("QUERY ERROR")
+            }
+            if (devices && devices.length) {
+                let user_acc_ids = devices.map(item => item.id)
+                let pgp_email_query = `SELECT * FROM pgp_emails WHERE user_acc_id IN(${user_acc_ids.join()})`
+                sql.query(pgp_email_query, function (err, pgpData) {
+                    if (err) {
+                        console.log(err);
+                        return res.send("QUERY ERROR")
+                    }
+                    if (pgpData.length) {
+
+                        pgpData.map(item => {
+                            let device = devices.find(device => device.id == item.user_acc_id)
+                            let insertServiceQ = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages , total_credits, start_date, service_expiry_date , service_term , is_temp) VALUES (${item.user_acc_id},${device.dealer_id}, '[]','${JSON.stringify(package)}',0,'${device.start_date}',  '${device.expiry_date}' ,0 , 1 )`
+                            sql.query(insertServiceQ, function (err, insertedData) {
+                                if (err) {
+                                    console.log(err);
+                                } else if (insertedData && insertedData.insertId) {
+                                    let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id,product_value, type , start_date) VALUES(${item.user_acc_id} , ${insertedData.insertId} , ${item.id} , '${item.pgp_email}' , 'pgp_email' , '${device.start_date}')`
+                                    sql.query(insertAccService)
+                                }
+
+                            })
+                        })
+                        return res.send("ACCOUNTS ADDED SUCCESSFULLY")
+                    } else {
+                        return res.send("Pgp emails not found to create services")
+                    }
+                })
+            } else {
+                return res.send("Devices not found to create services")
+            }
+        })
+
+
+
+    })
+})
+
+router.post('/show-pdf-file', reportingController.showPdfFile);
 
 
 module.exports = router;
