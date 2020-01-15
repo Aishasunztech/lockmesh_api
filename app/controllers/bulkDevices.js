@@ -1848,19 +1848,19 @@ exports.sendBulkMsg = async function (req, res) {
                         duration = `Everyday`
                     }
                     else if (duration === "WEEKLY") {
-                        duration = helpers.getWeekDay(msgData.week_day)
+                        duration = await helpers.getWeekDay(msgData.week_day)
                     }
                     else if (duration === "MONTHLY") {
-                        duration = `Every month on ${helpers.checkValue(msgData.month_date)} date`
+                        duration = `Every month on ${await helpers.checkValue(msgData.month_date)} date`
                     }
                     else if (duration === "3 MONTHS") {
-                        duration = `Every 3 months later on ${helpers.checkValue(msgData.month_date)} date`
+                        duration = `Every 3 months later on ${await helpers.checkValue(msgData.month_date)} date`
                     }
                     else if (duration === "6 MONTHS") {
-                        duration = `Every 6 months later on ${helpers.checkValue(msgData.month_date)} date`
+                        duration = `Every 6 months later on ${await helpers.checkValue(msgData.month_date)} date`
                     }
                     else if (duration === "12 MONTHS") {
-                        duration = `Every ${helpers.getMonthName(msgData.month_name)} on ${helpers.checkValue(msgData.month_date)} date`
+                        duration = `Every ${await helpers.getMonthName(msgData.month_name)} on ${await helpers.checkValue(msgData.month_date)} date`
                     } else {
                         duration = "N/A"
                     }
@@ -2046,19 +2046,19 @@ exports.getBulkMsgsList = async function (req, res) {
                             duration = `Everyday`
                         }
                         else if (duration === "WEEKLY") {
-                            duration = helpers.getWeekDay(msgData.week_day)
+                            duration = await helpers.getWeekDay(msgData.week_day)
                         }
                         else if (duration === "MONTHLY") {
-                            duration = `Every month on ${helpers.checkValue(msgData.month_date)} date`
+                            duration = `Every month on ${await helpers.checkValue(msgData.month_date)} date`
                         }
                         else if (duration === "3 MONTHS") {
-                            duration = `Every 3 months later on ${helpers.checkValue(msgData.month_date)} date`
+                            duration = `Every 3 months later on ${await helpers.checkValue(msgData.month_date)} date`
                         }
                         else if (duration === "6 MONTHS") {
-                            duration = `Every 6 months later on ${helpers.checkValue(msgData.month_date)} date`
+                            duration = `Every 6 months later on ${await helpers.checkValue(msgData.month_date)} date`
                         }
                         else if (duration === "12 MONTHS") {
-                            duration = `Every ${helpers.getMonthName(msgData.month_name)} on ${helpers.checkValue(msgData.month_date)} date`
+                            duration = `Every ${await helpers.getMonthName(msgData.month_name)} on ${await helpers.checkValue(msgData.month_date)} date`
                         } else {
                             duration = "N/A"
                         }
@@ -2092,8 +2092,8 @@ exports.getBulkMsgsList = async function (req, res) {
 
 // delete Bulk message
 exports.deleteBulkMsg = async function (req, res) {
+    console.log("Api called: deleteBulkMsg");
     try {
-        console.log("req body deleteBulkMsg ==> ", req.body);
 
         var verify = req.decoded;
         let loggedUserId = verify.user.id;
