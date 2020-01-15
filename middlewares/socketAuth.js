@@ -77,6 +77,6 @@ module.exports = async (socket, next) => {
         // }
 
     } else {
-        return next(new Error('Unauthorized: token not provided'));
+        return next('Unauthorized: token not provided');
     }
 }
