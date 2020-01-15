@@ -234,9 +234,9 @@ exports.baseSocket = async function (instance, socket) {
 
                     // added condition if device is not synced run the query of sync
 
-                    if (!is_sync) {
-                        await device_helpers.deviceSynced(device_id);
-                    }
+                    await device_helpers.deviceSynced(device_id);
+                    // if (!is_sync) {
+                    // }
 
                     socket.emit("get_sync_status_" + device_id, {
                         device_id: device_id,
