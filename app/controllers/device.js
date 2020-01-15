@@ -4432,9 +4432,9 @@ exports.flagDevice = async function (req, res) {
                         }
 
                         let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
-                        results[0].sim_id_data_plan = sim_id_data_plan[0]
+                        resquery[0].sim_id_data_plan = sim_id_data_plan[0]
                         let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
-                        results[0].sim_id2_data_plan = sim_id2_data_plan[0]
+                        resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
                         // if (servicesData[0]) {
                         //     resquery[0].services = servicesData[0]
                         // }
