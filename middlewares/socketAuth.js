@@ -50,33 +50,33 @@ const verifySession = async (deviceId, sessionId, isWeb = false, dealerId = null
 module.exports = async (socket, next) => {
     let token = socket.handshake.query.token;
     
-    next();
-    // if (verifyToken(token)) {
+    if (verifyToken(token)) {
+        next();
 
-    //     // let session_id = socket.id;
+        // let session_id = socket.id;
 
-    //     // var device_id = null;
-    //     // var dealer_id = null;
+        // var device_id = null;
+        // var dealer_id = null;
 
-    //     // let isWeb = socket.handshake.query['isWeb'];
+        // let isWeb = socket.handshake.query['isWeb'];
 
-    //     // if (device_helpers.checkNotNull(isWeb)) {
-    //     //     isWeb = true;
-    //     //     // dealer_id = socket.handshake.query['dealer_id'];
+        // if (device_helpers.checkNotNull(isWeb)) {
+        //     isWeb = true;
+        //     // dealer_id = socket.handshake.query['dealer_id'];
 
-    //     // } else {
-    //     //     isWeb = false;
-    //     //     device_id = socket.handshake.query['device_id'];
-    //     // }
+        // } else {
+        //     isWeb = false;
+        //     device_id = socket.handshake.query['device_id'];
+        // }
 
-    //     // let sessionVerify = await verifySession(device_id, session_id, isWeb, dealer_id);
+        // let sessionVerify = await verifySession(device_id, session_id, isWeb, dealer_id);
         
-    //     // if (sessionVerify) {
-    //     // } else {
-    //     //     return next(new Error('Unauthorized: token not provided'));
-    //     // }
+        // if (sessionVerify) {
+        // } else {
+        //     return next(new Error('Unauthorized: token not provided'));
+        // }
 
-    // } else {
-    //     return next('Unauthorized: token not provided');
-    // }
+    } else {
+        return next('Unauthorized: token not provided');
+    }
 }
