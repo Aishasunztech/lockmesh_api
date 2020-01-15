@@ -41,14 +41,14 @@ module.exports = {
 				return "Every Saturday";
 			case 7:
 				return "Every Sunday";
-	
+
 			default:
 				return "N/A";
 		}
 	},
-	
+
 	getMonthName: async function (key) {
-	
+
 		switch (key) {
 			case 1:
 				return "January";
@@ -74,7 +74,7 @@ module.exports = {
 				return "November";
 			case 12:
 				return "December";
-	
+
 			default:
 				return "N/A";
 		}
@@ -700,8 +700,10 @@ module.exports = {
 			let servicesData = await device_helpers.getServicesData(results[0].id);
 			let servicesIds = servicesData.map(item => { return item.id })
 			let userAccServiceData = []
+			let dataPlans = []
 			if (servicesIds.length) {
 				userAccServiceData = await device_helpers.getUserAccServicesData(results[0].id, servicesIds.join())
+				dataPlans = await device_helpers.getDataPlans(servicesIds)
 			}
 
 			results[0].finalStatus = device_helpers.checkStatus(results[0]);
@@ -738,7 +740,7 @@ module.exports = {
 
 			let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
 			results[0].sim_id_data_plan = sim_id_data_plan[0]
-			
+
 			let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
 			results[0].sim_id2_data_plan = sim_id2_data_plan[0]
 
