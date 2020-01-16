@@ -328,7 +328,7 @@ exports.addDataLimitsPlans = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
         if (req.body.usr_device_id) {
-            console.log(req.body);
+            // console.log(req.body);
             let device_id = req.body.device_id;
             let loggedDealerId = verify.user.id;
             let loggedDealerType = verify.user.user_type;
