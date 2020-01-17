@@ -859,7 +859,7 @@ exports.suspendDealer = async function (req, res) {
             var qury = `UPDATE dealers set account_status = 'suspended' where dealer_id = '${dealer_id}'`;
 
             sql.query(qury, async function (error, row) {
-                if(error){
+                if (error) {
                     data = {
                         status: false,
                         msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_NOT_SUSP], "Dealer not suspended"), // Dealer not suspended.                    
@@ -1061,10 +1061,7 @@ exports.resetPwd = async function (req, res) {
                 res.send(data);
                 return;
             }
-
-
         } else {
-
             res.json({
                 status: false,
                 "msg": await general_helpers.convertToLang(req.translation[MsgConstants.ENTER_VALID_DETAIL], "Please enter valid details"), // Invalid details"
