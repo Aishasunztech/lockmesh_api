@@ -328,28 +328,49 @@ exports.superAdminLogin = async function (req, res) {
 	let email = req.body.email
 	var enc_pwd = md5(password);
 	if (name != undefined && password != undefined && email != undefined && name != null && password != null && email != null && name != '' && password != '' && email != '') {
-		let user = await sql.query(`SELECT * FROM dealers WHERE dealer_name = '${name}' AND dealer_email = '${email}' AND password = '${enc_pwd}' AND type = '5'`)
-		if (user.length) {
-			var userType = await helpers.getUserType(user[0].dealer_id);
-			// console.log(userType);
-			user.user_type = userType;
-			// console.log({
-			// 	user: {
-			// 		...user,
-			// 		user_type: userType
-			// 	},
-			// 	user_type: userType
+		let users = await sql.query(`SELECT * FROM dealers WHERE dealer_name = '${name}' AND dealer_email = '${email}' AND password = '${enc_pwd}' AND type = '5'`)
+		if (users.length) {
 
-			// });
+			var userType = await helpers.getUserType(users[0].dealer_id);
+			// console.log(userType);
+			var ip = req.header('x-real-ip') || req.connection.remoteAddress
+			// console.log('object data is ', users[0]);
+
+			const user = {
+				id: users[0].dealer_id,
+				dealer_id: users[0].dealer_id,
+				email: users[0].dealer_email,
+				lastName: users[0].last_name,
+				name: users[0].dealer_name,
+				firstName: users[0].first_name,
+				dealer_name: users[0].dealer_name,
+				dealer_email: users[0].dealer_email,
+				link_code: users[0].link_code,
+				connected_dealer: users[0].connected_dealer,
+				account_status: users[0].account_status,
+				user_type: userType,
+				two_factor_auth: users[0].is_two_factor_auth,
+				ip_address: ip,
+				created: users[0].created,
+				modified: users[0].modified,
+				account_balance_status: users[0].account_balance_status,
+				account_balance_status_by: users[0].account_balance_status_by,
+				demos: users[0].demos,
+				remaining_demos: users[0].remaining_demos,
+				company_name: users[0].company_name,
+				company_address: users[0].company_address,
+				city: users[0].city,
+				state: users[0].state,
+				country: users[0].country,
+				postal_code: users[0].postal_code,
+				tel_no: users[0].tel_no,
+				website: users[0].website,
+				timezone: users[0].timezone,
+			}
 
 			jwt.sign(
 				{
-					user: {
-						...user,
-						user_type: userType
-					},
-					user_type: userType
-
+					user
 				},
 				constants.SECRET,
 				{
