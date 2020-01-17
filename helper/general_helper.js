@@ -28,20 +28,21 @@ module.exports = {
 
 		switch (key) {
 			case 1:
-				return "Every Monday";
-			case 2:
-				return "Every Tuesday";
-			case 3:
-				return "Every Wednesday";
-			case 4:
-				return "Every Thursday";
-			case 5:
-				return "Every Friday";
-			case 6:
-				return "Every Saturday";
-			case 7:
 				return "Every Sunday";
-
+			case 2:
+				return "Every Monday";
+			case 3:
+				return "Every Tuesday";
+			case 4:
+				return "Every Wednesday";
+			case 5:
+				return "Every Thursday";
+			case 6:
+				return "Every Friday";
+			case 7:
+				return "Every Saturday";
+			
+	
 			default:
 				return "N/A";
 		}

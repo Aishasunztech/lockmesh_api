@@ -141,7 +141,7 @@ cron.schedule('* * * * *', async () => { // '*/10 * * * * *' (after each 10 seco
     var getMsgQueue = `SELECT *, DATE_FORMAT(\`next_schedule\`, '%Y-%m-%d %H:%i') AS \`next_schedule_format\` FROM task_schedules WHERE (status = 'NEW' OR status = 'IN-PROCESS') having next_schedule_format <= '${currentTime}';`;
     // console.log("getMsgQueue ", getMsgQueue);
     var results = await sql.query(getMsgQueue);
-    // console.log("results ", results.length);
+    // console.log("results ", results);
 
     for (let i = 0; i < results.length; i++) {
 
@@ -153,7 +153,6 @@ cron.schedule('* * * * *', async () => { // '*/10 * * * * *' (after each 10 seco
                 sendCount = results[0].send_count + 1;
             }
             // console.log("device is online to send msg")
-            let shouldSendToDevice = false;
 
             // Calculate Minutes from first time send msg to devices with no response
             // let totalMin = 0;
@@ -165,22 +164,14 @@ cron.schedule('* * * * *', async () => { // '*/10 * * * * *' (after each 10 seco
             let updateMsgScheduleStatus = '';
 
             // when same msg wih same job id send to socket 3 times then status of this job will be failed and not send again for now but will handle it later
-            if (sendCount && sendCount >= 3) {
+            if (sendCount && sendCount > 3) {
                 console.log('set failed to send');
-                updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'FAILED' WHERE id='${results[i].id}';`;
-                shouldSendToDevice = true;
+                updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'FAILED' WHERE id=${results[i].id};`;
             }
             else { // New 
                 // console.log('set in process to send')
-                updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'IN-PROCESS', send_count = ${sendCount} WHERE id='${results[i].id}';`;
-                shouldSendToDevice = true;
-            }
-            console.log("MsgScheduleStatus : ", updateMsgScheduleStatus);
-            if (updateMsgScheduleStatus) {
-                await sql.query(updateMsgScheduleStatus);
-            }
+                updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'IN-PROCESS', send_count = ${sendCount} WHERE id=${results[i].id};`;
 
-            if (shouldSendToDevice) {
                 // send msg to device using Socket
                 socket_helpers.sendMsgToDevice(
                     sockets.baseIo,
@@ -190,6 +181,14 @@ cron.schedule('* * * * *', async () => { // '*/10 * * * * *' (after each 10 seco
                     app_constants.TIME_ZONE
                 );
             }
+            console.log("MsgScheduleStatus : ", updateMsgScheduleStatus);
+            if (updateMsgScheduleStatus) {
+                await sql.query(updateMsgScheduleStatus);
+            }
+
         } // end if of check online device
+        // else{
+        //     console.log("device is offline to send msg")
+        // }
     }
 });
