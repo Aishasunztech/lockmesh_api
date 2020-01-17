@@ -2021,7 +2021,7 @@ exports.getBulkMsgsList = async function (req, res) {
       
         if (verify) {
 
-            var selectQuery = `SELECT id, device_ids, repeat_duration, timer_status, msg, date_time, week_day, month_date, month_name, time, created_at FROM bulk_messages WHERE action_by = '${loggedUserId}' AND delete_status = 0;`;
+            var selectQuery = `SELECT id, device_ids, repeat_duration, timer_status, msg, date_time, week_day, month_date, month_name, time, created_at FROM bulk_messages WHERE action_by = '${loggedUserId}' AND delete_status = 0 ORDER BY id DESC;`;
             var result = await sql.query(selectQuery);
             // console.log("result ", result)
 
