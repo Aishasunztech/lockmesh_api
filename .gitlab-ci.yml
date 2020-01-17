@@ -149,5 +149,5 @@ stop_deploy:
     - echo "Remove review app"
   when: manual
   environment:
-    name: deploy_stoped
+    name: Live/TitanAPI
     action: stop
