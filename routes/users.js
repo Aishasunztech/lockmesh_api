@@ -1441,6 +1441,8 @@ router.post('/add-domain', accountController.addDomain);
 
 router.put('/edit-domain', accountController.editDomain);
 
+router.put('/delete-domain', accountController.deleteDomain);
+
 /**
  * @route POST /users/dealer-permissions/:permissionType
  * @group Dealers - Operations about Dashboard

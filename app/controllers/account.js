@@ -1668,6 +1668,40 @@ exports.editDomain = async function (req, res) {
         }
     }
 }
+exports.deleteDomain = async function (req, res) {
+    var verify = req.decoded;
+    if (verify) {
+        let domain_name = req.body.data.domain_name
+        let alreadyAdded = await sql.query(`SELECT * FROM domains WHERE name = '${domain_name}'`)
+        if (alreadyAdded.length == 0) {
+            res.send({
+                status: false,
+                msg: 'Domain not Found on whiteLabel Server.'
+            })
+            return
+        } else {
+            let insertQuery = `UPDATE domains SET delete_status = 1 WHERE name = '${domain_name}'`;
+            sql.query(insertQuery, async (err, rslt) => {
+                if (err) throw err;
+                if (rslt) {
+                    if (rslt.affectedRows) {
+                        res.send({
+                            status: true,
+                            msg: 'Domain deleted Successfully.',
+                        })
+                        return
+                    } else {
+                        res.send({
+                            status: false,
+                            msg: 'ERROR: Domain Not deleted.Please try again',
+                        })
+                        return
+                    }
+                }
+            })
+        }
+    }
+}
 exports.getLatestPaymentHistory = async function (req, res) {
 
     let paymentHistoryData = [];
