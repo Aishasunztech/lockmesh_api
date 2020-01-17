@@ -1756,7 +1756,7 @@ exports.sendBulkMsg = async function (req, res) {
         let monthDate = req.body.data.monthDate ? req.body.data.monthDate : 0; // 1 - 31
         let monthName = req.body.data.monthName ? req.body.data.monthName : 0; // for 12 months e.g February
         let time = req.body.data.time;
-        let intervalTime = 0; // calculate for repeat
+        let intervalTime = 0; // calculate for repeat (no need of interval time)
         let dealerTZ = req.body.timezone;
 
         allDevices.forEach((item) => {
@@ -1768,7 +1768,7 @@ exports.sendBulkMsg = async function (req, res) {
 
         // Form data Validations
         if (timer === "NOW") { // 01
-            dateTime = dealerTZ ? moment.tz(dealerTZ).tz(app_constants.TIME_ZONE).format(constants.TIMESTAMP_FORMAT) : '';
+            dateTime = dealerTZ ? moment.tz(dealerTZ).tz(app_constants.TIME_ZONE).format(constants.TIMESTAMP_FORMAT) : moment().tz(app_constants.TIME_ZONE).format(constants.TIMESTAMP_FORMAT);
             repeat = "NONE";
         }
         else if (timer === "DATE/TIME") { // 02
@@ -1779,26 +1779,26 @@ exports.sendBulkMsg = async function (req, res) {
             if (repeat === "DAILY") {
                 if (!time) {
                     valid_conditions = false;
-                    intervalTime = 1440;
                 }
+                // intervalTime = 1440;
             } else if (repeat === "WEEKLY") {
                 if (!time && !weekDay) {
                     valid_conditions = false;
-                    intervalTime = 10080;
                 }
+                // intervalTime = 10080;
             } else if (repeat === "MONTHLY" || repeat === "3 MONTHS" || repeat === "6 MONTHS") {
                 if (!time && !weekDay && !monthDate) {
                     valid_conditions = false;
-
-                    if (repeat === "MONTHLY") intervalTime = 43829;
-                    if (repeat === "3 MONTHS") intervalTime = 131487;
-                    if (repeat === "6 MONTHS") intervalTime = 262975;
                 }
+                // if (repeat === "MONTHLY") intervalTime = 43829;
+                // if (repeat === "3 MONTHS") intervalTime = 131487;
+                // if (repeat === "6 MONTHS") intervalTime = 262975;
+
             } else if (repeat === "12 MONTHS") {
                 if (!time && !weekDay && !monthName) {
                     valid_conditions = false;
-                    intervalTime = 525949;
                 }
+                // intervalTime = 525949;
             }
         }
         else { // 04
@@ -1933,29 +1933,32 @@ exports.updateBulkMsg = async function (req, res) {
             if (!dateTime) valid_conditions = false;
         }
         else if (timer === "REPEAT") { // 03
+            console.log("at repeat")
             if (repeat === "DAILY") {
+                console.log("at repeat daily", time, time ? true: false)
                 if (!time) {
+                    console.log("at repeat with time true")
                     valid_conditions = false;
-                    intervalTime = 1440;
                 }
+                intervalTime = 1440;
             } else if (repeat === "WEEKLY") {
                 if (!time && !weekDay) {
                     valid_conditions = false;
-                    intervalTime = 10080;
                 }
+                intervalTime = 10080;
             } else if (repeat === "MONTHLY" || repeat === "3 MONTHS" || repeat === "6 MONTHS") {
                 if (!time && !weekDay && !monthDate) {
                     valid_conditions = false;
-
-                    if (repeat === "MONTHLY") intervalTime = 43829;
-                    if (repeat === "3 MONTHS") intervalTime = 131487;
-                    if (repeat === "6 MONTHS") intervalTime = 262975;
                 }
+                if (repeat === "MONTHLY") intervalTime = 43829;
+                if (repeat === "3 MONTHS") intervalTime = 131487;
+                if (repeat === "6 MONTHS") intervalTime = 262975;
+
             } else if (repeat === "12 MONTHS") {
                 if (!time && !weekDay && !monthName) {
                     valid_conditions = false;
-                    intervalTime = 525949;
                 }
+                intervalTime = 525949;
             }
         }
         else { // 04
