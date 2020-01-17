@@ -232,7 +232,7 @@ exports.verifyCode = async function (req, res) {
 					return;
 				} else {
 					var userType = await helpers.getUserType(checkRes[0].dealer_id);
-					
+
 					/**
 					 * @author Usman Hafeez
 					 * @description added last_login date when dealer is logged in
@@ -276,35 +276,35 @@ exports.verifyCode = async function (req, res) {
 					}
 
 					jwt.sign({
-                        user
-                    }, constants.SECRET, {
-                            expiresIn: constants.DASHBOARD_EXPIRES_IN
-                        }, async function (err, token) {
-                            if (err) {
-                                return res.send({
-									'err': err,
-									status: false,
-								});
-                            } else {
-                                user.expiresIn = constants.DASHBOARD_EXPIRES_IN;
-                                user.verified = checkRes[0].verified;
-                                user.token = token;
-                                helpers.saveLogin(user, userType, app_constants.TOKEN, 1);
+						user
+					}, constants.SECRET, {
+						expiresIn: constants.DASHBOARD_EXPIRES_IN
+					}, async function (err, token) {
+						if (err) {
+							return res.send({
+								'err': err,
+								status: false,
+							});
+						} else {
+							user.expiresIn = constants.DASHBOARD_EXPIRES_IN;
+							user.verified = checkRes[0].verified;
+							user.token = token;
+							helpers.saveLogin(user, userType, app_constants.TOKEN, 1);
 
-                                return res.send({
-                                    token: token,
-                                    status: true,
-                                    msg: 'User loged in Successfully', //  expiresIn: constants.EXPIRES_IN, // await helpers.convertToLang(req.translation[MsgConstants.USER_LOGED_IN_SUCCESSFULLY], MsgConstants.USER_LOGED_IN_SUCCESSFULLY),
-                                    user
-								});
-                            }
-                        });
-                }
-            } else {
-                return res.send({
-                    status: false,
-                    msg:  'Invalid verification code', // await helpers.convertToLang(req.translation[MsgConstants.INVALID_VERIFICATION_CODE], MsgConstants.INVALID_VERIFICATION_CODE),
-                    data: null
+							return res.send({
+								token: token,
+								status: true,
+								msg: 'User loged in Successfully', //  expiresIn: constants.EXPIRES_IN, // await helpers.convertToLang(req.translation[MsgConstants.USER_LOGED_IN_SUCCESSFULLY], MsgConstants.USER_LOGED_IN_SUCCESSFULLY),
+								user
+							});
+						}
+					});
+				}
+			} else {
+				return res.send({
+					status: false,
+					msg: 'Invalid verification code', // await helpers.convertToLang(req.translation[MsgConstants.INVALID_VERIFICATION_CODE], MsgConstants.INVALID_VERIFICATION_CODE),
+					data: null
 				})
 			}
 		});
@@ -363,6 +363,7 @@ exports.superAdminLogin = async function (req, res) {
 					} else {
 						user.expiresIn = constants.EXPIRES_IN;
 						user.token = token;
+						helpers.saveLogin(user, userType, app_constants.TOKEN, 1);
 						data = {
 							status: true,
 							token: token,
