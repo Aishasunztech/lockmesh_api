@@ -1738,6 +1738,7 @@ module.exports = {
 				sa_pgp_prices[item.price_term] = Number(item.unit_price)
 			}
 		})
+
 		if (loggedDealerType === Constants.DEALER) {
 			if (packagesData.length) {
 				packagesData.map((item) => {
@@ -1774,6 +1775,7 @@ module.exports = {
 									pkg.pkg_price = pkg.pkg_price - Math.ceil((pkg.pkg_price * discount))
 									sa_total_price = sa_total_price - Math.ceil((sa_total_price * discount))
 								}
+								sa_total_price = isNaN(sa_total_price) ? 0 : sa_total_price
 								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id ,item_id ,  item_data, item_term, item_type, item_sale_price, item_admin_cost,status , retail_price) VALUES(${user_acc_id} , ${service_id}, ${pkg.id}, '${JSON.stringify(pkg)}','${item.pkg_term}' ,'package', ${pkg.pkg_price} , ${sa_total_price} , 'delivered' , '${pkg.retail_price}')`)
 							}
 						})
@@ -1863,6 +1865,7 @@ module.exports = {
 										packagesData[i].pkg_price = packagesData[i].pkg_price - Math.ceil((packagesData[i].pkg_price * discount))
 										adminPrice = adminPrice - (adminPrice * discount)
 									}
+									adminPrice = isNaN(adminPrice) ? 0 : adminPrice
 									sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term,item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package',' ${pkg.pkg_term}', ${pkg.pkg_price} ,${packagesData[i].pkg_price} , ${adminPrice} , 'delivered')`)
 								} else {
 									if (pay_now) {
@@ -1898,6 +1901,9 @@ module.exports = {
 									sa_total_price = sa_total_price - Math.ceil((sa_total_price * discount))
 									adminPrice = adminPrice - Math.ceil((adminPrice * discount))
 								}
+								sa_total_price = isNaN(sa_total_price) ? 0 : sa_total_price
+								adminPrice = isNaN(adminPrice) ? 0 : adminPrice
+
 								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package', '${pkg.pkg_term}', ${pkg.pkg_price} ,${sa_total_price} , ${adminPrice} , 'delivered')`)
 							}
 						})
@@ -1933,6 +1939,10 @@ module.exports = {
 									sa_total_price = sa_total_price - Math.ceil((sa_total_price * discount))
 									admin_total_price = admin_total_price - Math.ceil((admin_total_price * discount))
 								}
+
+								sa_total_price = isNaN(sa_total_price) ? 0 : sa_total_price
+								admin_total_price = isNaN(admin_total_price) ? 0 : admin_total_price
+
 								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package', '${pkg.pkg_term}', ${pkg.pkg_price} ,${sa_total_price} , ${admin_total_price} , 'delivered')`)
 							}
 						})

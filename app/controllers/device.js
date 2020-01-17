@@ -482,6 +482,30 @@ exports.acceptDevice = async function (req, res) {
             expiry_date = helpers.getExpDateByMonth(start_date, term)
         }
 
+        let loggedInUserData = await sql.query(`SELECT * FROM dealers WHERE dealer_id =${loggedDealerId}`)
+        if (!loggedInUserData || loggedInUserData.length < 1) {
+            res.send({
+                status: false,
+                msg: "Error: Dealer Data not found."
+            });
+            return
+        }
+        if (loggedDealerType !== constants.ADMIN) {
+            if (loggedInUserData[0].account_balance_status == 'suspended') {
+                res.send({
+                    status: false,
+                    msg: "Error: Your Account balance status is on restricted level 2. You cannot add a new device. Please Contact your admin"
+                });
+                return
+            }
+            else if (loggedInUserData[0].account_balance_status !== 'active' && !pay_now) {
+                res.send({
+                    status: false,
+                    msg: "Error: Your Account balance status is restricted. You cannot use pay later function. Please Contact your admin"
+                });
+                return
+            }
+        }
 
 
         let user_credits = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
@@ -942,9 +966,9 @@ exports.acceptDevice = async function (req, res) {
                                                         }
 
                                                         let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
-                                                        results[0].sim_id_data_plan = sim_id_data_plan[0]
+                                                        rsltq[0].sim_id_data_plan = sim_id_data_plan[0]
                                                         let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
-                                                        results[0].sim_id2_data_plan = sim_id2_data_plan[0]
+                                                        rsltq[0].sim_id2_data_plan = sim_id2_data_plan[0]
                                                         // rsltq[0].vpn = await device_helpers.getVpn(rsltq[0])
                                                     }
 
@@ -1188,6 +1212,32 @@ exports.createDeviceProfile = async function (req, res) {
         }
         let invoice_status = pay_now ? "PAID" : "UNPAID"
         let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
+        // console.log(verify.user);
+        let loggedInUserData = await sql.query(`SELECT * FROM dealers WHERE dealer_id =${loggedUserId}`)
+        if (!loggedInUserData || loggedInUserData.length < 1) {
+            res.send({
+                status: false,
+                msg: "Error: Dealer Data not found."
+            });
+            return
+        }
+        if (loggedUserType !== constants.ADMIN) {
+            if (loggedInUserData[0].account_balance_status == 'suspended') {
+                res.send({
+                    status: false,
+                    msg: "Error: Your Account balance status is on restricted level 2. You cannot add a new device. Please Contact your admin"
+                });
+                return
+            }
+            else if (loggedInUserData[0].account_balance_status !== 'active' && !pay_now) {
+                res.send({
+                    status: false,
+                    msg: "Error: Your Account balance status is restricted. You cannot use pay later function. Please Contact your admin"
+                });
+                return
+            }
+        }
+
 
         let user_credits = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
         sql.query(user_credits, async function (err, result) {
@@ -2183,7 +2233,23 @@ exports.editDevices = async function (req, res) {
             } else {
                 var status = "active";
             }
-
+            let loggedInUserData = await sql.query(`SELECT * FROM dealers WHERE dealer_id =${loggedDealerId}`)
+            if (!loggedInUserData || loggedInUserData.length < 1) {
+                res.send({
+                    status: false,
+                    msg: "Error: Dealer Data not found."
+                });
+                return
+            }
+            if (loggedDealerType !== constants.ADMIN) {
+                if (loggedInUserData[0].account_balance_status !== 'active' && !pay_now) {
+                    res.send({
+                        status: false,
+                        msg: "Error: Your Account balance status is on restricted level 1. You cannot use pay later function. Please Contact your admin"
+                    });
+                    return
+                }
+            }
             var checkDevice =
                 "SELECT start_date ,expiry_date from usr_acc WHERE device_id = '" +
                 usr_device_id +
