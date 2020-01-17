@@ -843,6 +843,9 @@ exports.undoDealer = async function (req, res) {
 
 }
 
+/**
+ * @description need to implement check who is suspending which one dealer weather He is allowed or not
+ */
 exports.suspendDealer = async function (req, res) {
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
@@ -853,9 +856,17 @@ exports.suspendDealer = async function (req, res) {
         if (!empty(dealer_id)) {
 
             //suspend dealer
-            var qury = "UPDATE dealers set account_status = 'suspended' where dealer_id = '" + dealer_id + "'";
+            var qury = `UPDATE dealers set account_status = 'suspended' where dealer_id = '${dealer_id}'`;
 
             sql.query(qury, async function (error, row) {
+                if(error){
+                    data = {
+                        status: false,
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_NOT_SUSP], "Dealer not suspended"), // Dealer not suspended.                    
+                    };
+                    return res.send(data);
+                }
+
                 //suspend sub dealer                                                                                                                 
                 // var qury1 = "UPDATE dealers set account_status = 'suspended' where connected_dealer = '" + dealer_id + "'";
                 // var rslt = await sql.query(qury1);
@@ -869,7 +880,9 @@ exports.suspendDealer = async function (req, res) {
                 //     };
                 //     res.send(data);
                 // } else 
+
                 if (row.affectedRows != 0) {
+                    await general_helpers.expireDealerLogin(dealer_id);
                     data = {
                         status: true,
                         msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_SUSP_SUCC], "Dealer suspended successfully"), // Dealer suspended successfully.
@@ -882,8 +895,7 @@ exports.suspendDealer = async function (req, res) {
                         status: false,
                         msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_NOT_SUSP], "Dealer not suspended"), // Dealer not suspended.                    
                     };
-                    res.send(data);
-                    return;
+                    return res.send(data);
                 }
             });
 
