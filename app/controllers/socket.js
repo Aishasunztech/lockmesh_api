@@ -1,5 +1,6 @@
 
 // Libraries
+var moment = require('moment');
 
 // Helpers
 const { sql } = require('../../config/database');
@@ -752,7 +753,7 @@ exports.baseSocket = async function (instance, socket) {
                     });
                 }
             } else {
-                
+
                 /**
                  * @author Usman Hafeez
                  * @description Do not remove this code. 
@@ -763,33 +764,84 @@ exports.baseSocket = async function (instance, socket) {
                 });
             }
 
-            // ************** */ ACK SEND MSG TO DEVICE
+            // ******************** ACK SEND MSG TO DEVICE ********************/ 
+
+            //****************
+            //**************** ALERT!
+            //*** require more changes to handle next_schedule time for future
+            // ***************
+            //****************
 
             socket.on(Constants.ACK_MSG_TO_DEVICE + device_id, async function (response) {
-                console.log("channel name: ", Constants.ACK_MSG_TO_DEVICE + device_id)
-                console.log('ack response data for ACK_MSG_TO_DEVICE =====================> ',  response);
+                // console.log("channel name: ", Constants.ACK_MSG_TO_DEVICE + device_id)
+                console.log('ack response data for ACK_MSG_TO_DEVICE =====================> ', response);
 
                 if (response) {
                     // get msg job detail
                     let getMsgQueue = `SELECT * FROM task_schedules WHERE id = ${response.job_id};`;
-                    let results = await sql.query(getMsgQueue);
-                    let updateMsgScheduleStatus;
+                    let jobQueryResult = await sql.query(getMsgQueue);
+                    // let updateMsgScheduleStatus;
 
-                    if (results[0].interval_status !== "REPEAT" || results[0].interval_time === 0) {
-                        updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'COMPLETE' WHERE id=${response.job_id};`;
+                    if (jobQueryResult[0].interval_status !== "REPEAT") {
+                        let updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'COMPLETE' WHERE id=${response.job_id};`;
+                        await sql.query(updateMsgScheduleStatus);
                     } else {
+                        // console.log("at repeat")
                         let nextTime = moment().tz(app_constants.TIME_ZONE).format(Constants.TIMESTAMP_FORMAT);
-                        if (results[0].next_schedule < nextTime) {
-                            nextTime = moment().add(results[0].interval_time, 'minutes').format(Constants.TIMESTAMP_FORMAT);
-                        } else {
-                            // else if (results[0].interval_description === "DAILY") {
-                            nextTime = moment(results[0].next_schedule).add(results[0].interval_time, 'minutes').format(Constants.TIMESTAMP_FORMAT);
+                        // if (jobQueryResult[0].next_schedule < nextTime) {
+                        //     nextTime = moment().tz(app_constants.TIME_ZONE).add(jobQueryResult[0].interval_time, 'minutes').format(Constants.TIMESTAMP_FORMAT);
+                        // } else {
+                        if (jobQueryResult[0].interval_description === "DAILY") {
+                            nextTime = moment(jobQueryResult[0].next_schedule).tz(app_constants.TIME_ZONE).add(1, 'days').format(Constants.TIMESTAMP_FORMAT);
                         }
-                        console.log("results[0].next_schedule ", results[0].next_schedule, nextTime);
-                        updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'SUCCESS', next_schedule = '${nextTime}' WHERE device_id='${device_id}';`;
+                        else if (jobQueryResult[0].interval_description === "WEEKLY") {
+                            nextTime = moment(jobQueryResult[0].next_schedule).tz(app_constants.TIME_ZONE).add(7, 'days').format(Constants.TIMESTAMP_FORMAT);
+                        }
+                        else if (jobQueryResult[0].interval_description === "MONTHLY") {
+                            nextTime = moment(jobQueryResult[0].next_schedule).tz(app_constants.TIME_ZONE).add(1, 'months').format(Constants.TIMESTAMP_FORMAT);
+                        }
+                        else if (jobQueryResult[0].interval_description === "3 MONTHS") {
+                            nextTime = moment(jobQueryResult[0].next_schedule).tz(app_constants.TIME_ZONE).add(3, 'months').format(Constants.TIMESTAMP_FORMAT);
+                        }
+                        else if (jobQueryResult[0].interval_description === "6 MONTHS") {
+                            nextTime = moment(jobQueryResult[0].next_schedule).tz(app_constants.TIME_ZONE).add(6, 'months').format(Constants.TIMESTAMP_FORMAT);
+                        }
+                        else if (jobQueryResult[0].interval_description === "12 MONTHS") {
+                            nextTime = moment(jobQueryResult[0].next_schedule).tz(app_constants.TIME_ZONE).add(1, 'years').format(Constants.TIMESTAMP_FORMAT);
+                        }
+
+                        // nextTime = moment(jobQueryResult[0].next_schedule).tz(app_constants.TIME_ZONE).add(jobQueryResult[0].interval_time, 'minutes').format(Constants.TIMESTAMP_FORMAT);
+                        // }
+                        // console.log("jobQueryResult[0].next_schedule ", jobQueryResult[0].next_schedule, " nextTime: ", nextTime);
+                        // updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'SUCCESS', next_schedule = '${nextTime}' WHERE device_id='${device_id}';`;
+
+                        // select record of completed job that have repeat timer status
+                        // var selectJobQuery = `SELECT * FROM task_schedules WHERE id = ${response.job_id};`;
+                        // console.log("selectJobQuery:: ", selectJobQuery);
+                        // var jobQueryResult = await sql.query(selectJobQuery);
+                        // console.log("jobQueryResult:: ", jobQueryResult);
+
+                        if (jobQueryResult && jobQueryResult.length) {
+
+                            // To copy data of succes job of repeat status => insert new record after send every single repeat step (daily, weekly, etc...)
+                            var insertJobQueue = `INSERT INTO task_schedules (task_id, device_id, title, interval_status, interval_time, interval_description, next_schedule, week_day, month_day, month_name, status, action_by, send_count) 
+                            VALUES (${jobQueryResult[0].task_id}, '${device_id}','${jobQueryResult[0].title}','${jobQueryResult[0].interval_status}', ${jobQueryResult[0].interval_time}, '${jobQueryResult[0].interval_description}', '${nextTime}', ${jobQueryResult[0].week_day}, ${jobQueryResult[0].month_day}, ${jobQueryResult[0].month_name}, 'NEW', ${jobQueryResult[0].action_by}, ${jobQueryResult[0].send_count});`;
+                            // console.log("insertJobQueue ", insertJobQueue);
+                            let response_data = await sql.query(insertJobQueue);
+                            // console.log("response_data:: ", response_data);
+
+                            // Previous job mark as complete 
+                            if (response_data && response_data.affectedRows) {
+
+                                let completeJob = `UPDATE task_schedules SET status = 'SUCCESS' WHERE id = ${response.job_id};`;
+                                // console.log("completeJob:: ", completeJob);
+                                let completeJobResult = await sql.query(completeJob);
+                                // console.log("completeJobResult:: ", completeJobResult);
+                                // let deleteJob = `DELETE FROM task_schedules WHERE id = ${response.job_id}`;
+                                // let deleteJobResult = await sql.query(deleteJob);
+                            }
+                        }
                     }
-                    console.log("updateMsgScheduleStatus : ", updateMsgScheduleStatus);
-                    await sql.query(updateMsgScheduleStatus);
                 }
             })
 
