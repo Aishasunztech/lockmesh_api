@@ -1005,16 +1005,21 @@ exports.resetPwd = async function (req, res) {
 
                 sendEmail(subject, message, email, async function (errors, response) {
                     if (errors) {
-                        res.send("Email could not sent due to error: " + errors);
+                        res.send({
+                            status: false,
+                            msg: "ERROR: Email could not sent."
+                        });
                         return;
                     } else {
 
                         var sq = "update dealers set password = '" + enc_pwd + "' where dealer_id = '" + dealer_id + "'";
                         sql.query(sq, async function (error, rows) {
-
-
                             if (error) {
                                 console.log(error);
+                                res.send({
+                                    status: false,
+                                    msg: "ERROR: Internal Server Error."
+                                });
                             }
 
                             if (rows.affectedRows == 0) {
@@ -1026,7 +1031,6 @@ exports.resetPwd = async function (req, res) {
                                 return;
                             } else {
                                 data = {
-
                                     "status": true,
                                     "msg": await general_helpers.convertToLang(req.translation[MsgConstants.PASS_CHANGE_SUCC], "Password changed successfully.Please check your email"), // Password changed successfully.Please check your email.
                                 };
