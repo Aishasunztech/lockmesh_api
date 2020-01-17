@@ -85,10 +85,10 @@ deploy_LiveLM_API:
 
 deploy_LiveTitan_API:
   stage: deploy
-  on_stop: stop_deploy
   environment:
     name: Live/TitanAPI
     url: https://api.titansecureserver.com
+    on_stop: stop_deploy
   before_script:
     - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
     - mkdir -p ~/.ssh
