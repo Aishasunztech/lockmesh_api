@@ -149,5 +149,5 @@ stop_deploy:
     - echo "Remove review app"
   when: manual
   environment:
-    #name: review/$CI_COMMIT_REF_NAME
+    name: deploy_stoped
     action: stop
