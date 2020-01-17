@@ -2414,4 +2414,17 @@ module.exports = {
 		})
 
 	},
+
+	/**
+	 * @author Usman Hafeez
+	 * @section expireDealerLogin
+	 */
+
+	expireDealerLogin: async function (dealerId) {
+		if(dealerId){
+			let loginQ = `UPDATE login_history SET status=0 WHERE dealer_id=${dealerId}`;
+			await sql.query(loginQ);
+		}
+	},
+	
 }
