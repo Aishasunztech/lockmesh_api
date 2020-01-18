@@ -1,29 +1,66 @@
+// libraries
 require("dotenv").config();
 require("stackify-node-apm");
-
-var app = require("../app");
+var fs = require( 'fs' );
+var momentTz = require("moment-timezone");
+var moment = require('moment');
 var debug = require("debug")("webportalbackend:server");
+
 var http = require("http");
+var https = require('https');
+
 let socket = require('socket.io');
+var datetime = require("node-datetime");
 
-
-var Constants = require("../constants/Application");
-const { sql } = require("../config/database");
-
-var port = normalizePort(process.env.PORT || "3000");
-app.set("port", port);
+// custom libraries
+var app = require("../app");
+require("../config/database");
 var events = require('../crons/db_events');
+let socketRoutes = require('../routes/sockets');
+require("../crons/index");
+
+// constants
+const constants = require('../config/constants');
+
+// ======================Configurations================== //
+
+// => Set timezone for moment Library
+momentTz.tz.setDefault(constants.TIME_ZONE);
+let d = moment().format('YYYY-MM-DD H:m:s');
+console.log("Moment Date Time:", d)
+
+// => set timezone for dateTime Library
+var today_date = datetime.create();
+
+// => set timezone for default date function
+
+// => set timezone for database
+
 /**
  * Create HTTP server.
  */
-var server = http.createServer(app);
-let socketRoutes = require('../routes/sockets');
+var port = normalizePort(process.env.PORT || "3000");
+app.set("port", port);
+
+// if(constants.APP_ENV === 'local'){
+	var server = http.createServer(app);
+// } else {
+
+	// var server = https.createServer({ 
+	// 	// key: fs.readFileSync('privateKey.pem'),
+	// 	// cert: fs.readFileSync('fullChain.pem') 
+	//  },app);
+// }
+
+
 // io.attach(server, {
 //     // pingInterval: 60000,
 //     // pingTimeout: 120000,
 //     // cookie: false
 // });
-let io= socket();
+let io = socket();
+// origin all commented
+// io.set('origins', '*:*');
 io.attach(server);
 socketRoutes.baseSocket(io);
 
@@ -34,6 +71,7 @@ socketRoutes.baseSocket(io);
 // socketRoutes.dealerSocket(dealerIo);
 
 // events.deviceQueue()
+
 /**
  * Listen on provided port, on all network interfaces.
  */
@@ -42,7 +80,6 @@ server.listen(port);
 server.on("error", onError);
 server.on("listening", onListening);
 
-require("../crons/index");
 // events.deviceQueue()
 // 	.then(() => console.log('Waiting for database events...'))
 // 	.catch(console.error);

@@ -547,7 +547,7 @@ exports.getPGPEmails = async (req, res) => {
 
         let query = '';
         if (permission_ids.length) {
-            query = `SELECT * FROM pgp_emails WHERE used=0 AND domain_id IN (${permission_ids.join()})`;
+            query = `SELECT * FROM pgp_emails WHERE used=0 AND delete_status = 0 AND domain_id IN (${permission_ids.join()})`;
         }
         // query = `SELECT * FROM pgp_emails WHERE used=0`;
 
@@ -888,6 +888,7 @@ exports.purchaseCredits = async function (req, res) {
 
     }
 }
+
 exports.purchaseCredits_CC = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
     if (verify) {
@@ -1057,6 +1058,7 @@ exports.purchaseCredits_CC = async function (req, res) {
 
     }
 }
+
 exports.saveProfile = async function (req, res) {
     try {
         var verify = req.decoded; // await verifyToken(req, res);
@@ -1589,6 +1591,113 @@ exports.getDomains = async function (req, res) {
             res.send({
                 status: true,
                 domains: []
+            })
+        }
+    }
+}
+
+
+exports.addDomain = async function (req, res) {
+    var verify = req.decoded;
+
+    if (verify) {
+        let domain = req.body.data.domain
+        let alreadyAdded = await sql.query(`SELECT * FROM domains WHERE name = '${domain}'`)
+        if (alreadyAdded && alreadyAdded.length) {
+            res.send({
+                status: false,
+                msg: 'Domain already added on whitelabel.Please Choose another domain.'
+            })
+            return
+        } else {
+            let insertQuery = "INSERT INTO domains (name) VALUES('" + domain + "')";
+            sql.query(insertQuery, async (err, rslt) => {
+                if (err) throw err;
+                if (rslt) {
+                    if (rslt.affectedRows) {
+                        res.send({
+                            status: true,
+                            msg: 'Domain Saved Successfully.',
+                        })
+                        return
+                    } else {
+                        res.send({
+                            status: false,
+                            msg: 'Domain Not Saved.Please try again',
+                        })
+                        return
+                    }
+                }
+            })
+        }
+    }
+}
+exports.editDomain = async function (req, res) {
+    var verify = req.decoded;
+    if (verify) {
+        let domain = req.body.data.domain
+        let oldDomain = req.body.data.oldDomain
+        console.log(oldDomain);
+        let alreadyAdded = await sql.query(`SELECT * FROM domains WHERE name = '${oldDomain}'`)
+        if (alreadyAdded.length == 0) {
+            res.send({
+                status: false,
+                msg: 'Domain not Found on whiteLabel Server'
+            })
+            return
+        } else {
+            let insertQuery = `UPDATE domains SET name = '${domain}' WHERE name = '${oldDomain}'`;
+            sql.query(insertQuery, async (err, rslt) => {
+                if (err) throw err;
+                if (rslt) {
+                    if (rslt.affectedRows) {
+                        res.send({
+                            status: true,
+                            msg: 'Domain updated Successfully.',
+                        })
+                        return
+                    } else {
+                        res.send({
+                            status: false,
+                            msg: 'Domain Not updated.Please try again',
+                        })
+                        return
+                    }
+                }
+            })
+        }
+    }
+}
+exports.deleteDomain = async function (req, res) {
+    var verify = req.decoded;
+    if (verify) {
+        let domain_name = req.body.data.domain_name
+        let alreadyAdded = await sql.query(`SELECT * FROM domains WHERE name = '${domain_name}'`)
+        if (alreadyAdded.length == 0) {
+            res.send({
+                status: false,
+                msg: 'Domain not Found on whiteLabel Server.'
+            })
+            return
+        } else {
+            let insertQuery = `UPDATE domains SET delete_status = 1 WHERE name = '${domain_name}'`;
+            sql.query(insertQuery, async (err, rslt) => {
+                if (err) throw err;
+                if (rslt) {
+                    if (rslt.affectedRows) {
+                        res.send({
+                            status: true,
+                            msg: 'Domain deleted Successfully.',
+                        })
+                        return
+                    } else {
+                        res.send({
+                            status: false,
+                            msg: 'ERROR: Domain Not deleted.Please try again',
+                        })
+                        return
+                    }
+                }
             })
         }
     }

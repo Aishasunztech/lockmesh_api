@@ -183,7 +183,7 @@ exports.acceptServiceRequest = async function (req, res) {
                                     await sql.query(update_profits_transections)
 
                                     if (prevServicePaidPrice > 0) {
-                                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dvc_dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service charges" })}',${prevServicePaidPrice} ,'credit','pending' , 'services' , 0 , ${prevServicePaidPrice})`
+                                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dvc_dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service charges", service_id: prevService.id })}',${prevServicePaidPrice} ,'credit','pending' , 'services' , 0 , ${prevServicePaidPrice})`
                                         await sql.query(transection_credits)
 
                                         update_credits_query = 'update financial_account_balance set credits = credits - ' + prevServicePaidPrice + ' where dealer_id ="' + dvc_dealer_id + '"';
@@ -193,18 +193,18 @@ exports.acceptServiceRequest = async function (req, res) {
                                         let dealer_holding_profit = prev_service_dealer_profit - refund_prev_service_dealer_profit
 
                                         if (admin_holding_profit > 0) {
-                                            let admin_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${verify.user.id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service holding profit" })}',${admin_holding_profit} ,'debit','holding' , 'services')`
+                                            let admin_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${verify.user.id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service holding profit", service_id: prevService.id })}',${admin_holding_profit} ,'debit','holding' , 'services')`
                                             await sql.query(admin_profit_transection)
                                         }
 
                                         if (dealer_holding_profit > 0) {
-                                            let dealer_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${deviceData[0].prnt_dlr_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service holding profit" })}',${dealer_holding_profit} ,'debit','holding' , 'services')`
+                                            let dealer_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${deviceData[0].prnt_dlr_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service holding profit", service_id: prevService.id })}',${dealer_holding_profit} ,'debit','holding' , 'services')`
                                             await sql.query(dealer_profit_transection)
                                         }
                                     }
 
                                 } else {
-                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dvc_dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, details: "REFUND SERVICES CREITS" })}' ,${creditsToRefund} ,'debit' , 'transferred' , 'services')`
+                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dvc_dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, details: "REFUND SERVICES CREITS", service_id: prevService.id })}' ,${creditsToRefund} ,'debit' , 'transferred' , 'services')`
                                     await sql.query(transection_credits)
                                     update_credits_query = 'update financial_account_balance set credits = credits + ' + creditsToRefund + ' where dealer_id ="' + dvc_dealer_id + '"';
                                     await sql.query(update_credits_query);
@@ -218,11 +218,11 @@ exports.acceptServiceRequest = async function (req, res) {
 
                                         if (admin_prev_service_profit > 0) {
 
-                                            let admin_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${verify.user.id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service refund profit" })}',${admin_prev_service_profit} ,'credit','transferred' , 'services')`
+                                            let admin_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${verify.user.id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service refund profit", service_id: prevService.id })}',${admin_prev_service_profit} ,'credit','transferred' , 'services')`
                                             await sql.query(admin_profit_transection)
                                         }
                                         if (dealer_prev_service_profit > 0) {
-                                            let dealer_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${deviceData[0].prnt_dlr_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service refund profit" })}',${dealer_prev_service_profit} ,'credit','transferred' , 'services')`
+                                            let dealer_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${deviceData[0].prnt_dlr_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service refund profit", service_id: prevService.id })}',${dealer_prev_service_profit} ,'credit','transferred' , 'services')`
                                             await sql.query(dealer_profit_transection)
                                         }
                                     }
@@ -747,9 +747,16 @@ exports.saveSaPackage = async function (req, res) {
     if (verify) {
 
         let data = req.body.data;
-        if (data) {
-            console.log(verify.user[0].dealer_id);
-            // console.log(dealer_id, 'whitelableid');
+        if (data && data.package_type) {
+            let package_type = data.package_type;
+
+            if (package_type !== 'services' && package_type !== 'data_plan') {
+                return res.send({
+                    status: false,
+                    msg: 'Invalid Data'
+                })
+            }
+
             let days = 0;
             if (data.pkgTerm) {
                 if (data.pkgTerm === "trial") {
@@ -776,22 +783,28 @@ exports.saveSaPackage = async function (req, res) {
                 }
             }
 
-            let pkg_features = JSON.stringify(data.pkgFeatures)
-            let insertQuery = "INSERT INTO packages (dealer_id , dealer_type , pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features , dealers) VALUES('" + verify.user[0].dealer_id + "' ,'super_admin' , '" + data.pkgName + "', '" + data.pkgTerm + "', '" + data.pkgPrice + "','" + days + "', '" + pkg_features + "' , '[]')";
-            console.log(insertQuery);
+            let pkg_features = '{}';
+            let insertQuery = '';
+            if (package_type === 'services') {
+                let pkg_features = JSON.stringify(data.pkgFeatures)
+                insertQuery = `INSERT INTO packages (dealer_id, dealer_type, pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, dealers, package_type ) VALUES('${verify.user[0].dealer_id}', 'super_admin', '${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}' , '[]', '${package_type}')`;
+            } else if (package_type === 'data_plan') {
+                insertQuery = `INSERT INTO packages (dealer_id, dealer_type, pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, data_limit, dealers, package_type ) VALUES('${verify.user[0].dealer_id}', 'super_admin', '${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}', ${data.data_limit}, '[]', '${package_type}')`;
+            }
+
+            // console.log(insertQuery);
 
             sql.query(insertQuery, async (err, rslt) => {
                 if (err) {
                     console.log(err)
-                    res.send({
+                    return res.send({
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[""], "Package Not Saved. Whitelabel Server Error"), // 'Package Saved Successfully',
+                        msg: await helpers.convertToLang(req.translation[""], "Package Not Saved. WhiteLabel Server Error"), // 'Package Saved Successfully',
                     })
-                    return
                 }
                 if (rslt) {
                     if (rslt.affectedRows) {
-                        let insertQ = "INSERT INTO dealer_packages_prices ( package_id,dealer_id , created_by , price) VALUES(" + rslt.insertId + ",'" + verify.user[0].dealer_id + "' ,'super_admin' , '" + data.pkgPrice + "')";
+                        let insertQ = `INSERT INTO dealer_packages_prices (package_id, dealer_id, created_by, price) VALUES(${rslt.insertId}, '${verify.user[0].dealer_id}', 'super_admin', '${data.pkgPrice}')`;
                         console.log(insertQ);
                         sql.query(insertQ)
                         res.send({
@@ -804,11 +817,10 @@ exports.saveSaPackage = async function (req, res) {
             })
 
         } else {
-            res.send({
+            return res.send({
                 status: false,
                 msg: await helpers.convertToLang(req.translation[MsgConstants.INVALID_DATA], "Invalid Data"), // 'Invalid Data'
             })
-            return
         }
     }
 }
@@ -1260,12 +1272,15 @@ exports.getPackages = async function (req, res) {
 
                         for (var i = 0; i < reslt.length; i++) {
                             if (loggedUserType === ADMIN) {
+                                // console.log(reslt);
                                 if (reslt[i].dealer_type === 'super_admin') {
                                     let result = await sql.query("SELECT * from dealer_packages_prices WHERE created_by = 'admin' AND package_id = " + reslt[i].id);
+                                    // console.log(result);
                                     if (result && result.length) {
                                         reslt[i].pkg_price = result[0].price
                                         reslt[i].retail_price = result[0].retail_price
                                     } else {
+                                        console.log(reslt[i.pkg_price]);
                                         reslt[i].retail_price = reslt[i].pkg_price
                                     }
                                 }
@@ -1649,6 +1664,7 @@ exports.getParentPackages = async function (req, res) {
                             }
                         }
                     }
+                    // console.log(reslt)
                     res.send({
                         status: true,
                         msg: await helpers.convertToLang(req.translation[MsgConstants.DATA_FOUND], "Data found"), // "Data found",
