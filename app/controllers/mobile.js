@@ -314,7 +314,9 @@ exports.linkDevice = async function (req, resp) {
 
 
                 var deviceCheckQuery = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND devices.device_id = '${deviceId}' ORDER BY devices.id DESC`;
+                console.log(deviceCheckQuery);
                 let deviceCheckResponse = await sql.query(deviceCheckQuery);
+                console.log(deviceCheckResponse);
                 if (deviceCheckResponse.length) {
                     console.log(deviceCheckResponse[0]);
                     if (deviceCheckResponse[0].unlink_status == 1) {
