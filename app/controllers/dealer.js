@@ -185,11 +185,30 @@ exports.getAllToAllDealers = async function (req, res) {
                     website: results[i].website,
                     timezone: results[i].timezone
                 };
-
                 data.push(dt);
             }
             res.send(data);
             return;
+        });
+    }
+};
+
+exports.getAdmin = async function(req, res){
+    var verify = req.decoded;
+    if(verify){
+        sql.query(`SELECT ${dealer_query_text} FROM dealers WHERE type = 1 LIMIT 1`, async function(err, data){
+            if(err){
+                console.log(err);
+                res.send({
+                    status: false,
+                    msg: err
+                });
+                return;
+            } else {
+                console.log(data);
+                res.send(data[0]);
+                return;
+            }
         });
     }
 };
