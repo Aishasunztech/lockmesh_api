@@ -335,7 +335,9 @@ exports.linkDevice = async function (req, resp) {
                                 console.log('Services Expire: Should delete device');
                                 var deleteSql1 = `DELETE FROM usr_acc where device_id=${deviceCheckResponse[0].usr_device_id}`;
                                 await sql.query(deleteSql1)
+                                console.log(deleteSql1);
                                 var sqlDevice = "DELETE from devices where device_id = '" + deviceId + "'";
+                                console.log(sqlDevice);
                                 await sql.query(sqlDevice);
                             }
                         } else {
@@ -1099,7 +1101,7 @@ exports.deviceStatus = async function (req, res) {
             var user_acc = await sql.query(`SELECT * FROM usr_acc WHERE device_id = ${device[0].id}`);
             if (user_acc.length > 0) {
                 // get user account device status
-                console.log('status is: ', device[0].device_id)
+                console.log('status is: ', device[0].device_id, user_acc[0])
 
                 user_acc[0]["flagged"] = device[0].flagged;
                 let deviceStatus = device_helpers.checkStatus(user_acc[0]);
