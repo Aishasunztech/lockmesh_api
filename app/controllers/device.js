@@ -1000,7 +1000,8 @@ exports.acceptDevice = async function (req, res) {
                                                             paid: discounted_price,
                                                             invoice_nr: inv_no,
                                                             invoice_status: invoice_status,
-                                                            paid_credits: paid_credits
+                                                            paid_credits: paid_credits,
+                                                            expiry_date: expiry_date
                                                         };
 
                                                         let fileName = "invoice-" + inv_no + ".pdf"
@@ -1492,6 +1493,7 @@ exports.createDeviceProfile = async function (req, res) {
                                             invoice_nr: inv_no,
                                             invoice_status: invoice_status,
                                             paid_credits: paid_credits,
+                                            expiry_date: expiry_date
                                         };
 
                                         let fileName = "invoice-" + inv_no + ".pdf"
@@ -1948,7 +1950,8 @@ exports.createDeviceProfile = async function (req, res) {
                                                                     paid: discounted_price,
                                                                     invoice_nr: inv_no,
                                                                     invoice_status: invoice_status,
-                                                                    paid_credits: paid_credits
+                                                                    paid_credits: paid_credits,
+                                                                    expiry_date: expiry_date
                                                                 };
 
                                                                 let fileName = "invoice-" + inv_no + ".pdf"
@@ -2857,7 +2860,8 @@ exports.editDevices = async function (req, res) {
                                     paid: total_price,
                                     invoice_nr: inv_no,
                                     invoice_status: invoice_status,
-                                    paid_credits: paid_credits
+                                    paid_credits: paid_credits,
+                                    expiry_date: expiry_date
                                 };
 
                                 let fileName = "invoice-" + inv_no + ".pdf"
@@ -3569,7 +3573,8 @@ exports.extendServices = async function (req, res) {
                             paid: total_price,
                             invoice_nr: inv_no,
                             paid_credits: paid_credits,
-                            invoice_status: invoice_status
+                            invoice_status: invoice_status,
+                            expiry_date: expiry_date
                         };
 
                         let fileName = "invoice-" + inv_no + ".pdf"

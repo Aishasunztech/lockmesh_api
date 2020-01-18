@@ -929,6 +929,7 @@ module.exports = {
         let pgp_email = body.pgp_email;
         let service = body.prevService
         let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
+        console.log(body.expiry_date);
         var expiry_date = moment(body.expiry_date).format("YYYY/MM/DD")
         var date_now = moment(new Date()).format('YYYY/MM/DD')
         // console.log(expiry_date, chat_id, pgp_email, sim_id, sim_id2, prevService);
@@ -1219,18 +1220,11 @@ module.exports = {
                     sql.query(`UPDATE user_acc_services SET product_value = ${sim_id2} WHERE service_id= ${service_id} AND product_value = '${prevSimId2}'`)
 
                 }
-
-
-
-
-
-
-
+                
                 // console.log(device_id);
                 let deviceData = await require('./general_helper').getAllRecordbyUserAccId(usr_acc_id)
                 // console.log(deviceData);
                 data.data = [deviceData]
-                // console.log(data);
             }
         }
         // console.log(data)
