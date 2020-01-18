@@ -400,6 +400,7 @@ router.get('/get_dealer_list', dealerController.getDealerForSA);
 /*Get dealers*/
 router.get("/dealers/:pageName", dealerController.getDealers);
 router.get("/get-all-dealers", dealerController.getAllToAllDealers);
+router.get("/get-admin", dealerController.getAdmin);
 
 /**
  * @route POST /users/add/dealer
