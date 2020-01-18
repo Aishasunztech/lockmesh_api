@@ -316,8 +316,10 @@ exports.linkDevice = async function (req, resp) {
                 var deviceCheckQuery = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND devices.device_id = '${deviceId}' ORDER BY devices.id DESC`;
                 let deviceCheckResponse = await sql.query(deviceCheckQuery);
                 if (deviceCheckResponse.length) {
+                    console.log(deviceCheckResponse[0]);
                     if (deviceCheckResponse[0].unlink_status == 1) {
                         if (deviceCheckResponse[0].dealer_id == dId) {
+                            console.log('same dealer');
                             let currentDate = moment(new Date()).format("YYYY/MM/DD")
                             if (deviceCheckResponse[0].expiry_date > currentDate) {
                                 var sql1 = `UPDATE  usr_acc SET unlink_status = 0, device_status = 1 where device_id=${deviceCheckResponse[0].usr_device_id}`;
@@ -330,15 +332,19 @@ exports.linkDevice = async function (req, resp) {
                                 });
                                 return
                             } else {
+                                console.log('Services Expire: Should delete device');
                                 var deleteSql1 = `DELETE FROM usr_acc where device_id=${deviceCheckResponse[0].usr_device_id}`;
                                 await sql.query(deleteSql1)
                                 var sqlDevice = "DELETE from devices where device_id = '" + deviceId + "'";
                                 await sql.query(sqlDevice);
                             }
                         } else {
+                            console.log('dealer not same: Should delete device');
                             var deleteSql1 = `DELETE FROM usr_acc where device_id=${deviceCheckResponse[0].usr_device_id}`;
+                            console.log(deleteSql1);
                             await sql.query(deleteSql1)
                             var sqlDevice = "DELETE from devices where device_id = '" + deviceId + "'";
+                            console.log(sqlDevice);
                             await sql.query(sqlDevice);
 
                         }
@@ -1758,7 +1764,7 @@ exports.SMAppListV3 = async function (req, res) {
                 status: true,
                 list: apps
             }
-        } 
+        }
         // else {
         //     data = {
         //         status: true,
