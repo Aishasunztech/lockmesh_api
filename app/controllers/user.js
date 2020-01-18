@@ -359,7 +359,7 @@ exports.updateProfile = async function (req, res) {
 
     if (verify) {
 
-        sql.query('UPDATE dealers SET `dealer_name` = ? where `dealer_id` = ?', [req.body.name, req.body.dealerId], async function (error, rows, status) {
+        sql.query('UPDATE dealers SET `dealer_name` = ? ,`company_name` = ? ,`company_address` = ? ,`city` = ? ,`state` = ? ,`country` = ? , `postal_code` = ? , `tel_no` = ? ,`website` = ? where `dealer_id` = ?', [req.body.name, req.body.company_name, req.body.company_address, req.body.city, req.body.state, req.body.country, req.body.postal_code, req.body.tel_no, req.body.website, req.body.dealerId], async function (error, rows, status) {
 
             if (error) {
                 console.log(error);

@@ -6,7 +6,8 @@ var mime = require("mime");
 var XLSX = require("xlsx");
 var empty = require("is-empty");
 const axios = require("axios");
-var moment = require("moment-strftime");
+// var moment = require("moment-strftime");
+var moment = require('moment');
 var randomize = require("randomatic");
 var datetime = require("node-datetime");
 
@@ -78,8 +79,10 @@ exports.bulkDevicesHistory = async function (req, res) {
                         let servicesData = await device_helpers.getServicesData(user_acc_ids)
                         let servicesIds = servicesData.map(item => { return item.id })
                         let userAccServiceData = []
+                        let data_plans = []
                         if (servicesIds.length) {
                             userAccServiceData = await device_helpers.getUserAccServicesData(user_acc_ids, servicesIds)
+                            data_plans = await device_helpers.getDataPlans(servicesIds)
                         }
 
                         for (var i = 0; i < results.length; i++) {
@@ -130,6 +133,11 @@ exports.bulkDevicesHistory = async function (req, res) {
                             // if (chat_id) {
                             //     results[i].chat_id = chat_id.chat_id
                             // }
+
+                            let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                            results[0].sim_id_data_plan = sim_id_data_plan[0]
+                            let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                            results[0].sim_id2_data_plan = sim_id2_data_plan[0]
 
                             let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
                             if (lastOnline) {
@@ -531,8 +539,10 @@ exports.suspendBulkAccountDevices = async function (req, res) {
                         let servicesData = await device_helpers.getServicesData(resquery[0].id)
                         let servicesIds = servicesData.map(item => { return item.id })
                         let userAccServiceData = []
+                        let data_plans = []
                         if (servicesIds.length) {
                             userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
+                            data_plans = await device_helpers.getDataPlans(servicesIds)
                         }
                         resquery[0].sim_id = "N/A"
                         resquery[0].sim_id2 = "N/A"
@@ -569,6 +579,11 @@ exports.suspendBulkAccountDevices = async function (req, res) {
                                 }
                             })
                         }
+
+                        let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                        resquery[0].sim_id_data_plan = sim_id_data_plan[0]
+                        let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                        resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
 
                         resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
 
@@ -729,8 +744,10 @@ exports.activateBulkDevices = async function (req, res) {
                         let servicesData = await device_helpers.getServicesData(resquery[0].id);
                         let servicesIds = servicesData.map(item => { return item.id })
                         let userAccServiceData = []
+                        let data_plans = []
                         if (servicesIds.length) {
                             userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
+                            data_plans = await device_helpers.getDataPlans(servicesIds)
                         }
                         resquery[0].sim_id = "N/A"
                         resquery[0].sim_id2 = "N/A"
@@ -767,6 +784,12 @@ exports.activateBulkDevices = async function (req, res) {
                                 }
                             })
                         }
+
+                        let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                        resquery[0].sim_id_data_plan = sim_id_data_plan[0]
+                        let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                        resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
+
                         resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
                         let remainTermDays = "N/A"
 
@@ -1225,7 +1248,7 @@ exports.unlinkBulkDevices = async function (req, res) {
                         // console.log("device is offline")
                         offlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
                     }
-
+                    console.log("bulk unlink device databulk: ", device);
                     device_helpers.saveActionHistory(device, constants.DEVICE_UNLINKED);
 
                     try {
@@ -1242,6 +1265,7 @@ exports.unlinkBulkDevices = async function (req, res) {
                                         linkToWL: false,
                                         device_id: device.device_id
                                     };
+                                    console.log("for SA DATA is:: ", data);
                                     axios.put(
                                         app_constants.UPDATE_DEVICE_SUPERADMIN_URL,
                                         data,
@@ -1433,8 +1457,10 @@ exports.wipeBulkDevices = async function (req, res) {
                             let servicesData = await device_helpers.getServicesData(resquery[0].id);
                             let servicesIds = servicesData.map(item => { return item.id })
                             let userAccServiceData = []
+                            let data_plans = []
                             if (servicesIds.length) {
                                 userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
+                                data_plans = await device_helpers.getDataPlans(servicesIds)
                             }
                             resquery[0].sim_id = "N/A"
                             resquery[0].sim_id2 = "N/A"
@@ -1471,6 +1497,11 @@ exports.wipeBulkDevices = async function (req, res) {
                                     }
                                 })
                             }
+
+                            let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
+                            resquery[0].sim_id_data_plan = sim_id_data_plan[0]
+                            let sim_id2_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id2')
+                            resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
 
                             device_helpers.saveActionHistory(
                                 resquery[0],
@@ -1708,103 +1739,159 @@ exports.applyBulkPolicy = async function (req, res) {
 
 // Send Messages
 exports.sendBulkMsg = async function (req, res) {
-    console.log("req body ", req.body);
-    // return res.send({ status: true })
+    console.log("req body sendBulkMsg ==> ", req.body);
+    let device_ids = [];
+    let user_device_ids = [];
+
     try {
         var verify = req.decoded;
-        let allDevices = req.body.selectedDevices;
-        let txtMsg = req.body.txtMsg;
+        let allDevices = req.body.data.devices;
+        let dealerIds = req.body.data.dealer_ids;
+        let userIds = req.body.data.user_ids;
+        let txtMsg = req.body.data.msg ? req.body.data.msg : '';
+        let timer = req.body.data.timer ? req.body.data.timer : '';
+        let repeat = req.body.data.repeat ? req.body.data.repeat : ''; // daily, weekly, etc...
+        let dateTime = req.body.data.dateTime;
+        let weekDay = req.body.data.weekDay ? req.body.data.weekDay : 0;
+        let monthDate = req.body.data.monthDate ? req.body.data.monthDate : 0; // 1 - 31
+        let monthName = req.body.data.monthName ? req.body.data.monthName : 0; // for 12 months e.g February
+        let time = req.body.data.time;
+        let intervalTime = 0; // calculate for repeat (no need of interval time)
+        let dealerTZ = req.body.timezone;
 
-        if (verify && allDevices && allDevices.length && txtMsg) {
-            let loggedUserId = verify.user.id
+        allDevices.forEach((item) => {
+            device_ids.push(item.device_id);
+            user_device_ids.push(item.usr_device_id);
+        });
 
-            // let failedToApply = [];
-            let onlineDevices = [];
-            let offlineDevices = [];
+        let valid_conditions = true;
 
-            for (let device of allDevices) {
-                let isOnline = await device_helpers.isDeviceOnline(device.device_id);
-                if (isOnline) {
-                    socket_helpers.sendBulkMsgToDevice(sockets.baseIo, device.device_id, txtMsg);
-                    onlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
+        // Form data Validations
+        if (timer === "NOW") { // 01
+            dateTime = dealerTZ ? moment.tz(dealerTZ).tz(app_constants.TIME_ZONE).format(constants.TIMESTAMP_FORMAT) : moment().tz(app_constants.TIME_ZONE).format(constants.TIMESTAMP_FORMAT);
+            repeat = "NONE";
+        }
+        else if (timer === "DATE/TIME") { // 02
+            repeat = "NONE";
+            if (!dateTime) valid_conditions = false;
+        }
+        else if (timer === "REPEAT") { // 03
+            if (repeat === "DAILY") {
+                if (!time) {
+                    valid_conditions = false;
+                }
+                // intervalTime = 1440;
+            } else if (repeat === "WEEKLY") {
+                if (!time && !weekDay) {
+                    valid_conditions = false;
+                }
+                // intervalTime = 10080;
+            } else if (repeat === "MONTHLY" || repeat === "3 MONTHS" || repeat === "6 MONTHS") {
+                if (!time && !weekDay && !monthDate) {
+                    valid_conditions = false;
+                }
+                // if (repeat === "MONTHLY") intervalTime = 43829;
+                // if (repeat === "3 MONTHS") intervalTime = 131487;
+                // if (repeat === "6 MONTHS") intervalTime = 262975;
 
-                } else {
-                    offlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
+            } else if (repeat === "12 MONTHS") {
+                if (!time && !weekDay && !monthName) {
+                    valid_conditions = false;
+                }
+                // intervalTime = 525949;
+            }
+        }
+        else { // 04
+            valid_conditions = false;
+        }
+        // end validation process
+
+        if (verify && allDevices && allDevices.length && txtMsg && valid_conditions) {
+            let loggedUserId = verify.user.id;
+
+            let dataObj = {
+                action_by: loggedUserId,
+                device_ids: user_device_ids,
+                dealer_ids: dealerIds,
+                user_ids: userIds,
+                msg: txtMsg,
+                timer,
+                repeat,
+                dateTime,
+                weekDay,
+                monthDate,
+                monthName,
+                // time
+            }
+
+            let response = await device_helpers.saveBuklMsg(dataObj);
+            // console.log("response ", response);
+            let device_detail = await device_helpers.getCompleteDetailOfDevice(user_device_ids);
+
+            if (response.status) {
+                for (let device_id of device_ids) {
+                    var insertJobQueue = `INSERT INTO task_schedules (task_id, device_id, title, interval_status, interval_time, interval_description, next_schedule, week_day, month_day, month_name, action_by) 
+                    VALUES (${response.insertId}, '${device_id}','${txtMsg}','${timer}', ${intervalTime}, '${repeat}', '${dateTime}', ${weekDay}, ${monthDate}, ${monthName}, ${loggedUserId});`;
+                    // console.log("insertJobQueue ", insertJobQueue);
+                    let response_data = await sql.query(insertJobQueue);
                 }
 
-            }
+                //************************** update inter description text and date time value w.r.t dealer timezone  *************/ 
+                let msgData = response.responseData[0];
+                let duration = msgData.repeat_duration ? msgData.repeat_duration : "NONE";
 
-            let messageTxt = '';
-            let contentTxt = '';
+                if (msgData.timer_status === "NOW" || msgData.timer_status === "DATE/TIME") {
+                    duration = `One Time`
+                }
+                else if (msgData.timer_status === "REPEAT") {
+                    if (duration === "DAILY") {
+                        duration = `Everyday`
+                    }
+                    else if (duration === "WEEKLY") {
+                        duration = await helpers.getWeekDay(msgData.week_day)
+                    }
+                    else if (duration === "MONTHLY") {
+                        duration = `Every month on ${await helpers.checkValue(msgData.month_date)} date`
+                    }
+                    else if (duration === "3 MONTHS") {
+                        duration = `Every 3 months later on ${await helpers.checkValue(msgData.month_date)} date`
+                    }
+                    else if (duration === "6 MONTHS") {
+                        duration = `Every 6 months later on ${await helpers.checkValue(msgData.month_date)} date`
+                    }
+                    else if (duration === "12 MONTHS") {
+                        duration = `Every ${await helpers.getMonthName(msgData.month_name)} on ${await helpers.checkValue(msgData.month_date)} date`
+                    } else {
+                        duration = "N/A"
+                    }
+                } else {
+                    duration = "N/A"
+                }
 
-            // if (failedToApply.length) {
-            //     messageTxt = await helpers.convertToLang(req.translation[""], "Failed to Applied Policy on All Selected Devices . Please try again")
-            // }
-            // else 
-            if (offlineDevices.length) {
-                messageTxt = await helpers.convertToLang(req.translation[""], "Warning All Selected Devices Are Offline");
-                contentTxt = await helpers.convertToLang(req.translation[""], "Message will be Send Soon on all Selected Devices. Action will be performed when devices back online");
-            }
-            else if (onlineDevices.length) {
-                messageTxt = await helpers.convertToLang(req.translation[""], "Message successfully send on all selected devices")
-            }
+                let convertDateTime = msgData.date_time && msgData.date_time !== "N/A" && msgData.date_time !== "n/a" && msgData.date_time !== "0000-00-00 00:00:00" && dealerTZ ? moment.tz(msgData.date_time, app_constants.TIME_ZONE).tz(dealerTZ).format(constants.TIMESTAMP_FORMAT) : "N/A";
+                msgData["date_time"] = convertDateTime;
+                msgData["interval_description"] = duration;
+                // end to update msg data w.r.t dealer timezone
 
-            if (onlineDevices.length || offlineDevices.length) {
-
-                // get user_device_ids and string device ids of online and offline devices
-                let queue_dvc_ids = [];
-                let queue_usr_dvc_ids = [];
-                let pushed_dvc_ids = [];
-                let pushed_usr_dvc_ids = [];
-
-                let all_usr_dvc_ids = [];
-
-                offlineDevices.forEach(item => {
-                    queue_dvc_ids.push(item.device_id);
-                    queue_usr_dvc_ids.push(item.usr_device_id);
-                });
-
-                onlineDevices.forEach(item => {
-                    pushed_dvc_ids.push(item.device_id);
-                    pushed_usr_dvc_ids.push(item.usr_device_id);
-                });
-                all_usr_dvc_ids = [...queue_usr_dvc_ids, ...pushed_usr_dvc_ids];
-
-                req.body["device_ids"] = all_usr_dvc_ids;
-                req.body["action_by"] = loggedUserId;
-                req.body["msg"] = txtMsg;
-                // console.log('save bulk history')
-                device_helpers.saveBuklActionHistory(req.body, constants.BULK_SEND_MESSAGE, true);
-
+                // console.log("last inserted msg record: ", msgData);
                 data = {
                     status: true,
-                    online: onlineDevices.length ? true : false,
-                    offline: offlineDevices.length ? true : false,
-                    // failed: failedToApply.length ? true : false,
-                    msg: messageTxt,
-                    content: contentTxt,
-                    data: {
-                        failed_device_ids: [], // failedToApply,
-                        queue_device_ids: queue_dvc_ids,
-                        pushed_device_ids: pushed_dvc_ids,
-                    }
-                };
+                    msg: "Bulk message saved successfully",
+                    devices: device_detail ? JSON.stringify(device_detail) : '[]',
+                    lastMsg: msgData
+                }
             } else {
                 data = {
                     status: false,
-                    msg: 'Error while Processing'
+                    msg: "Failed to save bulk message"
                 }
             }
-            // console.log("response data is: ", data)
             res.send(data);
 
         } else {
             data = {
                 status: false,
-                msg: await helpers.convertToLang(
-                    req.translation[""],
-                    "Invalid Devices"
-                )
+                msg: "Invalid Data"
             };
             res.send(data);
             return;
@@ -1816,5 +1903,227 @@ exports.sendBulkMsg = async function (req, res) {
             status: false,
             msg: 'Error while Processing'
         })
+    }
+}
+
+// Update Messages
+exports.updateBulkMsg = async function (req, res) {
+    console.log("req body updateBulkMsg ==> ", req.body);
+    try {
+        var verify = req.decoded;
+        let updateId = req.body.id;
+        let txtMsg = req.body.msg ? req.body.msg : '';
+        let timer = req.body.timer_status ? req.body.timer_status : '';
+        let repeat = req.body.repeat_duration ? req.body.repeat_duration : ''; // daily, weekly, etc...
+        let dateTime = req.body.date_time && req.body.date_time !== "N/A" ? req.body.date_time : '';
+        let weekDay = req.body.week_day ? req.body.week_day : 0;
+        let monthDate = req.body.month_date ? req.body.month_date : 0; // 1 - 31
+        let monthName = req.body.month_name ? req.body.month_name : 0; // for 12 months
+        let time = req.body.time;
+        let intervalTime = 0; // calculate for repeat
+
+        let valid_conditions = true;
+
+        // Form data Validations
+        if (timer === "NOW") { // 01
+            repeat = "NONE";
+        }
+        else if (timer === "DATE/TIME") { // 02
+            repeat = "NONE";
+            if (!dateTime) valid_conditions = false;
+        }
+        else if (timer === "REPEAT") { // 03
+            console.log("at repeat")
+            if (repeat === "DAILY") {
+                console.log("at repeat daily", time, time ? true: false)
+                if (!time) {
+                    console.log("at repeat with time true")
+                    valid_conditions = false;
+                }
+                intervalTime = 1440;
+            } else if (repeat === "WEEKLY") {
+                if (!time && !weekDay) {
+                    valid_conditions = false;
+                }
+                intervalTime = 10080;
+            } else if (repeat === "MONTHLY" || repeat === "3 MONTHS" || repeat === "6 MONTHS") {
+                if (!time && !weekDay && !monthDate) {
+                    valid_conditions = false;
+                }
+                if (repeat === "MONTHLY") intervalTime = 43829;
+                if (repeat === "3 MONTHS") intervalTime = 131487;
+                if (repeat === "6 MONTHS") intervalTime = 262975;
+
+            } else if (repeat === "12 MONTHS") {
+                if (!time && !weekDay && !monthName) {
+                    valid_conditions = false;
+                }
+                intervalTime = 525949;
+            }
+        }
+        else { // 04
+            valid_conditions = false;
+        }
+        // end validation process
+
+        if (verify && txtMsg && valid_conditions) {
+            let loggedUserId = verify.user.id
+
+            let updateMsgQuery = `UPDATE bulk_messages SET msg='${txtMsg}', timer_status = '${timer}', repeat_duration='${repeat}',  date_time='${dateTime}', week_day=${weekDay}, month_date=${monthDate}, month_name= ${monthName} WHERE id = ${updateId}`
+            console.log("updateMsgQuery ", updateMsgQuery);
+            let result = await sql.query(updateMsgQuery);
+
+            if (result && result.affectedRows) {
+
+                // Update task Scheduling data
+                var updateJobQueue = `UPDATE task_schedules SET title = '${txtMsg}', interval_status = '${timer}', interval_time = ${intervalTime}, interval_description = '${repeat}', next_schedule = '${dateTime}', week_day = ${weekDay}, month_day = ${monthDate}, month_name = ${monthName} WHERE task_id = ${updateId} AND action_by = ${loggedUserId};`;
+                console.log("updateJobQueue ", updateJobQueue);
+                let response_data = await sql.query(updateJobQueue);
+
+                data = {
+                    status: true,
+                    msg: "Message Setting update Successfully."
+                }
+            } else {
+                data = {
+                    status: false,
+                    msg: "Failed to update message setting."
+                }
+            }
+            res.send(data);
+
+        } else {
+            data = {
+                status: false,
+                msg: "Invalid Data"
+            };
+            res.send(data);
+            return;
+        }
+
+    } catch (error) {
+        console.log(error)
+        res.send({
+            status: false,
+            msg: 'Error while Processing'
+        })
+    }
+}
+
+
+// get Bulk messages
+exports.getBulkMsgsList = async function (req, res) {
+    try {
+        console.log("req.body =======> ", req.body);
+        var verify = req.decoded;
+        let loggedUserId = verify.user.id;
+        let dealerTZ = req.body.timezone;
+      
+        if (verify) {
+
+            var selectQuery = `SELECT id, device_ids, repeat_duration, timer_status, msg, date_time, week_day, month_date, month_name, time, created_at FROM bulk_messages WHERE action_by = '${loggedUserId}' AND delete_status = 0 ORDER BY id DESC;`;
+            var result = await sql.query(selectQuery);
+            // console.log("result ", result)
+
+            if (result && result.length) {
+
+                for (let msgData of result) {
+
+                    // get devices list of bulk msgs
+                    let devicesList = "[]";
+                    let deviceIds = msgData.device_ids ? JSON.parse(msgData.device_ids) : [];
+                    // console.log("deviceIds before get detail: ", deviceIds);
+                    if (deviceIds && deviceIds.length) {
+                        let device_detail = await device_helpers.getCompleteDetailOfDevice(deviceIds);
+                        devicesList = JSON.stringify(device_detail);
+                    }
+
+                    let duration = msgData.repeat_duration ? msgData.repeat_duration : "NONE";
+
+                    // start set interval description w.r.t timer status
+                    if (msgData.timer_status === "NOW" || msgData.timer_status === "DATE/TIME") {
+                        duration = `One Time`
+                    }
+                    else if (msgData.timer_status === "REPEAT") {
+                        if (duration === "DAILY") {
+                            duration = `Everyday`
+                        }
+                        else if (duration === "WEEKLY") {
+                            duration = await helpers.getWeekDay(msgData.week_day)
+                        }
+                        else if (duration === "MONTHLY") {
+                            duration = `Every month on ${await helpers.checkValue(msgData.month_date)} date`
+                        }
+                        else if (duration === "3 MONTHS") {
+                            duration = `Every 3 months later on ${await helpers.checkValue(msgData.month_date)} date`
+                        }
+                        else if (duration === "6 MONTHS") {
+                            duration = `Every 6 months later on ${await helpers.checkValue(msgData.month_date)} date`
+                        }
+                        else if (duration === "12 MONTHS") {
+                            duration = `Every ${await helpers.getMonthName(msgData.month_name)} on ${await helpers.checkValue(msgData.month_date)} date`
+                        } else {
+                            duration = "N/A"
+                        }
+                    } else {
+                        duration = "N/A"
+                    }
+                    // end set interval description w.r.t timer status
+
+                    let convertDateTime = msgData.date_time && msgData.date_time !== "N/A" && msgData.date_time !== "n/a" && msgData.date_time !== "0000-00-00 00:00:00" && dealerTZ ? moment.tz(msgData.date_time, app_constants.TIME_ZONE).tz(dealerTZ).format(constants.TIMESTAMP_FORMAT) : "N/A";
+                    msgData["date_time"] = convertDateTime;
+                    msgData["interval_description"] = duration;
+                    msgData["devices"] = devicesList;
+                }
+
+                // console.log("final data: ", result);
+                res.send({
+                    status: true,
+                    data: result
+                });
+            } else {
+                res.send({ status: false });
+            }
+
+        }
+    } catch (err) {
+        console.log(err);
+        res.send({ status: false })
+    }
+}
+
+
+// delete Bulk message
+exports.deleteBulkMsg = async function (req, res) {
+    console.log("Api called: deleteBulkMsg");
+    try {
+
+        var verify = req.decoded;
+        let loggedUserId = verify.user.id;
+        let msgId = req.params.id;
+        console.log('at deleteBulkMsg: msgId', msgId)
+        if (verify && msgId) {
+
+            var selectQuery = `UPDATE bulk_messages SET delete_status = 1 WHERE id=${msgId};`;
+            var result = await sql.query(selectQuery);
+            // console.log("result ", result)
+
+            if (result && result.affectedRows) {
+
+                let deleteJobQueue = `DELETE FROM task_schedules WHERE task_id = ${msgId};`;
+                // console.log("delete api deleteJobQueue ", deleteJobQueue);
+                sql.query(deleteJobQueue);
+                res.send({
+                    status: true,
+                    msg: "Message Delete Successfully"
+                });
+            } else {
+                res.send({ status: false, msg: 'Failded to delete message' });
+            }
+
+        }
+    } catch (err) {
+        console.log(err);
+        res.send({ status: false, msg: 'Failded to delete message' })
     }
 }
