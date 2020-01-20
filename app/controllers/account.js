@@ -547,10 +547,11 @@ exports.getPGPEmails = async (req, res) => {
 
         let query = '';
         if (permission_ids.length) {
-            query = `SELECT * FROM pgp_emails WHERE used=0 AND delete_status = 0 AND domain_id IN (${permission_ids.join()})`;
+            query = `SELECT * FROM pgp_emails WHERE used=0 AND delete_status = '0' AND domain_id IN (${permission_ids.join()})`;
         }
         // query = `SELECT * FROM pgp_emails WHERE used=0`;
 
+        console.log("permission_ids ", permission_ids, "query ", query)
         if (query !== '') {
             let resp = await sql.query(query);
             res.send({
