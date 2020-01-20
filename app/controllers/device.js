@@ -6755,7 +6755,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
                         // console.log('query is ', deleteq)
                         let resp = await sql.query(deleteq)
                         if (resp.affectedRows) {
-                            await sql.query(`UPDATE usr_acc SET del_status = '1' WHERE id = ${device.user_acc_id}`)
+                            await sql.query(`UPDATE usr_acc SET del_status = '1' WHERE id = ${device.user_acc_id} AND unlink_status = 1`)
                             deletedDevices.push(device.id);
                         } else {
                             deleteError += 1;
