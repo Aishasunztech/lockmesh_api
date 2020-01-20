@@ -1039,13 +1039,19 @@ router.get("/login_history", async function (req, res) {
 
 		// if (verify.status !== undefined && verify.status == true) {
 		if (verify) {
+			let start = (req.query.start) ? req.query.start : 0;
+			let limit = (req.query.limit) ? req.query.limit : false;
+console.log("start ", start, "limit ", limit)
 			let id = verify.user.id;
 			let data = {};
-			let query =
-				"SELECT * from login_history where dealer_id = '" +
-				id +
-				"' AND type = 'token' order by created_at desc";
-			// console.log(query);
+
+			let limitQ = ' LIMIT 10';
+			if (limit) {
+				limitQ = ` LIMIT ${start}, ${limit}`
+			}
+
+			let query = `SELECT * FROM login_history WHERE dealer_id = '${id}' AND type = 'token' ORDER BY created_at DESC ${limitQ};`;
+			console.log(query);
 			sql.query(query, async function (err, result) {
 				if (err) {
 					console.log(err);
