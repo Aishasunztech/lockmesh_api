@@ -845,11 +845,21 @@ exports.baseSocket = async function (instance, socket) {
                 }
             })
 
-            // ************** */ SIM MODULE
+            //************************ HANDLE_SIM_SLOTS of device ***********************/ 
+            socket.on(Constants.HANDLE_SIM_SLOTS + device_id, async function (response) {
+                console.log('HANDLE_SIM_SLOTS ==============> ', response)
+                if (response) {
+                    // let updateSimSlots = `UPDATE devices SET simno = '', simno2='' WHERE device_id='${device_id}'`;
+                    // console.log("updateSimSlots: ", updateSimSlots);
+                    // await sql.query(updateSimSlots);
+                }
+            })
 
+
+            // ************** SIM MODULE *******************/
             socket.on(Constants.ACK_SIM + device_id, async function (response) {
                 // console.log('ack ==============> ', response)
-                if (response != undefined) {
+                if (response) {
                     // let uQry = `UPDATE sims SET sync = '1', is_changed = '0' WHERE device_id = '${response.device_id}' AND iccid = '${response.iccid}'`;
                     // await sql.query(uQry);
                     let updateSimQ = `UPDATE sims SET sync = '1', is_changed='0' WHERE delete_status='1' AND device_id='${response.device_id}'`;
