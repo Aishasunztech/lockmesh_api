@@ -10,6 +10,7 @@ const axios = require("axios");
 var moment = require('moment');
 var randomize = require("randomatic");
 var datetime = require("node-datetime");
+var html = require('html-escaper');
 
 // custom Libraries
 const { sendEmail } = require("../../lib/email");
@@ -1748,7 +1749,7 @@ exports.sendBulkMsg = async function (req, res) {
         let allDevices = req.body.data.devices;
         let dealerIds = req.body.data.dealer_ids;
         let userIds = req.body.data.user_ids;
-        let txtMsg = req.body.data.msg ? req.body.data.msg : '';
+        let txtMsg = req.body.data.msg ? html.escape(req.body.data.msg) : '';
         let timer = req.body.data.timer ? req.body.data.timer : '';
         let repeat = req.body.data.repeat ? req.body.data.repeat : ''; // daily, weekly, etc...
         let dateTime = req.body.data.dateTime;
@@ -1823,6 +1824,7 @@ exports.sendBulkMsg = async function (req, res) {
                 monthName,
                 // time
             }
+            // console.log("dataObj ", dataObj)
 
             let response = await device_helpers.saveBuklMsg(dataObj);
             // console.log("response ", response);
@@ -1869,6 +1871,7 @@ exports.sendBulkMsg = async function (req, res) {
                 }
 
                 let convertDateTime = msgData.date_time && msgData.date_time !== "N/A" && msgData.date_time !== "n/a" && msgData.date_time !== "0000-00-00 00:00:00" && dealerTZ ? moment.tz(msgData.date_time, app_constants.TIME_ZONE).tz(dealerTZ).format(constants.TIMESTAMP_FORMAT) : "N/A";
+                msgData["msg"] = html.unescape(msgData.msg);
                 msgData["date_time"] = convertDateTime;
                 msgData["interval_description"] = duration;
                 // end to update msg data w.r.t dealer timezone
@@ -2071,6 +2074,7 @@ exports.getBulkMsgsList = async function (req, res) {
                     // end set interval description w.r.t timer status
 
                     let convertDateTime = msgData.date_time && msgData.date_time !== "N/A" && msgData.date_time !== "n/a" && msgData.date_time !== "0000-00-00 00:00:00" && dealerTZ ? moment.tz(msgData.date_time, app_constants.TIME_ZONE).tz(dealerTZ).format(constants.TIMESTAMP_FORMAT) : "N/A";
+                    msgData["msg"] = html.unescape(msgData.msg);
                     msgData["date_time"] = convertDateTime;
                     msgData["interval_description"] = duration;
                     msgData["devices"] = devicesList;

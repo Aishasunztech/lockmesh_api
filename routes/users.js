@@ -1033,6 +1033,10 @@ router.post("/purchase_credits_CC", accountController.purchaseCredits_CC);
  */
 
 //GET logion history
+
+//**
+// @ Abaid: to get login history is not a good approach of using limit that run query every time also for previous data (fix later)
+//* */
 router.get("/login_history", async function (req, res) {
 	try {
 		var verify = req.decoded;
@@ -1041,7 +1045,7 @@ router.get("/login_history", async function (req, res) {
 		if (verify) {
 			let start = (req.query.start) ? req.query.start : 0;
 			let limit = (req.query.limit) ? req.query.limit : false;
-console.log("start ", start, "limit ", limit)
+			// console.log("start ", start, "limit ", limit)
 			let id = verify.user.id;
 			let data = {};
 
