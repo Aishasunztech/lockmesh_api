@@ -2,6 +2,7 @@
 var datetime = require('node-datetime');
 var moment = require('moment');
 var cron = require('node-cron');
+var html = require('html-escaper');
 
 // custom libraries
 const { sql } = require('../config/database');
@@ -177,7 +178,7 @@ cron.schedule('* * * * *', async () => { // '*/10 * * * * *' (after each 10 seco
                     sockets.baseIo,
                     results[i].device_id,
                     results[i].id,
-                    results[i].title,
+                    html.unescape(results[i].title),
                     app_constants.TIME_ZONE
                 );
             }
