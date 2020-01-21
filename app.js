@@ -31,8 +31,8 @@ stackify.start({
 });
 
 // cors enable
-app.options("*", cors());
-app.use(cors("*"));
+// app.options("*", cors());
+// app.use(cors("*"));
 
 // Stackify Exception Handler
 app.use(stackify.expressExceptionHandler);
