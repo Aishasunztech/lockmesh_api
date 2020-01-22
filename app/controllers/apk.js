@@ -437,8 +437,11 @@ exports.upload = async function (req, res) {
                 console.log(filePath);
                 let versionCode = await helpers.getAPKVersionCode(filePath);
                 console.log("version code: ", versionCode);
+                
+                let label = await helpers.getAPKLabel(filePath);
+                console.log(label)
 
-                if (versionCode) {
+                if (versionCode && label) {
                     versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
 
 
@@ -450,8 +453,6 @@ exports.upload = async function (req, res) {
                     versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                     console.log("Version Name: ", versionName);
 
-                    let label = await helpers.getAPKLabel(filePath);
-                    console.log(label)
                     label = label.toString().replace(/(\r\n|\n|\r)/gm, "");
                     console.log("label Name: ", label);
 

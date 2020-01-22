@@ -929,6 +929,7 @@ module.exports = {
         let pgp_email = body.pgp_email;
         let service = body.prevService
         let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
+        // console.log(prevPGP, prevSimId2, prevSimId, prevChatID);
         var expiry_date = moment(body.expiry_date).format("YYYY/MM/DD")
         var date_now = moment(new Date()).format('YYYY/MM/DD')
         // console.log(expiry_date, chat_id, pgp_email, sim_id, sim_id2, prevService);
@@ -1078,7 +1079,8 @@ module.exports = {
                     }
                 }
 
-                if (pgp_email != prevPGP && prevPGP != 'N/A') {
+
+                if (pgp_email && pgp_email !== 'N/A' && pgp_email != prevPGP) {
                     console.log("PGP change");
                     let updatePgpEmails =
                         'update pgp_emails set user_acc_id = "' +
@@ -1104,10 +1106,20 @@ module.exports = {
                             '"';
                         await sql.query(updatePrevPgp);
                     }
-                    sql.query(`UPDATE user_acc_services SET product_value = ${pgp_email} WHERE service_id= ${service_id} AND product_value = '${prevPGP}'`)
+                    let getPgp = "SELECT * FROM pgp_emails WHERE pgp_email = '" + pgp_email + "'"
+                    sql.query(getPgp, function (err, result) {
+                        if (result && result.length) {
+                            if (prevPGP === 'N/A') {
+                                let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].pgp_email}' , 'pgp_email' , '${start_date}')`
+                                sql.query(insertAccService)
+                            } else {
+                                sql.query(`UPDATE user_acc_services SET product_value = '${pgp_email}' , product_id = ${result[0].id} WHERE service_id= ${service_id} AND product_value = '${prevPGP}'`)
+                            }
+                        }
+                    })
 
                 }
-                if (chat_id != prevChatID && prevChatID != 'N/A') {
+                if (chat_id && chat_id !== 'N/A' && chat_id != prevChatID) {
                     console.log("Chat change");
                     let updateChatIds =
                         'update chat_ids set user_acc_id = "' +
@@ -1132,10 +1144,19 @@ module.exports = {
                             '"';
                         await sql.query(updatePrevChat);
                     }
-                    sql.query(`UPDATE user_acc_services SET product_value = ${chat_id} WHERE service_id= ${service_id} AND product_value = '${prevChatID}'`)
-
+                    let getChatID = "SELECT * FROM chat_ids WHERE chat_id = '" + chat_id + "'"
+                    sql.query(getChatID, function (err, result) {
+                        if (result && result.length) {
+                            if (prevChatID === 'N/A') {
+                                let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].chat_id}' , 'chat_id' , '${start_date}')`
+                                sql.query(insertAccService)
+                            } else {
+                                sql.query(`UPDATE user_acc_services SET product_value = '${chat_id}' WHERE service_id= ${service_id} AND product_value = '${prevChatID}'`)
+                            }
+                        }
+                    })
                 }
-                if (sim_id != prevSimId && prevSimId != 'N/A') {
+                if (sim_id && sim_id != 'N/A' && sim_id != prevSimId) {
                     console.log("sim change");
 
                     // console.log("sim id 2 change");
@@ -1149,7 +1170,7 @@ module.exports = {
                     //     '"';
                     sql.query(insertSimIds, function (err, result) {
                         if (result && result.insertId) {
-                            if (finalStatus != constants.DEVICE_PRE_ACTIVATION) {
+                            if (finalStatus != Constants.DEVICE_PRE_ACTIVATION) {
                                 general_helpers.updateSimStatus(sim_id, 'active')
                             }
                         }
@@ -1178,10 +1199,21 @@ module.exports = {
                             '"';
                         await sql.query(updatePrevSim);
                     }
-                    sql.query(`UPDATE user_acc_services SET product_value = ${sim_id} WHERE service_id= ${service_id} AND product_value = '${prevSimId}'`)
+                    let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id + "'"
+                    sql.query(getsimID, function (err, result) {
+                        if (result && result.length) {
+                            if (prevSimId === 'N/A') {
+                                let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].sim_id}' , 'sim_id' , '${start_date}')`
+                                sql.query(insertAccService)
+                            } else {
+                                sql.query(`UPDATE user_acc_services SET product_value = '${sim_id}' WHERE service_id= ${service_id} AND product_value = '${prevSimId}'`)
+                            }
+                        }
+                    })
+
 
                 }
-                if (sim_id2 != prevSimId2 && prevSimId2 != 'N/A') {
+                if (sim_id2 && sim_id2 != 'N/A' && sim_id2 != prevSimId2) {
                     console.log("sim2 change");
 
                     let insertSimIds = `INSERT INTO sim_ids (sim_id , user_acc_id , start_date , dealer_id , used ,uploaded_by , uploaded_by_id) VALUES ('${sim_id2}' , ${usr_acc_id} , '${date_now}' , ${dealer_id} , 1 , '${verify.user.user_type}' , '${verify.user.id}')`;
@@ -1216,21 +1248,23 @@ module.exports = {
                             '"';
                         await sql.query(updatePrevSim);
                     }
-                    sql.query(`UPDATE user_acc_services SET product_value = ${sim_id2} WHERE service_id= ${service_id} AND product_value = '${prevSimId2}'`)
-
+                    let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id2 + "'"
+                    sql.query(getsimID, function (err, result) {
+                        if (result && result.length) {
+                            if (prevSimId2 === 'N/A') {
+                                let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].sim_id}' , 'sim_id2' , '${start_date}')`
+                                sql.query(insertAccService)
+                            } else {
+                                sql.query(`UPDATE user_acc_services SET product_value = '${sim_id2}' WHERE service_id= ${service_id} AND product_value = '${prevSimId2}'`)
+                            }
+                        }
+                    })
                 }
-
-
-
-
-
-
 
                 // console.log(device_id);
                 let deviceData = await require('./general_helper').getAllRecordbyUserAccId(usr_acc_id)
                 // console.log(deviceData);
                 data.data = [deviceData]
-                // console.log(data);
             }
         }
         // console.log(data)

@@ -28,27 +28,28 @@ module.exports = {
 
 		switch (key) {
 			case 1:
-				return "Every Monday";
-			case 2:
-				return "Every Tuesday";
-			case 3:
-				return "Every Wednesday";
-			case 4:
-				return "Every Thursday";
-			case 5:
-				return "Every Friday";
-			case 6:
-				return "Every Saturday";
-			case 7:
 				return "Every Sunday";
+			case 2:
+				return "Every Monday";
+			case 3:
+				return "Every Tuesday";
+			case 4:
+				return "Every Wednesday";
+			case 5:
+				return "Every Thursday";
+			case 6:
+				return "Every Friday";
+			case 7:
+				return "Every Saturday";
+			
 	
 			default:
 				return "N/A";
 		}
 	},
-	
+
 	getMonthName: async function (key) {
-	
+
 		switch (key) {
 			case 1:
 				return "January";
@@ -74,7 +75,7 @@ module.exports = {
 				return "November";
 			case 12:
 				return "December";
-	
+
 			default:
 				return "N/A";
 		}
@@ -700,8 +701,10 @@ module.exports = {
 			let servicesData = await device_helpers.getServicesData(results[0].id);
 			let servicesIds = servicesData.map(item => { return item.id })
 			let userAccServiceData = []
+			let dataPlans = []
 			if (servicesIds.length) {
 				userAccServiceData = await device_helpers.getUserAccServicesData(results[0].id, servicesIds.join())
+				dataPlans = await device_helpers.getDataPlans(servicesIds)
 			}
 
 			results[0].finalStatus = device_helpers.checkStatus(results[0]);
@@ -738,7 +741,7 @@ module.exports = {
 
 			let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
 			results[0].sim_id_data_plan = sim_id_data_plan[0]
-			
+
 			let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
 			results[0].sim_id2_data_plan = sim_id2_data_plan[0]
 
@@ -1127,7 +1130,7 @@ module.exports = {
 		let results = await sql.query(
 			"select devices.*  ," +
 			usr_acc_query_text +
-			', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.user_id = "' +
+			', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.user_id = "' +
 			userID +
 			'"'
 		);
@@ -1736,6 +1739,7 @@ module.exports = {
 				sa_pgp_prices[item.price_term] = Number(item.unit_price)
 			}
 		})
+
 		if (loggedDealerType === Constants.DEALER) {
 			if (packagesData.length) {
 				packagesData.map((item) => {
@@ -1772,6 +1776,7 @@ module.exports = {
 									pkg.pkg_price = pkg.pkg_price - Math.ceil((pkg.pkg_price * discount))
 									sa_total_price = sa_total_price - Math.ceil((sa_total_price * discount))
 								}
+								sa_total_price = isNaN(sa_total_price) ? 0 : sa_total_price
 								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id ,item_id ,  item_data, item_term, item_type, item_sale_price, item_admin_cost,status , retail_price) VALUES(${user_acc_id} , ${service_id}, ${pkg.id}, '${JSON.stringify(pkg)}','${item.pkg_term}' ,'package', ${pkg.pkg_price} , ${sa_total_price} , 'delivered' , '${pkg.retail_price}')`)
 							}
 						})
@@ -1861,6 +1866,7 @@ module.exports = {
 										packagesData[i].pkg_price = packagesData[i].pkg_price - Math.ceil((packagesData[i].pkg_price * discount))
 										adminPrice = adminPrice - (adminPrice * discount)
 									}
+									adminPrice = isNaN(adminPrice) ? 0 : adminPrice
 									sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term,item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package',' ${pkg.pkg_term}', ${pkg.pkg_price} ,${packagesData[i].pkg_price} , ${adminPrice} , 'delivered')`)
 								} else {
 									if (pay_now) {
@@ -1896,6 +1902,9 @@ module.exports = {
 									sa_total_price = sa_total_price - Math.ceil((sa_total_price * discount))
 									adminPrice = adminPrice - Math.ceil((adminPrice * discount))
 								}
+								sa_total_price = isNaN(sa_total_price) ? 0 : sa_total_price
+								adminPrice = isNaN(adminPrice) ? 0 : adminPrice
+
 								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package', '${pkg.pkg_term}', ${pkg.pkg_price} ,${sa_total_price} , ${adminPrice} , 'delivered')`)
 							}
 						})
@@ -1931,6 +1940,10 @@ module.exports = {
 									sa_total_price = sa_total_price - Math.ceil((sa_total_price * discount))
 									admin_total_price = admin_total_price - Math.ceil((admin_total_price * discount))
 								}
+
+								sa_total_price = isNaN(sa_total_price) ? 0 : sa_total_price
+								admin_total_price = isNaN(admin_total_price) ? 0 : admin_total_price
+
 								sql.query(`INSERT INTO services_sale (user_acc_id,service_data_id , item_id, item_data, item_type, item_term, item_sale_price, item_admin_cost, item_dealer_cost,status) VALUES(${user_acc_id} , ${service_id}, ${pkg.id},'${JSON.stringify(pkg)}', 'package', '${pkg.pkg_term}', ${pkg.pkg_price} ,${sa_total_price} , ${admin_total_price} , 'delivered')`)
 							}
 						})
@@ -2401,4 +2414,17 @@ module.exports = {
 		})
 
 	},
+
+	/**
+	 * @author Usman Hafeez
+	 * @section expireDealerLogin
+	 */
+
+	expireDealerLogin: async function (dealerId) {
+		if(dealerId){
+			let loginQ = `UPDATE login_history SET status=0 WHERE dealer_id=${dealerId}`;
+			await sql.query(loginQ);
+		}
+	},
+	
 }

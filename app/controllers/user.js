@@ -246,6 +246,8 @@ exports.editUser = async function (req, res) {
                         'Email : ' + userEmail + '<br> '
                     sendEmail("User info Changed Successfully", html, verify.user.email)
                     sendEmail("User Info Changed Successfully", html, userEmail)
+                    let updateDeviceEmails = `UPDATE usr_acc SET account_email = '${userEmail}' , account_name = '${userName}'  WHERE user_id = '${user_id}'`
+                    sql.query(updateDeviceEmails)
                 }
 
                 //res.send("Email has been sent successfully");

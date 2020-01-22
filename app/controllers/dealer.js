@@ -158,7 +158,7 @@ exports.getAllToAllDealers = async function (req, res) {
                 });
                 return;
             }
-            console.log(results)
+            // console.log(results)
             var data = [];
 
             for (var i = 0; i < results.length; i++) {
@@ -185,11 +185,30 @@ exports.getAllToAllDealers = async function (req, res) {
                     website: results[i].website,
                     timezone: results[i].timezone
                 };
-
                 data.push(dt);
             }
             res.send(data);
             return;
+        });
+    }
+};
+
+exports.getAdmin = async function(req, res){
+    var verify = req.decoded;
+    if(verify){
+        sql.query(`SELECT ${dealer_query_text} FROM dealers WHERE type = 1 LIMIT 1`, async function(err, data){
+            if(err){
+                console.log(err);
+                res.send({
+                    status: false,
+                    msg: err
+                });
+                return;
+            } else {
+                console.log(data);
+                res.send(data[0]);
+                return;
+            }
         });
     }
 };
@@ -843,6 +862,9 @@ exports.undoDealer = async function (req, res) {
 
 }
 
+/**
+ * @description need to implement check who is suspending which one dealer weather He is allowed or not
+ */
 exports.suspendDealer = async function (req, res) {
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
@@ -853,9 +875,17 @@ exports.suspendDealer = async function (req, res) {
         if (!empty(dealer_id)) {
 
             //suspend dealer
-            var qury = "UPDATE dealers set account_status = 'suspended' where dealer_id = '" + dealer_id + "'";
+            var qury = `UPDATE dealers set account_status = 'suspended' where dealer_id = '${dealer_id}'`;
 
             sql.query(qury, async function (error, row) {
+                if (error) {
+                    data = {
+                        status: false,
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_NOT_SUSP], "Dealer not suspended"), // Dealer not suspended.                    
+                    };
+                    return res.send(data);
+                }
+
                 //suspend sub dealer                                                                                                                 
                 // var qury1 = "UPDATE dealers set account_status = 'suspended' where connected_dealer = '" + dealer_id + "'";
                 // var rslt = await sql.query(qury1);
@@ -869,7 +899,9 @@ exports.suspendDealer = async function (req, res) {
                 //     };
                 //     res.send(data);
                 // } else 
+
                 if (row.affectedRows != 0) {
+                    await general_helpers.expireDealerLogin(dealer_id);
                     data = {
                         status: true,
                         msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_SUSP_SUCC], "Dealer suspended successfully"), // Dealer suspended successfully.
@@ -882,8 +914,7 @@ exports.suspendDealer = async function (req, res) {
                         status: false,
                         msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_NOT_SUSP], "Dealer not suspended"), // Dealer not suspended.                    
                     };
-                    res.send(data);
-                    return;
+                    return res.send(data);
                 }
             });
 
@@ -1005,16 +1036,21 @@ exports.resetPwd = async function (req, res) {
 
                 sendEmail(subject, message, email, async function (errors, response) {
                     if (errors) {
-                        res.send("Email could not sent due to error: " + errors);
+                        res.send({
+                            status: false,
+                            msg: "ERROR: Email could not sent."
+                        });
                         return;
                     } else {
 
                         var sq = "update dealers set password = '" + enc_pwd + "' where dealer_id = '" + dealer_id + "'";
                         sql.query(sq, async function (error, rows) {
-
-
                             if (error) {
                                 console.log(error);
+                                res.send({
+                                    status: false,
+                                    msg: "ERROR: Internal Server Error."
+                                });
                             }
 
                             if (rows.affectedRows == 0) {
@@ -1026,7 +1062,6 @@ exports.resetPwd = async function (req, res) {
                                 return;
                             } else {
                                 data = {
-
                                     "status": true,
                                     "msg": await general_helpers.convertToLang(req.translation[MsgConstants.PASS_CHANGE_SUCC], "Password changed successfully.Please check your email"), // Password changed successfully.Please check your email.
                                 };
@@ -1045,10 +1080,7 @@ exports.resetPwd = async function (req, res) {
                 res.send(data);
                 return;
             }
-
-
         } else {
-
             res.json({
                 status: false,
                 "msg": await general_helpers.convertToLang(req.translation[MsgConstants.ENTER_VALID_DETAIL], "Please enter valid details"), // Invalid details"
@@ -1944,7 +1976,6 @@ exports.saveDropDown = async function (req, res) {
                         status: false,
                         msg: await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_NOT_UP], "Items Not Updated"), // Items Not Updated.',
                     };
-
                 }
                 return res.send(data);
             });

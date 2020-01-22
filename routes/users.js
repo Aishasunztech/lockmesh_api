@@ -400,6 +400,7 @@ router.get('/get_dealer_list', dealerController.getDealerForSA);
 /*Get dealers*/
 router.get("/dealers/:pageName", dealerController.getDealers);
 router.get("/get-all-dealers", dealerController.getAllToAllDealers);
+router.get("/get-admin", dealerController.getAdmin);
 
 /**
  * @route POST /users/add/dealer
@@ -1032,19 +1033,29 @@ router.post("/purchase_credits_CC", accountController.purchaseCredits_CC);
  */
 
 //GET logion history
+
+//**
+// @ Abaid: to get login history is not a good approach of using limit that run query every time also for previous data (fix later)
+//* */
 router.get("/login_history", async function (req, res) {
 	try {
 		var verify = req.decoded;
 
 		// if (verify.status !== undefined && verify.status == true) {
 		if (verify) {
+			let start = (req.query.start) ? req.query.start : 0;
+			let limit = (req.query.limit) ? req.query.limit : false;
+			// console.log("start ", start, "limit ", limit)
 			let id = verify.user.id;
 			let data = {};
-			let query =
-				"SELECT * from login_history where dealer_id = '" +
-				id +
-				"' AND type = 'token' order by created_at desc";
-			// console.log(query);
+
+			let limitQ = ' LIMIT 10';
+			if (limit) {
+				limitQ = ` LIMIT ${start}, ${limit}`
+			}
+
+			let query = `SELECT * FROM login_history WHERE dealer_id = '${id}' AND type = 'token' ORDER BY created_at DESC ${limitQ};`;
+			console.log(query);
 			sql.query(query, async function (err, result) {
 				if (err) {
 					console.log(err);
@@ -1440,6 +1451,8 @@ router.get('/get-domains', accountController.getDomains);
 router.post('/add-domain', accountController.addDomain);
 
 router.put('/edit-domain', accountController.editDomain);
+
+router.put('/delete-domain', accountController.deleteDomain);
 
 /**
  * @route POST /users/dealer-permissions/:permissionType
