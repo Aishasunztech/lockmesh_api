@@ -1914,21 +1914,23 @@ exports.updateBulkMsg = async function (req, res) {
     console.log("req body updateBulkMsg ==> ", req.body);
     try {
         var verify = req.decoded;
-        let updateId = req.body.id;
-        let txtMsg = req.body.msg ? req.body.msg : '';
-        let timer = req.body.timer_status ? req.body.timer_status : '';
-        let repeat = req.body.repeat_duration ? req.body.repeat_duration : ''; // daily, weekly, etc...
-        let dateTime = req.body.date_time && req.body.date_time !== "N/A" ? req.body.date_time : '';
-        let weekDay = req.body.week_day ? req.body.week_day : 0;
-        let monthDate = req.body.month_date ? req.body.month_date : 0; // 1 - 31
-        let monthName = req.body.month_name ? req.body.month_name : 0; // for 12 months
-        let time = req.body.time;
+        let updateId = req.body.data.id;
+        let txtMsg = req.body.data.msg ? req.body.data.msg : '';
+        let timer = req.body.data.timer_status ? req.body.data.timer_status : '';
+        let repeat = req.body.data.repeat_duration ? req.body.data.repeat_duration : ''; // daily, weekly, etc...
+        let dateTime = req.body.data.date_time && req.body.data.date_time !== "N/A" ? req.body.data.date_time : '';
+        let weekDay = req.body.data.week_day ? req.body.data.week_day : 0;
+        let monthDate = req.body.data.month_date ? req.body.data.month_date : 0; // 1 - 31
+        let monthName = req.body.data.month_name ? req.body.data.month_name : 0; // for 12 months
+        let time = req.body.data.time;
         let intervalTime = 0; // calculate for repeat
+        let dealerTZ = req.body.timezone;
 
         let valid_conditions = true;
 
         // Form data Validations
         if (timer === "NOW") { // 01
+            dateTime = dealerTZ ? moment.tz(dealerTZ).tz(app_constants.TIME_ZONE).format(constants.TIMESTAMP_FORMAT) : moment().tz(app_constants.TIME_ZONE).format(constants.TIMESTAMP_FORMAT);
             repeat = "NONE";
         }
         else if (timer === "DATE/TIME") { // 02
@@ -1936,32 +1938,32 @@ exports.updateBulkMsg = async function (req, res) {
             if (!dateTime) valid_conditions = false;
         }
         else if (timer === "REPEAT") { // 03
-            console.log("at repeat")
+            // console.log("at repeat")
             if (repeat === "DAILY") {
-                console.log("at repeat daily", time, time ? true: false)
+                // console.log("at repeat daily", time, time ? true: false)
                 if (!time) {
-                    console.log("at repeat with time true")
+                    // console.log("at repeat with time true")
                     valid_conditions = false;
                 }
-                intervalTime = 1440;
+                // intervalTime = 1440;
             } else if (repeat === "WEEKLY") {
                 if (!time && !weekDay) {
                     valid_conditions = false;
                 }
-                intervalTime = 10080;
+                // intervalTime = 10080;
             } else if (repeat === "MONTHLY" || repeat === "3 MONTHS" || repeat === "6 MONTHS") {
                 if (!time && !weekDay && !monthDate) {
                     valid_conditions = false;
                 }
-                if (repeat === "MONTHLY") intervalTime = 43829;
-                if (repeat === "3 MONTHS") intervalTime = 131487;
-                if (repeat === "6 MONTHS") intervalTime = 262975;
+                // if (repeat === "MONTHLY") intervalTime = 43829;
+                // if (repeat === "3 MONTHS") intervalTime = 131487;
+                // if (repeat === "6 MONTHS") intervalTime = 262975;
 
             } else if (repeat === "12 MONTHS") {
                 if (!time && !weekDay && !monthName) {
                     valid_conditions = false;
                 }
-                intervalTime = 525949;
+                // intervalTime = 525949;
             }
         }
         else { // 04
@@ -1979,7 +1981,7 @@ exports.updateBulkMsg = async function (req, res) {
             if (result && result.affectedRows) {
 
                 // Update task Scheduling data
-                var updateJobQueue = `UPDATE task_schedules SET title = '${txtMsg}', interval_status = '${timer}', interval_time = ${intervalTime}, interval_description = '${repeat}', next_schedule = '${dateTime}', week_day = ${weekDay}, month_day = ${monthDate}, month_name = ${monthName} WHERE task_id = ${updateId} AND action_by = ${loggedUserId};`;
+                var updateJobQueue = `UPDATE task_schedules SET title = '${txtMsg}', interval_status = '${timer}', interval_time = ${intervalTime}, interval_description = '${repeat}', next_schedule = '${dateTime}', week_day = ${weekDay}, month_day = ${monthDate}, month_name = ${monthName} WHERE task_id = ${updateId} AND action_by = ${loggedUserId} AND status = 'NEW';`;
                 console.log("updateJobQueue ", updateJobQueue);
                 let response_data = await sql.query(updateJobQueue);
 

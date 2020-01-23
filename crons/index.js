@@ -140,7 +140,7 @@ cron.schedule('* * * * *', async () => { // '*/10 * * * * *' (after each 10 seco
     // var getMsgQueue = `SELECT * FROM task_schedules WHERE ((status = 'NEW' OR status = 'FAILED' OR status = 'IN-PROCESS' OR status = 'SUCCESS') AND next_schedule <= '${currentTime}');`;
     let currentTime = moment().tz(app_constants.TIME_ZONE).format(constants.TIMESTAMP_FORMAT_NOT_SEC);
     var getMsgQueue = `SELECT *, DATE_FORMAT(\`next_schedule\`, '%Y-%m-%d %H:%i') AS \`next_schedule_format\` FROM task_schedules WHERE (status = 'NEW' OR status = 'IN-PROCESS') having next_schedule_format <= '${currentTime}';`;
-    console.log("getMsgQueue ", getMsgQueue);
+    // console.log("getMsgQueue ", getMsgQueue);
     var results = await sql.query(getMsgQueue);
     // console.log("results ", results);
 
