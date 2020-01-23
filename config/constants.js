@@ -12,7 +12,8 @@ const authToken = '8f09f2ebc98338bff27e0ac73ea71a23';
 let twilioClient = require('twilio')(accountSid, authToken);
 
 // set default utc-1 timezone for testing
-let TIME_ZONE = "Europe/London"; // "Asia/Karachi";
+let TIME_ZONE =  "Europe/London"; // "Asia/Karachi";
+let TIME_ZONE_OFFSET = '+0:00';
 
 // Database
 let DB_HOST = "localhost";
@@ -182,6 +183,7 @@ module.exports = {
 	APP_TITLE: APP_TITLE,
 	APP_ENV: APP_ENV,
 	TIME_ZONE: TIME_ZONE,
+	TIME_ZONE_OFFSET: TIME_ZONE_OFFSET,
 	HOST: URL,
 	PORT: "",
 	SECRET: "kepitsecretwithauth!@#",
