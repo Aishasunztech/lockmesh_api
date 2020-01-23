@@ -3819,7 +3819,7 @@ exports.cancelExtendedServices = async function (req, res) {
                             update_credits_query = 'update financial_account_balance set credits = credits + ' + transection_record_data[0].credits + ' where dealer_id ="' + dealer_id + '"';
                             await sql.query(update_credits_query);
 
-                            let update_profits_transections = `UPDATE financial_account_transections SET status = 'cancelled' WHERE transection_data LIKE '%transection_type":"profit","service_id": ${service.id}% ' user_dvc_acc_id = ${user_acc_id} AND status = 'holding' AND type = 'services'`
+                            let update_profits_transections = `UPDATE financial_account_transections SET status = 'cancelled' WHERE transection_data LIKE '%transection_type":"profit","service_id": ${service.id}%' AND user_dvc_acc_id = ${user_acc_id} AND status = 'holding' AND type = 'services'`
                             await sql.query(update_profits_transections)
 
                         } else {
