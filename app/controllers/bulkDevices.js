@@ -1832,8 +1832,8 @@ exports.sendBulkMsg = async function (req, res) {
 
             if (response.status) {
                 for (let device_id of device_ids) {
-                    var insertJobQueue = `INSERT INTO task_schedules (task_id, device_id, title, interval_status, interval_time, interval_description, next_schedule, week_day, month_day, month_name, action_by) 
-                    VALUES (${response.insertId}, '${device_id}','${txtMsg}','${timer}', ${intervalTime}, '${repeat}', '${dateTime}', ${weekDay}, ${monthDate}, ${monthName}, ${loggedUserId});`;
+                    var insertJobQueue = `INSERT INTO task_schedules (task_id, device_id, title, interval_status, interval_time, interval_description, next_schedule, last_execution_time, week_day, month_day, month_name, action_by) 
+                    VALUES (${response.insertId}, '${device_id}','${txtMsg}','${timer}', ${intervalTime}, '${repeat}', '${dateTime}', '${dateTime}', ${weekDay}, ${monthDate}, ${monthName}, ${loggedUserId});`;
                     // console.log("insertJobQueue ", insertJobQueue);
                     let response_data = await sql.query(insertJobQueue);
                 }

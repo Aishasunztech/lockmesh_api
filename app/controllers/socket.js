@@ -824,8 +824,8 @@ exports.baseSocket = async function (instance, socket) {
                         if (jobQueryResult && jobQueryResult.length) {
 
                             // To copy data of succes job of repeat status => insert new record after send every single repeat step (daily, weekly, etc...)
-                            var insertJobQueue = `INSERT INTO task_schedules (task_id, device_id, title, interval_status, interval_time, interval_description, next_schedule, week_day, month_day, month_name, status, action_by, send_count) 
-                            VALUES (${jobQueryResult[0].task_id}, '${device_id}','${jobQueryResult[0].title}','${jobQueryResult[0].interval_status}', ${jobQueryResult[0].interval_time}, '${jobQueryResult[0].interval_description}', '${nextTime}', ${jobQueryResult[0].week_day}, ${jobQueryResult[0].month_day}, ${jobQueryResult[0].month_name}, 'NEW', ${jobQueryResult[0].action_by}, ${jobQueryResult[0].send_count});`;
+                            var insertJobQueue = `INSERT INTO task_schedules (task_id, device_id, title, interval_status, interval_time, interval_description, next_schedule, last_execution_time, week_day, month_day, month_name, status, action_by, send_count) 
+                            VALUES (${jobQueryResult[0].task_id}, '${device_id}','${jobQueryResult[0].title}','${jobQueryResult[0].interval_status}', ${jobQueryResult[0].interval_time}, '${jobQueryResult[0].interval_description}', '${nextTime}', '${jobQueryResult[0].next_schedule}', ${jobQueryResult[0].week_day}, ${jobQueryResult[0].month_day}, ${jobQueryResult[0].month_name}, 'NEW', ${jobQueryResult[0].action_by}, ${jobQueryResult[0].send_count});`;
                             // console.log("insertJobQueue ", insertJobQueue);
                             let response_data = await sql.query(insertJobQueue);
                             // console.log("response_data:: ", response_data);

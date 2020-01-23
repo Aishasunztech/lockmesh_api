@@ -140,7 +140,7 @@ cron.schedule('* * * * *', async () => { // '*/10 * * * * *' (after each 10 seco
     // var getMsgQueue = `SELECT * FROM task_schedules WHERE ((status = 'NEW' OR status = 'FAILED' OR status = 'IN-PROCESS' OR status = 'SUCCESS') AND next_schedule <= '${currentTime}');`;
     let currentTime = moment().tz(app_constants.TIME_ZONE).format(constants.TIMESTAMP_FORMAT_NOT_SEC);
     var getMsgQueue = `SELECT *, DATE_FORMAT(\`next_schedule\`, '%Y-%m-%d %H:%i') AS \`next_schedule_format\` FROM task_schedules WHERE (status = 'NEW' OR status = 'IN-PROCESS') having next_schedule_format <= '${currentTime}';`;
-    // console.log("getMsgQueue ", getMsgQueue);
+    console.log("getMsgQueue ", getMsgQueue);
     var results = await sql.query(getMsgQueue);
     // console.log("results ", results);
 
@@ -165,7 +165,7 @@ cron.schedule('* * * * *', async () => { // '*/10 * * * * *' (after each 10 seco
             let updateMsgScheduleStatus = '';
 
             // when same msg wih same job id send to socket 3 times then status of this job will be failed and not send again for now but will handle it later
-            if (sendCount && sendCount > 3) {
+            if (sendCount && sendCount > 3 && results[i].status === 'IN-PROCESS') {
                 console.log('set failed to send');
                 updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'FAILED' WHERE id=${results[i].id};`;
             }
