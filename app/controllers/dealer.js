@@ -1977,7 +1977,6 @@ exports.saveDropDown = async function (req, res) {
                         status: false,
                         msg: await general_helpers.convertToLang(req.translation[MsgConstants.ITEMS_NOT_UP], "Items Not Updated"), // Items Not Updated.',
                     };
-
                 }
                 return res.send(data);
             });

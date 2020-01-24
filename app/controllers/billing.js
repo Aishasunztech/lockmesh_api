@@ -2114,10 +2114,10 @@ exports.getCancelServiceRequests = async function (req, res) {
                     let serviceRemainingDays = requestExpiryDate.diff(dateNow, 'days') + 1
                     let totalDays = requestExpiryDate.diff(requestStartDate, 'days')
                     let creditsToRefund = Math.floor((preTotalPrice / totalDays) * serviceRemainingDays)
-                    let service_term = requestExpiryDate.diff(requestStartDate, 'month', true)
+                    // let service_term = requestExpiryDate.diff(requestStartDate, 'month', true)
                     request.service_remaining_days = serviceRemainingDays
                     request.credits_to_refund = creditsToRefund
-                    request.service_term = service_term
+                    // request.service_term = service_term
                 })
                 return res.send({
                     status: true,

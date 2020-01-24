@@ -192,7 +192,10 @@ exports.checkUniquePgp = async function (req, res) {
     if (verify) {
         let pgp_email = req.body.pgp_email
         if (helpers.validateEmail(pgp_email)) {
-            let checkExisted = await sql.query(`SELECT * FROM pgp_emails WHERE pgp_email = '${pgp_email}'`)
+            console.log('pgp_email.toUpperCase(): ', pgp_email.toLowerCase());
+            let checkExistingEmailQuery = `SELECT * FROM pgp_emails WHERE LOWER(pgp_email) = '${pgp_email.toLowerCase()}'`;
+            console.log('checkExistingEmailQuery:', checkExistingEmailQuery);
+            let checkExisted = await sql.query(checkExistingEmailQuery)
             if (checkExisted && checkExisted.length) {
                 res.send({
                     status: false,

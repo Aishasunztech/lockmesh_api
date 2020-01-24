@@ -19,10 +19,14 @@ const sqlPool = mysql.createPool({
     password: constants.DB_PASSWORD,
     database: constants.DB_NAME,
 
+    // timezone: 'utc',// 'UTC+0', // constants.TIME_ZONE,
     supportBigNumbers: true,
     bigNumberStrings: true,
     dateStrings: true
 });
+
+sqlPool.query(`SET time_zone = '${constants.TIME_ZONE_OFFSET}'`); // '+0:00'
+sqlPool.query(`SET @@global.time_zone = '${constants.TIME_ZONE_OFFSET}'`); // '+0:00'
 
 const DBEvents = new MySQLEvents(sqlPool, {
     startAtEnd: true,

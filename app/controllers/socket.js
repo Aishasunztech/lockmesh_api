@@ -235,9 +235,9 @@ exports.baseSocket = async function (instance, socket) {
 
                     // added condition if device is not synced run the query of sync
 
-                    if (!is_sync) {
-                        await device_helpers.deviceSynced(device_id);
-                    }
+                    await device_helpers.deviceSynced(device_id);
+                    // if (!is_sync) {
+                    // }
 
                     socket.emit("get_sync_status_" + device_id, {
                         device_id: device_id,
@@ -824,8 +824,8 @@ exports.baseSocket = async function (instance, socket) {
                         if (jobQueryResult && jobQueryResult.length) {
 
                             // To copy data of succes job of repeat status => insert new record after send every single repeat step (daily, weekly, etc...)
-                            var insertJobQueue = `INSERT INTO task_schedules (task_id, device_id, title, interval_status, interval_time, interval_description, next_schedule, week_day, month_day, month_name, status, action_by, send_count) 
-                            VALUES (${jobQueryResult[0].task_id}, '${device_id}','${jobQueryResult[0].title}','${jobQueryResult[0].interval_status}', ${jobQueryResult[0].interval_time}, '${jobQueryResult[0].interval_description}', '${nextTime}', ${jobQueryResult[0].week_day}, ${jobQueryResult[0].month_day}, ${jobQueryResult[0].month_name}, 'NEW', ${jobQueryResult[0].action_by}, ${jobQueryResult[0].send_count});`;
+                            var insertJobQueue = `INSERT INTO task_schedules (task_id, device_id, title, interval_status, interval_time, interval_description, next_schedule, last_execution_time, week_day, month_day, month_name, status, action_by, send_count) 
+                            VALUES (${jobQueryResult[0].task_id}, '${device_id}','${jobQueryResult[0].title}','${jobQueryResult[0].interval_status}', ${jobQueryResult[0].interval_time}, '${jobQueryResult[0].interval_description}', '${nextTime}', '${jobQueryResult[0].next_schedule}', ${jobQueryResult[0].week_day}, ${jobQueryResult[0].month_day}, ${jobQueryResult[0].month_name}, 'NEW', ${jobQueryResult[0].action_by}, ${jobQueryResult[0].send_count});`;
                             // console.log("insertJobQueue ", insertJobQueue);
                             let response_data = await sql.query(insertJobQueue);
                             // console.log("response_data:: ", response_data);
@@ -845,11 +845,21 @@ exports.baseSocket = async function (instance, socket) {
                 }
             })
 
-            // ************** */ SIM MODULE
+            //************************ HANDLE_SIM_SLOTS of device ***********************/ 
+            socket.on(Constants.HANDLE_SIM_SLOTS + device_id, async function (response) {
+                console.log('HANDLE_SIM_SLOTS ==============> ', response)
+                if (response) {
+                    // let updateSimSlots = `UPDATE devices SET simno = '', simno2='' WHERE device_id='${device_id}'`;
+                    // console.log("updateSimSlots: ", updateSimSlots);
+                    // await sql.query(updateSimSlots);
+                }
+            })
 
+
+            // ************** SIM MODULE *******************/
             socket.on(Constants.ACK_SIM + device_id, async function (response) {
                 // console.log('ack ==============> ', response)
-                if (response != undefined) {
+                if (response) {
                     // let uQry = `UPDATE sims SET sync = '1', is_changed = '0' WHERE device_id = '${response.device_id}' AND iccid = '${response.iccid}'`;
                     // await sql.query(uQry);
                     let updateSimQ = `UPDATE sims SET sync = '1', is_changed='0' WHERE delete_status='1' AND device_id='${response.device_id}'`;
