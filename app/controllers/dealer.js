@@ -168,6 +168,7 @@ exports.getAllToAllDealers = async function (req, res) {
                     dealer_id: results[i].dealer_id,
                     dealer_name: results[i].dealer_name,
                     dealer_email: results[i].dealer_email,
+                    type: await general_helpers.getUserType(results[i].dealer_id),
                     link_code: results[i].link_code,
                     account_status: results[i].account_status,
                     unlink_status: results[i].unlink_status,
