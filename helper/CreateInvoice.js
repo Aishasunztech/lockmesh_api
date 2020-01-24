@@ -13,7 +13,7 @@ function createInvoice(invoice, path, type = null) {
     } else {
         generateInvoiceTable(doc, invoice, type);
     }
-    generateFooter(doc);
+    generateFooter(doc, invoice);
 
     doc.end();
     doc.pipe(fs.createWriteStream(path));
@@ -38,10 +38,7 @@ function generateCustomerInformation(doc, invoice) {
         .fontSize(20)
         .text("INVOICE", 50, 160);
 
-    doc
-        .fillColor("#444444")
-        .fontSize(20)
-        .text(invoice.invoice_status, 400, 160);
+
 
     generateHr(doc, 185);
 
@@ -464,7 +461,8 @@ function generateEditInvoiceTable(doc, invoice, type) {
     doc.font("Helvetica");
 }
 
-function generateFooter(doc) {
+function generateFooter(doc, invoice) {
+    let colorStatus = invoice.invoice_status == 'PAID' ? '#00b300' : invoice.invoice_status == 'UNPAID' ? '#ff0000' : '#ffa500'
     doc
         .fontSize(10)
         .text(
@@ -473,6 +471,10 @@ function generateFooter(doc) {
             780,
             { align: "center", width: 500 }
         );
+    doc
+        .fillColor(colorStatus)
+        .fontSize(20)
+        .text(invoice.invoice_status, 50, 700);
 }
 
 function generateTableRow(
