@@ -1603,7 +1603,7 @@ exports.addDomain = async function (req, res) {
 
     if (verify) {
         let domain = req.body.data.domain
-        let alreadyAdded = await sql.query(`SELECT * FROM domains WHERE name = '${domain}'`)
+        let alreadyAdded = await sql.query(`SELECT * FROM domains WHERE name = '${domain}' AND delete_status = 0`)
         if (alreadyAdded && alreadyAdded.length) {
             res.send({
                 status: false,
