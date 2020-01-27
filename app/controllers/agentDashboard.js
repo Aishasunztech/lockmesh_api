@@ -97,7 +97,7 @@ exports.devices = async function (req, res) {
                     }
                     // let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
                     // if (lastOnline) {
-                        results[i].lastOnline = results[i].last_login ? results[i].last_login : "N/A"
+                    results[i].lastOnline = results[i].last_login ? results[i].last_login : "N/A"
                     // }
                     results[i].finalStatus = device_helpers.checkStatus(
                         results[i]
@@ -305,7 +305,13 @@ exports.acceptDevice = async function (req, res) {
 
                     let checkUniquePgp = `SELECT pgp_email FROM pgp_emails WHERE (pgp_email= '${pgp_email}' AND used=1)`;
                     let checkDevicepgp = await sql.query(checkUniquePgp);
-
+                    if (checkDevicepgp.length) {
+                        res.send({
+                            status: false,
+                            msg: "PGP Email already taken"
+                        });
+                        return;
+                    }
                     let checkUnique = `SELECT usr_acc.* FROM usr_acc WHERE account_email= '${device_email}' AND device_id != '${device_id}' AND user_id != '${user_id}'`
                     sql.query(checkUnique, async (checkUniqueEror, success) => {
                         if (checkUniqueEror) {
@@ -317,10 +323,10 @@ exports.acceptDevice = async function (req, res) {
                             return;
                         }
 
-                        if (success.length || checkDevicepgp.length) {
+                        if (success.length) {
                             res.send({
                                 status: false,
-                                msg: "Account Email OR PGP Email already taken"
+                                msg: "Account Email already taken"
                             });
                             return;
                         } else if (dealer_id !== 0 && dealer_id !== null) {
