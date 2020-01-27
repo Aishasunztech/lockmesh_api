@@ -1,5 +1,6 @@
 const fs = require("fs");
 const PDFDocument = require("pdfkit");
+const moment = require('moment')
 
 function createInvoice(invoice, path, type = null) {
 
@@ -12,7 +13,7 @@ function createInvoice(invoice, path, type = null) {
     } else {
         generateInvoiceTable(doc, invoice, type);
     }
-    generateFooter(doc);
+    generateFooter(doc, invoice);
 
     doc.end();
     doc.pipe(fs.createWriteStream(path));
@@ -37,10 +38,7 @@ function generateCustomerInformation(doc, invoice) {
         .fontSize(20)
         .text("INVOICE", 50, 160);
 
-    doc
-        .fillColor("#444444")
-        .fontSize(20)
-        .text(invoice.invoice_status, 400, 160);
+
 
     generateHr(doc, 185);
 
@@ -53,12 +51,18 @@ function generateCustomerInformation(doc, invoice) {
         .text(invoice.invoice_nr, 150, customerInformationTop)
         .font("Helvetica")
         .text("Invoice Date:", 50, customerInformationTop + 15)
-        .text(formatDate(new Date()), 150, customerInformationTop + 15)
-        .text("Balance Due:", 50, customerInformationTop + 30)
+        .text(moment().format('YYYY/MM/DD'), 150, customerInformationTop + 15)
+        .text("Expiry Date:", 50, customerInformationTop + 30)
+        .text(
+            invoice.expiry_date,
+            150,
+            customerInformationTop + 30
+        )
+        .text("Balance Due:", 50, customerInformationTop + 45)
         .text(
             ((invoice.pay_now) ? 0 : (invoice.invoice_status === "UNPAID" ? invoice.paid : (invoice.paid - invoice.paid_credits))) + " Credits",
             150,
-            customerInformationTop + 30
+            customerInformationTop + 45
         )
 
         .font("Helvetica")
@@ -429,7 +433,7 @@ function generateEditInvoiceTable(doc, invoice, type) {
         "",
         "Paid to date:",
         "",
-        ((invoice.pay_now) ? invoice.paid : invoice.invoice_status ? invoice.paid_price : 0) + " Credits"
+        ((invoice.pay_now) ? invoice.paid : (invoice.invoice_status === "UNPAID" ? 0 : invoice.paid_credits)) + " Credits"
     );
     const duePosition1 = duePosition + 15;
     doc.font("Helvetica-Bold");
@@ -457,7 +461,8 @@ function generateEditInvoiceTable(doc, invoice, type) {
     doc.font("Helvetica");
 }
 
-function generateFooter(doc) {
+function generateFooter(doc, invoice) {
+    let colorStatus = invoice.invoice_status == 'PAID' ? '#00b300' : invoice.invoice_status == 'UNPAID' ? '#ff0000' : '#ffa500'
     doc
         .fontSize(10)
         .text(
@@ -466,6 +471,10 @@ function generateFooter(doc) {
             780,
             { align: "center", width: 500 }
         );
+    doc
+        .fillColor(colorStatus)
+        .fontSize(20)
+        .text(invoice.invoice_status, 50, 700);
 }
 
 function generateTableRow(

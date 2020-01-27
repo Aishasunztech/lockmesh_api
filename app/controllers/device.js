@@ -482,6 +482,30 @@ exports.acceptDevice = async function (req, res) {
             expiry_date = helpers.getExpDateByMonth(start_date, term)
         }
 
+        let loggedInUserData = await sql.query(`SELECT * FROM dealers WHERE dealer_id =${loggedDealerId}`)
+        if (!loggedInUserData || loggedInUserData.length < 1) {
+            res.send({
+                status: false,
+                msg: "Error: Dealer Data not found."
+            });
+            return
+        }
+        if (loggedDealerType !== constants.ADMIN) {
+            if (loggedInUserData[0].account_balance_status == 'suspended') {
+                res.send({
+                    status: false,
+                    msg: "Error: Your Account balance status is on restricted level 2. You cannot add a new device. Please Contact your admin"
+                });
+                return
+            }
+            else if (loggedInUserData[0].account_balance_status !== 'active' && !pay_now) {
+                res.send({
+                    status: false,
+                    msg: "Error: Your Account balance status is restricted. You cannot use pay later function. Please Contact your admin"
+                });
+                return
+            }
+        }
 
 
         let user_credits = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
@@ -942,9 +966,9 @@ exports.acceptDevice = async function (req, res) {
                                                         }
 
                                                         let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
-                                                        results[0].sim_id_data_plan = sim_id_data_plan[0]
+                                                        rsltq[0].sim_id_data_plan = sim_id_data_plan[0]
                                                         let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
-                                                        results[0].sim_id2_data_plan = sim_id2_data_plan[0]
+                                                        rsltq[0].sim_id2_data_plan = sim_id2_data_plan[0]
                                                         // rsltq[0].vpn = await device_helpers.getVpn(rsltq[0])
                                                     }
 
@@ -976,7 +1000,8 @@ exports.acceptDevice = async function (req, res) {
                                                             paid: discounted_price,
                                                             invoice_nr: inv_no,
                                                             invoice_status: invoice_status,
-                                                            paid_credits: paid_credits
+                                                            paid_credits: paid_credits,
+                                                            expiry_date: expiry_date
                                                         };
 
                                                         let fileName = "invoice-" + inv_no + ".pdf"
@@ -1188,6 +1213,32 @@ exports.createDeviceProfile = async function (req, res) {
         }
         let invoice_status = pay_now ? "PAID" : "UNPAID"
         let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
+        // console.log(verify.user);
+        let loggedInUserData = await sql.query(`SELECT * FROM dealers WHERE dealer_id =${loggedUserId}`)
+        if (!loggedInUserData || loggedInUserData.length < 1) {
+            res.send({
+                status: false,
+                msg: "Error: Dealer Data not found."
+            });
+            return
+        }
+        if (loggedUserType !== constants.ADMIN) {
+            if (loggedInUserData[0].account_balance_status == 'suspended') {
+                res.send({
+                    status: false,
+                    msg: "Error: Your Account balance status is on restricted level 2. You cannot add a new device. Please Contact your admin"
+                });
+                return
+            }
+            else if (loggedInUserData[0].account_balance_status !== 'active' && !pay_now) {
+                res.send({
+                    status: false,
+                    msg: "Error: Your Account balance status is restricted. You cannot use pay later function. Please Contact your admin"
+                });
+                return
+            }
+        }
+
 
         let user_credits = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
         sql.query(user_credits, async function (err, result) {
@@ -1442,6 +1493,7 @@ exports.createDeviceProfile = async function (req, res) {
                                             invoice_nr: inv_no,
                                             invoice_status: invoice_status,
                                             paid_credits: paid_credits,
+                                            expiry_date: expiry_date
                                         };
 
                                         let fileName = "invoice-" + inv_no + ".pdf"
@@ -1898,7 +1950,8 @@ exports.createDeviceProfile = async function (req, res) {
                                                                     paid: discounted_price,
                                                                     invoice_nr: inv_no,
                                                                     invoice_status: invoice_status,
-                                                                    paid_credits: paid_credits
+                                                                    paid_credits: paid_credits,
+                                                                    expiry_date: expiry_date
                                                                 };
 
                                                                 let fileName = "invoice-" + inv_no + ".pdf"
@@ -2101,7 +2154,7 @@ exports.editDevices = async function (req, res) {
             let sim_id2 = req.body.sim_id2;
             let chat_id = req.body.chat_id;
             let pgp_email = req.body.pgp_email;
-
+            // console.log(sim_id, sim_id2 ,  pgp_email);
             let newService = req.body.service;
             let prevService = req.body.prevService
             let endUser_pay_status = req.body.paid_by_user ? req.body.paid_by_user : "PAID"
@@ -2118,6 +2171,7 @@ exports.editDevices = async function (req, res) {
             let dealer_credits = 0
             let refund_due_credits = 0
             let remaining_credits = null
+            // console.log(req.body.expiry_date);
             var expiry_date = loggedDealerType === constants.ADMIN ? moment(req.body.expiry_date).format("YYYY/MM/DD") : req.body.expiry_date
             var date_now = moment(new Date()).format('YYYY/MM/DD')
             let creditsToRefund = 0
@@ -2183,7 +2237,23 @@ exports.editDevices = async function (req, res) {
             } else {
                 var status = "active";
             }
-
+            let loggedInUserData = await sql.query(`SELECT * FROM dealers WHERE dealer_id =${loggedDealerId}`)
+            if (!loggedInUserData || loggedInUserData.length < 1) {
+                res.send({
+                    status: false,
+                    msg: "Error: Dealer Data not found."
+                });
+                return
+            }
+            if (loggedDealerType !== constants.ADMIN) {
+                if (loggedInUserData[0].account_balance_status !== 'active' && !pay_now) {
+                    res.send({
+                        status: false,
+                        msg: "Error: Your Account balance status is on restricted level 1. You cannot use pay later function. Please Contact your admin"
+                    });
+                    return
+                }
+            }
             var checkDevice =
                 "SELECT start_date ,expiry_date from usr_acc WHERE device_id = '" +
                 usr_device_id +
@@ -2683,12 +2753,11 @@ exports.editDevices = async function (req, res) {
                                             sql.query(insertAccService)
                                         }
                                     })
-
                                 }
 
                                 if (pgp_email && pgp_email !== '') {
-                                    let getsimID = "SELECT * FROM pgp_emails WHERE pgp_email = '" + pgp_email + "'"
-                                    sql.query(getsimID, function (err, result) {
+                                    let getPgp = "SELECT * FROM pgp_emails WHERE pgp_email = '" + pgp_email + "'"
+                                    sql.query(getPgp, function (err, result) {
                                         if (result && result.length) {
                                             let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].pgp_email}' , 'pgp_email' , '${start_date}')`
                                             sql.query(insertAccService)
@@ -2791,7 +2860,8 @@ exports.editDevices = async function (req, res) {
                                     paid: total_price,
                                     invoice_nr: inv_no,
                                     invoice_status: invoice_status,
-                                    paid_credits: paid_credits
+                                    paid_credits: paid_credits,
+                                    expiry_date: expiry_date
                                 };
 
                                 let fileName = "invoice-" + inv_no + ".pdf"
@@ -2812,7 +2882,7 @@ exports.editDevices = async function (req, res) {
                             } else {
                                 let service_id = prevService.id
                                 if (service_id) {
-                                    if (pgp_email != prevPGP && prevPGP != 'N/A') {
+                                    if (pgp_email && pgp_email !== 'N/A' && pgp_email != prevPGP) {
                                         console.log("PGP change");
                                         let updatePgpEmails =
                                             'update pgp_emails set user_acc_id = "' +
@@ -2838,10 +2908,19 @@ exports.editDevices = async function (req, res) {
                                                 '"';
                                             await sql.query(updatePrevPgp);
                                         }
-                                        sql.query(`UPDATE user_acc_services SET product_value = ${pgp_email} WHERE service_id= ${service_id} AND product_value = '${prevPGP}'`)
-
+                                        let getPgp = "SELECT * FROM pgp_emails WHERE pgp_email = '" + pgp_email + "'"
+                                        sql.query(getPgp, function (err, result) {
+                                            if (result && result.length) {
+                                                if (prevPGP === 'N/A') {
+                                                    let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].pgp_email}' , 'pgp_email' , '${start_date}')`
+                                                    sql.query(insertAccService)
+                                                } else {
+                                                    sql.query(`UPDATE user_acc_services SET product_value = '${pgp_email}' , product_id = ${result[0].id} WHERE service_id= ${service_id} AND product_value = '${prevPGP}'`)
+                                                }
+                                            }
+                                        })
                                     }
-                                    if (chat_id != prevChatID && prevChatID != 'N/A') {
+                                    if (chat_id && chat_id !== 'N/A' && chat_id != prevChatID) {
                                         console.log("Chat change");
                                         let updateChatIds =
                                             'update chat_ids set user_acc_id = "' +
@@ -2866,10 +2945,21 @@ exports.editDevices = async function (req, res) {
                                                 '"';
                                             await sql.query(updatePrevChat);
                                         }
-                                        sql.query(`UPDATE user_acc_services SET product_value = ${chat_id} WHERE service_id= ${service_id} AND product_value = '${prevChatID}'`)
+
+                                        let getChatID = "SELECT * FROM chat_ids WHERE chat_id = '" + chat_id + "'"
+                                        sql.query(getChatID, function (err, result) {
+                                            if (result && result.length) {
+                                                if (prevChatID === 'N/A') {
+                                                    let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].chat_id}' , 'chat_id' , '${start_date}')`
+                                                    sql.query(insertAccService)
+                                                } else {
+                                                    sql.query(`UPDATE user_acc_services SET product_value = '${chat_id}' WHERE service_id= ${service_id} AND product_value = '${prevChatID}'`)
+                                                }
+                                            }
+                                        })
 
                                     }
-                                    if (sim_id != prevSimId && prevSimId != 'N/A') {
+                                    if (sim_id && sim_id !== 'N/A' && sim_id != prevSimId) {
                                         console.log("sim change");
                                         // console.log("sim id 2 change");
                                         let insertSimIds = `INSERT INTO sim_ids (sim_id , user_acc_id , start_date , dealer_id , used ,uploaded_by , uploaded_by_id) VALUES ('${sim_id}' , ${usr_acc_id} , '${date_now}' , ${dealer_id} , 1 , '${verify.user.user_type}' , '${verify.user.id}')`;
@@ -2904,11 +2994,22 @@ exports.editDevices = async function (req, res) {
                                                 '"';
                                             await sql.query(updatePrevSim);
                                         }
-                                        sql.query(`UPDATE user_acc_services SET product_value = ${sim_id} WHERE service_id= ${service_id} AND product_value = '${prevSimId}'`)
+
+                                        let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id + "'"
+                                        sql.query(getsimID, function (err, result) {
+                                            if (result && result.length) {
+                                                if (prevSimId === 'N/A') {
+                                                    let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].sim_id}' , 'sim_id' , '${start_date}')`
+                                                    sql.query(insertAccService)
+                                                } else {
+                                                    sql.query(`UPDATE user_acc_services SET product_value = '${sim_id}' WHERE service_id= ${service_id} AND product_value = '${prevSimId}'`)
+                                                }
+                                            }
+                                        })
 
                                     }
 
-                                    if (sim_id2 != prevSimId2 && prevSimId2 != 'N/A') {
+                                    if (sim_id2 && sim_id2 !== 'N/A' && sim_id2 != prevSimId2) {
                                         console.log("sim id 2 change");
                                         let insertSimIds = `INSERT INTO sim_ids (sim_id , user_acc_id , start_date , dealer_id , used ,uploaded_by , uploaded_by_id) VALUES ('${sim_id2}' , ${usr_acc_id} , '${date_now}' , ${dealer_id} , 1 , '${verify.user.user_type}' , '${verify.user.id}')`;
 
@@ -2942,7 +3043,19 @@ exports.editDevices = async function (req, res) {
                                                 '"';
                                             await sql.query(updatePrevSim);
                                         }
-                                        sql.query(`UPDATE user_acc_services SET product_value = ${sim_id2} WHERE service_id= ${service_id} AND product_value = '${prevSimId2}'`)
+
+                                        let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id2 + "'"
+                                        sql.query(getsimID, function (err, result) {
+                                            if (result && result.length) {
+                                                if (prevSimId2 === 'N/A') {
+                                                    let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id, product_value, type , start_date) VALUES(${usr_acc_id} , ${service_id} , ${result[0].id} , '${result[0].sim_id}' , 'sim_id2' , '${start_date}')`
+                                                    sql.query(insertAccService)
+                                                } else {
+                                                    sql.query(`UPDATE user_acc_services SET product_value = '${sim_id2}' WHERE service_id= ${service_id} AND product_value = '${prevSimId2}'`)
+                                                }
+                                            }
+                                        })
+
                                     }
                                 }
                             }
@@ -3503,7 +3616,8 @@ exports.extendServices = async function (req, res) {
                             paid: total_price,
                             invoice_nr: inv_no,
                             paid_credits: paid_credits,
-                            invoice_status: invoice_status
+                            invoice_status: invoice_status,
+                            expiry_date: expiry_date
                         };
 
                         let fileName = "invoice-" + inv_no + ".pdf"
@@ -3705,7 +3819,7 @@ exports.cancelExtendedServices = async function (req, res) {
                             update_credits_query = 'update financial_account_balance set credits = credits + ' + transection_record_data[0].credits + ' where dealer_id ="' + dealer_id + '"';
                             await sql.query(update_credits_query);
 
-                            let update_profits_transections = `UPDATE financial_account_transections SET status = 'cancelled' WHERE transection_data LIKE '%transection_type":"profit","service_id": ${service.id}% ' user_dvc_acc_id = ${user_acc_id} AND status = 'holding' AND type = 'services'`
+                            let update_profits_transections = `UPDATE financial_account_transections SET status = 'cancelled' WHERE transection_data LIKE '%transection_type":"profit","service_id": ${service.id}%' AND user_dvc_acc_id = ${user_acc_id} AND status = 'holding' AND type = 'services'`
                             await sql.query(update_profits_transections)
 
                         } else {
@@ -4432,9 +4546,9 @@ exports.flagDevice = async function (req, res) {
                         }
 
                         let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
-                        results[0].sim_id_data_plan = sim_id_data_plan[0]
+                        resquery[0].sim_id_data_plan = sim_id_data_plan[0]
                         let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
-                        results[0].sim_id2_data_plan = sim_id2_data_plan[0]
+                        resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
                         // if (servicesData[0]) {
                         //     resquery[0].services = servicesData[0]
                         // }
@@ -6684,6 +6798,7 @@ exports.deleteUnlinkDevice = async function (req, res) {
                         // console.log('query is ', deleteq)
                         let resp = await sql.query(deleteq)
                         if (resp.affectedRows) {
+                            await sql.query(`UPDATE usr_acc SET del_status = '1' WHERE id = ${device.user_acc_id} AND unlink_status = 1`)
                             deletedDevices.push(device.id);
                         } else {
                             deleteError += 1;

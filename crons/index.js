@@ -2,6 +2,7 @@
 var datetime = require('node-datetime');
 var moment = require('moment');
 var cron = require('node-cron');
+var html = require('html-escaper');
 
 // custom libraries
 const { sql } = require('../config/database');
@@ -135,8 +136,10 @@ cron.schedule('* * * * *', async () => { // '*/10 * * * * *' (after each 10 seco
 
 
     // Get current time
-    let currentTime = moment().tz(app_constants.TIME_ZONE).format(constants.TIMESTAMP_FORMAT);
-    var getMsgQueue = `SELECT * FROM task_schedules WHERE ((status = 'NEW' OR status = 'FAILED' OR status = 'IN-PROCESS' OR status = 'SUCCESS') AND next_schedule <= '${currentTime}');`;
+    // let currentTime = moment().tz(app_constants.TIME_ZONE).format(constants.TIMESTAMP_FORMAT);
+    // var getMsgQueue = `SELECT * FROM task_schedules WHERE ((status = 'NEW' OR status = 'FAILED' OR status = 'IN-PROCESS' OR status = 'SUCCESS') AND next_schedule <= '${currentTime}');`;
+    let currentTime = moment().tz(app_constants.TIME_ZONE).format(constants.TIMESTAMP_FORMAT_NOT_SEC);
+    var getMsgQueue = `SELECT *, DATE_FORMAT(\`next_schedule\`, '%Y-%m-%d %H:%i') AS \`next_schedule_format\` FROM task_schedules WHERE (status = 'NEW' OR status = 'IN-PROCESS') having next_schedule_format <= '${currentTime}';`;
     // console.log("getMsgQueue ", getMsgQueue);
     var results = await sql.query(getMsgQueue);
     // console.log("results ", results);
@@ -146,41 +149,47 @@ cron.schedule('* * * * *', async () => { // '*/10 * * * * *' (after each 10 seco
         // check online/offline devices
         let isOnline = await device_helpers.isDeviceOnline(results[i].device_id);
         if (isOnline) {
-            let shouldSendToDevice = false;
+            let sendCount = 0;
+            if (results[0].send_count || results[0].send_count === 0) {
+                sendCount = results[0].send_count + 1;
+            }
+            // console.log("device is online to send msg")
 
             // Calculate Minutes from first time send msg to devices with no response
-            let totalMin = 0;
-            if (results[i].start_time && results[i].next_schedule) {
-                totalMin = moment(currentTime).diff(moment(results[i].start_time), 'minutes');
-            }
+            // let totalMin = 0;
+            // if (results[i].start_time && results[i].next_schedule) {
+            //     totalMin = moment(currentTime).diff(moment(results[i].start_time), 'minutes');
+            // }
             // console.log("calculte time: Start Time: ", results[i].start_time, "Next Schedules: ", currentTime, "totalMin ", totalMin);
 
             let updateMsgScheduleStatus = '';
-            if (totalMin && totalMin >= 5 && results[i].status === "IN-PROCESS") {
+
+            // when same msg wih same job id send to socket 3 times then status of this job will be failed and not send again for now but will handle it later
+            if (sendCount && sendCount > 3 && results[i].status === 'IN-PROCESS') {
                 console.log('set failed to send');
-                updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'FAILED', start_time = '' WHERE id='${results[i].id}';`;
-                shouldSendToDevice = true;
+                updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'FAILED' WHERE id=${results[i].id};`;
             }
-            else if (results[i].status !== "IN-PROCESS") { // New or Failed
-                console.log('set in process to send')
-                updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'IN-PROCESS', start_time = '${currentTime}' WHERE id='${results[i].id}';`;
-                shouldSendToDevice = true;
+            else { // New 
+                // console.log('set in process to send')
+                updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'IN-PROCESS', send_count = ${sendCount} WHERE id=${results[i].id};`;
+
+                // send msg to device using Socket
+                socket_helpers.sendMsgToDevice(
+                    sockets.baseIo,
+                    results[i].device_id,
+                    results[i].id,
+                    html.unescape(results[i].title),
+                    app_constants.TIME_ZONE
+                );
             }
             console.log("MsgScheduleStatus : ", updateMsgScheduleStatus);
             if (updateMsgScheduleStatus) {
                 await sql.query(updateMsgScheduleStatus);
             }
 
-            if (shouldSendToDevice) {
-                // send msg to device using Socket
-                socket_helpers.sendMsgToDevice(
-                    sockets.baseIo,
-                    results[i].device_id,
-                    results[i].id,
-                    results[i].title,
-                    app_constants.TIME_ZONE
-                );
-            }
         } // end if of check online device
+        // else{
+        //     console.log("device is offline to send msg")
+        // }
     }
 });

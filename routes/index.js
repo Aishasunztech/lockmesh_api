@@ -10,6 +10,11 @@ var MircroServiceAuthentication = require('./MircroServiceAuthentication');
 var MircroServiceSocketAuthentication = require('./MircroServiceSocketAuthentication');
 var mobileRoutes = require('./mobile');
 var signalRoutes = require('./signal');
+/**
+ * @author Usman Hafeez
+ * @description added routes for s-mail server
+ */
+var sMailRoutes = require('./sMail');
 var mobileV2Routes = require('./mobile_v2');
 var authRoutes = require('./auth');
 var nonVerifyRoutes = require('./nonVerify');
@@ -21,7 +26,7 @@ module.exports = function (app) {
 
 	app.use('/mobile', mobileRoutes);
 	app.use('/signal', signalRoutes);
-
+	app.use('/s-mail', sMailRoutes)
 	app.use('/users', authRoutes);
 	app.use('/users', nonVerifyRoutes);
 

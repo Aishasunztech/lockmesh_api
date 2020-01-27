@@ -547,10 +547,11 @@ exports.getPGPEmails = async (req, res) => {
 
         let query = '';
         if (permission_ids.length) {
-            query = `SELECT * FROM pgp_emails WHERE used=0 AND domain_id IN (${permission_ids.join()})`;
+            query = `SELECT * FROM pgp_emails WHERE used=0 AND delete_status = '0' AND domain_id IN (${permission_ids.join()})`;
         }
         // query = `SELECT * FROM pgp_emails WHERE used=0`;
 
+        // console.log("permission_ids ", permission_ids, "query ", query)
         if (query !== '') {
             let resp = await sql.query(query);
             res.send({
@@ -1488,9 +1489,9 @@ exports.getDomains = async function (req, res) {
                 condition = ` OR (dealer_permissions.dealer_id = 0 AND (dealer_permissions.dealer_type='admin' OR (dealer_permissions.dealer_type='dealer' AND dealer_permissions.permission_by=${getParentId[0].connected_dealer}))) `
                 // condition = `AND (dealer_type = 'admin' OR dealer_type = 'dealer')`
             }
-            selectQ = `SELECT domains.*, dealer_permissions.permission_id, dealer_permissions.dealer_id, dealer_permissions.permission_by, dealer_permissions.dealer_type FROM domains JOIN dealer_permissions ON (dealer_permissions.permission_id = domains.id) WHERE (dealer_permissions.dealer_id = ${loggedUserId} ${condition}) AND permission_type = 'domain';`;
+            selectQ = `SELECT domains.*, dealer_permissions.permission_id, dealer_permissions.dealer_id, dealer_permissions.permission_by, dealer_permissions.dealer_type FROM domains JOIN dealer_permissions ON (dealer_permissions.permission_id = domains.id) WHERE (dealer_permissions.dealer_id = ${loggedUserId} ${condition}) AND dealer_permissions.permission_type = 'domain' AND domains.delete_status = 0;`;
         } else {
-            selectQ = `SELECT * FROM domains`;
+            selectQ = `SELECT * FROM domains WHERE delete_status = 0`;
         }
         console.log("selectDomains selectQ ", selectQ)
         let selectDomains = await sql.query(selectQ);
@@ -1660,6 +1661,40 @@ exports.editDomain = async function (req, res) {
                         res.send({
                             status: false,
                             msg: 'Domain Not updated.Please try again',
+                        })
+                        return
+                    }
+                }
+            })
+        }
+    }
+}
+exports.deleteDomain = async function (req, res) {
+    var verify = req.decoded;
+    if (verify) {
+        let domain_name = req.body.data.domain_name
+        let alreadyAdded = await sql.query(`SELECT * FROM domains WHERE name = '${domain_name}'`)
+        if (alreadyAdded.length == 0) {
+            res.send({
+                status: false,
+                msg: 'Domain not Found on whiteLabel Server.'
+            })
+            return
+        } else {
+            let insertQuery = `UPDATE domains SET delete_status = 1 WHERE name = '${domain_name}'`;
+            sql.query(insertQuery, async (err, rslt) => {
+                if (err) throw err;
+                if (rslt) {
+                    if (rslt.affectedRows) {
+                        res.send({
+                            status: true,
+                            msg: 'Domain deleted Successfully.',
+                        })
+                        return
+                    } else {
+                        res.send({
+                            status: false,
+                            msg: 'ERROR: Domain Not deleted.Please try again',
                         })
                         return
                     }
