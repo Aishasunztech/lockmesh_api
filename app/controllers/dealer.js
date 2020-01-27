@@ -194,11 +194,11 @@ exports.getAllToAllDealers = async function (req, res) {
     }
 };
 
-exports.getAdmin = async function(req, res){
+exports.getAdmin = async function (req, res) {
     var verify = req.decoded;
-    if(verify){
-        sql.query(`SELECT ${dealer_query_text} FROM dealers WHERE type = 1 LIMIT 1`, async function(err, data){
-            if(err){
+    if (verify) {
+        sql.query(`SELECT ${dealer_query_text} FROM dealers WHERE type = 1 LIMIT 1`, async function (err, data) {
+            if (err) {
                 console.log(err);
                 res.send({
                     status: false,
@@ -762,44 +762,56 @@ exports.deleteDealer = async function (req, res) {
     if (verify) {
         var loggedInuid = verify.user.id;
 
-        if (!empty(dealer_id)) {
-            var dealerQ = `UPDATE dealers SET unlink_status = 1 WHERE dealer_id = ${dealer_id} `;
+        let getDealer = `SELECT * FROM dealers WHERE dealer_id = ${dealer_id}`
+        let dealerData = await sql.query(getDealer)
+        if (!empty(dealer_id) && dealerData[0].connected_dealer) {
+            if (verify.user.user_type === Constants.ADMIN || verify.user.id === dealerData[0].connected_dealer) {
+                var dealerQ = `UPDATE dealers SET unlink_status = 1 WHERE dealer_id = ${dealer_id} `;
+                sql.query(dealerQ, async function (error, row) {
 
-            sql.query(dealerQ, async function (error, row) {
+                    // var qury1 = "UPDATE dealers set unlink_status = 1 where connected_dealer = '" + dealer_id + "'";
+                    // var rslt = await sql.query(qury1);
+                    // if (row.affectedRows != 0 && rslt.affectedRows != 0) {
+                    //     data = {
+                    //         status: true,
+                    //         msg: 'Dealer and Sub-Dealer deleted successfully.',
+                    //         data: row
+                    //     };
+                    //     res.send(data);
+                    //     return;
+                    // } else 
 
-                // var qury1 = "UPDATE dealers set unlink_status = 1 where connected_dealer = '" + dealer_id + "'";
-                // var rslt = await sql.query(qury1);
-                // if (row.affectedRows != 0 && rslt.affectedRows != 0) {
-                //     data = {
-                //         status: true,
-                //         msg: 'Dealer and Sub-Dealer deleted successfully.',
-                //         data: row
-                //     };
-                //     res.send(data);
-                //     return;
-                // } else 
+                    if (row && row.affectedRows !== 0) {
 
-                if (row && row.affectedRows !== 0) {
+                        await general_helpers.expireDealerLogin(dealer_id);
 
-                    await general_helpers.expireDealerLogin(dealer_id);
+                        data = {
+                            status: true,
+                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_DEL_SUCC], "Dealer deleted successfully"), // Dealer deleted successfully.
+                            data: row
+                        };
+                        res.send(data);
+                        return;
+                    } else {
+                        data = {
+                            "status": false,
+                            "msg": await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_NOT_DEL], "Record not deleted"), // Record not deleted.
+                        };
+                        res.send(data);
+                        return;
+                    }
 
-                    data = {
-                        status: true,
-                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_DEL_SUCC], "Dealer deleted successfully"), // Dealer deleted successfully.
-                        data: row
-                    };
-                    res.send(data);
-                    return;
-                } else {
-                    data = {
-                        "status": false,
-                        "msg": await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_NOT_DEL], "Record not deleted"), // Record not deleted.
-                    };
-                    res.send(data);
-                    return;
-                }
-
-            });
+                });
+            } else {
+                data = {
+                    status: false,
+                    msg: await general_helpers.convertToLang(
+                        req.translation[""],
+                        "Unauthorized Access"
+                    )
+                };
+                res.send(data);
+            }
 
         } else {
             data = {
@@ -820,39 +832,55 @@ exports.undoDealer = async function (req, res) {
     if (verify) {
         var loggedInuid = verify.user.id;
         var dealer_id = req.body.dealer_id;
-        if (!empty(dealer_id)) {
-            var qury = "UPDATE dealers set unlink_status = '0' where dealer_id = '" + dealer_id + "'";
 
-            sql.query(qury, async function (error, row) {
-                // var qury1 = "UPDATE dealers set unlink_status = '0' where connected_dealer = '" + dealer_id + "'";
-                // var rslt = await sql.query(qury1);
+        let getDealer = `SELECT * FROM dealers WHERE dealer_id = ${dealer_id}`
+        let dealerData = await sql.query(getDealer)
 
-                // if (row.affectedRows != 0 && rslt.affectedRows != 0) {
-                //     data = {
-                //         "status": true,
-                //         "msg": 'Dealer and S-Dealer added again.',
-                //         "data": row
-                //     };
-                //     res.send(data);
-                // } else
+        if (!empty(dealer_id) && dealerData.length) {
+            if (verify.user.user_type === Constants.ADMIN || verify.user.id === dealerData[0].connected_dealer) {
+                var qury = "UPDATE dealers set unlink_status = '0' where dealer_id = '" + dealer_id + "'";
 
-                if (row && row.affectedRows != 0) {
-                    data = {
-                        status: true,
-                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_ADDED_AGAIN], "Dealer added again"), // Dealer added again.
-                        data: row
-                    };
-                    res.send(data);
-                    return;
-                } else {
-                    data = {
-                        status: false,
-                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_NOT_ADDED], "Dealer could not be added"), // Dealer not added.
-                    };
-                    res.send(data);
-                    return;
-                }
-            });
+                sql.query(qury, async function (error, row) {
+                    // var qury1 = "UPDATE dealers set unlink_status = '0' where connected_dealer = '" + dealer_id + "'";
+                    // var rslt = await sql.query(qury1);
+
+                    // if (row.affectedRows != 0 && rslt.affectedRows != 0) {
+                    //     data = {
+                    //         "status": true,
+                    //         "msg": 'Dealer and S-Dealer added again.',
+                    //         "data": row
+                    //     };
+                    //     res.send(data);
+                    // } else
+
+                    if (row && row.affectedRows != 0) {
+                        data = {
+                            status: true,
+                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_ADDED_AGAIN], "Dealer added again"), // Dealer added again.
+                            data: row
+                        };
+                        res.send(data);
+                        return;
+                    } else {
+                        data = {
+                            status: false,
+                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_NOT_ADDED], "Dealer could not be added"), // Dealer not added.
+                        };
+                        res.send(data);
+                        return;
+                    }
+                });
+            } else {
+                data = {
+                    status: false,
+                    msg: await general_helpers.convertToLang(
+                        req.translation[""],
+                        "Unauthorized Access"
+                    )
+                };
+                return res.send(data);
+            }
+
 
         } else {
             data = {
@@ -876,51 +904,65 @@ exports.suspendDealer = async function (req, res) {
         var loggedInuid = verify.user.id;
         let dealer_id = req.body.dealer_id;
 
-        if (!empty(dealer_id)) {
+        let getDealer = `SELECT * FROM dealers WHERE dealer_id = ${dealer_id}`
+        let dealerData = await sql.query(getDealer)
 
-            //suspend dealer
-            var qury = `UPDATE dealers set account_status = 'suspended' where dealer_id = '${dealer_id}'`;
+        if (!empty(dealer_id) && dealerData.length) {
+            if (verify.user.user_type === Constants.ADMIN || verify.user.id === dealerData[0].connected_dealer) {
+                //suspend dealer
+                var qury = `UPDATE dealers set account_status = 'suspended' where dealer_id = '${dealer_id}'`;
 
-            sql.query(qury, async function (error, row) {
-                if (error) {
-                    data = {
-                        status: false,
-                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_NOT_SUSP], "Dealer not suspended"), // Dealer not suspended.                    
-                    };
-                    return res.send(data);
-                }
+                sql.query(qury, async function (error, row) {
+                    if (error) {
+                        data = {
+                            status: false,
+                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_NOT_SUSP], "Dealer not suspended"), // Dealer not suspended.                    
+                        };
+                        return res.send(data);
+                    }
 
-                //suspend sub dealer                                                                                                                 
-                // var qury1 = "UPDATE dealers set account_status = 'suspended' where connected_dealer = '" + dealer_id + "'";
-                // var rslt = await sql.query(qury1);
+                    //suspend sub dealer                                                                                                                 
+                    // var qury1 = "UPDATE dealers set account_status = 'suspended' where connected_dealer = '" + dealer_id + "'";
+                    // var rslt = await sql.query(qury1);
 
-                // if (row.affectedRows != 0 && rslt.affectedRows != 0) {
+                    // if (row.affectedRows != 0 && rslt.affectedRows != 0) {
 
-                //     data = {
-                //         "status": true,
-                //         "msg": 'Dealer and Sub-Dealer suspended successfully.',
-                //         "data": row
-                //     };
-                //     res.send(data);
-                // } else 
+                    //     data = {
+                    //         "status": true,
+                    //         "msg": 'Dealer and Sub-Dealer suspended successfully.',
+                    //         "data": row
+                    //     };
+                    //     res.send(data);
+                    // } else 
 
-                if (row.affectedRows != 0) {
-                    await general_helpers.expireDealerLogin(dealer_id);
-                    data = {
-                        status: true,
-                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_SUSP_SUCC], "Dealer suspended successfully"), // Dealer suspended successfully.
-                        data: row
-                    };
-                    res.send(data);
-                    return;
-                } else {
-                    data = {
-                        status: false,
-                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_NOT_SUSP], "Dealer not suspended"), // Dealer not suspended.                    
-                    };
-                    return res.send(data);
-                }
-            });
+                    if (row.affectedRows != 0) {
+                        await general_helpers.expireDealerLogin(dealer_id);
+                        data = {
+                            status: true,
+                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_SUSP_SUCC], "Dealer suspended successfully"), // Dealer suspended successfully.
+                            data: row
+                        };
+                        res.send(data);
+                        return;
+                    } else {
+                        data = {
+                            status: false,
+                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_NOT_SUSP], "Dealer not suspended"), // Dealer not suspended.                    
+                        };
+                        return res.send(data);
+                    }
+                });
+            } else {
+                data = {
+                    status: false,
+                    msg: await general_helpers.convertToLang(
+                        req.translation[""],
+                        "Unauthorized Access"
+                    )
+                };
+                return res.send(data);
+            }
+
 
         } else {
             data = {
@@ -941,39 +983,50 @@ exports.activateDealer = async function (req, res) {
     if (verify) {
         var loggedInuid = verify.user.id;
         var dealer_id = req.body.dealer_id;
+        let getDealer = `SELECT * FROM dealers WHERE dealer_id = ${dealer_id}`
+        let dealerData = await sql.query(getDealer)
+        if (!empty(dealer_id) && dealerData.length) {
+            if (verify.user.user_type === Constants.ADMIN || verify.user.id === dealerData[0].connected_dealer) {
+                var qury = `UPDATE dealers SET account_status = '' WHERE dealer_id = ${dealer_id} `;
+                sql.query(qury, async function (error, row) {
+                    // var qury1 = "UPDATE dealers set account_status = '' where connected_dealer = '" + dealer_id + "'";
+                    // var rslt = await sql.query(qury1);
+                    // if (row.affectedRows != 0 && rslt.affectedRows != 0) {
+                    //     data = {
+                    //         "status": true,
+                    //         "msg": 'Dealer and S Dealer activated successfully.',
+                    //         "data": row
+                    //     };
+                    //     res.send(data);
+                    // } else 
+                    if (row && row.affectedRows != 0) {
+                        data = {
+                            status: true,
+                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_ACTIV_SUCC], "Dealer activated successfully"), // Dealer activated successfully.
+                            data: row
+                        };
+                        res.send(data);
+                        return;
+                    } else {
+                        data = {
+                            status: true,
+                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.DELAER_NOT_ACTIV], "Dealer not activated"), // Dealer not activated.'
+                        };
+                        res.send(data);
+                        return;
 
-        if (!empty(dealer_id)) {
-            var qury = `UPDATE dealers SET account_status = '' WHERE dealer_id = ${dealer_id} `;
-
-            sql.query(qury, async function (error, row) {
-                // var qury1 = "UPDATE dealers set account_status = '' where connected_dealer = '" + dealer_id + "'";
-                // var rslt = await sql.query(qury1);
-                // if (row.affectedRows != 0 && rslt.affectedRows != 0) {
-                //     data = {
-                //         "status": true,
-                //         "msg": 'Dealer and S Dealer activated successfully.',
-                //         "data": row
-                //     };
-                //     res.send(data);
-                // } else 
-                if (row && row.affectedRows != 0) {
-                    data = {
-                        status: true,
-                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_ACTIV_SUCC], "Dealer activated successfully"), // Dealer activated successfully.
-                        data: row
-                    };
-                    res.send(data);
-                    return;
-                } else {
-                    data = {
-                        status: true,
-                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DELAER_NOT_ACTIV], "Dealer not activated"), // Dealer not activated.'
-                    };
-                    res.send(data);
-                    return;
-
-                }
-            });
+                    }
+                });
+            } else {
+                data = {
+                    status: false,
+                    msg: await general_helpers.convertToLang(
+                        req.translation[""],
+                        "Unauthorized Access"
+                    )
+                };
+                res.send(data);
+            }
 
         } else {
             data = {
