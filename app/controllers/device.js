@@ -4151,130 +4151,145 @@ exports.unlinkDevice = async function (req, res) {
 
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
-        if (!empty(device_id)) {
+        var sql2 =
+            "select * from usr_acc where device_id = '" + device_id + "'";
+        var gtres = await sql.query(sql2);
+        if (!empty(device_id) && gtres.length) {
             console.log("device id:", device_id);
-            let dvcId = await device_helpers.getDvcIDByDeviceID(device_id);
-            console.log("dvc id:", dvcId);
+            if (verify.user.type === constants.ADMIN || verify.user.id === gtres[0].dealer_id || verify.user.id === gtres[0].prnt_dlr_id) {
+                let dvcId = await device_helpers.getDvcIDByDeviceID(device_id);
+                console.log("dvc id:", dvcId);
 
-            var sql1 = `UPDATE  usr_acc SET unlink_status = 1, device_status = 0 where device_id=${device_id}`;
-            sql.query(sql1, async function (error, results) {
-                if (error) {
-                    data = {
-                        status: false,
-                        msg: await helpers.convertToLang(
-                            req.translation[MsgConstants.DEVICE_NOT_UNLNK],
-                            "Device not unlinked"
-                        )
-                    };
-                }
-
-                if (results && results.affectedRows) {
-                    // Update device details on Super admin
-
-
-                    // var sqlDevice =
-                    //     "DELETE from devices where id = '" + device_id + "'";
-                    // await sql.query(sqlDevice);
-
-                    var userAccId = await device_helpers.getUsrAccIDbyDvcId(
-                        device_id
-                    );
-
-                    // await sql.query(
-                    //     "update pgp_emails set user_acc_id = null WHERE user_acc_id = '" +
-                    //     userAccId +
-                    //     "'"
-                    // );
-                    // await sql.query(
-                    //     "update chat_ids set user_acc_id = null WHERE user_acc_id = '" +
-                    //     userAccId +
-                    //     "'"
-                    // );
-
-                    // await sql.query(
-                    //     "update sim_ids set user_acc_id = null WHERE user_acc_id = '" +
-                    //     userAccId +
-                    //     "'"
-                    // );
-
-                    // // Delete unlinked & Transferred device 
-                    let unlinkDeviceQ = `SELECT * FROM usr_acc WHERE id=${userAccId} AND device_id='${device_id}'`;
-                    let getUnlinDeviceResult = await sql.query(unlinkDeviceQ);
-                    // console.log("getUnlinDeviceResult ", getUnlinDeviceResult);
-                    if (getUnlinDeviceResult[0].transfer_status) {
-                        let deleteUserQ = `DELETE FROM usr_acc WHERE id=${userAccId}`;
-                        // console.log("deleteUserQ ", deleteUserQ);
-                        let response = await sql.query(deleteUserQ);
-                        // console.log("response ", response)
-                        if (response.affectedRows > 0) {
-                            let deleteDevice = `DELETE FROM devices WHERE id=${device_id}`;
-                            // console.log("deleteDevice ", deleteDevice)
-                            sql.query(deleteDevice);
-                        }
-                    }
-
-                    console.log("unlink devices data: req.body.device: ", req.body.device)
-                    device_helpers.saveActionHistory(
-                        req.body.device,
-                        constants.DEVICE_UNLINKED
-                    );
-                    socket_helpers.sendDeviceStatus(sockets.baseIo, dvcId, "unlinked", true);
-
-                    try {
-                        axios
-                            .post(
-                                app_constants.SUPERADMIN_LOGIN_URL,
-                                app_constants.SUPERADMIN_USER_CREDENTIALS,
-                                { headers: {} }
+                var sql1 = `UPDATE  usr_acc SET unlink_status = 1, device_status = 0 where device_id=${device_id}`;
+                sql.query(sql1, async function (error, results) {
+                    if (error) {
+                        data = {
+                            status: false,
+                            msg: await helpers.convertToLang(
+                                req.translation[MsgConstants.DEVICE_NOT_UNLNK],
+                                "Device not unlinked"
                             )
-                            .then(async function (response) {
-                                // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
-                                if (response.data.status) {
-                                    let data = {
-                                        linkToWL: false,
-                                        device_id: dvcId
-                                    };
-                                    console.log("for SA DATA is:: ", data);
-                                    axios.put(
-                                        app_constants.UPDATE_DEVICE_SUPERADMIN_URL,
-                                        data,
-                                        {
-                                            headers: {
-                                                authorization:
-                                                    response.data.user.token
-                                            }
-                                        }
-                                    );
-                                }
-                            }).catch((err) => {
-                                if (err) {
-                                    console.log("SA SERVER NOT RESPONDING");
-                                }
-                            });
-
-                    } catch (err) {
-                        console.log(err);
+                        };
                     }
 
-                    data = {
-                        status: true,
-                        msg: await helpers.convertToLang(
-                            req.translation[MsgConstants.DEVICE_UNLNK_SUCC],
-                            "Device unlinked successfully"
-                        ) // Device unlinked successfully.
-                    };
-                } else {
-                    data = {
-                        status: false,
-                        msg: await helpers.convertToLang(
-                            req.translation[MsgConstants.DEVICE_NOT_UNLNK],
-                            "Device not unlinked"
-                        ) // Device not unlinked.
-                    };
-                }
-                res.send(data);
-                return;
-            });
+                    if (results && results.affectedRows) {
+                        // Update device details on Super admin
+
+
+                        // var sqlDevice =
+                        //     "DELETE from devices where id = '" + device_id + "'";
+                        // await sql.query(sqlDevice);
+
+                        var userAccId = await device_helpers.getUsrAccIDbyDvcId(
+                            device_id
+                        );
+
+                        // await sql.query(
+                        //     "update pgp_emails set user_acc_id = null WHERE user_acc_id = '" +
+                        //     userAccId +
+                        //     "'"
+                        // );
+                        // await sql.query(
+                        //     "update chat_ids set user_acc_id = null WHERE user_acc_id = '" +
+                        //     userAccId +
+                        //     "'"
+                        // );
+
+                        // await sql.query(
+                        //     "update sim_ids set user_acc_id = null WHERE user_acc_id = '" +
+                        //     userAccId +
+                        //     "'"
+                        // );
+
+                        // // Delete unlinked & Transferred device 
+                        let unlinkDeviceQ = `SELECT * FROM usr_acc WHERE id=${userAccId} AND device_id='${device_id}'`;
+                        let getUnlinDeviceResult = await sql.query(unlinkDeviceQ);
+                        // console.log("getUnlinDeviceResult ", getUnlinDeviceResult);
+                        if (getUnlinDeviceResult[0].transfer_status) {
+                            let deleteUserQ = `DELETE FROM usr_acc WHERE id=${userAccId}`;
+                            // console.log("deleteUserQ ", deleteUserQ);
+                            let response = await sql.query(deleteUserQ);
+                            // console.log("response ", response)
+                            if (response.affectedRows > 0) {
+                                let deleteDevice = `DELETE FROM devices WHERE id=${device_id}`;
+                                // console.log("deleteDevice ", deleteDevice)
+                                sql.query(deleteDevice);
+                            }
+                        }
+
+                        console.log("unlink devices data: req.body.device: ", req.body.device)
+                        device_helpers.saveActionHistory(
+                            req.body.device,
+                            constants.DEVICE_UNLINKED
+                        );
+                        socket_helpers.sendDeviceStatus(sockets.baseIo, dvcId, "unlinked", true);
+
+                        try {
+                            axios
+                                .post(
+                                    app_constants.SUPERADMIN_LOGIN_URL,
+                                    app_constants.SUPERADMIN_USER_CREDENTIALS,
+                                    { headers: {} }
+                                )
+                                .then(async function (response) {
+                                    // console.log("SUPER ADMIN LOGIN API RESPONSE", response);
+                                    if (response.data.status) {
+                                        let data = {
+                                            linkToWL: false,
+                                            device_id: dvcId
+                                        };
+                                        console.log("for SA DATA is:: ", data);
+                                        axios.put(
+                                            app_constants.UPDATE_DEVICE_SUPERADMIN_URL,
+                                            data,
+                                            {
+                                                headers: {
+                                                    authorization:
+                                                        response.data.user.token
+                                                }
+                                            }
+                                        );
+                                    }
+                                }).catch((err) => {
+                                    if (err) {
+                                        console.log("SA SERVER NOT RESPONDING");
+                                    }
+                                });
+
+                        } catch (err) {
+                            console.log(err);
+                        }
+
+                        data = {
+                            status: true,
+                            msg: await helpers.convertToLang(
+                                req.translation[MsgConstants.DEVICE_UNLNK_SUCC],
+                                "Device unlinked successfully"
+                            ) // Device unlinked successfully.
+                        };
+                    } else {
+                        data = {
+                            status: false,
+                            msg: await helpers.convertToLang(
+                                req.translation[MsgConstants.DEVICE_NOT_UNLNK],
+                                "Device not unlinked"
+                            ) // Device not unlinked.
+                        };
+                    }
+                    res.send(data);
+                    return;
+                });
+            } else {
+                data = {
+                    status: false,
+                    msg: await helpers.convertToLang(
+                        req.translation[""],
+                        "Unauthorized Access"
+                    )
+                };
+                return res.send(data);
+            }
+
         } else {
             data = {
                 status: false,
@@ -4299,39 +4314,248 @@ exports.unflagDevice = async function (req, res) {
 
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
-        if (!empty(device_id)) {
-            var sql1 = "update devices set flagged= 'Not flagged' where device_id='" + device_id + "'";
-            var rest = sql.query(sql1, async function (error, results) {
-                if (error) {
-                    console.log(error);
-                }
-                else if (results.affectedRows == 0) {
-                    data = {
-                        status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_UNFLAG], "Device not Unflagged.Please try again"), // Device not Unflagged.Please try again.
-                    }
-                    res.send(data);
-                } else {
-                    await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE devices.reject_status = 0 AND devices.device_id= "' + device_id + '"', async function (error, resquery, fields) {
-                        if (error) {
-                            console.log(error);
-                        }
-                        // console.log('resquery ==> ', resquery[0])
+        var sql2 =
+            "select * from usr_acc where device_id = '" + device_id + "'";
+        var gtres = await sql.query(sql2);
 
+        if (!empty(device_id) && gtres.length) {
+            if (verify.user.type === constants.ADMIN || verify.user.id === gtres[0].dealer_id || verify.user.id === gtres[0].prnt_dlr_id) {
+                var sql1 = "update devices set flagged= 'Not flagged' where id='" + device_id + "'";
+                var rest = sql.query(sql1, async function (error, results) {
+                    if (error) {
+                        console.log(error);
+                    }
+                    else if (results.affectedRows == 0) {
+                        data = {
+                            status: false,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_UNFLAG], "Device not Unflagged.Please try again"), // Device not Unflagged.Please try again.
+                        }
+                        res.send(data);
+                    } else {
+                        await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE devices.reject_status = 0 AND usr_acc.device_id= "' + device_id + '"', async function (error, resquery, fields) {
+                            if (error) {
+                                console.log(error);
+                            }
+                            // console.log('resquery ==> ', resquery[0])
+
+                            if (resquery.length) {
+                                resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
+                                let servicesData = await device_helpers.getServicesData(resquery[0].id);
+                                let servicesIds = servicesData.map(item => { return item.id })
+                                let dataPlans = []
+                                let userAccServiceData = []
+                                if (servicesIds.length) {
+                                    userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
+                                    dataPlans = await device_helpers.getDataPlans(servicesIds)
+                                }
+                                resquery[0].sim_id = "N/A"
+                                resquery[0].sim_id2 = "N/A"
+                                resquery[0].pgp_email = "N/A"
+                                resquery[0].chat_id = "N/A"
+                                // if (pgp_emails[0] && pgp_emails[0].pgp_email) {
+                                //     resquery[0].pgp_email = pgp_emails[0].pgp_email
+                                // } else {
+                                //     resquery[0].pgp_email = "N/A"
+                                // }
+                                // if (sim_ids && sim_ids.length) {
+                                //     resquery[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
+                                //     resquery[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
+                                // }
+                                // if (chat_ids[0] && chat_ids[0].chat_id) {
+                                //     resquery[0].chat_id = chat_ids[0].chat_id
+                                // }
+                                // else {
+                                //     resquery[0].chat_id = "N/A"
+                                // }
+                                let services = servicesData;
+                                let service_id = null
+                                if (services && services.length) {
+                                    services.map((item) => {
+                                        if (item.status === 'extended') {
+                                            resquery[0].extended_services = item
+                                        } else {
+                                            resquery[0].services = item
+                                            service_id = item.id
+                                        }
+                                    })
+                                }
+
+                                let productsData = userAccServiceData.filter(item => item.user_acc_id === resquery[0].id && item.service_id === service_id);
+                                if (productsData && productsData.length) {
+                                    productsData.map((item) => {
+                                        if (item.type === 'sim_id') {
+                                            resquery[0].sim_id = item.product_value
+                                        }
+                                        else if (item.type === 'sim_id2') {
+                                            resquery[0].sim_id2 = item.product_value
+                                        }
+                                        else if (item.type === 'pgp_email') {
+                                            resquery[0].pgp_email = item.product_value
+                                        }
+                                        else if (item.type === 'chat_id') {
+                                            resquery[0].chat_id = item.product_value
+                                        }
+                                    })
+                                }
+
+                                let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
+                                resquery[0].sim_id_data_plan = sim_id_data_plan[0]
+                                let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
+                                resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
+
+                                // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id);
+                                // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
+                                resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
+                                // } else {
+                                //     resquery[0].lastOnline = "N/A"
+                                // }
+                                let remainTermDays = "N/A"
+
+                                if (resquery[0].expiry_date !== null) {
+                                    let startDate = moment(new Date())
+                                    let expiray_date = new Date(resquery[0].expiry_date)
+                                    let endDate = moment(expiray_date)
+                                    remainTermDays = endDate.diff(startDate, 'days')
+                                }
+                                resquery[0].remainTermDays = remainTermDays
+                                // if (servicesData[0]) {
+                                //     resquery[0].services = servicesData[0]
+                                // }
+                                // dealerData = await getDealerdata(res[i]);
+                                resquery[0]["transfered_from"] = null;
+                                resquery[0]["transfered_to"] = null;
+
+                                let msgStatus = "";
+                                let status = false;
+
+                                if (resquery[0].finalStatus == constants.DEVICE_SUSPENDED) {
+                                    msgStatus = "suspended";
+                                } else if (resquery[0].finalStatus == constants.DEVICE_ACTIVATED || resquery[0].finalStatus == constants.DEVICE_TRIAL) {
+                                    msgStatus = "active";
+                                    status = true;
+                                }
+                                // else if (resquery[0].finalStatus == constants.DEVICE_EXPIRED) {
+                                //     status = "Expired";
+                                // }
+                                socket_helpers.sendDeviceStatus(sockets.baseIo, resquery[0].device_id, msgStatus, status);
+                                device_helpers.saveActionHistory(resquery[0], constants.DEVICE_UNFLAGGED)
+                                data = {
+                                    "data": resquery[0],
+                                    status: true,
+                                    msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_UNFLAG_SUCC], "Device Unflagged successfully"), // Device Unflagged successfully.
+                                }
+                            } else {
+                                data = {
+                                    status: false,
+                                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Error")
+                                }
+                            }
+
+                            res.send(data);
+                        })
+
+                    }
+                });
+
+            } else {
+                data = {
+                    status: false,
+                    msg: await helpers.convertToLang(
+                        req.translation[""],
+                        "Unauthorized Access"
+                    )
+                };
+                return res.send(data);
+            }
+
+        }
+        else {
+            data = {
+                status: false,
+                msg: await helpers.convertToLang(
+                    req.translation[""],
+                    "Device Not Found"
+                )
+            };
+            return res.send(data);
+        }
+
+    } else {
+
+        data = {
+            status: false,
+            msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_UNFLAG], "Device not Unflagged.Please try again"), // Device Is not unflagged.Please try again"
+        }
+        res.send(data);
+    }
+}
+
+exports.flagDevice = async function (req, res) {
+    var verify = req.decoded // await verifyToken(req, res);
+    var device_id = req.params.id;
+    var option = req.body.data
+    console.log('======= device_id =========', device_id)
+    console.log(option);
+    // return;
+
+    // if (verify.status !== undefined && verify.status == true) {
+    if (verify) {
+        var sql2 = "select * from devices where id = '" + device_id + "'";
+        var gtres = await sql.query(sql2);
+
+        var getUserAcc = "select * from usr_acc where device_id = '" + device_id + "'";
+        var getUserAccRes = await sql.query(getUserAcc);
+
+        if (!empty(device_id) && gtres.length && getUserAccRes.length) {
+            if (verify.user.type === constants.ADMIN || verify.user.id === getUserAccRes[0].dealer_id || verify.user.id === getUserAccRes[0].prnt_dlr_id) {
+                if (gtres[0].flagged === '' || gtres[0].flagged === 'null' || gtres[0].flagged === null || gtres[0].flagged === 'Not flagged') {
+                    var sql1 = `update devices set flagged='${option}' where id = '${device_id}'`;
+                    console.log(sql1);
+                    let results = await sql.query(sql1)
+
+                    if (results.affectedRows == 0) {
+                        data = {
+                            status: false,
+                            msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FLAG], "Device not Flagged.Please try again"), // Device not Flagged.Please try again."
+                        }
+                    } else {
+                        socket_helpers.sendDeviceStatus(sockets.baseIo, gtres[0].device_id, "flagged");
+
+                        let resquery = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE devices.reject_status = 0 AND devices.id= "' + device_id + '"')
                         if (resquery.length) {
+                            // let pgp_emails = await device_helpers.getPgpEmails(resquery[0].id);
+                            // let sim_ids = await device_helpers.getSimids(resquery[0].id);
+                            // let chat_ids = await device_helpers.getChatids(resquery[0].id);
                             resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
                             let servicesData = await device_helpers.getServicesData(resquery[0].id);
                             let servicesIds = servicesData.map(item => { return item.id })
-                            let dataPlans = []
                             let userAccServiceData = []
+                            let dataPlans = []
                             if (servicesIds.length) {
                                 userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
                                 dataPlans = await device_helpers.getDataPlans(servicesIds)
                             }
+                            // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id);
+                            // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
                             resquery[0].sim_id = "N/A"
                             resquery[0].sim_id2 = "N/A"
                             resquery[0].pgp_email = "N/A"
                             resquery[0].chat_id = "N/A"
+                            resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
+                            // } else {
+                            //     resquery[0].lastOnline = "N/A"
+                            // }
+                            let remainTermDays = "N/A"
+
+                            if (resquery[0].expiry_date !== null) {
+                                let startDate = moment(new Date())
+                                let expiray_date = new Date(resquery[0].expiry_date)
+                                let endDate = moment(expiray_date)
+                                remainTermDays = endDate.diff(startDate, 'days')
+                            }
+                            resquery[0].remainTermDays = remainTermDays
+
+
                             // if (pgp_emails[0] && pgp_emails[0].pgp_email) {
                             //     resquery[0].pgp_email = pgp_emails[0].pgp_email
                             // } else {
@@ -4382,22 +4606,6 @@ exports.unflagDevice = async function (req, res) {
                             resquery[0].sim_id_data_plan = sim_id_data_plan[0]
                             let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
                             resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
-
-                            // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id);
-                            // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                            resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
-                            // } else {
-                            //     resquery[0].lastOnline = "N/A"
-                            // }
-                            let remainTermDays = "N/A"
-
-                            if (resquery[0].expiry_date !== null) {
-                                let startDate = moment(new Date())
-                                let expiray_date = new Date(resquery[0].expiry_date)
-                                let endDate = moment(expiray_date)
-                                remainTermDays = endDate.diff(startDate, 'days')
-                            }
-                            resquery[0].remainTermDays = remainTermDays
                             // if (servicesData[0]) {
                             //     resquery[0].services = servicesData[0]
                             // }
@@ -4405,189 +4613,35 @@ exports.unflagDevice = async function (req, res) {
                             resquery[0]["transfered_from"] = null;
                             resquery[0]["transfered_to"] = null;
 
-                            let msgStatus = "";
-                            let status = false;
 
-                            if (resquery[0].finalStatus == constants.DEVICE_SUSPENDED) {
-                                msgStatus = "suspended";
-                            } else if (resquery[0].finalStatus == constants.DEVICE_ACTIVATED || resquery[0].finalStatus == constants.DEVICE_TRIAL) {
-                                msgStatus = "active";
-                                status = true;
-                            }
-                            // else if (resquery[0].finalStatus == constants.DEVICE_EXPIRED) {
-                            //     status = "Expired";
-                            // }
-                            socket_helpers.sendDeviceStatus(sockets.baseIo, resquery[0].device_id, msgStatus, status);
-                            device_helpers.saveActionHistory(resquery[0], constants.DEVICE_UNFLAGGED)
+                            device_helpers.saveActionHistory(resquery[0], constants.DEVICE_FLAGGED)
+                            console.log(resquery[0]);
                             data = {
-                                "data": resquery[0],
+                                data: resquery[0],
                                 status: true,
-                                msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_UNFLAG_SUCC], "Device Unflagged successfully"), // Device Unflagged successfully.
+                                msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_FLAG_SUCC], "Device Flagged successfully"), // Device Flagged successfully."
                             }
-                        } else {
-                            data = {
-                                status: false,
-                                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Error")
-                            }
+                            res.send(data);
                         }
+                    }
 
-                        res.send(data);
-                    })
-
-                }
-            });
-
-        }
-
-    } else {
-
-        data = {
-            status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_UNFLAG], "Device not Unflagged.Please try again"), // Device Is not unflagged.Please try again"
-        }
-        res.send(data);
-    }
-}
-
-exports.flagDevice = async function (req, res) {
-    var verify = req.decoded // await verifyToken(req, res);
-    var device_id = req.params.id;
-    var option = req.body.data
-    console.log('======= device_id =========', device_id)
-    console.log(option);
-    // return;
-
-    // if (verify.status !== undefined && verify.status == true) {
-    if (verify) {
-        var sql2 = "select * from devices where id = '" + device_id + "'";
-        var gtres = await sql.query(sql2);
-        if (!empty(device_id)) {
-
-            if (gtres[0].flagged === '' || gtres[0].flagged === 'null' || gtres[0].flagged === null || gtres[0].flagged === 'Not flagged') {
-                var sql1 = `update devices set flagged='${option}' where id = '${device_id}'`;
-                console.log(sql1);
-                let results = await sql.query(sql1)
-
-                if (results.affectedRows == 0) {
+                } else {
                     data = {
                         status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_NOT_FLAG], "Device not Flagged.Please try again"), // Device not Flagged.Please try again."
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_ALRDY_FLAG], "Device Already Flagged"), // Device Already Flagged
                     }
-                } else {
-                    socket_helpers.sendDeviceStatus(sockets.baseIo, gtres[0].device_id, "flagged");
-
-                    let resquery = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE devices.reject_status = 0 AND devices.id= "' + device_id + '"')
-                    if (resquery.length) {
-                        // let pgp_emails = await device_helpers.getPgpEmails(resquery[0].id);
-                        // let sim_ids = await device_helpers.getSimids(resquery[0].id);
-                        // let chat_ids = await device_helpers.getChatids(resquery[0].id);
-                        resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
-                        let servicesData = await device_helpers.getServicesData(resquery[0].id);
-                        let servicesIds = servicesData.map(item => { return item.id })
-                        let userAccServiceData = []
-                        let dataPlans = []
-                        if (servicesIds.length) {
-                            userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
-                            dataPlans = await device_helpers.getDataPlans(servicesIds)
-                        }
-                        // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id);
-                        // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                        resquery[0].sim_id = "N/A"
-                        resquery[0].sim_id2 = "N/A"
-                        resquery[0].pgp_email = "N/A"
-                        resquery[0].chat_id = "N/A"
-                        resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
-                        // } else {
-                        //     resquery[0].lastOnline = "N/A"
-                        // }
-                        let remainTermDays = "N/A"
-
-                        if (resquery[0].expiry_date !== null) {
-                            let startDate = moment(new Date())
-                            let expiray_date = new Date(resquery[0].expiry_date)
-                            let endDate = moment(expiray_date)
-                            remainTermDays = endDate.diff(startDate, 'days')
-                        }
-                        resquery[0].remainTermDays = remainTermDays
-
-
-                        // if (pgp_emails[0] && pgp_emails[0].pgp_email) {
-                        //     resquery[0].pgp_email = pgp_emails[0].pgp_email
-                        // } else {
-                        //     resquery[0].pgp_email = "N/A"
-                        // }
-                        // if (sim_ids && sim_ids.length) {
-                        //     resquery[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
-                        //     resquery[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
-                        // }
-                        // if (chat_ids[0] && chat_ids[0].chat_id) {
-                        //     resquery[0].chat_id = chat_ids[0].chat_id
-                        // }
-                        // else {
-                        //     resquery[0].chat_id = "N/A"
-                        // }
-                        let services = servicesData;
-                        let service_id = null
-                        if (services && services.length) {
-                            services.map((item) => {
-                                if (item.status === 'extended') {
-                                    resquery[0].extended_services = item
-                                } else {
-                                    resquery[0].services = item
-                                    service_id = item.id
-                                }
-                            })
-                        }
-
-                        let productsData = userAccServiceData.filter(item => item.user_acc_id === resquery[0].id && item.service_id === service_id);
-                        if (productsData && productsData.length) {
-                            productsData.map((item) => {
-                                if (item.type === 'sim_id') {
-                                    resquery[0].sim_id = item.product_value
-                                }
-                                else if (item.type === 'sim_id2') {
-                                    resquery[0].sim_id2 = item.product_value
-                                }
-                                else if (item.type === 'pgp_email') {
-                                    resquery[0].pgp_email = item.product_value
-                                }
-                                else if (item.type === 'chat_id') {
-                                    resquery[0].chat_id = item.product_value
-                                }
-                            })
-                        }
-
-                        let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
-                        resquery[0].sim_id_data_plan = sim_id_data_plan[0]
-                        let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
-                        resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
-                        // if (servicesData[0]) {
-                        //     resquery[0].services = servicesData[0]
-                        // }
-                        // dealerData = await getDealerdata(res[i]);
-                        resquery[0]["transfered_from"] = null;
-                        resquery[0]["transfered_to"] = null;
-
-
-                        device_helpers.saveActionHistory(resquery[0], constants.DEVICE_FLAGGED)
-                        console.log(resquery[0]);
-                        data = {
-                            data: resquery[0],
-                            status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_FLAG_SUCC], "Device Flagged successfully"), // Device Flagged successfully."
-                        }
-                        res.send(data);
-                    }
+                    res.send(data);
                 }
-
             } else {
                 data = {
                     status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.DEVICE_ALRDY_FLAG], "Device Already Flagged"), // Device Already Flagged
-                }
-                res.send(data);
+                    msg: await helpers.convertToLang(
+                        req.translation[""],
+                        "Unauthorized Access"
+                    )
+                };
+                return res.send(data);
             }
-
         } else {
             data = {
                 status: false,
@@ -5338,156 +5392,10 @@ exports.suspendAccountDevices = async function (req, res) {
             "select * from usr_acc where device_id = '" + device_id + "'";
         var gtres = await sql.query(sql2);
 
-        if (!empty(device_id)) {
+        if (!empty(device_id) && gtres.length) {
             let resDevice = null;
-
-            if (gtres[0].expiry_date == "" || gtres[0].expiry_date == null) {
-                var sql1 =
-                    "update usr_acc set account_status='suspended' where device_id = '" +
-                    device_id +
-                    "'";
-
-                var rest = sql.query(sql1, async function (error, results) {
-                    if (error) {
-                        console.log(error);
-                    }
-                    if (results.affectedRows == 0) {
-                        data = {
-                            status: false,
-                            msg: await helpers.convertToLang(
-                                req.translation[MsgConstants.ACC_NOT_SUSP],
-                                "Account not suspended.Please try again"
-                            ) // Account not suspended.Please try again.
-                        };
-                    } else {
-                        sql.query(
-                            "select devices.*  ," +
-                            usr_acc_query_text +
-                            ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
-                            device_id +
-                            '"',
-                            async function (error, resquery, fields) {
-                                if (error) {
-                                    console.log(error);
-                                }
-                                console.log("lolo else", resquery[0]);
-
-                                if (resquery.length) {
-                                    // let pgp_emails = await device_helpers.getPgpEmails(resquery[0].id);
-                                    // let sim_ids = await device_helpers.getSimids(resquery[0].id);
-                                    // let chat_ids = await device_helpers.getChatids(resquery[0].id);
-                                    resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
-
-                                    let servicesData = await device_helpers.getServicesData(resquery[0].id);
-                                    let servicesIds = servicesData.map(item => { return item.id })
-                                    let userAccServiceData = []
-                                    let dataPlans = []
-                                    if (servicesIds.length) {
-                                        userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
-                                        dataPlans = await device_helpers.getDataPlans(servicesIds)
-                                    }
-                                    resquery[0].sim_id = "N/A"
-                                    resquery[0].sim_id2 = "N/A"
-                                    resquery[0].pgp_email = "N/A"
-                                    resquery[0].chat_id = "N/A"
-                                    // if (pgp_emails[0].pgp_email) {
-                                    //     resquery[0].pgp_email = pgp_emails[0].pgp_email
-                                    // } else {
-                                    //     resquery[0].pgp_email = "N/A"
-                                    // }
-                                    // if (sim_ids[0].sim_id) {
-                                    //     resquery[0].sim_id = sim_ids[0].sim_id
-                                    // } else {
-                                    //     resquery[0].sim_id = "N/A"
-                                    // }
-                                    // if (chat_ids[0].chat_id) {
-                                    //     resquery[0].chat_id = chat_ids[0].chat_id
-                                    // }
-                                    // else {
-                                    //     resquery[0].chat_id = "N/A"
-
-                                    // }
-                                    let services = servicesData;
-                                    let service_id = null
-                                    if (services && services.length) {
-                                        services.map((item) => {
-                                            if (item.status === 'extended') {
-                                                resquery[0].extended_services = item
-                                            } else {
-                                                resquery[0].services = item
-                                                service_id = item.id
-                                            }
-                                        })
-                                    }
-
-                                    let productsData = userAccServiceData.filter(item => item.user_acc_id === resquery[0].id && item.service_id === service_id);
-                                    if (productsData && productsData.length) {
-                                        productsData.map((item) => {
-                                            if (item.type === 'sim_id') {
-                                                resquery[0].sim_id = item.product_value
-                                            }
-                                            else if (item.type === 'sim_id2') {
-                                                resquery[0].sim_id2 = item.product_value
-                                            }
-                                            else if (item.type === 'pgp_email') {
-                                                resquery[0].pgp_email = item.product_value
-                                            }
-                                            else if (item.type === 'chat_id') {
-                                                resquery[0].chat_id = item.product_value
-                                            }
-                                        })
-                                    }
-
-                                    let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
-                                    resquery[0].sim_id_data_plan = sim_id_data_plan[0]
-                                    let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
-                                    resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
-                                    // if (servicesData[0]) {
-                                    //     resquery[0].services = servicesData[0]
-                                    // }
-                                    // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
-                                    // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                                    resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
-                                    // } else {
-                                    //     resquery[0].lastOnline = "N/A"
-                                    // }
-                                    let remainTermDays = "N/A"
-
-                                    if (resquery[0].expiry_date !== null) {
-                                        let startDate = moment(new Date())
-                                        let expiray_date = new Date(resquery[0].expiry_date)
-                                        let endDate = moment(expiray_date)
-                                        remainTermDays = endDate.diff(startDate, 'days')
-                                    }
-                                    resquery[0].remainTermDays = remainTermDays
-                                    // dealerData = await getDealerdata(res[i]);
-                                    data = {
-                                        data: resquery[0],
-                                        status: true,
-                                        msg: await helpers.convertToLang(
-                                            req.translation[
-                                            MsgConstants.ACC_SUSP_SUCC
-                                            ],
-                                            "Account suspended successfully"
-                                        ) // Account suspended successfully.
-                                    };
-                                    device_helpers.saveActionHistory(
-                                        resquery[0],
-                                        constants.DEVICE_SUSPENDED
-                                    );
-                                    socket_helpers.sendDeviceStatus(sockets.baseIo,
-                                        resquery[0].device_id,
-                                        "suspended"
-                                    );
-
-                                    res.send(data);
-                                }
-                            }
-                        );
-                    }
-                });
-            } else {
-                if (gtres[0].expiry_date >= formatted_dt) {
+            if (verify.user.type === constants.ADMIN || verify.user.id === gtres[0].dealer_id || verify.user.id === gtres[0].prnt_dlr_id) {
+                if (gtres[0].expiry_date == "" || gtres[0].expiry_date == null) {
                     var sql1 =
                         "update usr_acc set account_status='suspended' where device_id = '" +
                         device_id +
@@ -5503,7 +5411,7 @@ exports.suspendAccountDevices = async function (req, res) {
                                 msg: await helpers.convertToLang(
                                     req.translation[MsgConstants.ACC_NOT_SUSP],
                                     "Account not suspended.Please try again"
-                                ) // Account not suspended.Please try again."
+                                ) // Account not suspended.Please try again.
                             };
                         } else {
                             sql.query(
@@ -5516,7 +5424,346 @@ exports.suspendAccountDevices = async function (req, res) {
                                     if (error) {
                                         console.log(error);
                                     }
-                                    // console.log('lolo else', resquery[0])
+                                    console.log("lolo else", resquery[0]);
+
+                                    if (resquery.length) {
+                                        // let pgp_emails = await device_helpers.getPgpEmails(resquery[0].id);
+                                        // let sim_ids = await device_helpers.getSimids(resquery[0].id);
+                                        // let chat_ids = await device_helpers.getChatids(resquery[0].id);
+                                        resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
+
+                                        let servicesData = await device_helpers.getServicesData(resquery[0].id);
+                                        let servicesIds = servicesData.map(item => { return item.id })
+                                        let userAccServiceData = []
+                                        let dataPlans = []
+                                        if (servicesIds.length) {
+                                            userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
+                                            dataPlans = await device_helpers.getDataPlans(servicesIds)
+                                        }
+                                        resquery[0].sim_id = "N/A"
+                                        resquery[0].sim_id2 = "N/A"
+                                        resquery[0].pgp_email = "N/A"
+                                        resquery[0].chat_id = "N/A"
+                                        // if (pgp_emails[0].pgp_email) {
+                                        //     resquery[0].pgp_email = pgp_emails[0].pgp_email
+                                        // } else {
+                                        //     resquery[0].pgp_email = "N/A"
+                                        // }
+                                        // if (sim_ids[0].sim_id) {
+                                        //     resquery[0].sim_id = sim_ids[0].sim_id
+                                        // } else {
+                                        //     resquery[0].sim_id = "N/A"
+                                        // }
+                                        // if (chat_ids[0].chat_id) {
+                                        //     resquery[0].chat_id = chat_ids[0].chat_id
+                                        // }
+                                        // else {
+                                        //     resquery[0].chat_id = "N/A"
+
+                                        // }
+                                        let services = servicesData;
+                                        let service_id = null
+                                        if (services && services.length) {
+                                            services.map((item) => {
+                                                if (item.status === 'extended') {
+                                                    resquery[0].extended_services = item
+                                                } else {
+                                                    resquery[0].services = item
+                                                    service_id = item.id
+                                                }
+                                            })
+                                        }
+
+                                        let productsData = userAccServiceData.filter(item => item.user_acc_id === resquery[0].id && item.service_id === service_id);
+                                        if (productsData && productsData.length) {
+                                            productsData.map((item) => {
+                                                if (item.type === 'sim_id') {
+                                                    resquery[0].sim_id = item.product_value
+                                                }
+                                                else if (item.type === 'sim_id2') {
+                                                    resquery[0].sim_id2 = item.product_value
+                                                }
+                                                else if (item.type === 'pgp_email') {
+                                                    resquery[0].pgp_email = item.product_value
+                                                }
+                                                else if (item.type === 'chat_id') {
+                                                    resquery[0].chat_id = item.product_value
+                                                }
+                                            })
+                                        }
+
+                                        let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
+                                        resquery[0].sim_id_data_plan = sim_id_data_plan[0]
+                                        let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
+                                        resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
+                                        // if (servicesData[0]) {
+                                        //     resquery[0].services = servicesData[0]
+                                        // }
+                                        // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
+                                        // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
+                                        resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
+                                        // } else {
+                                        //     resquery[0].lastOnline = "N/A"
+                                        // }
+                                        let remainTermDays = "N/A"
+
+                                        if (resquery[0].expiry_date !== null) {
+                                            let startDate = moment(new Date())
+                                            let expiray_date = new Date(resquery[0].expiry_date)
+                                            let endDate = moment(expiray_date)
+                                            remainTermDays = endDate.diff(startDate, 'days')
+                                        }
+                                        resquery[0].remainTermDays = remainTermDays
+                                        // dealerData = await getDealerdata(res[i]);
+                                        data = {
+                                            data: resquery[0],
+                                            status: true,
+                                            msg: await helpers.convertToLang(
+                                                req.translation[
+                                                MsgConstants.ACC_SUSP_SUCC
+                                                ],
+                                                "Account suspended successfully"
+                                            ) // Account suspended successfully.
+                                        };
+                                        device_helpers.saveActionHistory(
+                                            resquery[0],
+                                            constants.DEVICE_SUSPENDED
+                                        );
+                                        socket_helpers.sendDeviceStatus(sockets.baseIo,
+                                            resquery[0].device_id,
+                                            "suspended"
+                                        );
+
+                                        res.send(data);
+                                    }
+                                }
+                            );
+                        }
+                    });
+                } else {
+                    if (gtres[0].expiry_date >= formatted_dt) {
+                        var sql1 =
+                            "update usr_acc set account_status='suspended' where device_id = '" +
+                            device_id +
+                            "'";
+
+                        var rest = sql.query(sql1, async function (error, results) {
+                            if (error) {
+                                console.log(error);
+                            }
+                            if (results.affectedRows == 0) {
+                                data = {
+                                    status: false,
+                                    msg: await helpers.convertToLang(
+                                        req.translation[MsgConstants.ACC_NOT_SUSP],
+                                        "Account not suspended.Please try again"
+                                    ) // Account not suspended.Please try again."
+                                };
+                            } else {
+                                sql.query(
+                                    "select devices.*  ," +
+                                    usr_acc_query_text +
+                                    ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
+                                    device_id +
+                                    '"',
+                                    async function (error, resquery, fields) {
+                                        if (error) {
+                                            console.log(error);
+                                        }
+                                        // console.log('lolo else', resquery[0])
+
+                                        if (resquery.length) {
+                                            // let pgp_emails = await device_helpers.getPgpEmails(resquery[0].id);
+                                            // let sim_ids = await device_helpers.getSimids(resquery[0].id);
+                                            // let chat_ids = await device_helpers.getChatids(resquery[0].id);
+                                            resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
+                                            let servicesData = await device_helpers.getServicesData(resquery[0].id);
+                                            let servicesIds = servicesData.map(item => { return item.id })
+                                            let userAccServiceData = []
+                                            let dataPlans = []
+                                            if (servicesIds.length) {
+                                                userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
+                                                dataPlans = await device_helpers.getDataPlans(servicesIds)
+                                            }
+                                            resquery[0].sim_id = "N/A"
+                                            resquery[0].sim_id2 = "N/A"
+                                            resquery[0].pgp_email = "N/A"
+                                            resquery[0].chat_id = "N/A"
+                                            // if (pgp_emails[0] && pgp_emails[0].pgp_email) {
+                                            //     resquery[0].pgp_email = pgp_emails[0].pgp_email
+                                            // } else {
+                                            //     resquery[0].pgp_email = "N/A"
+                                            // }
+                                            // if (sim_ids && sim_ids.length) {
+                                            //     resquery[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
+                                            //     resquery[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
+                                            // }
+                                            // if (chat_ids[0] && chat_ids[0].chat_id) {
+                                            //     resquery[0].chat_id = chat_ids[0].chat_id
+                                            // }
+                                            // else {
+                                            //     resquery[0].chat_id = "N/A"
+
+                                            // }
+                                            let services = servicesData;
+                                            let service_id = null
+                                            if (services && services.length) {
+                                                services.map((item) => {
+                                                    if (item.status === 'extended') {
+                                                        resquery[0].extended_services = item
+                                                    } else {
+                                                        resquery[0].services = item
+                                                        service_id = item.id
+                                                    }
+                                                })
+                                            }
+
+                                            let productsData = userAccServiceData.filter(item => item.user_acc_id === resquery[0].id && item.service_id === service_id);
+                                            if (productsData && productsData.length) {
+                                                productsData.map((item) => {
+                                                    if (item.type === 'sim_id') {
+                                                        resquery[0].sim_id = item.product_value
+                                                    }
+                                                    else if (item.type === 'sim_id2') {
+                                                        resquery[0].sim_id2 = item.product_value
+                                                    }
+                                                    else if (item.type === 'pgp_email') {
+                                                        resquery[0].pgp_email = item.product_value
+                                                    }
+                                                    else if (item.type === 'chat_id') {
+                                                        resquery[0].chat_id = item.product_value
+                                                    }
+                                                })
+                                            }
+
+                                            let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
+                                            resquery[0].sim_id_data_plan = sim_id_data_plan[0]
+                                            let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
+                                            resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
+                                            // if (servicesData[0]) {
+                                            //     resquery[0].services = servicesData[0]
+                                            // }
+                                            // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
+                                            // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
+                                            resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
+                                            // } else {
+                                            //     resquery[0].lastOnline = "N/A"
+                                            // }
+                                            let remainTermDays = "N/A"
+
+                                            if (resquery[0].expiry_date !== null) {
+                                                let startDate = moment(new Date())
+                                                let expiray_date = new Date(resquery[0].expiry_date)
+                                                let endDate = moment(expiray_date)
+                                                remainTermDays = endDate.diff(startDate, 'days')
+                                            }
+                                            resquery[0].remainTermDays = remainTermDays
+                                            // dealerData = await getDealerdata(res[i]);
+                                            data = {
+                                                data: resquery[0],
+                                                status: true,
+                                                msg: await helpers.convertToLang(
+                                                    req.translation[
+                                                    MsgConstants.ACC_SUSP_SUCC
+                                                    ],
+                                                    "Account suspended successfully"
+                                                ) // Account suspended successfully."
+                                            };
+                                            device_helpers.saveActionHistory(
+                                                resquery[0],
+                                                constants.DEVICE_SUSPENDED
+                                            );
+                                            socket_helpers.sendDeviceStatus(sockets.baseIo,
+                                                resquery[0].device_id,
+                                                "suspended"
+                                            );
+                                            res.send(data);
+                                        }
+                                    }
+                                );
+                            }
+                        });
+                    } else {
+                        data = {
+                            status: false,
+                            msg: await helpers.convertToLang(
+                                req.translation[MsgConstants.NOT_SUSP_ACC_EXP],
+                                "Can't suspend !!! Account Already Expired"
+                            ) // Can't suspend !!! Account Already Expired."
+                        };
+                        res.send(data);
+                    }
+                }
+            }
+            else {
+                data = {
+                    status: false,
+                    msg: await helpers.convertToLang(
+                        req.translation[""],
+                        "Unautorized Access"
+                    ) // Can't suspend !!! Account Already Expired."
+                };
+                return res.send(data);
+            }
+
+        } else {
+            data = {
+                status: false,
+                msg: await helpers.convertToLang(
+                    req.translation[MsgConstants.INVALID_DEVICE],
+                    "Invalid Device"
+                ) // Invalid Device."
+            };
+            res.send(data);
+        }
+    }
+};
+
+
+exports.activateDevice = async function (req, res) {
+    var verify = req.decoded; // await verifyToken(req, res);
+    var device_id = req.params.id;
+    var tod_dat = datetime.create();
+    var formatted_dt = tod_dat.format("Y-m-d H:M:S");
+
+    // if (verify.status !== undefined && verify.status == true) {
+    if (verify) {
+        var sql2 =
+            "select * from usr_acc where device_id = '" + device_id + "'";
+        var gtres = await sql.query(sql2);
+
+        if (!empty(device_id) && gtres.length) {
+            if (verify.user.type === constants.ADMIN || verify.user.id === gtres[0].dealer_id || verify.user.id === gtres[0].prnt_dlr_id) {
+                if (gtres[0].expiry_date == "" || gtres[0].expiry_date == null) {
+                    var sql1 =
+                        "update usr_acc set account_status='' where device_id = '" +
+                        device_id +
+                        "'";
+
+                    var rest = sql.query(sql1, async function (error, results) {
+                        if (error) {
+                            console.log(error);
+                        }
+                        if (results.affectedRows == 0) {
+                            data = {
+                                status: false,
+                                msg: await helpers.convertToLang(
+                                    req.translation[MsgConstants.DEVICE_NOT_ACTIV],
+                                    "Device not activated.Please try again"
+                                ) // Device not activated.Please try again."
+                            };
+                        } else {
+                            sql.query(
+                                "select devices.*  ," +
+                                usr_acc_query_text +
+                                ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
+                                device_id +
+                                '"',
+                                async function (error, resquery, fields) {
+                                    if (error) {
+                                        console.log(error);
+                                    }
+                                    console.log("lolo else", resquery[0]);
 
                                     if (resquery.length) {
                                         // let pgp_emails = await device_helpers.getPgpEmails(resquery[0].id);
@@ -5586,15 +5833,8 @@ exports.suspendAccountDevices = async function (req, res) {
                                         resquery[0].sim_id_data_plan = sim_id_data_plan[0]
                                         let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
                                         resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
-                                        // if (servicesData[0]) {
-                                        //     resquery[0].services = servicesData[0]
-                                        // }
-                                        // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
-                                        // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
+
                                         resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
-                                        // } else {
-                                        //     resquery[0].lastOnline = "N/A"
-                                        // }
                                         let remainTermDays = "N/A"
 
                                         if (resquery[0].expiry_date !== null) {
@@ -5604,326 +5844,7 @@ exports.suspendAccountDevices = async function (req, res) {
                                             remainTermDays = endDate.diff(startDate, 'days')
                                         }
                                         resquery[0].remainTermDays = remainTermDays
-                                        // dealerData = await getDealerdata(res[i]);
-                                        data = {
-                                            data: resquery[0],
-                                            status: true,
-                                            msg: await helpers.convertToLang(
-                                                req.translation[
-                                                MsgConstants.ACC_SUSP_SUCC
-                                                ],
-                                                "Account suspended successfully"
-                                            ) // Account suspended successfully."
-                                        };
-                                        device_helpers.saveActionHistory(
-                                            resquery[0],
-                                            constants.DEVICE_SUSPENDED
-                                        );
-                                        socket_helpers.sendDeviceStatus(sockets.baseIo,
-                                            resquery[0].device_id,
-                                            "suspended"
-                                        );
-                                        res.send(data);
-                                    }
-                                }
-                            );
-                        }
-                    });
-                } else {
-                    data = {
-                        status: false,
-                        msg: await helpers.convertToLang(
-                            req.translation[MsgConstants.NOT_SUSP_ACC_EXP],
-                            "Can't suspend !!! Account Already Expired"
-                        ) // Can't suspend !!! Account Already Expired."
-                    };
-                    res.send(data);
-                }
-            }
-        } else {
-            data = {
-                status: false,
-                msg: await helpers.convertToLang(
-                    req.translation[MsgConstants.INVALID_DEVICE],
-                    "Invalid Device"
-                ) // Invalid Device."
-            };
-            res.send(data);
-        }
-    }
-};
 
-
-exports.activateDevice = async function (req, res) {
-    var verify = req.decoded; // await verifyToken(req, res);
-    var device_id = req.params.id;
-    var tod_dat = datetime.create();
-    var formatted_dt = tod_dat.format("Y-m-d H:M:S");
-
-    // if (verify.status !== undefined && verify.status == true) {
-    if (verify) {
-        var sql2 =
-            "select * from usr_acc where device_id = '" + device_id + "'";
-        var gtres = await sql.query(sql2);
-
-        if (!empty(device_id)) {
-            if (gtres[0].expiry_date == "" || gtres[0].expiry_date == null) {
-                var sql1 =
-                    "update usr_acc set account_status='' where device_id = '" +
-                    device_id +
-                    "'";
-
-                var rest = sql.query(sql1, async function (error, results) {
-                    if (error) {
-                        console.log(error);
-                    }
-                    if (results.affectedRows == 0) {
-                        data = {
-                            status: false,
-                            msg: await helpers.convertToLang(
-                                req.translation[MsgConstants.DEVICE_NOT_ACTIV],
-                                "Device not activated.Please try again"
-                            ) // Device not activated.Please try again."
-                        };
-                    } else {
-                        sql.query(
-                            "select devices.*  ," +
-                            usr_acc_query_text +
-                            ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
-                            device_id +
-                            '"',
-                            async function (error, resquery, fields) {
-                                if (error) {
-                                    console.log(error);
-                                }
-                                console.log("lolo else", resquery[0]);
-
-                                if (resquery.length) {
-                                    // let pgp_emails = await device_helpers.getPgpEmails(resquery[0].id);
-                                    // let sim_ids = await device_helpers.getSimids(resquery[0].id);
-                                    // let chat_ids = await device_helpers.getChatids(resquery[0].id);
-                                    resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
-                                    let servicesData = await device_helpers.getServicesData(resquery[0].id);
-                                    let servicesIds = servicesData.map(item => { return item.id })
-                                    let userAccServiceData = []
-                                    let dataPlans = []
-                                    if (servicesIds.length) {
-                                        userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
-                                        dataPlans = await device_helpers.getDataPlans(servicesIds)
-                                    }
-                                    resquery[0].sim_id = "N/A"
-                                    resquery[0].sim_id2 = "N/A"
-                                    resquery[0].pgp_email = "N/A"
-                                    resquery[0].chat_id = "N/A"
-                                    // if (pgp_emails[0] && pgp_emails[0].pgp_email) {
-                                    //     resquery[0].pgp_email = pgp_emails[0].pgp_email
-                                    // } else {
-                                    //     resquery[0].pgp_email = "N/A"
-                                    // }
-                                    // if (sim_ids && sim_ids.length) {
-                                    //     resquery[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
-                                    //     resquery[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
-                                    // }
-                                    // if (chat_ids[0] && chat_ids[0].chat_id) {
-                                    //     resquery[0].chat_id = chat_ids[0].chat_id
-                                    // }
-                                    // else {
-                                    //     resquery[0].chat_id = "N/A"
-
-                                    // }
-                                    let services = servicesData;
-                                    let service_id = null
-                                    if (services && services.length) {
-                                        services.map((item) => {
-                                            if (item.status === 'extended') {
-                                                resquery[0].extended_services = item
-                                            } else {
-                                                resquery[0].services = item
-                                                service_id = item.id
-                                            }
-                                        })
-                                    }
-
-                                    let productsData = userAccServiceData.filter(item => item.user_acc_id === resquery[0].id && item.service_id === service_id);
-                                    if (productsData && productsData.length) {
-                                        productsData.map((item) => {
-                                            if (item.type === 'sim_id') {
-                                                resquery[0].sim_id = item.product_value
-                                            }
-                                            else if (item.type === 'sim_id2') {
-                                                resquery[0].sim_id2 = item.product_value
-                                            }
-                                            else if (item.type === 'pgp_email') {
-                                                resquery[0].pgp_email = item.product_value
-                                            }
-                                            else if (item.type === 'chat_id') {
-                                                resquery[0].chat_id = item.product_value
-                                            }
-                                        })
-                                    }
-
-                                    let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
-                                    resquery[0].sim_id_data_plan = sim_id_data_plan[0]
-                                    let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
-                                    resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
-
-                                    resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
-                                    let remainTermDays = "N/A"
-
-                                    if (resquery[0].expiry_date !== null) {
-                                        let startDate = moment(new Date())
-                                        let expiray_date = new Date(resquery[0].expiry_date)
-                                        let endDate = moment(expiray_date)
-                                        remainTermDays = endDate.diff(startDate, 'days')
-                                    }
-                                    resquery[0].remainTermDays = remainTermDays
-
-                                    socket_helpers.sendDeviceStatus(sockets.baseIo,
-                                        resquery[0].device_id,
-                                        "active",
-                                        true
-                                    );
-                                    data = {
-                                        data: resquery[0],
-                                        status: true,
-                                        msg: await helpers.convertToLang(
-                                            req.translation[
-                                            MsgConstants.DEVICE_ACTIV_SUCC
-                                            ],
-                                            "Device activated successfully"
-                                        ) // Device activated successfully.
-                                    };
-                                    device_helpers.saveActionHistory(
-                                        resquery[0],
-                                        constants.DEVICE_ACTIVATED
-                                    );
-                                    res.send(data);
-                                }
-                            }
-                        );
-                    }
-                });
-            } else {
-                if (gtres[0].expiry_date > formatted_dt) {
-                    var sql1 =
-                        "update usr_acc set account_status='' where device_id = '" +
-                        device_id +
-                        "'";
-
-                    var rest = sql.query(sql1, async function (error, results) {
-                        if (error) {
-                            console.log(error);
-                        }
-                        if (results.affectedRows == 0) {
-                            data = {
-                                status: false,
-                                msg: await helpers.convertToLang(
-                                    req.translation[
-                                    MsgConstants.DEVICE_NOT_ACTIV
-                                    ],
-                                    "Device not activated.Please try again"
-                                ) // Device not activated.Please try again."
-                            };
-                        } else {
-                            sql.query(
-                                "select devices.*  ," +
-                                usr_acc_query_text +
-                                ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
-                                device_id +
-                                '"',
-                                async function (error, resquery, fields) {
-                                    if (error) {
-                                        console.log(error);
-                                    }
-                                    console.log("lolo else", resquery[0]);
-
-                                    if (resquery.length) {
-                                        let pgp_emails = await device_helpers.getPgpEmails(resquery[0].id);
-                                        let sim_ids = await device_helpers.getSimids(resquery[0].id);
-                                        let chat_ids = await device_helpers.getChatids(resquery[0].id);
-                                        resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
-                                        let servicesData = await device_helpers.getServicesData(resquery[0].id);
-                                        let servicesIds = servicesData.map(item => { return item.id })
-                                        let userAccServiceData = []
-                                        let dataPlans = []
-                                        if (servicesIds.length) {
-                                            userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
-                                            dataPlans = await device_helpers.getDataPlans(servicesIds)
-                                        }
-                                        resquery[0].sim_id = "N/A"
-                                        resquery[0].sim_id2 = "N/A"
-                                        resquery[0].pgp_email = "N/A"
-                                        resquery[0].chat_id = "N/A"
-                                        // if (pgp_emails[0] && pgp_emails[0].pgp_email) {
-                                        //     resquery[0].pgp_email = pgp_emails[0].pgp_email
-                                        // } else {
-                                        //     resquery[0].pgp_email = "N/A"
-                                        // }
-                                        // if (sim_ids && sim_ids.length) {
-                                        //     resquery[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
-                                        //     resquery[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
-                                        // }
-                                        // if (chat_ids[0] && chat_ids[0].chat_id) {
-                                        //     resquery[0].chat_id = chat_ids[0].chat_id
-                                        // }
-                                        // else {
-                                        //     resquery[0].chat_id = "N/A"
-
-                                        // }
-                                        let services = servicesData;
-                                        let service_id = null
-                                        if (services && services.length) {
-                                            services.map((item) => {
-                                                if (item.status === 'extended') {
-                                                    resquery[0].extended_services = item
-                                                } else {
-                                                    resquery[0].services = item
-                                                    service_id = item.id
-                                                }
-                                            })
-                                        }
-
-                                        let productsData = userAccServiceData.filter(item => item.user_acc_id === resquery[0].id && item.service_id === service_id);
-                                        if (productsData && productsData.length) {
-                                            productsData.map((item) => {
-                                                if (item.type === 'sim_id') {
-                                                    resquery[0].sim_id = item.product_value
-                                                }
-                                                else if (item.type === 'sim_id2') {
-                                                    resquery[0].sim_id2 = item.product_value
-                                                }
-                                                else if (item.type === 'pgp_email') {
-                                                    resquery[0].pgp_email = item.product_value
-                                                }
-                                                else if (item.type === 'chat_id') {
-                                                    resquery[0].chat_id = item.product_value
-                                                }
-                                            })
-                                        }
-
-                                        let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
-                                        resquery[0].sim_id_data_plan = sim_id_data_plan[0]
-                                        let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
-                                        resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
-                                        // if (servicesData[0]) {
-                                        //     resquery[0].services = servicesData[0]
-                                        // }
-                                        // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
-                                        // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
-                                        resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
-                                        // } else {
-                                        //     resquery[0].lastOnline = "N/A"
-                                        // }
-                                        let remainTermDays = "N/A"
-
-                                        if (resquery[0].expiry_date !== null) {
-                                            let startDate = moment(new Date())
-                                            let expiray_date = new Date(resquery[0].expiry_date)
-                                            let endDate = moment(expiray_date)
-                                            remainTermDays = endDate.diff(startDate, 'days')
-                                        }
-                                        resquery[0].remainTermDays = remainTermDays
-                                        // dealerData = await getDealerdata(res[i]);
                                         socket_helpers.sendDeviceStatus(sockets.baseIo,
                                             resquery[0].device_id,
                                             "active",
@@ -5934,11 +5855,10 @@ exports.activateDevice = async function (req, res) {
                                             status: true,
                                             msg: await helpers.convertToLang(
                                                 req.translation[
-                                                MsgConstants
-                                                    .DEVICE_ACTIV_SUCC
+                                                MsgConstants.DEVICE_ACTIV_SUCC
                                                 ],
                                                 "Device activated successfully"
-                                            ) // Device activated successfully."
+                                            ) // Device activated successfully.
                                         };
                                         device_helpers.saveActionHistory(
                                             resquery[0],
@@ -5951,16 +5871,174 @@ exports.activateDevice = async function (req, res) {
                         }
                     });
                 } else {
-                    data = {
-                        status: false,
-                        msg: await helpers.convertToLang(
-                            req.translation[MsgConstants.DEVICE_NOT_ACTIV_EXP],
-                            "Device cannnot be activated.It is expired already"
-                        ) // Device cannnot be activated.It is expired already.
-                    };
-                    res.send(data);
+                    if (gtres[0].expiry_date > formatted_dt) {
+                        var sql1 =
+                            "update usr_acc set account_status='' where device_id = '" +
+                            device_id +
+                            "'";
+
+                        var rest = sql.query(sql1, async function (error, results) {
+                            if (error) {
+                                console.log(error);
+                            }
+                            if (results.affectedRows == 0) {
+                                data = {
+                                    status: false,
+                                    msg: await helpers.convertToLang(
+                                        req.translation[
+                                        MsgConstants.DEVICE_NOT_ACTIV
+                                        ],
+                                        "Device not activated.Please try again"
+                                    ) // Device not activated.Please try again."
+                                };
+                            } else {
+                                sql.query(
+                                    "select devices.*  ," +
+                                    usr_acc_query_text +
+                                    ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' +
+                                    device_id +
+                                    '"',
+                                    async function (error, resquery, fields) {
+                                        if (error) {
+                                            console.log(error);
+                                        }
+                                        console.log("lolo else", resquery[0]);
+
+                                        if (resquery.length) {
+                                            let pgp_emails = await device_helpers.getPgpEmails(resquery[0].id);
+                                            let sim_ids = await device_helpers.getSimids(resquery[0].id);
+                                            let chat_ids = await device_helpers.getChatids(resquery[0].id);
+                                            resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
+                                            let servicesData = await device_helpers.getServicesData(resquery[0].id);
+                                            let servicesIds = servicesData.map(item => { return item.id })
+                                            let userAccServiceData = []
+                                            let dataPlans = []
+                                            if (servicesIds.length) {
+                                                userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
+                                                dataPlans = await device_helpers.getDataPlans(servicesIds)
+                                            }
+                                            resquery[0].sim_id = "N/A"
+                                            resquery[0].sim_id2 = "N/A"
+                                            resquery[0].pgp_email = "N/A"
+                                            resquery[0].chat_id = "N/A"
+                                            // if (pgp_emails[0] && pgp_emails[0].pgp_email) {
+                                            //     resquery[0].pgp_email = pgp_emails[0].pgp_email
+                                            // } else {
+                                            //     resquery[0].pgp_email = "N/A"
+                                            // }
+                                            // if (sim_ids && sim_ids.length) {
+                                            //     resquery[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
+                                            //     resquery[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
+                                            // }
+                                            // if (chat_ids[0] && chat_ids[0].chat_id) {
+                                            //     resquery[0].chat_id = chat_ids[0].chat_id
+                                            // }
+                                            // else {
+                                            //     resquery[0].chat_id = "N/A"
+
+                                            // }
+                                            let services = servicesData;
+                                            let service_id = null
+                                            if (services && services.length) {
+                                                services.map((item) => {
+                                                    if (item.status === 'extended') {
+                                                        resquery[0].extended_services = item
+                                                    } else {
+                                                        resquery[0].services = item
+                                                        service_id = item.id
+                                                    }
+                                                })
+                                            }
+
+                                            let productsData = userAccServiceData.filter(item => item.user_acc_id === resquery[0].id && item.service_id === service_id);
+                                            if (productsData && productsData.length) {
+                                                productsData.map((item) => {
+                                                    if (item.type === 'sim_id') {
+                                                        resquery[0].sim_id = item.product_value
+                                                    }
+                                                    else if (item.type === 'sim_id2') {
+                                                        resquery[0].sim_id2 = item.product_value
+                                                    }
+                                                    else if (item.type === 'pgp_email') {
+                                                        resquery[0].pgp_email = item.product_value
+                                                    }
+                                                    else if (item.type === 'chat_id') {
+                                                        resquery[0].chat_id = item.product_value
+                                                    }
+                                                })
+                                            }
+
+                                            let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
+                                            resquery[0].sim_id_data_plan = sim_id_data_plan[0]
+                                            let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
+                                            resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
+                                            // if (servicesData[0]) {
+                                            //     resquery[0].services = servicesData[0]
+                                            // }
+                                            // let loginHistoryData = await device_helpers.getLastLoginDetail(resquery[0].usr_device_id)
+                                            // if (loginHistoryData[0] && loginHistoryData[0].created_at) {
+                                            resquery[0].lastOnline = resquery[0].last_login ? resquery[0].last_login : "N/A"
+                                            // } else {
+                                            //     resquery[0].lastOnline = "N/A"
+                                            // }
+                                            let remainTermDays = "N/A"
+
+                                            if (resquery[0].expiry_date !== null) {
+                                                let startDate = moment(new Date())
+                                                let expiray_date = new Date(resquery[0].expiry_date)
+                                                let endDate = moment(expiray_date)
+                                                remainTermDays = endDate.diff(startDate, 'days')
+                                            }
+                                            resquery[0].remainTermDays = remainTermDays
+                                            // dealerData = await getDealerdata(res[i]);
+                                            socket_helpers.sendDeviceStatus(sockets.baseIo,
+                                                resquery[0].device_id,
+                                                "active",
+                                                true
+                                            );
+                                            data = {
+                                                data: resquery[0],
+                                                status: true,
+                                                msg: await helpers.convertToLang(
+                                                    req.translation[
+                                                    MsgConstants
+                                                        .DEVICE_ACTIV_SUCC
+                                                    ],
+                                                    "Device activated successfully"
+                                                ) // Device activated successfully."
+                                            };
+                                            device_helpers.saveActionHistory(
+                                                resquery[0],
+                                                constants.DEVICE_ACTIVATED
+                                            );
+                                            res.send(data);
+                                        }
+                                    }
+                                );
+                            }
+                        });
+                    } else {
+                        data = {
+                            status: false,
+                            msg: await helpers.convertToLang(
+                                req.translation[MsgConstants.DEVICE_NOT_ACTIV_EXP],
+                                "Device cannnot be activated.It is expired already"
+                            ) // Device cannnot be activated.It is expired already.
+                        };
+                        res.send(data);
+                    }
                 }
+            } else {
+                data = {
+                    status: false,
+                    msg: await helpers.convertToLang(
+                        req.translation[""],
+                        "Unauthorized Access"
+                    )
+                };
+                res.send(data);
             }
+
         } else {
             data = {
                 status: false,
@@ -5985,143 +6063,136 @@ exports.wipeDevice = async function (req, res) {
             '"';
         var resquery = await sql.query(deviceQuery);
         if (device_id && resquery.length) {
-            var sql1 = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, type) VALUES ('" +
-                resquery[0].device_id +
-                "'," +
-                resquery[0].dealer_id +
-                "," +
-                resquery[0].id +
-                ", 'wipe')";
+            if (verify.user.type === constants.ADMIN || verify.user.id === resquery[0].dealer_id || verify.user.id === resquery[0].prnt_dlr_id) {
+                var sql1 = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, type) VALUES ('" +
+                    resquery[0].device_id +
+                    "'," +
+                    resquery[0].dealer_id +
+                    "," +
+                    resquery[0].id +
+                    ", 'wipe')";
 
-            sql.query(sql1, async function (error, results) {
-                if (error) {
-                    console.log(error);
-                }
-                if (results.affectedRows == 0) {
-                    data = {
-                        status: false,
-                        msg: await helpers.convertToLang(
-                            req.translation[MsgConstants.DEVICE_NOT_WIPE],
-                            "Device not wiped.Please try again"
-                        ) // Device not wiped.Please try again.
-                    };
-                    res.send(data);
-                } else {
-                    let wipe_device_date = await sql.query("SELECT created_at FROM device_history WHERE id= " + results.insertId)
-                    let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + resquery[0].id + " AND (type = 'push_apps' || type = 'pull_apps' || type = 'policy' || type = 'profile') AND created_at <= '" + wipe_device_date[0].created_at + "'";
-                    await sql.query(historyUpdate);
+                sql.query(sql1, async function (error, results) {
+                    if (error) {
+                        console.log(error);
+                    }
+                    if (results.affectedRows == 0) {
+                        data = {
+                            status: false,
+                            msg: await helpers.convertToLang(
+                                req.translation[MsgConstants.DEVICE_NOT_WIPE],
+                                "Device not wiped.Please try again"
+                            ) // Device not wiped.Please try again.
+                        };
+                        res.send(data);
+                    } else {
+                        let wipe_device_date = await sql.query("SELECT created_at FROM device_history WHERE id= " + results.insertId)
+                        let historyUpdate = "UPDATE device_history SET status=1 WHERE user_acc_id=" + resquery[0].id + " AND (type = 'push_apps' || type = 'pull_apps' || type = 'policy' || type = 'profile') AND created_at <= '" + wipe_device_date[0].created_at + "'";
+                        await sql.query(historyUpdate);
 
-                    if (resquery[0].online === constants.DEVICE_ONLINE) {
-                        socket_helpers.sendDeviceStatus(sockets.baseIo,
-                            resquery[0].device_id,
+                        if (resquery[0].online === constants.DEVICE_ONLINE) {
+                            socket_helpers.sendDeviceStatus(sockets.baseIo,
+                                resquery[0].device_id,
+                                constants.DEVICE_WIPE
+                            );
+                            data = {
+                                status: true,
+                                online: true,
+                                msg: await helpers.convertToLang(
+                                    req.translation[""],
+                                    "Device Wiped Susseccfully."
+                                ),
+                                content: ""
+                            }
+                            // Need to remove this code after APP TEAM release
+                            var clearWipeDevice = "UPDATE device_history SET status=1 WHERE type='wipe' AND user_acc_id=" + resquery[0].id + "";
+                            sql.query(clearWipeDevice)
+                        } else {
+                            data = {
+                                status: true,
+                                online: false,
+                                msg: await helpers.convertToLang(
+                                    req.translation[
+                                    MsgConstants.WARNING_DEVICE_OFFLINE
+                                    ],
+                                    "Warning Device Offline"
+                                ),
+                                content: await helpers.convertToLang(
+                                    req.translation[
+                                    ""
+                                    ],
+                                    "Wipe command sent to device. Action will be performed when device is back online"
+                                )
+                            }
+                        }
+                        resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
+                        let servicesData = await device_helpers.getServicesData(resquery[0].id);
+                        let servicesIds = servicesData.map(item => { return item.id })
+                        let userAccServiceData = []
+                        let dataPlans = []
+                        if (servicesIds.length) {
+                            userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
+                            dataPlans = await device_helpers.getDataPlans(servicesIds)
+                        }
+                        resquery[0].sim_id = "N/A"
+                        resquery[0].sim_id2 = "N/A"
+                        resquery[0].pgp_email = "N/A"
+                        resquery[0].chat_id = "N/A"
+                        let services = servicesData;
+                        let service_id = null
+                        if (services && services.length) {
+                            services.map((item) => {
+                                if (item.status === 'extended') {
+                                    resquery[0].extended_services = item
+                                } else {
+                                    resquery[0].services = item
+                                    service_id = item.id
+                                }
+                            })
+                        }
+
+                        let productsData = userAccServiceData.filter(item => item.user_acc_id === resquery[0].id && item.service_id === service_id);
+                        if (productsData && productsData.length) {
+                            productsData.map((item) => {
+                                if (item.type === 'sim_id') {
+                                    resquery[0].sim_id = item.product_value
+                                }
+                                else if (item.type === 'sim_id2') {
+                                    resquery[0].sim_id2 = item.product_value
+                                }
+                                else if (item.type === 'pgp_email') {
+                                    resquery[0].pgp_email = item.product_value
+                                }
+                                else if (item.type === 'chat_id') {
+                                    resquery[0].chat_id = item.product_value
+                                }
+                            })
+                        }
+                        let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
+                        resquery[0].sim_id_data_plan = sim_id_data_plan[0]
+                        let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
+                        resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
+
+                        device_helpers.saveActionHistory(
+                            resquery[0],
                             constants.DEVICE_WIPE
                         );
-                        data = {
-                            status: true,
-                            online: true,
-                            msg: await helpers.convertToLang(
-                                req.translation[""],
-                                "Device Wiped Susseccfully."
-                            ),
-                            content: ""
-                        }
-                        // Need to remove this code after APP TEAM release
-                        var clearWipeDevice = "UPDATE device_history SET status=1 WHERE type='wipe' AND user_acc_id=" + resquery[0].id + "";
-                        sql.query(clearWipeDevice)
-                    } else {
-                        data = {
-                            status: true,
-                            online: false,
-                            msg: await helpers.convertToLang(
-                                req.translation[
-                                MsgConstants.WARNING_DEVICE_OFFLINE
-                                ],
-                                "Warning Device Offline"
-                            ),
-                            content: await helpers.convertToLang(
-                                req.translation[
-                                ""
-                                ],
-                                "Wipe command sent to device. Action will be performed when device is back online"
-                            )
-                        }
+
+                        res.send(data);
+
                     }
+                });
+            } else {
+                data = {
+                    status: false,
+                    msg: await helpers.convertToLang(
+                        req.translation[""],
+                        "Unauthorized Access"
+                    )
+                };
+                return res.send(data);
+            }
 
-                    // let pgp_emails = await device_helpers.getPgpEmails(resquery[0].id);
-                    // let sim_ids = await device_helpers.getSimids(resquery[0].id);
-                    // let chat_ids = await device_helpers.getChatids(resquery[0].id);
-                    resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
-                    let servicesData = await device_helpers.getServicesData(resquery[0].id);
-                    let servicesIds = servicesData.map(item => { return item.id })
-                    let userAccServiceData = []
-                    let dataPlans = []
-                    if (servicesIds.length) {
-                        userAccServiceData = await device_helpers.getUserAccServicesData(resquery[0].id, servicesIds)
-                        dataPlans = await device_helpers.getDataPlans(servicesIds)
-                    }
-                    resquery[0].sim_id = "N/A"
-                    resquery[0].sim_id2 = "N/A"
-                    resquery[0].pgp_email = "N/A"
-                    resquery[0].chat_id = "N/A"
-                    // if (pgp_emails[0] && pgp_emails[0].pgp_email) {
-                    //     resquery[0].pgp_email = pgp_emails[0].pgp_email
-                    // } else {
-                    //     resquery[0].pgp_email = "N/A"
-                    // }
-                    // if (sim_ids && sim_ids.length) {
-                    //     resquery[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
-                    //     resquery[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
-                    // }
-                    // if (chat_ids[0] && chat_ids[0].chat_id) {
-                    //     resquery[0].chat_id = chat_ids[0].chat_id
-                    // }
-                    // else {
-                    //     resquery[0].chat_id = "N/A"
-                    // }
-                    let services = servicesData;
-                    let service_id = null
-                    if (services && services.length) {
-                        services.map((item) => {
-                            if (item.status === 'extended') {
-                                resquery[0].extended_services = item
-                            } else {
-                                resquery[0].services = item
-                                service_id = item.id
-                            }
-                        })
-                    }
-
-                    let productsData = userAccServiceData.filter(item => item.user_acc_id === resquery[0].id && item.service_id === service_id);
-                    if (productsData && productsData.length) {
-                        productsData.map((item) => {
-                            if (item.type === 'sim_id') {
-                                resquery[0].sim_id = item.product_value
-                            }
-                            else if (item.type === 'sim_id2') {
-                                resquery[0].sim_id2 = item.product_value
-                            }
-                            else if (item.type === 'pgp_email') {
-                                resquery[0].pgp_email = item.product_value
-                            }
-                            else if (item.type === 'chat_id') {
-                                resquery[0].chat_id = item.product_value
-                            }
-                        })
-                    }
-                    let sim_id_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id')
-                    resquery[0].sim_id_data_plan = sim_id_data_plan[0]
-                    let sim_id2_data_plan = dataPlans.filter((item) => item.sim_type == 'sim_id2')
-                    resquery[0].sim_id2_data_plan = sim_id2_data_plan[0]
-
-                    device_helpers.saveActionHistory(
-                        resquery[0],
-                        constants.DEVICE_WIPE
-                    );
-
-                    res.send(data);
-
-                }
-            });
         } else {
             data = {
                 status: false,

@@ -773,130 +773,133 @@ exports.suspendDevice = async function (req, res) {
 
             if (gtres.length) {
 
-
-                var sql1 = `UPDATE usr_acc SET account_status='suspended' WHERE device_id = '${device_id}' `;
-                // if (gtres[0].expiry_date == '' || gtres[0].expiry_date == null) {
-
-
-                //     sql.query(sql1, async function (error, results) {
-                //         if (error) {
-                //             console.log(error);
-                //         }
-
-                //         if (results && results.affectedRows === 0) {
-
-                //             data = {
-                //                 status: false,
-                //                 msg: "Account not suspended.Please try again", // Account not suspended.Please try again.
-                //             }
-                //             return res.send(data);
-                //         } else {
-
-                //             sql.query('select devices.*, ' + usr_acc_query_text + ', dealers.dealer_name, dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery) {
-                //                 if (error) {
-                //                     console.log(error);
-                //                 }
-
-                //                 if (resquery.length) {
-                //                     resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
-                //                     resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
-                //                     resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
-                //                     resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
-                //                     // dealerData = await getDealerdata(res[i]);
-                //                     data = {
-                //                         data: resquery[0],
-                //                         status: true,
-                //                         msg: await helpers.convertToLang(req.translation[MsgConstants.ACC_SUSP_SUCC], "Account suspended successfully"), // Account suspended successfully.
-                //                     }
-                //                     device_helpers.saveActionHistory(resquery[0], constants.DEVICE_SUSPENDED)
-                //                     socket_helpers.sendDeviceStatus(sockets.baseIo, resquery[0].device_id, "suspended");
+                if (verify.user.type === constants.ADMIN || verify.user.id === gtres[0].dealer_id || verify.user.id === gtres[0].prnt_dlr_id) {
+                    var sql1 = `UPDATE usr_acc SET account_status='suspended' WHERE device_id = '${device_id}' `;
+                    // if (gtres[0].expiry_date == '' || gtres[0].expiry_date == null) {
 
 
-                //                     res.send(data);
+                    //     sql.query(sql1, async function (error, results) {
+                    //         if (error) {
+                    //             console.log(error);
+                    //         }
 
-                //                 }
-                //             })
+                    //         if (results && results.affectedRows === 0) {
 
-                //         }
+                    //             data = {
+                    //                 status: false,
+                    //                 msg: "Account not suspended.Please try again", // Account not suspended.Please try again.
+                    //             }
+                    //             return res.send(data);
+                    //         } else {
 
+                    //             sql.query('select devices.*, ' + usr_acc_query_text + ', dealers.dealer_name, dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery) {
+                    //                 if (error) {
+                    //                     console.log(error);
+                    //                 }
 
-                //     });
-
-                // } else {
-
-                if (gtres[0].expiry_date == '' || gtres[0].expiry_date == null || gtres[0].expiry_date >= formatted_dt) {
-
-
-                    sql.query(sql1, async function (error, results) {
-                        if (error) {
-                            data = {
-                                status: false,
-                                msg: "Device not suspended. Please try again", // Account not suspended.Please try again."
-                            }
-                            return res.send(data);
-                        }
-
-                        if (results.affectedRows == 0) {
-
-                            data = {
-                                status: false,
-                                msg: "device not suspended. Please try again", // Account not suspended.Please try again."
-                            }
-                            return res.send(data);
-
-                        } else {
+                    //                 if (resquery.length) {
+                    //                     resquery[0].finalStatus = device_helpers.checkStatus(resquery[0])
+                    //                     resquery[0].pgp_email = await device_helpers.getPgpEmails(resquery[0])
+                    //                     resquery[0].sim_id = await device_helpers.getSimids(resquery[0])
+                    //                     resquery[0].chat_id = await device_helpers.getChatids(resquery[0])
+                    //                     // dealerData = await getDealerdata(res[i]);
+                    //                     data = {
+                    //                         data: resquery[0],
+                    //                         status: true,
+                    //                         msg: await helpers.convertToLang(req.translation[MsgConstants.ACC_SUSP_SUCC], "Account suspended successfully"), // Account suspended successfully.
+                    //                     }
+                    //                     device_helpers.saveActionHistory(resquery[0], constants.DEVICE_SUSPENDED)
+                    //                     socket_helpers.sendDeviceStatus(sockets.baseIo, resquery[0].device_id, "suspended");
 
 
-                            sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
-                                if (error) {
-                                    console.log(error);
+                    //                     res.send(data);
+
+                    //                 }
+                    //             })
+
+                    //         }
+
+
+                    //     });
+
+                    // } else {
+
+                    if (gtres[0].expiry_date == '' || gtres[0].expiry_date == null || gtres[0].expiry_date >= formatted_dt) {
+
+
+                        sql.query(sql1, async function (error, results) {
+                            if (error) {
+                                data = {
+                                    status: false,
+                                    msg: "Device not suspended. Please try again", // Account not suspended.Please try again."
                                 }
-                                // console.log('lolo else', resquery[0])
+                                return res.send(data);
+                            }
 
-                                if (resquery.length) {
-                                    let pgp_emails = await device_helpers.getPgpEmails(results[0].id);
-                                    let sim_ids = await device_helpers.getSimids(results[0].id);
-                                    let chat_ids = await device_helpers.getChatids(results[0].id);
-                                    results[0].finalStatus = device_helpers.checkStatus(results[0]);
-                                    if (pgp_emails[0] && pgp_emails[0].pgp_email) {
-                                        results[0].pgp_email = pgp_emails[0].pgp_email
-                                    } else {
-                                        results[0].pgp_email = "N/A"
-                                    }
-                                    if (sim_ids && sim_ids.length) {
-                                        resquery[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
-                                        resquery[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
-                                    }
-                                    if (chat_ids[0] && chat_ids[0].chat_id) {
-                                        results[0].chat_id = chat_ids[0].chat_id
-                                    }
-                                    else {
-                                        results[0].chat_id = "N/A"
-                                    }
-                                    // dealerData = await getDealerdata(res[i]);
-                                    data = {
-                                        data: resquery[0],
-                                        status: true,
-                                        msg: "Device suspended successfully", // Account suspended successfully."
-                                    }
-                                    device_helpers.saveActionHistory(resquery[0], constants.DEVICE_SUSPENDED)
-                                    socket_helpers.sendDeviceStatus(sockets.baseIo, resquery[0].device_id, "suspended");
-                                    return res.send(data);
+                            if (results.affectedRows == 0) {
+
+                                data = {
+                                    status: false,
+                                    msg: "device not suspended. Please try again", // Account not suspended.Please try again."
                                 }
-                            })
+                                return res.send(data);
 
+                            } else {
+                                sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= "' + device_id + '"', async function (error, resquery, fields) {
+                                    if (error) {
+                                        console.log(error);
+                                    }
+                                    // console.log('lolo else', resquery[0])
+                                    if (resquery.length) {
+                                        let pgp_emails = await device_helpers.getPgpEmails(results[0].id);
+                                        let sim_ids = await device_helpers.getSimids(results[0].id);
+                                        let chat_ids = await device_helpers.getChatids(results[0].id);
+                                        results[0].finalStatus = device_helpers.checkStatus(results[0]);
+                                        if (pgp_emails[0] && pgp_emails[0].pgp_email) {
+                                            results[0].pgp_email = pgp_emails[0].pgp_email
+                                        } else {
+                                            results[0].pgp_email = "N/A"
+                                        }
+                                        if (sim_ids && sim_ids.length) {
+                                            resquery[0].sim_id = sim_ids[0] ? sim_ids[0].sim_id : "N/A"
+                                            resquery[0].sim_id2 = sim_ids[1] ? sim_ids[1].sim_id : "N/A"
+                                        }
+                                        if (chat_ids[0] && chat_ids[0].chat_id) {
+                                            results[0].chat_id = chat_ids[0].chat_id
+                                        }
+                                        else {
+                                            results[0].chat_id = "N/A"
+                                        }
+                                        // dealerData = await getDealerdata(res[i]);
+                                        data = {
+                                            data: resquery[0],
+                                            status: true,
+                                            msg: "Device suspended successfully", // Account suspended successfully."
+                                        }
+                                        device_helpers.saveActionHistory(resquery[0], constants.DEVICE_SUSPENDED)
+                                        socket_helpers.sendDeviceStatus(sockets.baseIo, resquery[0].device_id, "suspended");
+                                        return res.send(data);
+                                    }
+                                })
+
+                            }
+
+                        });
+                    } else {
+                        data = {
+                            status: false,
+                            msg: "Can't suspend !!! Device Already Expired", // Can't suspend !!! Account Already Expired."
                         }
-
-                    });
-
+                        return res.send(data);
+                    }
                 } else {
-
                     data = {
                         status: false,
-                        msg: "Can't suspend !!! Device Already Expired", // Can't suspend !!! Account Already Expired."
+                        msg: "Unauthorize Access", // Account not suspended.Please try again."
                     }
                     return res.send(data);
                 }
+
                 // }
             } else {
                 data = {
