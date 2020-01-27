@@ -2701,7 +2701,7 @@ exports.connectDealerDomainsPermissions = async function (req, res) {
                         } else {
                             deleteNotIn = `DELETE FROM dealer_permissions WHERE dealer_id IN (${dealers}) AND permission_id = ${permissionId} AND permission_type='${permissionType}' AND permission_by=${loggedUserId}`;
                         }
-                        console.log("deleteNotIn: ", deleteNotIn);
+                        // console.log("deleteNotIn: ", deleteNotIn);
                         let deleteDealers = await sql.query(deleteNotIn);
                         // console.log("deleteDealers: ", deleteDealers);
 
@@ -2753,7 +2753,7 @@ exports.connectDealerDomainsPermissions = async function (req, res) {
     else if (permissionRemoved.length === 0 && failedToRemove.length > 0) {
         data = {
             status: false,
-            msg: 'Failed to remove'
+            msg: 'Failed to remove domain'
         }
     }
     else if (permissionRemoved.length > 0 && failedToRemove.length > 0) {
@@ -2765,13 +2765,13 @@ exports.connectDealerDomainsPermissions = async function (req, res) {
     else if (ActionNotDefined.length > 0) {
         data = {
             status: false,
-            msg: 'Action not define'
+            msg: 'Action not defined to add/remove domains'
         }
     }
     else {
         data = {
             status: false,
-            msg: 'Error while processing'
+            msg: 'Error while processing on domains'
         }
     }
     // console.log("response data is: ", data)
