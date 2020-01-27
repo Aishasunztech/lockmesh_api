@@ -384,7 +384,7 @@ exports.superAdminLogin = async function (req, res) {
 					} else {
 						user.expiresIn = constants.EXPIRES_IN;
 						user.token = token;
-						helpers.saveLogin(user, userType, app_constants.TOKEN, 1);
+						await helpers.saveLogin(user, userType, app_constants.TOKEN, 1);
 						data = {
 							status: true,
 							token: token,
