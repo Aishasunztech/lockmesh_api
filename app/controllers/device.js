@@ -4156,7 +4156,7 @@ exports.unlinkDevice = async function (req, res) {
         var gtres = await sql.query(sql2);
         if (!empty(device_id) && gtres.length) {
             console.log("device id:", device_id);
-            if (verify.user.type === constants.ADMIN || verify.user.id === gtres[0].dealer_id || verify.user.id === gtres[0].prnt_dlr_id) {
+            if (verify.user.user_type === constants.ADMIN || verify.user.id === gtres[0].dealer_id || verify.user.id === gtres[0].prnt_dlr_id) {
                 let dvcId = await device_helpers.getDvcIDByDeviceID(device_id);
                 console.log("dvc id:", dvcId);
 
@@ -4319,7 +4319,7 @@ exports.unflagDevice = async function (req, res) {
         var gtres = await sql.query(sql2);
 
         if (!empty(device_id) && gtres.length) {
-            if (verify.user.type === constants.ADMIN || verify.user.id === gtres[0].dealer_id || verify.user.id === gtres[0].prnt_dlr_id) {
+            if (verify.user.user_type === constants.ADMIN || verify.user.id === gtres[0].dealer_id || verify.user.id === gtres[0].prnt_dlr_id) {
                 var sql1 = "update devices set flagged= 'Not flagged' where id='" + device_id + "'";
                 var rest = sql.query(sql1, async function (error, results) {
                     if (error) {
@@ -4507,7 +4507,7 @@ exports.flagDevice = async function (req, res) {
         var getUserAccRes = await sql.query(getUserAcc);
 
         if (!empty(device_id) && gtres.length && getUserAccRes.length) {
-            if (verify.user.type === constants.ADMIN || verify.user.id === getUserAccRes[0].dealer_id || verify.user.id === getUserAccRes[0].prnt_dlr_id) {
+            if (verify.user.user_type === constants.ADMIN || verify.user.id === getUserAccRes[0].dealer_id || verify.user.id === getUserAccRes[0].prnt_dlr_id) {
                 if (gtres[0].flagged === '' || gtres[0].flagged === 'null' || gtres[0].flagged === null || gtres[0].flagged === 'Not flagged') {
                     var sql1 = `update devices set flagged='${option}' where id = '${device_id}'`;
                     console.log(sql1);
@@ -5394,7 +5394,7 @@ exports.suspendAccountDevices = async function (req, res) {
 
         if (!empty(device_id) && gtres.length) {
             let resDevice = null;
-            if (verify.user.type === constants.ADMIN || verify.user.id === gtres[0].dealer_id || verify.user.id === gtres[0].prnt_dlr_id) {
+            if (verify.user.user_type === constants.ADMIN || verify.user.id === gtres[0].dealer_id || verify.user.id === gtres[0].prnt_dlr_id) {
                 if (gtres[0].expiry_date == "" || gtres[0].expiry_date == null) {
                     var sql1 =
                         "update usr_acc set account_status='suspended' where device_id = '" +
@@ -5733,7 +5733,7 @@ exports.activateDevice = async function (req, res) {
         var gtres = await sql.query(sql2);
 
         if (!empty(device_id) && gtres.length) {
-            if (verify.user.type === constants.ADMIN || verify.user.id === gtres[0].dealer_id || verify.user.id === gtres[0].prnt_dlr_id) {
+            if (verify.user.user_type === constants.ADMIN || verify.user.id === gtres[0].dealer_id || verify.user.id === gtres[0].prnt_dlr_id) {
                 if (gtres[0].expiry_date == "" || gtres[0].expiry_date == null) {
                     var sql1 =
                         "update usr_acc set account_status='' where device_id = '" +
@@ -6063,7 +6063,7 @@ exports.wipeDevice = async function (req, res) {
             '"';
         var resquery = await sql.query(deviceQuery);
         if (device_id && resquery.length) {
-            if (verify.user.type === constants.ADMIN || verify.user.id === resquery[0].dealer_id || verify.user.id === resquery[0].prnt_dlr_id) {
+            if (verify.user.user_type === constants.ADMIN || verify.user.id === resquery[0].dealer_id || verify.user.id === resquery[0].prnt_dlr_id) {
                 var sql1 = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, type) VALUES ('" +
                     resquery[0].device_id +
                     "'," +

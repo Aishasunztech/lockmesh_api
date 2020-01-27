@@ -773,7 +773,7 @@ exports.suspendDevice = async function (req, res) {
 
             if (gtres.length) {
 
-                if (verify.user.type === constants.ADMIN || verify.user.id === gtres[0].dealer_id || verify.user.id === gtres[0].prnt_dlr_id) {
+                if (verify.user.user_type === constants.ADMIN || verify.user.id === gtres[0].dealer_id || verify.user.id === gtres[0].prnt_dlr_id) {
                     var sql1 = `UPDATE usr_acc SET account_status='suspended' WHERE device_id = '${device_id}' `;
                     // if (gtres[0].expiry_date == '' || gtres[0].expiry_date == null) {
 
