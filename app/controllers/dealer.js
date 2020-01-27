@@ -168,6 +168,7 @@ exports.getAllToAllDealers = async function (req, res) {
                     dealer_id: results[i].dealer_id,
                     dealer_name: results[i].dealer_name,
                     dealer_email: results[i].dealer_email,
+                    type: await general_helpers.getUserType(results[i].dealer_id),
                     link_code: results[i].link_code,
                     account_status: results[i].account_status,
                     unlink_status: results[i].unlink_status,
@@ -762,9 +763,9 @@ exports.deleteDealer = async function (req, res) {
         var loggedInuid = verify.user.id;
 
         if (!empty(dealer_id)) {
-            var qury = `UPDATE dealers SET unlink_status = 1 WHERE dealer_id = ${dealer_id} `;
+            var dealerQ = `UPDATE dealers SET unlink_status = 1 WHERE dealer_id = ${dealer_id} `;
 
-            sql.query(qury, async function (error, row) {
+            sql.query(dealerQ, async function (error, row) {
 
                 // var qury1 = "UPDATE dealers set unlink_status = 1 where connected_dealer = '" + dealer_id + "'";
                 // var rslt = await sql.query(qury1);
@@ -779,6 +780,9 @@ exports.deleteDealer = async function (req, res) {
                 // } else 
 
                 if (row && row.affectedRows !== 0) {
+
+                    await general_helpers.expireDealerLogin(dealer_id);
+
                     data = {
                         status: true,
                         msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_DEL_SUCC], "Dealer deleted successfully"), // Dealer deleted successfully.

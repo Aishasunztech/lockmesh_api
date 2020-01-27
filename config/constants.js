@@ -12,7 +12,8 @@ const authToken = '8f09f2ebc98338bff27e0ac73ea71a23';
 let twilioClient = require('twilio')(accountSid, authToken);
 
 // set default utc-1 timezone for testing
-let TIME_ZONE = "Europe/Berlin"; // "Asia/Karachi";
+let TIME_ZONE =  "Europe/London"; // "Asia/Karachi";
+let TIME_ZONE_OFFSET = '+0:00';
 
 // Database
 let DB_HOST = "localhost";
@@ -47,7 +48,7 @@ if (HOST_NAME) {
 			URL = "https://dev.lockmesh.com";
 			SUPERADMIN_URL = "https://dev.meshguard.co";
 			SUPERADMIN_URL_API = "https://devapi.meshguard.co"
-			TIME_ZONE = 'Europe/Berlin';
+			TIME_ZONE = 'Europe/London';
 
 			DB_USERNAME = "web";
 			DB_PASSWORD = "Alibaba@40C#";
@@ -62,7 +63,7 @@ if (HOST_NAME) {
 			URL = "https://predev.lockmesh.com";
 			SUPERADMIN_URL = "https://dev.meshguard.co";
 			SUPERADMIN_URL_API = "https://devapi.meshguard.co"
-			TIME_ZONE = 'Europe/Berlin';
+			TIME_ZONE = 'Europe/London';
 
 			DB_USERNAME = "web";
 			DB_PASSWORD = "Alibaba@40C#";
@@ -77,7 +78,7 @@ if (HOST_NAME) {
 			URL = "https://loadtester.lockmesh.com";
 			SUPERADMIN_URL = "https://dev.meshguard.co";
 			SUPERADMIN_URL_API = "https://devapi.meshguard.co"
-			TIME_ZONE = 'Europe/Berlin';
+			TIME_ZONE = 'Europe/London';
 
 			DB_USERNAME = "web";
 			DB_PASSWORD = "Alibaba@40C#";
@@ -92,7 +93,7 @@ if (HOST_NAME) {
 			URL = "https://lockmesh.com";
 			SUPERADMIN_URL = "https://meshguard.co";
 			SUPERADMIN_URL_API = "https://api.meshguard.co"
-			TIME_ZONE = 'Europe/Berlin';
+			TIME_ZONE = 'Europe/London';
 
 			// Database
 			// DB_HOST = "localhost";
@@ -110,7 +111,7 @@ if (HOST_NAME) {
 			URL = "https://titansecureserver.com";
 			SUPERADMIN_URL = "https://meshguard.co";
 			SUPERADMIN_URL_API = "https://api.meshguard.co"
-			TIME_ZONE = 'Europe/Berlin';
+			TIME_ZONE = 'Europe/London';
 
 			// DB_HOST = "localhost";
 			// DB_NAME = 'lockmesh_db'
@@ -182,6 +183,7 @@ module.exports = {
 	APP_TITLE: APP_TITLE,
 	APP_ENV: APP_ENV,
 	TIME_ZONE: TIME_ZONE,
+	TIME_ZONE_OFFSET: TIME_ZONE_OFFSET,
 	HOST: URL,
 	PORT: "",
 	SECRET: "kepitsecretwithauth!@#",

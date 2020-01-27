@@ -95,6 +95,8 @@ module.exports = {
   RECV_SIM_DATA: 'receiveSimData_',
   // DD: 'unRegister_sim_',
 
+  HANDLE_SIM_SLOTS: 'handle_sim_slots_',
+  
   // Transfer
   FLAGGED: 'flagged_',
 
