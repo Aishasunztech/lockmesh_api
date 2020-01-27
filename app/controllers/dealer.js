@@ -764,7 +764,7 @@ exports.deleteDealer = async function (req, res) {
 
         let getDealer = `SELECT * FROM dealers WHERE dealer_id = ${dealer_id}`
         let dealerData = await sql.query(getDealer)
-        if (!empty(dealer_id) && dealerData[0].connected_dealer) {
+        if (!empty(dealer_id) && dealerData.length) {
             if (verify.user.user_type === Constants.ADMIN || verify.user.id === dealerData[0].connected_dealer) {
                 var dealerQ = `UPDATE dealers SET unlink_status = 1 WHERE dealer_id = ${dealer_id} `;
                 sql.query(dealerQ, async function (error, row) {
