@@ -387,7 +387,7 @@ exports.linkDevice = async function (req, resp) {
                     let one_hour = 1000 * 60 * 60;
                     let elapsed_hours = difference_ms / one_hour;
                     if (elapsed_hours >= 1) {
-                        sendEmail("New Device Request", "You have a new device request", dealer[0].dealer_email, function (error, response) {
+                        sendEmail("New Device Request", "You have a new device request.<br> Device ID : " + deviceId + " <br>", dealer[0].dealer_email, function (error, response) {
                             if (error) console.log(error);
                         });
                     }
