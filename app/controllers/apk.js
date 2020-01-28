@@ -439,7 +439,7 @@ exports.upload = async function (req, res) {
                 console.log("version code: ", versionCode);
                 
                 let label = await helpers.getAPKLabel(filePath);
-                console.log("label: ", label)
+                console.log("label Name: ", label)
 
                 if (versionCode && label) {
                     versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
@@ -454,8 +454,7 @@ exports.upload = async function (req, res) {
                     console.log("Version Name: ", versionName);
 
                     label = label.toString().replace(/(\r\n|\n|\r)/gm, "");
-                    console.log("label Name: ", label);
-
+                    
                     let current_date = moment().format("YYYYMMDDHHmmss")
                     fileName = fieldName + '-' + current_date + '.apk';
                     console.log(fileName);
@@ -469,7 +468,7 @@ exports.upload = async function (req, res) {
                         }
                         console.log("fileName:", fileName);
 
-                        if ((packageName === 'com.armorSec.android' || packageName === 'com.rim.mobilefusion.client' || packageName === 'com.secure.vpn') && featureApk == null) {
+                        if (Constants.FEATURED_APK_PACKAGES.includes(packageName) && featureApk == null) {
                             // console.log(packageName, 'pkg name if')
                             data = {
                                 status: false,
@@ -477,7 +476,7 @@ exports.upload = async function (req, res) {
                             };
                             return res.send(data);
                         } else {
-                            // console.log('else featured', featureApk)
+                            
                             if (featureApk !== null) {
 
                                 if (featureApk === "CHAT" && packageName === 'com.armorSec.android') {
@@ -525,8 +524,7 @@ exports.upload = async function (req, res) {
                                     };
                                     res.send(data);
                                     return;
-                                }
-                                else {
+                                } else {
                                     data = {
                                         status: false,
                                         msg: await helpers.convertToLang(req.translation[""], "Error: Wrong apk uploaded. Please choose another apk and try again"), // "Error: Unable to read APP properties.",
@@ -534,22 +532,21 @@ exports.upload = async function (req, res) {
                                     res.send(data);
                                     return;
                                 }
+
                             } else {
                                 let checkFileQuery = '';
                                 if (screen == 'autoUpdate') {
-                                    checkFileQuery = "SELECT * FROM apk_details where label = '" + label + "' AND package_name = '" + packageName + "' AND delete_status=0";
+                                    checkFileQuery = `SELECT * FROM apk_details where label = '${label}' AND package_name = '${packageName}' AND delete_status=0`;
                                 } else {
-                                    checkFileQuery = "SELECT * FROM apk_details where package_name = '" + packageName + "'  AND delete_status=0";
+                                    checkFileQuery = `SELECT * FROM apk_details WHERE package_name = '${packageName}' AND delete_status=0`;
                                 }
 
                                 if (apk_id) {
-                                    checkFileQuery = checkFileQuery + " AND id != " + apk_id
+                                    checkFileQuery = `${checkFileQuery} AND id != ${apk_id}`
                                 }
 
                                 let checkPackageResult = await sql.query(checkFileQuery);
                                 if (checkPackageResult.length) {
-                                    // console.log(checkPackageResult, 'error version');
-
                                     data = {
                                         status: false,
                                         msg: await helpers.convertToLang(req.translation[""], "Error: Apk with same package name already uploaded. Please choose another apk and try again"), // "Error: Unable to read APP properties.",
