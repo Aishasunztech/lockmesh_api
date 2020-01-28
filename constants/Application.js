@@ -186,7 +186,7 @@ module.exports = {
     { "key": "transfered_to", "value": "tableHeadings.TRANSFERED" },
     { "key": "name", "value": "tableHeadings.DEVICENAME" },
     { "key": "account_email", "value": "tableHeadings.ACCOUNTEMAIL" },
-    { "key": "client_id", "value": "tableHeadings.CLIENTID" },
+    // { "key": "client_id", "value": "tableHeadings.CLIENTID" },
     { "key": "activation_code", "value": "tableHeadings.ACTIVATIONCODE" },
     { "key": "pgp_email", "value": "tableHeadings.PGPEMAIL" },
     { "key": "sim_id", "value": "tableHeadings.SIMID" },
