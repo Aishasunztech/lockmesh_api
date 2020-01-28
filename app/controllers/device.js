@@ -4811,9 +4811,6 @@ exports.transferDeviceProfile = async function (req, res) {
 
                 if (rsltq.length > 0) {
 
-
-
-
                     // Update New usr_acc
                     let Update_UsrAcc_Query = `UPDATE usr_acc SET user_id='${rsltq[0].user_id}', account_email='${rsltq[0].account_email}',account_name='${rsltq[0].account_name}',dealer_id=${rsltq[0].dealer_id},prnt_dlr_id=${rsltq[0].prnt_dlr_id},link_code='${rsltq[0].link_code}',client_id='${rsltq[0].client_id}',start_date='${rsltq[0].start_date}',expiry_months='${rsltq[0].expiry_months}',expiry_date='${rsltq[0].expiry_date}',status='${rsltq[0].status}',device_status=${rsltq[0].device_status},activation_status=${rsltq[0].activation_status},account_status='${rsltq[0].account_status}',unlink_status=0,transfer_status=0, transfered_from='${flagged_device.device_id}', transfered_to='${reqDevice.device_id}',dealer_name='${rsltq[0].dealer_name}',prnt_dlr_name='${rsltq[0].prnt_dlr_name}',del_status='0',note='${rsltq[0].note}',validity=${rsltq[0].validity}, batch_no='${rsltq[0].batch_no}'  WHERE device_id=${reqDevice.usr_device_id};`;
                     await sql.query(Update_UsrAcc_Query, async function (err, resp) {
@@ -4848,111 +4845,119 @@ exports.transferDeviceProfile = async function (req, res) {
                                     var getDeviceName = await sql.query(`SELECT name from devices WHERE id='${flagged_device.usr_device_id}'`);
                                     await sql.query(`UPDATE devices SET name='${getDeviceName[0].name}', is_sync='0' WHERE id=${reqDevice.usr_device_id}`);
 
-                                    // console.log('==============> :: 08', flagged_device.id)
-                                    // // Get usr_acc_profile
-                                    // let Select_UsrAccProfile = `SELECT * FROM usr_acc_profile WHERE user_acc_id = ${flagged_device.id} AND delete_status = '0'`;
-                                    // console.log('Select_UsrAccProfile ', Select_UsrAccProfile)
-                                    // let UsrAccProfile_Result = await sql.query(Select_UsrAccProfile)
+                                    var slctquery =
+                                        "select devices.*  ," +
+                                        usr_acc_query_text +
+                                        ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id where devices.id = '" +
+                                        flagged_device.usr_device_id +
+                                        "'";
+                                    // console.log(slctquery);
+                                    rsltq = await sql.query(slctquery);
 
-                                    // // Copy usr_acc_profile
-                                    // if (UsrAccProfile_Result.length > 0) {
-
-                                    //     console.log('==============> :: 09')
-                                    //     // Update usr_acc_profile
-                                    //     // let Update_UsrAccProfile = `UPDATE usr_acc_profile SET profile_name='${UsrAccProfile_Result[0].profile_name}', profile_note='${UsrAccProfile_Result[0].profile_note}', policy_id='${UsrAccProfile_Result[0].policy_id}', user_acc_id='${reqDevice.id}', dealer_id='${UsrAccProfile_Result[0].dealer_id}', app_list='${UsrAccProfile_Result[0].app_list}', permissions='${UsrAccProfile_Result[0].permissions}', controls='${UsrAccProfile_Result[0].controls}', passwords='${UsrAccProfile_Result[0].passwords}', status='${UsrAccProfile_Result[0].status}' WHERE user_acc_id=${reqDevice.id};`;
-                                    //     let Insert_UsrAccProfile = `INSERT INTO usr_acc_profile (profile_name, profile_note, policy_id, user_acc_id, dealer_id, app_list, permissions, controls, passwords, status) 
-                                    //     VALUES('${UsrAccProfile_Result[0].profile_name}', '${UsrAccProfile_Result[0].profile_note}', '${UsrAccProfile_Result[0].policy_id}', '${reqDevice.id}', '${UsrAccProfile_Result[0].dealer_id}', '${UsrAccProfile_Result[0].app_list}', '${UsrAccProfile_Result[0].permissions}', '${UsrAccProfile_Result[0].controls}', '${UsrAccProfile_Result[0].passwords}', '${UsrAccProfile_Result[0].status}');`;
-
-                                    //     let resp = await sql.query(Insert_UsrAccProfile);
-                                    //     // await sql.query(Insert_UsrAccProfile, async function (err, resp) {
-
-                                    //     console.log('Insert_UsrAccProfile ', Insert_UsrAccProfile)
-                                    //     console.log('==============> :: 10')
-                                    //     if (resp.affectedRows > 0) {
-
-                                    //         console.log('==============> :: 11')
-                                    //         // Delete Old usr_acc_profile
-                                    //         let delete_UsrAccProfile = `UPDATE usr_acc_profile SET delete_status = '1' WHERE user_acc_id=${flagged_device.id};`;
-                                    //         console.log('delete_UsrAccProfile ', delete_UsrAccProfile)
-                                    //           await sql.query(delete_UsrAccProfile);
-                                    //     }
-                                    //     // });
-
-
-
-
-                                    // }
-                                    // else {
-                                    //     console.log('==============> :: 12')
-                                    //     data = {
-                                    //         status: false,
-                                    //         msg: "Device Services not fully transfered"
-                                    //     }
-                                    //     res.send(data);
-                                    //     return;
-                                    // }
-
-                                    // ChatIds
-                                    let ChatIds = `SELECT * FROM chat_ids WHERE user_acc_id = '${flagged_device.id}' AND used= '1' AND delete_status = '0'`; // "flagged_device.id" is user id(primary key) at usr_acc table
-
-                                    console.log("ChatIds Q", ChatIds)
-                                    let ChatIds_Result = await sql.query(ChatIds)
-                                    console.log("ChatIds_Result ", ChatIds_Result)
-                                    let chatIndex = ChatIds_Result.length - 1;
-                                    if (ChatIds_Result.length > 0) {
-
-                                        let InsertChatIds = `INSERT INTO chat_ids (chat_id, user_acc_id, used) VALUES('${ChatIds_Result[chatIndex].chat_id}', '${reqDevice.id}', '1')`;
-                                        console.log("InsertChatIds ", InsertChatIds)
-                                        await sql.query(InsertChatIds);
-                                        // Update chat_ids
-                                        let UpdateChatIds = `UPDATE chat_ids SET delete_status = '1' WHERE user_acc_id=${flagged_device.id};`;
-                                        console.log("UpdateChatIds ", UpdateChatIds)
-                                        await sql.query(UpdateChatIds);
+                                    // let pgp_emails = await device_helpers.getPgpEmails(rsltq[0].id);
+                                    // let sim_ids = await device_helpers.getSimids(rsltq[0].id);
+                                    // let chat_ids = await device_helpers.getChatids(rsltq[0].id);
+                                    let flaggedDeviceServicesData = await device_helpers.getServicesData(rsltq[0].id);
+                                    let flaggedDeviceServicesIds = flaggedDeviceServicesData.map(item => { return item.id })
+                                    let flaggedDeviceUserAccServiceData = []
+                                    let flaggedDeviceDataPlans = []
+                                    if (flaggedDeviceServicesIds.length) {
+                                        flaggedDeviceUserAccServiceData = await device_helpers.getUserAccServicesData(rsltq[0].id, flaggedDeviceServicesIds)
+                                        flaggedDeviceDataPlans = await device_helpers.getDataPlans(flaggedDeviceServicesIds)
                                     }
 
-                                    // pgp_emails
-                                    let pgpEmails = `SELECT * FROM pgp_emails WHERE user_acc_id = '${flagged_device.id}' AND used= '1' AND delete_status = '0'`; // "flagged_device.id" is user id(primary key) at usr_acc table
-                                    console.log("pgpEmails Q", pgpEmails)
-                                    let pgp_emails_Result = await sql.query(pgpEmails)
-                                    // console.log("pgp_emails_Result ", pgp_emails_Result)
-                                    let pgpIndex = pgp_emails_Result.length - 1;
-                                    if (pgp_emails_Result.length > 0) {
+                                    let flaggedDeviceServices = flaggedDeviceServicesData;
+                                    if (flaggedDeviceServices && flaggedDeviceServices.length) {
+                                        flaggedDeviceServices.map(async (item) => {
+                                            console.log("UPDATE SERVICE QUERY:", `UPDATE services_data SET status = 'transferred' WHERE id = ${item.id}`);
+                                            await sql.query(`UPDATE services_data SET status = 'transferred' WHERE id = ${item.id}`)
 
-                                        let InsertPgp_emails = `INSERT INTO pgp_emails (pgp_email, user_acc_id, used) VALUES('${pgp_emails_Result[pgpIndex].pgp_email}', '${reqDevice.id}', '1')`;
-                                        await sql.query(InsertPgp_emails);
-                                        // console.log("InsertPgp_emails ", InsertPgp_emails)
-                                        let UpdatePgp_emails = `UPDATE pgp_emails SET delete_status = '1' WHERE user_acc_id=${flagged_device.id};`;
-                                        await sql.query(UpdatePgp_emails);
-                                        // console.log("UpdatePgp_emails ", UpdatePgp_emails)
-                                    }
+                                            console.log("INSERT SERVICE QUERY:", `INSERT INTO services_data (user_acc_id , dealer_id , packages , products, total_credits , paid_credits , start_date,service_term , service_expiry_date , status, grace_days, data_plan_price) VALUES(${reqDevice.id} ,${item.dealer_id} ,'${item.packages}' ,'${item.products}' ,${item.total_credits} ,${item.paid_credits} , '${item.start_date}' , '${item.end_date}' , '${service_term}' , '${item.service_expiry_date}' , '${item.status}' , ${item.grace_days} , ${item.data_plan_price})`);
+                                            let insertedService = await sql.query(`INSERT INTO services_data (user_acc_id , dealer_id , packages , products, total_credits , paid_credits , start_date,service_term , service_expiry_date , status, grace_days, data_plan_price) VALUES(${reqDevice.id} ,${item.dealer_id} ,'${item.packages}' ,'${item.products}' ,${item.total_credits} ,${item.paid_credits} , '${item.start_date}' , '${item.end_date}' , '${service_term}' , '${item.service_expiry_date}' , '${item.status}' , ${item.grace_days} , ${item.data_plan_price})`)
 
-                                    // SimIds
-                                    let SimIds = `SELECT * FROM sim_ids WHERE user_acc_id = '${flagged_device.id}' AND used= '1' AND delete_status = '0'`;
-                                    // console.log("SimIds Q", SimIds)
-                                    let SimIds_Result = await sql.query(SimIds);
-                                    // console.log("SimIds_Result ", SimIds_Result)
-                                    if (SimIds_Result.length > 0) {
-                                        for (var i = 0; i < SimIds_Result.length; i++) {
-                                            let InsertSimIds = `INSERT INTO sim_ids (sim_id, user_acc_id, used) VALUES('${SimIds_Result[0].sim_id}', '${reqDevice.id}', '1')`;
-                                            // console.log("InsertSimIds ", InsertSimIds)
-                                            let resp = await sql.query(InsertSimIds);
-                                            // console.log("resp ", resp)
-
-                                            // Update sim_ids
-                                            if (resp.affectedRows > 0) {
-                                                let UpdateSim_ids = `UPDATE sim_ids SET delete_status = '1' WHERE user_acc_id=${flagged_device.id};`;
-                                                // console.log("UpdateSim_ids ", UpdateSim_ids)
-                                                await sql.query(UpdateSim_ids);
+                                            let insertedServiceId = insertedService.insertId
+                                            if (flaggedDeviceDataPlans && flaggedDeviceDataPlans.length) {
+                                                await sql.query(`UPDATE sim_data_plans SET status = deleted WHERE service_id = ${item.id}`)
+                                                flaggedDeviceDataPlans.map(async dataPlan => {
+                                                    let data_package_plan = `INSERT INTO sim_data_plans ( service_id , data_plan_package , total_price , total_data , sim_type , start_date , used_data) VALUES( ${insertedServiceId} , '${dataPlan.data_plan_package}' , '${dataPlan.data_plan_price}' , '${dataPlan.data_limit}' , '${dataPlan.sim_type}' , '${dataPlan.start_date}' ,'${dataPlan.used_data}')`
+                                                    await sql.query(data_package_plan)
+                                                })
                                             }
-                                        }
-                                    }
 
+                                            let productsData = flaggedDeviceUserAccServiceData.filter(usr_acc_service => usr_acc_service.service_id === item.id);
+                                            if (productsData && productsData.length) {
+                                                productsData.map(async (productItem) => {
+                                                    let insert_again = true
+                                                    let inserted_id = null
+                                                    let insertedProductData = null
+                                                    if (productItem.type === 'sim_id' || productItem.type === 'sim_id2') {
+                                                        if (item.status === 'extended') {
+                                                            let alreadyAdded = await sql.query(`SELECT sim_id FROM sim_ids WHERE sim_id = '${productItem.product_value}' AND user_acc_id = '${reqDevice.id}'`)
+                                                            if (alreadyAdded && alreadyAdded.length) {
+                                                                insert_again = false
+                                                                inserted_id = alreadyAdded[0].id
+                                                            }
+                                                        }
+                                                        let UpdateSimIds = `UPDATE sim_ids SET delete_status = '1' WHERE sim_id = '${productItem.product_value}'`;
+                                                        await sql.query(UpdateSimIds);
+                                                        if (insert_again) {
+                                                            let InsertSimIds = `INSERT INTO sim_ids (sim_id, user_acc_id, used , dealer_id , start_date , uploaded_by , uploaded_by_id , activated) VALUES('${productItem.product_value}', '${reqDevice.id}', '1' , '${productItem.dealer_id}' , '${productItem.start_date}' , '${productItem.uploaded_by}' ,  '${productItem.uploaded_by_id}' , '${productItem.activated}')`;
+                                                            insertedProductData = await sql.query(InsertSimIds);
+                                                            if (insertedProductData) {
+                                                                inserted_id = insertedProductData.insertId
+                                                            }
+                                                        }
+                                                    }
+                                                    else if (productItem.type === 'pgp_email') {
+                                                        if (item.status === 'extended') {
+                                                            let alreadyAdded = await sql.query(`SELECT pgp_email FROM pgp_emails WHERE pgp_email = '${productItem.product_value}' AND user_acc_id = '${reqDevice.id}'`)
+                                                            if (alreadyAdded && alreadyAdded.length) {
+                                                                insert_again = false
+                                                                inserted_id = alreadyAdded[0].id
+                                                            }
+                                                        }
+                                                        let UpdatePgp = `UPDATE pgp_emails SET delete_status = '1' WHERE pgp_email = '${productItem.product_value}'`;
+                                                        await sql.query(UpdatePgp);
+
+                                                        if (insert_again) {
+                                                            let InsertPgp = `INSERT INTO pgp_emails (pgp_email, user_acc_id, used , dealer_id , start_date , uploaded_by , uploaded_by_id) VALUES('${productItem.product_value}', '${reqDevice.id}', '1' , '${productItem.dealer_id}' , '${productItem.start_date}' , '${productItem.uploaded_by}' ,  '${productItem.uploaded_by_id}')`;
+                                                            insertedProductData = await sql.query(InsertPgp);
+                                                            if (insertedProductData) {
+                                                                inserted_id = insertedProductData.insertId
+                                                            }
+                                                        }
+                                                    }
+                                                    else if (productItem.type === 'chat_id') {
+                                                        if (item.status === 'extended') {
+                                                            let alreadyAdded = await sql.query(`SELECT chat_id FROM chat_ids WHERE chat_id = '${productItem.product_value}' AND user_acc_id = '${reqDevice.id}'`)
+                                                            if (alreadyAdded && alreadyAdded.length) {
+                                                                insert_again = false
+                                                                inserted_id = alreadyAdded[0].id
+                                                            }
+                                                        }
+                                                        let UpdateChat = `UPDATE chat_ids SET delete_status = '1' WHERE chat_id = '${productItem.product_value}'`;
+                                                        insertedProductData = await sql.query(UpdateChat);
+
+                                                        if (insert_again) {
+                                                            let InsertChat = `INSERT INTO chat_ids (chat_id, user_acc_id, used , dealer_id , start_date , uploaded_by , uploaded_by_id , domain_id ) VALUES('${productItem.product_value}', '${reqDevice.id}', '1' , '${productItem.dealer_id}' , '${productItem.start_date}' , '${productItem.uploaded_by}' ,  '${productItem.uploaded_by_id}' , '${productItem.domain_id}' )`;
+                                                            insertedProductData = await sql.query(InsertChat);
+                                                            if (insertedProductData) {
+                                                                inserted_id = insertedProductData.insertId
+                                                            }
+                                                        }
+                                                    }
+                                                    await sql.query(`UPDATE user_acc_services SET status = 'transferred' WHERE id = ${productItem.id}`)
+                                                    if (inserted_id) {
+                                                        let insertAccService = `INSERT INTO user_acc_services (user_acc_id , service_id , product_id,product_value, type , start_date) VALUES(${reqDevice.id} , ${insertedServiceId} , ${inserted_id} , '${productItem.product_value}' , '${productItem.type}' , '${productItem.start_date}')`
+                                                        await sql.query(insertAccService)
+                                                    }
+                                                })
+                                            }
+                                        })
+                                    }
                                     // Save History 
                                     let resquery = await sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE devices.reject_status = 0 AND devices.id= "' + flagged_device.usr_device_id + '"')
 
-                                    // let pgp_emails = await device_helpers.getPgpEmails(resquery[0].id);
-                                    // let sim_ids = await device_helpers.getSimids(resquery[0].id);
-                                    // let chat_ids = await device_helpers.getChatids(resquery[0].id);
                                     resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
 
                                     let servicesData = await device_helpers.getServicesData(resquery[0].id);
@@ -4967,22 +4972,7 @@ exports.transferDeviceProfile = async function (req, res) {
                                     resquery[0].sim_id2 = "N/A"
                                     resquery[0].pgp_email = "N/A"
                                     resquery[0].chat_id = "N/A"
-                                    // if (pgp_emails[0] && pgp_emails[0].pgp_email) {
-                                    //     resquery[0].pgp_email = pgp_emails[0].pgp_email
-                                    // } else {
-                                    //     resquery[0].pgp_email = "N/A"
-                                    // }
-                                    // if (sim_ids[0] && sim_ids[0].sim_id) {
-                                    //     resquery[0].sim_id = sim_ids[0].sim_id
-                                    // } else {
-                                    //     resquery[0].sim_id = "N/A"
-                                    // }
-                                    // if (chat_ids[0] && chat_ids[0].chat_id) {
-                                    //     resquery[0].chat_id = chat_ids[0].chat_id
-                                    // }
-                                    // else {
-                                    //     resquery[0].chat_id = "N/A"
-                                    // }
+
                                     let services = servicesData;
                                     let service_id = null
                                     if (services && services.length) {
