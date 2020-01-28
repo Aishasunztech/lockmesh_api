@@ -202,8 +202,10 @@ module.exports = {
     { "key": "sim_2", "value": "tableHeadings.SIM2" },
     { "key": "serial_number", "value": "tableHeadings.SERIALNUMBER" },
     { "key": "model", "value": "tableHeadings.MODEL" },
-    { "key": "s_dealer", "value": "tableHeadings.S-DEALER" },
-    { "key": "s_dealer_name", "value": "tableHeadings.S-DEALERNAME" },
+    // { "key": "s_dealer", "value": "tableHeadings.S-DEALER" },
+    // { "key": "s_dealer_name", "value": "tableHeadings.S-DEALERNAME" },
+    { "key": "s_dealer", "value": "tableHeadings.device-parent-id" }, // PARENT DEALER ID
+    { "key": "s_dealer_name", "value": "tableHeadings.device-parent-name" }, // PARENT DEALER NAME
     { "key": "remainTermDays", "value": "REMAINING TERM DAYS" },
     { "key": "start_date", "value": "tableHeadings.STARTDATE" },
     { "key": "expiry_date", "value": "tableHeadings.EXPIRYDATE" },
