@@ -439,7 +439,7 @@ exports.upload = async function (req, res) {
                 console.log("version code: ", versionCode);
                 
                 let label = await helpers.getAPKLabel(filePath);
-                console.log(label)
+                console.log("label: ", label)
 
                 if (versionCode && label) {
                     versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
