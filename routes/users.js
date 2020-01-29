@@ -1049,10 +1049,11 @@ router.get("/login_history", async function (req, res) {
 			let id = verify.user.id;
 			let data = {};
 
-			let limitQ = ' LIMIT 10';
-			if (limit) {
-				limitQ = ` LIMIT ${start}, ${limit}`
-			}
+			let limitQ = ' LIMIT 50';
+			// let limitQ = ' LIMIT 10';
+			// if (limit) {
+			// 	limitQ = ` LIMIT ${start}, ${limit}`
+			// }
 
 			let query = `SELECT * FROM login_history WHERE dealer_id = '${id}' AND type = 'token' ORDER BY created_at DESC ${limitQ};`;
 			console.log(query);
