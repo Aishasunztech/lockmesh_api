@@ -195,6 +195,8 @@ module.exports = {
     { "key": "dealer_id", "value": "tableHeadings.DEALERID" },
     { "key": "dealer_name", "value": "tableHeadings.DEALERNAME" },
     { "key": "dealer_pin", "value": "tableHeadings.DEALERPIN" },
+    { "key": "s_dealer", "value": "tableHeadings.device-parent-id" }, // PARENT DEALER ID
+    { "key": "s_dealer_name", "value": "tableHeadings.device-parent-name" }, // PARENT DEALER NAME
     { "key": "mac_address", "value": "tableHeadings.MACADDRESS" },
     { "key": "imei_1", "value": "tableHeadings.IMEI1" },
     { "key": "sim_1", "value": "tableHeadings.SIM1" },
@@ -204,8 +206,6 @@ module.exports = {
     { "key": "model", "value": "tableHeadings.MODEL" },
     // { "key": "s_dealer", "value": "tableHeadings.S-DEALER" },
     // { "key": "s_dealer_name", "value": "tableHeadings.S-DEALERNAME" },
-    { "key": "s_dealer", "value": "tableHeadings.device-parent-id" }, // PARENT DEALER ID
-    { "key": "s_dealer_name", "value": "tableHeadings.device-parent-name" }, // PARENT DEALER NAME
     { "key": "remainTermDays", "value": "REMAINING TERM DAYS" },
     { "key": "start_date", "value": "tableHeadings.STARTDATE" },
     { "key": "expiry_date", "value": "tableHeadings.EXPIRYDATE" },
