@@ -934,7 +934,7 @@ router.get('/apklist', apkController.apkList);
  * @security JWT
  */
 // upload test apk
-router.post('/upload', multipartMiddleware, apkController.upload);
+router.post('/upload', multipartMiddleware, apkController.uploadApk);
 
 
 /**
