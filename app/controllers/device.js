@@ -616,11 +616,14 @@ exports.acceptDevice = async function (req, res) {
                                                 return;
                                             } else if (dealer_id !== 0 && dealer_id !== null) {
 
-                                                if (connected_dealer !== 0) {
+                                                if (connected_dealer) {
+                                                    // get connected dealer data
+                                                    let connectedDealer = `SELECT * FROM dealers WHERE dealer_id = '${connected_dealer}';`;
+                                                    let conn_dealer_result = await sql.query(connectedDealer);
 
                                                     common_Query = "UPDATE devices set name = '" + device_name + "',  model = '" + req.body.model + "' WHERE id = '" + usr_device_id + "'"
 
-                                                    usr_acc_Query = "UPDATE usr_acc set user_id = '" + user_id + "' , account_email = '" + device_email + "', status = '" + status + "',trial_status = '" + trial_status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' , expiry_months = '" + term + "' , prnt_dlr_id=" + dealer_id + ", prnt_dlr_name='" + dealer[0].dealer_name + "' WHERE device_id = '" + usr_device_id + "'"
+                                                    usr_acc_Query = "UPDATE usr_acc set user_id = '" + user_id + "' , account_email = '" + device_email + "', status = '" + status + "',trial_status = '" + trial_status + "',client_id = '" + client_id + "', device_status = 1, unlink_status=0 ,  start_date = '" + start_date + "' ,expiry_date = '" + expiry_date + "' , expiry_months = '" + term + "' , prnt_dlr_id=" + connected_dealer + ", prnt_dlr_name='" + conn_dealer_result[0].dealer_name + "' WHERE device_id = '" + usr_device_id + "'"
 
                                                 } else {
 
