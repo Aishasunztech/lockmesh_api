@@ -273,10 +273,12 @@ exports.uploadApk = async function (req, res) {
                     console.log("Version Name: ", versionName);
 
                     label = label.toString().replace(/(\r\n|\n|\r)/gm, "");
+                    console.log("Modified label Name: ", label)
 
                     let current_date = moment().format("YYYYMMDDHHmmss")
                     fileName = fieldName + '-' + current_date + '.apk';
-                    console.log(fileName);
+                    console.log("File Name:", fileName);
+
                     let target_path = path.join(__dirname, "../../uploads/" + fileName);
                     helpers.move(filePath, target_path, async function (error) {
                         if (error) {
@@ -285,7 +287,6 @@ exports.uploadApk = async function (req, res) {
                                 msg: "Error while uploading"
                             });
                         }
-                        console.log("fileName:", fileName);
 
                         if (Constants.FEATURED_APK_PACKAGES.includes(packageName) && featureApk == null) {
                             // console.log(packageName, 'pkg name if')
@@ -298,58 +299,27 @@ exports.uploadApk = async function (req, res) {
 
                             if (featureApk !== null) {
 
-                                if (featureApk === "CHAT" && packageName === 'com.armorSec.android') {
+                                if (
+                                    (featureApk === "SCHAT" && packageName === 'com.schat.android') ||
+                                    (featureApk === "SMAIL" && packageName === 'com.android.smail') ||
+                                    (featureApk === "D2D" && packageName === 'com.secure.d2d') ||
+                                    (featureApk === "SVPN" && packageName === 'com.secure.vpn') ||
+                                    (featureApk === "SVAULT" && packageName === 'com.secure.svault')
+                                ) {
                                     data = {
                                         status: true,
                                         msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
                                         fileName: fileName,
                                         size: formatByte,
                                         version: versionName
-
-
                                     };
-                                    res.send(data);
-                                    return;
-                                } else if (featureApk === "PGP" && packageName === 'ca.unlimitedwireless.mailpgp') {
-                                    data = {
-                                        status: true,
-                                        msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
-                                        fileName: fileName,
-                                        size: formatByte,
-                                        version: versionName
-
-                                    };
-                                    res.send(data);
-                                    return;
-                                } else if (featureApk === "UEM" && packageName === 'com.rim.mobilefusion.client') {
-                                    data = {
-                                        status: true,
-                                        msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
-                                        fileName: fileName,
-                                        size: formatByte,
-                                        version: versionName
-
-                                    };
-                                    res.send(data);
-                                    return;
-                                } else if (featureApk === "VPN" && packageName === 'com.secure.vpn') {
-                                    data = {
-                                        status: true,
-                                        msg: await helpers.convertToLang(req.translation[MsgConstants.APP_UPLOADED_SUCCESSFULLY], "Success: App Uploaded Successfully"), // 'Success: App Uploaded Successfully.',
-                                        fileName: fileName,
-                                        size: formatByte,
-                                        version: versionName
-
-                                    };
-                                    res.send(data);
-                                    return;
+                                    return res.send(data);
                                 } else {
                                     data = {
                                         status: false,
                                         msg: await helpers.convertToLang(req.translation[""], "Error: Wrong apk uploaded. Please choose another apk and try again"), // "Error: Unable to read APP properties.",
                                     };
-                                    res.send(data);
-                                    return;
+                                    return res.send(data);
                                 }
 
                             } else {
