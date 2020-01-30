@@ -443,7 +443,7 @@ module.exports = {
             // status = 'Expired';
             status = Constants.DEVICE_EXPIRED;
         }
-        else if ((device.device_status === '0' || device.device_status === 0) && (device.unlink_status === '0' || device.unlink_status === 0) && (device.activation_status === null || device.activation_status === '')) {
+        else if (((device.device_status === '0' || device.device_status === 0) && (device.unlink_status === '0' || device.unlink_status === 0) && (device.activation_status === null || device.activation_status === '')) || (device.relink_status === 1 || device.relink_status === '1')) {
             // status = 'Pending activation';
             status = Constants.DEVICE_PENDING_ACTIVATION;
         }

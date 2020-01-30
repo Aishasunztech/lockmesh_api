@@ -216,6 +216,9 @@ router.put("/delete/:device_id", deviceController.deleteDevice);
 /** Unlink Device  **/
 router.post("/unlink/:id", deviceController.unlinkDevice);
 
+/** Relink Device  **/
+router.put("/relink-device/:id", deviceController.relinkDevice);
+
 /** Suspend Account Devices / client **/
 router.post("/suspend/:id", deviceController.suspendAccountDevices);
 
