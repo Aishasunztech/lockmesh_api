@@ -165,6 +165,7 @@ module.exports = {
 
   APK_ON: 'On',
   APK_OFF: 'Off',
+  FEATURED_APK_PACKAGES : ['com.secure.d2d', 'com.schat.android', 'com.secure.vpn', 'com.secure.svault', 'com.android.smail'],
 
   // Default Columns
   // deviceColumns : ["DEVICE ID", "USER ID", "REMAINING DAYS", "FLAGGED", "STATUS", "MODE", "DEVICE NAME", "ACTIVATION CODE", "ACCOUNT EMAIL", "PGP EMAIL", "CHAT ID", "CLIENT ID", "DEALER ID", "DEALER PIN", "MAC ADDRESS", "SIM ID", "IMEI 1", "SIM 1", "IMEI 2", "SIM 2", "SERIAL NUMBER", "MODEL", "START DATE", "EXPIRY DATE", "DEALER NAME", "S-DEALER", "S-DEALER NAME"],
@@ -186,7 +187,7 @@ module.exports = {
     { "key": "transfered_to", "value": "tableHeadings.TRANSFERED" },
     { "key": "name", "value": "tableHeadings.DEVICENAME" },
     { "key": "account_email", "value": "tableHeadings.ACCOUNTEMAIL" },
-    { "key": "client_id", "value": "tableHeadings.CLIENTID" },
+    // { "key": "client_id", "value": "tableHeadings.CLIENTID" },
     { "key": "activation_code", "value": "tableHeadings.ACTIVATIONCODE" },
     { "key": "pgp_email", "value": "tableHeadings.PGPEMAIL" },
     { "key": "sim_id", "value": "tableHeadings.SIMID" },
@@ -195,6 +196,8 @@ module.exports = {
     { "key": "dealer_id", "value": "tableHeadings.DEALERID" },
     { "key": "dealer_name", "value": "tableHeadings.DEALERNAME" },
     { "key": "dealer_pin", "value": "tableHeadings.DEALERPIN" },
+    { "key": "s_dealer", "value": "tableHeadings.device-parent-id" }, // PARENT DEALER ID
+    { "key": "s_dealer_name", "value": "tableHeadings.device-parent-name" }, // PARENT DEALER NAME
     { "key": "mac_address", "value": "tableHeadings.MACADDRESS" },
     { "key": "imei_1", "value": "tableHeadings.IMEI1" },
     { "key": "sim_1", "value": "tableHeadings.SIM1" },
@@ -202,8 +205,8 @@ module.exports = {
     { "key": "sim_2", "value": "tableHeadings.SIM2" },
     { "key": "serial_number", "value": "tableHeadings.SERIALNUMBER" },
     { "key": "model", "value": "tableHeadings.MODEL" },
-    { "key": "s_dealer", "value": "tableHeadings.S-DEALER" },
-    { "key": "s_dealer_name", "value": "tableHeadings.S-DEALERNAME" },
+    // { "key": "s_dealer", "value": "tableHeadings.S-DEALER" },
+    // { "key": "s_dealer_name", "value": "tableHeadings.S-DEALERNAME" },
     { "key": "remainTermDays", "value": "REMAINING TERM DAYS" },
     { "key": "start_date", "value": "tableHeadings.STARTDATE" },
     { "key": "expiry_date", "value": "tableHeadings.EXPIRYDATE" },

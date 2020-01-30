@@ -33,19 +33,19 @@ const { sendEmail } = require("../lib/email");
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
 
-    
-    sql.getConnection((error, connection)=> {
-        if(error){
+
+    sql.getConnection((error, connection) => {
+        if (error) {
             console.log(error)
         }
-        connection.beginTransaction(async function(err) {
+        connection.beginTransaction(async function (err) {
             if (err) {
                 console.log(err)
             };
             let something = await connection.query("SELECT * FROM devicess");
             console.log(something);
-            connection.commit(function(err){
-                if(err){
+            connection.commit(function (err) {
+                if (err) {
                     console.log(err)
                 }
                 return res.send('test')
@@ -210,6 +210,77 @@ router.get('/refactor_policy_apps', async function (req, res) {
 
     res.send('test');
 })
+
+router.get('/update_parent_dealer_data_into_user_acc', async function (req, res) {
+    let data = {};
+
+    sql.query(`SELECT * FROM  dealers`, async function (error, result) {
+
+        if (error) {
+            data = {
+                status: false,
+                msg: "Query error"
+            }
+            res.send(data);
+            return;
+        }
+
+        if (result && result.length) {
+            for (let i = 0; i < result.length; i++) {
+
+                let parentDealerId = null;
+                let parentDealerName = '';
+
+                if (result[i].connected_dealer && result[i].type === 3) { // type 3 represent only to sdealer
+                    parentDealerId = result[i].connected_dealer;
+
+                    console.log("Sdealer found :: ===>  Dealer id: ", result[i].dealer_id, "  Parent dealer id: ", parentDealerId);
+
+                    // get parent dealer name
+                    let getParentDealerName = await sql.query(`SELECT dealer_name FROM dealers WHERE dealer_id = ${parentDealerId};`);
+                    if (getParentDealerName && getParentDealerName.length) {
+                        parentDealerName = getParentDealerName[0].dealer_name;
+                    }
+                }
+
+                // Update parent dealer data into usr_acc table
+                let updateUserAcc = `UPDATE usr_acc SET prnt_dlr_id = ${parentDealerId}, prnt_dlr_name = '${parentDealerName}' WHERE dealer_id = ${result[i].dealer_id};`;
+                let updateResults = await sql.query(updateUserAcc);
+
+                if (updateResults && updateResults.affectedRows) {
+                    console.log(` usr_acc table record Update successfully Dealer ID is: ${result[i].dealer_id}`);
+                }
+
+                // Update parent dealer data into acc_action_history table
+                let updateAccActionHistoy = `UPDATE acc_action_history SET prnt_dlr_id = ${parentDealerId}, prnt_dlr_name = '${parentDealerName}' WHERE dealer_id = ${result[i].dealer_id};`;
+                let accHistoryResults = await sql.query(updateAccActionHistoy);
+
+                if (accHistoryResults && accHistoryResults.affectedRows) {
+                    console.log(` acc_action_history table record Update successfully Dealer ID is: ${result[i].dealer_id}`);
+                }
+
+
+                // else {
+                //     console.log(`Not found Parent dealer into usr_acc table of Dealer ID is: ${result[i].dealer_id}`);
+                // }
+            }
+
+            data = {
+                status: true,
+                msg: `All parent dealer id and name Update successfully`
+            }
+            return res.send(data);
+        } else {
+            data = {
+                status: false,
+                msg: "Not found any dealer record"
+            }
+            res.send(data);
+            return;
+        }
+    });
+
+});
 
 router.get('/update_device_columns', async function (req, res) {
     let data = {};
