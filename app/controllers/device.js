@@ -508,7 +508,7 @@ exports.acceptDevice = async function (req, res) {
         }
 
 
-        let user_credits = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
+        let user_credits = "SELECT * FROM financial_account_balance WHERE dealer_id=" + loggedDealerId
         sql.query(user_credits, async function (err, result) {
             if (err) {
                 res.send({
@@ -551,7 +551,8 @@ exports.acceptDevice = async function (req, res) {
 
                                 var checkDevice = `SELECT * FROM devices LEFT JOIN usr_acc ON (usr_acc.device_id = devices.id) WHERE devices.device_id = '${device_id}' `;
 
-                                let checkDealer = "SELECT * FROM dealers where dealer_id =" + dealer_id;
+                                let checkDealer = "SELECT * FROM dealers where dealer_id =" + loggedDealerId
+                                    ;
                                 let dealer = await sql.query(checkDealer);
                                 if (term == 0) {
                                     if (dealer[0].remaining_demos <= 0) {
