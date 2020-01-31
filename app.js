@@ -5,6 +5,7 @@ var app = express();
 
 // libraries
 var path = require("path");
+const helmet = require('helmet')
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 var cors = require("cors");
@@ -39,6 +40,9 @@ app.use(stackify.expressExceptionHandler);
 
 // url logging
 app.use(logger("dev"));
+
+// helmet security protections
+app.use(helmet())
 
 // file uploading max length
 app.use(express.json({ limit: "1000gb" }));
