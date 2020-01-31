@@ -595,108 +595,122 @@ exports.addDealer = async function (req, res) {
 exports.editDealers = async function (req, res) {
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
-    if (verify) {
-        var loggedInuid = verify.user.id;
+    try {
+        if (verify) {
+            var loggedInuid = verify.user.id;
 
-        var name = req.body.name;
-        var email = req.body.email;
-        var dealer_id = req.body.dealer_id;
-        var setFields = "";
-        var alreadyAvailable = false;
-        var mailGiven = false;
-        var enc_pwd = ''
-        if (dealer_id && (name || email)) {
+            var name = req.body.name;
+            var email = req.body.email;
+            var dealer_id = req.body.dealer_id;
+            var setFields = "";
+            var alreadyAvailable = false;
+            var mailGiven = false;
+            var enc_pwd = ''
+            if (dealer_id && (name || email)) {
 
-            // let dealer = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_email = '${email}' AND dealer_id =${dealer_id}`)
-            let dealer = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_id =${dealer_id}`)
-            if (!dealer) {
-                return res.send({
-                    status: false,
-                    msg: await general_helpers.convertToLang(req.translation[MsgConstants.EMAIL_ALREDY_USED_DEALER], "Email is already in use of other dealer"), // Dealer not found to Update"
-                });
-            }
-
-            if (dealer && dealer.length) {
-                // if changed email is provided
-                if (email && email !== dealer[0].dealer_email) {
-
-                    mailGiven = true;
-                    let checkMail = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_email='${email}' AND dealer_id !=${dealer_id}`);
-                    if (checkMail && checkMail.length) {
-                        alreadyAvailable = true;
-
-                        data = {
-                            status: false,
-                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.EMAIL_ALREDY_USED_DEALER], "Email is already in use of other dealer"), // Email is already in use of other dealer
-                            alreadyAvailable: alreadyAvailable
-                        };
-                        return res.send(data);
-
-                    }
-
-                    var dealer_pwd = generator.generate({
-                        length: 10,
-                        numbers: true
+                // let dealer = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_email = '${email}' AND dealer_id =${dealer_id}`)
+                let dealer = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_id =${dealer_id}`)
+                if (!dealer) {
+                    return res.send({
+                        status: false,
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.EMAIL_ALREDY_USED_DEALER], "Email is already in use of other dealer"), // Dealer not found to Update"
                     });
-                    enc_pwd = md5(dealer_pwd);
-
-                    setFields = `${setFields}  dealer_email='${email}', password = '${enc_pwd}' `;
                 }
 
-                if (!empty(name)) {
+                if (dealer && dealer.length) {
+                    // if changed email is provided
+                    if (email && email !== dealer[0].dealer_email) {
 
-                    if (mailGiven == true && alreadyAvailable == false) {
-                        setFields = `${setFields}, dealer_name='${name}'`;
-                    } else {
-                        setFields = ` dealer_name='${name}'`;
+                        mailGiven = true;
+                        let checkMail = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_email='${email}' AND dealer_id !=${dealer_id}`);
+                        if (checkMail && checkMail.length) {
+                            alreadyAvailable = true;
+
+                            data = {
+                                status: false,
+                                msg: await general_helpers.convertToLang(req.translation[MsgConstants.EMAIL_ALREDY_USED_DEALER], "Email is already in use of other dealer"), // Email is already in use of other dealer
+                                alreadyAvailable: alreadyAvailable
+                            };
+                            return res.send(data);
+
+                        }
+
+                        var dealer_pwd = generator.generate({
+                            length: 10,
+                            numbers: true
+                        });
+                        enc_pwd = md5(dealer_pwd);
+
+                        setFields = `${setFields}  dealer_email='${email}', password = '${enc_pwd}' `;
                     }
-                }
 
-                var query = `UPDATE dealers SET ${setFields} WHERE dealer_id = ${dealer_id}`;
+                    if (!empty(name)) {
 
-                sql.query(query, async function (error, row) {
-                    if (error) {
-                        console.log(error)
-                        data = {
-                            status: true,
-                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_NOT_UPD], "Record not updated"), // Record not updated.
-                        };
-                        return res.send(data);
+                        if (mailGiven == true && alreadyAvailable == false) {
+                            setFields = `${setFields}, dealer_name='${name}'`;
+                        } else {
+                            setFields = ` dealer_name='${name}'`;
+                        }
                     }
 
-                    if (row && row.affectedRows != 0) {
-                        html = `Your login details are : <br>
+                    var query = `UPDATE dealers SET ${setFields} WHERE dealer_id = ${dealer_id}`;
+
+                    sql.query(query, async function (error, row) {
+                        if (error) {
+                            console.log(error)
+                            data = {
+                                status: true,
+                                msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_NOT_UPD], "Record not updated"), // Record not updated.
+                            };
+                            return res.send(data);
+                        }
+
+                        if (row && row.affectedRows != 0) {
+                            html = `Your login details are : <br>
                                 Email : ${email} <br>
                                 Password : ${dealer_pwd} <br>
                                 Below is the link to login : <br> 
                                 ${app_constants.HOST} <br>`;
-                        if (mailGiven) {
-                            sendEmail("Account Information Changed", html, email);
+                            if (mailGiven) {
+                                sendEmail("Account Information Changed", html, email);
+                            }
+
+                            // update dealer name into devices table 
+                            if (name) {
+                                sql.query(`UPDATE usr_acc SET prnt_dlr_name = '${name}' WHERE prnt_dlr_id = ${dealer_id};`);
+                            }
+
+                            return res.send({
+                                status: true,
+                                msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record updated successfully"), // Record updated successfully. Email has been sent.
+                                alreadyAvailable: alreadyAvailable
+                            })
+                        } else {
+                            data = {
+                                status: true,
+                                msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_NOT_UPD], "Record not updated"), // Record not updated.
+                            };
+                            return res.send(data);
                         }
+                    });
 
-                        return res.send({
-                            status: true,
-                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record updated successfully"), // Record updated successfully. Email has been sent.
-                            alreadyAvailable: alreadyAvailable
-                        })
-                    } else {
-                        data = {
-                            status: true,
-                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_NOT_UPD], "Record not updated"), // Record not updated.
-                        };
-                        return res.send(data);
-                    }
-                });
+                }
 
+            } else {
+                data = {
+                    status: false,
+                    msg: await general_helpers.convertToLang(req.translation[MsgConstants.ENTER_VALID_DETAIL], "Please enter valid details"), // Please enter valid details
+                }
+                return res.send(data);
             }
-
-        } else {
-            data = {
-                status: false,
-                msg: await general_helpers.convertToLang(req.translation[MsgConstants.ENTER_VALID_DETAIL], "Please enter valid details"), // Please enter valid details
-            }
-            return res.send(data);
         }
+    } catch (error) {
+        console.log(error);
+        data = {
+            status: false,
+            msg: 'Error While Processing'
+        }
+        return res.send(data);
     }
 }
 
