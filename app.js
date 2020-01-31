@@ -42,7 +42,7 @@ app.use(stackify.expressExceptionHandler);
 app.use(logger("dev"));
 
 // helmet security protections
-app.use(helmet())
+// app.use(helmet())
 
 // file uploading max length
 app.use(express.json({ limit: "1000gb" }));
