@@ -2143,7 +2143,8 @@ exports.editDevices = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
 
     if (verify) {
-        if (!empty(req.body.usr_device_id)) {
+        let usr_device_id = req.body.usr_device_id;
+        if (usr_device_id) {
 
             let loggedDealerId = verify.user.id;
             let loggedDealerType = verify.user.user_type;
@@ -2249,14 +2250,16 @@ exports.editDevices = async function (req, res) {
             } else {
                 var status = "active";
             }
+
             let loggedInUserData = await sql.query(`SELECT * FROM dealers WHERE dealer_id =${loggedDealerId}`)
             if (!loggedInUserData || loggedInUserData.length < 1) {
                 res.send({
                     status: false,
-                    msg: "Error: Dealer Data not found."
+                    msg: "Error: Dealer not found."
                 });
                 return
             }
+
             if (loggedDealerType !== constants.ADMIN) {
                 if (loggedInUserData[0].account_balance_status !== 'active' && !pay_now) {
                     res.send({
@@ -2266,13 +2269,10 @@ exports.editDevices = async function (req, res) {
                     return
                 }
             }
-            var checkDevice =
-                "SELECT start_date ,expiry_date from usr_acc WHERE device_id = '" +
-                usr_device_id +
-                "'";
+
+            var checkDevice = `SELECT * FROM usr_acc WHERE device_id = ?`;
             if (loggedDealerType === constants.SDEALER) {
-                checkDevice =
-                    checkDevice + " AND dealer_id = " + loggedDealerId;
+                checkDevice = checkDevice + " AND dealer_id = " + loggedDealerId;
             } else if (loggedDealerType === constants.DEALER) {
                 checkDevice =
                     checkDevice +
@@ -2290,12 +2290,24 @@ exports.editDevices = async function (req, res) {
                 });
                 return;
             }
+            console.log('====>:', checkDevice)
             if (loggedDealerType === constants.ADMIN) {
                 let response = await device_helpers.editDeviceAdmin(req.body, verify)
                 res.send(response)
                 return
             } else {
-                sql.query(checkDevice, async function (error, rows) {
+                sql.query(checkDevice, [sql.escape(usr_device_id)],  async function (error, rows) {
+                    if (error) {
+                        console.log('edit check device error:');
+                        return res.send({
+                            status: false,
+                            msg: await helpers.convertToLang(
+                                req.translation[''],
+                                "ERROR: internal server error"
+                            ) // No Device found
+                        });
+                    }
+                    console.log(rows);
                     if (rows.length) {
                         if (newService) {
                             let user_credits_q = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
@@ -2514,6 +2526,17 @@ exports.editDevices = async function (req, res) {
                             }
                         }
                         sql.query(common_Query, async function (error, row) {
+                            if (error) {
+                                console.log('update device query error:');
+                                return res.send({
+                                    status: false,
+                                    msg: await helpers.convertToLang(
+                                        req.translation[''],
+                                        "ERROR: internal server error"
+                                    ) // No Device found
+                                });
+                            }
+
                             await sql.query(usr_acc_Query);
                             if (newService) {
 
@@ -3185,7 +3208,7 @@ exports.editDevices = async function (req, res) {
                             return;
                         });
                     } else {
-                        res.send({
+                        return res.send({
                             status: false,
                             msg: await helpers.convertToLang(
                                 req.translation[MsgConstants.DEVICE_NOT_FOUND],
