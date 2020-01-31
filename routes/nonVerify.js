@@ -33,25 +33,28 @@ const { sendEmail } = require("../lib/email");
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
 
+    // console.log(req.app);
+    return res.send('test')
 
-    sql.getConnection((error, connection) => {
-        if (error) {
-            console.log(error)
-        }
-        connection.beginTransaction(async function (err) {
-            if (err) {
-                console.log(err)
-            };
-            let something = await connection.query("SELECT * FROM devicess");
-            console.log(something);
-            connection.commit(function (err) {
-                if (err) {
-                    console.log(err)
-                }
-                return res.send('test')
-            })
-        })
-    })
+    // transactions
+    // sql.getConnection((error, connection) => {
+    //     if (error) {
+    //         console.log(error)
+    //     }
+    //     connection.beginTransaction(async function (err) {
+    //         if (err) {
+    //             console.log(err)
+    //         };
+    //         let something = await connection.query("SELECT * FROM devicess");
+    //         console.log(something);
+    //         connection.commit(function (err) {
+    //             if (err) {
+    //                 console.log(err)
+    //             }
+    //         })
+    //     })
+    // })
+
     // helpers.updateSimStatus('8901260852293382529', 'deactivated')
     // let attachment = {
     //     fileName: "invoice-PI000045.pdf",

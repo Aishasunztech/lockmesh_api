@@ -471,5 +471,13 @@ module.exports = {
     sendJobToPanel: function (io, job) {
         console.log("data emitted on panel successfully");
         io.emit(Constants.SEND_JOB_TO_PANEL, job);
-    }
+    },
+
+    deviceInfoUpdated: async function (io, device_id, data) {
+        console.log("DEVICE INFORMATION UPDATED", data)
+        io.emit(Constants.DEVICE_INFO_UPDATED + device_id, {
+            status: true,
+            data: data
+        });
+    },
 }

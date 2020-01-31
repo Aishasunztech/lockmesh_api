@@ -3,6 +3,11 @@ require("express-group-routes");
 var express = require("express");
 var app = express();
 
+// Security Libraries
+// const helmet = require('helmet');
+var sqlInjection = require('./middlewares/injectable');
+// var expressSanitized = require('express-sanitize-escape');
+
 // libraries
 var path = require("path");
 var cookieParser = require("cookie-parser");
@@ -39,6 +44,15 @@ app.use(stackify.expressExceptionHandler);
 
 // url logging
 app.use(logger("dev"));
+
+// helmet security protections
+// app.use(helmet())
+
+// SQL injection
+// app.use(sqlInjection);
+
+// escape input
+// app.use(expressSanitized.middleware());
 
 // file uploading max length
 app.use(express.json({ limit: "1000gb" }));
