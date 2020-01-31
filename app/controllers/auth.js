@@ -37,8 +37,8 @@ exports.login = async function (req, res) {
 	//check for if email is already registered
 	var userQ = `SELECT * FROM dealers WHERE dealer_email = ? limit 1`;
 
-	var users = await sql.query(userQ, [sql.escape(email)]);
-
+	var users = await sql.query(userQ, [email]);
+	console.log(users)
 	if (users.length == 0) {
 		data = {
 			status: false,
