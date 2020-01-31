@@ -6369,11 +6369,13 @@ exports.connectDevice = async function (req, res) {
 
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
-        if (!empty(req.params.device_id)) {
+        if (req.params.device_id) {
+            let device_id = req.params.device_id;
             let userId = verify.user.id;
             //  console.log(verify.user);
             let usertype = await helpers.getUserType(userId);
-            let where = "devices.device_id = '" + req.params.device_id + "'";
+
+            let where = `devices.device_id = ?`;
 
             if (usertype != constants.ADMIN) {
                 where =
@@ -6385,11 +6387,7 @@ exports.connectDevice = async function (req, res) {
                     ")";
             }
             // console.log("select devices.*  ," + usr_acc_query_text + ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id where " + where);
-            await sql.query(
-                "select devices.*  ," +
-                usr_acc_query_text +
-                ", dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id where " +
-                where,
+            await sql.query(`select devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON devices.id = usr_acc.device_id LEFT JOIN dealers ON dealers.dealer_id = usr_acc.dealer_id WHERE ${where}`, [device_id],
                 async function (error, results) {
                     if (error) {
                         console.log(error);
