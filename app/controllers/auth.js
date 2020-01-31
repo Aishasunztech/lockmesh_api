@@ -38,7 +38,6 @@ exports.login = async function (req, res) {
 	var userQ = `SELECT * FROM dealers WHERE dealer_email = ? limit 1`;
 
 	var users = await sql.query(userQ, [email]);
-	console.log(users)
 	if (users.length == 0) {
 		data = {
 			status: false,
@@ -48,8 +47,8 @@ exports.login = async function (req, res) {
 		return res.send(data);
 	} else {
 
-		var userTypeQuery = `SELECT * FROM user_roles WHERE id =${users[0].type} AND status=1`;
-		var userType = await sql.query(userTypeQuery);
+		var userTypeQuery = `SELECT * FROM user_roles WHERE id =? AND status=1`;
+		var userType = await sql.query(userTypeQuery, [users[0].type]);
 		if (userType.length == 0) {
 
 			data = {
@@ -57,8 +56,7 @@ exports.login = async function (req, res) {
 				msg: 'User does not exist', // await helpers.convertToLang(req.translation[MsgConstants.USER_DOES_NOT_EXIST], MsgConstants.USER_DOES_NOT_EXIST),
 				data: null
 			}
-			res.send(data);
-			return;
+			return res.send(data);
 		} else {
 
 			if (users[0].password === enc_pwd) {
