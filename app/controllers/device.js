@@ -3159,12 +3159,25 @@ exports.editDevices = async function (req, res) {
 
                                 if (rsltq[0].expiry_date !== null) {
                                     let startDate = moment(new Date())
-                                    let expiray_date = new Date(rsltq[0].expiry_date)
-                                    let endDate = moment(expiray_date)
+                                    let expiry_date = new Date(rsltq[0].expiry_date)
+                                    let endDate = moment(expiry_date)
                                     remainTermDays = endDate.diff(startDate, 'days')
                                     rsltq[0].remainTermDays = remainTermDays
                                 }
                             }
+
+                            socket_helpers.deviceInfoUpdated(sockets.baseIo,
+                                device_id,
+                                {
+                                    device_id: rsltq[0].device_id,
+                                    expiry_date: rsltq[0].expiry_date,
+                                    user_id: rsltq[0].user_id,
+                                    sim_id: rsltq[0].sim_id,
+                                    sim_id2: rsltq[0].sim_id2,
+                                    pgp_email: rsltq[0].pgp_email,
+                                    chat_id: rsltq[0].chat_id
+                                }
+                            );
                             data = {
                                 status: true,
                                 msg: cancelService ? "Request has been submitted to cancel your services." : await helpers.convertToLang(
@@ -4875,6 +4888,18 @@ exports.transferUser = async function (req, res) {
                     // if (servicesData[0]) {
                     //     resquery[0].services = servicesData[0]
                     // }
+                    socket_helpers.deviceInfoUpdated(sockets.baseIo,
+                        resquery[0].device_id,
+                        {
+                            device_id: resquery[0].device_id,
+                            expiry_date: resquery[0].expiry_date,
+                            user_id: resquery[0].user_id,
+                            sim_id: resquery[0].sim_id,
+                            sim_id2: resquery[0].sim_id2,
+                            pgp_email: resquery[0].pgp_email,
+                            chat_id: resquery[0].chat_id
+                        }
+                    );
                     device_helpers.saveActionHistory(resquery[0], constants.USER_TRANSFERED)
                     data = {
                         status: true,

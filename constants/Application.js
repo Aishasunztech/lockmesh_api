@@ -56,6 +56,8 @@ module.exports = {
   DEVICE_ACCEPT: "Accept Device",
   NEW_DEVICE: "new device",
   DEVICE_WIPE: "wiped",
+  DEVICE_INFO_UPDATED: "device_info_updated_",
+
 
   DEVICE_ONLINE: "online",
   DEVICE_OFFLINE: "offline",
@@ -165,7 +167,7 @@ module.exports = {
 
   APK_ON: 'On',
   APK_OFF: 'Off',
-  FEATURED_APK_PACKAGES : ['com.secure.d2d', 'com.schat.android', 'com.secure.vpn', 'com.secure.svault', 'com.android.smail'],
+  FEATURED_APK_PACKAGES: ['com.secure.d2d', 'com.schat.android', 'com.secure.vpn', 'com.secure.svault', 'com.android.smail'],
 
   // Default Columns
   // deviceColumns : ["DEVICE ID", "USER ID", "REMAINING DAYS", "FLAGGED", "STATUS", "MODE", "DEVICE NAME", "ACTIVATION CODE", "ACCOUNT EMAIL", "PGP EMAIL", "CHAT ID", "CLIENT ID", "DEALER ID", "DEALER PIN", "MAC ADDRESS", "SIM ID", "IMEI 1", "SIM 1", "IMEI 2", "SIM 2", "SERIAL NUMBER", "MODEL", "START DATE", "EXPIRY DATE", "DEALER NAME", "S-DEALER", "S-DEALER NAME"],
