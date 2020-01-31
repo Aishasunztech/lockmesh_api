@@ -78,7 +78,7 @@ exports.devices = async function (req, res) {
             };
 
             // console.log("results ", results.length)
-            if (results.length > 0) {
+            if (results && results.length) {
                 let devices_acc_array = [];
                 let usr_device_ids_array = []
                 for (let i = 0; i < results.length; i++) {
