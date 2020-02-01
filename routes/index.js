@@ -37,9 +37,7 @@ module.exports = function (app) {
 	app.use('/microservice-socket-authentication',
 		MircroServiceSocketAuthentication);
 
-	app.use('/users',
-		authMiddleware,
-		userRoutes);
+	app.use('/users', authMiddleware, userRoutes);
 
 	app.group('/api/v1', function (router) {
 		router.use('/mobile', mobileRoutes);

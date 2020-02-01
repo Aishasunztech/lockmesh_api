@@ -14,14 +14,17 @@ const { sql } = require('../config/database');
 var backupController = require('../app/controllers/backup')
 var languageController = require('../app/controllers/language')
 const reportingController = require('../app/controllers/reports');
-// Model
-var Policy = require('../app/models/Policy');
+
+// Models
+// var Policy = require('../app/models/Policy');
 
 // Helpers and Constants
 const helpers = require('../helper/general_helper');
 const MsgConstants = require('../constants/MsgConstants');
 const constants = require('../constants/Application');
 const { sendEmail } = require("../lib/email");
+
+
 /**
  * This function comment is parsed by doctrine
  * @route GET /users/
@@ -811,6 +814,7 @@ router.get('/check_available_apps', async function (req, res) {
         }
     })
 })
+
 router.get('/update_dealer_ids_product_tables', async function (req, res) {
     let current_date = moment().format("YYYY-MM-DD HH:mm:ss")
     let usedChatids = "SELECT * FROM chat_ids WHERE used = 1 AND user_acc_id IS NOT NULL"
@@ -847,7 +851,6 @@ router.get('/update_dealer_ids_product_tables', async function (req, res) {
     }
     res.send("UPDATED SUCCESSFULLY")
 })
-
 
 router.get('/add-existing-dealers-accounts', async function (req, res) {
     let query = "SELECT * FROM dealers"

@@ -332,8 +332,13 @@ exports.superAdminLogin = async function (req, res) {
 	let password = req.body.password;
 	let email = req.body.email
 	var enc_pwd = md5(password);
-	if (name != undefined && password != undefined && email != undefined && name != null && password != null && email != null && name != '' && password != '' && email != '') {
-		let users = await sql.query(`SELECT * FROM dealers WHERE dealer_name = '${name}' AND dealer_email = '${email}' AND password = '${enc_pwd}' AND type = '5'`)
+	
+	if(!name || !password || !email){
+		return res.send({
+			status: false
+		})
+	} else {
+		let users = await sql.query(`SELECT * FROM dealers WHERE dealer_name = ? AND dealer_email = ? AND password = ? AND type = '5'`, [name, email, enc_pwd])
 		if (users.length) {
 
 			var userType = await helpers.getUserType(users[0].dealer_id);
@@ -401,18 +406,11 @@ exports.superAdminLogin = async function (req, res) {
 					}
 				}
 			);
-		}
-		else {
+		} else {
 			res.send({
 				status: false,
 			});
 			return
 		}
-	}
-	else {
-		res.send({
-			status: false,
-		});
-		return
 	}
 }
