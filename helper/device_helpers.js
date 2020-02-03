@@ -1265,7 +1265,7 @@ module.exports = {
                 let deviceData = await require('./general_helper').getAllRecordbyUserAccId(usr_acc_id)
                 // console.log(deviceData);
                 data.data = [deviceData]
-                socket_helpers.deviceInfoUpdated(sockets.baseIo,
+                socket_helpers.deviceInfoUpdated(require("../routes/sockets").baseIo,
                     device_id,
                     {
                         device_id: deviceData.device_id,
