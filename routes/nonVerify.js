@@ -14,14 +14,17 @@ const { sql } = require('../config/database');
 var backupController = require('../app/controllers/backup')
 var languageController = require('../app/controllers/language')
 const reportingController = require('../app/controllers/reports');
-// Model
-var Policy = require('../app/models/Policy');
+
+// Models
+// var Policy = require('../app/models/Policy');
 
 // Helpers and Constants
 const helpers = require('../helper/general_helper');
 const MsgConstants = require('../constants/MsgConstants');
 const constants = require('../constants/Application');
 const { sendEmail } = require("../lib/email");
+
+
 /**
  * This function comment is parsed by doctrine
  * @route GET /users/
@@ -33,6 +36,27 @@ const { sendEmail } = require("../lib/email");
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
 
+    // console.log(req.app);
+    return res.send('test')
+
+    // transactions
+    // sql.getConnection((error, connection) => {
+    //     if (error) {
+    //         console.log(error)
+    //     }
+    //     connection.beginTransaction(async function (err) {
+    //         if (err) {
+    //             console.log(err)
+    //         };
+    //         let something = await connection.query("SELECT * FROM devicess");
+    //         console.log(something);
+    //         connection.commit(function (err) {
+    //             if (err) {
+    //                 console.log(err)
+    //             }
+    //         })
+    //     })
+    // })
 
     // helpers.updateSimStatus('8901260852293382529', 'deactivated')
     // let attachment = {
@@ -41,15 +65,15 @@ router.get('/', async function (req, res, next) {
     // }
     // let html = 'Pre-activation device created successfully. Invoice is attached below. <br>';
     // sendEmail("Pre-Activation device creation.", html, 'hamza.dawood007@gmail.com', null, attachment)
-    let d = moment().format('YYYY-MM-DD H:m:s');
-    console.log("Date Time:", d)
+    // let d = moment().format('YYYY-MM-DD H:m:s');
+    // console.log("Date Time:", d)
 
-    let attachment = {
-        fileName: "invoice-PI000045.pdf",
-        file: path.join(__dirname, "../uploads/invoice-PI000045.pdf")
-    }
-    let html = 'Pre-activation device created successfully. Invoice is attached below. <br>';
-    sendEmail("Pre-Activation device creation.", html, 'hamza.dawood007@gmail.com', null, attachment)
+    // let attachment = {
+    //     fileName: "invoice-PI000045.pdf",
+    //     file: path.join(__dirname, "../uploads/invoice-PI000045.pdf")
+    // }
+    // let html = 'Pre-activation device created successfully. Invoice is attached below. <br>';
+    // sendEmail("Pre-Activation device creation.", html, 'hamza.dawood007@gmail.com', null, attachment)
 
 
     // const errors = validationResult(req);
@@ -57,7 +81,7 @@ router.get('/', async function (req, res, next) {
     //     return res.json({ errors: errors.array() });
     // }
 
-    return res.send("test");
+    // return res.send("test");
     // let data = {
     //     key: 'value'
     // }
@@ -192,6 +216,77 @@ router.get('/refactor_policy_apps', async function (req, res) {
 
     res.send('test');
 })
+
+router.get('/update_parent_dealer_data_into_user_acc', async function (req, res) {
+    let data = {};
+
+    sql.query(`SELECT * FROM  dealers`, async function (error, result) {
+
+        if (error) {
+            data = {
+                status: false,
+                msg: "Query error"
+            }
+            res.send(data);
+            return;
+        }
+
+        if (result && result.length) {
+            for (let i = 0; i < result.length; i++) {
+
+                let parentDealerId = null;
+                let parentDealerName = '';
+
+                if (result[i].connected_dealer && result[i].type === 3) { // type 3 represent only to sdealer
+                    parentDealerId = result[i].connected_dealer;
+
+                    console.log("Sdealer found :: ===>  Dealer id: ", result[i].dealer_id, "  Parent dealer id: ", parentDealerId);
+
+                    // get parent dealer name
+                    let getParentDealerName = await sql.query(`SELECT dealer_name FROM dealers WHERE dealer_id = ${parentDealerId};`);
+                    if (getParentDealerName && getParentDealerName.length) {
+                        parentDealerName = getParentDealerName[0].dealer_name;
+                    }
+                }
+
+                // Update parent dealer data into usr_acc table
+                let updateUserAcc = `UPDATE usr_acc SET prnt_dlr_id = ${parentDealerId}, prnt_dlr_name = '${parentDealerName}' WHERE dealer_id = ${result[i].dealer_id};`;
+                let updateResults = await sql.query(updateUserAcc);
+
+                if (updateResults && updateResults.affectedRows) {
+                    console.log(` usr_acc table record Update successfully Dealer ID is: ${result[i].dealer_id}`);
+                }
+
+                // Update parent dealer data into acc_action_history table
+                let updateAccActionHistoy = `UPDATE acc_action_history SET prnt_dlr_id = ${parentDealerId}, prnt_dlr_name = '${parentDealerName}' WHERE dealer_id = ${result[i].dealer_id};`;
+                let accHistoryResults = await sql.query(updateAccActionHistoy);
+
+                if (accHistoryResults && accHistoryResults.affectedRows) {
+                    console.log(` acc_action_history table record Update successfully Dealer ID is: ${result[i].dealer_id}`);
+                }
+
+
+                // else {
+                //     console.log(`Not found Parent dealer into usr_acc table of Dealer ID is: ${result[i].dealer_id}`);
+                // }
+            }
+
+            data = {
+                status: true,
+                msg: `All parent dealer id and name Update successfully`
+            }
+            return res.send(data);
+        } else {
+            data = {
+                status: false,
+                msg: "Not found any dealer record"
+            }
+            res.send(data);
+            return;
+        }
+    });
+
+});
 
 router.get('/update_device_columns', async function (req, res) {
     let data = {};
@@ -719,6 +814,7 @@ router.get('/check_available_apps', async function (req, res) {
         }
     })
 })
+
 router.get('/update_dealer_ids_product_tables', async function (req, res) {
     let current_date = moment().format("YYYY-MM-DD HH:mm:ss")
     let usedChatids = "SELECT * FROM chat_ids WHERE used = 1 AND user_acc_id IS NOT NULL"
@@ -755,7 +851,6 @@ router.get('/update_dealer_ids_product_tables', async function (req, res) {
     }
     res.send("UPDATED SUCCESSFULLY")
 })
-
 
 router.get('/add-existing-dealers-accounts', async function (req, res) {
     let query = "SELECT * FROM dealers"

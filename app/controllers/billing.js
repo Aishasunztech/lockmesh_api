@@ -170,74 +170,72 @@ exports.acceptServiceRequest = async function (req, res) {
 
                                 let transection_record = "SELECT * from financial_account_transections where user_dvc_acc_id = " + usr_acc_id + " AND user_id = '" + dvc_dealer_id + "' AND type = 'services' ORDER BY id DESC LIMIT 1"
                                 let transection_record_data = await sql.query(transection_record)
+                                if (transection_record_data.length) {
+                                    if (transection_record_data[0] && transection_record_data[0].status === 'pending') {
+                                        let update_transection = "UPDATE financial_account_transections SET status = 'cancelled' WHERE id = " + transection_record_data[0].id
+                                        await sql.query(update_transection)
 
-                                if (transection_record_data[0] && transection_record_data[0].status === 'pending') {
-                                    let update_transection = "UPDATE financial_account_transections SET status = 'cancelled' WHERE id = " + transection_record_data[0].id
-                                    await sql.query(update_transection)
-
-                                    update_credits_query = 'update financial_account_balance set credits = credits + ' + transection_record_data[0].credits + ' where dealer_id ="' + dvc_dealer_id + '"';
-                                    await sql.query(update_credits_query);
-
-
-                                    let update_profits_transections = "UPDATE financial_account_transections SET status = 'cancelled' WHERE user_dvc_acc_id = " + usr_acc_id + " AND status = 'holding' AND type = 'services'"
-                                    await sql.query(update_profits_transections)
-
-                                    if (prevServicePaidPrice > 0) {
-                                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dvc_dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service charges", service_id: prevService.id })}',${prevServicePaidPrice} ,'credit','pending' , 'services' , 0 , ${prevServicePaidPrice})`
-                                        await sql.query(transection_credits)
-
-                                        update_credits_query = 'update financial_account_balance set credits = credits - ' + prevServicePaidPrice + ' where dealer_id ="' + dvc_dealer_id + '"';
+                                        update_credits_query = 'update financial_account_balance set credits = credits + ' + transection_record_data[0].credits + ' where dealer_id ="' + dvc_dealer_id + '"';
                                         await sql.query(update_credits_query);
 
-                                        let admin_holding_profit = prev_service_admin_profit - refund_prev_service_admin_profit
-                                        let dealer_holding_profit = prev_service_dealer_profit - refund_prev_service_dealer_profit
 
-                                        if (admin_holding_profit > 0) {
-                                            let admin_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${verify.user.id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service holding profit", service_id: prevService.id })}',${admin_holding_profit} ,'debit','holding' , 'services')`
-                                            await sql.query(admin_profit_transection)
+                                        let update_profits_transections = "UPDATE financial_account_transections SET status = 'cancelled' WHERE user_dvc_acc_id = " + usr_acc_id + " AND status = 'holding' AND type = 'services'"
+                                        await sql.query(update_profits_transections)
+
+                                        if (prevServicePaidPrice > 0) {
+                                            let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type , paid_credits , due_credits) VALUES (${dvc_dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service charges", service_id: prevService.id })}',${prevServicePaidPrice} ,'credit','pending' , 'services' , 0 , ${prevServicePaidPrice})`
+                                            await sql.query(transection_credits)
+
+                                            update_credits_query = 'update financial_account_balance set credits = credits - ' + prevServicePaidPrice + ' where dealer_id ="' + dvc_dealer_id + '"';
+                                            await sql.query(update_credits_query);
+
+                                            let admin_holding_profit = prev_service_admin_profit - refund_prev_service_admin_profit
+                                            let dealer_holding_profit = prev_service_dealer_profit - refund_prev_service_dealer_profit
+
+                                            if (admin_holding_profit > 0) {
+                                                let admin_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${verify.user.id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service holding profit", service_id: prevService.id })}',${admin_holding_profit} ,'debit','holding' , 'services')`
+                                                await sql.query(admin_profit_transection)
+                                            }
+
+                                            if (dealer_holding_profit > 0) {
+                                                let dealer_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${deviceData[0].prnt_dlr_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service holding profit", service_id: prevService.id })}',${dealer_holding_profit} ,'debit','holding' , 'services')`
+                                                await sql.query(dealer_profit_transection)
+                                            }
                                         }
+                                    } else {
+                                        let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dvc_dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, details: "REFUND SERVICES CREITS", service_id: prevService.id })}' ,${creditsToRefund} ,'debit' , 'transferred' , 'services')`
+                                        await sql.query(transection_credits)
+                                        update_credits_query = 'update financial_account_balance set credits = credits + ' + creditsToRefund + ' where dealer_id ="' + dvc_dealer_id + '"';
+                                        await sql.query(update_credits_query);
+                                        refund_prev_service_admin_profit = refund_prev_service_admin_profit - Math.ceil((refund_prev_service_admin_profit * 0.03))
+                                        refund_prev_service_dealer_profit = refund_prev_service_dealer_profit - Math.ceil((refund_prev_service_dealer_profit * 0.03))
 
-                                        if (dealer_holding_profit > 0) {
-                                            let dealer_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${deviceData[0].prnt_dlr_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service holding profit", service_id: prevService.id })}',${dealer_holding_profit} ,'debit','holding' , 'services')`
-                                            await sql.query(dealer_profit_transection)
+                                        if (prevServicePaidPrice > 0) {
+
+                                            let admin_prev_service_profit = prev_service_admin_profit - refund_prev_service_admin_profit
+                                            let dealer_prev_service_profit = prev_service_dealer_profit - refund_prev_service_dealer_profit
+
+                                            if (admin_prev_service_profit > 0) {
+
+                                                let admin_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${verify.user.id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service refund profit", service_id: prevService.id })}',${admin_prev_service_profit} ,'credit','transferred' , 'services')`
+                                                await sql.query(admin_profit_transection)
+                                            }
+                                            if (dealer_prev_service_profit > 0) {
+                                                let dealer_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${deviceData[0].prnt_dlr_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service refund profit", service_id: prevService.id })}',${dealer_prev_service_profit} ,'credit','transferred' , 'services')`
+                                                await sql.query(dealer_profit_transection)
+                                            }
                                         }
-                                    }
-
-                                } else {
-                                    let transection_credits = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${dvc_dealer_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, details: "REFUND SERVICES CREITS", service_id: prevService.id })}' ,${creditsToRefund} ,'debit' , 'transferred' , 'services')`
-                                    await sql.query(transection_credits)
-                                    update_credits_query = 'update financial_account_balance set credits = credits + ' + creditsToRefund + ' where dealer_id ="' + dvc_dealer_id + '"';
-                                    await sql.query(update_credits_query);
-                                    refund_prev_service_admin_profit = refund_prev_service_admin_profit - Math.ceil((refund_prev_service_admin_profit * 0.03))
-                                    refund_prev_service_dealer_profit = refund_prev_service_dealer_profit - Math.ceil((refund_prev_service_dealer_profit * 0.03))
-
-                                    if (prevServicePaidPrice > 0) {
-
-                                        let admin_prev_service_profit = prev_service_admin_profit - refund_prev_service_admin_profit
-                                        let dealer_prev_service_profit = prev_service_dealer_profit - refund_prev_service_dealer_profit
-
-                                        if (admin_prev_service_profit > 0) {
-
-                                            let admin_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${verify.user.id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service refund profit", service_id: prevService.id })}',${admin_prev_service_profit} ,'credit','transferred' , 'services')`
-                                            await sql.query(admin_profit_transection)
+                                        // console.log("", refund_prev_service_admin_profit);
+                                        if (refund_prev_service_admin_profit) {
+                                            updateAdminProfit = 'update financial_account_balance set credits = credits - ' + refund_prev_service_admin_profit + ' where dealer_id ="' + verify.user.id + '"';
+                                            await sql.query(updateAdminProfit);
                                         }
-                                        if (dealer_prev_service_profit > 0) {
-                                            let dealer_profit_transection = `INSERT INTO financial_account_transections (user_id,user_dvc_acc_id, transection_data, credits ,transection_type , status , type) VALUES (${deviceData[0].prnt_dlr_id},${usr_acc_id} ,'${JSON.stringify({ user_acc_id: usr_acc_id, description: "Services changed, Previous service refund profit", service_id: prevService.id })}',${dealer_prev_service_profit} ,'credit','transferred' , 'services')`
-                                            await sql.query(dealer_profit_transection)
+                                        if (refund_prev_service_dealer_profit) {
+                                            updateAdminProfit = 'update financial_account_balance set credits = credits - ' + refund_prev_service_dealer_profit + ' where dealer_id ="' + deviceData[0].prnt_dlr_id + '"';
+                                            await sql.query(updateAdminProfit);
                                         }
-                                    }
-                                    // console.log("", refund_prev_service_admin_profit);
-                                    if (refund_prev_service_admin_profit) {
-                                        updateAdminProfit = 'update financial_account_balance set credits = credits - ' + refund_prev_service_admin_profit + ' where dealer_id ="' + verify.user.id + '"';
-                                        await sql.query(updateAdminProfit);
-                                    }
-                                    if (refund_prev_service_dealer_profit) {
-                                        updateAdminProfit = 'update financial_account_balance set credits = credits - ' + refund_prev_service_dealer_profit + ' where dealer_id ="' + deviceData[0].prnt_dlr_id + '"';
-                                        await sql.query(updateAdminProfit);
                                     }
                                 }
-
-
                                 res.send({
                                     status: true,
                                     msg: await helpers.convertToLang(req.translation[""], "Services has been cancalled successfully from device."), // "Credits added successfully.",

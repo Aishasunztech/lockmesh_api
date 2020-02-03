@@ -7,6 +7,26 @@ const constants = require('./constants');
 
 // sequelize_connection
 
+/**
+ * @author Usman Hafeez
+ * @description Connection with creatConnection method
+ */
+// const sqlPool = mysql.createConnection({
+//     //connectionLimit: 1000,
+//     //connectTimeout: 60 * 60 * 1000,
+//     //aquireTimeout: 60 * 60 * 1000,
+//     //timeout: 60 * 60 * 1000,
+
+//     host: constants.DB_HOST,
+//     user: constants.DB_USERNAME,
+//     password: constants.DB_PASSWORD,
+//     database: constants.DB_NAME,
+
+//     // timezone: 'utc',// 'UTC+0', // constants.TIME_ZONE,
+//     supportBigNumbers: true,
+//     bigNumberStrings: true,
+//     dateStrings: true
+// });
 
 const sqlPool = mysql.createPool({
     //connectionLimit: 1000,
@@ -25,8 +45,10 @@ const sqlPool = mysql.createPool({
     dateStrings: true
 });
 
+
 sqlPool.query(`SET time_zone = '${constants.TIME_ZONE_OFFSET}'`); // '+0:00'
 sqlPool.query(`SET @@global.time_zone = '${constants.TIME_ZONE_OFFSET}'`); // '+0:00'
+
 
 const DBEvents = new MySQLEvents(sqlPool, {
     startAtEnd: true,
@@ -37,20 +59,24 @@ const DBEvents = new MySQLEvents(sqlPool, {
 
 
 sqlPool.getConnection((err, connection) => {
+    
     if (err) {
         if (err.code === 'PROTOCOL_CONNECTION_LOST') {
             console.error('Database connection was closed.')
-        }
-        if (err.code === 'ER_CON_COUNT_ERROR') {
+        } else if (err.code === 'ER_CON_COUNT_ERROR') {
             console.error('Database has too many connections.')
-        }
-        if (err.code === 'ECONNREFUSED') {
+        } else if (err.code === 'ECONNREFUSED') {
             console.error('Database connection was refused.')
+        } else {
+            console.log(err)
         }
     }
     if (connection) connection.release()
     return
 });
+
+// 
+
 
 sqlPool.query = util.promisify(sqlPool.query); // Magic happens here.
 

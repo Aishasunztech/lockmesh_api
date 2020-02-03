@@ -216,6 +216,9 @@ router.put("/delete/:device_id", deviceController.deleteDevice);
 /** Unlink Device  **/
 router.post("/unlink/:id", deviceController.unlinkDevice);
 
+/** Relink Device  **/
+router.put("/relink-device/:id", deviceController.relinkDevice);
+
 /** Suspend Account Devices / client **/
 router.post("/suspend/:id", deviceController.suspendAccountDevices);
 
@@ -934,7 +937,7 @@ router.get('/apklist', apkController.apkList);
  * @security JWT
  */
 // upload test apk
-router.post('/upload', multipartMiddleware, apkController.upload);
+router.post('/upload', multipartMiddleware, apkController.uploadApk);
 
 
 /**
@@ -1049,10 +1052,11 @@ router.get("/login_history", async function (req, res) {
 			let id = verify.user.id;
 			let data = {};
 
-			let limitQ = ' LIMIT 10';
-			if (limit) {
-				limitQ = ` LIMIT ${start}, ${limit}`
-			}
+			let limitQ = ' LIMIT 50';
+			// let limitQ = ' LIMIT 10';
+			// if (limit) {
+			// 	limitQ = ` LIMIT ${start}, ${limit}`
+			// }
 
 			let query = `SELECT * FROM login_history WHERE dealer_id = '${id}' AND type = 'token' ORDER BY created_at DESC ${limitQ};`;
 			console.log(query);

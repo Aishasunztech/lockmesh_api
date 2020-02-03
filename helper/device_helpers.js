@@ -443,7 +443,7 @@ module.exports = {
             // status = 'Expired';
             status = Constants.DEVICE_EXPIRED;
         }
-        else if ((device.device_status === '0' || device.device_status === 0) && (device.unlink_status === '0' || device.unlink_status === 0) && (device.activation_status === null || device.activation_status === '')) {
+        else if (((device.device_status === '0' || device.device_status === 0) && (device.unlink_status === '0' || device.unlink_status === 0) && (device.activation_status === null || device.activation_status === '')) || (device.relink_status === 1 || device.relink_status === '1')) {
             // status = 'Pending activation';
             status = Constants.DEVICE_PENDING_ACTIVATION;
         }
@@ -1265,6 +1265,18 @@ module.exports = {
                 let deviceData = await require('./general_helper').getAllRecordbyUserAccId(usr_acc_id)
                 // console.log(deviceData);
                 data.data = [deviceData]
+                socket_helpers.deviceInfoUpdated(sockets.baseIo,
+                    device_id,
+                    {
+                        device_id: deviceData.device_id,
+                        expiry_date: deviceData.expiry_date,
+                        user_id: deviceData.user_id,
+                        sim_id: deviceData.sim_id,
+                        sim_id2: deviceData.sim_id2,
+                        pgp_email: deviceData.pgp_email,
+                        chat_id: deviceData.chat_id
+                    }
+                );
             }
         }
         // console.log(data)
