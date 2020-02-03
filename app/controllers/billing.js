@@ -637,7 +637,7 @@ exports.savePackage = async function (req, res) {
 }
 
 exports.editPackage = async function (req, res) {
-    // console.log('data is', req.body)
+
     var verify = req.decoded; // await verifyToken(req, res);
 
     if (verify) {
