@@ -3,6 +3,11 @@ require("express-group-routes");
 var express = require("express");
 var app = express();
 
+// Security Libraries
+// const helmet = require('helmet');
+var sqlInjection = require('./middlewares/injectable');
+// var expressSanitized = require('express-sanitize-escape');
+
 // libraries
 var path = require("path");
 var cookieParser = require("cookie-parser");
@@ -40,6 +45,15 @@ app.use(stackify.expressExceptionHandler);
 // url logging
 app.use(logger("dev"));
 
+// helmet security protections
+// app.use(helmet())
+
+// SQL injection
+// app.use(sqlInjection);
+
+// escape input
+// app.use(expressSanitized.middleware());
+
 // file uploading max length
 app.use(express.json({ limit: "1000gb" }));
 app.use(
@@ -54,6 +68,7 @@ app.use(
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
+// Allow headers
 app.use(function (req, res, next) {
 	res.header("Access-Control-Allow-Origin", "*");
 	res.header(
@@ -106,5 +121,21 @@ app.get("/itest", function (req, res) {
 
 // app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 require("./routes/index.js")(app);
+
+// catch 404 and forward to error handler
+app.use(function (req, res, next) {
+	res.status(404).send({ msg: 'Not Found' })
+});
+
+// error handler
+app.use(function (err, req, res, next) {
+	// set locals, only providing error in development
+	res.locals.message = err.message;
+	res.locals.error = req.app.get('env') === 'development' ? err : {};
+
+	// render the error page
+	res.status(err.status || 500);
+	res.send(err);
+});
 
 module.exports = app;

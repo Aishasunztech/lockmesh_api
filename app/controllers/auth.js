@@ -24,25 +24,31 @@ var data;
 exports.login = async function (req, res) {
 	var email = req.body.demail;
 	var pwd = req.body.pwd;
+	if(!email || !pwd){
+		data = {
+			status: false,
+			msg: 'Bad request',
+		}
+		return res.send(data);
+	}
 	var enc_pwd = md5(pwd);
 	var data = '';
 
 	//check for if email is already registered
-	var userQ = `SELECT * FROM dealers WHERE dealer_email = '${email}' limit 1`;
-	var users = await sql.query(userQ);
+	var userQ = `SELECT * FROM dealers WHERE dealer_email = ? limit 1`;
 
+	var users = await sql.query(userQ, [email]);
 	if (users.length == 0) {
 		data = {
 			status: false,
 			msg: 'User does not exist', // await helpers.convertToLang(req.translation[MsgConstants.USER_DOES_NOT_EXIST], MsgConstants.USER_DOES_NOT_EXIST),
 			data: null
 		}
-		res.send(data);
-		return;
+		return res.send(data);
 	} else {
 
-		var userTypeQuery = `SELECT * FROM user_roles WHERE id =${users[0].type} AND status=1`;
-		var userType = await sql.query(userTypeQuery);
+		var userTypeQuery = `SELECT * FROM user_roles WHERE id =? AND status=1`;
+		var userType = await sql.query(userTypeQuery, [users[0].type]);
 		if (userType.length == 0) {
 
 			data = {
@@ -50,8 +56,7 @@ exports.login = async function (req, res) {
 				msg: 'User does not exist', // await helpers.convertToLang(req.translation[MsgConstants.USER_DOES_NOT_EXIST], MsgConstants.USER_DOES_NOT_EXIST),
 				data: null
 			}
-			res.send(data);
-			return;
+			return res.send(data);
 		} else {
 
 			if (users[0].password === enc_pwd) {
@@ -327,8 +332,13 @@ exports.superAdminLogin = async function (req, res) {
 	let password = req.body.password;
 	let email = req.body.email
 	var enc_pwd = md5(password);
-	if (name != undefined && password != undefined && email != undefined && name != null && password != null && email != null && name != '' && password != '' && email != '') {
-		let users = await sql.query(`SELECT * FROM dealers WHERE dealer_name = '${name}' AND dealer_email = '${email}' AND password = '${enc_pwd}' AND type = '5'`)
+	
+	if(!name || !password || !email){
+		return res.send({
+			status: false
+		})
+	} else {
+		let users = await sql.query(`SELECT * FROM dealers WHERE dealer_name = ? AND dealer_email = ? AND password = ? AND type = '5'`, [name, email, enc_pwd])
 		if (users.length) {
 
 			var userType = await helpers.getUserType(users[0].dealer_id);
@@ -384,7 +394,7 @@ exports.superAdminLogin = async function (req, res) {
 					} else {
 						user.expiresIn = constants.EXPIRES_IN;
 						user.token = token;
-						helpers.saveLogin(user, userType, app_constants.TOKEN, 1);
+						await helpers.saveLogin(user, userType, app_constants.TOKEN, 1);
 						data = {
 							status: true,
 							token: token,
@@ -396,18 +406,11 @@ exports.superAdminLogin = async function (req, res) {
 					}
 				}
 			);
-		}
-		else {
+		} else {
 			res.send({
 				status: false,
 			});
 			return
 		}
-	}
-	else {
-		res.send({
-			status: false,
-		});
-		return
 	}
 }

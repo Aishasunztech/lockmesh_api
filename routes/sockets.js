@@ -1,9 +1,9 @@
 // Libraries
 
 // Helpers
-const { sql } = require('../config/database');
-const device_helpers = require('../helper/device_helpers.js');
-const general_helpers = require('../helper/general_helper.js');
+// const { sql } = require('../config/database');
+// const device_helpers = require('../helper/device_helpers.js');
+// const general_helpers = require('../helper/general_helper.js');
 
 // Controllers
 const socketController = require('../app/controllers/socket');
@@ -12,8 +12,8 @@ const socketController = require('../app/controllers/socket');
 const socketMiddleware = require('../middlewares/socketAuth');
 
 // Constants
-const Constants = require('../constants/Application');
-const app_constants = require('../config/constants');
+// const Constants = require('../constants/Application');
+// const app_constants = require('../config/constants');
 
 let io;
 // let dealerIo;
