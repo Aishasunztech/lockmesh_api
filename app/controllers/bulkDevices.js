@@ -53,13 +53,24 @@ exports.bulkDevicesHistory = async function (req, res) {
         if (getHistory.length) {
             for (let index = 0; index < getHistory.length; index++) {
 
-                // get devices
-                console.log("getHistory[index].device_id ", getHistory[index].device_ids);
+                // get policy
+                let policyName = '';
+                if (getHistory[index].policy && !isNaN(getHistory[index].policy)) {
+                    // console.log('policy is: ', getHistory[index].policy);
+                    let getPolicyQ = `SELECT * FROM policy WHERE id=${getHistory[index].policy}`;
+                    let policy = await sql.query(getPolicyQ)
+                    // // getHistory[index].policy = await helpers.refactorPolicy(policy);
+                    policyName = policy[0].policy_name;
+                }
 
+                // get devices
+                // console.log("getHistory[index].device_id ", getHistory[index].device_ids);
+
+                getHistory[index]["devices"] = "[]";
                 if (JSON.parse(getHistory[index].device_ids).length) {
                     let query = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers ON (usr_acc.dealer_id = dealers.dealer_id) 
                 WHERE devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.device_id IN (${JSON.parse(getHistory[index].device_ids)}) ORDER BY devices.id DESC`;
-                    console.log('query is: ', query);
+                    // console.log('query is: ', query);
 
                     let results = await sql.query(query);
                     // console.log('result is: ', results)
@@ -226,15 +237,13 @@ exports.bulkDevicesHistory = async function (req, res) {
                             device.validity = checkValue(device.validity);
                         }
 
-                        getHistory[index]["data"] = JSON.stringify(finalResult);
-                    } else {
-                        getHistory[index]["data"] = "[]";
+                        getHistory[index]["devices"] = JSON.stringify(finalResult);
                     }
-                } else {
-                    getHistory[index]["data"] = "[]";
                 }
+                getHistory[index].policy = policyName;
             }
         }
+        // console.log("getHistory ", getHistory);
         res.send(getHistory);
 
     }
@@ -332,7 +341,7 @@ exports.getFilteredBulkDevices = async function (req, res) {
 
                     let query = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) 
             WHERE devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 AND usr_acc.device_status != 0 ${where_in_dealer} ${where_in_user} ${where_con} ORDER BY devices.id DESC`;
-                    console.log('query is: ', query);
+                    // console.log('query is: ', query);
 
                     sql.query(query, async function (error, results, fields) {
                         if (error) throw error;
@@ -988,7 +997,7 @@ exports.applyBulkPushApps = async function (req, res) {
             let push_apps = req.body.apps;
             let noOfApps = push_apps.length;
 
-            let apps = push_apps === undefined ? "[]" : JSON.stringify(push_apps);
+            let apps = push_apps ? JSON.stringify(push_apps) : "[]";
 
             let failedToPush = [];
             let queueAppsList = [];
@@ -996,8 +1005,8 @@ exports.applyBulkPushApps = async function (req, res) {
 
             for (let index = 0; index < selectedDevices.length; index++) {
 
-                var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, push_apps, type) VALUES ('${selectedDevices[index].device_id}', ${dealer_id}, ${selectedDevices[index].usrAccId}, '${apps}', 'push_apps');`;
-                console.log("applyQuery for bulk push apps ", applyQuery)
+                var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, push_apps, type, action_by, dealer_type) VALUES ('${selectedDevices[index].device_id}', ${dealer_id}, ${selectedDevices[index].usrAccId}, '${apps}', 'push_apps', ${verify.user.id}, '${verify.user.user_type}');`;
+                // console.log("applyQuery for bulk push apps ", applyQuery)
                 let rslts = await sql.query(applyQuery);
 
                 if (rslts && rslts.affectedRows) {
@@ -1006,11 +1015,11 @@ exports.applyBulkPushApps = async function (req, res) {
                     var loadDeviceQ = `INSERT INTO apps_queue_jobs (device_id,action,type,total_apps,is_in_process) VALUES ('${selectedDevices[index].device_id}', 'push', 'push', ${noOfApps}, 1);`;
                     sql.query(loadDeviceQ);
                     if (isOnline) {
-                        console.log("device is online")
+                        // console.log("device is online")
                         socket_helpers.applyPushApps(sockets.baseIo, rslts.insertId, apps, selectedDevices[index].device_id);
                         pushedAppsList.push({ device_id: selectedDevices[index].device_id, usr_device_id: selectedDevices[index].usr_device_id });
                     } else {
-                        console.log("device is offline")
+                        // console.log("device is offline")
                         // socket_helpers.applyPushApps(sockets.baseIo, apps, selectedDevices[index].device_id);
                         queueAppsList.push({ device_id: selectedDevices[index].device_id, usr_device_id: selectedDevices[index].usr_device_id });
                     }
@@ -1116,7 +1125,7 @@ exports.applyBulkPullApps = async function (req, res) {
 
             for (let index = 0; index < selectedDevices.length; index++) {
 
-                var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, pull_apps, type) VALUES ('${selectedDevices[index].device_id}', ${dealer_id}, ${selectedDevices[index].usrAccId}, '${apps}', 'pull_apps');`;
+                var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, pull_apps, type, action_by, dealer_type) VALUES ('${selectedDevices[index].device_id}', ${dealer_id}, ${selectedDevices[index].usrAccId}, '${apps}', 'pull_apps', ${verify.user.id}, '${verify.user.user_type}');`;
                 // console.log("applyQuery for bulk pull apps ", applyQuery)
                 let rslts = await sql.query(applyQuery);
 
@@ -1256,7 +1265,7 @@ exports.unlinkBulkDevices = async function (req, res) {
                         // console.log("device is offline")
                         offlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
                     }
-                    console.log("bulk unlink device databulk: ", device);
+                    // console.log("bulk unlink device databulk: ", device);
                     device_helpers.saveActionHistory(device, constants.DEVICE_UNLINKED);
 
                     try {
@@ -1430,13 +1439,13 @@ exports.wipeBulkDevices = async function (req, res) {
                     var deviceQuery = "select devices.*  ," + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE devices.reject_status = 0 AND devices.id= "' + device_id + '"';
                     var resquery = await sql.query(deviceQuery);
                     if (device_id && resquery && resquery.length) {
-                        var sql1 = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, type) VALUES ('" +
+                        var sql1 = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, type, action_by, dealer_type) VALUES ('" +
                             resquery[0].device_id +
                             "'," +
                             resquery[0].dealer_id +
                             "," +
                             resquery[0].id +
-                            ", 'wipe')";
+                            ", 'wipe', " + verify.user.id + ", '" + verify.user.user_type + "')";
 
                         let results = await sql.query(sql1);
 
@@ -1641,7 +1650,7 @@ exports.applyBulkPolicy = async function (req, res) {
             for (let device of allDevices) {
                 let userAccId = device.usrAccId; // await device_helpers.getUsrAccIDbyDvcId(device.usr_device_id);
 
-                var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES ('" + device.device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
+                var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type, action_by, dealer_type) VALUES ('" + device.device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy', " + verify.user.id + ", '" + verify.user.user_type + "')";
                 let policyApplied = await sql.query(applyQuery);
 
                 if (policyApplied && policyApplied.insertId) {
@@ -1699,7 +1708,7 @@ exports.applyBulkPolicy = async function (req, res) {
 
                 req.body["device_ids"] = all_usr_dvc_ids;
                 req.body["action_by"] = dealer_id;
-                req.body["policy"] = policy;
+                req.body["policy"] = policy_id;
                 // console.log('save bulk history')
                 device_helpers.saveBuklActionHistory(req.body, constants.BULK_PUSHED_POLICY);
 
@@ -2108,7 +2117,7 @@ exports.getBulkMsgsList = async function (req, res) {
 
 // delete Bulk message
 exports.deleteBulkMsg = async function (req, res) {
-    console.log("Api called: deleteBulkMsg");
+    // console.log("Api called: deleteBulkMsg");
     try {
 
         var verify = req.decoded;

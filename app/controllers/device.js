@@ -7464,7 +7464,7 @@ exports.writeIMEI = async function (req, res) {
                     };
                     let newImei = JSON.stringify(imei);
                     var applyQuery =
-                        "INSERT INTO device_history (device_id,dealer_id,user_acc_id, imei, type) VALUES ('" +
+                        "INSERT INTO device_history (device_id,dealer_id,user_acc_id, imei, type, action_by, dealer_type) VALUES ('" +
                         device_id +
                         "'," +
                         dealer_id +
