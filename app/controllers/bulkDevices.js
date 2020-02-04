@@ -996,7 +996,7 @@ exports.applyBulkPushApps = async function (req, res) {
 
             for (let index = 0; index < selectedDevices.length; index++) {
 
-                var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, push_apps, type) VALUES ('${selectedDevices[index].device_id}', ${dealer_id}, ${selectedDevices[index].usrAccId}, '${apps}', 'push_apps');`;
+                var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, push_apps, type, action_by, dealer_type) VALUES ('${selectedDevices[index].device_id}', ${dealer_id}, ${selectedDevices[index].usrAccId}, '${apps}', 'push_apps', ${verify.user.id}, '${verify.user.user_type}');`;
                 console.log("applyQuery for bulk push apps ", applyQuery)
                 let rslts = await sql.query(applyQuery);
 
@@ -1116,7 +1116,7 @@ exports.applyBulkPullApps = async function (req, res) {
 
             for (let index = 0; index < selectedDevices.length; index++) {
 
-                var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, pull_apps, type) VALUES ('${selectedDevices[index].device_id}', ${dealer_id}, ${selectedDevices[index].usrAccId}, '${apps}', 'pull_apps');`;
+                var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, pull_apps, type, action_by, dealer_type) VALUES ('${selectedDevices[index].device_id}', ${dealer_id}, ${selectedDevices[index].usrAccId}, '${apps}', 'pull_apps', ${verify.user.id}, '${verify.user.user_type}');`;
                 // console.log("applyQuery for bulk pull apps ", applyQuery)
                 let rslts = await sql.query(applyQuery);
 
@@ -1430,13 +1430,13 @@ exports.wipeBulkDevices = async function (req, res) {
                     var deviceQuery = "select devices.*  ," + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE devices.reject_status = 0 AND devices.id= "' + device_id + '"';
                     var resquery = await sql.query(deviceQuery);
                     if (device_id && resquery && resquery.length) {
-                        var sql1 = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, type) VALUES ('" +
+                        var sql1 = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, type, action_by, dealer_type) VALUES ('" +
                             resquery[0].device_id +
                             "'," +
                             resquery[0].dealer_id +
                             "," +
                             resquery[0].id +
-                            ", 'wipe')";
+                            ", 'wipe', " + verify.user.id + ", '" + verify.user.user_type + "')";
 
                         let results = await sql.query(sql1);
 
@@ -1641,7 +1641,7 @@ exports.applyBulkPolicy = async function (req, res) {
             for (let device of allDevices) {
                 let userAccId = device.usrAccId; // await device_helpers.getUsrAccIDbyDvcId(device.usr_device_id);
 
-                var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES ('" + device.device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
+                var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type, action_by, dealer_type) VALUES ('" + device.device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy', " + verify.user.id + ", '" + verify.user.user_type + "')";
                 let policyApplied = await sql.query(applyQuery);
 
                 if (policyApplied && policyApplied.insertId) {
