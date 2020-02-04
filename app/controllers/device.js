@@ -3190,12 +3190,14 @@ exports.editDevices = async function (req, res) {
                                     rsltq[0].remainTermDays = remainTermDays
                                 }
                             }
+                            var d = new Date(rsltq[0].expiry_date);
+                            var n = d.valueOf();
 
                             socket_helpers.deviceInfoUpdated(sockets.baseIo,
                                 device_id,
                                 {
                                     device_id: rsltq[0].device_id,
-                                    expiry_date: rsltq[0].expiry_date,
+                                    expiry_date: n,
                                     user_id: rsltq[0].user_id,
                                     sim_id: rsltq[0].sim_id,
                                     sim_id2: rsltq[0].sim_id2,
@@ -4914,11 +4916,15 @@ exports.transferUser = async function (req, res) {
                     // if (servicesData[0]) {
                     //     resquery[0].services = servicesData[0]
                     // }
+
+                    var d = new Date(resquery[0].expiry_date);
+                    var n = d.valueOf();
+
                     socket_helpers.deviceInfoUpdated(sockets.baseIo,
                         resquery[0].device_id,
                         {
                             device_id: resquery[0].device_id,
-                            expiry_date: resquery[0].expiry_date,
+                            expiry_date: n,
                             user_id: resquery[0].user_id,
                             sim_id: resquery[0].sim_id,
                             sim_id2: resquery[0].sim_id2,
