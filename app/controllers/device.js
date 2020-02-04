@@ -3191,7 +3191,8 @@ exports.editDevices = async function (req, res) {
                                 }
                             }
                             var d = new Date(rsltq[0].expiry_date);
-                            var n = d.valueOf()
+                            var n = d.valueOf();
+
                             socket_helpers.deviceInfoUpdated(sockets.baseIo,
                                 device_id,
                                 {
@@ -4915,8 +4916,10 @@ exports.transferUser = async function (req, res) {
                     // if (servicesData[0]) {
                     //     resquery[0].services = servicesData[0]
                     // }
+
                     var d = new Date(resquery[0].expiry_date);
-                    var n = d.valueOf()
+                    var n = d.valueOf();
+
                     socket_helpers.deviceInfoUpdated(sockets.baseIo,
                         resquery[0].device_id,
                         {
