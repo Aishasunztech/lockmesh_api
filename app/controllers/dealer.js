@@ -1452,8 +1452,25 @@ exports.getDealerPaymentHistory = async function (req, res) {
 exports.getDealerSalesHistory = async function (req, res) {
     let verify = req.decoded;
 
+    let dealer_id = req.body.dealerId;
+
     let user_type = verify.user.user_type;
-    let dealer_id = req.body.dealer_id;
+
+    if (!dealer_id || user_type === Constants.SDEALER) {
+        let saleInfo = {
+            totalCost: totalCost,
+            totalSale: totalSale,
+            totalProfitLoss: totalSale - totalCost,
+        };
+
+        response = {
+            data: [...packagesData, ...hardwaresData],
+            saleInfo,
+            status: true,
+        };
+
+        return res.send(response);
+    }
 
     let condition = '';
     let hardwareCondition = '';
@@ -1469,21 +1486,7 @@ exports.getDealerSalesHistory = async function (req, res) {
     let response = {};
     let sDealerIds = [];
 
-    if (!dealer_id || user_type === Constants.SDEALER) {
-        let saleInfo = {
-            'totalCost': totalCost,
-            'totalSale': totalSale,
-            'totalProfitLoss': totalSale - totalCost,
-        };
-
-        response = {
-            data: [...packagesData, ...hardwaresData],
-            saleInfo,
-            status: true,
-        };
-
-        return res.send(response);
-    }
+    
 
 
 
