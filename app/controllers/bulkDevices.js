@@ -56,7 +56,7 @@ exports.bulkDevicesHistory = async function (req, res) {
                 // get policy
                 let policyName = '';
                 if (getHistory[index].policy && !isNaN(getHistory[index].policy)) {
-                    console.log('policy is: ', getHistory[index].policy);
+                    // console.log('policy is: ', getHistory[index].policy);
                     let getPolicyQ = `SELECT * FROM policy WHERE id=${getHistory[index].policy}`;
                     let policy = await sql.query(getPolicyQ)
                     // // getHistory[index].policy = await helpers.refactorPolicy(policy);
