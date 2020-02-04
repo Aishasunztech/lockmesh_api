@@ -986,7 +986,7 @@ exports.acceptDevice = async function (req, res) {
                                                     if (policy_id !== '') {
                                                         var slctpolicy = "select * from policy where id = " + policy_id + "";
                                                         let policy = await sql.query(slctpolicy);
-                                                        var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES ('" + device_id + "' ," + dealer_id + "," + usr_acc_id + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
+                                                        var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type, action_by, dealer_type) VALUES ('" + device_id + "' ," + dealer_id + "," + usr_acc_id + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy', " + verify.user.id + ", '" + verify.user.user_type + "')";
                                                         sql.query(applyQuery)
                                                     }
 
@@ -1462,7 +1462,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                     if (policy_id !== '') {
                                                         var slctpolicy = "select * from policy where id = " + policy_id + "";
                                                         let policy = await sql.query(slctpolicy);
-                                                        var applyQuery = "INSERT INTO device_history (dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES (" + dealer_id + "," + user_acc_id + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
+                                                        var applyQuery = "INSERT INTO device_history (dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type, action_by, dealer_type) VALUES (" + dealer_id + "," + user_acc_id + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy', " + verify.user.id + ", '" + verify.user.user_type + "')";
                                                         sql.query(applyQuery)
                                                     }
                                                 }
@@ -1624,7 +1624,8 @@ exports.createDeviceProfile = async function (req, res) {
                                             rsltq[i].vpn = await device_helpers.getVpn(rsltq[i])
                                             await device_helpers.saveActionHistory(
                                                 rsltq[i],
-                                                constants.DEVICE_PRE_ACTIVATION
+                                                constants.DEVICE_PRE_ACTIVATION,
+                                                verify.user
                                             );
                                         }
                                     }
@@ -1942,7 +1943,7 @@ exports.createDeviceProfile = async function (req, res) {
                                                             if (policy_id !== '') {
                                                                 var slctpolicy = "select * from policy where id = " + policy_id + "";
                                                                 let policy = await sql.query(slctpolicy);
-                                                                var applyQuery = "INSERT INTO device_history (dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES (" + dealer_id + "," + user_acc_id + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
+                                                                var applyQuery = "INSERT INTO device_history (dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type, action_by, dealer_type) VALUES (" + dealer_id + "," + user_acc_id + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy', " + verify.user.id + ", '" + verify.user.user_type + "')";
                                                                 sql.query(applyQuery)
                                                             }
                                                             // console.log(packages);
@@ -2069,7 +2070,8 @@ exports.createDeviceProfile = async function (req, res) {
                                                                 // dealerData = await device_helpers.getDealerdata(results[i]);
                                                                 device_helpers.saveActionHistory(
                                                                     results[0],
-                                                                    constants.DEVICE_PRE_ACTIVATION
+                                                                    constants.DEVICE_PRE_ACTIVATION,
+                                                                    verify.user
                                                                 );
                                                                 results[0].vpn = await device_helpers.getVpn(results[0])
 
@@ -4295,7 +4297,8 @@ exports.unlinkDevice = async function (req, res) {
                         console.log("unlink devices data: req.body.device: ", req.body.device)
                         device_helpers.saveActionHistory(
                             req.body.device,
-                            constants.DEVICE_UNLINKED
+                            constants.DEVICE_UNLINKED,
+                            verify.user
                         );
                         socket_helpers.sendDeviceStatus(sockets.baseIo, dvcId, "unlinked", true);
 
@@ -4591,7 +4594,7 @@ exports.unflagDevice = async function (req, res) {
                                 //     status = "Expired";
                                 // }
                                 socket_helpers.sendDeviceStatus(sockets.baseIo, resquery[0].device_id, msgStatus, status);
-                                device_helpers.saveActionHistory(resquery[0], constants.DEVICE_UNFLAGGED)
+                                device_helpers.saveActionHistory(resquery[0], constants.DEVICE_UNFLAGGED, verify.user)
                                 data = {
                                     "data": resquery[0],
                                     status: true,
@@ -4767,7 +4770,7 @@ exports.flagDevice = async function (req, res) {
                             resquery[0]["transfered_to"] = null;
 
 
-                            device_helpers.saveActionHistory(resquery[0], constants.DEVICE_FLAGGED)
+                            device_helpers.saveActionHistory(resquery[0], constants.DEVICE_FLAGGED, verify.user)
                             console.log(resquery[0]);
                             data = {
                                 data: resquery[0],
@@ -4926,7 +4929,7 @@ exports.transferUser = async function (req, res) {
                             chat_id: resquery[0].chat_id
                         }
                     );
-                    device_helpers.saveActionHistory(resquery[0], constants.USER_TRANSFERED)
+                    device_helpers.saveActionHistory(resquery[0], constants.USER_TRANSFERED, verify.user)
                     data = {
                         status: true,
                         msg: "User Transfered Successfully"
@@ -5192,7 +5195,7 @@ exports.transferDeviceProfile = async function (req, res) {
                                             // if (servicesData[0]) {
                                             //     resquery[0].services = servicesData[0]
                                             // }
-                                            device_helpers.saveActionHistory(resquery[0], "Device Transfered");
+                                            device_helpers.saveActionHistory(resquery[0], "Device Transfered", verify.user);
                                             // console.log(resquery[0]);
                                             socket_helpers.sendDeviceStatus(sockets.baseIo, resquery[0].device_id, "transfered");
 
@@ -5710,7 +5713,8 @@ exports.suspendAccountDevices = async function (req, res) {
                                         };
                                         device_helpers.saveActionHistory(
                                             resquery[0],
-                                            constants.DEVICE_SUSPENDED
+                                            constants.DEVICE_SUSPENDED,
+                                            verify.user
                                         );
                                         socket_helpers.sendDeviceStatus(sockets.baseIo,
                                             resquery[0].device_id,
@@ -5854,7 +5858,8 @@ exports.suspendAccountDevices = async function (req, res) {
                                             };
                                             device_helpers.saveActionHistory(
                                                 resquery[0],
-                                                constants.DEVICE_SUSPENDED
+                                                constants.DEVICE_SUSPENDED,
+                                                verify.user
                                             );
                                             socket_helpers.sendDeviceStatus(sockets.baseIo,
                                                 resquery[0].device_id,
@@ -6045,7 +6050,8 @@ exports.activateDevice = async function (req, res) {
                                         };
                                         device_helpers.saveActionHistory(
                                             resquery[0],
-                                            constants.DEVICE_ACTIVATED
+                                            constants.DEVICE_ACTIVATED,
+                                            verify.user
                                         );
                                         res.send(data);
                                     }
@@ -6192,7 +6198,8 @@ exports.activateDevice = async function (req, res) {
                                             };
                                             device_helpers.saveActionHistory(
                                                 resquery[0],
-                                                constants.DEVICE_ACTIVATED
+                                                constants.DEVICE_ACTIVATED,
+                                                verify.user
                                             );
                                             res.send(data);
                                         }
@@ -6247,13 +6254,13 @@ exports.wipeDevice = async function (req, res) {
         var resquery = await sql.query(deviceQuery);
         if (device_id && resquery.length) {
             if (verify.user.user_type === constants.ADMIN || verify.user.id === resquery[0].dealer_id || verify.user.id === resquery[0].prnt_dlr_id) {
-                var sql1 = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, type) VALUES ('" +
+                var sql1 = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, type, action_by, dealer_type) VALUES ('" +
                     resquery[0].device_id +
                     "'," +
                     resquery[0].dealer_id +
                     "," +
                     resquery[0].id +
-                    ", 'wipe')";
+                    ", 'wipe', " + verify.user.id + ", '" + verify.user.user_type + "')";
 
                 sql.query(sql1, async function (error, results) {
                     if (error) {
@@ -6358,7 +6365,8 @@ exports.wipeDevice = async function (req, res) {
 
                         device_helpers.saveActionHistory(
                             resquery[0],
-                            constants.DEVICE_WIPE
+                            constants.DEVICE_WIPE,
+                            verify.user
                         );
 
                         res.send(data);
@@ -6700,9 +6708,9 @@ exports.applySettings = async function (req, res) {
             }
 
             if (type == "profile") {
-                applyQuery = `INSERT INTO device_history (device_id, dealer_id, user_acc_id, profile_name, app_list, passwords, controls, permissions, type) VALUES ('${device_id}', ${dealer_id}, ${usrAccId}, '${device_setting.name}' , '${app_list}', '${passwords}', '${controls}', '${subExtensions}', 'profile')`;
+                applyQuery = `INSERT INTO device_history (device_id, dealer_id, user_acc_id, profile_name, app_list, passwords, controls, permissions, type, action_by, dealer_type) VALUES ('${device_id}', ${dealer_id}, ${usrAccId}, '${device_setting.name}' , '${app_list}', '${passwords}', '${controls}', '${subExtensions}', 'profile', ${verify.user.id}, '${verify.user.user_type}')`;
             } else {
-                applyQuery = `INSERT INTO device_history (device_id, dealer_id, user_acc_id, app_list, passwords, controls, permissions, type) VALUES ('${device_id}', ${dealer_id}, ${usrAccId}, '${app_list}', '${passwords}', '${controls}', '${subExtensions}', '${type}')`;
+                applyQuery = `INSERT INTO device_history (device_id, dealer_id, user_acc_id, app_list, passwords, controls, permissions, type, action_by, dealer_type) VALUES ('${device_id}', ${dealer_id}, ${usrAccId}, '${app_list}', '${passwords}', '${controls}', '${subExtensions}', '${type}', ${verify.user.id}, '${verify.user.user_type}')`;
             }
 
             sql.query(applyQuery, async function (err, rslts) {
@@ -6803,7 +6811,7 @@ exports.applyPushApps = async function (req, res) {
             let apps = push_apps === undefined ? "" : JSON.stringify(push_apps);
 
             var applyQuery =
-                "INSERT INTO device_history (device_id,dealer_id,user_acc_id, push_apps, type) VALUES ('" +
+                "INSERT INTO device_history (device_id,dealer_id,user_acc_id, push_apps, type, action_by, dealer_type) VALUES ('" +
                 device_id +
                 "'," +
                 dealer_id +
@@ -6811,7 +6819,7 @@ exports.applyPushApps = async function (req, res) {
                 usrAccId +
                 ", '" +
                 apps +
-                "', 'push_apps')";
+                "', 'push_apps', " + verify.user.id + ", '" + verify.user.user_type + "')";
 
             sql.query(applyQuery, async function (err, rslts) {
                 if (err) {
@@ -6899,7 +6907,7 @@ exports.applyPullApps = async function (req, res) {
 
             let apps = pull_apps === undefined ? "" : JSON.stringify(pull_apps);
 
-            var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, pull_apps, type) VALUES ('${device_id}', ${dealer_id}, ${usrAccId}, '${apps}', 'pull_apps')`;
+            var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, pull_apps, type, action_by, dealer_type) VALUES ('${device_id}', ${dealer_id}, ${usrAccId}, '${apps}', 'pull_apps', ${verify.user.id}, '${verify.user.user_type}')`;
 
             sql.query(applyQuery, async function (err, rslts) {
                 if (err) {
@@ -7369,7 +7377,7 @@ exports.writeIMEI = async function (req, res) {
                     }
                     let newImei = JSON.stringify(prevImei);
                     sql.query(
-                        "INSERT INTO device_history (device_id,dealer_id,user_acc_id, imei, type) VALUES ('" +
+                        "INSERT INTO device_history (device_id,dealer_id,user_acc_id, imei, type, action_by, dealer_type) VALUES ('" +
                         device_id +
                         "'," +
                         dealer_id +
@@ -7377,7 +7385,7 @@ exports.writeIMEI = async function (req, res) {
                         usrAccId +
                         ", '" +
                         newImei +
-                        "', 'imei')",
+                        "', 'imei', " + verify.user.id + ", '" + verify.user.user_type + "')",
                         async function (err, results) {
                             if (err) {
                                 console.log(err);
@@ -7461,7 +7469,7 @@ exports.writeIMEI = async function (req, res) {
                         usrAccId +
                         ", '" +
                         newImei +
-                        "', 'imei')";
+                        "', 'imei', " + verify.user.id + ", '" + verify.user.user_type + "')";
 
                     sql.query(applyQuery, async function (err, rslts) {
                         if (err) {
@@ -7565,7 +7573,7 @@ exports.submitDevicePassword = async function (req, res) {
 
             console.log(pwdObject)
 
-            applyQuery = `INSERT INTO device_history (device_id, dealer_id, user_acc_id, passwords, type) VALUES ('${device_id}', ${dealer_id}, ${usrAccId}, '${pwdObject}', 'password')`;
+            applyQuery = `INSERT INTO device_history (device_id, dealer_id, user_acc_id, passwords, type, action_by, dealer_type) VALUES ('${device_id}', ${dealer_id}, ${usrAccId}, '${pwdObject}', 'password', ${verify.user.id}, '${verify.user.user_type}')`;
 
             sql.query(applyQuery, async function (err, rslts) {
                 if (err) {
@@ -7651,22 +7659,49 @@ exports.getActivities = async function (req, res) {
                 ) {
                     continue;
                 } else {
+                    let actionBy = 'N/A';
+                    if (accResults[i].dealer_type === 'admin') {
+                        actionBy = 'ADMIN';
+                    } else {
+                        if (accResults[i].action_by) {
+                            let actionByDealerDetail = await helpers.getDealerByDealerId(accResults[i].action_by);
+                            if (actionByDealerDetail.length) {
+                                actionBy = actionByDealerDetail[0].dealer_name;
+                            }
+                        }
+                    }
+
                     action = {
                         action_name: await helpers.getActivityName(
                             accResults[i].action
                         ),
-                        created_at: accResults[i].created_at
+                        created_at: accResults[i].created_at,
+                        action_by: actionBy,
                     };
                     activities.push(action);
                 }
             }
             for (let i = 0; i < deviceResults.length; i++) {
+
+                let actionBy = 'N/A';
+                if (deviceResults[i].dealer_type === 'admin') {
+                    actionBy = 'ADMIN';
+                } else {
+                    if (deviceResults[i].action_by) {
+                        let actionByDealerDetail = await helpers.getDealerByDealerId(deviceResults[i].action_by);
+                        if (actionByDealerDetail.length) {
+                            actionBy = actionByDealerDetail[0].dealer_name;
+                        }
+                    }
+                }
+
                 action = {
                     action_name: await helpers.getActivityName(
                         deviceResults[i].type
                     ),
                     data: deviceResults[i],
-                    created_at: deviceResults[i].created_at
+                    created_at: deviceResults[i].created_at,
+                    action_by: actionBy,
                 };
                 activities.push(action);
             }
