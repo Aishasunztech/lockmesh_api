@@ -1452,7 +1452,7 @@ exports.getDealerPaymentHistory = async function (req, res) {
 exports.getDealerSalesHistory = async function (req, res) {
     let verify = req.decoded;
 
-    let dealer_id = req.body.dealerId;
+    let dealer_id = req.params.dealerId;
 
     let user_type = verify.user.user_type;
 
