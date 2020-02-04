@@ -20,9 +20,9 @@ const reportingController = require('../app/controllers/reports');
 
 // Helpers and Constants
 const helpers = require('../helper/general_helper');
-const MsgConstants = require('../constants/MsgConstants');
+// const MsgConstants = require('../constants/MsgConstants');
 const constants = require('../constants/Application');
-const { sendEmail } = require("../lib/email");
+// const { sendEmail } = require("../lib/email");
 
 
 /**
@@ -216,6 +216,10 @@ router.get('/refactor_policy_apps', async function (req, res) {
 
     res.send('test');
 })
+
+router.get('/refactor_policy_apps_icon', async function (req, res){
+    let policyDefaultAppsQ = '';
+});
 
 router.get('/update_parent_dealer_data_into_user_acc', async function (req, res) {
     let data = {};
