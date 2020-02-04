@@ -1452,8 +1452,25 @@ exports.getDealerPaymentHistory = async function (req, res) {
 exports.getDealerSalesHistory = async function (req, res) {
     let verify = req.decoded;
 
+    let dealer_id = req.params.dealerId;
+
     let user_type = verify.user.user_type;
-    let dealer_id = req.body.dealer_id;
+
+    if (!dealer_id || user_type === Constants.SDEALER) {
+        let saleInfo = {
+            totalCost: totalCost,
+            totalSale: totalSale,
+            totalProfitLoss: totalSale - totalCost,
+        };
+
+        response = {
+            data: [...packagesData, ...hardwaresData],
+            saleInfo,
+            status: true,
+        };
+
+        return res.send(response);
+    }
 
     let condition = '';
     let hardwareCondition = '';
@@ -1469,21 +1486,7 @@ exports.getDealerSalesHistory = async function (req, res) {
     let response = {};
     let sDealerIds = [];
 
-    if (!dealer_id || user_type === Constants.SDEALER) {
-        let saleInfo = {
-            'totalCost': totalCost,
-            'totalSale': totalSale,
-            'totalProfitLoss': totalSale - totalCost,
-        };
-
-        response = {
-            data: [...packagesData, ...hardwaresData],
-            saleInfo,
-            status: true,
-        };
-
-        return res.send(response);
-    }
+    
 
 
 
@@ -1508,7 +1511,7 @@ exports.getDealerSalesHistory = async function (req, res) {
     hardwareCondition = ` AND hd.dealer_id = ${dealer_id}`
 
     if (user_type === Constants.ADMIN && dealer_type === Constants.DEALER) {
-        sDealerIds = await generalHelper.getSdealersByDealerId(dealer_id);
+        sDealerIds = await general_helpers.getSdealersByDealerId(dealer_id);
 
         if (sDealerIds.length > 0) {
             condition = ` AND ua.dealer_id IN (${dealer_id}, ${sDealerIds.join(',')})`
