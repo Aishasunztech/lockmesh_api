@@ -749,20 +749,26 @@ exports.savePolicyChanges = async function (req, res) {
     try {
         var verify = req.decoded;
         if (verify) {
+            let id = req.body.id;
+            if(!id){
+                data = {
+                    status: false,
+                    msg: await helpers.convertToLang(req.translation[''], "Bad request"), // error'
+                };
+                return res.send(data)
+            }
 
-            let record = req.body;
-            let id = record.id;
-            let push_apps = record.push_apps;
-            let controls = record.controls;
-            let permissions = record.permissions;
-            let app_list = record.app_list;
-            let policy_note = record.policy_note;
-            let policy_name = record.policy_name;
+            let push_apps = req.body.push_apps;
+            let controls = req.body.controls;
+            let permissions = req.body.permissions;
+            let app_list = req.body.app_list;
+            let policy_note = req.body.policy_note;
+            let policy_name = req.body.policy_name;
             var command_name = '#' + policy_name.replace(/ /g, "_");
 
             let pushAppFileSize = 0;
 
-            if (push_apps !== undefined) {
+            if (push_apps) {
                 let parsedPushApps = JSON.parse(push_apps);
                 parsedPushApps.forEach((app) => {
                     app.guest = (app.guest !== undefined) ? app.guest : false;
@@ -782,9 +788,9 @@ exports.savePolicyChanges = async function (req, res) {
             let policyObjSize = helpers.formatBytes(pushAppsSize + appListSize + secureAppsSize + sysPermissionSize)
             let policyActualSize = helpers.formatBytes(pushAppFileSize + appListSize + secureAppsSize + sysPermissionSize);
 
-            let query = `UPDATE policy SET push_apps = '${push_apps}', controls = '${controls}', permissions = '${permissions}', app_list = '${app_list}', policy_note = '${policy_note}', policy_name = '${policy_name}', command_name='${command_name}', object_size = '${policyObjSize}', policy_size = '${policyActualSize}' WHERE id=${id}`;
+            let query = `UPDATE policy SET push_apps = '${push_apps}', controls = '${controls}', permissions = '${permissions}', app_list = '${app_list}', policy_note = '${policy_note}', policy_name = '${policy_name}', command_name='${command_name}', object_size = '${policyObjSize}', policy_size = '${policyActualSize}' WHERE id=?`;
 
-            sql.query(query, async function (error, result) {
+            sql.query(query, [sql.escape(id)],  async function (error, result) {
 
                 if (error) {
                     data = {
@@ -812,7 +818,13 @@ exports.savePolicyChanges = async function (req, res) {
             });
         }
     } catch (error) {
-        console.log(error);
+        console.log("save policy error: ",error);
+        data = {
+            status: false,
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "ERROR"), // error'
+        };
+        return res.send(data);
+
     }
 }
 
