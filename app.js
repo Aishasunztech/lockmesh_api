@@ -35,6 +35,8 @@ stackify.start({
 	env: serverEnv
 });
 
+app.disable('x-powered-by');
+
 // cors enable
 app.options("*", cors());
 app.use(cors("*"));
