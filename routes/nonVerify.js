@@ -819,6 +819,27 @@ router.get('/check_available_apps', async function (req, res) {
     })
 })
 
+router.get('/check_apps_in_folder', async function (req, res) {
+    fs.readdir(path.join(__dirname, '../uploads/'), async function (err, files) {
+        if(err){
+            return res.status(403).send('no files available');
+        }
+        let apkFiles = [];
+        if(files && files.length){
+
+            await files.forEach(async file=>{
+                let extName = path.extname(file);
+                console.log( extName);
+                if(extName === '.apk'){
+                    let packageName = await helpers.getAPKPackageName(path.join(__dirname, '../uploads/' + file));
+                    apkFiles.push({file, packageName});
+                }
+            })
+        }
+        return res.send(apkFiles);        
+    });
+})
+
 router.get('/update_dealer_ids_product_tables', async function (req, res) {
     let current_date = moment().format("YYYY-MM-DD HH:mm:ss")
     let usedChatids = "SELECT * FROM chat_ids WHERE used = 1 AND user_acc_id IS NOT NULL"
