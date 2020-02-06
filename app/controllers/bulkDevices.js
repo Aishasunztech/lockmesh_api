@@ -1996,6 +1996,8 @@ exports.updateBulkMsg = async function (req, res) {
 
             if (result && result.affectedRows) {
 
+                // let isValidToUpdate = `SELECTE id FROM task_schedules WHERE task_id = ${updateId} AND action_by = ${loggedUserId} AND status = 'NEW' ORDER BY id DESC LIMIT 1;`;
+
                 // Update task Scheduling data
                 var updateJobQueue = `UPDATE task_schedules SET title = '${txtMsg}', interval_status = '${timer}', interval_time = ${intervalTime}, interval_description = '${repeat}', next_schedule = '${dateTime}', week_day = ${weekDay}, month_day = ${monthDate}, month_name = ${monthName} WHERE task_id = ${updateId} AND action_by = ${loggedUserId} AND status = 'NEW';`;
                 console.log("updateJobQueue ", updateJobQueue);
