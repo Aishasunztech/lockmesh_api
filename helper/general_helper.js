@@ -41,8 +41,8 @@ module.exports = {
 				return "Every Friday";
 			case 7:
 				return "Every Saturday";
-			
-	
+
+
 			default:
 				return "N/A";
 		}
@@ -2398,12 +2398,13 @@ module.exports = {
 					// console.log(response);
 					if (response) {
 						if (status === 'active') {
-							sql.query(`UPDATE sim_ids SET activated = 1 WHERE sim_id = '${sim_id}' AND delete_status = '0'`)
+							sql.query(`UPDATE sim_ids SET activated = 1 , status = 'active' WHERE sim_id = '${sim_id}' AND delete_status = '0'`)
 						}
 						else if (status === 'deactivated') {
-							sql.query(`UPDATE sim_ids SET activated = 0 WHERE sim_id = '${sim_id}' AND delete_status = '1'`)
+							sql.query(`UPDATE sim_ids SET activated = 0 , status = 'disabled' WHERE sim_id = '${sim_id}' AND delete_status = '1'`)
 						}
-
+					} else {
+						console.log(response);
 					}
 				}).catch(err => {
 					console.log(err);
@@ -2421,39 +2422,39 @@ module.exports = {
 	 */
 
 	expireDealerLogin: async function (dealerId) {
-		if(dealerId){
+		if (dealerId) {
 			let loginQ = `UPDATE login_history SET status=0 WHERE dealer_id=${dealerId}`;
 			await sql.query(loginQ);
 		}
 	},
-	
-	hasSql : (value) => {
+
+	hasSql: (value) => {
 
 		if (value === null || value === undefined) {
 			return false;
 		}
-	
+
 		// sql regex reference: http://www.symantec.com/connect/articles/detection-sql-injection-and-cross-site-scripting-attacks
 		var sql_meta = new RegExp('(%27)|(\')|(--)|(%23)|(#)', 'i');
 		if (sql_meta.test(value)) {
 			return true;
 		}
-	
+
 		var sql_meta2 = new RegExp('((%3D)|(=))[^\n]*((%27)|(\')|(--)|(%3B)|(;))', 'i');
 		if (sql_meta2.test(value)) {
 			return true;
 		}
-	
+
 		var sql_typical = new RegExp('w*((%27)|(\'))((%6F)|o|(%4F))((%72)|r|(%52))', 'i');
 		if (sql_typical.test(value)) {
 			return true;
 		}
-	
+
 		var sql_union = new RegExp('((%27)|(\'))union', 'i');
 		if (sql_union.test(value)) {
 			return true;
 		}
-	
+
 		return false;
 	}
 }

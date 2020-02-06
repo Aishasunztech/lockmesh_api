@@ -12,13 +12,14 @@ const socket_helpers = require('../../helper/socket_helper');
 
 // constants
 const MsgConstants = require('../../constants/MsgConstants')
+const constants = require('../../constants/Application')
 
 
 
-exports.getSims = async function (req, res) {
+exports.getStandAloneSims = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
-        var SQry = `SELECT s.* FROM sim_ids as s LEFT JOIN standalone_sims as sas ON  WHERE device_id= '${deviceId}' AND delete_status = '0'`;
+        var SQry = `SELECT s.* , d.device_id FROM sim_ids as s LEFT JOIN usr_acc as u on s.user_acc_id = u.id LEFT JOIN devices as d ON d.id= u.device_id LEFT JOIN standalone_sims as sas ON sas.sim_id = s.sim_id WHERE s.delete_status = '0' AND ( s.delete_status = '0' OR sas.status = 'active' OR sas.status = 'completed')`;
         sql.query(SQry, async function (err, result) {
             // console.log("=======================================")
             // console.log('result is :', result)
@@ -29,37 +30,21 @@ exports.getSims = async function (req, res) {
                 })
                 return;
             };
-
-            // console.log(`SELECT * FROM device_attributes WHERE device_id= '${deviceId}' AND (name='un_register_guest' OR name='un_register_encrypt') AND delete_status = '0'`);
-
-            var SDeviceAttributes = await sql.query(`SELECT * FROM device_attributes WHERE device_id= '${deviceId}' AND (name='un_register_guest' OR name='un_register_encrypt') AND delete_status = '0'`);
-            let obj = {
-                unRegisterGuest: 0,
-                unRegisterEncrypt: 1
-            }
-
-            SDeviceAttributes.forEach(record => {
-                // console.log('record is; ', record);
-                if (record.name === "un_register_guest") {
-                    obj.unRegisterGuest = JSON.parse(record.value);
-                } else if (record.name === "un_register_encrypt") {
-                    obj.unRegisterEncrypt = JSON.parse(record.value);
-                }
-            });
-
-
-            // console.log("SDeviceAttributes ========>obj  ", obj)
             if (result.length > 0) {
+                result.map(item => {
+                    item.device_id = helpers.checkValue(item.device_id)
+                    item.term = helpers.checkValue(item.term)
+                    item.start_date = helpers.checkValue(item.start_date)
+                    item.expiry_date = helpers.checkValue(item.expiry_date)
+                })
                 data = {
                     status: true,
-                    data: result,
-                    unRegisterSetting: obj
+                    data: result
                 }
             } else {
                 data = {
                     status: false,
-                    data: [],
-                    unRegisterSetting: obj
+                    data: []
                 }
             }
             res.send(data);
@@ -70,6 +55,74 @@ exports.getSims = async function (req, res) {
     } else {
         res.send({
             status: false,
+        })
+        return;
+    }
+}
+
+exports.changeSimStatus = async function (req, res) {
+    var verify = req.decoded;
+    if (verify) {
+        let id = req.body.id
+        let type = req.body.type
+        let user_id = verify.user.id
+        let user_type = verify.user.user_type
+        if (id && (type === 'activate' || type === 'disable')) {
+            let sim_query = `SELECT * FROM sim_ids WHERE id = ${id} AND delete_status = '0' `
+            if (user_type !== constants.ADMIN) {
+                sim_query = sim_query + `AND dealer_id = ${user_id} `
+            }
+            console.log(sim_query);
+            sql.query(sim_query, async function (err, results) {
+                if (err) {
+                    res.send({
+                        status: false,
+                        msg: "Error: Internal server error."
+                    })
+                    return;
+                }
+                if (results && results.length) {
+                    let sim = results[0]
+                    if (type === 'activate') {
+                        if (sim.status !== 'active') {
+                            let responseDate = helpers.updateSimStatus(sim.sim_id, 'active')
+                        } else {
+                            res.send({
+                                status: false,
+                                msg: "Error: Sim is already activated."
+                            })
+                            return;
+                        }
+                    } else if (type === 'disable') {
+                        if (sim.status !== 'disabled') {
+                            let responseDate = await helpers.updateSimStatus(sim.sim_id, 'deactivated')
+                        } else {
+                            res.send({
+                                status: false,
+                                msg: "Error: Sim is already disabled."
+                            })
+                            return;
+                        }
+                    }
+                } else {
+                    res.send({
+                        status: false,
+                        msg: "Error: Sim not found."
+                    })
+                    return;
+                }
+            })
+        } else {
+            res.send({
+                status: false,
+                msg: "Error: Unauthorized Access"
+            })
+            return;
+        }
+    } else {
+        res.send({
+            status: false,
+            msg: "Error: Unauthorized Access"
         })
         return;
     }
