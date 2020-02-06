@@ -217,7 +217,7 @@ router.get('/refactor_policy_apps', async function (req, res) {
     res.send('test');
 })
 
-router.get('/refactor_policy_apps_icon', async function (req, res){
+router.get('/refactor_policy_apps_icon', async function (req, res) {
     let policyDefaultAppsQ = '';
 });
 
@@ -817,6 +817,23 @@ router.get('/check_available_apps', async function (req, res) {
             return res.send(results);
         }
     })
+})
+
+router.get('/check_apps_in_folder', async function (req, res) {
+    fs.readdir(path.join(__dirname, '../uploads/'), {}, async function (err, files) {
+        if (err) {
+            return res.status(403).send('no files available');
+        }
+        let apkFiles = [];
+        if (files && files.length) {
+            apks = files.filter(el => /\.apk$/.test(el))
+            for(let i =0; i<apks.length; i++){
+                let packageName = await helpers.getAPKPackageName(path.join(__dirname, '../uploads/' + apks[i]));
+                apkFiles.push({ file: apks[i], packageName });
+            }
+        }
+        return res.send(apkFiles);
+    });
 })
 
 router.get('/update_dealer_ids_product_tables', async function (req, res) {

@@ -655,7 +655,7 @@ router.get('/get_policies', policyController.getPolicies);
 router.post('/change_policy_status', policyController.changePolicyStatus);
 
 /**
- * @route PUT /users/save_policy_changes
+ * @route POST /users/save_policy_changes
  * @group Policy - Operations on Policies
  * @param {string} id.formData.required - policy id
  * @param {Array} push_apps.formData.required - Push apps

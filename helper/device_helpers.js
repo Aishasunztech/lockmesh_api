@@ -619,7 +619,6 @@ module.exports = {
         }
     },
     saveActionHistory: async (device, action, loggedInUser = '') => {
-        console.log("verify.user.user_type ===============================> ", loggedInUser)
         // console.log('SAVE HISTORY', action, device);
         let loggedInDealerId = null;
         let loggedInDealerType = '';
@@ -640,7 +639,7 @@ module.exports = {
         } else {
             finalQuery = query + "('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','" + device.online + "','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + parentDealerId + "','" + device.link_code + "', '" + device.client_id + "', '" + device.start_date + "', '" + device.expiry_months + "', '" + device.expiry_date + "','" + device.activation_code + "','" + device.status + "','" + device.device_status + "',0,'" + device.wipe_status + "','" + accountStatus + "','" + device.unlink_status + "','" + device.transfer_status + "','" + device.transfer_user_status + "','" + device.transfered_from + "','" + device.transfered_to + "','" + device.user_transfered_from + "','" + device.user_transfered_to + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','" + device.finalStatus + "'," + loggedInDealerId + ", '" + loggedInDealerType + "')"
         }
-        console.log("saveActionHistory:: ", finalQuery);
+        // console.log("saveActionHistory:: ", finalQuery);
         await sql.query(finalQuery)
 
     },
@@ -881,7 +880,7 @@ module.exports = {
 
     // Bulk History
     saveBuklActionHistory: async (data, action) => {
-        console.log('saveBuklActionHistory ', action, data);
+        // console.log('saveBuklActionHistory ', action, data);
 
         let InsertQuery = `INSERT INTO bulk_device_history (action, dealer_ids, user_ids, device_ids, apps, policy, action_by) VALUES ('${action}', '${JSON.stringify(data.dealer_ids)}', '${JSON.stringify(data.user_ids)}', '${JSON.stringify(data.device_ids)}', '${data.apps ? JSON.stringify(data.apps) : "[]"}', '${data.policy ? JSON.stringify(data.policy) : null}', '${data.action_by}');`;
         console.log(InsertQuery);
