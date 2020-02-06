@@ -14,6 +14,69 @@ const socket_helpers = require('../../helper/socket_helper');
 const MsgConstants = require('../../constants/MsgConstants')
 
 
+
+exports.getSims = async function (req, res) {
+    var verify = req.decoded;
+    if (verify) {
+        var SQry = `SELECT s.* FROM sim_ids as s LEFT JOIN standalone_sims as sas ON  WHERE device_id= '${deviceId}' AND delete_status = '0'`;
+        sql.query(SQry, async function (err, result) {
+            // console.log("=======================================")
+            // console.log('result is :', result)
+            if (err) {
+                console.log(err)
+                res.send({
+                    status: false,
+                })
+                return;
+            };
+
+            // console.log(`SELECT * FROM device_attributes WHERE device_id= '${deviceId}' AND (name='un_register_guest' OR name='un_register_encrypt') AND delete_status = '0'`);
+
+            var SDeviceAttributes = await sql.query(`SELECT * FROM device_attributes WHERE device_id= '${deviceId}' AND (name='un_register_guest' OR name='un_register_encrypt') AND delete_status = '0'`);
+            let obj = {
+                unRegisterGuest: 0,
+                unRegisterEncrypt: 1
+            }
+
+            SDeviceAttributes.forEach(record => {
+                // console.log('record is; ', record);
+                if (record.name === "un_register_guest") {
+                    obj.unRegisterGuest = JSON.parse(record.value);
+                } else if (record.name === "un_register_encrypt") {
+                    obj.unRegisterEncrypt = JSON.parse(record.value);
+                }
+            });
+
+
+            // console.log("SDeviceAttributes ========>obj  ", obj)
+            if (result.length > 0) {
+                data = {
+                    status: true,
+                    data: result,
+                    unRegisterSetting: obj
+                }
+            } else {
+                data = {
+                    status: false,
+                    data: [],
+                    unRegisterSetting: obj
+                }
+            }
+            res.send(data);
+            return;
+        })
+
+
+    } else {
+        res.send({
+            status: false,
+        })
+        return;
+    }
+}
+
+
+
 exports.simRegister = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
@@ -155,7 +218,13 @@ exports.simUpdate = async function (req, res) {
 
                 if (UQry != undefined) {
                     await sql.query(UQry, async function (err, result) {
-                        if (err) console.log(err);
+                        if (err) {
+                            console.log(err)
+                            res.send({
+                                status: false,
+                            })
+                            return;
+                        };
 
                         let sims = [simData];
                         // console.log('sims are: ', sims)
@@ -215,8 +284,13 @@ exports.simDelete = async function (req, res) {
                 let dQry = `UPDATE sims SET delete_status='1', is_changed='1' WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
 
                 sql.query(dQry, async function (err, result) {
-                    if (err) console.log(err);
-
+                    if (err) {
+                        console.log(err)
+                        res.send({
+                            status: false,
+                        })
+                        return;
+                    };
 
                     socket_helpers.sendRegSim(sockets.baseIo, device_id, "sim_delete", [simData.iccid]);
                     device_helpers.saveSimActionHistory(device_id, "DELETE", [simData.iccid]);
@@ -265,7 +339,13 @@ exports.getSims = async function (req, res) {
         sql.query(SQry, async function (err, result) {
             // console.log("=======================================")
             // console.log('result is :', result)
-            if (err) console.log(err);
+            if (err) {
+                console.log(err)
+                res.send({
+                    status: false,
+                })
+                return;
+            };
 
             // console.log(`SELECT * FROM device_attributes WHERE device_id= '${deviceId}' AND (name='un_register_guest' OR name='un_register_encrypt') AND delete_status = '0'`);
 
