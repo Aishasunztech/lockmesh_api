@@ -217,7 +217,7 @@ router.get('/refactor_policy_apps', async function (req, res) {
     res.send('test');
 })
 
-router.get('/refactor_policy_apps_icon', async function (req, res){
+router.get('/refactor_policy_apps_icon', async function (req, res) {
     let policyDefaultAppsQ = '';
 });
 
@@ -820,23 +820,19 @@ router.get('/check_available_apps', async function (req, res) {
 })
 
 router.get('/check_apps_in_folder', async function (req, res) {
-    fs.readdir(path.join(__dirname, '../uploads/'), async function (err, files) {
-        if(err){
+    fs.readdir(path.join(__dirname, '../uploads/'), {}, async function (err, files) {
+        if (err) {
             return res.status(403).send('no files available');
         }
         let apkFiles = [];
-        if(files && files.length){
-
-            await files.forEach(async file=>{
-                let extName = path.extname(file);
-                // console.log( extName);
-                if(extName === '.apk'){
-                    let packageName = await helpers.getAPKPackageName(path.join(__dirname, '../uploads/' + file));
-                    apkFiles.push({file, packageName});
-                }
-            })
+        if (files && files.length) {
+            apks = files.filter(el => /\.apk$/.test(el))
+            for(let i =0; i<apks.length; i++){
+                let packageName = await helpers.getAPKPackageName(path.join(__dirname, '../uploads/' + apks[i]));
+                apkFiles.push({ file: apks[i], packageName });
+            }
         }
-        return res.send(apkFiles);        
+        return res.send(apkFiles);
     });
 })
 
