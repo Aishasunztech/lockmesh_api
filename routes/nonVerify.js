@@ -829,7 +829,7 @@ router.get('/check_apps_in_folder', async function (req, res) {
 
             await files.forEach(async file=>{
                 let extName = path.extname(file);
-                console.log( extName);
+                // console.log( extName);
                 if(extName === '.apk'){
                     let packageName = await helpers.getAPKPackageName(path.join(__dirname, '../uploads/' + file));
                     apkFiles.push({file, packageName});
