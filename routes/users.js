@@ -899,7 +899,7 @@ router.get("/get_used_chat_ids", accountController.getUsedChatIDs);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.get("/get_pgp_emails", accountController.getPGPEmails);
+router.get("/get_pgp_emails/:user_acc_id/:dealer_id", accountController.getPGPEmails);
 /**
  * @route GET /users/get_all_pgp_emails
  * @group Account  -Operations on account

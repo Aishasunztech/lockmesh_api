@@ -26,27 +26,29 @@ exports.createServiceProduct = async function (req, res) {
     if (verify) {
         let auto_generated = req.body.auto_generated
         let product_data = req.body.product_data
+        let user_acc_id = req.body.user_acc_id
+        let dealer_id = req.body.dealer_id
         let type = req.body.type
         if (type && product_data) {
             if (type === 'pgp_email' && !auto_generated) {
                 let pgp_email = product_data.username + '@' + product_data.domain
-                console.log(pgp_email);
+                // console.log(pgp_email);
                 if (helpers.validateEmail(pgp_email)) {
                     let checkExisted = await sql.query(`SELECT * FROM pgp_emails WHERE pgp_email = '${pgp_email}'`)
                     if (checkExisted && checkExisted.length) {
-                        res.send({
+                        return res.send({
                             status: false,
                             msg: "ERROR: Username not available.Please choose another username."
                         })
-                        return
                     }
                     product_data.pgp_email = pgp_email
                 } else {
-                    res.send({
+
+                    return res.send({
                         status: false,
                         msg: "ERROR: Invalid pgp email."
                     })
-                    return
+
                 }
             }
 
@@ -65,7 +67,7 @@ exports.createServiceProduct = async function (req, res) {
                             let query = ''
                             let getQuery = ''
                             if (type === 'pgp_email') {
-                                query = `INSERT INTO pgp_emails (pgp_email , uploaded_by , uploaded_by_id , domain_id) VALUES ('${response.data.product}' , '${verify.user.user_type}' , '${verify.user.id}' , ${product_data.domain_id})`
+                                query = `INSERT INTO pgp_emails (pgp_email , uploaded_by , uploaded_by_id , domain_id , user_acc_id , dealer_id) VALUES ('${response.data.product}' , '${verify.user.user_type}' , '${verify.user.id}' , ${product_data.domain_id}, ${user_acc_id} , ${dealer_id})`
                                 getQuery = `SELECT * FROM pgp_emails WHERE id = `
                             }
                             else if (type === 'chat_id') {
