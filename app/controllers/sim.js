@@ -67,12 +67,12 @@ exports.changeSimStatus = async function (req, res) {
         let type = req.body.type
         let user_id = verify.user.id
         let user_type = verify.user.user_type
-        if (id && (type === 'activate' || type === 'disable')) {
+        if (id && (type === 'activate' || type === 'suspend')) {
             let sim_query = `SELECT * FROM sim_ids WHERE id = ${id} AND delete_status = '0' `
             if (user_type !== constants.ADMIN) {
                 sim_query = sim_query + `AND dealer_id = ${user_id} `
             }
-            console.log(sim_query);
+            // console.log(sim_query);
             sql.query(sim_query, async function (err, results) {
                 if (err) {
                     res.send({
@@ -84,8 +84,9 @@ exports.changeSimStatus = async function (req, res) {
                 if (results && results.length) {
                     let sim = results[0]
                     if (type === 'activate') {
-                        if (sim.status !== 'active') {
-                            let responseDate = helpers.updateSimStatus(sim.sim_id, 'active')
+                        if (sim.sim_status !== 'active') {
+                            let responseDate = helpers.updateSimStatus(sim.sim_id, 'active', res)
+
                         } else {
                             res.send({
                                 status: false,
@@ -93,13 +94,13 @@ exports.changeSimStatus = async function (req, res) {
                             })
                             return;
                         }
-                    } else if (type === 'disable') {
-                        if (sim.status !== 'disabled') {
-                            let responseDate = await helpers.updateSimStatus(sim.sim_id, 'deactivated')
+                    } else if (type === 'suspend') {
+                        if (sim.sim_status !== 'suspended') {
+                            let responseDate = await helpers.updateSimStatus(sim.sim_id, 'suspended', res)
                         } else {
                             res.send({
                                 status: false,
-                                msg: "Error: Sim is already disabled."
+                                msg: "Error: Sim is already suspended."
                             })
                             return;
                         }

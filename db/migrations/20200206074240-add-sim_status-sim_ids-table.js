@@ -4,8 +4,8 @@ module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.addColumn('sim_ids', 'sim_status', {
       type: Sequelize.ENUM,
-      values: ['active', 'disabled'],
-      defaultValue: 'disabled'
+      values: ['active', 'disabled', 'suspended'],
+      defaultValue: 'active'
     })
   },
 
