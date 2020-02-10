@@ -637,7 +637,7 @@ exports.savePackage = async function (req, res) {
 }
 
 exports.editPackage = async function (req, res) {
-    // console.log('data is', req.body)
+
     var verify = req.decoded; // await verifyToken(req, res);
 
     if (verify) {
@@ -748,7 +748,7 @@ exports.saveSaPackage = async function (req, res) {
         if (data && data.package_type) {
             let package_type = data.package_type;
 
-            if (package_type !== 'services' && package_type !== 'data_plan') {
+            if (package_type !== 'services' && package_type !== 'data_plan' && package_type !== 'Standalone Sim') {
                 return res.send({
                     status: false,
                     msg: 'Invalid Data'
@@ -788,6 +788,8 @@ exports.saveSaPackage = async function (req, res) {
                 insertQuery = `INSERT INTO packages (dealer_id, dealer_type, pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, dealers, package_type ) VALUES('${verify.user[0].dealer_id}', 'super_admin', '${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}' , '[]', '${package_type}')`;
             } else if (package_type === 'data_plan') {
                 insertQuery = `INSERT INTO packages (dealer_id, dealer_type, pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, data_limit, dealers, package_type ) VALUES('${verify.user[0].dealer_id}', 'super_admin', '${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}', ${data.data_limit}, '[]', '${package_type}')`;
+            } else if (package_type === 'Standalone Sim') {
+                insertQuery = `INSERT INTO packages (dealer_id, dealer_type, pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, dealers, package_type ) VALUES('${verify.user[0].dealer_id}', 'super_admin', '${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}', '[]', '${'standalone_sim'}')`;
             }
 
             // console.log(insertQuery);

@@ -455,13 +455,30 @@ exports.getChatIDs = async (req, res) => {
     var verify = req.decoded; // await verifyToken(req, res);
     if (verify) {
         var loggedInuid = verify.user.id;
-        let query = "select * from chat_ids where used=0";
+         let user_acc_id = req.params.user_acc_id
+        let dealer_id = req.params.dealer_id
+        let query = `SELECT * FROM chat_ids WHERE user_acc_id = ${user_acc_id} AND dealer_id = ${dealer_id} AND delete_status = '0'`;
         sql.query(query, async function (error, resp) {
-            res.send({
-                status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
-                data: resp
-            });
+            if (error) {
+                return res.send({
+                    status: false,
+                    msg: await helpers.convertToLang(req.translation[""], "Server Error"), // "data success",
+                    data: []
+                });
+            }
+            if (resp && resp.length) {
+                return res.send({
+                    status: true,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
+                    data: resp
+                });
+            } else {
+                return res.send({
+                    status: false,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
+                    data: []
+                });
+            }
         });
     } else {
         res.send({
@@ -527,8 +544,10 @@ exports.getPGPEmails = async (req, res) => {
     if (verify) {
         let loggedUserId = verify.user.dealer_id;
         let loggedUserType = verify.user.user_type;
+        let user_acc_id = req.params.user_acc_id
+        let dealer_id = req.params.dealer_id
         let condition = '';
-
+        console.log(user_acc_id, dealer_id);
         if (loggedUserType === constants.DEALER) {
             condition = ` OR (dealer_id = 0 AND dealer_type='admin') `
         }
@@ -541,18 +560,18 @@ exports.getPGPEmails = async (req, res) => {
         }
 
         let pgpPermisionQ = `SELECT * FROM dealer_permissions WHERE (dealer_id = '${loggedUserId}' ${condition}) AND permission_type = 'domain';`;
-        console.log("pgpPermisionQ ", pgpPermisionQ);
+        // console.log("pgpPermisionQ ", pgpPermisionQ);
         let dealerDomainPermissions = await sql.query(pgpPermisionQ);
         let permission_ids = dealerDomainPermissions.map((prm) => prm.permission_id);
 
-        let query = '';
-        if (permission_ids.length) {
-            query = `SELECT * FROM pgp_emails WHERE used=0 AND delete_status = '0' AND domain_id IN (${permission_ids.join()})`;
+        let query = `SELECT * FROM pgp_emails WHERE delete_status = '0' AND dealer_id = ${dealer_id} AND user_acc_id = ${user_acc_id} `;
+        if (permission_ids.length && loggedUserType !== ADMIN) {
+            query = query + `AND domain_id IN (${permission_ids.join()})`;
         }
         // query = `SELECT * FROM pgp_emails WHERE used=0`;
-
         // console.log("permission_ids ", permission_ids, "query ", query)
         if (query !== '') {
+            console.log(query);
             let resp = await sql.query(query);
             res.send({
                 status: true,

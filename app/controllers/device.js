@@ -2716,7 +2716,7 @@ exports.editDevices = async function (req, res) {
                                         await sql.query(updatePrevSim);
 
                                         if (finalStatus != constants.DEVICE_PRE_ACTIVATION) {
-                                            helpers.updateSimStatus(sim_id, 'deactivated')
+                                            helpers.updateSimStatus(sim_id, 'suspended')
                                         }
 
 
@@ -2730,6 +2730,7 @@ exports.editDevices = async function (req, res) {
                                             if (result && result.insertId) {
                                                 if (finalStatus != constants.DEVICE_PRE_ACTIVATION) {
                                                     helpers.updateSimStatus(sim_id2, 'active')
+
                                                 }
                                             }
                                         });
@@ -2750,7 +2751,7 @@ exports.editDevices = async function (req, res) {
                                             '"';
                                         await sql.query(updatePrevSim);
                                         if (finalStatus != constants.DEVICE_PRE_ACTIVATION) {
-                                            helpers.updateSimStatus(sim_id, 'deactivated')
+                                            helpers.updateSimStatus(sim_id, 'suspended')
                                         }
                                     }
                                 }

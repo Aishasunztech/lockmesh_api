@@ -3,7 +3,7 @@ const { sql } = require('../config/database');
 var moment = require("moment-strftime");
 var fs = require("fs");
 var path = require('path');
-var general_helpers = require('./general_helper')
+// var general_helpers = require('./general_helper')
 var socket_helpers = require('./socket_helper')
 var forge = require('node-forge');
 
@@ -1179,7 +1179,7 @@ module.exports = {
                     sql.query(insertSimIds, function (err, result) {
                         if (result && result.insertId) {
                             if (finalStatus != Constants.DEVICE_PRE_ACTIVATION) {
-                                general_helpers.updateSimStatus(sim_id, 'active')
+                                require('./general_helper').updateSimStatus(sim_id, 'active')
                             }
                         }
                     });
@@ -1228,7 +1228,7 @@ module.exports = {
                     sql.query(insertSimIds, function (err, result) {
                         if (result && result.insertId) {
                             if (finalStatus != constants.DEVICE_PRE_ACTIVATION) {
-                                general_helpers.updateSimStatus(sim_id2, 'active')
+                                require('./general_helper').updateSimStatus(sim_id2, 'active')
                             }
                         }
                     });
@@ -1276,7 +1276,7 @@ module.exports = {
 
                 var d = new Date(deviceData.expiry_date);
                 var n = d.valueOf();
-                
+
                 socket_helpers.deviceInfoUpdated(require("../routes/sockets").baseIo,
                     device_id,
                     {

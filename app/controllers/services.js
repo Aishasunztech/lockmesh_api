@@ -26,27 +26,36 @@ exports.createServiceProduct = async function (req, res) {
     if (verify) {
         let auto_generated = req.body.auto_generated
         let product_data = req.body.product_data
+        let user_acc_id = req.body.user_acc_id ? req.body.user_acc_id : null
+        let dealer_id = req.body.dealer_id ? req.body.dealer_id : null
         let type = req.body.type
         if (type && product_data) {
+            let usr_acc = await sql.query(`SELECT pgp_remaining_limit FROM usr_acc WHERE id = ${user_acc_id}`)
+            if (usr_acc && usr_acc.length) {
+                if (usr_acc[0].pgp_remaining_limit < 1) {
+                    return res.send({
+                        status: false,
+                        msg: "ERROR: You are not allowed to create new PGP EMAIL. Your Max limit has been exeeded to create PGP EMAILS on this device."
+                    })
+                }
+            }
             if (type === 'pgp_email' && !auto_generated) {
                 let pgp_email = product_data.username + '@' + product_data.domain
-                console.log(pgp_email);
+                // console.log(pgp_email);
                 if (helpers.validateEmail(pgp_email)) {
                     let checkExisted = await sql.query(`SELECT * FROM pgp_emails WHERE pgp_email = '${pgp_email}'`)
                     if (checkExisted && checkExisted.length) {
-                        res.send({
+                        return res.send({
                             status: false,
                             msg: "ERROR: Username not available.Please choose another username."
                         })
-                        return
                     }
                     product_data.pgp_email = pgp_email
                 } else {
-                    res.send({
+                    return res.send({
                         status: false,
                         msg: "ERROR: Invalid pgp email."
                     })
-                    return
                 }
             }
 
@@ -65,15 +74,16 @@ exports.createServiceProduct = async function (req, res) {
                             let query = ''
                             let getQuery = ''
                             if (type === 'pgp_email') {
-                                query = `INSERT INTO pgp_emails (pgp_email , uploaded_by , uploaded_by_id , domain_id) VALUES ('${response.data.product}' , '${verify.user.user_type}' , '${verify.user.id}' , ${product_data.domain_id})`
+                                query = `INSERT INTO pgp_emails (pgp_email , uploaded_by , uploaded_by_id , domain_id , user_acc_id , dealer_id) VALUES ('${response.data.product}' , '${verify.user.user_type}' , '${verify.user.id}' , ${product_data.domain_id}, ${user_acc_id} , ${dealer_id})`
                                 getQuery = `SELECT * FROM pgp_emails WHERE id = `
+                                sql.query(`UPDATE usr_acc SET pgp_remaining_limit = pgp_remaining_limit - 1 WHERE id =${user_acc_id}`)
                             }
                             else if (type === 'chat_id') {
-                                query = `INSERT INTO chat_ids (chat_id , uploaded_by , uploaded_by_id) VALUES ('${response.data.product}' , '${verify.user.user_type}' , '${verify.user.id}')`
+                                query = `INSERT INTO chat_ids (chat_id , uploaded_by , uploaded_by_id , user_acc_id , dealer_id) VALUES ('${response.data.product}' , '${verify.user.user_type}' , '${verify.user.id}', ${user_acc_id} , ${dealer_id})`
                                 getQuery = `SELECT * FROM chat_ids WHERE id = `
                             }
                             else if (type === 'sim_id') {
-                                query = `INSERT INTO sim_ids (sim_id , uploaded_by , uploaded_by_id) VALUES ('${response.data.product}' , '${verify.user.user_type}' , '${verify.user.id}')`
+                                query = `INSERT INTO sim_ids (sim_id , uploaded_by , uploaded_by_id , user_acc_id , dealer_id) VALUES ('${response.data.product}' , '${verify.user.user_type}' , '${verify.user.id}', ${user_acc_id} , ${dealer_id})`
                             }
                             else {
                                 res.send({
