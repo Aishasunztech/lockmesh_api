@@ -67,7 +67,7 @@ exports.changeSimStatus = async function (req, res) {
         let type = req.body.type
         let user_id = verify.user.id
         let user_type = verify.user.user_type
-        if (id && (type === 'activate' || type === 'suspend')) {
+        if (id && (type === 'activate' || type === 'suspend' || type === 'reset')) {
             let sim_query = `SELECT * FROM sim_ids WHERE id = ${id} AND delete_status = '0' `
             if (user_type !== constants.ADMIN) {
                 sim_query = sim_query + `AND dealer_id = ${user_id} `
@@ -104,6 +104,15 @@ exports.changeSimStatus = async function (req, res) {
                             })
                             return;
                         }
+                    }
+                    else if (type === 'reset') {
+                        let responseDate = await helpers.updateSimStatus(sim.sim_id, 'reset', res)
+                    } else {
+                        res.send({
+                            status: false,
+                            msg: "Error: Unautorized Command."
+                        })
+                        return;
                     }
                 } else {
                     res.send({

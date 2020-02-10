@@ -2394,7 +2394,11 @@ module.exports = {
 	updateSimStatus: (sim_id, status, res = null) => {
 		app_constants.twilioClient.wireless.sims.list({ iccid: sim_id }).then(response => {
 			if (response && response.length) {
-				app_constants.twilioClient.wireless.sims(response[0].sid).update({ status: status }).then(response => {
+				let updateObject = { status: status }
+				if (status == 'reset') {
+					updateObject = { resetStatus: 'resetting' }
+				}
+				app_constants.twilioClient.wireless.sims(response[0].sid).update(updateObject).then(response => {
 					// console.log(response);
 					if (response) {
 						if (status === 'active') {
@@ -2413,6 +2417,14 @@ module.exports = {
 								res.send({
 									status: true,
 									msg: "Sim suspended successfully."
+								})
+								return;
+							}
+						} else if (status === 'reset') {
+							if (res) {
+								res.send({
+									status: true,
+									msg: "Sim network connectivity reset successfully."
 								})
 								return;
 							}
