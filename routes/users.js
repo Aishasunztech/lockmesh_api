@@ -18,6 +18,13 @@ var Constants = require("../constants/Application");
 var MsgConstants = require("../constants/MsgConstants");
 // var app_constants = require("../config/constants");
 
+//***************** Validations **********************/ 
+const commonValidators = require('../app/validators/commonValidators');
+const authValidators = require('../app/validators/auth');
+const userValidators = require('../app/validators/user');
+const deviceValidators = require('../app/validators/device');
+var errorMsgs = commonValidators.responsValidationResults;
+
 var helpers = require("../helper/general_helper.js");
 const device_helpers = require("../helper/device_helpers.js");
 
@@ -104,7 +111,7 @@ router.get("/user_type", aclController.getUserType);
  */
 
 /**GET all the devices**/
-router.get("/devices", deviceController.devices);
+router.get("/devices", [deviceValidators.devices, errorMsgs], deviceController.devices);
 router.get("/get-devices-for-report", deviceController.getDevicesForReport);
 
 /**
