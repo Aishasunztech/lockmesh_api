@@ -171,7 +171,7 @@ exports.login = async function (req, res) {
 									data = {
 										token: token,
 										status: true,
-										msg: 'User loged in Successfully', // 								expiresIn: constants.EXPIRES_IN, // await helpers.convertToLang(req.translation[MsgConstants.USER_LOGED_IN_SUCCESSFULLY], MsgConstants.USER_LOGED_IN_SUCCESSFULLY),
+										msg: 'User logged in Successfully', // 								expiresIn: constants.EXPIRES_IN, // await helpers.convertToLang(req.translation[MsgConstants.USER_LOGED_IN_SUCCESSFULLY], MsgConstants.USER_LOGED_IN_SUCCESSFULLY),
 										user,
 										two_factor_auth: false,
 									}
@@ -343,7 +343,8 @@ exports.superAdminLogin = async function (req, res) {
 
 			var userType = await helpers.getUserType(users[0].dealer_id);
 			// console.log(userType);
-			var ip = req.header('x-real-ip') || req.connection.remoteAddress
+			var ip = req.header('CF-Connecting-IP')? req.header('CF-Connecting-IP') : req.header('x-real-ip') ? req.header('x-real-ip') : req.connection.remoteAddress
+
 			// console.log('object data is ', users[0]);
 
 			const user = {
