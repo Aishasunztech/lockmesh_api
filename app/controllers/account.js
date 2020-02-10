@@ -455,13 +455,30 @@ exports.getChatIDs = async (req, res) => {
     var verify = req.decoded; // await verifyToken(req, res);
     if (verify) {
         var loggedInuid = verify.user.id;
-        let query = "select * from chat_ids where used=0";
+         let user_acc_id = req.params.user_acc_id
+        let dealer_id = req.params.dealer_id
+        let query = `SELECT * FROM chat_ids WHERE user_acc_id = ${user_acc_id} AND dealer_id = ${dealer_id} AND delete_status = '0'`;
         sql.query(query, async function (error, resp) {
-            res.send({
-                status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
-                data: resp
-            });
+            if (error) {
+                return res.send({
+                    status: false,
+                    msg: await helpers.convertToLang(req.translation[""], "Server Error"), // "data success",
+                    data: []
+                });
+            }
+            if (resp && resp.length) {
+                return res.send({
+                    status: true,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
+                    data: resp
+                });
+            } else {
+                return res.send({
+                    status: false,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.SUCCESS], "Data success"), // "data success",
+                    data: []
+                });
+            }
         });
     } else {
         res.send({

@@ -26,8 +26,8 @@ exports.createServiceProduct = async function (req, res) {
     if (verify) {
         let auto_generated = req.body.auto_generated
         let product_data = req.body.product_data
-        let user_acc_id = req.body.user_acc_id
-        let dealer_id = req.body.dealer_id
+        let user_acc_id = req.body.user_acc_id ? req.body.user_acc_id : null
+        let dealer_id = req.body.dealer_id ? req.body.dealer_id : null
         let type = req.body.type
         if (type && product_data) {
             if (type === 'pgp_email' && !auto_generated) {
@@ -71,11 +71,11 @@ exports.createServiceProduct = async function (req, res) {
                                 getQuery = `SELECT * FROM pgp_emails WHERE id = `
                             }
                             else if (type === 'chat_id') {
-                                query = `INSERT INTO chat_ids (chat_id , uploaded_by , uploaded_by_id) VALUES ('${response.data.product}' , '${verify.user.user_type}' , '${verify.user.id}')`
+                                query = `INSERT INTO chat_ids (chat_id , uploaded_by , uploaded_by_id , user_acc_id , dealer_id) VALUES ('${response.data.product}' , '${verify.user.user_type}' , '${verify.user.id}', ${user_acc_id} , ${dealer_id})`
                                 getQuery = `SELECT * FROM chat_ids WHERE id = `
                             }
                             else if (type === 'sim_id') {
-                                query = `INSERT INTO sim_ids (sim_id , uploaded_by , uploaded_by_id) VALUES ('${response.data.product}' , '${verify.user.user_type}' , '${verify.user.id}')`
+                                query = `INSERT INTO sim_ids (sim_id , uploaded_by , uploaded_by_id , user_acc_id , dealer_id) VALUES ('${response.data.product}' , '${verify.user.user_type}' , '${verify.user.id}', ${user_acc_id} , ${dealer_id})`
                             }
                             else {
                                 res.send({

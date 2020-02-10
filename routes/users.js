@@ -875,7 +875,7 @@ router.get("/resync_ids", accountController.getAllSimIDs);
  * @security JWT
  */
 // router.get('/get_used_sim_ids', accountController.getUsedSimIDs);
-router.get("/get_chat_ids", accountController.getChatIDs);
+router.get("/get_chat_ids/:user_acc_id/:dealer_id", accountController.getChatIDs);
 /**
  * @route GET /users/get_all_chat_ids
  * @group Account  -Operations on account

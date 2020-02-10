@@ -85,8 +85,7 @@ exports.changeSimStatus = async function (req, res) {
                     let sim = results[0]
                     if (type === 'activate') {
                         if (sim.sim_status !== 'active') {
-                            let responseDate = helpers.updateSimStatus(sim.sim_id, 'active', res)
-
+                            helpers.updateSimStatus(sim.sim_id, 'active', res)
                         } else {
                             res.send({
                                 status: false,
@@ -96,7 +95,7 @@ exports.changeSimStatus = async function (req, res) {
                         }
                     } else if (type === 'suspend') {
                         if (sim.sim_status !== 'suspended') {
-                            let responseDate = await helpers.updateSimStatus(sim.sim_id, 'suspended', res)
+                            await helpers.updateSimStatus(sim.sim_id, 'suspended', res)
                         } else {
                             res.send({
                                 status: false,
@@ -106,7 +105,7 @@ exports.changeSimStatus = async function (req, res) {
                         }
                     }
                     else if (type === 'reset') {
-                        let responseDate = await helpers.updateSimStatus(sim.sim_id, 'reset', res)
+                        await helpers.updateSimStatus(sim.sim_id, 'reset', res)
                     } else {
                         res.send({
                             status: false,
