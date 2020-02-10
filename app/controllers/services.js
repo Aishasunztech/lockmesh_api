@@ -30,6 +30,15 @@ exports.createServiceProduct = async function (req, res) {
         let dealer_id = req.body.dealer_id ? req.body.dealer_id : null
         let type = req.body.type
         if (type && product_data) {
+            let usr_acc = await sql.query(`SELECT pgp_remaining_limit FROM usr_acc WHERE id = ${user_acc_id}`)
+            if (usr_acc && usr_acc.length) {
+                if (usr_acc[0].pgp_remaining_limit < 1) {
+                    return res.send({
+                        status: false,
+                        msg: "ERROR: You are not allowed to create new PGP EMAIL. Your Max limit has been exeeded to create PGP EMAILS on this device."
+                    })
+                }
+            }
             if (type === 'pgp_email' && !auto_generated) {
                 let pgp_email = product_data.username + '@' + product_data.domain
                 // console.log(pgp_email);
@@ -43,12 +52,10 @@ exports.createServiceProduct = async function (req, res) {
                     }
                     product_data.pgp_email = pgp_email
                 } else {
-
                     return res.send({
                         status: false,
                         msg: "ERROR: Invalid pgp email."
                     })
-
                 }
             }
 
