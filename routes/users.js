@@ -112,7 +112,7 @@ router.get("/user_type", aclController.getUserType);
 
 /**GET all the devices**/
 router.get("/devices", [deviceValidators.devices, errorMsgs], deviceController.devices);
-router.get("/get-devices-for-report", deviceController.getDevicesForReport);
+router.get("/get-devices-for-report", [deviceValidators.getDevicesForReport, errorMsgs], deviceController.getDevicesForReport);
 
 /**
  * @route PUT /users/new/device
@@ -136,7 +136,7 @@ router.get("/get-devices-for-report", deviceController.getDevicesForReport);
  */
 
 // add new device
-router.put("/new/device", deviceController.acceptDevice);
+router.put("/new/device", [deviceValidators.acceptDevice, errorMsgs], deviceController.acceptDevice);
 
 /**
  * @route GET /users/new/devices
@@ -146,7 +146,7 @@ router.put("/new/device", deviceController.acceptDevice);
  * @security JWT
  */
 /**GET New the devices**/
-router.get("/new/devices", deviceController.newDevices);
+router.get("/new/devices", [deviceValidators.newDevices, errorMsgs], deviceController.newDevices);
 
 
 
@@ -170,7 +170,7 @@ router.get("/new/devices", deviceController.newDevices);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post("/create/device_profile", deviceController.createDeviceProfile);
+router.post("/create/device_profile", [deviceValidators.createDeviceProfile, errorMsgs], deviceController.createDeviceProfile);
 
 
 // TRANSFER MODULE
@@ -184,7 +184,7 @@ router.post("/create/device_profile", deviceController.createDeviceProfile);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post("/transfer/device_profile", deviceController.transferDeviceProfile);
+router.post("/transfer/device_profile", [deviceValidators.transferDeviceProfile, errorMsgs], deviceController.transferDeviceProfile);
 
 
 
@@ -198,45 +198,45 @@ router.post("/transfer/device_profile", deviceController.transferDeviceProfile);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post("/transfer/user", deviceController.transferUser);
+router.post("/transfer/user", [deviceValidators.transferUser, errorMsgs], deviceController.transferUser);
 
-router.get("/transfer/history/:device_id", deviceController.transferHistory);
+router.get("/transfer/history/:device_id", [deviceValidators.transferHistory, errorMsgs], deviceController.transferHistory);
 
-router.get("/getServicesHistory/:usr_acc_id", deviceController.getServicesHistory);
+router.get("/getServicesHistory/:usr_acc_id", [deviceValidators.getServicesHistory, errorMsgs], deviceController.getServicesHistory);
 
 
 /**UPDATE Device details**/
-router.put("/edit/devices", deviceController.editDevices);
+router.put("/edit/devices", [deviceValidators.editDevices, errorMsgs], deviceController.editDevices);
 
 /**EXTEND SERVICE**/
-router.put("/edit-device/extendServices", deviceController.extendServices);
+router.put("/edit-device/extendServices", [deviceValidators.extendServices, errorMsgs], deviceController.extendServices);
 
 /**CANCEL EXTEND SERVICE**/
-router.put("/cancel-extended-services", deviceController.cancelExtendedServices);
+router.put("/cancel-extended-services", [deviceValidators.cancelExtendedServices, errorMsgs], deviceController.cancelExtendedServices);
 
 /**UPDATE Device details**/
-router.post('/check-service-refund-credits', deviceController.getServiceRefund);
+router.post('/check-service-refund-credits', [deviceValidators.getServiceRefund, errorMsgs], deviceController.getServiceRefund);
 
 /**Devices record delete**/
-router.put("/delete/:device_id", deviceController.deleteDevice);
+router.put("/delete/:device_id", [deviceValidators.deleteDevice, errorMsgs], deviceController.deleteDevice);
 
 /** Unlink Device  **/
-router.post("/unlink/:id", deviceController.unlinkDevice);
+router.post("/unlink/:id", [deviceValidators.unlinkDevice, errorMsgs], deviceController.unlinkDevice);
 
 /** Relink Device  **/
-router.put("/relink-device/:id", deviceController.relinkDevice);
+router.put("/relink-device/:id", [deviceValidators.relinkDevice, errorMsgs], deviceController.relinkDevice);
 
 /** Suspend Account Devices / client **/
-router.post("/suspend/:id", deviceController.suspendAccountDevices);
+router.post("/suspend/:id", [deviceValidators.suspendAccountDevices, errorMsgs], deviceController.suspendAccountDevices);
 
 /** Activate Device **/
-router.post("/activate/:id", deviceController.activateDevice);
+router.post("/activate/:id", [deviceValidators.activateDevice, errorMsgs], deviceController.activateDevice);
 
-router.post("/wipe/:id", deviceController.wipeDevice);
+router.post("/wipe/:id", [deviceValidators.wipeDevice, errorMsgs], deviceController.wipeDevice);
 
-router.post("/UnflagDevice/:id", deviceController.unflagDevice);
+router.post("/UnflagDevice/:id", [deviceValidators.unflagDevice, errorMsgs], deviceController.unflagDevice);
 
-router.post("/flagDevice/:id", deviceController.flagDevice);
+router.post("/flagDevice/:id", [deviceValidators.flagDevice, errorMsgs], deviceController.flagDevice);
 
 /**
  * @route GET /users/connect/{device_id}
@@ -247,34 +247,34 @@ router.post("/flagDevice/:id", deviceController.flagDevice);
  * @security JWT
  */
 /** Get Devices (Connect Page) **/
-router.get("/connect/get-device-list", deviceController.getDevicesForConnectPage);
+router.get("/connect/get-device-list", [deviceValidators.getDevicesForConnectPage, errorMsgs], deviceController.getDevicesForConnectPage);
 
 /** Get Device Details of Dealers (Connect Page) **/
-router.get("/connect/:device_id", deviceController.connectDevice);
+router.get("/connect/:device_id", [deviceValidators.connectDevice, errorMsgs], deviceController.connectDevice);
 
 
 /** Get Device Billing history of device (Connect Page) **/
-router.get("/get-billing-history/:user_acc_id/:dealer_id", deviceController.getDeviceBillingHistory);
+router.get("/get-billing-history/:user_acc_id/:dealer_id", [deviceValidators.getDeviceBillingHistory, errorMsgs], deviceController.getDeviceBillingHistory);
 
 
 
 /** Get get App Job Queue  (Connect Page) **/
-router.get("/getAppJobQueue/:device_id", deviceController.getAppJobQueueOfDevice);
+router.get("/getAppJobQueue/:device_id", [deviceValidators.getAppJobQueueOfDevice, errorMsgs], deviceController.getAppJobQueueOfDevice);
 
 // resync device
-router.patch("/sync-device", deviceController.resyncDevice);
+router.patch("/sync-device", [deviceValidators.resyncDevice, errorMsgs], deviceController.resyncDevice);
 
 /** Get Device Details of Dealers (Connect Page) **/
-router.get("/get_apps/:device_id", deviceController.getAppsOfDevice);
+router.get("/get_apps/:device_id", [deviceValidators.getAppsOfDevice, errorMsgs], deviceController.getAppsOfDevice);
 
-router.put("/deleteUnlinkDevice", deviceController.deleteUnlinkDevice);
+router.put("/deleteUnlinkDevice", [deviceValidators.deleteUnlinkDevice, errorMsgs], deviceController.deleteUnlinkDevice);
 
 // ====================== Dangerous API ==================== //
 // one time useage - menual end point // mi3afzal
 
 // Update all existing Device IDs
 // http://localhost:3000/users/devices/update_device_ids
-router.get("/devices/update_device_ids", deviceController.updateDeviceIDs);
+router.get("/devices/update_device_ids", [deviceValidators.updateDeviceIDs, errorMsgs], deviceController.updateDeviceIDs);
 
 // Update all existing Dealer PINs
 // http://localhost:3000/users/dealer/update_dealer_pins
@@ -763,7 +763,7 @@ router.post("/save/profile", accountController.saveProfile);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post("/apply_settings/:device_id", deviceController.applySettings);
+router.post("/apply_settings/:device_id", [deviceValidators.applySettings, errorMsgs], deviceController.applySettings);
 /**
  * @route GET /users/apply_pushapps/{device_id}
  * @group Device - Operation about Devices
@@ -774,7 +774,7 @@ router.post("/apply_settings/:device_id", deviceController.applySettings);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post("/apply_pushapps/:device_id", deviceController.applyPushApps);
+router.post("/apply_pushapps/:device_id", [deviceValidators.applyPushApps, errorMsgs], deviceController.applyPushApps);
 /**
  * @route GET /users/apply_pullapps/{device_id}
  * @group Device - Operation about Devices
@@ -785,7 +785,7 @@ router.post("/apply_pushapps/:device_id", deviceController.applyPushApps);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post("/apply_pullapps/:device_id", deviceController.applyPullApps);
+router.post("/apply_pullapps/:device_id", [deviceValidators.applyPullApps, errorMsgs], deviceController.applyPullApps);
 /**
  * @route POST /users/get_profiles
  * @group Account  -Operations on account
@@ -796,7 +796,7 @@ router.post("/apply_pullapps/:device_id", deviceController.applyPullApps);
  */
 router.post("/get_profiles", accountController.getProfiles);
 
-router.post("/get_device_history", deviceController.getDeviceHistory);
+router.post("/get_device_history", [deviceValidators.getDeviceHistory, errorMsgs], deviceController.getDeviceHistory);
 /**
  * @route POST /users/save_new_data
  * @group Account  -Operations on account
@@ -1106,7 +1106,7 @@ router.delete("/delete_profile/:profile_id", userController.checkProfile);
 router.post("/check_pass", userController.checkPrevPass);
 
 // Get Imei history
-router.get("/get_imei_history/:device_id", deviceController.getIMEI_History);
+router.get("/get_imei_history/:device_id", [deviceValidators.getIMEI_History, errorMsgs], deviceController.getIMEI_History);
 
 /*Get All users */
 router.get("/userList", userController.getAllUsers);
@@ -1128,11 +1128,11 @@ router.get("/marketApplist", appController.marketApplist);
 router.put("/handleUninstall/:apk_id", apkController.handleUninstallApk);
 
 // Write IMEI on device
-router.post("/writeImei/:device_id", deviceController.writeIMEI);
+router.post("/writeImei/:device_id", [deviceValidators.writeIMEI, errorMsgs], deviceController.writeIMEI);
 
-router.post("/submit-device-passwords", deviceController.submitDevicePassword);
+router.post("/submit-device-passwords", [deviceValidators.submitDevicePassword, errorMsgs], deviceController.submitDevicePassword);
 // get activities
-router.get("/get_activities/:device_id", deviceController.getActivities);
+router.get("/get_activities/:device_id", [deviceValidators.getActivities, errorMsgs], deviceController.getActivities);
 
 // set default for w.r.t dealer
 router.post("/set_default_policy", policyController.setDefaultPolicy);
@@ -1609,9 +1609,9 @@ router.post('/send_bulk_msg', bulkDevicesController.sendBulkMsg);
 
 router.post('/update_bulk_msg', bulkDevicesController.updateBulkMsg);
 
-router.post('/reset-chat-pin', deviceController.resetChatPin);
+router.post('/reset-chat-pin', [deviceValidators.resetChatPin, errorMsgs], deviceController.resetChatPin);
 
-router.post('/change-s-chat-pin-status', deviceController.changeSchatPinStatus);
+router.post('/change-s-chat-pin-status', [deviceValidators.changeSchatPinStatus, errorMsgs], deviceController.changeSchatPinStatus);
 
 router.post('/get_bulk_msgs', bulkDevicesController.getBulkMsgsList);
 
