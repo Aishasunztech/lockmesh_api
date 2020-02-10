@@ -112,7 +112,7 @@ exports.login = async function (req, res) {
 
 						var userType = await helpers.getUserType(users[0].dealer_id);
 						var get_connected_devices = await sql.query(`SELECT COUNT(*) AS total FROM usr_acc WHERE dealer_id='${users[0].dealer_id}'`);
-						var ip = req.header('x-real-ip') ? req.header('x-real-ip') : req.connection.remoteAddress
+						var ip = req.header('CF-Connecting-IP')? req.header('CF-Connecting-IP') : req.header('x-real-ip') ? req.header('x-real-ip') : req.connection.remoteAddress
 						console.log('object data is:', users[0]);
 
 						const user = {
