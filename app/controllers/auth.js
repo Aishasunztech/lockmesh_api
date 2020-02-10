@@ -24,7 +24,7 @@ var data;
 exports.login = async function (req, res) {
 	var email = req.body.demail;
 	var pwd = req.body.pwd;
-	if(!email || !pwd){
+	if (!email || !pwd) {
 		data = {
 			status: false,
 			msg: 'Bad request',
@@ -111,9 +111,9 @@ exports.login = async function (req, res) {
 						helpers.updateDealerLastLogin(users[0].dealer_id);
 
 						var userType = await helpers.getUserType(users[0].dealer_id);
-						var get_connected_devices = await sql.query(`select count(*) AS total FROM usr_acc WHERE dealer_id='${users[0].dealer_id}'`);
-						var ip = req.header('x-real-ip') || req.connection.remoteAddress
-						console.log('object data is ', users[0]);
+						var get_connected_devices = await sql.query(`SELECT COUNT(*) AS total FROM usr_acc WHERE dealer_id='${users[0].dealer_id}'`);
+						var ip = req.header('x-real-ip') ? req.header('x-real-ip') : req.connection.remoteAddress
+						console.log('object data is:', users[0]);
 
 						const user = {
 							id: users[0].dealer_id,
@@ -332,8 +332,8 @@ exports.superAdminLogin = async function (req, res) {
 	let password = req.body.password;
 	let email = req.body.email
 	var enc_pwd = md5(password);
-	
-	if(!name || !password || !email){
+
+	if (!name || !password || !email) {
 		return res.send({
 			status: false
 		})
