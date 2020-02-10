@@ -23,6 +23,9 @@ const commonValidators = require('../app/validators/commonValidators');
 const authValidators = require('../app/validators/auth');
 const userValidators = require('../app/validators/user');
 const deviceValidators = require('../app/validators/device');
+const accountValidators = require('../app/validators/account');
+const apkValidators = require('../app/validators/apk');
+const appValidators = require('../app/validators/app');
 var errorMsgs = commonValidators.responsValidationResults;
 
 var helpers = require("../helper/general_helper.js");
@@ -112,7 +115,7 @@ router.get("/user_type", aclController.getUserType);
 
 /**GET all the devices**/
 router.get("/devices", [deviceValidators.devices, errorMsgs], deviceController.devices);
-router.get("/get-devices-for-report", [deviceValidators.getDevicesForReport, errorMsgs], deviceController.getDevicesForReport);
+router.get("/get-devices-for-report", deviceController.getDevicesForReport);
 
 /**
  * @route PUT /users/new/device
@@ -136,7 +139,7 @@ router.get("/get-devices-for-report", [deviceValidators.getDevicesForReport, err
  */
 
 // add new device
-router.put("/new/device", [deviceValidators.acceptDevice, errorMsgs], deviceController.acceptDevice);
+router.put("/new/device", deviceController.acceptDevice);
 
 /**
  * @route GET /users/new/devices
@@ -146,7 +149,7 @@ router.put("/new/device", [deviceValidators.acceptDevice, errorMsgs], deviceCont
  * @security JWT
  */
 /**GET New the devices**/
-router.get("/new/devices", [deviceValidators.newDevices, errorMsgs], deviceController.newDevices);
+router.get("/new/devices", deviceController.newDevices);
 
 
 
@@ -170,7 +173,7 @@ router.get("/new/devices", [deviceValidators.newDevices, errorMsgs], deviceContr
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post("/create/device_profile", [deviceValidators.createDeviceProfile, errorMsgs], deviceController.createDeviceProfile);
+router.post("/create/device_profile", deviceController.createDeviceProfile);
 
 
 // TRANSFER MODULE
@@ -184,7 +187,7 @@ router.post("/create/device_profile", [deviceValidators.createDeviceProfile, err
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post("/transfer/device_profile", [deviceValidators.transferDeviceProfile, errorMsgs], deviceController.transferDeviceProfile);
+router.post("/transfer/device_profile", deviceController.transferDeviceProfile);
 
 
 
@@ -198,45 +201,45 @@ router.post("/transfer/device_profile", [deviceValidators.transferDeviceProfile,
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post("/transfer/user", [deviceValidators.transferUser, errorMsgs], deviceController.transferUser);
+router.post("/transfer/user", deviceController.transferUser);
 
-router.get("/transfer/history/:device_id", [deviceValidators.transferHistory, errorMsgs], deviceController.transferHistory);
+router.get("/transfer/history/:device_id", deviceController.transferHistory);
 
-router.get("/getServicesHistory/:usr_acc_id", [deviceValidators.getServicesHistory, errorMsgs], deviceController.getServicesHistory);
+router.get("/getServicesHistory/:usr_acc_id", deviceController.getServicesHistory);
 
 
 /**UPDATE Device details**/
-router.put("/edit/devices", [deviceValidators.editDevices, errorMsgs], deviceController.editDevices);
+router.put("/edit/devices", deviceController.editDevices);
 
 /**EXTEND SERVICE**/
-router.put("/edit-device/extendServices", [deviceValidators.extendServices, errorMsgs], deviceController.extendServices);
+router.put("/edit-device/extendServices", deviceController.extendServices);
 
 /**CANCEL EXTEND SERVICE**/
-router.put("/cancel-extended-services", [deviceValidators.cancelExtendedServices, errorMsgs], deviceController.cancelExtendedServices);
+router.put("/cancel-extended-services", deviceController.cancelExtendedServices);
 
 /**UPDATE Device details**/
-router.post('/check-service-refund-credits', [deviceValidators.getServiceRefund, errorMsgs], deviceController.getServiceRefund);
+router.post('/check-service-refund-credits', deviceController.getServiceRefund);
 
 /**Devices record delete**/
-router.put("/delete/:device_id", [deviceValidators.deleteDevice, errorMsgs], deviceController.deleteDevice);
+router.put("/delete/:device_id", deviceController.deleteDevice);
 
 /** Unlink Device  **/
-router.post("/unlink/:id", [deviceValidators.unlinkDevice, errorMsgs], deviceController.unlinkDevice);
+router.post("/unlink/:id", deviceController.unlinkDevice);
 
 /** Relink Device  **/
-router.put("/relink-device/:id", [deviceValidators.relinkDevice, errorMsgs], deviceController.relinkDevice);
+router.put("/relink-device/:id", deviceController.relinkDevice);
 
 /** Suspend Account Devices / client **/
-router.post("/suspend/:id", [deviceValidators.suspendAccountDevices, errorMsgs], deviceController.suspendAccountDevices);
+router.post("/suspend/:id", deviceController.suspendAccountDevices);
 
 /** Activate Device **/
-router.post("/activate/:id", [deviceValidators.activateDevice, errorMsgs], deviceController.activateDevice);
+router.post("/activate/:id", deviceController.activateDevice);
 
-router.post("/wipe/:id", [deviceValidators.wipeDevice, errorMsgs], deviceController.wipeDevice);
+router.post("/wipe/:id", deviceController.wipeDevice);
 
-router.post("/UnflagDevice/:id", [deviceValidators.unflagDevice, errorMsgs], deviceController.unflagDevice);
+router.post("/UnflagDevice/:id", deviceController.unflagDevice);
 
-router.post("/flagDevice/:id", [deviceValidators.flagDevice, errorMsgs], deviceController.flagDevice);
+router.post("/flagDevice/:id", deviceController.flagDevice);
 
 /**
  * @route GET /users/connect/{device_id}
@@ -247,34 +250,34 @@ router.post("/flagDevice/:id", [deviceValidators.flagDevice, errorMsgs], deviceC
  * @security JWT
  */
 /** Get Devices (Connect Page) **/
-router.get("/connect/get-device-list", [deviceValidators.getDevicesForConnectPage, errorMsgs], deviceController.getDevicesForConnectPage);
+router.get("/connect/get-device-list", deviceController.getDevicesForConnectPage);
 
 /** Get Device Details of Dealers (Connect Page) **/
-router.get("/connect/:device_id", [deviceValidators.connectDevice, errorMsgs], deviceController.connectDevice);
+router.get("/connect/:device_id", deviceController.connectDevice);
 
 
 /** Get Device Billing history of device (Connect Page) **/
-router.get("/get-billing-history/:user_acc_id/:dealer_id", [deviceValidators.getDeviceBillingHistory, errorMsgs], deviceController.getDeviceBillingHistory);
+router.get("/get-billing-history/:user_acc_id/:dealer_id", deviceController.getDeviceBillingHistory);
 
 
 
 /** Get get App Job Queue  (Connect Page) **/
-router.get("/getAppJobQueue/:device_id", [deviceValidators.getAppJobQueueOfDevice, errorMsgs], deviceController.getAppJobQueueOfDevice);
+router.get("/getAppJobQueue/:device_id", deviceController.getAppJobQueueOfDevice);
 
 // resync device
-router.patch("/sync-device", [deviceValidators.resyncDevice, errorMsgs], deviceController.resyncDevice);
+router.patch("/sync-device", deviceController.resyncDevice);
 
 /** Get Device Details of Dealers (Connect Page) **/
-router.get("/get_apps/:device_id", [deviceValidators.getAppsOfDevice, errorMsgs], deviceController.getAppsOfDevice);
+router.get("/get_apps/:device_id", deviceController.getAppsOfDevice);
 
-router.put("/deleteUnlinkDevice", [deviceValidators.deleteUnlinkDevice, errorMsgs], deviceController.deleteUnlinkDevice);
+router.put("/deleteUnlinkDevice", deviceController.deleteUnlinkDevice);
 
 // ====================== Dangerous API ==================== //
 // one time useage - menual end point // mi3afzal
 
 // Update all existing Device IDs
 // http://localhost:3000/users/devices/update_device_ids
-router.get("/devices/update_device_ids", [deviceValidators.updateDeviceIDs, errorMsgs], deviceController.updateDeviceIDs);
+router.get("/devices/update_device_ids", deviceController.updateDeviceIDs);
 
 // Update all existing Dealer PINs
 // http://localhost:3000/users/dealer/update_dealer_pins
@@ -739,7 +742,7 @@ router.get("/get_usr_acc_id/:device_id", async function (req, res) {
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.get("/get_app_permissions", appController.getAppPermissions);
+router.get("/get_app_permissions", [appValidators.getAppPermissions, errorMsgs], appController.getAppPermissions);
 /**
  * @route GET /users/get_system_permissions
  * @group APK - All Operations on apks
@@ -747,12 +750,12 @@ router.get("/get_app_permissions", appController.getAppPermissions);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.get('/get_system_permissions', appController.getSystemPermissions)
+router.get('/get_system_permissions', [appValidators.getSystemPermissions, errorMsgs], appController.getSystemPermissions)
 
 // policy name should be unique
 
 
-router.post("/save/profile", accountController.saveProfile);
+router.post("/save/profile", [accountValidators.saveProfile, errorMsgs], accountController.saveProfile);
 /**
  * @route GET /users/apply_settings/{device_id}
  * @group Device - Operation about Devices
@@ -763,7 +766,7 @@ router.post("/save/profile", accountController.saveProfile);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post("/apply_settings/:device_id", [deviceValidators.applySettings, errorMsgs], deviceController.applySettings);
+router.post("/apply_settings/:device_id", deviceController.applySettings);
 /**
  * @route GET /users/apply_pushapps/{device_id}
  * @group Device - Operation about Devices
@@ -774,7 +777,7 @@ router.post("/apply_settings/:device_id", [deviceValidators.applySettings, error
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post("/apply_pushapps/:device_id", [deviceValidators.applyPushApps, errorMsgs], deviceController.applyPushApps);
+router.post("/apply_pushapps/:device_id", deviceController.applyPushApps);
 /**
  * @route GET /users/apply_pullapps/{device_id}
  * @group Device - Operation about Devices
@@ -785,7 +788,7 @@ router.post("/apply_pushapps/:device_id", [deviceValidators.applyPushApps, error
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post("/apply_pullapps/:device_id", [deviceValidators.applyPullApps, errorMsgs], deviceController.applyPullApps);
+router.post("/apply_pullapps/:device_id", deviceController.applyPullApps);
 /**
  * @route POST /users/get_profiles
  * @group Account  -Operations on account
@@ -794,9 +797,9 @@ router.post("/apply_pullapps/:device_id", [deviceValidators.applyPullApps, error
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post("/get_profiles", accountController.getProfiles);
+router.post("/get_profiles", [accountValidators.getProfiles, errorMsgs], accountController.getProfiles);
 
-router.post("/get_device_history", [deviceValidators.getDeviceHistory, errorMsgs], deviceController.getDeviceHistory);
+router.post("/get_device_history", deviceController.getDeviceHistory);
 /**
  * @route POST /users/save_new_data
  * @group Account  -Operations on account
@@ -806,7 +809,7 @@ router.post("/get_device_history", [deviceValidators.getDeviceHistory, errorMsgs
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post("/save_new_data", accountController.saveNewData);
+router.post("/save_new_data", [accountValidators.saveNewData, errorMsgs], accountController.saveNewData);
 
 // import sims
 /**
@@ -818,7 +821,7 @@ router.post("/save_new_data", accountController.saveNewData);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post("/import/:fieldName", accountController.importIDs);
+router.post("/import/:fieldName", [accountValidators.importIDs, errorMsgs], accountController.importIDs);
 /**
  * @route POST /users/export/{fieldName}
  * @group Account  -Operations on account
@@ -827,7 +830,7 @@ router.post("/import/:fieldName", accountController.importIDs);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.get("/export/:fieldName", accountController.exportIDs);
+router.get("/export/:fieldName", [accountValidators.exportIDs, errorMsgs], accountController.exportIDs);
 /**
  * @route GET /users/get_sim_ids
  * @group Account  -Operations on account
@@ -835,7 +838,7 @@ router.get("/export/:fieldName", accountController.exportIDs);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.get("/get_sim_ids", accountController.getSimIDs);
+router.get("/get_sim_ids", [accountValidators.getSimIDs, errorMsgs], accountController.getSimIDs);
 /**
  * @route GET /users/get_all_sim_ids
  * @group Account  -Operations on account
@@ -843,7 +846,7 @@ router.get("/get_sim_ids", accountController.getSimIDs);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.get("/get_all_sim_ids", accountController.getAllSimIDs);
+router.get("/get_all_sim_ids", [accountValidators.getAllSimIDs, errorMsgs], accountController.getAllSimIDs);
 /**
  * @route GET /users/resync_ids
  * @group Account  -Operations on account
@@ -851,7 +854,7 @@ router.get("/get_all_sim_ids", accountController.getAllSimIDs);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.get("/resync_ids", accountController.getAllSimIDs);
+router.get("/resync_ids", [accountValidators.getAllSimIDs, errorMsgs], accountController.getAllSimIDs);
 
 /**
  * @route GET /users/get_chat_ids
@@ -860,8 +863,8 @@ router.get("/resync_ids", accountController.getAllSimIDs);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-// router.get('/get_used_sim_ids', accountController.getUsedSimIDs);
-router.get("/get_chat_ids", accountController.getChatIDs);
+// router.get('/get_used_sim_ids', [accountValidators.getUsedSimIDs, errorMsgs],accountController.getUsedSimIDs);
+router.get("/get_chat_ids", [accountValidators.getChatIDs, errorMsgs], accountController.getChatIDs);
 /**
  * @route GET /users/get_all_chat_ids
  * @group Account  -Operations on account
@@ -869,7 +872,7 @@ router.get("/get_chat_ids", accountController.getChatIDs);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.get("/get_all_chat_ids", accountController.getAllChatIDs);
+router.get("/get_all_chat_ids", [accountValidators.getAllChatIDs, errorMsgs], accountController.getAllChatIDs);
 /**
  * @route GET /users/get_used_chat_ids
  * @group Account  -Operations on account
@@ -877,7 +880,7 @@ router.get("/get_all_chat_ids", accountController.getAllChatIDs);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.get("/get_used_chat_ids", accountController.getUsedChatIDs);
+router.get("/get_used_chat_ids", [accountValidators.getUsedChatIDs, errorMsgs], accountController.getUsedChatIDs);
 /**
  * @route GET /users/get_pgp_emails
  * @group Account  -Operations on account
@@ -885,7 +888,7 @@ router.get("/get_used_chat_ids", accountController.getUsedChatIDs);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.get("/get_pgp_emails", accountController.getPGPEmails);
+router.get("/get_pgp_emails", [accountValidators.getPGPEmails, errorMsgs], accountController.getPGPEmails);
 /**
  * @route GET /users/get_all_pgp_emails
  * @group Account  -Operations on account
@@ -893,7 +896,7 @@ router.get("/get_pgp_emails", accountController.getPGPEmails);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.get("/get_all_pgp_emails", accountController.getAllPGPEmails);
+router.get("/get_all_pgp_emails", [accountValidators.getAllPGPEmails, errorMsgs], accountController.getAllPGPEmails);
 /**
  * @route GET /users/get_used_pgp_emails
  * @group Account  -Operations on account
@@ -901,7 +904,7 @@ router.get("/get_all_pgp_emails", accountController.getAllPGPEmails);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.get("/get_used_pgp_emails", accountController.getUsedPGPEmails);
+router.get("/get_used_pgp_emails", [accountValidators.getUsedPGPEmails, errorMsgs], accountController.getUsedPGPEmails);
 /**
  * @route GET /users/get_used_sim_ids
  * @group Account  -Operations on account
@@ -909,9 +912,9 @@ router.get("/get_used_pgp_emails", accountController.getUsedPGPEmails);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.get("/get_used_sim_ids", accountController.getUsedSimIDs);
+router.get("/get_used_sim_ids", [accountValidators.getUsedSimIDs, errorMsgs], accountController.getUsedSimIDs);
 
-// router.get('/get_packages', accountController.getPackages);
+// router.get('/get_packages', [accountValidators.getPackages, errorMsgs],accountController.getPackages);
 /**
  * @route GET /users/get_used_sim_ids
  * @group Account  -Operations on account
@@ -921,7 +924,7 @@ router.get("/get_used_sim_ids", accountController.getUsedSimIDs);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post("/delete_CSV_ids/:fieldName", accountController.deleteCSV);
+router.post("/delete_CSV_ids/:fieldName", [accountValidators.deleteCSV, errorMsgs], accountController.deleteCSV);
 
 /**
  * @route GET /users/apklist
@@ -931,7 +934,7 @@ router.post("/delete_CSV_ids/:fieldName", accountController.deleteCSV);
  * @security JWT
  */
 /** Get Apk List Admin Panel **/
-router.get('/apklist', apkController.apkList);
+router.get('/apklist', [apkValidators.apkList, errorMsgs], apkController.apkList);
 
 /** Get Apk List Admin Panel **/
 /**
@@ -944,7 +947,7 @@ router.get('/apklist', apkController.apkList);
  * @security JWT
  */
 // upload test apk
-router.post('/upload', multipartMiddleware, apkController.uploadApk);
+router.post('/upload', multipartMiddleware, [apkValidators.uploadApk, errorMsgs], apkController.uploadApk);
 
 
 /**
@@ -958,7 +961,7 @@ router.post('/upload', multipartMiddleware, apkController.uploadApk);
  */
 
 // add apk. endpoints name should be changed
-router.post("/checkApkName", apkController.checkApkName);
+router.post("/checkApkName", [apkValidators.checkApkName, errorMsgs], apkController.checkApkName);
 
 /**
  * @route POST /users/addApk
@@ -971,7 +974,7 @@ router.post("/checkApkName", apkController.checkApkName);
  * @security JWT
  */
 // add apk. endpoints name should be changed
-router.post("/addApk", apkController.addApk);
+router.post("/addApk", [apkValidators.addApk, errorMsgs], apkController.addApk);
 
 /**
  * @route POST /users/edit/apk
@@ -985,7 +988,7 @@ router.post("/addApk", apkController.addApk);
  * @security JWT
  */
 /** Edit Apk (Admin panel) **/
-router.post("/edit/apk", apkController.editApk);
+router.post("/edit/apk", [apkValidators.editApk, errorMsgs], apkController.editApk);
 
 /**
  * @route POST /users/apk/delete
@@ -996,7 +999,7 @@ router.post("/edit/apk", apkController.editApk);
  * @security JWT
  */
 /**Delete Apk**/
-router.post("/apk/delete", apkController.deleteApk);
+router.post("/apk/delete", [apkValidators.deleteApk, errorMsgs], apkController.deleteApk);
 
 /**
  * @route POST /users/toggle
@@ -1008,7 +1011,7 @@ router.post("/apk/delete", apkController.deleteApk);
  * @security JWT
  */
 /** Toggle Apk Admin Panel (On / Off) **/
-router.post("/toggle", apkController.toggle);
+router.post("/toggle", [apkValidators.toggle, errorMsgs], apkController.toggle);
 
 /**
  * @route GET /users/purchase_credits
@@ -1019,7 +1022,7 @@ router.post("/toggle", apkController.toggle);
  * @security JWT
  */
 // Purchase credits_CASH
-router.post("/purchase_credits", accountController.purchaseCredits);
+router.post("/purchase_credits", [accountValidators.purchaseCredits, errorMsgs], accountController.purchaseCredits);
 /**
  * @route GET /users/purchase_credits_CC
  * @group Account  -Operations on account
@@ -1030,7 +1033,7 @@ router.post("/purchase_credits", accountController.purchaseCredits);
  * @security JWT
  */
 // Purchase credits form Credit card
-router.post("/purchase_credits_CC", accountController.purchaseCredits_CC);
+router.post("/purchase_credits_CC", [accountValidators.purchaseCredits_CC, errorMsgs], accountController.purchaseCredits_CC);
 
 
 
@@ -1106,7 +1109,7 @@ router.delete("/delete_profile/:profile_id", userController.checkProfile);
 router.post("/check_pass", userController.checkPrevPass);
 
 // Get Imei history
-router.get("/get_imei_history/:device_id", [deviceValidators.getIMEI_History, errorMsgs], deviceController.getIMEI_History);
+router.get("/get_imei_history/:device_id", deviceController.getIMEI_History);
 
 /*Get All users */
 router.get("/userList", userController.getAllUsers);
@@ -1115,24 +1118,24 @@ router.get("/userList", userController.getAllUsers);
 router.post("/userListOfDevice", userController.getDealerUsers);
 
 /*Transfer Apps to secure market */
-router.post("/transferApps", appController.transferApps);
+router.post("/transferApps", [appValidators.transferApps, errorMsgs], appController.transferApps);
 
 /*Remove Apps to secure market */
-router.post("/remove_sm_apps", appController.removeSMApps);
+router.post("/remove_sm_apps", [appValidators.removeSMApps, errorMsgs], appController.removeSMApps);
 
 /** Get Market app List **/
 
-router.get("/marketApplist", appController.marketApplist);
+router.get("/marketApplist", [appValidators.marketApplist, errorMsgs], appController.marketApplist);
 
 // Change unistall app restriction for Secure market apps
-router.put("/handleUninstall/:apk_id", apkController.handleUninstallApk);
+router.put("/handleUninstall/:apk_id", [apkValidators.handleUninstallApk, errorMsgs], apkController.handleUninstallApk);
 
 // Write IMEI on device
-router.post("/writeImei/:device_id", [deviceValidators.writeIMEI, errorMsgs], deviceController.writeIMEI);
+router.post("/writeImei/:device_id", deviceController.writeIMEI);
 
-router.post("/submit-device-passwords", [deviceValidators.submitDevicePassword, errorMsgs], deviceController.submitDevicePassword);
+router.post("/submit-device-passwords", deviceController.submitDevicePassword);
 // get activities
-router.get("/get_activities/:device_id", [deviceValidators.getActivities, errorMsgs], deviceController.getActivities);
+router.get("/get_activities/:device_id", deviceController.getActivities);
 
 // set default for w.r.t dealer
 router.post("/set_default_policy", policyController.setDefaultPolicy);
@@ -1312,7 +1315,7 @@ router.get('/get-parent-hardware-prices', billingController.getHardwarePrices);
 
 router.patch('/check-package-name', billingController.checkPackageName);
 
-router.post("/credit-request-ack", accountController.ackCreditRequest);
+router.post("/credit-request-ack", [accountValidators.ackCreditRequest, errorMsgs], accountController.ackCreditRequest);
 
 router.get("/newRequests", billingController.newRequests);
 
@@ -1450,7 +1453,7 @@ router.get('/dashboard-data', dashboardController.getDashboardData);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.get('/get-domains', accountController.getDomains);
+router.get('/get-domains', [accountValidators.getDomains, errorMsgs], accountController.getDomains);
 
 /**
  * @route GET /users/domains-domains
@@ -1459,11 +1462,11 @@ router.get('/get-domains', accountController.getDomains);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post('/add-domain', accountController.addDomain);
+router.post('/add-domain', [accountValidators.addDomain, errorMsgs], accountController.addDomain);
 
-router.put('/edit-domain', accountController.editDomain);
+router.put('/edit-domain', [accountValidators.editDomain, errorMsgs], accountController.editDomain);
 
-router.put('/delete-domain', accountController.deleteDomain);
+router.put('/delete-domain', [accountValidators.deleteDomain, errorMsgs], accountController.deleteDomain);
 
 /**
  * @route POST /users/dealer-permissions/:permissionType
@@ -1546,7 +1549,7 @@ router.post('/reports/grace-days', reportingController.generateGraceDaysReport);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post('/get-latest-payment-history', accountController.getLatestPaymentHistory);
+router.post('/get-latest-payment-history', [accountValidators.getLatestPaymentHistory, errorMsgs], accountController.getLatestPaymentHistory);
 
 /**
  * @route POST /users/get-overdue-details
@@ -1555,7 +1558,7 @@ router.post('/get-latest-payment-history', accountController.getLatestPaymentHis
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.get('/get-overdue-details', accountController.getOverdueDetails);
+router.get('/get-overdue-details', [accountValidators.getOverdueDetails, errorMsgs], accountController.getOverdueDetails);
 
 /**
  * @route POST /users/get-processes
@@ -1609,9 +1612,9 @@ router.post('/send_bulk_msg', bulkDevicesController.sendBulkMsg);
 
 router.post('/update_bulk_msg', bulkDevicesController.updateBulkMsg);
 
-router.post('/reset-chat-pin', [deviceValidators.resetChatPin, errorMsgs], deviceController.resetChatPin);
+router.post('/reset-chat-pin', deviceController.resetChatPin);
 
-router.post('/change-s-chat-pin-status', [deviceValidators.changeSchatPinStatus, errorMsgs], deviceController.changeSchatPinStatus);
+router.post('/change-s-chat-pin-status', deviceController.changeSchatPinStatus);
 
 router.post('/get_bulk_msgs', bulkDevicesController.getBulkMsgsList);
 
