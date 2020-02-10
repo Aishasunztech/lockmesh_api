@@ -1,8 +1,8 @@
 var express = require('express');
 var router = express.Router();
 var authController = require('../app/controllers/auth')
-
-
+const mobileValidator = require('../app/validators/mobile_validators');
+// const { validationResult } = require('express-validator');
 router.post('/super_admin_login', authController.superAdminLogin)
 
 
@@ -16,7 +16,7 @@ router.post('/super_admin_login', authController.superAdminLogin)
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
  */
-router.post('/login', authController.login);
+router.post('/login', [mobileValidator.loginValidation, authController.responsValidationResults], authController.login);
 
 /**
  * @route POST /users/verify_code
