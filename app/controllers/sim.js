@@ -19,7 +19,12 @@ const constants = require('../../constants/Application')
 exports.getStandAloneSims = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
-        var SQry = `SELECT s.* , d.device_id FROM sim_ids as s LEFT JOIN usr_acc as u on s.user_acc_id = u.id LEFT JOIN devices as d ON d.id= u.device_id LEFT JOIN standalone_sims as sas ON sas.sim_id = s.sim_id WHERE s.delete_status = '0' AND ( s.delete_status = '0' OR sas.status = 'active' OR sas.status = 'completed')`;
+        let loggedInId = verify.user.id
+        let loggedInType = verify.user.user_type
+        var SQry = `SELECT s.* , d.device_id FROM sim_ids as s LEFT JOIN usr_acc as u on s.user_acc_id = u.id LEFT JOIN devices as d ON d.id= u.device_id LEFT JOIN standalone_sims as sas ON sas.sim_id = s.sim_id WHERE s.delete_status = '0' AND ( s.delete_status = '0' OR sas.status = 'active' OR sas.status = 'completed') `;
+        if (loggedInType !== constants.ADMIN) {
+            SQry = SQry + `AND (s.dealer_id = ${loggedInId} OR s.uploaded_by_id = ${loggedInId}) `
+        }
         sql.query(SQry, async function (err, result) {
             // console.log("=======================================")
             // console.log('result is :', result)

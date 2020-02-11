@@ -74,7 +74,7 @@ exports.createServiceProduct = async function (req, res) {
                             let query = ''
                             let getQuery = ''
                             if (type === 'pgp_email') {
-                                query = `INSERT INTO pgp_emails (pgp_email , uploaded_by , uploaded_by_id , domain_id , user_acc_id , dealer_id) VALUES ('${response.data.product}' , '${verify.user.user_type}' , '${verify.user.id}' , ${product_data.domain_id}, ${user_acc_id} , ${dealer_id})`
+                                query = `INSERT INTO pgp_emails (pgp_email , uploaded_by , uploaded_by_id , domain_id , user_acc_id , dealer_id) VALUES ('${response.data.product.toLowerCase()}' , '${verify.user.user_type}' , '${verify.user.id}' , ${product_data.domain_id}, ${user_acc_id} , ${dealer_id})`
                                 getQuery = `SELECT * FROM pgp_emails WHERE id = `
                                 sql.query(`UPDATE usr_acc SET pgp_remaining_limit = pgp_remaining_limit - 1 WHERE id =${user_acc_id}`)
                             }
