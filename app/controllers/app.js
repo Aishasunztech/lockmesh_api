@@ -108,6 +108,7 @@ exports.transferApps = async function (req, res) {
 
     // if (verify.status !== undefined && verify.status == true) {
     var verify = req.decoded;
+    console.log("check body: ", req.body);
     if (verify) {
         try {
             let appKeys = req.body.data
