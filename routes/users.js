@@ -1643,4 +1643,6 @@ router.post('/validate_sim_id', ServicesController.validateSimId);
 
 router.put('/add-data-plans', ServicesController.addDataLimitsPlans);
 
+router.put('/reset-pgp-limit', ServicesController.resetPgpLimit);
+
 module.exports = router;
