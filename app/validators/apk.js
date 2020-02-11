@@ -11,7 +11,8 @@ exports.checkApkName = [
 
     check('name')
         .exists()
-        .notEmpty(),
+        .notEmpty()
+        .isString(),
 
 
 ];
@@ -65,36 +66,43 @@ exports.addApk = [
 exports.editApk = [
     check('apk_id')
         .exists()
-        .notEmpty(),
+        .notEmpty()
+        .isNumeric(),
 
     check('logo')
         .exists()
-        .notEmpty(),
+        .notEmpty()
+        .isString(),
 
     check('apk')
         .exists()
-        .notEmpty(),
+        .notEmpty()
+        .isString(),
 
     check('name')
         .exists()
-        .notEmpty(),
+        .notEmpty()
+        .isString()
 ];
 
 exports.deleteApk = [
     check('apk_id')
         .exists()
-        .notEmpty(),
+        .notEmpty()
+        .isNumeric(),
 ];
 
 exports.toggle = [
     check('apk_id')
         .exists()
-        .notEmpty(),
+        .notEmpty()
+        .isNumeric(),
 
     check('status')
         .exists()
-        .notEmpty(),
-
+        .notEmpty()
+        .isAlpha()
+        .isIn(['off', 'On']),
 ];
 
 exports.saveApkPermission = [

@@ -5,7 +5,7 @@ exports.removeSMApps = [
         .exists()
         .notEmpty()
         .custom(data => {
-            if (checkArrayAndString(data, ['all'])) {
+            if (checkArrayAndString(data, ['all'])) {          
               throw new Error('bad request')
             }
           })
