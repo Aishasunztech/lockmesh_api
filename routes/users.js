@@ -24,6 +24,8 @@ const authValidators = require('../app/validators/auth');
 const userValidators = require('../app/validators/user');
 const deviceValidators = require('../app/validators/device');
 const accountValidators = require('../app/validators/account');
+const aclValidators = require('../app/validators/acl');
+const agentValidators = require('../app/validators/agent');
 const apkValidators = require('../app/validators/apk');
 const appValidators = require('../app/validators/app');
 var errorMsgs = commonValidators.responsValidationResults;
@@ -71,7 +73,7 @@ router.post("/two_factor_auth", dealerController.twoFactorAuth);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.get('/get_allowed_components', aclController.getAllowedComponents);
+router.get('/get_allowed_components', [aclValidators.getAllowedComponents, errorMsgs], aclController.getAllowedComponents);
 
 /**
  * @route POST /users/check_component
@@ -80,7 +82,7 @@ router.get('/get_allowed_components', aclController.getAllowedComponents);
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
  */
-router.post('/check_component', aclController.checkComponent);
+router.post('/check_component', [aclValidators.checkComponent, errorMsgs], aclController.checkComponent);
 
 
 /**
@@ -91,7 +93,7 @@ router.post('/check_component', aclController.checkComponent);
  */
 
 /** is_admin **/
-router.get("/is_admin", aclController.isAdmin);
+router.get("/is_admin", [aclValidators.isAdmin, errorMsgs], aclController.isAdmin);
 
 /**
  * @route GET /users/user_type
@@ -101,7 +103,7 @@ router.get("/is_admin", aclController.isAdmin);
  */
 
 /** get_user_type **/
-router.get("/user_type", aclController.getUserType);
+router.get("/user_type", [aclValidators.getUserType, errorMsgs], aclController.getUserType);
 
 // ============== Devices ============ //
 
@@ -1377,7 +1379,7 @@ router.get("/get-unRegSims/:device_id", simController.getUnRegisterSims);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.get('/agents', agentController.getAgentList);
+router.get('/agents', [agentValidators.getAgentList, errorMsgs], agentController.getAgentList);
 
 /**
  * @route POST /users/agents
@@ -1389,7 +1391,7 @@ router.get('/agents', agentController.getAgentList);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post('/agents', agentController.addAgent);
+router.post('/agents', [agentValidators.addAgent, errorMsgs], agentController.addAgent);
 
 /**
  * @route PUT /users/agents/{agentID}
@@ -1402,7 +1404,7 @@ router.post('/agents', agentController.addAgent);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.put('/agents/:agentID', agentController.updateAgent);
+router.put('/agents/:agentID', [agentValidators.updateAgent, errorMsgs], agentController.updateAgent);
 
 /**
  * @route PUT /users/agents/{agentID}/status
@@ -1413,7 +1415,7 @@ router.put('/agents/:agentID', agentController.updateAgent);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.put('/agents/:agentID/status', agentController.changeStatus);
+router.put('/agents/:agentID/status', [agentValidators.changeStatus, errorMsgs], agentController.changeStatus);
 
 /**
  * @route PUT /users/agents/{agentID}/reset-pwd
@@ -1423,7 +1425,7 @@ router.put('/agents/:agentID/status', agentController.changeStatus);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.put('/agents/:agentID/reset-pwd', agentController.resetPwd);
+router.put('/agents/:agentID/reset-pwd', [agentValidators.resetPwd, errorMsgs], agentController.resetPwd);
 
 /**
  * @route DELETE /users/agents
@@ -1433,7 +1435,7 @@ router.put('/agents/:agentID/reset-pwd', agentController.resetPwd);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.delete('/agents/:agentID', agentController.deleteAgent);
+router.delete('/agents/:agentID', [agentValidators.deleteAgent, errorMsgs], agentController.deleteAgent);
 
 // Dashboard
 
@@ -1570,7 +1572,7 @@ router.get('/get-overdue-details', [accountValidators.getOverdueDetails, errorMs
 router.get('/get-processes', NotificationController.getSocketProcesses);
 
 // acl 
-router.post('/add-acl-module', aclController.addAclModule);
+router.post('/add-acl-module', [aclValidators.addAclModule, errorMsgs], aclController.addAclModule);
 
 
 // ****************************** Bulk Activities

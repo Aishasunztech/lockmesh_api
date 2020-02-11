@@ -1,113 +1,271 @@
 const { check } = require('express-validator');
 
-exports.getProfiles =[
+exports.getProfiles = [
+    check('device_id')
+        .exists()
+        .notEmpty()
+];
+
+exports.saveNewData = [
+    check('type')
+        .exists()
+        .notEmpty()
+        .isString(),
+
+    check('newData')
+        .exists()
+        .notEmpty()
+        .isArray()
+];
+
+exports.importIDs = [
+    check('fieldName')
+        .exists()
+        .notEmpty()
+        .isString(),
+
+    check('parsedData')
+        .exists()
+        .notEmpty()
+        .isArray()
+];
+
+exports.exportIDs = [
+    check('fieldName')
+        .exists()
+        .notEmpty()
+        .isString()
+];
+
+exports.getSimIDs = [ // nn
 
 ];
 
-exports.saveNewData =[
+exports.getAllSimIDs = [ // nn
 
 ];
 
-exports.importIDs =[
+exports.resync_ids = [ // call same function as above (getAllSimIDs)
 
 ];
 
-exports.exportIDs =[
+exports.getUsedSimIDs = [ // nn
 
 ];
 
-exports.getSimIDs =[
+exports.getChatIDs = [ // nn
 
 ];
 
-exports.getAllSimIDs =[
+exports.getAllChatIDs = [ // nn
 
 ];
 
-exports.resync_ids =[
+exports.getPGPEmails = [ // nn
 
 ];
 
-exports.getUsedSimIDs =[
+exports.getAllPGPEmails = [ // nn
 
 ];
 
-exports.getChatIDs =[
+exports.getUsedPGPEmails = [ // nn
 
 ];
 
-exports.getAllChatIDs =[
+exports.getUsedSimIDs = [ // nn
 
 ];
 
-exports.getPGPEmails =[
+exports.getUsedChatIDs = [ // nn
 
 ];
 
-exports.getAllPGPEmails =[
+exports.deleteCSV = [
+    check('fieldName')
+        .exists()
+        .notEmpty()
+        .isString(),
+
+    check('ids')
+        .exists()
+        .notEmpty()
+        .isArray()
+];
+
+exports.purchaseCredits = [
+    check('data.credits')
+        .exists()
+        .notEmpty(),
+
+    check('data.method')
+        .exists()
+        .notEmpty(),
+
+    check('data.total')
+        .exists()
+        .notEmpty(),
+
+    check('data.currency_price')
+        .exists()
+        .notEmpty(),
+
+    check('data.promo_code')
+        .exists()
+        .notEmpty(),
+
+    check('data.currency')
+        .exists()
+        .notEmpty(),
 
 ];
 
-exports.getUsedPGPEmails =[
+exports.purchaseCredits_CC = [
+    check('creditInfo.credits')
+        .exists()
+        .notEmpty(),
+
+    check('creditInfo.method')
+        .exists()
+        .notEmpty(),
+
+    check('creditInfo.total')
+        .exists()
+        .notEmpty(),
+
+    check('creditInfo.currency_price')
+        .exists()
+        .notEmpty(),
+
+    check('creditInfo.promo_code')
+        .exists()
+        .notEmpty(),
+
+    check('creditInfo.currency')
+        .exists()
+        .notEmpty(),
+
+    check('cardInfo.number')
+        .exists()
+        .notEmpty(),
+
+    check('cardInfo.name')
+        .exists()
+        .notEmpty(),
+
+    check('cardInfo.cvc')
+        .exists()
+        .notEmpty(),
+
+    check('cardInfo.expiry')
+        .exists()
+        .notEmpty(),
 
 ];
 
-exports.getUsedSimIDs =[
+exports.saveProfile = [
+    check('profileName')
+        .exists()
+        .notEmpty(),
+
+    check('usr_acc_id')
+        .exists()
+        .notEmpty(),
+
+    check('device_setting.app_list')
+        .exists()
+        .notEmpty(),
+
+    check('device_setting.passwords')
+        .exists()
+        .notEmpty(),
+
+    check('device_setting.controls')
+        .exists()
+        .notEmpty(),
+
+    check('device_setting.extensions')
+        .exists()
+        .notEmpty()
 
 ];
 
-exports.getUsedChatIDs =[
+exports.savePackagePermissions = [
+    check('action')
+        .exists()
+        .notEmpty(),
+
+    check('package_id')
+        .exists()
+        .notEmpty(),
+
+    check('dealers')
+        .exists()
+        .notEmpty()
+];
+
+exports.ackCreditRequest = [
+    check('data.credits')
+        .exists()
+        .notEmpty(),
+
+    check('data.dealer_id')
+        .exists()
+        .notEmpty(),
+
+    check('data.request_id')
+        .exists()
+        .notEmpty(),
+
+    check('data.type')
+        .exists()
+        .notEmpty(),
 
 ];
 
-exports.deleteCSV =[
+exports.getDomains = [ // nn
 
 ];
 
-exports.purchaseCredits =[
+
+exports.addDomain = [
+    check('data.domain')
+        .exists()
+        .notEmpty(),
+];
+
+exports.editDomain = [
+    check('data.domain')
+        .exists()
+        .notEmpty(),
+
+    check('data.oldDomain')
+        .exists()
+        .notEmpty(),
 
 ];
 
-exports.purchaseCredits_CC =[
+exports.deleteDomain = [
+    check('data.domain_name')
+        .exists()
+        .notEmpty()
 
 ];
 
-exports.saveProfile =[
+exports.getLatestPaymentHistory = [
+    check('type')
+        .exists()
+        .notEmpty(),
 
+    check('status')
+        .exists()
+        .notEmpty(),
+
+    check('limit')
+        .exists()
+        .notEmpty()
 ];
 
-exports.savePackagePermissions =[
-
-];
-
-exports.ackCreditRequest =[
-
-];
-
-exports.getDomains =[
-
-];
-
-exports.getDomains =[
-
-];
-
-exports.addDomain =[
-
-];
-
-exports.editDomain =[
-
-];
-
-exports.deleteDomain =[
-
-];
-
-exports.getLatestPaymentHistory =[
-
-];
-
-exports.getOverdueDetails =[
+exports.getOverdueDetails = [ // nn
 
 ];
