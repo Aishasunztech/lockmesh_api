@@ -375,11 +375,9 @@ exports.getAllSimIDs = async (req, res) => {
     if (verify) {
         let query = "";
         let type = verify.user.user_type;
+        query = "SELECT * FROM sim_ids WHERE delete_status = '0'";
         if (type === DEALER || type === SDEALER) {
-            let userIDs = await helpers.getUserAccID(verify.user.dealer_id);
-            query = `SELECT * FROM sim_ids WHERE used = '1' AND delete_status = '0' AND user_acc_id IN (${userIDs})`;
-        } else {
-            query = "SELECT * FROM sim_ids";
+            query = query + ` AND (dealer_id = ${verify.user.id} OR uploaded_by_id = ${verify.user.id}) `;
         }
 
         sql.query(query, async function (error, resp) {
@@ -455,7 +453,7 @@ exports.getChatIDs = async (req, res) => {
     var verify = req.decoded; // await verifyToken(req, res);
     if (verify) {
         var loggedInuid = verify.user.id;
-         let user_acc_id = req.params.user_acc_id
+        let user_acc_id = req.params.user_acc_id
         let dealer_id = req.params.dealer_id
         let query = `SELECT * FROM chat_ids WHERE user_acc_id = ${user_acc_id} AND dealer_id = ${dealer_id} AND delete_status = '0'`;
         sql.query(query, async function (error, resp) {
@@ -488,16 +486,13 @@ exports.getChatIDs = async (req, res) => {
     }
 }
 
-
 exports.getAllChatIDs = async (req, res) => {
     var verify = req.decoded;
     if (verify) {
         let type = verify.user.user_type;
+        let query = "SELECT * FROM chat_ids WHERE delete_status = '0'";
         if (type === DEALER || type === SDEALER) {
-            let userIDs = await helpers.getUserAccID(verify.user.dealer_id);
-            query = `SELECT * FROM chat_ids WHERE used = '1' AND delete_status = '0' AND user_acc_id IN (${userIDs})`;
-        } else {
-            query = "SELECT * FROM chat_ids";
+            query = query + ` AND (dealer_id = ${verify.user.id} OR uploaded_by_id = ${verify.user.id}) `;
         }
 
         sql.query(query, async function (error, resp) {
@@ -535,9 +530,6 @@ exports.getAllChatIDs = async (req, res) => {
         })
     }
 }
-
-
-
 
 exports.getPGPEmails = async (req, res) => {
     var verify = req.decoded; // await verifyToken(req, res);
@@ -601,11 +593,9 @@ exports.getAllPGPEmails = async (req, res) => {
     if (verify) {
         let type = verify.user.user_type;
         let dealer_id = verify.user.dealer_id;
+        let query = "SELECT * FROM pgp_emails WHERE delete_status = '0'";
         if (type === DEALER || type === SDEALER) {
-            let userIDs = await helpers.getUserAccID(dealer_id);
-            query = `SELECT * FROM pgp_emails WHERE used = '1' AND delete_status = '0' AND user_acc_id IN (${userIDs})`;
-        } else {
-            query = "SELECT * FROM pgp_emails";
+            query = query + ` AND (dealer_id = ${verify.user.id} OR uploaded_by_id = ${verify.user.id}) `;
         }
         sql.query(query, async function (error, resp) {
             if (error) {
@@ -796,7 +786,6 @@ exports.deleteCSV = async (req, res) => {
         }
     }
 }
-
 
 // Purchase credits_CASH
 exports.purchaseCredits = async function (req, res) {

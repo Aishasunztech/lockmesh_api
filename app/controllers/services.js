@@ -737,7 +737,7 @@ exports.resetPgpLimit = async function (req, res) {
                             });
                             return
                         }
-                        console.log(results);
+                        // console.log(results);
                         if (results && results.affectedRows > 0) {
                             res.send({
                                 status: true,
