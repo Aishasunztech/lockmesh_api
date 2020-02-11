@@ -1,4 +1,4 @@
-const { check } = require('express-validator');
+const { check, query, param, header } = require('express-validator');
 
 exports.devices = [ // nn
 

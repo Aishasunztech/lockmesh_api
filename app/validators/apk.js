@@ -1,4 +1,4 @@
-const { check } = require('express-validator');
+const { check, query, param, header } = require('express-validator');
 
 exports.apkList = [ // nn
 
@@ -18,21 +18,21 @@ exports.checkApkName = [
 
 exports.uploadApk = [
     // query
-    check('fieldName')
+    query('fieldName')
         .exists()
         .notEmpty(),
 
-    check('screen')
+    query('screen')
         .exists()
         .notEmpty(),
 
 
     // headers
-    check('id')
+    header('id')
         .exists()
         .notEmpty(),
 
-    check('featured')
+    header('featured')
         .exists()
         .notEmpty(),
 
