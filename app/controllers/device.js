@@ -6796,6 +6796,7 @@ exports.applySettings = async function (req, res) {
 };
 
 exports.applyPushApps = async function (req, res) {
+    console.log(req.body);
     try {
         var verify = req.decoded; // await verifyToken(req, res);
         // if (verify.status !== undefined && verify.status == true) {

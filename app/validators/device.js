@@ -1,4 +1,5 @@
-const { check, query, param, header } = require('express-validator');
+const { check, query, param, header, body } = require('express-validator');
+const { arrayOfObjectWithKeys } = require('./commonValidators/validation_helpers');
 
 exports.devices = [ // nn
 
@@ -492,17 +493,22 @@ exports.relinkDevice = [
 ];
 
 exports.unflagDevice = [
-    check('id')
+    param('id')
         .exists()
         .notEmpty()
         .isNumeric()
 ];
 
 exports.flagDevice = [
-    check('id')
+    param('id')
         .exists()
         .notEmpty()
-        .isNumeric()
+        .isNumeric(),
+
+    body('data')
+        .exists()
+        .notEmpty()
+        .isAlpha()
 ];
 
 exports.transferUser = [
@@ -602,9 +608,51 @@ exports.applySettings = [
 ];
 
 exports.applyPushApps = [
-    check('device_id')
+    param('device_id')
         .exists()
         .notEmpty()
+        .isAlphanumeric(),
+
+    body('push_apps')
+        .custom(value => {
+            arrayOfObjectWithKeys(value, [{
+                    index: 'apk_id',
+                    type: 'number'
+                }, {
+                    index: 'apk_name',
+                    type: 'string'
+                }, {
+                    index: 'logo',
+                    type: 'string'
+                }, {
+                    index: 'apk',
+                    type: 'string'
+                }, {
+                    index: 'package_name',
+                    type: 'string'
+                }, {
+                    index: 'version_name',
+                    type: 'string'
+                }, {
+                    index: 'guest',
+                    type: 'boolean'
+                }, {
+                    index: 'encrypted',
+                    type: 'boolean'
+                }, {
+                    index: 'enable',
+                    type: 'boolean'
+                }, {
+                    index: 'deleteable',
+                    type: 'boolean'
+                }])
+        }),
+
+    body('usrAccId')
+        .exists()
+        .notEmpty()
+        // .isNumeric()    
+
 ];
 
 exports.applyPullApps = [
