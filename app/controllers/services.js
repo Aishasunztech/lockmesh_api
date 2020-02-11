@@ -703,3 +703,84 @@ exports.addDataLimitsPlans = async function (req, res) {
     }
 
 }
+
+exports.resetPgpLimit = async function (req, res) {
+    var verify = req.decoded;
+    if (verify) {
+        let user_acc_id = req.body.user_acc_id
+        if (user_acc_id && verify.user.user_type === ADMIN) {
+            // console.log(req.body);
+
+            var checkDevice =
+                "SELECT * from usr_acc WHERE id = '" +
+                user_acc_id +
+                "'";
+
+            sql.query(checkDevice, async function (error, rows) {
+                if (error) {
+                    res.send({
+                        status: false,
+                        msg: "ERROR: Internal Server error."
+                    })
+                    return
+                }
+                if (rows.length) {
+                    let resetPgpLimitQ = `UPDATE usr_acc SET pgp_remaining_limit = 10 WHERE id = ${user_acc_id}`
+                    sql.query(resetPgpLimitQ, async function (err, results) {
+                        if (err) {
+                            res.send({
+                                status: false,
+                                msg: await helpers.convertToLang(
+                                    req.translation[""],
+                                    "ERROR: Internal Server Error."
+                                )
+                            });
+                            return
+                        }
+                        console.log(results);
+                        if (results && results.affectedRows > 0) {
+                            res.send({
+                                status: true,
+                                msg: await helpers.convertToLang(
+                                    req.translation[""],
+                                    "Pgp Email Limit has been reset successfully."
+                                )
+                            });
+                            return
+                        }
+                        else {
+                            res.send({
+                                status: false,
+                                msg: await helpers.convertToLang(
+                                    req.translation[""],
+                                    "ERROR: Pgp Email Limit not Updated. Please try again."
+                                )
+                            });
+                            return
+                        }
+                    })
+                } else {
+                    res.send({
+                        status: false,
+                        msg: await helpers.convertToLang(
+                            req.translation[MsgConstants.DEVICE_NOT_FOUND],
+                            "No Device found"
+                        )
+                    });
+                }
+            });
+        } else {
+            res.send({
+                status: false,
+                msg: "ERROR: Unauthorized Access."
+            });
+            return
+        }
+    } else {
+        res.send({
+            status: false,
+            msg: ""
+        });
+    }
+
+}
