@@ -1,5 +1,8 @@
 const { check, query, param, header, body } = require('express-validator');
-const { arrayOfObjectWithKeys } = require('./commonValidators/validation_helpers');
+const { arrayOfObjectWithKeys, isObject } = require('./commonValidators/validation_helpers');
+
+const DEVICE_ID_PATTERN = /^([A-Za-z]{4})([0-9]{6})$/;
+const USER_ID_PATTERN = /^ID([0-9]{6,})$/;
 
 exports.devices = [ // nn
 
@@ -474,22 +477,20 @@ exports.deleteDevice = [
 ];
 
 exports.unlinkDevice = [
-    check('action')
+    param('id')
         .exists()
         .notEmpty()
-        .isString(),
-
-    check('devices')
-        .exists()
-        .notEmpty()
-        .isArray()
+        .isNumeric(),
+    
+    body('device')
+        .custom(value => isObject(value))
 ];
 
 exports.relinkDevice = [
-    check('id')
+    param('id')
         .exists()
         .notEmpty()
-    // .isNumeric()
+        .isNumeric()
 ];
 
 exports.unflagDevice = [
@@ -512,27 +513,32 @@ exports.flagDevice = [
 ];
 
 exports.transferUser = [
-    check('NewUser')
-        .exists()
-        .notEmpty(),
-
-    check('OldUser')
-        .exists()
-        .notEmpty(),
-
-    check('OldUsr_device_id')
+    body('NewUser')
         .exists()
         .notEmpty()
+        .matches(USER_ID_PATTERN),
+
+    body('OldUser')
+        .exists()
+        .notEmpty()
+        .matches(USER_ID_PATTERN),
+
+    body('OldUsr_device_id')
+        .exists()
+        .notEmpty()
+        .isNumeric()
 ];
 
 exports.transferDeviceProfile = [
     check('flagged_device')
         .exists()
-        .notEmpty(),
+        .notEmpty()
+        .custom(value => isObject(value)),
 
     check('reqDevice')
         .exists()
         .notEmpty()
+        .custom(value => isObject(value))
 ];
 
 exports.transferHistory = [
@@ -657,21 +663,46 @@ exports.applyPushApps = [
 ];
 
 exports.applyPullApps = [
-    check('device_id')
+    param('device_id')
         .exists()
         .notEmpty()
+        .isAlphanumeric(),
+
+    body('pull_apps')
+        .custom(value => {
+            return arrayOfObjectWithKeys(value, [
+                {index: 'key', type: 'number'},
+                {index: 'app_id', type: 'number'},
+                {index: 'package_name', type: 'string'},
+                {index: 'label', type: 'string'},
+                {index: 'apk_id', type: 'number'},
+                {index: 'apk_name', type: 'string'},
+                {index: 'version_name', type: 'string'},
+                {index: 'apk', type: 'string'},
+                {index: 'guest', type: 'boolean'},
+                {index: 'encrypted', type: 'boolean'},
+                {index: 'enable', type: 'boolean'}
+            ]);
+        }),
+    
+    body('usrAccId')
+        .exists()
+        .notEmpty()
+        .isNumeric()
 ];
 
 exports.getAppJobQueueOfDevice = [
-    check('device_id')
+    param('device_id')
         .exists()
         .notEmpty()
+        .isAlphanumeric()
 ];
 
 exports.resyncDevice = [
-    check('device_id')
+    body('device_id')
         .exists()
         .notEmpty()
+        .matches(DEVICE_ID_PATTERN)
 ];
 
 exports.deleteUnlinkDevice = [

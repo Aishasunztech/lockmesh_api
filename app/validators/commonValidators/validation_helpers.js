@@ -16,18 +16,17 @@ exports.arrayOfObjectWithKeys = function(value, obj = []){
                     errors.push(`object must have the following key: ${k.index}`);
                 } else {
                     let current = item[k.index];
+                    let valType = typeof current;
                     if(k.type === 'number'){
-                        let n = parseInt(current);
-                        if(isNaN(n)){
-                            errors.push(`${k.index} has invalid value ${current}, ${k.type} required`);
+                        if(!(/^\d+$/.test(current))){
+                            errors.push(`${k.index} has invalid value ${current} of type ${valType}, ${k.type} required`);
                         }
                     } else if(k.type === 'float'){
-                        let n2 = parseFloat(current);
-                        if(isNaN(n2)){
-                            errors.push(`${k.index} has invalid value ${current}, ${k.type} requried`);
+                        if(!(/^[+-]?([0-9]*[.])?[0-9]+$/.test(current))){
+                            errors.push(`${k.index} has invalid value ${current} of type ${valType}, ${k.type} requried`);
                         }
                     } else if(typeof current !== k.type){
-                        errors.push(`${k.index} has invalid value ${current}, ${k.type} required`);
+                        errors.push(`${k.index} has invalid value ${current} of type ${valType}, ${k.type} required`);
                     }
                 }
             });
@@ -42,10 +41,6 @@ exports.arrayOfObjectWithKeys = function(value, obj = []){
     }
 }
 
-
-// exports.arrayOfObjectWithKeys = function(value){
-//     if(typeof value !== 'string'){
-//         throw new Error('string required');
-//     }
-//     // return true;
-// }
+exports.isObject = function(value){
+    return (!Array.isArray(value) && Object.keys(value).length > 0);
+}
