@@ -615,7 +615,7 @@ exports.applyPushApps = [
 
     body('push_apps')
         .custom(value => {
-            arrayOfObjectWithKeys(value, [{
+            return arrayOfObjectWithKeys(value, [{
                     index: 'apk_id',
                     type: 'number'
                 }, {
@@ -645,13 +645,14 @@ exports.applyPushApps = [
                 }, {
                     index: 'deleteable',
                     type: 'boolean'
-                }])
+                }]
+            );
         }),
 
     body('usrAccId')
         .exists()
         .notEmpty()
-        // .isNumeric()    
+        .isNumeric()    
 
 ];
 
