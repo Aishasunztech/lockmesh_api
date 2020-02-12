@@ -4970,11 +4970,6 @@ exports.transferDeviceProfile = async function (req, res) {
             let date_now = moment().format('YYYY/MM/DD')
             // Get data of Flagged Device
             var SelectFlaggedDeviceDetail = `SELECT ${usr_acc_query_text} FROM usr_acc LEFT JOIN devices ON (usr_acc.device_id=devices.id) WHERE usr_acc.device_id = ${flagged_device.usr_device_id} AND usr_acc.id = ${flagged_device.id} and devices.flagged != 'Not flagged'`;
-
-            console.log(SelectFlaggedDeviceDetail);
-
-
-            return;
             sql.query(SelectFlaggedDeviceDetail, async function (err, rsltq) {
                 if (err) {
                     console.log(err);
