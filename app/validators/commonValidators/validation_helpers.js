@@ -8,7 +8,11 @@ exports.arrayOfObjectWithKeys = function(value, obj = []){
         let errors = [];
         value.map((item) =>{
             return obj.filter(k => {
-                if(!Object.keys(item).includes(k.index)){
+                if(typeof k === 'string'){
+                    if(!Object.keys(item).includes(k)){
+                        errors.push(`object must have the following key: ${k}`);
+                    }
+                } else if(!Object.keys(item).includes(k.index)){
                     errors.push(`object must have the following key: ${k.index}`);
                 } else {
                     let current = item[k.index];
@@ -28,7 +32,7 @@ exports.arrayOfObjectWithKeys = function(value, obj = []){
                 }
             });
         });
-        if(Object.keys(errors).length){
+        if(errors.length){
             throw new Error(errors.join())
         } else {
              return true;
