@@ -1,18 +1,18 @@
-const { check, query, param, header } = require('express-validator');
+const { check, query, param, body, header } = require('express-validator');
 
 exports.apkList = [ // nn
 
 ];
 
 exports.checkApkName = [
-    check('apk_id')
-        .exists()
-        .notEmpty(),
+    // check('apk_id')
+    //     .exists()
+    //     .notEmpty(),
 
     check('name')
         .exists()
         .notEmpty()
-        .isString(),
+        .isAlphanumeric(),
 
 
 ];
@@ -23,82 +23,88 @@ exports.uploadApk = [
         .exists()
         .notEmpty(),
 
-    query('screen')
-        .exists()
-        .notEmpty(),
+    // query('screen')
+    //     .exists()
+    //     .notEmpty(),
 
 
-    // headers
-    header('id')
-        .exists()
-        .notEmpty(),
+    //***** no need to validate file data */ 
 
-    header('featured')
-        .exists()
-        .notEmpty(),
+    // // headers
+    // header('id')
+    //     .exists()
+    //     .notEmpty(),
+
+    // header('featured')
+    //     .exists()
+    //     .notEmpty(),
 
 
-    // files
-    check('logo')
-        .exists()
-        .notEmpty(),
 
-    check('apk')
-        .exists()
-        .notEmpty(),
+    // // files
+    // check('logo')
+    //     .exists()
+    //     .notEmpty(),
+
+    // check('apk')
+    //     .exists()
+    //     .notEmpty(),
 
 ];
 
 exports.addApk = [
-    check('logo')
+    body('logo')
         .exists()
-        .notEmpty(),
+        .notEmpty()
+        .isString(),
 
-    check('apk')
+    body('apk')
         .exists()
-        .notEmpty(),
+        .notEmpty()
+        .isString(),
 
-    check('name')
+    body('name')
         .exists()
-        .notEmpty(),
+        .notEmpty()
+        .isString()
 ];
 
 exports.editApk = [
-    check('apk_id')
+    body('apk_id')
         .exists()
         .notEmpty()
         .isNumeric(),
 
-    check('logo')
+    body('logo')
         .exists()
         .notEmpty()
         .isString(),
 
-    check('apk')
+    body('apk')
         .exists()
         .notEmpty()
         .isString(),
 
-    check('name')
+    body('name')
         .exists()
         .notEmpty()
         .isString()
 ];
 
 exports.deleteApk = [
-    check('apk_id')
+    body('apk_id')
         .exists()
         .notEmpty()
         .isNumeric(),
 ];
 
 exports.toggle = [
-    check('apk_id')
+    body('apk_id')
         .exists()
         .notEmpty()
         .isNumeric(),
 
-    check('status')
+    body('status')
         .exists()
         .notEmpty()
         .isAlpha()
@@ -106,45 +112,48 @@ exports.toggle = [
 ];
 
 exports.saveApkPermission = [
-    check('action')
-        .exists()
-        .notEmpty(),
+    // body('action')
+    //     .exists()
+    //     .notEmpty(),
 
-    check('apkId')
-        .exists()
-        .notEmpty(),
+    // body('apkId')
+    //     .exists()
+    //     .notEmpty(),
 
-    check('dealers')
-        .exists()
-        .notEmpty(),
+    // body('dealers')
+    //     .exists()
+    //     .notEmpty(),
 ];
 
 exports.savePolicyPermissions = [
-    check('action')
-        .exists()
-        .notEmpty(),
+    // check('action')
+    //     .exists()
+    //     .notEmpty(),
 
-    check('policyId')
-        .exists()
-        .notEmpty(),
+    // check('policyId')
+    //     .exists()
+    //     .notEmpty(),
 
-    check('dealers')
-        .exists()
-        .notEmpty(),
+    // check('dealers')
+    //     .exists()
+    //     .notEmpty(),
 ];
 
+// secure market apps uninstal
 exports.handleUninstallApk = [
     // param
-    check('apk_id')
+    param('apk_id')
         .exists()
-        .notEmpty(),
+        .notEmpty()
+        .isNumeric(),
 
-    // body
-    check('spaceType')
+    body('spaceType')
         .exists()
-        .notEmpty(),
+        .notEmpty()
+        .isAlpha()
+        .isIn(['guest', 'encrypted']),
 
-    check('value')
-        .exists()
-        .notEmpty(),
+    // body('value')
+    //     .exists()
+    //     .notEmpty(),
 ];

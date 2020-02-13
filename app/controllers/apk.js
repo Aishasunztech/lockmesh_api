@@ -215,9 +215,11 @@ console.log("body ", req.body);
 
 exports.uploadApk = async function (req, res) {
     res.setHeader('Content-Type', 'multipart/form-data');
-
+    // console.log(req.query, req.files, "req.query.fieldName ", req.query.fieldName);
+    console.log("req.header ", req.headers);
     var verify = req.decoded;
-
+// res.send({status: true, msg: 'mkflsd'})
+// return;
     if (verify) {
         console.log("field name: ", req.query.fieldName);
 
@@ -749,7 +751,7 @@ exports.toggle = async function (req, res) {
 
 exports.saveApkPermission = async function (req, res) {
     var verify = req.decoded;
-
+    console.log("check body: ", req.body);
     // console.log(req.body.action);
     // if (verify['status'] !== undefined && verify.status == true) {
     if (verify) {

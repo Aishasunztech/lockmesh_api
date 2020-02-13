@@ -333,6 +333,7 @@ exports.getUserDealers = async function (req, res) {
 
 exports.getDealers = async function (req, res) {
     var verify = req.decoded;
+    console.log(req.params)
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
         let where = "";
@@ -413,7 +414,7 @@ exports.getDealers = async function (req, res) {
         } else {
             return res.send({
                 status: false,
-                msg: "Error in query " + error,
+                msg: "Error in query ",
                 data: []
             });
         }
@@ -425,7 +426,7 @@ exports.getDealers = async function (req, res) {
 exports.addDealer = async function (req, res) {
 
     var verify = req.decoded;
-
+    console.log(req.body)
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
         var dealerName = req.body.name;
@@ -594,6 +595,7 @@ exports.addDealer = async function (req, res) {
 
 exports.editDealers = async function (req, res) {
     var verify = req.decoded;
+    console.log(req.body)
     // if (verify.status !== undefined && verify.status == true) {
     try {
         if (verify) {
@@ -694,6 +696,11 @@ exports.editDealers = async function (req, res) {
                         }
                     });
 
+                } else {
+                    return res.send({
+                        status: false,
+                        msg: 'Dealer not found'
+                    });
                 }
 
             } else {
@@ -716,6 +723,7 @@ exports.editDealers = async function (req, res) {
 
 exports.setDealerCreditsLimit = async function (req, res) {
     var verify = req.decoded;
+    console.log(req.body)
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
         var credits_limit = req.body.credits_limit;
@@ -755,6 +763,11 @@ exports.setDealerCreditsLimit = async function (req, res) {
 
                     }
                 })
+            } else {
+                return res.send({
+                    status: false,
+                    msg: 'Dealer not found'
+                });
             }
         } else {
             data = {
@@ -841,7 +854,7 @@ exports.deleteDealer = async function (req, res) {
 /** Undo Dealer / S-Dealer **/
 exports.undoDealer = async function (req, res) {
     var verify = req.decoded;
-
+    // console.log(req.body)
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
         var loggedInuid = verify.user.id;
@@ -1057,12 +1070,14 @@ exports.activateDealer = async function (req, res) {
 
 
 exports.resetPwd = async function (req, res) {
-
+    console.log(req.body);
+    // return res.send({status:false, msg: 'kjk'})
     var verify = req.decoded;
     var isReset = false;
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
-
+        // console.log(req.body)
+        return res.send({ status: false, msg: 'kdlfas' })
         var user = verify.user;
         if (req.body.pageName != undefined && req.body.pageName != "") {
             if (user.user_type === Constants.ADMIN || user.user_type === Constants.DEALER) {
@@ -1486,7 +1501,7 @@ exports.getDealerSalesHistory = async function (req, res) {
     let response = {};
     let sDealerIds = [];
 
-    
+
 
 
 
@@ -2005,6 +2020,8 @@ exports.getDropdownSelectedItems = async function (req, res) {
 exports.saveDropDown = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
+        console.log(req.body, req.body.selected_items);
+        return res.send({ status: false });
 
         var selected_items = req.body.selected_items;
         var dropdownType = req.body.pageName;
