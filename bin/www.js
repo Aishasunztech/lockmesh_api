@@ -1,7 +1,7 @@
 // libraries
 require("dotenv").config();
 require("stackify-node-apm");
-var fs = require( 'fs' );
+var fs = require('fs');
 var momentTz = require("moment-timezone");
 var moment = require('moment');
 var debug = require("debug")("webportalbackend:server");
@@ -43,13 +43,13 @@ var port = normalizePort(process.env.PORT || "3000");
 app.set("port", port);
 
 // if(constants.APP_ENV === 'local'){
-	var server = http.createServer(app);
+var server = http.createServer(app);
 // } else {
 
-	// var server = https.createServer({ 
-	// 	// key: fs.readFileSync('privateKey.pem'),
-	// 	// cert: fs.readFileSync('fullChain.pem') 
-	//  },app);
+// var server = https.createServer({ 
+// 	// key: fs.readFileSync('privateKey.pem'),
+// 	// cert: fs.readFileSync('fullChain.pem') 
+//  },app);
 // }
 
 
@@ -63,6 +63,22 @@ let io = socket();
 // io.set('origins', '*:*');
 io.attach(server);
 socketRoutes.baseSocket(io);
+
+
+
+let mobile_io = socket({
+	path: '/mobile/socket'
+});
+
+mobile_io.attach(server);
+socketRoutes.mobileSocket(mobile_io);
+
+let web_io = socket({
+	path: '/web/socket'
+});
+
+web_io.attach(server);
+socketRoutes.webSocket(web_io);
 
 // let dealerIo = socket({
 // 	path: '/dealer'

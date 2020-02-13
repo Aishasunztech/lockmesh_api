@@ -19,12 +19,15 @@ let io;
 // let dealerIo;
 
 module.exports = {
-    baseIo:io,
-    baseSocket : function (socketIo) {
+    baseIo: io,
+    mobile_io: null,
+    web_io: null,
+
+    baseSocket: function (socketIo) {
         this.baseIo = socketIo;
         // socket configuration options
         // io.path('/api')
-    
+
         // {
         //    path: '/socket.io',
         //    serveClient: false,
@@ -32,42 +35,60 @@ module.exports = {
         //    pingTimeout: 5000,
         //    cookie: false
         // }
-    
-    
+
+
         // io = socket({
         //     pingTimeout :100
         // });
-    
-    
-        
-    
+
+
+
+
         // io.set('transports', ['websocket']);
-    
+
         // ===============================================================================
         // io.of('/') is for middleware not for path/namespace/endpoint 
         // ===============================================================================
-    
+
         // ===============================================================================
         // io.of('dynamic of for device_id') for dynamic/namespace/endpoint
         // ===============================================================================
         // const dynamicNsp = io.of(/^\/\d+$/).on('connect', (socket) => {
         //     const newNamespace = socket.nsp; // newNamespace.name === '/dynamic-101'
-    
+
         //     // broadcast to all clients in the given sub-namespace
         //     newNamespace.emit('hello');
         // });
-    
-    
+
+
         // middleware for socket incoming and outgoing requests
         socketIo.use(socketMiddleware);
-    
-    
-        socketIo.sockets.on('connection', async function(socket){
+
+
+        socketIo.sockets.on('connection', async function (socket) {
+            console.log("BASE SOCKET CONNETED");
             await socketController.baseSocket(socketIo, socket)
         });
-        
+
     },
 
+    mobileSocket: function (socketIo) {
+        this.mobile_io = socketIo;
+        socketIo.use(socketMiddleware);
+        socketIo.sockets.on('connection', async function (socket) {
+            console.log("MOBILE SOCKET CONNETED");
+            await socketController.baseSocket(socketIo, socket)
+        });
+    },
+
+    webSocket: function (socketIo) {
+        this.web_io = socketIo;
+        socketIo.use(socketMiddleware);
+        socketIo.sockets.on('connection', async function (socket) {
+            console.log("WEB SOCKET CONNETED");
+            await socketController.baseSocket(socketIo, socket)
+        });
+    },
     // dealerIo: dealerIo,
     // dealerSocket: function (socketIo){
     //     // console.log(socketIo);
