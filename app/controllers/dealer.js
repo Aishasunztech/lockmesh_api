@@ -1120,6 +1120,8 @@ exports.resetPwd = async function (req, res) {
             }
 
             newPwd = req.body.newpwd;
+            dealer_id = user.dealer_id;
+            email = user.dealer_email
 
         }
         // console.log("new password " + newpwd);
