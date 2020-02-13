@@ -1,8 +1,15 @@
 const { check, param, body } = require('express-validator');
 const {
     add_dealer_roles,
-    page_names_for_drop_downs
+    page_names_for_drop_downs,
+    permission_types
 } = require('./commonValidators/constants');
+
+const { arrayOfObjectWithKeys, isObject } = require('./commonValidators/validation_helpers');
+
+// Define Dealer Schemas
+const saveDropDownSchema = [];
+
 
 
 exports.getAllDealers = [ // nn
@@ -23,149 +30,125 @@ exports.getUserDealers = [
 
 exports.getDealers = [
     param('pageName')
-        .exists()
         .notEmpty()
     // .isNumeric()
 ];
 
 exports.addDealer = [
     body('name')
-        .exists()
         .notEmpty()
         .isAlphanumeric(),
 
     body('email')
-        .exists()
         .notEmpty()
         .isEmail(),
 
     body('pageType')
-        .exists()
         .notEmpty()
         .isIn(add_dealer_roles),
 ];
 
 exports.editDealers = [
     body('name')
-        .exists()
         .notEmpty()
         .isAlphanumeric(),
 
     body('email')
-        .exists()
         .notEmpty()
         .isEmail(),
 
     body('dealer_id')
-        .exists()
         .notEmpty()
         .isNumeric()
 ];
 
 exports.setDealerCreditsLimit = [
     body('credits_limit')
-        .exists()
         .notEmpty()
         // .isNumeric(),
         .matches(/^(-?)[0-9]+$/),
 
     body('dealer_id')
-        .exists()
         .notEmpty()
         .isNumeric()
 ];
 
 exports.deleteDealer = [
     body('dealer_id')
-        .exists()
         .notEmpty()
         .isNumeric()
 ];
 
 exports.undoDealer = [
     body('dealer_id')
-        .exists()
         .notEmpty()
         .isNumeric()
 ];
 
 exports.suspendDealer = [
     body('dealer_id')
-        .exists()
         .notEmpty()
         .isNumeric()
 ];
 
 exports.activateDealer = [
     body('dealer_id')
-        .exists()
         .notEmpty()
         .isNumeric()
 ];
 
 exports.resetPwd = [
     // body('pageName')
-    //     .exists()
     //     .notEmpty()
     //     .isIn(add_dealer_roles),
 
     // body('newpwd')
-    //     .exists()
     //     .notEmpty()
     //     .isNumeric(),
 
     // body('curntpwd')
-    //     .exists()
     //     .notEmpty()
     //     .isNumeric(),
 
     // body('dealer_id')
-    //     .exists()
     //     .notEmpty()
     //     .isNumeric(),
 
     // body('dealer_email')
-    //     .exists()
     //     .notEmpty()
     //     .isEmail(),
 ];
 
 exports.connectDealer = [
     param('dealerId')
-        .exists()
         .notEmpty()
         .isNumeric()
 ];
 
 exports.dealerDomains = [
     param('dealerId')
-        .exists()
         .notEmpty()
         .isNumeric()
 ];
 
 exports.getDealerPaymentHistory = [
     param('dealerId')
-        .exists()
         .notEmpty()
         .isNumeric()
 ];
 
 exports.getDealerSalesHistory = [
     param('dealerId')
-        .exists()
         .notEmpty()
         .isNumeric()
 ];
 
 exports.changeDealerStatus = [
     param('dealerId')
-        .exists()
         .notEmpty()
         .isNumeric(),
 
     body('dealerStatus')
-        .exists()
         .notEmpty()
         .isIn(['active', 'restricted', 'suspended'])
 ];
@@ -184,51 +167,96 @@ exports.getDealerForSA = [ // nn
 
 exports.getDropdownSelectedItems = [
     param('dropdownType')
-        .exists()
         .notEmpty()
-        .isIn([page_names_for_drop_downs]),
+        .isIn(page_names_for_drop_downs),
 ];
 
 exports.saveDropDown = [
-    // body('selected_items')
-    //     .exists()
-    //     .isEmpty()
-    //     .isArray({ min: 1 }),
+    body('selected_items')
+        // .isArray()
+        .custom(value => {
+            return arrayOfObjectWithKeys(JSON.parse(value), saveDropDownSchema, true);
+        }),
 
-    // body('pageName')
-    //     .exists()
+    body('pageName')
+        .notEmpty()
+        .isIn(page_names_for_drop_downs),
+];
+
+exports.getPagination = [ // not uses
+    // param('dropdownType')
     //     .notEmpty()
-    //     .isIn([page_names_for_drop_downs]),
+    //     .isIn(page_names_for_drop_downs),
 ];
 
-exports.getPagination = [
-
-];
-
-exports.postPagination = [
+exports.postPagination = [ // not uses
 
 ];
 
-exports.updateDealerPins = [
+exports.updateDealerPins = [ // nn script
 
 ];
 
 exports.twoFactorAuth = [
-
+    body('isEnable')
+        // .not().isIn([undefined, null])
+        .isBoolean()
 ];
 
 exports.dealerPermissions = [
+    param('permissionType')
+        .notEmpty()
+        .isInt(permission_types),
+
+    body('action')
+        .notEmpty()
+        .isIn(['save', 'delete']),
+
+    body('permissionId')
+        .notEmpty()
+        .isNumeric(),
+
+    body('dealers')
+        .notEmpty()
+        .custom(value => {
+            return arrayOfObjectWithKeys(JSON.parse(value));
+        }),
+
+    body('statusAll')
+        .isBoolean()
 
 ];
 
 exports.connectDealerDomainsPermissions = [
 
+    body('action')
+        .notEmpty()
+        .isIn(['save', 'delete']),
+
+    body('permissionIds')
+        .notEmpty()
+        .isArray(),
+
+    body('dealers')
+        .notEmpty()
+        .isArray(),
+
+    body('statusAll')
+        .isBoolean()
 ];
 
 exports.setDealerDemosLimit = [
+    body('demos')
+        // .isNumeric()
+        .matches(/^[1-9][0-9]+$/),
 
+    body('dealer_id')
+        .notEmpty()
+        .isNumeric(),
 ];
 
 exports.setTimeZone = [
-
+    body('data')
+        .notEmpty()
+        .isString(),
 ];
