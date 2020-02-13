@@ -39,7 +39,7 @@ var today_date = datetime.create();
 /**
  * Create HTTP server.
  */
-var port = normalizePort(process.env.PORT || "3000");
+var port = normalizePort(process.env.PORT || constants.PORT);
 app.set("port", port);
 
 // if(constants.APP_ENV === 'local'){
@@ -135,7 +135,7 @@ function onError(error) {
 
 function onListening() {
 	var addr = server.address();
-	var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
+	var bind = typeof addr === "string" ? "pipe: " + addr : "port: " + addr.port;
 	debug("Listening on " + bind);
 	console.log("Listening on " + bind);
 }
