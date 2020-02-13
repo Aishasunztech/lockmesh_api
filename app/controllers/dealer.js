@@ -1059,66 +1059,105 @@ exports.activateDealer = async function (req, res) {
 exports.resetPwd = async function (req, res) {
 
     var verify = req.decoded;
-    var isReset = false;
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
+        var isReset = false;
+
+        let dealer_id = req.body.dealer_id;
+        var email = req.body.dealer_email;
+        let pageName = req.body.pageName;
 
         var user = verify.user;
-        if (req.body.pageName != undefined && req.body.pageName != "") {
-            if (user.user_type === Constants.ADMIN || user.user_type === Constants.DEALER) {
-                var newpwd = generator.generate({
-                    length: 10,
-                    numbers: true
-                });
-                isReset = true;
-                var query = "SELECT password FROM dealers WHERE dealer_id=" + req.body.dealer_id + " limit 1";
-                var rslt = await sql.query(query);
-                var curntPassword = rslt[0].password;
-            }
-        } else {
+        let newPwd = '';
+        let currentPassword = '';
+        /**
+         * @author Usman Hafeez
+         * @description 
+         */
 
-            if (req.body.newpwd != undefined) {
-                var newpwd = req.body.newpwd;
-                var curntPassword = md5(req.body.curntpwd);
+        if (pageName) {
+            if (user.user_type === Constants.SDEALER) {
+                return res.send({
+                    status: false,
+                    msg: "ERROR: password reset not allowed"
+                });
             }
+            let where_con = '';
+
+
+
+
+            if (user.user_type === Constants.ADMIN) {
+                where_con = `dealer_id = ? `
+
+            } else if (user.user_type === Constants.DEALER) {
+                where_con = ` dealer_id = ? AND (connected_dealer=${user.dealer_id} OR connected_dealer=0)`
+            }
+
+            var query = `SELECT password FROM dealers WHERE ${where_con} limit 1`;
+            var dealerResult = await sql.query(query, [dealer_id]);
+            if (!dealerResult || !dealerResult.length) {
+                return res.send({
+                    status: false,
+                    msg: "ERROR: password reset not allowed"
+                });
+            }
+
+            newPwd = generator.generate({
+                length: 10,
+                numbers: true
+            });
+            isReset = true;
+            currentPassword = dealerResult[0].password;
+
+
+        } else {
+            if (!req.body.newpwd) {
+                return res.send({
+                    status: false,
+                    msg: "ERROR: please put new password"
+                });
+            }
+
+            newPwd = req.body.newpwd;
+
         }
         // console.log("new password " + newpwd);
-        var email = req.body.dealer_email;
-        var dealer_id = req.body.dealer_id;
-        var enc_pwd = md5(newpwd); // encryted pwd
+        
+
+        var enc_pwd = md5(newPwd); // encryted pwd
 
 
-        if (!empty(email) && !empty(newpwd) && !empty(dealer_id)) {
+        if (email && newPwd && dealer_id) {
 
-            var query = "SELECT link_code from dealers where dealer_id=" + dealer_id + " AND password='" + curntPassword + "' limit 1";
+            var query = `SELECT link_code FROM dealers WHERE dealer_id=? LIMIT 1`;
 
 
-            var result = await sql.query(query);
+            var result = await sql.query(query, [dealer_id]);
             if (result.length) {
                 // console.log('error');
                 if (isReset) {
 
                     var subject = "Password Reset";
-                    var message = 'Your login details are : <br> Email : ' + email + '<br> Password : ' + newpwd + '<br> Dealer id : ' + dealer_id + '<br> Dealer Pin : ' + result[0].link_code + '.<br> Below is the link to login : <br> http://www.lockmesh.com <br>';
+                    var message = `Your login details are : <br> Email : ${email}<br> Password : ${newPwd}<br> Dealer id : ${dealer_id}<br> Dealer Pin : ${result[0].link_code}.<br> Below is the link to login : <br> ${app_constants.HOST} <br>`;
                 } else {
                     var subject = "Password Change";
-                    var message = 'You have changed your password in your Lockmesh.com account. <br><br> This is just to inform you about the activity. If it was not you, please immediately contact your provider to reset the password.';
+                    var message = `You have changed your password in your ${app_constants.HOST} account. <br><br> This is just to inform you about the activity. If it was not you, please immediately contact your provider to reset the password.`;
                 }
 
                 sendEmail(subject, message, email, async function (errors, response) {
                     if (errors) {
-                        res.send({
+                        return res.send({
                             status: false,
                             msg: "ERROR: Email could not sent."
                         });
-                        return;
                     } else {
 
-                        var sq = "update dealers set password = '" + enc_pwd + "' where dealer_id = '" + dealer_id + "'";
-                        sql.query(sq, async function (error, rows) {
+                        var updateDealerQ = `UPDATE dealers SET password = '${enc_pwd}' WHERE dealer_id = ?`;
+                        sql.query(updateDealerQ, [dealer_id], async function (error, rows) {
                             if (error) {
                                 console.log(error);
-                                res.send({
+                                return res.send({
                                     status: false,
                                     msg: "ERROR: Internal Server Error."
                                 });
@@ -1126,27 +1165,25 @@ exports.resetPwd = async function (req, res) {
 
                             if (rows.affectedRows == 0) {
                                 data = {
-                                    "status": false,
-                                    "data": rows
+                                    status: false,
+                                    msg: 'password is not updated'
                                 };
-                                res.send(data);
-                                return;
                             } else {
                                 data = {
                                     "status": true,
                                     "msg": await general_helpers.convertToLang(req.translation[MsgConstants.PASS_CHANGE_SUCC], "Password changed successfully.Please check your email"), // Password changed successfully.Please check your email.
-                                };
-                                res.send(data);
-                                return;
+                                }
                             }
+                            return res.send(data);
                         });
                     }
 
                 });
+
             } else {
                 data = {
                     "status": false,
-                    "msg": await general_helpers.convertToLang(req.translation[MsgConstants.INVALID_USER_AND_PASS], "Invalid User and Password"), // Invalid User and Password'
+                    "msg": await general_helpers.convertToLang(req.translation[MsgConstants.INVALID_USER_AND_PASS], "Error: password is not updated"), // Invalid User and Password'
                 };
                 res.send(data);
                 return;
@@ -1154,7 +1191,7 @@ exports.resetPwd = async function (req, res) {
         } else {
             res.json({
                 status: false,
-                "msg": await general_helpers.convertToLang(req.translation[MsgConstants.ENTER_VALID_DETAIL], "Please enter valid details"), // Invalid details"
+                "msg": await general_helpers.convertToLang(req.translation[MsgConstants.ENTER_VALID_DETAIL], "Error: Please enter valid details"), // Invalid details"
             });
             return;
         }
@@ -1486,7 +1523,7 @@ exports.getDealerSalesHistory = async function (req, res) {
     let response = {};
     let sDealerIds = [];
 
-    
+
 
 
 
