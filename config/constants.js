@@ -1,40 +1,54 @@
-let HOST_NAME = process.env.HOST_NAME;
-let APP_ENV = process.env.APP_ENV;
+var HOST_NAME = process.env.HOST_NAME;
+var APP_ENV = process.env.APP_ENV;
 
 // App Info
-let APP_TITLE = "LockMesh Dev";
-let URL = "http://localhost:3000";
-let SUPERADMIN_URL = "http://localhost:8042";
-let SUPERADMIN_URL_API = "http://localhost:8042";
+var APP_TITLE = "LockMesh Dev";
+var URL = "http://localhost:3000";
 
+var USERNAME = '';
+var PASSWORD = '';
+
+
+// set default utc-1 timezone for testing
+var TIME_ZONE =  "Europe/London"; // "Asia/Karachi";
+var TIME_ZONE_OFFSET = '+0:00';
+
+// Database
+var DB_HOST = "localhost";
+var DB_NAME = "lockmesh_db";
+var DB_USERNAME = "root";
+var DB_PASSWORD = "";
+
+
+// Email
+var SMTP_FROM_EMAIL = "admin@lockmesh.com";
+var SMTP_FROM_NAME = "Admin";
+
+// Device ID and Dealer Pin
+var DEVICE_ID_SYSTEM_LETTER = "L";
+var DEVICE_ID_SYSTEM_LETTER_INDEX = 2;
+
+var DEALER_PIN_SYSTEM_LETTER = "6";
+var DEALER_PIN_SYSTEM_LETTER_INDEX = 4;
+
+var STAFF_ID_SYSTEM_LETTER = '1';
+var STAFF_ID_SYSTEM_LETTER_INDEX = 1;
+
+
+// SA APIS AND CREDENTIALS
+var SUPERADMIN_URL = "http://localhost:8042";
+var SUPERADMIN_URL_API = "http://localhost:8042";
+var SA_USERNAME = 'whiteLabelAdmin!786@gmial.com';
+var SA_PASSWORD = 'whiteLabel@Admin!786';
+
+// TWILIO CREDENTIALS
 const accountSid = 'AC2383c4b776efb51c86cc6f9a5cdb4e89';
 const authToken = '8f09f2ebc98338bff27e0ac73ea71a23';
 let twilioClient = require('twilio')(accountSid, authToken);
 
-// set default utc-1 timezone for testing
-let TIME_ZONE =  "Europe/London"; // "Asia/Karachi";
-let TIME_ZONE_OFFSET = '+0:00';
-
-// Database
-let DB_HOST = "localhost";
-let DB_NAME = "lockmesh_db";
-let DB_USERNAME = "root";
-let DB_PASSWORD = "";
-
-
-// Email
-let SMTP_FROM_EMAIL = "admin@lockmesh.com";
-let SMTP_FROM_NAME = "Admin";
-
-// Device ID and Dealer Pin
-let DEVICE_ID_SYSTEM_LETTER = "L";
-let DEVICE_ID_SYSTEM_LETTER_INDEX = 2;
-
-let DEALER_PIN_SYSTEM_LETTER = "6";
-let DEALER_PIN_SYSTEM_LETTER_INDEX = 4;
-
-let STAFF_ID_SYSTEM_LETTER = '1';
-let STAFF_ID_SYSTEM_LETTER_INDEX = 1;
+// FIXER CREDENTIALS
+var FIXER_API_KEY= '96035c5c5b46baea5a96b84930eaed79';
+var BASE_CURRENCY = 'USD';
 
 if (HOST_NAME) {
 	APP_TITLE = HOST_NAME;
@@ -182,14 +196,19 @@ module.exports = {
 	HOST_NAME: HOST_NAME,
 	APP_TITLE: APP_TITLE,
 	APP_ENV: APP_ENV,
+	HOST: URL,
+	PORT: 3000,
+	
 	TIME_ZONE: TIME_ZONE,
 	TIME_ZONE_OFFSET: TIME_ZONE_OFFSET,
-	HOST: URL,
-	PORT: "",
 	SECRET: "kepitsecretwithauth!@#",
 	EXPIRES_IN: "86400s", // 24 Hours
 	DASHBOARD_EXPIRES_IN: '10800s', //3 Hours
 	MOBILE_EXPIRES_IN: '10800s', //3 Hours
+	
+	// APP Credentials
+	USERNAME: USERNAME,
+	PASSWORD: PASSWORD,
 
 	// BASIC AUTH Constants
 	BASIC_AUTH_USER: "web",
@@ -219,10 +238,13 @@ module.exports = {
 
 	STAFF_ID_SYSTEM_LETTER,
 	STAFF_ID_SYSTEM_LETTER_INDEX,
+
+	// Twilio credentials
 	twilioClient: twilioClient,
+
 	// Fixer API key
-	FIXER_API_KEY: "96035c5c5b46baea5a96b84930eaed79",
-	BASE_CURRENCY: "USD",
+	FIXER_API_KEY: FIXER_API_KEY,
+	BASE_CURRENCY: BASE_CURRENCY,
 
 	// SUPERADMIN URLs
 	SUPERADMIN_LOGIN_URL: `${
@@ -260,8 +282,8 @@ module.exports = {
 		}/api/v1/users/resync_ids`,
 
 	SUPERADMIN_USER_CREDENTIALS: {
-		email: "whiteLabelAdmin!786@gmial.com",
-		password: "whiteLabel@Admin!786"
+		email: SA_USERNAME,
+		password: SA_PASSWORD
 	}
 
 };
