@@ -4969,7 +4969,7 @@ exports.transferDeviceProfile = async function (req, res) {
             console.log(flagged_device, reqDevice);
             let date_now = moment().format('YYYY/MM/DD')
             // Get data of Flagged Device
-            var SelectFlaggedDeviceDetail = `SELECT ${usr_acc_query_text} FROM usr_acc WHERE device_id = ${flagged_device.usr_device_id} AND id = ${flagged_device.id}`;
+            var SelectFlaggedDeviceDetail = `SELECT ${usr_acc_query_text} FROM usr_acc LEFT JOIN devices ON (usr_acc.device_id=devices.id) WHERE usr_acc.device_id = ${flagged_device.usr_device_id} AND usr_acc.id = ${flagged_device.id} and devices.flagged != 'Not flagged'`;
             sql.query(SelectFlaggedDeviceDetail, async function (err, rsltq) {
                 if (err) {
                     console.log(err);
@@ -6893,6 +6893,7 @@ exports.applyPushApps = async function (req, res) {
 };
 
 exports.applyPullApps = async function (req, res) {
+    console.log(req.body);
     try {
         var verify = req.decoded;
 
