@@ -78,7 +78,7 @@ exports.login = async function (req, resp) {
                     jwt.sign({
                         device
                     }, app_constants.SECRET, {
-                        expiresIn: app_constants.EXPIRES_IN
+                        expiresIn: app_constants.MOBILE_EXPIRES_IN
                     }, (err, token) => {
                         if (err) {
                             data = {
@@ -219,7 +219,7 @@ exports.login = async function (req, resp) {
                                 jwt.sign({
                                     device
                                 }, app_constants.SECRET, {
-                                    expiresIn: app_constants.EXPIRES_IN
+                                    expiresIn: app_constants.MOBILE_EXPIRES_IN
                                 }, (err, token) => {
                                     if (err) {
                                         resp.json({
@@ -285,7 +285,7 @@ exports.systemLogin = async function (req, res) {
         },
         app_constants.SECRET,
         {
-            expiresIn: app_constants.EXPIRES_IN
+            expiresIn: app_constants.MOBILE_EXPIRES_IN
         },
         (err, token) => {
             if (err) {
@@ -767,7 +767,7 @@ exports.deviceStatus = async function (req, res) {
                         jwt.sign({
                             dvc
                         }, app_constants.SECRET, {
-                            expiresIn: app_constants.EXPIRES_IN
+                            expiresIn: app_constants.MOBILE_EXPIRES_IN
                         }, async (err, token) => {
 
                             if (err) {
@@ -850,7 +850,7 @@ exports.deviceStatus = async function (req, res) {
                     jwt.sign({
                         dvc
                     }, app_constants.SECRET, {
-                        expiresIn: app_constants.EXPIRES_IN
+                        expiresIn: app_constants.MOBILE_EXPIRES_IN
                     }, (err, token) => {
 
                         if (err) {
@@ -953,7 +953,7 @@ exports.deviceStatus = async function (req, res) {
                         jwt.sign({
                             dvc
                         }, app_constants.SECRET, {
-                            expiresIn: app_constants.EXPIRES_IN
+                            expiresIn: app_constants.MOBILE_EXPIRES_IN
                         }, async (err, token) => {
 
                             if (err) {
@@ -1033,7 +1033,7 @@ exports.deviceStatus = async function (req, res) {
                     jwt.sign({
                         dvc
                     }, app_constants.SECRET, {
-                        expiresIn: app_constants.EXPIRES_IN
+                        expiresIn: app_constants.MOBILE_EXPIRES_IN
                     }, (err, token) => {
 
                         if (err) {
@@ -1140,7 +1140,7 @@ exports.deviceStatus = async function (req, res) {
                         jwt.sign({
                             dvc
                         }, app_constants.SECRET, {
-                            expiresIn: app_constants.EXPIRES_IN
+                            expiresIn: app_constants.MOBILE_EXPIRES_IN
                         }, async (err, token) => {
 
                             if (err) {
@@ -1220,7 +1220,7 @@ exports.deviceStatus = async function (req, res) {
                     jwt.sign({
                         dvc
                     }, app_constants.SECRET, {
-                        expiresIn: app_constants.EXPIRES_IN
+                        expiresIn: app_constants.MOBILE_EXPIRES_IN
                     }, async (err, token) => {
 
                         if (err) {
