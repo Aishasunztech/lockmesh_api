@@ -389,6 +389,13 @@ exports.acceptDevice = async function (req, res) {
         let pay_now = req.body.pay_now
         let userData = await helpers.getUserDataByUserId(user_id);
 
+        if(!userData.length){
+            return res.send({
+                status: false,
+                msg: `Error: User Data not found against userId: ${user_id}.`
+            });
+        }
+
         let device_id = req.body.device_id;
         let device_name = userData[0].name;
         let device_email = userData[0].email;
@@ -399,9 +406,9 @@ exports.acceptDevice = async function (req, res) {
         let usr_acc_id = req.body.usr_acc_id;
         let usr_device_id = req.body.usr_device_id;
         let policy_id = req.body.policy_id;
-        let sim_id = req.body.sim_id == undefined ? "" : req.body.sim_id;
+        let sim_id = req.body.sim_id ? req.body.sim_id : '';
         var sim_id2 = req.body.sim_id2 ? req.body.sim_id2 : '';
-        let chat_id = req.body.chat_id == undefined ? "" : req.body.chat_id;
+        let chat_id = req.body.chat_id ? req.body.chat_id : "";
         let pgp_email = req.body.pgp_email == undefined ? "" : req.body.pgp_email;
         var trial_status = 0;
 
@@ -459,10 +466,10 @@ exports.acceptDevice = async function (req, res) {
 
         if (packages.length) {
             packages.map((item) => {
-                if (item.pkg_features.sim_id) {
+                if (item.pkg_features && item.pkg_features.sim_id) {
                     sim_id_included = true
                 }
-                if (item.pkg_features.sim_id2) {
+                if (item.pkg_features && item.pkg_features.sim_id2) {
                     sim_id2_included = true
                 }
             })
@@ -981,7 +988,7 @@ exports.acceptDevice = async function (req, res) {
                                                     }
 
 
-                                                    if (policy_id !== '') {
+                                                    if (policy_id) {
                                                         var slctpolicy = "select * from policy where id = " + policy_id + "";
                                                         let policy = await sql.query(slctpolicy);
                                                         var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type, action_by, dealer_type) VALUES ('" + device_id + "' ," + dealer_id + "," + usr_acc_id + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy', " + verify.user.id + ", '" + verify.user.user_type + "')";
@@ -1189,10 +1196,10 @@ exports.createDeviceProfile = async function (req, res) {
 
         if (packages.length) {
             packages.map((item) => {
-                if (item.pkg_features.sim_id) {
+                if (item.pkg_features && item.pkg_features.sim_id) {
                     sim_id_included = true
                 }
-                if (item.pkg_features.sim_id2) {
+                if (item.pkg_features && item.pkg_features.sim_id2) {
                     sim_id2_included = true
                 }
             })
@@ -1313,20 +1320,20 @@ exports.createDeviceProfile = async function (req, res) {
 
                                             if (packages.length) {
                                                 packages.map((item) => {
-                                                    if (item.pkg_features.sim_id) {
+                                                    if (item.pkg_features && item.pkg_features.sim_id) {
                                                         sim_id = (sim_ids[0]) ? sim_ids[0].sim_id : null;
                                                         if (sim_id) {
                                                             sim_ids.shift();
                                                         }
                                                     }
-                                                    if (item.pkg_features.sim_id2) {
+                                                    if (item.pkg_features && item.pkg_features.sim_id2) {
                                                         sim_id2 = (sim_ids[0]) ? sim_ids[0].sim_id : null;
                                                         if (sim_id) {
                                                             sim_ids.shift();
                                                         }
                                                     }
 
-                                                    if (item.pkg_features.chat_id) {
+                                                    if (item.pkg_features && item.pkg_features.chat_id) {
                                                         chat_id = (chat_ids[i]) ? chat_ids[i].chat_id : null;
                                                     }
                                                     if (item.pkg_features.pgp_email) {
@@ -7882,6 +7889,10 @@ exports.resetChatPin = async function (req, res) {
             }
         }).catch((err) => {
             console.log(err);
+            res.status(200).send({
+                msg: "Not Found",
+                status: false
+            });
         });
     }
 
@@ -7902,9 +7913,14 @@ exports.changeSchatPinStatus = async function (req, res) {
         if (req.body.type === 'disable') {
             type = 'disabled';
             URL = 'https://signal.lockmesh.com/v1/accounts/pin/disable?chat_id=' + chat_id;
-        } else {
+        } else if(req.body.type === 'enable') {
             type = 'enabled';
             URL = 'https://signal.lockmesh.com/v1/accounts/pin/enable?chat_id=' + chat_id;
+        } else {
+            return res.send({
+                msg: "Error: Invalid option for type",
+                status: false
+            });
         }
 
 

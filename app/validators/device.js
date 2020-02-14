@@ -1,6 +1,6 @@
 const { check, query, param, header, body } = require('express-validator');
 const { arrayOfObjectWithKeys, isObject, validateSimId, validatePGPEmail, validateChatId } = require('./commonValidators/validation_helpers');
-const { DEVICE_ID_PATTERN, USER_ID_PATTERN, DATE_REGEX, IMEI_REGEX } = require('../../constants/validation');
+const { DEVICE_ID_PATTERN, USER_ID_PATTERN, DATE_REGEX, IMEI_REGEX, CHAT_ID } = require('../../constants/validation');
 
 //************************* Define Device Schemas ****************/ 
 const applyPushAppsSchema = [
@@ -69,16 +69,9 @@ exports.devices = [ // nn
 ];
 
 exports.getDevicesForConnectPage = [ // nn
-    //     check('dealer_id')
-    //         .exists()
-    //         .notEmpty(),
-
 ];
 
 exports.getDevicesForReport = [  // nn
-    //     check('dealer_id')
-    //         .exists()
-    //         .notEmpty(),
 ];
 
 exports.newDevices = [ // nn
@@ -86,192 +79,167 @@ exports.newDevices = [ // nn
 ];
 
 exports.acceptDevice = [ // put
-    // check('user_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('user_id')
+        .notEmpty()
+        .matches(USER_ID_PATTERN),
 
-    // check('pay_now')
-    //     .exists()
-    //     .notEmpty(),
+    body('pay_now')
+        .isBoolean(),
 
-    // check('device_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('device_id')
+        .notEmpty()
+        .matches(DEVICE_ID_PATTERN),
 
-    // check('client_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('model')
+        .isString(),
 
-    // check('model')
-    //     .exists()
-    //     .notEmpty(),
+    body('dealer_id')
+        .notEmpty()
+        .isInt(),
 
-    // check('dealer_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('connected_dealer')
+        .optional({checkFalsy: true})
+        .isInt(),
 
-    // check('connected_dealer')
-    //     .exists()
-    //     .notEmpty(),
+    body('usr_acc_id')
+        .notEmpty()
+        .isInt(),
 
-    // check('usr_acc_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('usr_device_id')
+        .notEmpty()
+        .isInt(),
 
-    // check('usr_device_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('policy_id')
+        .optional({ checkFalsy: true })
+        .isInt(),
 
-    // check('policy_id')
-    //     .exists()
-    //     .notEmpty(),
+    
+    check('sim_id')
+        .optional({checkFalsy:true})
+        .isInt(),
 
-    // check('sim_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('sim_id2')
+        .optional({checkFalsy:true})
+        .isInt(),
 
-    // check('sim_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('chat_id')
+        .optional({checkFalsy: true})
+        .matches(CHAT_ID),
 
-    // check('sim_id2')
-    //     .exists()
-    //     .notEmpty(),
+    body('pgp_email')
+        .optional({checkFalsy: true})
+        .isEmail(),
 
-    // check('sim_id2')
-    //     .exists()
-    //     .notEmpty(),
+    body('term')
+        .optional({checkFalsy: true})
+        .not().isIn([false])
+        .isInt({min: 0, max: 12}),
 
-    // check('chat_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('products')
+        .optional()
+        .isArray(),
 
-    // check('chat_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('packages')
+        .optional()
+        .isArray(),
 
-    // check('pgp_email')
-    //     .exists()
-    //     .notEmpty(),
+    body('hardwares')
+        .optional({checkFalsy: true})
+        .isArray(),
 
-    // check('pgp_email')
-    //     .exists()
-    //     .notEmpty(),
+    body('total_price')
+        .isNumeric(),
 
-    // check('term')
-    //     .exists()
-    //     .notEmpty(),
+    body('hardwarePrice')
+        .optional({checkFalsy: true})
+        .isNumeric(),
 
-    // check('products')
-    //     .exists()
-    //     .notEmpty(),
+    body('data_plans')
+        .optional({checkFalsy: true})
+        .custom(v => isObject(v)),
 
-    // check('packages')
-    //     .exists()
-    //     .notEmpty(),
-
-    // check('hardwares')
-    //     .exists()
-    //     .notEmpty(),
-
-    // check('total_price')
-    //     .exists()
-    //     .notEmpty(),
-
-    // check('hardwarePrice')
-    //     .exists()
-    //     .notEmpty(),
-
-    // check('data_plans')
-    //     .exists()
-    //     .notEmpty(),
-
-    // check('paid_by_user')
-    //     .exists()
-    //     .notEmpty(),
-
-    // check('model')
-    //     .exists()
-    //     .notEmpty(),
+    body('paid_by_user')
+        .isIn(["PAID", "UNPAID"]),
 
 ];
 
 exports.createDeviceProfile = [
-    // check('client_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('client_id')
+        .optional({checkFalsy: true})
+        .isString(),
 
-    // check('chat_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('chat_id')
+        .optional({checkFalsy: true})
+        .matches(CHAT_ID),
 
-    // check('model')
-    //     .exists()
-    //     .notEmpty(),
+    body('model')
+        .isString(),
 
-    // check('user_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('user_id')
+        .notEmpty()
+        .matches(USER_ID_PATTERN),
 
-    // check('pgp_email')
-    //     .exists()
-    //     .notEmpty(),
+    body('pgp_email')
+        .optional({checkFalsy: true})
+        .isEmail(),
 
-    // check('term')
-    //     .exists()
-    //     .notEmpty(),
+    body('term')
+        .optional({checkFalsy: true})
+        .not().isIn([false])
+        .isInt({min: 0, max: 12}),
 
-    // check('duplicate')
-    //     .exists()
-    //     .notEmpty(),
+    body('duplicate')
+        .optional({checkFalsy: true})
+        .isInt(),
 
-    // check('data_plans')
-    //     .exists()
-    //     .notEmpty(),
+    body('data_plans')
+        .optional({checkFalsy: true})
+        .custom(v => isObject(v)),
 
-    // check('note')
-    //     .exists()
-    //     .notEmpty(),
+    body('note')
+        .optional({checkFalsy: true})
+        .isString(),
 
-    // check('validity')
-    //     .exists()
-    //     .notEmpty(),
+    body('validity')
+        .optional({nullable: true})
+        .isInt(),
 
-    // check('sim_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('sim_id')
+        .optional()
+        .isInt(),
 
-    // check('sim_id2')
-    //     .exists()
-    //     .notEmpty(),
+    body('sim_id2')
+        .optional()
+        .isInt(),
 
-    // check('policy_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('policy_id')
+        .optional({checkFalsy:true})
+        .isInt(),
 
-    // check('products')
-    //     .exists()
-    //     .notEmpty(),
+    body('products')
+        .optional({checkFalsy: true})
+        .isArray(),
 
-    // check('packages')
-    //     .exists()
-    //     .notEmpty(),
+    body('packages')
+        .optional({checkFalsy: true})
+        .isArray(),
 
-    // check('hardwares')
-    //     .exists()
-    //     .notEmpty(),
+    body('hardwares')
+        .optional()
+        .isArray(),
 
-    // check('pay_now')
-    //     .exists()
-    //     .notEmpty(),
+    body('pay_now')
+        .isBoolean(),
 
-    // check('hardwarePrice')
-    //     .exists()
-    //     .notEmpty(),
+    body('hardwarePrice')
+        .optional({checkFalsy: true})
+        .isNumeric(),
 
-    // check('paid_by_user')
-    //     .exists()
-    //     .notEmpty(),
+    body('paid_by_user')
+        .isIn(['PAID', 'UNPAID']),
+
+    body('total_price')
+        .isNumeric()
 
 ];
 
@@ -522,9 +490,6 @@ exports.getServiceRefund = [
 ];
 
 exports.deleteDevice = [ // nn
-    // check('device_id')
-    //     .exists()
-    //     .notEmpty()
 ];
 
 exports.unlinkDevice = [
@@ -666,9 +631,7 @@ exports.applyPushApps = [
         .matches(DEVICE_ID_PATTERN),
 
     body('push_apps')
-        .custom(value => {
-            return arrayOfObjectWithKeys(value, applyPushAppsSchema);
-        }),
+        .custom(value => arrayOfObjectWithKeys(value, applyPushAppsSchema)),
 
     body('usrAccId')
         .notEmpty()
@@ -682,9 +645,7 @@ exports.applyPullApps = [
         .matches(DEVICE_ID_PATTERN),
 
     body('pull_apps')
-        .custom(value => {
-            return arrayOfObjectWithKeys(value, applyPullAppsSchema);
-        }),
+        .custom(value => arrayOfObjectWithKeys(value, applyPullAppsSchema)),
 
     body('usrAccId')
         .notEmpty()
@@ -744,24 +705,32 @@ exports.writeIMEI = [
 
 exports.submitDevicePassword = [
     check('device_id')
-        .exists()
-        .notEmpty(),
+        .notEmpty()
+        .matches(DEVICE_ID_PATTERN),
 
-    check('usr_acc_id')
-        .exists()
+    body('usr_acc_id')
+        .notEmpty()
+        .isInt(),
+
+    body()
+        .notEmpty()
+        .isIn(["admin_password","guest_password","encrypted_password","duress_password"]),
+
+    body('passwords.pwd')
+        .isString()
         .notEmpty()
 ];
 
 exports.getActivities = [
-    check('device_id')
-        .exists()
-        .notEmpty(),
+    param('device_id')
+        .notEmpty()
+        .matches(DEVICE_ID_PATTERN),
 ];
 
 exports.getIMEI_History = [
-    check('device_id')
-        .exists()
+    param('device_id')
         .notEmpty()
+        .matches(DEVICE_ID_PATTERN)
 ];
 
 exports.updateDeviceIDs = [ // nn
@@ -769,17 +738,20 @@ exports.updateDeviceIDs = [ // nn
 ];
 
 exports.resetChatPin = [
-    check('chat_id')
-        .exists()
-        .notEmpty(),
-
-    check('pin')
-        .exists()
+    body('chat_id')
         .notEmpty()
+        .matches(CHAT_ID),
+
+    body('pin')
+        .notEmpty()
+        .isInt()
 ];
 
 exports.changeSchatPinStatus = [
-    check('chat_id')
-        .exists()
+    body('chat_id')
         .notEmpty()
+        .matches(CHAT_ID),
+
+    body('type')
+        .isString()
 ];
