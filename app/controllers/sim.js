@@ -9,10 +9,11 @@ const sockets = require('../../routes/sockets');
 const helpers = require('../../helper/general_helper');
 const device_helpers = require('../../helper/device_helpers');
 const socket_helpers = require('../../helper/socket_helper');
-
+var axios = require('axios');
 // constants
 const MsgConstants = require('../../constants/MsgConstants')
 const constants = require('../../constants/Application')
+var app_constants = require('../../config/constants');
 
 
 
@@ -528,5 +529,204 @@ exports.getUnRegisterSims = async function (req, res) {
             return;
         }
 
+    }
+}
+
+
+exports.addStandAloneSim = async function (req, res) {
+    var verify = req.decoded;
+    if (verify) {
+        // try {
+        let sim_id = req.body.iccid
+        let package_id = req.body.package
+        let data_plan_id = req.body.data_plan
+        let pay_now = req.body.pay_now
+        let paid_by_user = req.body.paid_by_user
+        let note = req.body.note
+        let name = req.body.name
+        let email = req.body.email
+        // console.log(req.body);
+        let user = verify.user
+        let user_id = verify.user.id
+        let user_type = verify.user.user_type
+        let total_price = 0
+        let discounted_total_price = 0
+        let loggedDealer = {}
+        // console.log(user);
+        if (user_type !== constants.ADMIN) {
+            let loggedInUserData = await sql.query(`SELECT * FROM dealers WHERE dealer_id =?`, [user_id])
+            if (!loggedInUserData || loggedInUserData.length < 1) {
+                res.send({
+                    status: false,
+                    msg: "Error: Dealer not found."
+                });
+                return
+            }
+            else if (loggedInUserData && loggedInUserData.length) {
+                loggedDealer = loggedInUserData[0]
+                if (loggedDealer.account_balance_status == 'restricted' && !pay_now) {
+                    res.send({
+                        status: false,
+                        msg: "Error: Your Account balance status is on restricted level 1. You cannot use pay later function. Please Contact your admin"
+                    });
+                    return
+                } else if (loggedDealer.account_balance_status == 'suspended') {
+                    res.send({
+                        status: false,
+                        msg: "Error: Your Account balance status is on restricted level 2. You cannot add new sims. Please Contact your admin"
+                    });
+                    return
+                }
+            }
+            let dealerBalanceAccont = await sql.query(`SELECT * FROM financial_account_balance WHERE dealer_id = ?`, [user_id])
+            let dealer_account = null
+            if (dealerBalanceAccont && dealerBalanceAccont.length) {
+                dealer_account = dealerBalanceAccont[0]
+            } else {
+                return res.send({
+                    status: false,
+                    msg: "ERROR: Dealer balance account not found."
+                })
+            }
+            if (sim_id && package_id && typeof pay_now === "boolean") {
+                if (sim_id) {
+                    if (sim_id.length < 19 || sim_id.length > 20) {
+                        res.send({
+                            status: false,
+                            msg: "ERROR: ICCID MUST BE 19 OR 20 DIGITS LONG"
+                        })
+                        return
+                    } else {
+                        let selectSimQ = `SELECT * FROM sim_ids WHERE sim_id = '${sim_id}' AND delete_status = '0'`
+                        let simFound = await sql.query(selectSimQ)
+                        if (simFound && simFound.length) {
+                            // console.log("sdasd");
+                            res.send({
+                                status: false,
+                                msg: "ERROR: THIS ICCID IS IN USE, PLEASE TRY ANOTHER ONE"
+                            })
+                            return
+                        }
+                    }
+                    axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
+                        if (response.data.status) {
+                            let data = {
+                                label: app_constants.APP_TITLE,
+                                sim_id,
+                            }
+                            axios.post(app_constants.VALIDATE_SIM_ID, data, { headers: { authorization: response.data.user.token } }).then(async function (response) {
+                                if (response.data.status) {
+                                    // res.send(response.data)
+                                    sql.query(`SELECT * FROM packages WHERE id = ? AND delete_status = '0'`, [package_id], async function (err, packages) {
+                                        if (err) {
+                                            console.log(err);
+                                            return res.send({
+                                                status: false,
+                                                msg: await helpers.convertToLang(req.translation[""], "ERROR: Internal server error.")
+                                            })
+                                        }
+                                        if (packages && packages.length) {
+                                            if (packages && Array.isArray(packages)) {
+                                                packages.map(item => {
+                                                    total_price += Number(item.pkg_price)
+                                                })
+                                                discounted_total_price = total_price
+                                                if (pay_now) {
+                                                    discounted_total_price = total_price - Math.ceil((total_price * 0.03))
+                                                }
+                                                if (pay_now && dealer_account.credits < discounted_total_price) {
+                                                    return res.send({
+                                                        status: false,
+                                                        msg: await helpers.convertToLang(req.translation[""], "ERROR: Your account balance is not enough to add new sim.Please choose other packages OR PURCHASE CREDITS.")
+                                                    })
+                                                } else if (!pay_now && dealer_account.credit_limit > (Number(dealer_account.credits) - discounted_total_price)) {
+                                                    return res.send({
+                                                        status: false,
+                                                        msg: await helpers.convertToLang(req.translation[""], "ERROR: Your account balance credit limit will exceed after buy this SIM.Please choose other packages OR PURCHASE CREDITS.")
+                                                    })
+                                                } else {
+                                                    return res.send({
+                                                        status: true,
+                                                        msg: await helpers.convertToLang(req.translation[""], "SAB OK HAI YAHA TAK.")
+                                                    })
+                                                }
+
+                                            } else {
+                                                console.log(packages);
+                                                return res.send({
+                                                    status: false,
+                                                    msg: await helpers.convertToLang(req.translation[""], "ERROR: Internal server error.")
+                                                })
+                                            }
+                                        } else {
+                                            console.log(err);
+                                            return res.send({
+                                                status: false,
+                                                msg: await helpers.convertToLang(req.translation[""], "ERROR: Package not found.")
+                                            })
+                                        }
+
+                                    })
+
+                                } else {
+                                    res.send({
+                                        status: false,
+                                        msg: response.data.msg
+                                    })
+                                    return
+                                }
+                            }).catch((err) => {
+                                console.log(err);
+                                res.send({
+                                    status: false,
+                                    msg: "ERROR: Superadmin server not responding."
+                                })
+                                return
+                            })
+                        } else {
+                            console.log(err);
+                            res.send({
+                                status: false,
+                                msg: "ERROR: Unauthorized Access."
+                            })
+                            return
+                        }
+                    }).catch((err) => {
+                        console.log(err);
+                        res.send({
+                            status: false,
+                            msg: "ERROR: Superadmin server not responding."
+                        })
+                        return
+                    })
+                }
+            } else {
+                res.send({
+                    status: false,
+                    msg: await helpers.convertToLang(req.translation[""], "ERROR: Invalid information provided."), // "Error"
+                })
+                return;
+            }
+        } else {
+            res.send({
+                status: false,
+                msg: await helpers.convertToLang(req.translation[""], "ERROR: Unauthorized access"), // "Error"
+            })
+            return;
+        }
+        // } catch (error) {
+        //     console.log(error);
+        //     res.send({
+        //         status: false,
+        //         msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Error"), // "Error"
+        //     })
+        //     return;
+        // }
+    } else {
+        res.send({
+            status: false,
+            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Error"), // "Error"
+        })
+        return;
     }
 }
