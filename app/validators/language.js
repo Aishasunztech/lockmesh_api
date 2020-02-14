@@ -1,15 +1,18 @@
-const { check } = require('express-validator');
+const { check, body } = require('express-validator');
 
 
 
-exports.getLanguage = [
+exports.getLanguage = [ // nn
 
 ];
 
 exports.saveLanguage = [
-
+    body('language.id')
+        .exists()
+        .notEmpty()
+        .isNumeric()
 ];
 
-exports.getAll_Languages = [
+exports.getAll_Languages = [ // nn
 
 ];

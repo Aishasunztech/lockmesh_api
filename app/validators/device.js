@@ -2,6 +2,68 @@ const { check, query, param, header, body } = require('express-validator');
 const { arrayOfObjectWithKeys, isObject, validateSimId, validatePGPEmail, validateChatId } = require('./commonValidators/validation_helpers');
 const { DEVICE_ID_PATTERN, USER_ID_PATTERN, DATE_REGEX } = require('../../constants/validation');
 
+//************************* Define Device Schemas ****************/ 
+const applyPushAppsSchema = [
+    {
+        index: 'apk_id',
+        type: 'number'
+    },
+    {
+        index: 'apk_name',
+        type: 'string'
+    },
+    {
+        index: 'logo',
+        type: 'string'
+    },
+    {
+        index: 'apk',
+        type: 'string'
+    },
+    {
+        index: 'package_name',
+        type: 'string'
+    },
+    {
+        index: 'version_name',
+        type: 'string'
+    },
+    {
+        index: 'guest',
+        type: 'boolean'
+    },
+    {
+        index: 'encrypted',
+        type: 'boolean'
+    },
+    {
+        index: 'enable',
+        type: 'boolean'
+    },
+    {
+        index: 'deleteable',
+        type: 'boolean'
+    }
+];
+
+const applyPullAppsSchema = [
+    { index: 'key', type: 'number' },
+    { index: 'app_id', type: 'number' },
+    { index: 'package_name', type: 'string' },
+    { index: 'label', type: 'string' },
+    { index: 'apk_id', type: 'number' },
+    { index: 'apk_name', type: 'string' },
+    { index: 'version_name', type: 'string' },
+    { index: 'apk', type: 'string' },
+    { index: 'guest', type: 'boolean' },
+    { index: 'encrypted', type: 'boolean' },
+    { index: 'enable', type: 'boolean' }
+];
+
+
+
+
+//************** Device API validation rules ****************/
 exports.devices = [ // nn
 
 ];
@@ -470,7 +532,7 @@ exports.unlinkDevice = [
         .exists()
         .notEmpty()
         .isNumeric(),
-    
+
     body('device')
         .custom(value => isObject(value))
 ];
@@ -610,44 +672,13 @@ exports.applyPushApps = [
 
     body('push_apps')
         .custom(value => {
-            return arrayOfObjectWithKeys(value, [{
-                    index: 'apk_id',
-                    type: 'number'
-                }, {
-                    index: 'apk_name',
-                    type: 'string'
-                }, {
-                    index: 'logo',
-                    type: 'string'
-                }, {
-                    index: 'apk',
-                    type: 'string'
-                }, {
-                    index: 'package_name',
-                    type: 'string'
-                }, {
-                    index: 'version_name',
-                    type: 'string'
-                }, {
-                    index: 'guest',
-                    type: 'boolean'
-                }, {
-                    index: 'encrypted',
-                    type: 'boolean'
-                }, {
-                    index: 'enable',
-                    type: 'boolean'
-                }, {
-                    index: 'deleteable',
-                    type: 'boolean'
-                }]
-            );
+            return arrayOfObjectWithKeys(value, applyPushAppsSchema);
         }),
 
     body('usrAccId')
         .exists()
         .notEmpty()
-        .isNumeric()    
+        .isNumeric()
 
 ];
 
@@ -659,21 +690,9 @@ exports.applyPullApps = [
 
     body('pull_apps')
         .custom(value => {
-            return arrayOfObjectWithKeys(value, [
-                {index: 'key', type: 'number'},
-                {index: 'app_id', type: 'number'},
-                {index: 'package_name', type: 'string'},
-                {index: 'label', type: 'string'},
-                {index: 'apk_id', type: 'number'},
-                {index: 'apk_name', type: 'string'},
-                {index: 'version_name', type: 'string'},
-                {index: 'apk', type: 'string'},
-                {index: 'guest', type: 'boolean'},
-                {index: 'encrypted', type: 'boolean'},
-                {index: 'enable', type: 'boolean'}
-            ]);
+            return arrayOfObjectWithKeys(value, applyPullAppsSchema);
         }),
-    
+
     body('usrAccId')
         .exists()
         .notEmpty()

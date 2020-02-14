@@ -99,7 +99,7 @@ exports.getLanguage = async function (req, res) {
 
 exports.saveLanguage = async function (req, res) {
     var verify = req.decoded;
-
+console.log(req.body);
     if (verify) {
         // console.log('save lang body is: ', req.body);
         let lang_id = req.body.language.id;

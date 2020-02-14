@@ -28,6 +28,9 @@ const aclValidators = require('../app/validators/acl');
 const agentValidators = require('../app/validators/agent');
 const apkValidators = require('../app/validators/apk');
 const appValidators = require('../app/validators/app');
+const languageValidators = require('../app/validators/language');
+const policyValidators = require('../app/validators/policy');
+const dealerValidators = require('../app/validators/dealer');
 var errorMsgs = commonValidators.responsValidationResults;
 
 var helpers = require("../helper/general_helper.js");
@@ -64,7 +67,7 @@ const ServicesController = require('../app/controllers/services');
 // const AUTO_UPDATE_ADMIN = "auto_update_admin";
 
 // enable or disable two factor auth
-router.post("/two_factor_auth", dealerController.twoFactorAuth);
+router.post("/two_factor_auth", [dealerValidators.twoFactorAuth, errorMsgs], dealerController.twoFactorAuth);
 
 /**
  * @route GET /users/get_allowed_components
@@ -283,7 +286,7 @@ router.get("/devices/update_device_ids", [deviceValidators.updateDeviceIDs, erro
 
 // Update all existing Dealer PINs
 // http://localhost:3000/users/dealer/update_dealer_pins
-router.get("/dealer/update_dealer_pins", dealerController.updateDealerPins);
+router.get("/dealer/update_dealer_pins", [dealerValidators.updateDealerPins, errorMsgs], dealerController.updateDealerPins);
 
 
 // ====================== Users ==================== //
@@ -364,9 +367,9 @@ router.put('/updateProfile/:id', userController.updateProfile);
  * @security JWT
  */
 /** Reset password dealers (Admin Panel) **/
-router.post("/resetpwd", dealerController.resetPwd);
+router.post("/resetpwd", [dealerValidators.resetPwd, errorMsgs], dealerController.resetPwd);
 
-router.post("/set-timezone", dealerController.setTimeZone);
+router.post("/set-timezone", [dealerValidators.setTimeZone, errorMsgs], dealerController.setTimeZone);
 
 /**
  * @route GET /users/get-info
@@ -376,7 +379,7 @@ router.post("/set-timezone", dealerController.setTimeZone);
  * @security JWT
  */
 /** Dealer and S Dealer Info **/
-router.get("/get-info", dealerController.getInfo);
+router.get("/get-info", [dealerValidators.getInfo, errorMsgs], dealerController.getInfo);
 
 
 // =================== Dealers ================= //
@@ -389,7 +392,7 @@ router.get("/get-info", dealerController.getInfo);
  * @security JWT
  */
 /*Get All Dealers */
-router.get("/dealers", dealerController.getAllDealers);
+router.get("/dealers", [dealerValidators.getAllDealers, errorMsgs], dealerController.getAllDealers);
 
 /**
  * @route GET /users/user_dealers
@@ -399,10 +402,10 @@ router.get("/dealers", dealerController.getAllDealers);
  * @security JWT
  */
 /*Get User Dealers */
-router.get('/user_dealers', dealerController.getUserDealers);
+router.get('/user_dealers', [dealerValidators.getUserDealers, errorMsgs], dealerController.getUserDealers);
 
 /*Get All Dealers FOR SUPER_ADMIN*/
-router.get('/get_dealer_list', dealerController.getDealerForSA);
+router.get('/get_dealer_list', [dealerValidators.getDealerForSA, errorMsgs], dealerController.getDealerForSA);
 
 /**
  * @route GET /users/dealers/{pageName}
@@ -413,9 +416,9 @@ router.get('/get_dealer_list', dealerController.getDealerForSA);
  * @security JWT
  */
 /*Get dealers*/
-router.get("/dealers/:pageName", dealerController.getDealers);
-router.get("/get-all-dealers", dealerController.getAllToAllDealers);
-router.get("/get-admin", dealerController.getAdmin);
+router.get("/dealers/:pageName", [dealerValidators.getDealers, errorMsgs], dealerController.getDealers);
+router.get("/get-all-dealers", [dealerValidators.getAllToAllDealers, errorMsgs], dealerController.getAllToAllDealers);
+router.get("/get-admin", [dealerValidators.getAdmin, errorMsgs], dealerController.getAdmin);
 
 /**
  * @route POST /users/add/dealer
@@ -429,7 +432,7 @@ router.get("/get-admin", dealerController.getAdmin);
  */
 
 /*** Add Dealer ***/
-router.post("/add/dealer", dealerController.addDealer);
+router.post("/add/dealer", [dealerValidators.addDealer, errorMsgs], dealerController.addDealer);
 
 /**
  * @route PUT /users/edit/dealers
@@ -443,7 +446,7 @@ router.post("/add/dealer", dealerController.addDealer);
  */
 
 /** Edit Dealer (Admin panel) **/
-router.put("/edit/dealers", dealerController.editDealers);
+router.put("/edit/dealers", [dealerValidators.editDealers, errorMsgs], dealerController.editDealers);
 
 /**
  * @route POST /users/dealer/delete
@@ -454,7 +457,7 @@ router.put("/edit/dealers", dealerController.editDealers);
  * @security JWT
  */
 /** Delete Dealer from admin Panel**/
-router.post("/dealer/delete/", dealerController.deleteDealer);
+router.post("/dealer/delete", [dealerValidators.deleteDealer, errorMsgs], dealerController.deleteDealer);
 /**
  * @route POST /users/dealer/undo
  * @group Dealer - Operations about Dealers
@@ -464,7 +467,7 @@ router.post("/dealer/delete/", dealerController.deleteDealer);
  * @security JWT
  */
 /** Undo Dealer / S-Dealer **/
-router.post("/dealer/undo", dealerController.undoDealer);
+router.post("/dealer/undo", [dealerValidators.undoDealer, errorMsgs], dealerController.undoDealer);
 
 /**
  * @route POST /users/dealer/suspend
@@ -475,7 +478,7 @@ router.post("/dealer/undo", dealerController.undoDealer);
  * @security JWT
  */
 /** Suspend Dealer **/
-router.post("/dealer/suspend", dealerController.suspendDealer);
+router.post("/dealer/suspend", [dealerValidators.suspendDealer, errorMsgs], dealerController.suspendDealer);
 
 /**
  * @route POST /users/dealer/activate
@@ -486,10 +489,10 @@ router.post("/dealer/suspend", dealerController.suspendDealer);
  * @security JWT
  */
 /** Activate Dealer **/
-router.post("/dealer/activate", dealerController.activateDealer);
+router.post("/dealer/activate", [dealerValidators.activateDealer, errorMsgs], dealerController.activateDealer);
 
 /**UPDATE DEALER DEMOS LIMIT**/
-router.put("/set_demos_limit", dealerController.setDealerDemosLimit);
+router.put("/set_demos_limit", [dealerValidators.setDealerDemosLimit, errorMsgs], dealerController.setDealerDemosLimit);
 
 /**
  * @route GET /users/get_dealer_apps
@@ -500,7 +503,7 @@ router.put("/set_demos_limit", dealerController.setDealerDemosLimit);
  */
 /** Get logged in Dealer permitted apps  **/
 
-router.get('/get_dealer_apps', dealerController.getLoggedDealerApps);
+router.get('/get_dealer_apps', [dealerValidators.getLoggedDealerApps, errorMsgs], dealerController.getLoggedDealerApps);
 /**
  * @route GET /users/get_usr_acc_id/{device_id}
  * @group Dealer - Operations about Dealers
@@ -540,7 +543,7 @@ router.get('/get_usr_acc_id/:device_id', async function (req, res) {
  * @security JWT
  */
 /*** Connect Dealer ***/
-router.get("/connect-dealer/:dealerId", dealerController.connectDealer);
+router.get("/connect-dealer/:dealerId", [dealerValidators.connectDealer, errorMsgs], dealerController.connectDealer);
 
 /**
  * @route GET /users/dealer-domains/:dealerId
@@ -550,9 +553,9 @@ router.get("/connect-dealer/:dealerId", dealerController.connectDealer);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.get("/dealer-domains/:dealerId", dealerController.dealerDomains)
+router.get("/dealer-domains/:dealerId", [dealerValidators.dealerDomains, errorMsgs], dealerController.dealerDomains)
 
-router.post("/dealer-domain-permissions", dealerController.connectDealerDomainsPermissions);
+router.post("/dealer-domain-permissions", [dealerValidators.connectDealerDomainsPermissions, errorMsgs], dealerController.connectDealerDomainsPermissions);
 
 /**
  * @route GET /users/payment-history/:dealerId
@@ -563,7 +566,7 @@ router.post("/dealer-domain-permissions", dealerController.connectDealerDomainsP
  * @security JWT
  */
 /*** Dealer Payment History ***/
-router.post("/payment-history/:dealerId", dealerController.getDealerPaymentHistory);
+router.post("/payment-history/:dealerId", [dealerValidators.getDealerPaymentHistory, errorMsgs], dealerController.getDealerPaymentHistory);
 
 /**
  * @route GET /users/sales-history/:dealerId
@@ -574,11 +577,11 @@ router.post("/payment-history/:dealerId", dealerController.getDealerPaymentHisto
  * @security JWT
  */
 /*** Dealer Payment History ***/
-router.get("/sales-history/:dealerId", dealerController.getDealerSalesHistory);
+router.get("/sales-history/:dealerId", [dealerValidators.getDealerSalesHistory, errorMsgs], dealerController.getDealerSalesHistory);
 
 
 /**UPDATE DEALER CREDITS LIMIT**/
-router.put("/set_credits_limit", dealerController.setDealerCreditsLimit);
+router.put("/set_credits_limit", [dealerValidators.setDealerCreditsLimit, errorMsgs], dealerController.setDealerCreditsLimit);
 
 /**
  * @route PUT /users/dealer-status
@@ -589,7 +592,7 @@ router.put("/set_credits_limit", dealerController.setDealerCreditsLimit);
  * @security JWT
  */
 //** dealer account balance status */
-router.put('/dealer-status/:dealerId', dealerController.changeDealerStatus);
+router.put('/dealer-status/:dealerId', [dealerValidators.changeDealerStatus, errorMsgs], dealerController.changeDealerStatus);
 
 
 // =================== General Routes ================= //
@@ -603,7 +606,7 @@ router.put('/dealer-status/:dealerId', dealerController.changeDealerStatus);
  * @security JWT
  */
 /** Get Dropdown Selected Items **/
-router.get("/dealer/gtdropdown/:dropdownType", dealerController.getDropdownSelectedItems);
+router.get("/dealer/gtdropdown/:dropdownType", [dealerValidators.getDropdownSelectedItems, errorMsgs], dealerController.getDropdownSelectedItems);
 
 
 /**
@@ -616,7 +619,7 @@ router.get("/dealer/gtdropdown/:dropdownType", dealerController.getDropdownSelec
  * @security JWT
  */
 /** post Dealer Dropdown Selected Items **/
-router.post("/dealer/dropdown", dealerController.saveDropDown);
+router.post("/dealer/dropdown", [dealerValidators.saveDropDown, errorMsgs], dealerController.saveDropDown);
 /**
  * @route GET /users/dealer/getPagination/{dropdownType}
  * @group Dealer - Operations about Dealers
@@ -627,7 +630,7 @@ router.post("/dealer/dropdown", dealerController.saveDropDown);
  */
 
 /** Get pagination **/
-router.get("/dealer/getPagination/:dropdownType", dealerController.getPagination);
+router.get("/dealer/getPagination/:dropdownType", [dealerValidators.getPagination, errorMsgs], dealerController.getPagination);
 
 /**
  * @route POST /users/dealer/postPagination/{dropdownType}
@@ -639,7 +642,7 @@ router.get("/dealer/getPagination/:dropdownType", dealerController.getPagination
  * @security JWT
  */
 /** post Dealer Pagination **/
-router.post("/dealer/postPagination", dealerController.postPagination);
+router.post("/dealer/postPagination", [dealerValidators.postPagination, errorMsgs], dealerController.postPagination);
 
 
 // =========== Policy ============= //
@@ -652,7 +655,7 @@ router.post("/dealer/postPagination", dealerController.postPagination);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.get('/get_policies', policyController.getPolicies);
+router.get('/get_policies', [policyValidators.getPolicies, errorMsgs], policyController.getPolicies);
 
 /**
  * @route POST /users/change_policy_status
@@ -664,7 +667,7 @@ router.get('/get_policies', policyController.getPolicies);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post('/change_policy_status', policyController.changePolicyStatus);
+router.post('/change_policy_status', [policyValidators.changePolicyStatus, errorMsgs], policyController.changePolicyStatus);
 
 /**
  * @route POST /users/save_policy_changes
@@ -680,7 +683,7 @@ router.post('/change_policy_status', policyController.changePolicyStatus);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post('/save_policy_changes', policyController.savePolicyChanges);
+router.post('/save_policy_changes', [policyValidators.savePolicyChanges, errorMsgs], policyController.savePolicyChanges);
 
 /**
  * @route POST /users/check_policy_name
@@ -691,7 +694,7 @@ router.post('/save_policy_changes', policyController.savePolicyChanges);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post('/check_policy_name', policyController.checkPolicyName);
+router.post('/check_policy_name', [policyValidators.checkPolicyName, errorMsgs], policyController.checkPolicyName);
 
 /**
  * @route POST /users/save_policy
@@ -701,7 +704,7 @@ router.post('/check_policy_name', policyController.checkPolicyName);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post('/save_policy', policyController.savePolicy);
+router.post('/save_policy', [policyValidators.savePolicy, errorMsgs], policyController.savePolicy);
 
 /**
  * @route POST /users/apply_policy/{device_id}
@@ -713,7 +716,7 @@ router.post('/save_policy', policyController.savePolicy);
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post('/apply_policy/:device_id', policyController.applyPolicy);
+router.post('/apply_policy/:device_id', [policyValidators.applyPolicy, errorMsgs], policyController.applyPolicy);
 
 
 router.get("/get_usr_acc_id/:device_id", async function (req, res) {
@@ -1140,7 +1143,7 @@ router.post("/submit-device-passwords", [deviceValidators.submitDevicePassword, 
 router.get("/get_activities/:device_id", [deviceValidators.getActivities, errorMsgs], deviceController.getActivities);
 
 // set default for w.r.t dealer
-router.post("/set_default_policy", policyController.setDefaultPolicy);
+router.post("/set_default_policy", [policyValidators.setDefaultPolicy, errorMsgs], policyController.setDefaultPolicy);
 
 router.put("/force_update", async function (req, res) {
 	var verify = req.decoded;
@@ -1295,11 +1298,11 @@ router.post("/delete-sa-package", billingController.deleteSaPackage);
 
 router.post("/delete-sa-hardware", billingController.deleteSaHardware);
 
-router.get("/get-language", languageController.getLanguage);
+router.get("/get-language", [languageValidators.getLanguage, errorMsgs], languageController.getLanguage);
 
-router.patch("/save-language", languageController.saveLanguage);
+router.patch("/save-language", [languageValidators.saveLanguage, errorMsgs], languageController.saveLanguage);
 
-router.get('/get-all-languages', languageController.getAll_Languages);
+router.get('/get-all-languages', [languageValidators.getAll_Languages, errorMsgs], languageController.getAll_Languages);
 
 router.get("/get-prices", billingController.getPrices);
 
@@ -1477,7 +1480,7 @@ router.put('/delete-domain', [accountValidators.deleteDomain, errorMsgs], accoun
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post("/dealer-permissions/:permissionType", dealerController.dealerPermissions);
+router.post("/dealer-permissions/:permissionType", [dealerValidators.dealerPermissions, errorMsgs], dealerController.dealerPermissions);
 
 /**
  * @route GET /users/getInvoiceId

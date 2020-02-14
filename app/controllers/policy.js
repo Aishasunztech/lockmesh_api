@@ -558,10 +558,10 @@ exports.checkPolicyName = async function (req, res) {
 
 exports.changePolicyStatus = async function (req, res) {
     var verify = req.decoded;
-
+console.log(req.body)
     if (verify) {
         let id = req.body.id;
-        let value = req.body.value == true || req.body.value == 1 ? 1 : 0;
+        let value = req.body.value ? 1 : 0;
         let key = req.body.key;
 
         let query = "UPDATE policy SET " + key + " = '" + value + "' WHERE id='" + id + "'";
@@ -746,6 +746,7 @@ exports.savePolicy = async function (req, res) {
 }
 
 exports.savePolicyChanges = async function (req, res) {
+    // console.log(req.body)
     try {
         var verify = req.decoded;
         if (verify) {

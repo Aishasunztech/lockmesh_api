@@ -6,16 +6,11 @@ const { validationResult } = require('express-validator');
 exports.responsValidationResults = async function (req, res, next) {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-        return res.status(422).json({ status: false, msg: 'Error', errors: errors.array() })
+        return res.status(422).json({ status: false, msg: 'Data not validated', errors: errors.array() })
     }
     next();
 }
 
-
-exports.testCommon = [
-    // check('email').isEmail(),
-    // check('pwd').notEmpty()
-];
 
 exports.login = [
     check('demail').isEmail(),
