@@ -1,11 +1,6 @@
 const { check, query, param, header, body } = require('express-validator');
-const { arrayOfObjectWithKeys, isObject } = require('./commonValidators/validation_helpers');
-
-
-// constants
-const DEVICE_ID_PATTERN = /^([A-Za-z]{4})([0-9]{6})$/; // ABCD123456
-const USER_ID_PATTERN = /^ID([0-9]{6,})$/; // ID123456
-
+const { arrayOfObjectWithKeys, isObject, validateSimId, validatePGPEmail, validateChatId } = require('./commonValidators/validation_helpers');
+const { DEVICE_ID_PATTERN, USER_ID_PATTERN, DATE_REGEX, IMEI_REGEX } = require('../../constants/validation');
 
 //************************* Define Device Schemas ****************/ 
 const applyPushAppsSchema = [
@@ -404,141 +399,132 @@ exports.editDevices = [
 ];
 
 exports.extendServices = [
-    // check('usr_device_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('usr_device_id')
+        .notEmpty()
+        .isInt(),
 
-    // check('device_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('dealer_id')
+        .notEmpty()
+        .isInt(),
 
-    // check('dealer_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('usr_acc_id')
+        .notEmpty()
+        .isInt(),
 
-    // check('client_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('model')
+        .optional({nullable: true})
+        .isString(),
 
-    // check('usr_acc_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('usr_device_id')
+        .notEmpty()
+        .isInt(),
 
-    // check('usr_device_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('prevChatID')
+        .optional()
+        .custom(value => validateChatId(value)),
 
-    // check('prevPGP')
-    //     .exists()
-    //     .notEmpty(),
+    body('prevSimId')
+        .optional()
+        .isInt(),
 
-    // check('prevChatID')
-    //     .exists()
-    //     .notEmpty(),
+    body('prevSimId2')
+        .optional()
+        .isInt(),
 
-    // check('prevSimId')
-    //     .exists()
-    //     .notEmpty(),
+    body('finalStatus')
+        .optional()
+        .isString(),
 
-    // check('prevSimId2')
-    //     .exists()
-    //     .notEmpty(),
+    body('sim_id')
+        .optional()
+        .isInt(),
 
-    // check('finalStatus')
-    //     .exists()
-    //     .notEmpty(),
+    body('sim_id2')
+        .optional()
+        .isInt(),
 
-    // check('note')
-    //     .exists()
-    //     .notEmpty(
+    body('chat_id')
+        .optional()
+        .custom(value => validateChatId(value)),
 
-    //     ),
-    // check('start_date')
-    //     .exists()
-    //     .notEmpty(),
+    body('pgp_email')
+        .optional()
+        .custom(value => validatePGPEmail(value, 'pgp_email')),
+    
+    body('prevPGP')
+        .optional()
+        .custom(value=> validatePGPEmail(value, 'prevPGP')),
 
-    // check('sim_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('service')
+        .optional()
+        .isBoolean(),
 
-    // check('sim_id2')
-    //     .exists()
-    //     .notEmpty(),
+    body('prevService')
+        .notEmpty()
+        .custom(value => isObject(value)),
 
-    // check('chat_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('paid_by_user')
+        .optional()
+        .isIn(['PAID', 'UNPAID']),
 
-    // check('pgp_email')
-    //     .exists()
-    //     .notEmpty(),
+    body('products')
+        .optional()
+        .isArray(),
 
-    // check('service')
-    //     .exists()
-    //     .notEmpty(),
+    body('packages')
+        .optional()
+        .isArray(),
 
-    // check('prevService')
-    //     .exists()
-    //     .notEmpty(),
+    body('total_price')
+        .notEmpty()
+        .isInt(),
 
-    // check('paid_by_user')
-    //     .exists()
-    //     .notEmpty(),
+    body('expiry_date')
+        .optional()
+        .matches(DATE_REGEX),
 
-    // check('products')
-    //     .exists()
-    //     .notEmpty(),
+    body('pay_now')
+        .optional()
+        .isBoolean(),
 
-    // check('packages')
-    //     .exists()
-    //     .notEmpty(),
+    check('renewService')
+        .optional()
+        .isBoolean(),
 
-    // check('total_price')
-    //     .exists()
-    //     .notEmpty(),
-
-    // check('expiry_date')
-    //     .exists()
-    //     .notEmpty(),
-
-    // check('pay_now')
-    //     .exists()
-    //     .notEmpty(),
-
-    // check('renewService')
-    //     .exists()
-    //     .notEmpty(),
-
-    // check('user_id')
-    //     .exists()
-    //     .notEmpty(),
-
-    // check('data_plans')
-    //     .exists()
-    //     .notEmpty()
+    body('user_id')
+        .notEmpty()
+        .matches(USER_ID_PATTERN),
 
 ];
 
 exports.cancelExtendedServices = [
-    check('service_id')
-        .exists()
-        .notEmpty(),
-
-    check('user_acc_id')
+    body('service_id')
         .exists()
         .notEmpty()
+        .isInt(),
+
+    body('user_acc_id')
+        .exists()
+        .notEmpty()
+        .isInt()
 ];
 
 exports.getServiceRefund = [
-    check('device_id')
+    check('service_id')
         .exists()
         .notEmpty()
+        .isInt(),
+
+    body('user_acc_id')
+        .exists()
+        .notEmpty()
+        .isInt()
 ];
 
-exports.deleteDevice = [
-    check('device_id')
-        .exists()
-        .notEmpty()
+exports.deleteDevice = [ // nn
+    // check('device_id')
+    //     .exists()
+    //     .notEmpty()
 ];
 
 exports.unlinkDevice = [
@@ -607,82 +593,77 @@ exports.transferDeviceProfile = [
 ];
 
 exports.transferHistory = [
-    check('device_id')
-        .exists()
-        .notEmpty()
+    param('device_id')
         .isLength({ min: 10, max: 10 })
-        // .withMessage('device length incorect')
-        .isString()
+        .isString(),
 
     // req.params.device_id
 ];
 
 exports.getServicesHistory = [
-    check('usr_acc_id')
-        .exists()
+    param('usr_acc_id')
         .notEmpty()
-    // .withMessage('asdfgh')
-
-    // req.params.usr_acc_id
+        .isInt()
 ];
 
 exports.suspendAccountDevices = [
-    check('id')
-        .exists()
+    param('id')
         .notEmpty()
-        .isNumeric()
+        .isInt()
 ];
 
 exports.activateDevice = [
-    check('id')
-        .exists()
+    param('id')
         .notEmpty()
-        .isNumeric()
+        .isInt()
 ];
 
 exports.wipeDevice = [
-    check('id')
-        .exists()
+    param('id')
         .notEmpty()
-        .isNumeric()
+        .isInt()
 ];
 
 exports.connectDevice = [
-    check('device_id')
-        .exists()
+    param('device_id')
         .notEmpty()
-        .isLength({ min: 10, max: 10 })
-        // .withMessage('')
-        .isString()
+        .matches(DEVICE_ID_PATTERN)
 ];
 
 exports.getDeviceBillingHistory = [
-    check('user_acc_id')
-        .exists()
-        .notEmpty(),
+    param('user_acc_id')
+        .notEmpty()
+        .isInt(),
 
     check('dealer_id')
-        .exists()
         .notEmpty()
+        .isInt()
 ];
 
 exports.getAppsOfDevice = [
-    check('device_id')
-        .exists()
+    param('device_id')
         .notEmpty()
+        .matches(DEVICE_ID_PATTERN)
 ];
 
 exports.applySettings = [
-    check('device_id')
-        .exists()
+    param('device_id')
         .notEmpty()
+        .matches(DEVICE_ID_PATTERN),
+
+    param('usr_acc_id')
+        .notEmpty()
+        .isInt(),
+    
+    body('device_setting')
+        .notEmpty()
+        .custom(value=>isObject(value))
 ];
 
 exports.applyPushApps = [
     param('device_id')
-        .exists()
         .notEmpty()
-        .isAlphanumeric(),
+        .matches(DEVICE_ID_PATTERN),
 
     body('push_apps')
         .custom(value => {
@@ -690,17 +671,15 @@ exports.applyPushApps = [
         }),
 
     body('usrAccId')
-        .exists()
         .notEmpty()
-        .isNumeric()
+        .isInt()
 
 ];
 
 exports.applyPullApps = [
     param('device_id')
-        .exists()
         .notEmpty()
-        .isAlphanumeric(),
+        .matches(DEVICE_ID_PATTERN),
 
     body('pull_apps')
         .custom(value => {
@@ -708,9 +687,8 @@ exports.applyPullApps = [
         }),
 
     body('usrAccId')
-        .exists()
         .notEmpty()
-        .isNumeric()
+        .isInt()
 ];
 
 exports.getAppJobQueueOfDevice = [
@@ -741,15 +719,27 @@ exports.deleteUnlinkDevice = [
 ];
 
 exports.getDeviceHistory = [
-    check('device_id')
-        .exists()
+    body('device_id')
         .notEmpty()
+        .matches(DEVICE_ID_PATTERN)
 ];
 
 exports.writeIMEI = [
-    check('device_id')
-        .exists()
+    param('device_id')
         .notEmpty()
+        .matches(DEVICE_ID_PATTERN),
+
+    body('usrAccId')
+        .isEmpty()
+        .isInt(),
+
+    body('type')
+        .isEmpty()
+        .isIn(['IMEI1', 'IMEI2']),
+
+    body('imeiNo')
+        .notEmpty()
+        .matches(IMEI_REGEX),
 ];
 
 exports.submitDevicePassword = [
