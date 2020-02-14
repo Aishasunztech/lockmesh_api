@@ -3240,7 +3240,6 @@ exports.editDevices = async function (req, res) {
 exports.extendServices = async function (req, res) {
     res.setHeader("Content-Type", "application/json");
     var verify = req.decoded; // await verifyToken(req, res);
-
     if (verify) {
         if (!empty(req.body.usr_device_id)) {
 
@@ -3345,6 +3344,13 @@ exports.extendServices = async function (req, res) {
             }
             sql.query(checkDevice, async function (error, rows) {
                 if (rows.length) {
+                    
+                    let isExtendedOrCancelled = await sql.query(`SELECT * FROM services_data WHERE user_acc_id = ${usr_acc_id} AND (status = 'extended' OR status = 'request_for_cancel')`);
+
+                    if(isExtendedOrCancelled && isExtendedOrCancelled.length){
+                        return res.send({status: false,
+                        msg: 'You have Applied a Renewal or Extension for this device, please cancel service first before choosing new service.'});
+                    }
 
                     if (newService || renewService) {
 
@@ -3498,7 +3504,8 @@ exports.extendServices = async function (req, res) {
                             data_plan_price += (Number(data_plans.sim_id2.pkg_price) - discount)
                         }
 
-                        let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date , status , service_term) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice - data_plan_price} ,'${rows[0].expiry_date}' ,'${expiry_date}' , 'extended' , '${exp_month}')`
+                        let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date , status , service_term) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice - data_plan_price} ,'${rows[0].expiry_date}' ,'${expiry_date}' , 'extended' , '${exp_month}')`;
+                        console.log(service_billing);
                         let service_data_result = await sql.query(service_billing);
                         let service_id = null
                         if (service_data_result.affectedRows) {
@@ -3807,13 +3814,14 @@ exports.cancelExtendedServices = async function (req, res) {
     res.setHeader("Content-Type", "application/json");
     var verify = req.decoded; // await verifyToken(req, res);
     if (verify) {
-        if (!empty(req.body.service_id)) {
+        if (req.body.service_id && req.body.user_acc_id) {
             let service_id = req.body.service_id
             let user_acc_id = req.body.user_acc_id
+            let dealer_id = verify.user.id;
             // console.log(req.body);
-            let extendedServicesData = `SELECT * FROM services_data WHERE id = ${service_id} AND status = 'extended' AND user_acc_id = ${user_acc_id}`
+            let extendedServicesData = "SELECT * FROM services_data WHERE id = ? AND status = 'extended' AND user_acc_id = ? AND dealer_id = ?";
 
-            sql.query(extendedServicesData, async function (err, result) {
+            sql.query(extendedServicesData, [service_id, user_acc_id, dealer_id], async function (err, result) {
                 if (err) {
                     console.log(err);
                     res.send({
@@ -4051,10 +4059,11 @@ exports.getServiceRefund = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
 
     if (verify) {
-        let service_id = req.body.service_id
-        console.log(service_id);
+        let service_id = req.body.service_id;
+        let user_acc_id = req.body.user_acc_id;
+        let dealer_id = verify.user.id;
         if (service_id) {
-            sql.query("SELECT * from services_data WHERE id = " + service_id, async function (err, result) {
+            sql.query("SELECT * from services_data WHERE id = ? AND user_acc_id = ? AND dealer_id = ?", [service_id, user_acc_id, dealer_id], async function (err, result) {
                 if (err) {
                     res.send({
                         status: false,
@@ -4105,8 +4114,10 @@ exports.getServiceRefund = async function (req, res) {
     }
 };
 
+
+// unused api
+// not validated
 exports.deleteDevice = async function (req, res) {
-    // console.log(req.body);
     var verify = req.decoded; // await verifyToken(req, res);
 
     // if (verify.status !== undefined && verify.status == true) {

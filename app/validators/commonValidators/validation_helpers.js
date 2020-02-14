@@ -1,4 +1,5 @@
-const { check, custom } = require('express-validator');
+const { body } = require('express-validator');
+const { SIM_ID_PATTERN, EMAIL_REGEX, CHAT_ID } = require('../../../constants/validation');
 
 exports.arrayOfObjectWithKeys = function(value, obj = []){
     // console.log(obj);
@@ -43,4 +44,31 @@ exports.arrayOfObjectWithKeys = function(value, obj = []){
 
 exports.isObject = function(value){
     return (!Array.isArray(value) && Object.keys(value).length > 0);
+}
+
+exports.validateSimId = function(value){
+    if(["", null, "N/A"].includes(value)){
+        return true;
+    } else if(SIM_ID_PATTERN.test(value)){
+        return true;
+    }
+    throw new Error('Invalid value');
+}
+
+exports.validatePGPEmail = function(value, key){
+    if(["", null, "N/A"].includes(value)){
+        return true;
+    } else if(EMAIL_REGEX.test(value)){
+        return true;
+    }
+    throw new Error('Invalid value');
+}
+
+exports.validateChatId = function(value){
+    if(["", null, "N/A"].includes(value)){
+        return true;
+    } else if(CHAT_ID.test(value)){
+        return true;
+    }
+    throw new Error('Invalid value');
 }

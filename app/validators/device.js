@@ -1,8 +1,6 @@
 const { check, query, param, header, body } = require('express-validator');
-const { arrayOfObjectWithKeys, isObject } = require('./commonValidators/validation_helpers');
-
-const DEVICE_ID_PATTERN = /^([A-Za-z]{4})([0-9]{6})$/;
-const USER_ID_PATTERN = /^ID([0-9]{6,})$/;
+const { arrayOfObjectWithKeys, isObject, validateSimId, validatePGPEmail, validateChatId } = require('./commonValidators/validation_helpers');
+const { DEVICE_ID_PATTERN, USER_ID_PATTERN, DATE_REGEX } = require('../../constants/validation');
 
 exports.devices = [ // nn
 
@@ -339,141 +337,132 @@ exports.editDevices = [
 ];
 
 exports.extendServices = [
-    // check('usr_device_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('usr_device_id')
+        .notEmpty()
+        .isInt(),
 
-    // check('device_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('dealer_id')
+        .notEmpty()
+        .isInt(),
 
-    // check('dealer_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('usr_acc_id')
+        .notEmpty()
+        .isInt(),
 
-    // check('client_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('model')
+        .optional({nullable: true})
+        .isString(),
 
-    // check('usr_acc_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('usr_device_id')
+        .notEmpty()
+        .isInt(),
 
-    // check('usr_device_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('prevChatID')
+        .optional()
+        .custom(value => validateChatId(value)),
 
-    // check('prevPGP')
-    //     .exists()
-    //     .notEmpty(),
+    body('prevSimId')
+        .optional()
+        .isInt(),
 
-    // check('prevChatID')
-    //     .exists()
-    //     .notEmpty(),
+    body('prevSimId2')
+        .optional()
+        .isInt(),
 
-    // check('prevSimId')
-    //     .exists()
-    //     .notEmpty(),
+    body('finalStatus')
+        .optional()
+        .isString(),
 
-    // check('prevSimId2')
-    //     .exists()
-    //     .notEmpty(),
+    body('sim_id')
+        .optional()
+        .isInt(),
 
-    // check('finalStatus')
-    //     .exists()
-    //     .notEmpty(),
+    body('sim_id2')
+        .optional()
+        .isInt(),
 
-    // check('note')
-    //     .exists()
-    //     .notEmpty(
+    body('chat_id')
+        .optional()
+        .custom(value => validateChatId(value)),
 
-    //     ),
-    // check('start_date')
-    //     .exists()
-    //     .notEmpty(),
+    body('pgp_email')
+        .optional()
+        .custom(value => validatePGPEmail(value, 'pgp_email')),
+    
+    body('prevPGP')
+        .optional()
+        .custom(value=> validatePGPEmail(value, 'prevPGP')),
 
-    // check('sim_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('service')
+        .optional()
+        .isBoolean(),
 
-    // check('sim_id2')
-    //     .exists()
-    //     .notEmpty(),
+    body('prevService')
+        .notEmpty()
+        .custom(value => isObject(value)),
 
-    // check('chat_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('paid_by_user')
+        .optional()
+        .isIn(['PAID', 'UNPAID']),
 
-    // check('pgp_email')
-    //     .exists()
-    //     .notEmpty(),
+    body('products')
+        .optional()
+        .isArray(),
 
-    // check('service')
-    //     .exists()
-    //     .notEmpty(),
+    body('packages')
+        .optional()
+        .isArray(),
 
-    // check('prevService')
-    //     .exists()
-    //     .notEmpty(),
+    body('total_price')
+        .notEmpty()
+        .isInt(),
 
-    // check('paid_by_user')
-    //     .exists()
-    //     .notEmpty(),
+    body('expiry_date')
+        .optional()
+        .matches(DATE_REGEX),
 
-    // check('products')
-    //     .exists()
-    //     .notEmpty(),
+    body('pay_now')
+        .optional()
+        .isBoolean(),
 
-    // check('packages')
-    //     .exists()
-    //     .notEmpty(),
+    check('renewService')
+        .optional()
+        .isBoolean(),
 
-    // check('total_price')
-    //     .exists()
-    //     .notEmpty(),
-
-    // check('expiry_date')
-    //     .exists()
-    //     .notEmpty(),
-
-    // check('pay_now')
-    //     .exists()
-    //     .notEmpty(),
-
-    // check('renewService')
-    //     .exists()
-    //     .notEmpty(),
-
-    // check('user_id')
-    //     .exists()
-    //     .notEmpty(),
-
-    // check('data_plans')
-    //     .exists()
-    //     .notEmpty()
+    body('user_id')
+        .notEmpty()
+        .matches(USER_ID_PATTERN),
 
 ];
 
 exports.cancelExtendedServices = [
-    check('service_id')
-        .exists()
-        .notEmpty(),
-
-    check('user_acc_id')
+    body('service_id')
         .exists()
         .notEmpty()
+        .isInt(),
+
+    body('user_acc_id')
+        .exists()
+        .notEmpty()
+        .isInt()
 ];
 
 exports.getServiceRefund = [
-    check('device_id')
+    check('service_id')
         .exists()
         .notEmpty()
+        .isInt(),
+
+    body('user_acc_id')
+        .exists()
+        .notEmpty()
+        .isInt()
 ];
 
 exports.deleteDevice = [
-    check('device_id')
-        .exists()
-        .notEmpty()
+    // check('device_id')
+    //     .exists()
+    //     .notEmpty()
 ];
 
 exports.unlinkDevice = [
