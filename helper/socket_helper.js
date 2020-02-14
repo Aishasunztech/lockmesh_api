@@ -2,6 +2,8 @@
 
 // Helpers
 const { sql } = require('../config/database');
+
+// console.log(webIo, deviceIo, baseIo)
 // const device_helpers = require('../helper/device_helpers.js');
 // const general_helpers = require('../helper/general_helper.js');
 
@@ -12,12 +14,12 @@ const Constants = require('../constants/Application');
 
 
 module.exports = {
+    checkSocketVars: () => {
+        const socket_helper = require('../routes/sockets');
+        console.log(socket_helper.deviceIo)
+    },
+    // send to device
     sendRegSim: async (io, device_id, action, data) => {
-        console.log(Constants.SEND_SIM + device_id, 'sendRegSim data is=> ', {
-            action,
-            device_id,
-            entries: (data === undefined || data === null) ? '[]' : JSON.stringify(data),
-        });
 
         io.emit(Constants.SEND_SIM + device_id, {
             action,
@@ -26,6 +28,7 @@ module.exports = {
         });
     },
 
+    // send to panel 
     updateSimRecord: async function (io, device_id, response, socket = null) {
         // console.log('action is: ', response.action)
         console.log('updateSimRecord response is:: ', response)
@@ -176,6 +179,7 @@ module.exports = {
 
     },
 
+    // send to panel
     sendOnlineOfflineStatus: async (io, status, deviceId) => {
         console.log(status, ":", deviceId);
         io.emit(Constants.SEND_ONLINE_OFFLINE_STATUS + deviceId, {
@@ -183,10 +187,12 @@ module.exports = {
         })
     },
 
+    // send to frontend
     deviceSynced: (io, deviceId, status) => {
         io.emit('device_synced_' + deviceId, status);
     },
 
+    // send to device
     sendEmit: async (io, setting_id, app_list, passwords, controls, permissions, device_id) => {
         console.log("applied history ID:", setting_id);
 
@@ -201,6 +207,7 @@ module.exports = {
         });
     },
 
+    // send to device
     applyPushApps: (io, setting_id, push_apps, device_id) => {
         console.log("applied pushApps ID:", setting_id);
 
@@ -220,6 +227,7 @@ module.exports = {
         });
     },
 
+    // send to device
     getPullApps: (io, setting_id, pull_apps, device_id) => {
         console.log("applied pullApps ID:", setting_id);
 
@@ -237,6 +245,7 @@ module.exports = {
         });
     },
 
+    // doubt
     writeImei: (io, setting_id, imei, device_id) => {
         console.log("write_imei_" + device_id);
 
@@ -254,6 +263,7 @@ module.exports = {
         });
     },
 
+    // send to device
     syncDevice: async (io, device_id) => {
         io.emit(Constants.GET_SYNC_STATUS + device_id, {
             device_id: device_id,
@@ -265,6 +275,7 @@ module.exports = {
     },
 
     // live device status activity
+    // send to device
     sendDeviceStatus: async function (io, device_id, device_status, status = false) {
         console.log("send device status", device_id, device_status);
         io.emit(Constants.DEVICE_STATUS + device_id, {
@@ -274,6 +285,7 @@ module.exports = {
         });
     },
 
+    // send to panel
     ackSettingApplied: async function (io, device_id, app_list, extensions, controls) {
         let setting = {};
         if (app_list) {
@@ -292,6 +304,7 @@ module.exports = {
     },
 
 
+    // send to panel
     installedApps: async (io, deviceId, dvcId, response) => {
         // console.log("installedApps()", response);
         let app_list = JSON.parse(response);
@@ -313,7 +326,7 @@ module.exports = {
 
     },
 
-
+    // send to panel
     ackSinglePushApp: async function (io, device_id, dvcId, response) {
         console.log("ackSinglePushApp()");
         // let pushApp = null;
@@ -347,6 +360,7 @@ module.exports = {
         // })
     },
 
+    // send to panel
     uninstalledApps: async (io, deviceId, dvcId, response) => {
         console.log("uninstalledApps() ", response);
         let app_list = JSON.parse(response);
@@ -358,6 +372,7 @@ module.exports = {
         })
     },
 
+    // send to panel
     ackSinglePullApp: async function (io, device_id, dvc_id, response) {
 
         let pullApp = null;
@@ -389,6 +404,7 @@ module.exports = {
 
     },
 
+    // send to panel
     ackFinishedPolicyStep: async function (io, device_id, user_acc_id) {
         console.log("FINISHED POLICY STEP")
 
@@ -405,6 +421,7 @@ module.exports = {
         }
     },
 
+    // send to panel
     ackFinishedWipe: async function (io, device_id, user_acc_id) {
         console.log("DEVICE WIPED SUCCESSFULLY")
 
@@ -416,6 +433,7 @@ module.exports = {
         });
     },
 
+    // send to panel
     ackImeiChanged: async function (io, device_id) {
         console.log("IMEI Applied")
         await sql.query("UPDATE devices set is_push_apps = 0 WHERE device_id = '" + device_id + "'")
@@ -425,6 +443,7 @@ module.exports = {
         });
     },
 
+    // send to device
     getPolicy: (io, setting_id, device_id, policy) => {
 
         // to send acknowledgement on frontend
@@ -446,6 +465,7 @@ module.exports = {
         }
     },
 
+    // send to device
     sendMsgToDevice: async function (io, device_id, job_id, msg, SERVER_TIMEZONE) {
         console.log("data::  ", device_id, msg, job_id, "channel name: ", Constants.SEND_MSG_TO_DEVICE + device_id);
 
@@ -460,24 +480,33 @@ module.exports = {
         }
     },
 
+    // send to device
     forceCheckUpdate: async function (io, device_id) {
-        console.log("testing forceupdate", device_id);
+        console.log("testing force update: ", device_id);
         io.emit(Constants.FORCE_UPDATE_CHECK + device_id, {
             device_id: device_id,
             status: true
         });
     },
 
+    // send to panel
     sendJobToPanel: function (io, job) {
         console.log("data emitted on panel successfully");
         io.emit(Constants.SEND_JOB_TO_PANEL, job);
     },
 
+    // send to device
     deviceInfoUpdated: async function (io, device_id, data) {
         console.log("DEVICE INFORMATION UPDATED", data)
-        io.emit(Constants.DEVICE_INFO_UPDATED + device_id, {
+        this.sendSocketDataToDevice(Constants.DEVICE_INFO_UPDATED + device_id, {
             status: true,
             data: data
-        });
+        })
+        
     },
+
+    sendSocketDataToDevice: function(eventName, payload) {
+        const {deviceIo} = require('../routes/sockets');
+        deviceIo.emit(eventName, payload)
+    }
 }
