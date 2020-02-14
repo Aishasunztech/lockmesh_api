@@ -58,7 +58,7 @@ module.exports = {
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
       },
       end_date: {
-        type: 'TIMESTAMP',
+        type: 'DATETIME',
       },
       created_at: {
         type: 'TIMESTAMP',
