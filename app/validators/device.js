@@ -1,6 +1,6 @@
 const { check, query, param, header, body } = require('express-validator');
 const { arrayOfObjectWithKeys, isObject, validateSimId, validatePGPEmail, validateChatId } = require('./commonValidators/validation_helpers');
-const { DEVICE_ID_PATTERN, USER_ID_PATTERN, DATE_REGEX, IMEI_REGEX, CHAT_ID } = require('../../constants/validation');
+const { DEVICE_ID_PATTERN, USER_ID_PATTERN, DATE_REGEX, IMEI_REGEX, CHAT_ID, ONLY_DATE_REGEX } = require('../../constants/validation');
 
 //************************* Define Device Schemas ****************/ 
 const applyPushAppsSchema = [
@@ -244,125 +244,117 @@ exports.createDeviceProfile = [
 ];
 
 exports.editDevices = [
-    // check('usr_device_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('usr_device_id')
+        .notEmpty()
+        .isInt({min: 1}),
 
-    // check('device_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('device_id')
+        .notEmpty()
+        .isInt({min:1}),
 
-    // check('dealer_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('dealer_id')
+        .notEmpty()
+        .isInt({min:1}),
 
-    // check('client_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('client_id')
+        .optional({checkFalsy: true})
+        .isString(),
 
-    // check('model')
-    //     .exists()
-    //     .notEmpty(),
+    body('model')
+        .isString(),
 
-    // check('user_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('user_id')
+        .notEmpty()
+        .isString(),
 
-    // check('usr_acc_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('usr_acc_id')
+        .isInt({min:1}),
 
-    // check('usr_device_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('usr_device_id')
+        .isInt({min:1}),
 
-    // check('prevPGP')
-    //     .exists()
-    //     .notEmpty(),
+    body('prevPGP')
+        .optional()
+        .custom(v => validatePGPEmail(v)),
 
-    // check('prevChatID')
-    //     .exists()
-    //     .notEmpty(),
+    body('prevChatID')
+        .optional()
+        .matches(CHAT_ID),
 
-    // check('prevSimId')
-    //     .exists()
-    //     .notEmpty(),
+    body('prevSimId')
+        .optional()
+        .isInt(),
 
-    // check('prevSimId2')
-    //     .exists()
-    //     .notEmpty(),
+    body('prevSimId2')
+        .optional()
+        .isInt(),
 
-    // check('finalStatus')
-    //     .exists()
-    //     .notEmpty(),
+    body('finalStatus')
+        .optional()
+        .isString(),
 
-    // check('note')
-    //     .exists()
-    //     .notEmpty(),
+    body('note')
+        .optional()
+        .isString(),
 
-    // check('validity')
-    //     .exists()
-    //     .notEmpty(),
+    body('validity')
+        .optional({nullable: true})
+        .isInt(),
 
-    // check('start_date')
-    //     .exists()
-    //     .notEmpty(),
+    body('start_date')
+        .optional()
+        .matches(ONLY_DATE_REGEX),
 
-    // check('sim_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('sim_id')
+        .optional()
+        .isInt(),
 
-    // check('sim_id2')
-    //     .exists()
-    //     .notEmpty(),
+    body('sim_id2')
+        .optional()
+        .isInt(),
 
-    // check('chat_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('chat_id')
+        .optional()
+        .matches(CHAT_ID),
 
-    // check('pgp_email')
-    //     .exists()
-    //     .notEmpty(),
+    body('pgp_email')
+        .optional()
+        .custom(v => validatePGPEmail(v)),
 
-    // check('service')
-    //     .exists()
-    //     .notEmpty(),
+    body('service')
+        .isBoolean(),
 
-    // check('prevService')
-    //     .exists()
-    //     .notEmpty(),
+    body('prevService')
+        .isBoolean(),
 
-    // check('paid_by_user')
-    //     .exists()
-    //     .notEmpty(),
+    body('paid_by_user')
+        .isIn(['PAID', 'UNPAID']),
 
-    // check('products')
-    //     .exists()
-    //     .notEmpty(),
+    body('products')
+        .optional({checkFalsy: true})
+        .isArray(),
 
-    // check('packages')
-    //     .exists()
-    //     .notEmpty(),
+    body('packages')
+        .optional({checkFalsy: true})
+        .isArray(),
 
-    // check('total_price')
-    //     .exists()
-    //     .notEmpty(),
+    body('total_price')
+        .notEmpty()
+        .isInt(),
 
-    // check('expiry_date')
-    //     .exists()
-    //     .notEmpty(),
+    body('expiry_date')
+        .optional()
+        .matches(DATE_REGEX),
 
-    // check('pay_now')
-    //     .exists()
-    //     .notEmpty(),
+    body('pay_now')
+        .isBoolean(),
 
-    // check('cancelService')
-    //     .exists()
-    //     .notEmpty(),
+    body('cancelService')
+        .isBoolean(),
 
-    // check('data_plans')
-    //     .exists()
-    //     .notEmpty(),
+    body('data_plans')
+        .optional({checkFalsy: true})
+        .custom(v => isObject(v)),
 
 ];
 
