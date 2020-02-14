@@ -46,7 +46,7 @@ exports.arrayOfObjectWithKeys = function (value, obj = [], allowEmptyArray = fal
 }
 
 exports.isObject = function (value) {
-    return (!Array.isArray(value) && Object.keys(value).length > 0);
+    return (!Array.isArray(value) && typeof value === 'object' && Object.keys(value).length > 0);
 }
 
 exports.validateSimId = function(value){

@@ -1,6 +1,6 @@
 const { check, query, param, header, body } = require('express-validator');
 const { arrayOfObjectWithKeys, isObject, validateSimId, validatePGPEmail, validateChatId } = require('./commonValidators/validation_helpers');
-const { DEVICE_ID_PATTERN, USER_ID_PATTERN, DATE_REGEX } = require('../../constants/validation');
+const { DEVICE_ID_PATTERN, USER_ID_PATTERN, DATE_REGEX, IMEI_REGEX } = require('../../constants/validation');
 
 //************************* Define Device Schemas ****************/ 
 const applyPushAppsSchema = [
@@ -521,7 +521,7 @@ exports.getServiceRefund = [
         .isInt()
 ];
 
-exports.deleteDevice = [
+exports.deleteDevice = [ // nn
     // check('device_id')
     //     .exists()
     //     .notEmpty()
@@ -593,82 +593,77 @@ exports.transferDeviceProfile = [
 ];
 
 exports.transferHistory = [
-    check('device_id')
-        .exists()
-        .notEmpty()
+    param('device_id')
         .isLength({ min: 10, max: 10 })
-        // .withMessage('device length incorect')
-        .isString()
+        .isString(),
 
     // req.params.device_id
 ];
 
 exports.getServicesHistory = [
-    check('usr_acc_id')
-        .exists()
+    param('usr_acc_id')
         .notEmpty()
-    // .withMessage('asdfgh')
-
-    // req.params.usr_acc_id
+        .isInt()
 ];
 
 exports.suspendAccountDevices = [
-    check('id')
-        .exists()
+    param('id')
         .notEmpty()
-        .isNumeric()
+        .isInt()
 ];
 
 exports.activateDevice = [
-    check('id')
-        .exists()
+    param('id')
         .notEmpty()
-        .isNumeric()
+        .isInt()
 ];
 
 exports.wipeDevice = [
-    check('id')
-        .exists()
+    param('id')
         .notEmpty()
-        .isNumeric()
+        .isInt()
 ];
 
 exports.connectDevice = [
-    check('device_id')
-        .exists()
+    param('device_id')
         .notEmpty()
-        .isLength({ min: 10, max: 10 })
-        // .withMessage('')
-        .isString()
+        .matches(DEVICE_ID_PATTERN)
 ];
 
 exports.getDeviceBillingHistory = [
-    check('user_acc_id')
-        .exists()
-        .notEmpty(),
+    param('user_acc_id')
+        .notEmpty()
+        .isInt(),
 
     check('dealer_id')
-        .exists()
         .notEmpty()
+        .isInt()
 ];
 
 exports.getAppsOfDevice = [
-    check('device_id')
-        .exists()
+    param('device_id')
         .notEmpty()
+        .matches(DEVICE_ID_PATTERN)
 ];
 
 exports.applySettings = [
-    check('device_id')
-        .exists()
+    param('device_id')
         .notEmpty()
+        .matches(DEVICE_ID_PATTERN),
+
+    param('usr_acc_id')
+        .notEmpty()
+        .isInt(),
+    
+    body('device_setting')
+        .notEmpty()
+        .custom(value=>isObject(value))
 ];
 
 exports.applyPushApps = [
     param('device_id')
-        .exists()
         .notEmpty()
-        .isAlphanumeric(),
+        .matches(DEVICE_ID_PATTERN),
 
     body('push_apps')
         .custom(value => {
@@ -676,17 +671,15 @@ exports.applyPushApps = [
         }),
 
     body('usrAccId')
-        .exists()
         .notEmpty()
-        .isNumeric()
+        .isInt()
 
 ];
 
 exports.applyPullApps = [
     param('device_id')
-        .exists()
         .notEmpty()
-        .isAlphanumeric(),
+        .matches(DEVICE_ID_PATTERN),
 
     body('pull_apps')
         .custom(value => {
@@ -694,9 +687,8 @@ exports.applyPullApps = [
         }),
 
     body('usrAccId')
-        .exists()
         .notEmpty()
-        .isNumeric()
+        .isInt()
 ];
 
 exports.getAppJobQueueOfDevice = [
@@ -727,15 +719,27 @@ exports.deleteUnlinkDevice = [
 ];
 
 exports.getDeviceHistory = [
-    check('device_id')
-        .exists()
+    body('device_id')
         .notEmpty()
+        .matches(DEVICE_ID_PATTERN)
 ];
 
 exports.writeIMEI = [
-    check('device_id')
-        .exists()
+    param('device_id')
         .notEmpty()
+        .matches(DEVICE_ID_PATTERN),
+
+    body('usrAccId')
+        .isEmpty()
+        .isInt(),
+
+    body('type')
+        .isEmpty()
+        .isIn(['IMEI1', 'IMEI2']),
+
+    body('imeiNo')
+        .notEmpty()
+        .matches(IMEI_REGEX),
 ];
 
 exports.submitDevicePassword = [

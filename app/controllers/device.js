@@ -5484,7 +5484,6 @@ exports.transferDeviceProfile = async function (req, res) {
 exports.transferHistory = async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
     var verify = req.decoded;
-    console.log("transferHistory device id: ", req.params.device_id)
     if (verify) {
         try {
             if (req.params.device_id) {
