@@ -26,3 +26,14 @@ exports.permission_types = [
     'domain',
     'package'
 ];
+
+exports.bulk_action_list = [
+    'PUSHED APPS',
+    'PULLED APPS',
+    'PUSHED POLICY',
+    'SET PERMISSIONS',
+    'ACTIVATED DEVICES',
+    'SUSPENDED DEVICES',
+    'UNLINKED DEVICES',
+    'WIPED DEVICES',
+    'SEND MESSAGE']

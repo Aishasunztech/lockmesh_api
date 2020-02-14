@@ -31,6 +31,7 @@ const appValidators = require('../app/validators/app');
 const languageValidators = require('../app/validators/language');
 const policyValidators = require('../app/validators/policy');
 const dealerValidators = require('../app/validators/dealer');
+const bulkDevicesValidators = require('../app/validators/bulkDevices');
 var errorMsgs = commonValidators.responsValidationResults;
 
 var helpers = require("../helper/general_helper.js");
@@ -1589,41 +1590,41 @@ router.post('/add-acl-module', [aclValidators.addAclModule, errorMsgs], aclContr
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.post('/filtered-bulkDevices', bulkDevicesController.getFilteredBulkDevices);
+router.post('/filtered-bulkDevices', [bulkDevicesValidators.getFilteredBulkDevices, errorMsgs], bulkDevicesController.getFilteredBulkDevices);
 
-router.get("/get-bulk-history", bulkDevicesController.bulkDevicesHistory);
+router.get("/get-bulk-history", [bulkDevicesValidators.bulkDevicesHistory, errorMsgs], bulkDevicesController.bulkDevicesHistory);
 
 
 /** Suspend Bulk Devices / client **/
-router.post("/bulk-suspend", bulkDevicesController.suspendBulkAccountDevices);
+router.post("/bulk-suspend", [bulkDevicesValidators.suspendBulkAccountDevices, errorMsgs], bulkDevicesController.suspendBulkAccountDevices);
 
 /** Activate Bulk Device **/
-router.post("/bulk-activate", bulkDevicesController.activateBulkDevices);
+router.post("/bulk-activate", [bulkDevicesValidators.activateBulkDevices, errorMsgs], bulkDevicesController.activateBulkDevices);
 
 // /** Unlink Bulk Device  **/
-router.post("/bulk-unlink", bulkDevicesController.unlinkBulkDevices);
+router.post("/bulk-unlink", [bulkDevicesValidators.unlinkBulkDevices, errorMsgs], bulkDevicesController.unlinkBulkDevices);
 
-router.post("/bulk-wipe", bulkDevicesController.wipeBulkDevices);
+router.post("/bulk-wipe", [bulkDevicesValidators.wipeBulkDevices, errorMsgs], bulkDevicesController.wipeBulkDevices);
 
-// router.post("/getUsersOfDealers", bulkDevicesController.getUsersOfDealers);
+// router.post("/getUsersOfDealers", [bulkDevicesValidators.getUsersOfDealers , errorMsgs], bulkDevicesController.getUsersOfDealers);
 
-router.post("/apply_bulk_pushapps", bulkDevicesController.applyBulkPushApps);
+router.post("/apply_bulk_pushapps", [bulkDevicesValidators.applyBulkPushApps, errorMsgs], bulkDevicesController.applyBulkPushApps);
 
-router.post("/apply_bulk_pullapps", bulkDevicesController.applyBulkPullApps);
+router.post("/apply_bulk_pullapps", [bulkDevicesValidators.applyBulkPullApps, errorMsgs], bulkDevicesController.applyBulkPullApps);
 
-router.post('/apply_bulk_policy', bulkDevicesController.applyBulkPolicy);
+router.post('/apply_bulk_policy', [bulkDevicesValidators.applyBulkPolicy, errorMsgs], bulkDevicesController.applyBulkPolicy);
 
-router.post('/send_bulk_msg', bulkDevicesController.sendBulkMsg);
+router.post('/send_bulk_msg', [bulkDevicesValidators.sendBulkMsg, errorMsgs], bulkDevicesController.sendBulkMsg);
 
-router.post('/update_bulk_msg', bulkDevicesController.updateBulkMsg);
+router.post('/update_bulk_msg', [bulkDevicesValidators.updateBulkMsg, errorMsgs], bulkDevicesController.updateBulkMsg);
 
 router.post('/reset-chat-pin', [deviceValidators.resetChatPin, errorMsgs], deviceController.resetChatPin);
 
 router.post('/change-s-chat-pin-status', [deviceValidators.changeSchatPinStatus, errorMsgs], deviceController.changeSchatPinStatus);
 
-router.post('/get_bulk_msgs', bulkDevicesController.getBulkMsgsList);
+router.post('/get_bulk_msgs', [bulkDevicesValidators.getBulkMsgsList, errorMsgs], bulkDevicesController.getBulkMsgsList);
 
-router.get('/delete_bulk_msg/:id', bulkDevicesController.deleteBulkMsg);
+router.get('/delete_bulk_msg/:id', [bulkDevicesValidators.deleteBulkMsg, errorMsgs], bulkDevicesController.deleteBulkMsg);
 
 // ============== SERVICES ============ //
 

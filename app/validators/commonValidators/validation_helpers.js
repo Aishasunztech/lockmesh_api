@@ -49,28 +49,44 @@ exports.isObject = function (value, empty = false) {
     return (!Array.isArray(value) && typeof value === 'object' && (empty || Object.keys(value).length > 0));
 }
 
-exports.validateSimId = function(value){
-    if(["", null, "N/A"].includes(value)){
+exports.isValidTimeZone = function (tz, nullable = true) {
+    // if (!Intl || !Intl.DateTimeFormat().resolvedOptions().timeZone) {
+    //     throw 'Time zones are not available in this environment';
+    // }
+    if (nullable && tz === '') return true;
+
+    try {
+        Intl.DateTimeFormat(undefined, { timeZone: tz });
         return true;
-    } else if(SIM_ID_PATTERN.test(value)){
+    }
+    catch (ex) {
+        return false;
+    }
+
+}
+
+exports.validateSimId = function (value) {
+    if (["", null, "N/A"].includes(value)) {
+        return true;
+    } else if (SIM_ID_PATTERN.test(value)) {
         return true;
     }
     throw new Error('Invalid value');
 }
 
-exports.validatePGPEmail = function(value, key){
-    if(["", null, "N/A"].includes(value)){
+exports.validatePGPEmail = function (value, key) {
+    if (["", null, "N/A"].includes(value)) {
         return true;
-    } else if(EMAIL_REGEX.test(value)){
+    } else if (EMAIL_REGEX.test(value)) {
         return true;
     }
     throw new Error('Invalid value');
 }
 
-exports.validateChatId = function(value){
-    if(["", null, "N/A"].includes(value)){
+exports.validateChatId = function (value) {
+    if (["", null, "N/A"].includes(value)) {
         return true;
-    } else if(CHAT_ID.test(value)){
+    } else if (CHAT_ID.test(value)) {
         return true;
     }
     throw new Error('Invalid value');
