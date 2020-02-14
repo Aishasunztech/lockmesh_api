@@ -12,11 +12,6 @@ exports.responsValidationResults = async function (req, res, next) {
 }
 
 
-exports.testCommon = [
-    // check('email').isEmail(),
-    // check('pwd').notEmpty()
-];
-
 exports.login = [
     check('demail').isEmail(),
     check('pwd').notEmpty()
