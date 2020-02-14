@@ -47,3 +47,19 @@ exports.arrayOfObjectWithKeys = function (value, obj = [], allowEmptyArray = fal
 exports.isObject = function (value) {
     return (!Array.isArray(value) && Object.keys(value).length > 0);
 }
+
+
+exports.isValidTimeZone = function (tz, nullable = true) {
+    // if (!Intl || !Intl.DateTimeFormat().resolvedOptions().timeZone) {
+    //     throw 'Time zones are not available in this environment';
+    // }
+    if (nullable && tz === '') return true;
+
+    try {
+        Intl.DateTimeFormat(undefined, { timeZone: tz });
+        return true;
+    }
+    catch (ex) {
+        return false;
+    }
+}
