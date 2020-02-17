@@ -2265,7 +2265,7 @@ exports.editDevices = async function (req, res) {
             }
 
             if (loggedDealerType !== constants.ADMIN) {
-                if (loggedInUserData[0].account_balance_status !== 'active' && !pay_now) {
+                if (loggedInUserData[0].account_balance_status !== 'active' && !pay_now && newService) {
                     res.send({
                         status: false,
                         msg: "Error: Your Account balance status is on restricted level 1. You cannot use pay later function. Please Contact your admin"
@@ -6597,19 +6597,20 @@ exports.getAppsOfDevice = async function (req, res) {
     try {
         var verify = req.decoded; // await verifyToken(req, res);
         if (verify) {
-            if (req.params.device_id) {
+            let deviceId = req.params.device_id;
+            if (deviceId) {
 
-                var getAppsQ =
-                    `SELECT user_apps.id, user_apps.device_id, user_apps.app_id, user_apps.guest, user_apps.encrypted, user_apps.enable,
-				apps_info.label, apps_info.default_app, apps_info.system_app, apps_info.package_name, apps_info.visible, apps_info.unique_name as uniqueName, apps_info.icon as icon , apps_info.extension, apps_info.extension_id
-				FROM user_apps
-				LEFT JOIN apps_info ON (user_apps.app_id = apps_info.id)
-				LEFT JOIN devices ON (user_apps.device_id=devices.id)
-				WHERE devices.device_id = '${req.params.device_id}'`;
+                /**
+                 * extension => application is extension or not
+                 * visible => status either application should show in list or not
+                 * default => default application can not be hidden for encrypted space
+                 * system_app => system application cannot be pulled
+                 */
+                var getAppsQ = `SELECT user_apps.id, user_apps.device_id, user_apps.app_id, user_apps.guest, user_apps.encrypted, user_apps.enable, apps_info.label, apps_info.default_app, apps_info.system_app, apps_info.package_name, apps_info.visible, apps_info.unique_name as uniqueName, apps_info.icon as icon , apps_info.extension, apps_info.extension_id FROM user_apps LEFT JOIN apps_info ON (user_apps.app_id = apps_info.id) LEFT JOIN devices ON (user_apps.device_id=devices.id) WHERE devices.device_id = ?`;
 
-                sql.query(getAppsQ, async (error, apps) => {
+                sql.query(getAppsQ, [deviceId], async (error, apps) => {
                     if (error) {
-                        console.log(error);
+                        console.log("get application errors: ", error);
                         return res.send({
                             status: false,
                             msg: ''
@@ -6644,16 +6645,16 @@ exports.getAppsOfDevice = async function (req, res) {
                         }
                     }
 
-                    var systemPermissionQ = `SELECT * from user_app_permissions WHERE device_id ='${req.params.device_id}' LIMIT 1`;
+                    var systemPermissionQ = `SELECT * FROM user_app_permissions WHERE device_id =? LIMIT 1`;
                     //
-                    sql.query(systemPermissionQ, async (error, controls) => {
+                    sql.query(systemPermissionQ, [deviceId], async (error, controls) => {
                         if (error) {
                             console.log("Error:", error);
 
                         }
 
                         let cntrls = []
-                        if (controls.length > 0) {
+                        if (controls && controls.length > 0) {
                             cntrls = JSON.parse(controls[0].permissions);
                         }
 
