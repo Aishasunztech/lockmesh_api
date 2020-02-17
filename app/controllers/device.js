@@ -762,7 +762,6 @@ exports.acceptDevice = async function (req, res) {
                                                             if (pay_now) {
                                                                 price = price - Math.ceil(Number((price * 0.03)))
                                                             }
-
                                                             let admin_cost = 0
                                                             let dealer_cost = 0
                                                             let result = await sql.query("SELECT * FROM dealer_hardwares_prices WHERE hardware_id =" + hardwares[i].id + " AND created_by = 'super_admin'")

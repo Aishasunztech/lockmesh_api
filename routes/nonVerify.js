@@ -37,26 +37,26 @@ const constants = require('../constants/Application');
 router.get('/', async function (req, res, next) {
 
     // console.log(req.app);
-    return res.send('test')
 
     // transactions
-    // sql.getConnection((error, connection) => {
-    //     if (error) {
-    //         console.log(error)
-    //     }
-    //     connection.beginTransaction(async function (err) {
-    //         if (err) {
-    //             console.log(err)
-    //         };
-    //         let something = await connection.query("SELECT * FROM devicess");
-    //         console.log(something);
-    //         connection.commit(function (err) {
-    //             if (err) {
-    //                 console.log(err)
-    //             }
-    //         })
-    //     })
-    // })
+    sql.getConnection((error, connection) => {
+        if (error) {
+            console.log(error)
+        }
+        connection.beginTransaction(async function (err) {
+            if (err) {
+                console.log(err)
+            };
+            let something = await connection.query("SELECT * FROM devices");
+            console.log(something);
+            connection.commit(function (err) {
+                if (err) {
+                    console.log(err)
+                }
+            })
+        })
+    })
+    return res.send('test')
 
     // helpers.updateSimStatus('8901260852293382529', 'deactivated')
     // let attachment = {
@@ -827,7 +827,7 @@ router.get('/check_apps_in_folder', async function (req, res) {
         let apkFiles = [];
         if (files && files.length) {
             apks = files.filter(el => /\.apk$/.test(el))
-            for(let i =0; i<apks.length; i++){
+            for (let i = 0; i < apks.length; i++) {
                 let packageName = await helpers.getAPKPackageName(path.join(__dirname, '../uploads/' + apks[i]));
                 apkFiles.push({ file: apks[i], packageName });
             }
