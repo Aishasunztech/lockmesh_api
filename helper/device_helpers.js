@@ -505,7 +505,7 @@ module.exports = {
      * String ids of usr_acc table
      */
     getServicesData: async (ids) => {
-        console.log(ids);
+        console.log('get device ids services: ',ids);
         let query = "SELECT * FROM services_data WHERE user_acc_id IN (" + ids + ") AND (end_date IS NULL OR end_date = '') AND (status = 'active' OR status = 'request_for_cancel' OR status = 'extended') "
         let results = await sql.query(query);
         if (results.length) {
