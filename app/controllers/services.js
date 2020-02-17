@@ -22,6 +22,7 @@ let usr_acc_query_text = constants.usr_acc_query_text; //"usr_acc.id, usr_acc.us
 let data;
 
 exports.createServiceProduct = async function (req, res) {
+    console.log('body', req.body);
     var verify = req.decoded;
     if (verify) {
         let auto_generated = req.body.auto_generated

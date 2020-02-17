@@ -2,30 +2,30 @@ const { check } = require('express-validator');
 
 
 
-exports.generateProductReport = [
+exports.generateProductReport = [ // nn
 
 ];
 
-exports.generateInvoiceReport = [
+exports.generateInvoiceReport = [ // nn
 
 ];
 
-exports.generatePaymentHistoryReport = [
+exports.generatePaymentHistoryReport = [ // nn
 
 ];
 
-exports.generateHardwareReport = [
+exports.generateHardwareReport = [ // nn
 
 ];
 
-exports.generateSalesReport = [
+exports.generateSalesReport = [ // nn
 
 ];
 
-exports.generateGraceDaysReport = [
+exports.generateGraceDaysReport = [ // nn
 
 ];
 
-exports.showPdfFile = [
+exports.showPdfFile = [ // nn
 
 ];
