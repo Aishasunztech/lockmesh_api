@@ -55,12 +55,12 @@ const socketRoutes = require('../routes/sockets');
 //     // cookie: false
 // });
 
-// // Base socket
-// let io = socket();
-// // origin all commented
-// // io.set('origins', '*:*');
-// io.attach(server);
-// socketRoutes.baseSocket(io);
+// Base socket
+let io = socket();
+// origin all commented
+// io.set('origins', '*:*');
+io.attach(server);
+socketRoutes.baseSocket(io);
 
 
 // Socket for device
