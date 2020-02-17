@@ -1990,7 +1990,7 @@ exports.updateBulkMsg = async function (req, res) {
         }
         // end validation process
 
-        if (verify && txtMsg && valid_conditions) {
+        if (req.body.data && txtMsg && valid_conditions) {
             let loggedUserId = verify.user.id
             // let addNewTask = true;
 
@@ -2056,7 +2056,7 @@ exports.updateBulkMsg = async function (req, res) {
             } else {
                 data = {
                     status: false,
-                    msg: "Data not found"
+                    msg: "record not found to update"
                 };
                 res.send(data);
                 return;
