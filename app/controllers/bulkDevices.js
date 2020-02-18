@@ -1989,30 +1989,75 @@ exports.updateBulkMsg = async function (req, res) {
 
         if (verify && txtMsg && valid_conditions) {
             let loggedUserId = verify.user.id
+            // let addNewTask = true;
 
-            let updateMsgQuery = `UPDATE bulk_messages SET msg='${txtMsg}', timer_status = '${timer}', repeat_duration='${repeat}',  date_time='${dateTime}', week_day=${weekDay}, month_date=${monthDate}, month_name= ${monthName} WHERE id = ${updateId}`
-            console.log("updateMsgQuery ", updateMsgQuery);
-            let result = await sql.query(updateMsgQuery);
+            let validToUpdate = await sql.query(`SELECT * FROM bulk_messages WHERE id = ${updateId};`);
 
-            if (result && result.affectedRows) {
+            if (validToUpdate && validToUpdate.length) {
+                // console.log("validToUpdate ", validToUpdate);
+                let editDateTime = validToUpdate[0].date_time;
+                let currentDateTime = moment().tz(app_constants.TIME_ZONE).format(constants.TIMESTAMP_FORMAT);
 
-                // Update task Scheduling data
-                var updateJobQueue = `UPDATE task_schedules SET title = '${txtMsg}', interval_status = '${timer}', interval_time = ${intervalTime}, interval_description = '${repeat}', next_schedule = '${dateTime}', week_day = ${weekDay}, month_day = ${monthDate}, month_name = ${monthName} WHERE task_id = ${updateId} AND action_by = ${loggedUserId} AND status = 'NEW';`;
-                console.log("updateJobQueue ", updateJobQueue);
-                let response_data = await sql.query(updateJobQueue);
+                if (validToUpdate[0].timer_status === "DATE/TIME" && currentDateTime > editDateTime) {
+                    // if (currentDateTime > editDateTime) {
+                    data = {
+                        status: false,
+                        msg: "This message time is passed. You are not allowed to change this message settings."
+                    }
+                    res.send(data);
+                    return
+                    // }
+                } else {
+                    let updateMsgQuery = `UPDATE bulk_messages SET msg='${txtMsg}', timer_status = '${timer}', repeat_duration='${repeat}',  date_time='${dateTime}', week_day=${weekDay}, month_date=${monthDate}, month_name= ${monthName} WHERE id = ${updateId}`
+                    console.log("updateMsgQuery ", updateMsgQuery);
+                    let result = await sql.query(updateMsgQuery);
 
-                data = {
-                    status: true,
-                    msg: "Message Setting update Successfully."
+                    if (result && result.affectedRows) {
+
+
+                        // Update task Scheduling data
+                        // if (addNewTask) {
+                        //     let device_ids = JSON.parse(validToUpdate[0].device_ids);
+                        //     console.log("check device ids: ", device_ids);
+                        //     for (let i = 0; i < device_ids.length; i++) {
+                        //         let getDeviceId = await sql.query(`SELECT device_id FROM devices WHERE id =  ${device_ids[i].device_id}`)
+
+                        //         var insertJobQueue = `INSERT INTO task_schedules (task_id, device_id, title, interval_status, interval_time, interval_description, next_schedule, last_execution_time, week_day, month_day, month_name, status, action_by) 
+                        // VALUES (${updateId}, '${getDeviceId[0].device_id}','${txtMsg}','${timer}', ${intervalTime}, '${repeat}', '${dateTime}', '${dateTime}', ${weekDay}, ${monthDate}, ${monthName}, 'NEW', ${loggedUserId});`;
+                        //         // console.log("insertJobQueue ", insertJobQueue);
+                        //         let response_data = await sql.query(insertJobQueue);
+                        //     }
+
+                        // } else {
+                        var updateJobQueue = `UPDATE task_schedules SET title = '${txtMsg}', interval_status = '${timer}', interval_time = ${intervalTime}, interval_description = '${repeat}', next_schedule = '${dateTime}', week_day = ${weekDay}, month_day = ${monthDate}, month_name = ${monthName} WHERE task_id = ${updateId} AND action_by = ${loggedUserId} AND status = 'NEW';`;
+                        console.log("updateJobQueue ", updateJobQueue);
+                        let response_data = await sql.query(updateJobQueue);
+
+                        // }
+
+                        data = {
+                            status: true,
+                            msg: "Message Setting update Successfully."
+                        }
+                    } else {
+                        data = {
+                            status: false,
+                            msg: "Failed to update message setting."
+                        }
+                    }
+                    res.send(data);
+
+
                 }
+
             } else {
                 data = {
                     status: false,
-                    msg: "Failed to update message setting."
-                }
+                    msg: "Data not found"
+                };
+                res.send(data);
+                return;
             }
-            res.send(data);
-
         } else {
             data = {
                 status: false,

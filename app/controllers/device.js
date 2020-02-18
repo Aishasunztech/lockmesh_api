@@ -46,26 +46,23 @@ exports.devices = async function (req, res) {
                 where_con = ` AND (usr_acc.dealer_id =${
                     verify.user.id
                     } OR usr_acc.prnt_dlr_id = ${verify.user.id})`;
-                query = `SELECT * From acc_action_history WHERE action = 'UNLINKED' AND dealer_id = ${
-                    verify.user.id
-                    } AND del_status IS NULL`;
-
             } else {
                 where_con = ` AND usr_acc.dealer_id = ${verify.user.id} `;
-                query = `SELECT * From acc_action_history WHERE action = 'UNLINKED' AND dealer_id = ${
-                    verify.user.id
-                    } AND del_status IS NULL`;
+
             }
+            // query = `SELECT * From acc_action_history WHERE action = 'UNLINKED' AND dealer_id = ${
+            //     verify.user.id
+            //     } AND del_status IS NULL`;
         } else {
-            query = `SELECT * From acc_action_history WHERE action = 'UNLINKED' AND del_status IS NULL `;
+            // query = `SELECT * From acc_action_history WHERE action = 'UNLINKED' AND del_status IS NULL `;
         }
-        newArray = await sql.query(query);
+        // newArray = await sql.query(query);
 
 
         // console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 ' + where_con + ' order by devices.id DESC');
         // sql.query('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer , pgp_emails.pgp_email,chat_ids.chat_id ,sim_ids.sim_id from devices left join usr_acc on  devices.id = usr_acc.device_id left join dealers on dealers.dealer_id = usr_acc.dealer_id LEFT JOIN pgp_emails on pgp_emails.user_acc_id = usr_acc.id LEFT JOIN chat_ids on chat_ids.user_acc_id = usr_acc.id LEFT JOIN sim_ids on sim_ids.device_id = usr_acc.device_id where usr_acc.transfer_status = 0 ' + where_con + ' order by devices.id DESC', function (error, results, fields) {
         // console.log('select devices.*  ,' + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 ' + where_con + ' order by devices.id DESC');
-        let deviceQuery = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) WHERE ((devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0) OR (usr_acc.relink_status = 1))  ${where_con} ORDER BY devices.id DESC`;
+        let deviceQuery = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) WHERE ((devices.reject_status = 0 AND usr_acc.del_status = 0) OR (usr_acc.relink_status = 1))  ${where_con} ORDER BY devices.id DESC`;
 
         sql.query(deviceQuery, async function (error, results, fields) {
             data = {
@@ -172,7 +169,8 @@ exports.devices = async function (req, res) {
                     );
                 }
                 // console.log("devices api: ", results);
-                let finalResult = [...results, ...newArray];
+                // let finalResult = [...results, ...newArray];
+                let finalResult = results;
 
                 let checkValue = helpers.checkValue;
                 for (let device of finalResult) {
@@ -2267,7 +2265,7 @@ exports.editDevices = async function (req, res) {
             }
 
             if (loggedDealerType !== constants.ADMIN) {
-                if (loggedInUserData[0].account_balance_status !== 'active' && !pay_now) {
+                if (loggedInUserData[0].account_balance_status !== 'active' && !pay_now && newService) {
                     res.send({
                         status: false,
                         msg: "Error: Your Account balance status is on restricted level 1. You cannot use pay later function. Please Contact your admin"
@@ -2718,7 +2716,7 @@ exports.editDevices = async function (req, res) {
                                         await sql.query(updatePrevSim);
 
                                         if (finalStatus != constants.DEVICE_PRE_ACTIVATION) {
-                                            helpers.updateSimStatus(sim_id, 'deactivated')
+                                            helpers.updateSimStatus(sim_id, 'suspended')
                                         }
 
 
@@ -2732,6 +2730,7 @@ exports.editDevices = async function (req, res) {
                                             if (result && result.insertId) {
                                                 if (finalStatus != constants.DEVICE_PRE_ACTIVATION) {
                                                     helpers.updateSimStatus(sim_id2, 'active')
+
                                                 }
                                             }
                                         });
@@ -2752,7 +2751,7 @@ exports.editDevices = async function (req, res) {
                                             '"';
                                         await sql.query(updatePrevSim);
                                         if (finalStatus != constants.DEVICE_PRE_ACTIVATION) {
-                                            helpers.updateSimStatus(sim_id, 'deactivated')
+                                            helpers.updateSimStatus(sim_id, 'suspended')
                                         }
                                     }
                                 }
@@ -6598,19 +6597,20 @@ exports.getAppsOfDevice = async function (req, res) {
     try {
         var verify = req.decoded; // await verifyToken(req, res);
         if (verify) {
-            if (req.params.device_id) {
+            let deviceId = req.params.device_id;
+            if (deviceId) {
 
-                var getAppsQ =
-                    `SELECT user_apps.id, user_apps.device_id, user_apps.app_id, user_apps.guest, user_apps.encrypted, user_apps.enable,
-				apps_info.label, apps_info.default_app, apps_info.system_app, apps_info.package_name, apps_info.visible, apps_info.unique_name as uniqueName, apps_info.icon as icon , apps_info.extension, apps_info.extension_id
-				FROM user_apps
-				LEFT JOIN apps_info ON (user_apps.app_id = apps_info.id)
-				LEFT JOIN devices ON (user_apps.device_id=devices.id)
-				WHERE devices.device_id = '${req.params.device_id}'`;
+                /**
+                 * extension => application is extension or not
+                 * visible => status either application should show in list or not
+                 * default => default application can not be hidden for encrypted space
+                 * system_app => system application cannot be pulled
+                 */
+                var getAppsQ = `SELECT user_apps.id, user_apps.device_id, user_apps.app_id, user_apps.guest, user_apps.encrypted, user_apps.enable, apps_info.label, apps_info.default_app, apps_info.system_app, apps_info.package_name, apps_info.visible, apps_info.unique_name as uniqueName, apps_info.icon as icon , apps_info.extension, apps_info.extension_id FROM user_apps LEFT JOIN apps_info ON (user_apps.app_id = apps_info.id) LEFT JOIN devices ON (user_apps.device_id=devices.id) WHERE devices.device_id = ?`;
 
-                sql.query(getAppsQ, async (error, apps) => {
+                sql.query(getAppsQ, [deviceId], async (error, apps) => {
                     if (error) {
-                        console.log(error);
+                        console.log("get application errors: ", error);
                         return res.send({
                             status: false,
                             msg: ''
@@ -6645,16 +6645,16 @@ exports.getAppsOfDevice = async function (req, res) {
                         }
                     }
 
-                    var systemPermissionQ = `SELECT * from user_app_permissions WHERE device_id ='${req.params.device_id}' LIMIT 1`;
+                    var systemPermissionQ = `SELECT * FROM user_app_permissions WHERE device_id =? LIMIT 1`;
                     //
-                    sql.query(systemPermissionQ, async (error, controls) => {
+                    sql.query(systemPermissionQ, [deviceId], async (error, controls) => {
                         if (error) {
                             console.log("Error:", error);
 
                         }
 
                         let cntrls = []
-                        if (controls.length > 0) {
+                        if (controls && controls.length > 0) {
                             cntrls = JSON.parse(controls[0].permissions);
                         }
 
@@ -7069,11 +7069,12 @@ exports.deleteUnlinkDevice = async function (req, res) {
                 if (action === 'unlink') {
                     for (let device of req.body.devices) {
                         // console.log(req.body.devices.length);
-                        let deleteq = "UPDATE acc_action_history SET del_status='1' WHERE id='" + device.id + "' AND dealer_id = '" + verify.user.id + "' AND action = 'UNLINKED'";
-                        // console.log('query is ', deleteq)
-                        let resp = await sql.query(deleteq)
-                        if (resp.affectedRows) {
-                            await sql.query(`UPDATE usr_acc SET del_status = '1' WHERE id = ${device.user_acc_id} AND unlink_status = 1`)
+                        // let deleteq = "UPDATE acc_action_history SET del_status='1' WHERE id='" + device.id + "' AND dealer_id = '" + verify.user.id + "' AND action = 'UNLINKED'";
+                        // // console.log('query is ', deleteq)
+                        // let resp = await sql.query(deleteq)
+                        // if (resp.affectedRows) {
+                        let updateResp = await sql.query(`UPDATE usr_acc SET del_status = '1' WHERE id = ${device.user_acc_id} AND unlink_status = 1`)
+                        if (updateResp.affectedRows) {
                             deletedDevices.push(device.id);
                         } else {
                             deleteError += 1;
