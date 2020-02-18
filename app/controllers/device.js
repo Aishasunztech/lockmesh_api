@@ -7420,7 +7420,7 @@ exports.writeIMEI = async function (req, res) {
                                             MsgConstants
                                                 .RESTART_DEVICE_REQUIRED_TO_APPLY_IMEI
                                             ],
-                                            " on Device.Restart device is required to apply IMEI."
+                                            " on Device. Restart device is required to apply IMEI."
                                         )
                                     };
                                     res.send(data);
@@ -7502,7 +7502,7 @@ exports.writeIMEI = async function (req, res) {
                                         MsgConstants
                                             .RESTART_DEVICE_REQUIRED_TO_APPLY_IMEI
                                         ],
-                                        " on Device.Restart device is required to apply IMEI."
+                                        " on Device. Restart device is required to apply IMEI."
                                     )
                                 };
                                 res.send(data);
