@@ -2338,8 +2338,6 @@ exports.twoFactorAuth = async function (req, res) {
  *
  */
 exports.dealerPermissions = async function (req, res) {
-    console.log(req.body)
-
     var verify = req.decoded;
     let loggedUserId = verify.user.dealer_id;
     let loggedUserType = verify.user.user_type;

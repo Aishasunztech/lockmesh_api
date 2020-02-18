@@ -2150,6 +2150,7 @@ exports.createDeviceProfile = async function (req, res) {
 }
 
 exports.editDevices = async function (req, res) {
+    console.log('editDevice', req.body);
     res.setHeader("Content-Type", "application/json");
     var verify = req.decoded; // await verifyToken(req, res);
 
@@ -2482,6 +2483,8 @@ exports.editDevices = async function (req, res) {
                                     client_id +
                                     "', device_status = 1, unlink_status=0 ,  start_date = '" +
                                     start_date +
+                                    "', expiry_months = '" +
+                                    exp_month +
                                     "' WHERE device_id = '" +
                                     usr_device_id +
                                     "'";
@@ -2497,6 +2500,8 @@ exports.editDevices = async function (req, res) {
                                     start_date +
                                     "' ,expiry_date = '" +
                                     expiry_date +
+                                    "', expiry_months = '" +
+                                    exp_month +
                                     "' WHERE device_id = '" +
                                     usr_device_id +
                                     "'";
@@ -2514,6 +2519,8 @@ exports.editDevices = async function (req, res) {
                                     client_id +
                                     "', device_status = 0, unlink_status=0 ,start_date = '" +
                                     start_date +
+                                    "', expiry_months = '" +
+                                    exp_month +
                                     "' WHERE device_id = '" +
                                     usr_device_id +
                                     "'";
@@ -2531,6 +2538,8 @@ exports.editDevices = async function (req, res) {
                                     start_date +
                                     "', expiry_date = '" +
                                     expiry_date +
+                                    "', expiry_months = '" +
+                                    exp_month +
                                     "' WHERE device_id = '" +
                                     usr_device_id +
                                     "'";

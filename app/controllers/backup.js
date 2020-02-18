@@ -15,10 +15,15 @@ let usr_acc_query_text = constants.usr_acc_query_text;
 
 var data;
 exports.createBackupDB = async function (req, res) {
-
     res.setHeader('Content-Type', 'application/json');
 
     var verify = req.decoded;
+    if(verify.user.user_type !== constants.ADMIN){
+        return res.send({
+            status: false,
+            msg: 'no permissions'
+        });
+    }
     // var loggedInuid = verify.user.id;
     if (verify) {
         var ws;

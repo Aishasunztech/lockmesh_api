@@ -1,6 +1,6 @@
 const { check, query, param, header, body } = require('express-validator');
 const { arrayOfObjectWithKeys, isObject, validateSimId, validatePGPEmail, validateChatId } = require('./commonValidators/validation_helpers');
-const { DEVICE_ID_PATTERN, USER_ID_PATTERN, DATE_REGEX, IMEI_REGEX, CHAT_ID, ONLY_DATE_REGEX } = require('../../constants/validation');
+const { DEVICE_ID_PATTERN, USER_ID_PATTERN, DATE_REGEX, IMEI_REGEX, CHAT_ID, ONLY_DATE_REGEX, DATE_REGEX_WITH_NA } = require('../../constants/validation');
 
 //************************* Define Device Schemas ****************/ 
 const applyPushAppsSchema = [
@@ -250,7 +250,7 @@ exports.editDevices = [
 
     body('device_id')
         .notEmpty()
-        .isInt({min:1}),
+        .matches(DEVICE_ID_PATTERN),
 
     body('dealer_id')
         .notEmpty()
@@ -279,15 +279,15 @@ exports.editDevices = [
 
     body('prevChatID')
         .optional()
-        .matches(CHAT_ID),
+        .custom(v => validateChatId(v)),
 
     body('prevSimId')
         .optional()
-        .isInt(),
+        .custom(v => validateSimId(v)),
 
     body('prevSimId2')
         .optional()
-        .isInt(),
+        .custom(v => validateSimId(v)),
 
     body('finalStatus')
         .optional()
@@ -303,31 +303,34 @@ exports.editDevices = [
 
     body('start_date')
         .optional()
-        .matches(ONLY_DATE_REGEX),
+        .matches(DATE_REGEX_WITH_NA),
 
     body('sim_id')
         .optional()
-        .isInt(),
+        .custom(v => validateSimId(v)),
 
     body('sim_id2')
         .optional()
-        .isInt(),
+        .custom(v => validateSimId(v)),
 
     body('chat_id')
         .optional()
-        .matches(CHAT_ID),
+        .custom(v => validateChatId(v)),
 
     body('pgp_email')
         .optional()
         .custom(v => validatePGPEmail(v)),
 
-    body('service')
-        .isBoolean(),
+    // body('service')
+    //     .optional()
+    //     .isBoolean(),
 
     body('prevService')
-        .isBoolean(),
+        .optional({checkFalsy: true})
+        .custom(v => isObject(v)),
 
     body('paid_by_user')
+        .optional({checkFalsy: true})
         .isIn(['PAID', 'UNPAID']),
 
     body('products')
@@ -339,18 +342,19 @@ exports.editDevices = [
         .isArray(),
 
     body('total_price')
-        .notEmpty()
+        .optional()
         .isInt(),
 
     body('expiry_date')
         .optional()
         .matches(DATE_REGEX),
 
-    body('pay_now')
-        .isBoolean(),
+    // body('pay_now')
+    //     .optional()
+    //     .isBoolean(),
 
-    body('cancelService')
-        .isBoolean(),
+    // body('cancelService')
+    //     .isBoolean(),
 
     body('data_plans')
         .optional({checkFalsy: true})

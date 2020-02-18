@@ -206,7 +206,7 @@ exports.twoFactorAuth = [
 exports.dealerPermissions = [
     param('permissionType')
         .notEmpty()
-        .isInt(permission_types),
+        .isIn(permission_types),
 
     body('action')
         .notEmpty()
