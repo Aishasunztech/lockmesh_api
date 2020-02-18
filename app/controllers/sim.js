@@ -1,6 +1,7 @@
 // libraries
 var empty = require('is-empty');
 var moment = require('moment');
+var path = require("path");
 
 // custom libraries
 const { sql } = require('../../config/database');
@@ -15,6 +16,8 @@ var axios = require('axios');
 const MsgConstants = require('../../constants/MsgConstants')
 const constants = require('../../constants/Application')
 var app_constants = require('../../config/constants');
+const { createInvoice } = require('../../helper/CreateInvoice')
+
 
 
 
@@ -550,6 +553,7 @@ exports.addStandAloneSim = async function (req, res) {
         let user_type = verify.user.user_type
         let total_price = 0
         let discounted_total_price = 0
+        let discount = 0
         let date_now = moment().format('YYYY/MM/DD')
         let term = req.body.term
         let loggedDealer = {}
@@ -654,17 +658,14 @@ exports.addStandAloneSim = async function (req, res) {
                                                         let data_plan_package = null
                                                         let admin_cost = 0
                                                         let dealer_cost = 0
+                                                        let paid_credits = 0
+                                                        let expiry_date = helpers.getExpDateByMonth(date_now, term)
                                                         if (packages && Array.isArray(packages)) {
                                                             packages.map(async item => {
                                                                 total_price += Number(item.pkg_price)
                                                                 if (item.package_type === 'data_plan') {
                                                                     data_plan_package = item
                                                                 }
-                                                                let price = item.hardware_price
-                                                                if (pay_now) {
-                                                                    price = price - Math.ceil(Number((price * 0.03)))
-                                                                }
-
                                                                 let result = await sql.query("SELECT * FROM dealer_packages_prices WHERE package_id =" + item.id + " AND created_by = 'super_admin'")
                                                                 if (result.length) {
                                                                     admin_cost = result[0].price
@@ -683,7 +684,8 @@ exports.addStandAloneSim = async function (req, res) {
                                                             })
                                                             discounted_total_price = total_price
                                                             if (pay_now) {
-                                                                discounted_total_price = total_price - Math.ceil((total_price * 0.03))
+                                                                discount = Math.ceil((total_price * 0.03))
+                                                                discounted_total_price = total_price - discount
                                                             }
                                                             if (pay_now && dealer_account.credits < discounted_total_price) {
                                                                 return res.send({
@@ -720,8 +722,8 @@ exports.addStandAloneSim = async function (req, res) {
                                                                     }
                                                                     if (insertResult && insertResult.insertId) {
                                                                         let sim_t_id = insertResult.insertId
-                                                                        let inserStandaloneQuery = `INSERT INTO standalone_sims (sim_id ,iccid , dealer_id , dealer_type , package_data , sale_price , admin_cost , dealer_cost , term , start_date) VALUES (?,?,?,?,?,?,?,?,?,?)`
-                                                                        let standAloneValues = [sim_t_id, sim_id, user_id, user_type, JSON.stringify(packages), discounted_total_price, admin_cost, dealer_cost, term, date_now]
+                                                                        let inserStandaloneQuery = `INSERT INTO standalone_sims (sim_id ,iccid , dealer_id , dealer_type , package_data , sale_price , admin_cost , dealer_cost , term , start_date , end_date) VALUES (?,?,?,?,?,?,?,?,?,?,?)`
+                                                                        let standAloneValues = [sim_t_id, sim_id, user_id, user_type, JSON.stringify(packages), discounted_total_price, admin_cost, dealer_cost, term, date_now, expiry_date]
                                                                         sql.query(inserStandaloneQuery, standAloneValues, async function (error, insertResultStandAlone) {
                                                                             if (error) {
                                                                                 console.log(error);
@@ -768,9 +770,9 @@ exports.addStandAloneSim = async function (req, res) {
                                                                                 }
                                                                                 else {
                                                                                     let transection_due_credits = discounted_total_price;
-                                                                                    if (dealerBalanceAccont.credits > 0) {
-                                                                                        transection_due_credits = discounted_total_price - dealerBalanceAccont.credits
-                                                                                        let paid_credits = dealerBalanceAccont.credits
+                                                                                    if (dealer_account.credits > 0) {
+                                                                                        transection_due_credits = discounted_total_price - dealer_account.credits
+                                                                                        paid_credits = dealer_account.credits
                                                                                         let transection_credits = `INSERT INTO financial_account_transections (user_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits) VALUES (${user_id} ,'${JSON.stringify({ sim_iccid: sim_id, standalone_service_id: standalone_t_id })}' ,${discounted_total_price} ,'credit' , 'pending' , 'standalone_sim' , ${paid_credits} , ${transection_due_credits})`
                                                                                         let inserteddata = await sql.query(transection_credits)
                                                                                         if (!inserteddata || !inserteddata.insertId) {
@@ -843,8 +845,10 @@ exports.addStandAloneSim = async function (req, res) {
                                                                                 if (!updatedResult || updatedResult.affectedRows < 0) {
                                                                                     connection.rollback()
                                                                                 }
-                                                                                var SimQry = `SELECT s.* , d.device_id FROM sim_ids as s LEFT JOIN usr_acc as u on s.user_acc_id = u.id LEFT JOIN devices as d ON d.id= u.device_id LEFT JOIN standalone_sims as sas ON sas.sim_id = s.sim_id WHERE s.id = ${sim_t_id} AND sas.id = ${standalone_t_id}`;
-                                                                                sql.query(SimQry, function (err, result) {
+
+                                                                                var SimQry = `SELECT s.* , d.device_id FROM sim_ids as s LEFT JOIN usr_acc as u on s.user_acc_id = u.id LEFT JOIN devices as d ON d.id= u.device_id LEFT JOIN standalone_sims as sas ON sas.sim_id = s.id WHERE s.id = ${sim_t_id} AND sas.id = ${standalone_t_id}`;
+                                                                                console.log(SimQry);
+                                                                                sql.query(SimQry, async function (err, result) {
                                                                                     if (err) {
                                                                                         console.log(err);
                                                                                         connection.rollback()
@@ -864,11 +868,50 @@ exports.addStandAloneSim = async function (req, res) {
                                                                                         //     } else {
                                                                                         //     }
                                                                                         // })
+                                                                                        let user_credits = "SELECT * FROM financial_account_balance WHERE dealer_id=" + user_id
+                                                                                        let account_balance = await sql.query(user_credits)
+                                                                                        let inv_no = await helpers.getInvoiceId()
+                                                                                        const invoice = {
+                                                                                            shipping: {
+                                                                                                name: verify.user.dealer_name,
+                                                                                                dealer_pin: verify.user.link_code
+                                                                                            },
+                                                                                            products: [],
+                                                                                            packages: packages,
+                                                                                            hardwares: [],
+                                                                                            pay_now: pay_now,
+                                                                                            discount: discount,
+                                                                                            discountPercent: "3%",
+                                                                                            quantity: 1,
+                                                                                            subtotal: total_price,
+                                                                                            paid: discounted_total_price,
+                                                                                            invoice_nr: inv_no,
+                                                                                            invoice_status: invoice_status,
+                                                                                            paid_credits: paid_credits,
+                                                                                            expiry_date: expiry_date
+                                                                                        };
+
+                                                                                        let fileName = "invoice-" + inv_no + ".pdf"
+                                                                                        let filePath = path.join(__dirname, "../../uploads/" + fileName)
+                                                                                        await createInvoice(invoice, filePath)
+
+                                                                                        let attachment = {
+                                                                                            fileName: fileName,
+                                                                                            file: filePath
+                                                                                        }
+
+                                                                                        // sql.query(`INSERT INTO invoices (inv_no,user_acc_id,dealer_id,file_name ,end_user_payment_status) VALUES('${inv_no}',${usr_acc_id},${dealer_id}, '${fileName}' , '${paid_by_user}')`)
+
+                                                                                        html = 'You have added a new standalone sim with ICCID :  ' + sim_id + '.<br>Your Invoice is attached below. <br>';
+
+                                                                                        sendEmail("NEW STANDALONE SIM ADDED", html, verify.user.dealer_email, null, attachment);
+
                                                                                         console.log("Standalone Sim added Successfully");
                                                                                         return res.send({
                                                                                             status: true,
                                                                                             msg: "Stand Alone Sim added Successfully.",
-                                                                                            data: result[0]
+                                                                                            data: result[0],
+                                                                                            credits: account_balance[0] ? account_balance[0].credits : 0,
                                                                                         })
                                                                                     }
                                                                                 })

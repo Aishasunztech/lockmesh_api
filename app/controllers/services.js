@@ -274,7 +274,10 @@ exports.validateSimId = async function (req, res) {
                 })
                 return
             } else {
-                let selectSimQ = `SELECT * FROM sim_ids WHERE sim_id = '${sim_id}' AND delete_status = '0' AND user_acc_id  !='${user_acc_id}'`
+                let selectSimQ = `SELECT * FROM sim_ids WHERE sim_id = '${sim_id}' AND delete_status = '0'`
+                if (user_acc_id) {
+                    selectSimQ = selectSimQ + ` AND (user_acc_id  !='${user_acc_id}' OR (type = 'standalone' AND user_acc_id IS NULL))`
+                }
                 console.log(selectSimQ);
                 let simFound = await sql.query(selectSimQ)
                 if (simFound && simFound.length) {
