@@ -853,6 +853,27 @@ router.get("/get_sim_ids", [accountValidators.getSimIDs, errorMsgs], accountCont
  * @security JWT
  */
 router.get("/get_all_sim_ids", [accountValidators.getAllSimIDs, errorMsgs], accountController.getAllSimIDs);
+
+/**
+ * @route GET /users/get-standalone-sims
+ * @group Account  -Operations on account
+ * @returns {object} 200 - Array of sim ids 
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+
+router.get("/get-standalone-sims", simController.getStandAloneSims);
+
+/**
+ * @route GET /users/change_sim_status
+ * @group Account  -Operations on account
+ * @returns {object} 200 - Array of sim ids 
+ * @returns {Error}  default - Unexpected error
+ * @security JWT
+ */
+
+router.put("/change_sim_status", simController.changeSimStatus);
+
 /**
  * @route GET /users/resync_ids
  * @group Account  -Operations on account
@@ -869,8 +890,8 @@ router.get("/resync_ids", [accountValidators.getAllSimIDs, errorMsgs], accountCo
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-// router.get('/get_used_sim_ids', [accountValidators.getUsedSimIDs, errorMsgs],accountController.getUsedSimIDs);
-router.get("/get_chat_ids", [accountValidators.getChatIDs, errorMsgs], accountController.getChatIDs);
+// router.get('/get_used_sim_ids', accountController.getUsedSimIDs);
+router.get("/get_chat_ids/:user_acc_id/:dealer_id", [accountValidators.getChatIDs, errorMsgs], accountController.getChatIDs);
 /**
  * @route GET /users/get_all_chat_ids
  * @group Account  -Operations on account
@@ -894,7 +915,7 @@ router.get("/get_used_chat_ids", [accountValidators.getUsedChatIDs, errorMsgs], 
  * @returns {Error}  default - Unexpected error
  * @security JWT
  */
-router.get("/get_pgp_emails", [accountValidators.getPGPEmails, errorMsgs], accountController.getPGPEmails);
+router.get("/get_pgp_emails/:user_acc_id/:dealer_id", [accountValidators.getPGPEmails, errorMsgs], accountController.getPGPEmails);
 /**
  * @route GET /users/get_all_pgp_emails
  * @group Account  -Operations on account
@@ -1637,5 +1658,7 @@ router.post('/check-unique-pgp', ServicesController.checkUniquePgp);
 router.post('/validate_sim_id', ServicesController.validateSimId);
 
 router.put('/add-data-plans', ServicesController.addDataLimitsPlans);
+
+router.put('/reset-pgp-limit', ServicesController.resetPgpLimit);
 
 module.exports = router;

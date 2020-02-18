@@ -2,9 +2,10 @@
 
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.changeColumn('bulk_device_history', 'policy', {
-      type: Sequelize.INTEGER,
-      defaultValue: null
+    return queryInterface.addColumn('sim_ids', 'type', {
+      type: Sequelize.ENUM,
+      values: ['device', 'standalone'],
+      defaultValue: 'device'
     })
   },
 

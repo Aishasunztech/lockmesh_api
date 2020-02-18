@@ -20,12 +20,9 @@ const expressSwagger = require('express-swagger-generator')(app);
 
 // Application Constants
 const swaggerOptions = require('./config/swaggerOptions');
-const constants = require('./config/constants');
-
-
+const app_constants = require('./config/constants');
 
 app.disable("etag");
-
 
 var serverEnv = "localhost";
 if (process.env.HOST_NAME) serverEnv = process.env.HOST_NAME;
@@ -100,7 +97,7 @@ var basic = auth.basic({
 }, (username, password, callback) => {
 	// Custom authentication
 	// Use callback(error) if you want to throw async error.
-	callback(username === constants.BASIC_AUTH_USER && password === constants.BASIC_AUTH_PASSWORD);
+	callback(username === app_constants.BASIC_AUTH_USER && password === app_constants.BASIC_AUTH_PASSWORD);
 }
 );
 
@@ -119,25 +116,6 @@ app.get("/itest", function (req, res) {
 	console.log("iTest failed successfully!!");
 	stackify.log("info", "hey! - iTest failed successfully!!");
 
-});
-
-// app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-require("./routes/index.js")(app);
-
-// catch 404 and forward to error handler
-app.use(function (req, res, next) {
-	res.status(404).send({ msg: 'Not Found' })
-});
-
-// error handler
-app.use(function (err, req, res, next) {
-	// set locals, only providing error in development
-	res.locals.message = err.message;
-	res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-	// render the error page
-	res.status(err.status || 500);
-	res.send(err);
 });
 
 module.exports = app;
