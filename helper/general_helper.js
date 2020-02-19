@@ -2391,10 +2391,15 @@ module.exports = {
 		let updateLastLoginQ = `UPDATE dealers SET last_login = '${moment().format("YYYY/MM/DD HH:mm:ss")}' WHERE dealer_id=${dealerId}`;
 		await sql.query(updateLastLoginQ);
 	},
-	updateSimStatus: (sim_id, status, res = null) => {
+	updateSimStatus: (sim_id, status, res = null, isNew = false, dealer_data = null) => {
 		app_constants.twilioClient.wireless.sims.list({ iccid: sim_id }).then(response => {
 			if (response && response.length) {
 				let updateObject = { status: status }
+				if (isNew) {
+					let date_now = moment().format('YYYY/MM/DD_HH:mm')
+					let unique_name = `${dealer_data.dealer_name}_${dealer_data.dealer_pin}_${date_now}`
+					updateObject = { status: status, uniqueName: unique_name }
+				}
 				if (status == 'reset') {
 					updateObject = { resetStatus: 'resetting' }
 				}

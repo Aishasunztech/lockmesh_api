@@ -7,12 +7,14 @@ function createInvoice(invoice, path, type = null) {
     let doc = new PDFDocument({ size: "A4", margin: 50 });
 
     generateHeader(doc);
+
     generateCustomerInformation(doc, invoice);
     if (type === 'editService') {
         generateEditInvoiceTable(doc, invoice, type);
     } else {
         generateInvoiceTable(doc, invoice, type);
     }
+
     generateFooter(doc, invoice);
 
     doc.end();
@@ -37,9 +39,6 @@ function generateCustomerInformation(doc, invoice) {
         .fillColor("#444444")
         .fontSize(20)
         .text("INVOICE", 50, 160);
-
-
-
     generateHr(doc, 185);
 
     const customerInformationTop = 200;
@@ -64,25 +63,45 @@ function generateCustomerInformation(doc, invoice) {
             150,
             customerInformationTop + 45
         )
+    if (invoice.type === 'standalone_sim') {
+        doc
+            .font("Helvetica")
+            .text("Dealer Name:", 325, customerInformationTop)
+            .font("Helvetica-Bold")
+            .text(invoice.shipping.name, 425, customerInformationTop)
+            .font("Helvetica")
+            .text("Dealer Pin:", 325, customerInformationTop + 15)
+            .font("Helvetica-Bold")
+            .text(invoice.shipping.dealer_pin, 425, customerInformationTop + 15)
+            .font("Helvetica")
 
-        .font("Helvetica")
-        .text("Dealer Name:", 325, customerInformationTop)
-        .font("Helvetica-Bold")
-        .text(invoice.shipping.name, 425, customerInformationTop)
-        .font("Helvetica")
-        .text("Device ID:", 325, customerInformationTop + 15)
-        .font("Helvetica-Bold")
-        .text(invoice.shipping.device_id, 425, customerInformationTop + 15)
-        .font("Helvetica")
-        .text("User ID:", 325, customerInformationTop + 30)
-        .font("Helvetica-Bold")
-        .text(invoice.shipping.user_id, 425, customerInformationTop + 30)
-        .font("Helvetica")
-        .text("Dealer PIN:", 325, customerInformationTop + 45)
-        .font("Helvetica-Bold")
-        .text(invoice.shipping.dealer_pin, 425, customerInformationTop + 45)
-        .moveDown();
+            .text("Sim ICCID:", 325, customerInformationTop + 30)
+            .font("Helvetica-Bold")
+            .text(invoice.shipping.sim_id, 425, customerInformationTop + 30)
+            .font("Helvetica")
+            .moveDown();
 
+    } else {
+        doc
+            .font("Helvetica")
+            .text("Dealer Name:", 325, customerInformationTop)
+            .font("Helvetica-Bold")
+            .text(invoice.shipping.name, 425, customerInformationTop)
+            .font("Helvetica")
+            .text("Device ID:", 325, customerInformationTop + 15)
+            .font("Helvetica-Bold")
+            .text(invoice.shipping.device_id, 425, customerInformationTop + 15)
+            .font("Helvetica")
+
+            .text("User ID:", 325, customerInformationTop + 30)
+            .font("Helvetica-Bold")
+            .text(invoice.shipping.user_id, 425, customerInformationTop + 30)
+            .font("Helvetica")
+            .text("Dealer PIN:", 325, customerInformationTop + 45)
+            .font("Helvetica-Bold")
+            .text(invoice.shipping.dealer_pin, 425, customerInformationTop + 45)
+            .moveDown();
+    }
     generateHr(doc, 267);
 }
 
@@ -97,7 +116,16 @@ function generateInvoiceTable(doc, invoice, type) {
             .text("EXTENDED SERVICES", 220, 330);
 
         invoiceTableTop = 365;
+    } else if (type === 'standalone_sim') {
+        doc
+            .fillColor("#444444")
+            .fontSize(15)
+            .font("Helvetica-Bold")
+            .text("SIM SERVICES", 220, 330);
+
+        invoiceTableTop = 365;
     }
+
     doc.font("Helvetica-Bold");
     generateTableRow(
         doc,

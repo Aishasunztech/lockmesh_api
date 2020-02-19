@@ -4,6 +4,7 @@ var router = express.Router();
 var path = require('path');
 var fs = require("fs");
 var mime = require('mime');
+var pdf = require('html-pdf');
 var CryptoJS = require("crypto-js");
 var moment = require("moment")
 // const { check, validationResult } = require('express-validator');
@@ -36,26 +37,37 @@ const constants = require('../constants/Application');
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
 
+    // let html = `<div class="ant-modal-content"><div class="ant-modal-body" style="overflow: overlay;"><div><h1 style="text-align: center;">MDM PANEL SERVICES</h1><h4 style="text-align: center;">FLAT/RM H 15/F  SIU KING BLDG 6 ON WAH ST <br> NGAU TAU KOK KLN, HONG KONG</h4><h2>INVOICE</h2><div style="border-top: 2px solid lightgray; border-bottom: 2px solid lightgray; padding-top: 10px; padding-bottom: 10px;"><div class="ant-row"><div class="ant-col-6">Invoice Number:</div><div class="ant-col-6">PI000334</div><div class="ant-col-6">Dealer Name:</div><div class="ant-col-6">HAMZA DAWOOD </div></div><div class="ant-row"><div class="ant-col-6">Invoice Date:</div><div class="ant-col-6">2020/02/19 </div><div class="ant-col-6">Dealer PIN:</div><div class="ant-col-6">541663</div></div><div class="ant-row"><div class="ant-col-6">Balance Due:</div><div class="ant-col-6">200 Credits</div><div class="ant-col-6">SIM ID:</div><div class="ant-col-6">8901260852296619158</div></div></div><div style="margin-top: 20px;"><h4>SIM SERVICES</h4><div class="ant-table-wrapper"><div class="ant-spin-nested-loading"><div class="ant-spin-container"><div class="ant-table ant-table-middle ant-table-scroll-position-left"><div class="ant-table-content"><div class="ant-table-body"><table class=""><colgroup><col><col><col><col><col><col><col></colgroup><thead class="ant-table-thead"><tr><th class="row ant-table-align-center" style="text-align: center;"><div>#</div></th><th class="ant-table-align-center" style="text-align: center;"><div>ITEM</div></th><th class="ant-table-align-center" style="text-align: center;"><div>DESCRPTION</div></th><th class="ant-table-align-center" style="text-align: center;"><div>SERVICE TERM</div></th><th class="ant-table-align-center" style="text-align: center;"><div>UNIT PRICE (CREDITS)</div></th><th class="ant-table-align-center" style="text-align: center;"><div>QUANTITY</div></th><th class="ant-table-align-center" style="text-align: center;"><div>TOTAL</div></th></tr></thead><tbody class="ant-table-tbody"><tr class="ant-table-row ant-table-row-level-0" data-row-key="0"><td class="row" style="text-align: center;"><span class="ant-table-row-indent indent-level-0" style="padding-left: 0px;"></span>1</td><td class="" style="text-align: center;">STAND ALONE SIM</td><td class="" style="text-align: center;">test</td><td class="" style="text-align: center;">1 month</td><td class="" style="text-align: center;">100</td><td class="" style="text-align: center;">1</td><td class="" style="text-align: center;">100</td></tr><tr class="ant-table-row ant-table-row-level-0" data-row-key="1"><td class="row" style="text-align: center;"><span class="ant-table-row-indent indent-level-0" style="padding-left: 0px;"></span>2</td><td class="" style="text-align: center;">Data plan</td><td class="" style="text-align: center;">3GB from LM</td><td class="" style="text-align: center;">1 month</td><td class="" style="text-align: center;">100</td><td class="" style="text-align: center;">1</td><td class="" style="text-align: center;">100</td></tr></tbody></table></div></div></div></div></div></div></div><div style="margin-top: 20px; text-align: right;"><div class="ant-row"><div class="ant-col-16"></div><div class="ant-col-4">Subtotal : </div><div class="ant-col-4">200 Credits</div></div><br><div class="ant-row" style="font-weight: bold;"><div class="ant-col-12"></div><div class="ant-col-8">Total : </div><div class="ant-col-4">200&nbsp;Credits</div></div><div class="ant-row" style="font-weight: bold;"><div class="ant-col-14"></div><div class="ant-col-6">Equivalent USD Price: </div><div class="ant-col-4">$200.00</div></div></div><p style="text-align: center; margin-top: 70px;">Thank you for your business.</p></div></div></div>`
+    // let fileName = "invoice-html-pdf.pdf"
+    // let filePath = path.join(__dirname, "../uploads/" + fileName)
+    // console.log(filePath);
+    // pdf.create(html).toStream(function (err, stream) {
+    //     stream.pipe(fs.createWriteStream(filePath));
+    // });
+
+
+
     // console.log(req.app);
 
+
     // transactions
-    sql.getConnection((error, connection) => {
-        if (error) {
-            console.log(error)
-        }
-        connection.beginTransaction(async function (err) {
-            if (err) {
-                console.log(err)
-            };
-            let something = await connection.query("SELECT * FROM devices");
-            console.log(something);
-            connection.commit(function (err) {
-                if (err) {
-                    console.log(err)
-                }
-            })
-        })
-    })
+    // sql.getConnection((error, connection) => {
+    //     if (error) {
+    //         console.log(error)
+    //     }
+    //     connection.beginTransaction(async function (err) {
+    //         if (err) {
+    //             console.log(err)
+    //         };
+    //         let something = await connection.query("SELECT * FROM devices");
+    //         console.log(something);
+    //         connection.commit(function (err) {
+    //             if (err) {
+    //                 console.log(err)
+    //             }
+    //         })
+    //     })
+    // })
     return res.send('test')
 
     // helpers.updateSimStatus('8901260852293382529', 'deactivated')

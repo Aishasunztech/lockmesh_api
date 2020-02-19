@@ -28,6 +28,7 @@
     "hashids": "^2.1.0",
     "helmet": "^3.21.2",
     "html-escaper": "^2.0.0",
+    "html-pdf": "^2.2.0",
     "http-auth": "^3.2.4",
     "is-empty": "^1.2.0",
     "jimp": "^0.9.3",
