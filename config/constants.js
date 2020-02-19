@@ -53,11 +53,7 @@ var BASE_CURRENCY = 'USD';
 if (HOST_NAME) {
 	APP_TITLE = HOST_NAME;
 	switch (HOST_NAME) {
-		case "":
-		case "localhost": {
-			break;
-		}
-
+	
 		case "LockMesh Dev": {
 			URL = "https://dev.lockmesh.com";
 			SUPERADMIN_URL = "https://dev.meshguard.co";
