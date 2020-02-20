@@ -730,7 +730,7 @@ exports.setDealerCreditsLimit = async function (req, res) {
         return res.send(data);
     }
     let userType = verify.user.user_type;
-    credits_limit = (credits_limit <= -1) ? 0 : credits_limit;
+    credits_limit = (credits_limit > -1) ? 0 : credits_limit;
 
     let dealer = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_id =?`, [dealer_id])
     if (!dealer || !dealer.length) {

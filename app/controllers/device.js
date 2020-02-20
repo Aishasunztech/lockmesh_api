@@ -2160,7 +2160,7 @@ exports.createDeviceProfile = async function (req, res) {
     }
 }
 
-exports.editDevices = async function (req, res) {
+exports.editDevice = async function (req, res) {
     res.setHeader("Content-Type", "application/json");
     var verify = req.decoded; // await verifyToken(req, res);
 
@@ -2195,7 +2195,7 @@ exports.editDevices = async function (req, res) {
             let endUser_pay_status = req.body.paid_by_user ? req.body.paid_by_user : "PAID"
             let products = (req.body.products) ? req.body.products : []
             let packages = (req.body.packages) ? req.body.packages : []
-            let admin_data = await sql.query("SELECT * from dealers WHERE type = 1")
+            let admin_data = await sql.query("SELECT * FROM dealers WHERE type = 1")
             let total_price = req.body.total_price;
             let admin_profit = 0
             let dealer_profit = 0
@@ -2273,7 +2273,7 @@ exports.editDevices = async function (req, res) {
                 var status = "active";
             }
 
-            let loggedInUserData = await sql.query(`SELECT * FROM dealers WHERE dealer_id =${loggedDealerId}`)
+            let loggedInUserData = await sql.query(`SELECT * FROM dealers WHERE dealer_id =?`, [loggedDealerId])
             if (!loggedInUserData || loggedInUserData.length < 1) {
                 res.send({
                     status: false,
@@ -2474,12 +2474,7 @@ exports.editDevices = async function (req, res) {
                                 return
                             }
                         }
-                        common_Query =
-                            "UPDATE devices set model = '" +
-                            req.body.model +
-                            "' WHERE id = '" +
-                            usr_device_id +
-                            "'";
+                        common_Query = `UPDATE devices set model = '${req.body.model}' WHERE id = '${usr_device_id}'`;
                         if (
                             finalStatus !== constants.DEVICE_PRE_ACTIVATION
                         ) {
