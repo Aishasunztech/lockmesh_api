@@ -785,11 +785,11 @@ exports.saveSaPackage = async function (req, res) {
             let insertQuery = '';
             if (package_type === 'services') {
                 let pkg_features = JSON.stringify(data.pkgFeatures)
-                insertQuery = `INSERT INTO packages (dealer_id, dealer_type, pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, dealers, package_type ) VALUES('${verify.user[0].dealer_id}', 'super_admin', '${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}' , '[]', '${package_type}')`;
+                insertQuery = `INSERT INTO packages (dealer_id, dealer_type, pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, dealers, package_type ) VALUES('${verify.user.dealer_id}', 'super_admin', '${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}' , '[]', '${package_type}')`;
             } else if (package_type === 'data_plan') {
-                insertQuery = `INSERT INTO packages (dealer_id, dealer_type, pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, data_limit, dealers, package_type ) VALUES('${verify.user[0].dealer_id}', 'super_admin', '${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}', ${data.data_limit}, '[]', '${package_type}')`;
+                insertQuery = `INSERT INTO packages (dealer_id, dealer_type, pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, data_limit, dealers, package_type ) VALUES('${verify.user.dealer_id}', 'super_admin', '${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}', ${data.data_limit}, '[]', '${package_type}')`;
             } else if (package_type === 'Standalone Sim') {
-                insertQuery = `INSERT INTO packages (dealer_id, dealer_type, pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, dealers, package_type ) VALUES('${verify.user[0].dealer_id}', 'super_admin', '${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}', '[]', '${'standalone_sim'}')`;
+                insertQuery = `INSERT INTO packages (dealer_id, dealer_type, pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, dealers, package_type , data_limit) VALUES('${verify.user.dealer_id}', 'super_admin', '${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}', '[]', '${'standalone_sim'}' , ${data.data_limit})`;
             }
 
             // console.log(insertQuery);
@@ -804,7 +804,7 @@ exports.saveSaPackage = async function (req, res) {
                 }
                 if (rslt) {
                     if (rslt.affectedRows) {
-                        let insertQ = `INSERT INTO dealer_packages_prices (package_id, dealer_id, created_by, price) VALUES(${rslt.insertId}, '${verify.user[0].dealer_id}', 'super_admin', '${data.pkgPrice}')`;
+                        let insertQ = `INSERT INTO dealer_packages_prices (package_id, dealer_id, created_by, price) VALUES(${rslt.insertId}, '${verify.user.dealer_id}', 'super_admin', '${data.pkgPrice}')`;
                         console.log(insertQ);
                         sql.query(insertQ)
                         res.send({
