@@ -31,6 +31,7 @@ exports.getStandAloneSims = async function (req, res) {
         if (loggedInType !== constants.ADMIN) {
             SQry = SQry + `AND (s.dealer_id = ${loggedInId} OR s.uploaded_by_id = ${loggedInId}) `
         }
+        SQry = SQry + ` ORDER BY s.created_at DESC`
         sql.query(SQry, async function (err, result) {
             // console.log("=======================================")
             // console.log('result is :', result)
