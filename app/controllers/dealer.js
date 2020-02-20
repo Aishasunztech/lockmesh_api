@@ -1125,7 +1125,7 @@ exports.resetPwd = async function (req, res) {
 
         }
         // console.log("new password " + newpwd);
-        
+
 
         var enc_pwd = md5(newPwd); // encryted pwd
 
@@ -1376,8 +1376,6 @@ exports.connectDealer = async function (req, res) {
 
 exports.dealerDomains = async function (req, res) {
     var verify = req.decoded;
-    // if (verify.status !== undefined && verify.status == true) {
-
     let dealer_id = req.params.dealerId;
     let userType = verify.user.user_type;
     let userId = verify.user.id;
@@ -1389,14 +1387,8 @@ exports.dealerDomains = async function (req, res) {
         })
     }
     let where_con = '';
-
-    // if (userType === Constants.DEALER) {
-    //     where_con = ` AND connected_dealer= ${userId}`
-    // }
     let dealer_type = await general_helpers.getUserType(dealer_id);
-
     if (dealer_type === Constants.DEALER && userType == Constants.DEALER) {
-
         return res.send({
             status: false,
             domains: []
@@ -1409,38 +1401,55 @@ exports.dealerDomains = async function (req, res) {
         let getParentId = await sql.query(`SELECT connected_dealer FROM dealers WHERE dealer_id = ${dealer_id}`);
         where_con = ` OR (dealer_permissions.dealer_id = 0 AND (dealer_permissions.dealer_type='admin' OR (dealer_permissions.dealer_type='dealer' AND dealer_permissions.permission_by=${getParentId[0].connected_dealer}))) `
     }
-    selectQ = `SELECT domains.*, dealer_permissions.permission_id, dealer_permissions.dealer_id, dealer_permissions.permission_by, dealer_permissions.dealer_type FROM domains JOIN dealer_permissions ON (dealer_permissions.permission_id = domains.id) WHERE (dealer_permissions.dealer_id = ${dealer_id} ${where_con}) AND permission_type = 'domain';`;
-
+    let selectQ = `SELECT domains.*, dealer_permissions.permission_id, dealer_permissions.dealer_id, dealer_permissions.permission_by, dealer_permissions.dealer_type FROM domains JOIN dealer_permissions ON (dealer_permissions.permission_id = domains.id) WHERE (dealer_permissions.dealer_id = ${dealer_id} ${where_con}) AND permission_type = 'domain';`;
+    // console.log("selectQ ", selectQ)
     let selectDomains = await sql.query(selectQ);
+    // console.log('get connect dealer selectDomains: ', selectDomains)
 
-    // get all dealers under admin or sdealers under dealer
-    let userDealers = await general_helpers.getUserDealers(dealer_type, dealer_id);
-    // console.log("userDealers ========> ", userDealers);
-    let sdealerList = userDealers.dealerList;
-    let dealerCount = userDealers.dealerCount;
-
-
-
+    let getDomainIds = [];
+    let duplicateIds = [];
     let results = selectDomains;
-    // for (var i = 0; i < results.length; i++) {
-    //     let permissionDealers = await general_helpers.getDealersAgainstPermissions(results[i].id, 'domain', dealer_id, sdealerList, dealer_type);
-    //     // let allDealers = [];
 
-    //     results[i].dealers = permissionDealers.allDealers;
-    //     results[i].statusAll = permissionDealers.statusAll;
+    for (var i = 0; i < results.length; i++) {
+        if (getDomainIds.includes(results[i].permission_id)) {
+            duplicateIds.push(results[i].permission_id);
+        } else {
+            getDomainIds.push(results[i].permission_id);
+        }
+    }
 
-    //     let permissions = (results[i].dealers !== undefined && results[i].dealers !== null) ? JSON.parse(results[i].dealers) : [];
+    let filteredDomains = [];
+    for (let i = 0; i < results.length; i++) {
 
-    //     let permissionCount = (permissions && permissions.length) ? permissions.length : 0;
+        if (duplicateIds.includes(results[i].permission_id) && results[i].dealer_type !== ADMIN) {
+            // console.log('condition true')
+            continue
+        }
+        // console.log(duplicateIds, "i is: ", i, "permission_by id is: ", results[i].permission_id);
 
-    //     let permissionC = ((dealerCount == permissionCount) && (permissionCount > 0)) ? "All" : permissionCount.toString();
-    //     results[i].permission_count = permissionC;
-    // }
 
-    if (results && results.length) {
+        // get dealer name
+        if (results[i].dealer_type === ADMIN) {
+            results[i].permission_by = ADMIN;
+        } else if (results[i].dealer_type === DEALER || results[i].dealer_type === SDEALER) {
+            let dealerName = await sql.query(`SELECT dealer_name FROM dealers WHERE dealer_id = '${results[i].permission_by}'`);
+            // console.log("dealerName ", dealerName);
+            results[i].permission_by = dealerName[0].dealer_name ? dealerName[0].dealer_name : 'N/A';
+        } else {
+            results[i].permission_by = 'N/A';
+        }
+
+        if (!results[i].dealer_type) {
+            results[i].dealer_type = 'N/A';
+        }
+        filteredDomains.push(results[i]);
+    }
+
+    // console.log('get filtered connect dealer domains: ', results.length, filteredDomains.length, filteredDomains)
+    if (filteredDomains && filteredDomains.length) {
         return res.send({
             status: true,
-            domains: results
+            domains: filteredDomains
         })
     } else {
         return res.send({
@@ -2804,18 +2813,20 @@ exports.connectDealerDomainsPermissions = async function (req, res) {
                         // console.log("prevParsDealers ", prevParsDealers);
 
                         // delete dealers that are not in new permissions
-                        let deleteNotIn = '';
+                        let dealerCondition = '';
                         if (prevParsDealers.length) {
-                            deleteNotIn = `DELETE FROM dealer_permissions WHERE dealer_id NOT IN (${prevParsDealers.join()}) AND permission_id = ${permissionId} AND permission_type='${permissionType}' AND permission_by=${loggedUserId}`;
+                            // deleteNotIn = `DELETE FROM dealer_permissions WHERE dealer_id NOT IN (${prevParsDealers.join()}) AND permission_id = ${permissionId} AND permission_type='${permissionType}' AND permission_by=${loggedUserId}`;
+                            dealerCondition = `dealer_id NOT IN (${prevParsDealers.join()}) AND `;
                         } else {
-                            deleteNotIn = `DELETE FROM dealer_permissions WHERE dealer_id IN (${dealers}) AND permission_id = ${permissionId} AND permission_type='${permissionType}' AND permission_by=${loggedUserId}`;
+                            dealerCondition = `dealer_id IN (${dealers}) AND `;
                         }
+                        let deleteNotIn = `DELETE FROM dealer_permissions WHERE ${dealerCondition} permission_id = ${permissionId} AND permission_type='${permissionType}' ${loggedUserType === ADMIN ? '' : `AND permission_by=${loggedUserId}`}`;
                         // console.log("deleteNotIn: ", deleteNotIn);
                         let deleteDealers = await sql.query(deleteNotIn);
                         // console.log("deleteDealers: ", deleteDealers);
 
                         if (deleteDealers.affectedRows) {
-                            await sql.query(`DELETE FROM dealer_permissions WHERE permission_id = ${permissionId} AND permission_type='${permissionType}' AND permission_by IN (${dealers})`);
+                            // await sql.query(`DELETE FROM dealer_permissions WHERE permission_id = ${permissionId} AND permission_type='${permissionType}' AND permission_by IN (${dealers})`);
 
                             permissionRemoved.push(permissionId);
                         } else {
