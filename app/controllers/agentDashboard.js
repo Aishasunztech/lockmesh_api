@@ -494,7 +494,6 @@ exports.editDevices = async function (req, res) {
     if (verify) {
 
         if (!empty(req.body.usr_device_id)) {
-            console.log(req.body);
             let loggedDealerId = verify.user.id;
             let loggedDealerType = verify.user.user_type;
 

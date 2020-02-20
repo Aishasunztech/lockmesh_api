@@ -2150,7 +2150,6 @@ exports.createDeviceProfile = async function (req, res) {
 }
 
 exports.editDevices = async function (req, res) {
-    console.log('editDevice', req.body);
     res.setHeader("Content-Type", "application/json");
     var verify = req.decoded; // await verifyToken(req, res);
 

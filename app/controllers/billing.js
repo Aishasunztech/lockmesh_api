@@ -20,33 +20,33 @@ exports.acceptRequest = async function (req, res) {
     if (verify) {
         try {
             let id = req.params.id
-            let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
+            let query = "SELECT * from credit_requests where id = ? and  status = '0'"
             // console.log(query);
-            sql.query(query, async function (err, result) {
+            sql.query(query, [id], async function (err, result) {
                 if (err) {
                     console.log(err);
                 }
                 if (result.length) {
-                    let logginUserCredits = await sql.query("select credits from financial_account_balance where dealer_id = " + verify.user.id)
+                    let logginUserCredits = await sql.query("select credits from financial_account_balance where dealer_id = ?", [verify.user.id])
                     if (logginUserCredits.length) {
                         if (logginUserCredits[0].credits > result[0].credits) {
                             let dealer_id = result[0].dealer_id
                             let newCredit = result[0].credits
                             let deductedCredits = logginUserCredits[0].credits - result[0].credits
-                            let credits = await sql.query("select * from financial_account_balance where dealer_id = " + dealer_id);
+                            let credits = await sql.query("select * from financial_account_balance where dealer_id = ?",  [dealer_id]);
                             // console.log(resul);
                             if (credits.length) {
                                 newCredit = credits[0].credits + result[0].credits
                             }
-                            sql.query("update financial_account_balance set credits = " + newCredit + " where dealer_id = " + dealer_id, async function (err, reslt) {
+                            sql.query("update financial_account_balance set credits = ? where dealer_id = ?" + [newCredit, dealer_id], async function (err, reslt) {
                                 if (err) {
                                     console.log(err);
                                 }
                                 if (reslt && reslt.affectedRows > 0) {
-                                    let updateQuery = "update credit_requests set status = 1 where id= " + id
-                                    await sql.query(updateQuery);
-                                    let userCredits = "update financial_account_balance set credits = " + deductedCredits + " where dealer_id = " + verify.user.id;
-                                    await sql.query(userCredits)
+                                    let updateQuery = "update credit_requests set status = 1 where id= ?"
+                                    await sql.query(updateQuery, [id]);
+                                    let userCredits = "update financial_account_balance set credits = ? where dealer_id = ?";
+                                    await sql.query(userCredits, [deductedCredits, verify.user.id])
                                     res.send({
                                         status: true,
                                         msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_ADDED_SUCCESSFULLY], "Credits added successfully"), // "Credits added successfully.",
@@ -55,16 +55,16 @@ exports.acceptRequest = async function (req, res) {
                                     return
                                 }
                                 else {
-                                    let query = `INSERT into financial_account_balance (dealer_id,credits) VALUES (${dealer_id}, ${newCredit})`;
-                                    sql.query(query, async function (err, reslt) {
+                                    let query = `INSERT into financial_account_balance (dealer_id,credits) VALUES (?, ?)`;
+                                    sql.query(query, [dealer_id, newCredit], async function (err, reslt) {
                                         if (err) {
                                             console.log(err);
                                         }
                                         if (reslt && reslt.affectedRows > 0) {
-                                            let updateQuery = "update credit_requests set status = 1 where id= " + id
-                                            await sql.query(updateQuery)
-                                            let userCredits = "update financial_account_balance set credits = " + deductedCredits + " where dealer_id = " + verify.user.id;
-                                            await sql.query(userCredits)
+                                            let updateQuery = "update credit_requests set status = 1 where id= ?"
+                                            await sql.query(updateQuery, [id])
+                                            let userCredits = "update financial_account_balance set credits = ? where dealer_id = ?";
+                                            await sql.query(userCredits, [newCredit, verify.user.id])
                                             res.send({
                                                 status: true,
                                                 msg: await helpers.convertToLang(req.translation[MsgConstants.CREDITS_ADDED_SUCCESSFULLY], "Credits added successfully"), // "Credits added successfully.",
@@ -114,12 +114,23 @@ exports.acceptRequest = async function (req, res) {
 }
 
 exports.acceptServiceRequest = async function (req, res) {
+    // console.log(req.body);
+    // return res.send({
+    //     status: false,
+    //     msg: ''
+    // });
     var verify = req.decoded; // await verifyToken(req, res);
+    if(verify.user.user_type !== constants.ADMIN){
+        return res.send({
+            status: false,
+            msg: 'Error: unauthorized access'
+        });
+    }
 
     if (verify) {
         try {
             let id = req.params.id
-            let request = req.body
+            // let request = req.body
             let usr_acc_id = req.body.user_acc_id
             let query = "SELECT * from services_data where id = " + id + " and  status = 'request_for_cancel'"
             // console.log(query);
@@ -269,6 +280,13 @@ exports.acceptServiceRequest = async function (req, res) {
 exports.deleteServiceRequest = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
 
+    if(verify.user.user_type !== constants.ADMIN){
+        return res.send({
+            status: false,
+            msg: 'Error: unauthorized access'
+        });
+    }
+
     if (verify) {
         try {
             let id = req.params.id
@@ -327,10 +345,17 @@ exports.savePrices = async function (req, res) {
     // console.log('save-prices data at server is', req.body)
     var verify = req.decoded; // await verifyToken(req, res);
 
+    if(verify.user.user_type !== constants.ADMIN){
+        return res.send({
+            status: false,
+            msg: 'Error: unauthorized access'
+        });
+    }
+
     if (verify) {
         let data = req.body.data;
         if (data) {
-            console.log(data, 'data')
+            // console.log(data, 'data')
             // let dealer_id = req.body.dealer_id;
             let dealer_id = verify.user.dealer_id;
             if (dealer_id) {
@@ -349,7 +374,7 @@ exports.savePrices = async function (req, res) {
                             if (innerObject.hasOwnProperty(innerKey)) {
                                 let days = 0;
                                 let f_key = innerKey;
-                                console.log(innerKey + " -> " + innerObject[innerKey]);
+                                // console.log(innerKey + " -> " + innerObject[innerKey]);
                                 if (innerObject[innerKey]) {
 
                                     // console.log('is string', string)
@@ -365,7 +390,7 @@ exports.savePrices = async function (req, res) {
                                                 // console.log('sring[1]', stringarray[1])
                                                 if (stringarray[1] == 'month') {
                                                     days = parseInt(month) * 30
-                                                } else if (string[1] == 'year') {
+                                                } else if (stringarray[1] == 'year') {
                                                     days = parseInt(month) * 365
                                                 } else {
                                                     days = 30
@@ -377,7 +402,7 @@ exports.savePrices = async function (req, res) {
                                 // console.log(days, 'days are')
                                 let unit_price = innerKey;
                                 let updateQuery = "UPDATE prices SET unit_price='" + innerObject[f_key] + "', price_expiry='" + days + "' WHERE dealer_id='" + dealer_id + "' AND price_term='" + innerKey + "' AND price_for='" + key + "'";
-                                console.log(updateQuery, 'query')
+                                // console.log(updateQuery, 'query')
                                 sql.query(updateQuery, async function (err, result) {
                                     if (err) {
                                         console.log(err)
@@ -387,7 +412,7 @@ exports.savePrices = async function (req, res) {
                                         // console.log('outerKey', outerKey)
                                         if (!result.affectedRows) {
                                             let insertQuery = "INSERT INTO prices (price_for, unit_price, price_term, price_expiry, dealer_id , dealer_type) VALUES('" + outerKey + "', '" + innerObject[f_key] + "', '" + unit_price + "', '" + days + "', '" + dealer_id + "' , '" + verify.user.user_type + "')";
-                                            console.log('Billing query', insertQuery)
+                                            // console.log('Billing query', insertQuery)
                                             let rslt = await sql.query(insertQuery);
                                             if (rslt) {
                                                 if (rslt.affectedRows == 0) {
@@ -434,12 +459,16 @@ exports.savePrices = async function (req, res) {
 
 exports.saveSaPrices = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
-
+    if(verify.user.user_type !== constants.SUPER_ADMIN){
+        return res.send({
+            status: false,
+            msg: 'Error: unuthorized access'
+        });
+    }
     if (verify) {
         let data = req.body.data;
         if (data) {
-            let dealer_id = verify.user[0].dealer_id;
-            console.log(dealer_id);
+            let dealer_id = verify.user.dealer_id;
             if (dealer_id) {
                 // console.log(dealer_id, 'whitelableid');
                 let error = 0;
@@ -540,7 +569,6 @@ exports.saveSaPrices = async function (req, res) {
 }
 
 exports.savePackage = async function (req, res) {
-    // console.log('data is', req.body)
     var verify = req.decoded; // await verifyToken(req, res);
 
     if (verify) {
@@ -578,7 +606,7 @@ exports.savePackage = async function (req, res) {
                                         // console.log('sring[1]', stringarray[1])
                                         if (stringarray[1] == 'month') {
                                             days = parseInt(month) * 30
-                                        } else if (string[1] == 'year') {
+                                        } else if (stringarray[1] == 'year') {
                                             days = parseInt(month) * 365
                                         } else {
                                             days = 30
@@ -637,8 +665,8 @@ exports.savePackage = async function (req, res) {
 }
 
 exports.editPackage = async function (req, res) {
-
     var verify = req.decoded; // await verifyToken(req, res);
+    console.log(req.body);
 
     if (verify) {
         let data = req.body.data;

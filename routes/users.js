@@ -32,6 +32,7 @@ const languageValidators = require('../app/validators/language');
 const policyValidators = require('../app/validators/policy');
 const dealerValidators = require('../app/validators/dealer');
 const bulkDevicesValidators = require('../app/validators/bulkDevices');
+const billingValidator = require('../app/validators/billing');
 var errorMsgs = commonValidators.responsValidationResults;
 
 var helpers = require("../helper/general_helper.js");
@@ -1298,13 +1299,13 @@ router.post("/authenticate_update_user", async function (req, res) {
 });
 
 // *****************************  SET AND GET => PRICES & PAKAGES   **************************
-router.patch("/save-prices", billingController.savePrices);
+router.patch("/save-prices", [billingValidator.savePrices, errorMsgs], billingController.savePrices);
 
-router.patch("/save-sa-prices", billingController.saveSaPrices);
+router.patch("/save-sa-prices", [billingValidator.saveSaPrices, errorMsgs], billingController.saveSaPrices);
 
-router.post("/save-package", billingController.savePackage);
+router.post("/save-package", [billingValidator.savePackage, errorMsgs], billingController.savePackage);
 
-router.put("/edit-package", billingController.editPackage);
+router.put("/edit-package", [billingValidator.editPackage, errorMsgs], billingController.editPackage);
 
 router.delete("/delete_package/:id", billingController.deletePackage);
 
@@ -1352,11 +1353,11 @@ router.put("/delete_request/:id", billingController.deleteRequest);
 
 router.put("/accept_request/:id", billingController.acceptRequest);
 
-router.put("/delete_service_request/:id", billingController.deleteServiceRequest);
+router.put("/delete_service_request/:id", [billingValidator.deleteServiceRequest, errorMsgs], billingController.deleteServiceRequest);
 
-router.put("/accept_service_request/:id", billingController.acceptServiceRequest);
+router.put("/accept_service_request/:id", [billingValidator.acceptServiceRequest, errorMsgs], billingController.acceptServiceRequest);
 
-router.get("/get-cancel-service-requests", billingController.getCancelServiceRequests);
+router.get("/get-cancel-service-requests", [billingValidator.getCancelServiceRequests, errorMsgs], billingController.getCancelServiceRequests);
 
 
 /*** Create Backup ***/
