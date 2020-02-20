@@ -193,12 +193,14 @@ module.exports = {
 		}
 	},
 	getComponentIdByUri: async function (componentUri) {
-		// console.log(componentUri);
+		console.log(componentUri);
 
 		if (componentUri.includes("/connect-device/")) {
 			componentUri = "/connect-device/:deviceId";
 		} else if (componentUri.includes('/connect-dealer/')) {
 			componentUri = '/connect-dealer'
+		} else if (componentUri.includes('/connect-sim/')) {
+			componentUri = '/connect-sim'
 		}
 		console.log("componentUri:", componentUri);
 		// this query should be based on ComponentName, not on ComponentUri
