@@ -17,6 +17,7 @@ module.exports = {
   SDEALER: "sdealer",
   AUTO_UPDATE_ADMIN: "auto_update_admin",
   SUPER_ADMIN: 'SuperAdmin',
+  SUPER_ADMIN_DB: 'super_admin',
 
   DEVICE: 'device',
   SOCKET: 'socket',

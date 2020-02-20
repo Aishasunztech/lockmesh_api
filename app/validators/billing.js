@@ -1,5 +1,6 @@
 const { check, param, body } = require('express-validator');
 const { ObjectOfObjectWithKeys, ObjectWithKeys, atLeastOneTrueRequired } = require('../validators/commonValidators/validation_helpers');
+const { BOOLEAN_REGEX } = require('../../constants/validation');
 
 const savePricesSchema = [
     {index: '6 month', type: 'number'},
@@ -88,87 +89,139 @@ exports.editPackage = [
         .custom(v => ObjectWithKeys(v, savePackageSchema))
         .custom(v => atLeastOneTrueRequired(v)),
 
-    body('dealer_id')
-        .notEmpty()
+    body('data.dealer_id')
         .isInt({min: 1}),
 
-    body('package_id')
-        .notEmpty()
+    body('data.package_id')
         .isInt({min: 1}),
 
-    body('retail_price')
+    body('data.retail_price')
         .optional()
         .isInt({min: 0})
 ];
 
 exports.saveSaPackage = [
+    body('data.pkgName')
+        .notEmpty()
+        .isString(),
 
+    body('data.pkgTerm')
+        .notEmpty()
+        .isString(),
+
+    body('data.pkgPrice')
+        .notEmpty()
+        .isInt({min: 1}),
+
+    body('data.pkgFeatures')
+        .custom(v => ObjectWithKeys(v, savePackageSchema))
+        .custom(v => atLeastOneTrueRequired(v)),
+
+    body('package_type')
+        .notEmpty()
+        .isIn(['services', 'data_plan', 'Standalone Sim'])
 ];
 
 exports.saveSaHardware = [
 
+    body('data.hardwareName')
+        .notEmpty()
+        .isString(),
+    
+    body('data.hardwarePrice')
+        .isInt({min: 1})
 ];
 
 exports.deletePackage = [
-
+    param('id')
+        .isInt({min: 1})
 ];
 
 exports.modifyItemPrice = [
+    param('id')
+        .isInt({min: 1}),
+
+    body('price')
+        .isInt({min:0}),
+
+    body('isModify')
+        .matches(BOOLEAN_REGEX),
+
+    body('type')
+        .notEmpty()
+        .isString(),
+
+    body('retail_price')
+        .isInt({min: 0})
+];
+
+exports.getPrices = [ // nn
 
 ];
 
-exports.getPrices = [
+exports.getPackages = [ // nn
 
 ];
 
-exports.getPackages = [
+exports.getHardwares = [ // nn
 
 ];
 
-exports.getHardwares = [
+exports.getParentPackages = [ // nn
 
 ];
 
-exports.getParentPackages = [
+exports.getProductPrices = [ // nn
 
 ];
 
-exports.getProductPrices = [
+exports.getHardwarePrices = [ // nn
 
 ];
 
-exports.getHardwarePrices = [
+exports.checkPackageName = [ // nn
 
 ];
 
-exports.checkPackageName = [
+exports.newRequests = [ // nn
 
 ];
 
-exports.newRequests = [
-
-];
-
-exports.getUserCredits = [
+exports.getUserCredits = [ // nn
 
 ];
 
 exports.deleteRequest = [
-
+    param('id')
+        .isInt({min: 1})
 ];
 
 exports.deleteSaPackage = [
-
+    body('data.pkg_name')
+        .notEmpty()
+        .isString()
 ];
 
 exports.deleteSaHardware = [
-
+    body('data.name')
+        .notEmpty()
+        .isString()
 ];
 
 exports.editSaHardware = [
+    body('data.name')
+        .notEmpty()
+        .isString(),
+    
+    body('data.new_name')
+        .notEmpty()
+        .isString(),
+
+    body('data.new_price')
+        .isInt({min: 1})
 
 ];
 
-exports.getCancelServiceRequests = [
+exports.getCancelServiceRequests = [ // nn
 
 ];

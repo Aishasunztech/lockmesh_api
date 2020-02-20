@@ -1307,13 +1307,13 @@ router.post("/save-package", [billingValidator.savePackage, errorMsgs], billingC
 
 router.put("/edit-package", [billingValidator.editPackage, errorMsgs], billingController.editPackage);
 
-router.delete("/delete_package/:id", billingController.deletePackage);
+router.delete("/delete_package/:id", [billingValidator.deletePackage, errorMsgs], billingController.deletePackage);
 
-router.put("/modify_item_price/:id", billingController.modifyItemPrice);
+router.put("/modify_item_price/:id", [billingValidator.modifyItemPrice, errorMsgs], billingController.modifyItemPrice);
 
-router.post("/save-sa-package", billingController.saveSaPackage);
+router.post("/save-sa-package", [billingValidator.saveSaPackage, errorMsgs], billingController.saveSaPackage);
 
-router.post("/save-sa-hardware", billingController.saveSaHardware);
+router.post("/save-sa-hardware", [billingValidator.saveSaHardware, errorMsgs], billingController.saveSaHardware);
 
 router.post("/edit-sa-hardware", billingController.editSaHardware);
 
@@ -1349,7 +1349,7 @@ router.get("/newRequests", billingController.newRequests);
 
 router.get("/get_user_credits", billingController.getUserCredits);
 
-router.put("/delete_request/:id", billingController.deleteRequest);
+router.put("/delete_request/:id", [billingValidator.deleteRequest, errorMsgs], billingController.deleteRequest);
 
 router.put("/accept_request/:id", billingController.acceptRequest);
 
