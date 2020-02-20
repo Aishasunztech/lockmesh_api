@@ -427,147 +427,149 @@ exports.addDealer = async function (req, res) {
     var verify = req.decoded;
 
     // if (verify.status !== undefined && verify.status == true) {
-    if (verify) {
-        var dealerName = req.body.name;
-        var dealerEmail = req.body.email;
 
-        if (!empty(dealerEmail) && !empty(dealerName)) {
-            var pageType = req.body.pageType;
+    var dealerName = req.body.name;
+    var dealerEmail = req.body.email;
+    var pageType = req.body.pageType;
 
-            var loggedInuid = verify.user.id;
-            let userType = await general_helpers.getUserType(loggedInuid);
+    if (!dealerEmail || !dealerEmail || !pageType) {
+        data = {
+            status: false,
+            msg: await general_helpers.convertToLang(req.translation[MsgConstants.INVALID_EMAIL_NAME], "Invalid dealer data provided"), // Invalid email or name
+        }
+        res.send(data);
+        return;
+    }
 
-            if (userType == Constants.SDEALER || (userType == Constants.DEALER && pageType == Constants.DEALER)) {
-                data = {
-                    status: false,
-                    msg: "invalid operation",
-                }
-                res.send(data);
-                return;
+
+    var loggedInuid = verify.user.id;
+    let userType = verify.user.user_type;
+
+    if (userType == Constants.SDEALER || (userType == Constants.DEALER && pageType == Constants.DEALER)) {
+        data = {
+            status: false,
+            msg: "invalid operation",
+        }
+        res.send(data);
+        return;
+    }
+
+    let sdealerDealerId = 0;
+
+    if (userType == Constants.ADMIN && pageType == Constants.SDEALER) {
+        sdealerDealerId = req.body.dealerId;
+    } else if (userType == Constants.DEALER && pageType == Constants.SDEALER) {
+        sdealerDealerId = loggedInuid;
+    }
+
+    /* var link_code = randomize('0', 6);
+    link_code = await general_helpers.checkLinkCode(link_code); */
+    var link_code = await general_helpers.generateLinkCode();
+
+    var type = await general_helpers.getDealerTypeIdByName(pageType);
+
+    var dealer_pwd = generator.generate({
+        length: 10,
+        numbers: true
+    });
+
+    var enc_pwd = md5(dealer_pwd); //encryted pwd
+
+    var dealer = await sql.query(`SELECT * FROM dealers WHERE dealer_email = ?`, [dealerEmail]);
+    if (dealer.length > 0) {
+        data = {
+            status: false,
+            msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_ALREADY_REG], "Dealer Already Registered. Please use another email"), // Dealer Already Registered. Please use another email.
+        }
+        res.send(data);
+        return;
+    }
+
+    var insertDealerQ = `INSERT INTO dealers (connected_dealer, dealer_name, dealer_email, password, link_code , type , modified, created) `;
+    if (sdealerDealerId != undefined && !empty(sdealerDealerId) && sdealerDealerId != null && sdealerDealerId != 0) {
+        insertDealerQ += ` VALUES (${sdealerDealerId}, '${dealerName}', '${dealerEmail}', '${enc_pwd}', '${link_code}', '${type}', NOW(), NOW())`;
+    } else {
+        insertDealerQ += ` VALUES (0, '${dealerName}', '${dealerEmail}', '${enc_pwd}', '${link_code}', '${type}', NOW(), NOW())`;
+    }
+
+    sql.query(insertDealerQ, async function (error, rows) {
+        if (error) {
+            data = {
+                status: false,
+                msg: await general_helpers.convertToLang(req.translation[''], "Dealer Insertion Error"), // Dealer Already Registered. Please use another email.
             }
+            res.send(data);
+            return;
+        };
 
-            let sdealerDealerId = 0;
+        if (rows && rows.affectedRows) {
 
-            if (userType == Constants.ADMIN && pageType == Constants.SDEALER) {
-                sdealerDealerId = req.body.dealerId;
-            } else if (userType == Constants.DEALER && pageType == Constants.SDEALER) {
-                sdealerDealerId = loggedInuid;
-            }
+            sql.query("INSERT INTO financial_account_balance(dealer_id) VALUES(" + rows.insertId + ")")
+            sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('" + rows.insertId + "', '" + JSON.stringify(Constants.deviceColumns) + "', 'devices') ")
+            sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('" + rows.insertId + "', '" + JSON.stringify(Constants.dealerColumns) + "', 'dealer') ")
+            sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('" + rows.insertId + "', '" + JSON.stringify(Constants.sdealerColumns) + "', 'sdealer') ")
+            sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('" + rows.insertId + "', '" + JSON.stringify(Constants.apkColumns) + "', 'apk') ")
+            var html = '';
 
-            /* var link_code = randomize('0', 6);
-            link_code = await general_helpers.checkLinkCode(link_code); */
-            var link_code = await general_helpers.generateLinkCode();
-
-            var type = await general_helpers.getDealerTypeIdByName(pageType);
-
-            var dealer_pwd = generator.generate({
-                length: 10,
-                numbers: true
-            });
-
-            var enc_pwd = md5(dealer_pwd); //encryted pwd
-
-            var dealer = await sql.query(`SELECT * FROM dealers WHERE dealer_email = '${dealerEmail}'`);
-            if (dealer.length > 0) {
-                data = {
-                    status: false,
-                    msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_ALREADY_REG], "Dealer Already Registered. Please use another email"), // Dealer Already Registered. Please use another email.
-                }
-                res.send(data);
-                return;
-            }
-
-            var sql1 = `INSERT INTO dealers (connected_dealer, dealer_name, dealer_email, password, link_code , type , modified, created) `;
-            if (sdealerDealerId != undefined && !empty(sdealerDealerId) && sdealerDealerId != null && sdealerDealerId != 0) {
-                sql1 += ` VALUES (${sdealerDealerId}, '${dealerName}', '${dealerEmail}', '${enc_pwd}', '${link_code}', '${type}', NOW(), NOW())`;
-            } else {
-                sql1 += ` VALUES (0, '${dealerName}', '${dealerEmail}', '${enc_pwd}', '${link_code}', '${type}', NOW(), NOW())`;
-            }
-
-            sql.query(sql1, async function (error, rows) {
-                if (error) {
-                    console.log(error);
-                    return;
-                };
-
-                if (rows && rows.affectedRows) {
-
-                    sql.query("INSERT INTO financial_account_balance(dealer_id) VALUES(" + rows.insertId + ")")
-                    sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('" + rows.insertId + "', '" + JSON.stringify(Constants.deviceColumns) + "', 'devices') ")
-                    sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('" + rows.insertId + "', '" + JSON.stringify(Constants.dealerColumns) + "', 'dealer') ")
-                    sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('" + rows.insertId + "', '" + JSON.stringify(Constants.sdealerColumns) + "', 'sdealer') ")
-                    sql.query("INSERT INTO dealer_dropdown_list(dealer_id, selected_items, type) VALUES('" + rows.insertId + "', '" + JSON.stringify(Constants.apkColumns) + "', 'apk') ")
-                    var html = '';
-
-                    html = `Your login details are : <br>
+            html = `Your login details are : <br>
                     Email : ${dealerEmail}<br>
                     Password : ${dealer_pwd} <br>
                     Dealer id : ${rows.insertId}<br>
                     Dealer Pin : ${link_code}<br>
                     Below is the link to login : <br> ${app_constants.HOST} <br>`;
 
-                    // if (pageType === DEALER) {
+            // if (pageType === DEALER) {
 
-                    //     html = `Your login details are : <br>
-                    //         Email : ${dealerEmail}<br>
-                    //         Password : ${dealer_pwd} <br>
-                    //         Dealer id : ${rows.insertId}<br>
-                    //         Dealer Pin : ${link_code}<br>
-                    //         Below is the link to login : <br> ${app_constants.HOST} <br>`;
-                    // } else {
-                    //     html = `Your login details are : <br>
-                    //         Email : ${dealerEmail}<br>
-                    //         Password : ${dealer_pwd} <br>
-                    //         Dealer id : ${rows.insertId}<br>
-                    //         Dealer Pin : ${link_code}<br>
-                    //         Below is the link to login : <br> ${app_constants.HOST} <br>`;
-                    // }
+            //     html = `Your login details are : <br>
+            //         Email : ${dealerEmail}<br>
+            //         Password : ${dealer_pwd} <br>
+            //         Dealer id : ${rows.insertId}<br>
+            //         Dealer Pin : ${link_code}<br>
+            //         Below is the link to login : <br> ${app_constants.HOST} <br>`;
+            // } else {
+            //     html = `Your login details are : <br>
+            //         Email : ${dealerEmail}<br>
+            //         Password : ${dealer_pwd} <br>
+            //         Dealer id : ${rows.insertId}<br>
+            //         Dealer Pin : ${link_code}<br>
+            //         Below is the link to login : <br> ${app_constants.HOST} <br>`;
+            // }
 
-                    sendEmail("Account Registration", html, dealerEmail, async function (emailError, response) {
-                        var dealer = await sql.query(`SELECT * FROM dealers WHERE dealer_email = '${dealerEmail}' limit 1`);
-                        if (dealer.length) {
+            sendEmail("Account Registration", html, dealerEmail, async function (emailError, response) {
+                var dealer = await sql.query(`SELECT * FROM dealers WHERE dealer_email = ? limit 1`, [dealerEmail]);
+                if (dealer.length) {
 
-                            dealer[0].connected_devices = [{ total: '0' }];
+                    dealer[0].connected_devices = [{ total: '0' }];
 
-                            dealer[0].devicesList = [];
-                            dealer[0].dealer_token = 'N/A';
+                    dealer[0].devicesList = [];
+                    dealer[0].dealer_token = 'N/A';
 
-                            if (pageType == Constants.SDEALER && (sdealerDealerId != undefined && !empty(sdealerDealerId) && sdealerDealerId != null && sdealerDealerId != 0)) {
-                                let prnt_dealer = await general_helpers.getDealerByDealerId(sdealerDealerId);
+                    if (pageType == Constants.SDEALER && (sdealerDealerId != undefined && !empty(sdealerDealerId) && sdealerDealerId != null && sdealerDealerId != 0)) {
+                        let prnt_dealer = await general_helpers.getDealerByDealerId(sdealerDealerId);
 
-                                if (prnt_dealer && prnt_dealer.length) {
-                                    dealer[0].parent_dealer = prnt_dealer[0].dealer_name;
-                                    dealer[0].parent_dealer_id = prnt_dealer[0].dealer_id;
-                                }
-                            }
-                            if (emailError) {
-                                data = {
-                                    status: true,
-                                    msg: await general_helpers.convertToLang(req.translation[MsgConstants.EMAIL_NOT_SENT], "Email could not sent due to error: ") + emailError, // Email could not sent due to error: " + emailError,
-                                    added_dealer: dealer,
-                                }
-                                res.send(data);
-                                return;
-                            }
-                            // console.log('result add',dealer);
-                            data = {
-                                status: true,
-                                msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_REG_SUCC], "Dealer has been registered successfully"), // Dealer has been registered successfully
-                                added_dealer: dealer,
-
-                            }
-                            res.send(data);
-                            return;
-                        } else {
-                            data = {
-                                status: false,
-                                msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_NOT_ADDED], "Dealer could not be added"), // Dealer could not be added
-                            }
-                            res.send(data);
-                            return;
+                        if (prnt_dealer && prnt_dealer.length) {
+                            dealer[0].parent_dealer = prnt_dealer[0].dealer_name;
+                            dealer[0].parent_dealer_id = prnt_dealer[0].dealer_id;
                         }
+                    }
+                    if (emailError) {
+                        data = {
+                            status: true,
+                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.EMAIL_NOT_SENT], "Email could not sent due to error: ") + emailError, // Email could not sent due to error: " + emailError,
+                            added_dealer: dealer,
+                        }
+                        res.send(data);
+                        return;
+                    }
+                    // console.log('result add',dealer);
+                    data = {
+                        status: true,
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_REG_SUCC], "Dealer has been registered successfully"), // Dealer has been registered successfully
+                        added_dealer: dealer,
 
-                    });
+                    }
+                    res.send(data);
+                    return;
                 } else {
                     data = {
                         status: false,
@@ -577,192 +579,197 @@ exports.addDealer = async function (req, res) {
                     return;
                 }
 
-
             });
-
         } else {
             data = {
                 status: false,
-                msg: await general_helpers.convertToLang(req.translation[MsgConstants.INVALID_EMAIL_NAME], "Invalid email or name"), // Invalid email or name
+                msg: await general_helpers.convertToLang(req.translation[MsgConstants.DEALER_NOT_ADDED], "Dealer could not be added"), // Dealer could not be added
             }
             res.send(data);
             return;
         }
 
-    }
+
+    });
+
 }
 
 exports.editDealers = async function (req, res) {
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
-    try {
-        if (verify) {
-            var loggedInuid = verify.user.id;
+    var name = req.body.name;
+    var email = req.body.email;
+    var dealer_id = req.body.dealer_id;
+    if (dealer_id && (name || email)) {
+        let userType = verify.user.user_type;
+        var setFields = "";
+        var alreadyAvailable = false;
+        var mailGiven = false;
+        var enc_pwd = ''
 
-            var name = req.body.name;
-            var email = req.body.email;
-            var dealer_id = req.body.dealer_id;
-            var setFields = "";
-            var alreadyAvailable = false;
-            var mailGiven = false;
-            var enc_pwd = ''
-            if (dealer_id && (name || email)) {
+        // let dealer = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_email = '${email}' AND dealer_id =${dealer_id}`)
+        let dealer = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_id =?`, [dealer_id])
+        if (!dealer || !dealer.length) {
+            return res.send({
+                status: false,
+                msg: await general_helpers.convertToLang(req.translation[''], "Dealer doesn't exist"), // Dealer not found to Update"
+            });
+        }
+        
+        if (dealer && dealer.length) {
+            let dealerType = await general_helpers.getUserType(dealer[0].dealer_id)
+            if (userType === Constants.SDEALER || (userType === Constants.DEALER && dealerType === Constants.DEALER)) {
+                return res.send({
+                    status: false,
+                    msg: await general_helpers.convertToLang(req.translation[''], "Operation not allowed"), // Dealer not found to Update"
+                });
+            }
 
-                // let dealer = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_email = '${email}' AND dealer_id =${dealer_id}`)
-                let dealer = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_id =${dealer_id}`)
-                if (!dealer) {
-                    return res.send({
+            // if changed email is provided
+            if (email && email !== dealer[0].dealer_email) {
+
+                mailGiven = true;
+                let checkMail = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_email=? AND dealer_id !=?`, [email, dealer_id]);
+                if (checkMail && checkMail.length) {
+                    alreadyAvailable = true;
+
+                    data = {
                         status: false,
-                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.EMAIL_ALREDY_USED_DEALER], "Email is already in use of other dealer"), // Dealer not found to Update"
-                    });
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.EMAIL_ALREDY_USED_DEALER], "Email is already in use of other dealer"), // Email is already in use of other dealer
+                        alreadyAvailable: alreadyAvailable
+                    };
+                    return res.send(data);
+
                 }
 
-                if (dealer && dealer.length) {
-                    // if changed email is provided
-                    if (email && email !== dealer[0].dealer_email) {
+                var dealer_pwd = generator.generate({
+                    length: 10,
+                    numbers: true
+                });
+                enc_pwd = md5(dealer_pwd);
 
-                        mailGiven = true;
-                        let checkMail = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_email='${email}' AND dealer_id !=${dealer_id}`);
-                        if (checkMail && checkMail.length) {
-                            alreadyAvailable = true;
+                setFields = `${setFields}  dealer_email='${email}', password = '${enc_pwd}' `;
+            }
 
-                            data = {
-                                status: false,
-                                msg: await general_helpers.convertToLang(req.translation[MsgConstants.EMAIL_ALREDY_USED_DEALER], "Email is already in use of other dealer"), // Email is already in use of other dealer
-                                alreadyAvailable: alreadyAvailable
-                            };
-                            return res.send(data);
+            if (name) {
 
-                        }
+                if (mailGiven == true && alreadyAvailable == false) {
+                    setFields = `${setFields}, dealer_name='${name}'`;
+                } else {
+                    setFields = ` dealer_name='${name}'`;
+                }
+            }
 
-                        var dealer_pwd = generator.generate({
-                            length: 10,
-                            numbers: true
-                        });
-                        enc_pwd = md5(dealer_pwd);
+            var query = `UPDATE dealers SET ${setFields} WHERE dealer_id = ${dealer_id}`;
 
-                        setFields = `${setFields}  dealer_email='${email}', password = '${enc_pwd}' `;
-                    }
+            sql.query(query, async function (error, row) {
+                if (error) {
+                    console.log('update dealer id: ', error)
+                    data = {
+                        status: true,
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_NOT_UPD], "Record not updated"), // Record not updated.
+                    };
+                    return res.send(data);
+                }
 
-                    if (!empty(name)) {
-
-                        if (mailGiven == true && alreadyAvailable == false) {
-                            setFields = `${setFields}, dealer_name='${name}'`;
-                        } else {
-                            setFields = ` dealer_name='${name}'`;
-                        }
-                    }
-
-                    var query = `UPDATE dealers SET ${setFields} WHERE dealer_id = ${dealer_id}`;
-
-                    sql.query(query, async function (error, row) {
-                        if (error) {
-                            console.log(error)
-                            data = {
-                                status: true,
-                                msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_NOT_UPD], "Record not updated"), // Record not updated.
-                            };
-                            return res.send(data);
-                        }
-
-                        if (row && row.affectedRows != 0) {
-                            html = `Your login details are : <br>
+                if (row && row.affectedRows != 0) {
+                    html = `Your login details are : <br>
                                 Email : ${email} <br>
                                 Password : ${dealer_pwd} <br>
                                 Below is the link to login : <br> 
                                 ${app_constants.HOST} <br>`;
-                            if (mailGiven) {
-                                sendEmail("Account Information Changed", html, email);
-                            }
+                    if (mailGiven) {
+                        sendEmail("Account Information Changed", html, email);
+                    }
 
-                            // update dealer name into devices table 
-                            if (name) {
-                                sql.query(`UPDATE usr_acc SET prnt_dlr_name = '${name}' WHERE prnt_dlr_id = ${dealer_id};`);
-                            }
+                    // update dealer name into devices table 
+                    if (name) {
+                        await sql.query(`UPDATE usr_acc SET prnt_dlr_name = '${name}' WHERE prnt_dlr_id = ${dealer_id};`);
+                    }
 
-                            return res.send({
-                                status: true,
-                                msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record updated successfully"), // Record updated successfully. Email has been sent.
-                                alreadyAvailable: alreadyAvailable
-                            })
-                        } else {
-                            data = {
-                                status: true,
-                                msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_NOT_UPD], "Record not updated"), // Record not updated.
-                            };
-                            return res.send(data);
-                        }
-                    });
-
+                    return res.send({
+                        status: true,
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record updated successfully"), // Record updated successfully. Email has been sent.
+                        alreadyAvailable: alreadyAvailable
+                    })
+                } else {
+                    data = {
+                        status: true,
+                        msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_NOT_UPD], "Record not updated"), // Record not updated.
+                    };
+                    return res.send(data);
                 }
+            });
 
-            } else {
-                data = {
-                    status: false,
-                    msg: await general_helpers.convertToLang(req.translation[MsgConstants.ENTER_VALID_DETAIL], "Please enter valid details"), // Please enter valid details
-                }
-                return res.send(data);
-            }
         }
-    } catch (error) {
-        console.log(error);
+
+    } else {
         data = {
             status: false,
-            msg: 'Error While Processing'
+            msg: await general_helpers.convertToLang(req.translation[MsgConstants.ENTER_VALID_DETAIL], "Please enter valid details"), // Please enter valid details
         }
         return res.send(data);
     }
+
+
 }
 
 exports.setDealerCreditsLimit = async function (req, res) {
     var verify = req.decoded;
+    
     // if (verify.status !== undefined && verify.status == true) {
-    if (verify) {
-        var credits_limit = req.body.credits_limit;
-        var dealer_id = req.body.dealer_id;
-        if (dealer_id && credits_limit) {
-            let dealer = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_id =${dealer_id}`)
-            if (!dealer) {
-                return res.send({
-                    status: false,
-                    msg: await general_helpers.convertToLang(req.translation[""], "Dealer not found to update."), // Dealer not found to Update"
-                });
-            }
-
-            if (dealer && dealer.length) {
-                let updateCreditsLimitQ = `UPDATE financial_account_balance SET credits_limit = ${credits_limit} WHERE dealer_id = ${dealer_id}`
-                sql.query(updateCreditsLimitQ, async function (err, response) {
-                    if (err) {
-                        console.log(err);
-                        data = {
-                            status: false,
-                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.QUERY_ERROR], "Query Error"), // Please enter valid details
-                        }
-                        return res.send(data);
-                    }
-                    if (response && response.affectedRows) {
-                        data = {
-                            status: true,
-                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record Updated Successfully"), // Please enter valid details
-                        }
-                        return res.send(data)
-                    } else {
-                        data = {
-                            status: false,
-                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_NOT_UPD], "Record not Updated."), // Please enter valid details
-                        }
-                        return res.send(data)
-
-                    }
-                })
-            }
-        } else {
-            data = {
-                status: false,
-                msg: await general_helpers.convertToLang(req.translation[MsgConstants.ENTER_VALID_DETAIL], "Please enter valid details"), // Please enter valid details
-            }
-            return res.send(data);
+    var credits_limit = req.body.credits_limit;
+    var dealer_id = req.body.dealer_id;
+    if (!dealer_id || typeof credits_limit != "number") {
+        data = {
+            status: false,
+            msg: await general_helpers.convertToLang(req.translation[MsgConstants.ENTER_VALID_DETAIL], "Please enter valid details"), // Please enter valid details
         }
+        return res.send(data);
+    }
+    let userType = verify.user.user_type;
+    credits_limit = (credits_limit <= -1) ? 0 : credits_limit;
+
+    let dealer = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_id =?`, [dealer_id])
+    if (!dealer || !dealer.length) {
+        return res.send({
+            status: false,
+            msg: await general_helpers.convertToLang(req.translation[""], "Dealer not found to update."), // Dealer not found to Update"
+        });
+    }
+
+    if (dealer && dealer.length) {
+        if (userType === Constants.SDEALER || (userType === Constants.DEALER && dealerType === Constants.DEALER)) {
+            return res.send({
+                status: false,
+                msg: await general_helpers.convertToLang(req.translation[''], "Operation not allowed"), // Dealer not found to Update"
+            });
+        }
+        let updateCreditsLimitQ = `UPDATE financial_account_balance SET credits_limit = ? WHERE dealer_id = ?`
+        sql.query(updateCreditsLimitQ, [credits_limit, dealer_id], async function (err, response) {
+            if (err) {
+                console.log(err);
+                data = {
+                    status: false,
+                    msg: await general_helpers.convertToLang(req.translation[MsgConstants.QUERY_ERROR], "Query Error"), // Please enter valid details
+                }
+                return res.send(data);
+            }
+            if (response && response.affectedRows) {
+                data = {
+                    status: true,
+                    msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_UPD_SUCC], "Record Updated Successfully"), // Please enter valid details
+                }
+                return res.send(data)
+            } else {
+                data = {
+                    status: false,
+                    msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_NOT_UPD], "Record not Updated."), // Please enter valid details
+                }
+                return res.send(data)
+
+            }
+        })
     }
 }
 
@@ -774,27 +781,32 @@ exports.deleteDealer = async function (req, res) {
 
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
-        var loggedInuid = verify.user.id;
+        if(!dealer_id){
+            data = {
+                status: false,
+                msg: await general_helpers.convertToLang(req.translation[MsgConstants.INVALID_DEALER], "Invalid Dealer"), // Invalid Dealer.
+            };
+            res.send(data);
+            return;
+        }
 
-        let getDealer = `SELECT * FROM dealers WHERE dealer_id = ${dealer_id}`
-        let dealerData = await sql.query(getDealer)
-        if (!empty(dealer_id) && dealerData.length) {
+        let getDealerQ = `SELECT * FROM dealers WHERE dealer_id = ?`
+        let dealerData = await sql.query(getDealerQ, [dealer_id])
+        if (dealerData.length) {
             if (verify.user.user_type === Constants.ADMIN || verify.user.id === dealerData[0].connected_dealer) {
-                var dealerQ = `UPDATE dealers SET unlink_status = 1 WHERE dealer_id = ${dealer_id} `;
-                sql.query(dealerQ, async function (error, row) {
 
-                    // var qury1 = "UPDATE dealers set unlink_status = 1 where connected_dealer = '" + dealer_id + "'";
-                    // var rslt = await sql.query(qury1);
-                    // if (row.affectedRows != 0 && rslt.affectedRows != 0) {
-                    //     data = {
-                    //         status: true,
-                    //         msg: 'Dealer and Sub-Dealer deleted successfully.',
-                    //         data: row
-                    //     };
-                    //     res.send(data);
-                    //     return;
-                    // } else 
-
+                var dealerQ = `UPDATE dealers SET unlink_status = 1 WHERE dealer_id = ?`;
+                sql.query(dealerQ, [dealer_id], async function (error, row) {
+                    if(error){
+                        console.log('delete dealer error: ', error);
+                        data = {
+                            status: false,
+                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_NOT_DEL], "Record not deleted"), // Record not deleted.
+                        };
+                        res.send(data);
+                        return;
+                    }
+                    
                     if (row && row.affectedRows !== 0) {
 
                         await general_helpers.expireDealerLogin(dealer_id);
@@ -808,8 +820,8 @@ exports.deleteDealer = async function (req, res) {
                         return;
                     } else {
                         data = {
-                            "status": false,
-                            "msg": await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_NOT_DEL], "Record not deleted"), // Record not deleted.
+                            status: false,
+                            msg: await general_helpers.convertToLang(req.translation[MsgConstants.RECORD_NOT_DEL], "Record not deleted"), // Record not deleted.
                         };
                         res.send(data);
                         return;
@@ -1125,7 +1137,7 @@ exports.resetPwd = async function (req, res) {
 
         }
         // console.log("new password " + newpwd);
-        
+
 
         var enc_pwd = md5(newPwd); // encryted pwd
 
