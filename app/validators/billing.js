@@ -117,7 +117,7 @@ exports.saveSaPackage = [
         .custom(v => ObjectWithKeys(v, savePackageSchema))
         .custom(v => atLeastOneTrueRequired(v)),
 
-    body('package_type')
+    body('data.package_type')
         .notEmpty()
         .isIn(['services', 'data_plan', 'Standalone Sim'])
 ];

@@ -1662,4 +1662,7 @@ router.put('/add-data-plans', ServicesController.addDataLimitsPlans);
 
 router.put('/reset-pgp-limit', ServicesController.resetPgpLimit);
 
+
+router.post('/add-standalone-sim', simController.addStandAloneSim);
+
 module.exports = router;

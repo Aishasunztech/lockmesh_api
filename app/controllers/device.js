@@ -77,10 +77,14 @@ exports.devices = async function (req, res) {
             // console.log("results ", results.length)
             if (results && results.length) {
                 let devices_acc_array = [];
+                let expired_devices_acc_array = [];
                 let usr_device_ids_array = []
                 for (let i = 0; i < results.length; i++) {
                     devices_acc_array.push(results[i].id)
                     usr_device_ids_array.push(results[i].usr_device_id)
+                    if (results[i].status === 'expired') {
+                        expired_devices_acc_array.push(results[i].id)
+                    }
                 }
                 let user_acc_ids = devices_acc_array.join()
                 let usr_device_ids = usr_device_ids_array.join()
@@ -92,6 +96,7 @@ exports.devices = async function (req, res) {
                 // let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
                 let servicesData = await device_helpers.getServicesData(user_acc_ids)
                 let servicesIds = servicesData.map(item => { return item.id })
+
                 let userAccServiceData = []
                 let dataPlans = []
                 if (servicesIds.length) {
@@ -104,16 +109,25 @@ exports.devices = async function (req, res) {
                     results[i].sim_id2 = "N/A"
                     results[i].pgp_email = "N/A"
                     results[i].chat_id = "N/A"
-
+                    results[i].finalStatus = device_helpers.checkStatus(
+                        results[i]
+                    );
                     let service_id = null
                     let services = servicesData.filter(data => data.user_acc_id === results[i].id);
                     if (services && services.length) {
                         services.map((item) => {
-                            if (item.status === 'extended') {
-                                results[i].extended_services = item
+                            if (results[i].finalStatus !== 'Expired') {
+                                if (item.status === 'extended') {
+                                    results[i].extended_services = item
+                                } else {
+                                    results[i].services = item
+                                    service_id = item.id
+                                }
                             } else {
-                                results[i].services = item
-                                service_id = item.id
+                                if (item.status === 'completed') {
+                                    results[i].services = item
+                                    service_id = item.id
+                                }
                             }
                         })
                     }
@@ -160,9 +174,7 @@ exports.devices = async function (req, res) {
 
                     results[i].lastOnline = results[i].last_login ? results[i].last_login : "N/A"
                     // }
-                    results[i].finalStatus = device_helpers.checkStatus(
-                        results[i]
-                    );
+
                     results[i].validity = await device_helpers.checkRemainDays(
                         results[i].created_at,
                         results[i].validity
@@ -757,7 +769,6 @@ exports.acceptDevice = async function (req, res) {
                                                             if (pay_now) {
                                                                 price = price - Math.ceil(Number((price * 0.03)))
                                                             }
-
                                                             let admin_cost = 0
                                                             let dealer_cost = 0
                                                             let result = await sql.query("SELECT * FROM dealer_hardwares_prices WHERE hardware_id =" + hardwares[i].id + " AND created_by = 'super_admin'")
@@ -3308,7 +3319,6 @@ exports.extendServices = async function (req, res) {
             let paid_credits = 0
             let dealer_credits_copy = 0
             let invoice_status = (pay_now) ? "PAID" : "UNPAID"
-
             var basic_data_plan = {
                 sim_id:
                 {
@@ -3335,7 +3345,7 @@ exports.extendServices = async function (req, res) {
             // console.log(expiry_date);
             // return
             var checkDevice =
-                "SELECT start_date ,expiry_date , expiry_months from usr_acc WHERE device_id = '" +
+                "SELECT start_date ,expiry_date , expiry_months , status from usr_acc WHERE device_id = '" +
                 usr_device_id +
                 "'";
             if (loggedDealerType === constants.SDEALER) {
@@ -3360,14 +3370,7 @@ exports.extendServices = async function (req, res) {
             }
             sql.query(checkDevice, async function (error, rows) {
                 if (rows.length) {
-                    
-                    let isExtendedOrCancelled = await sql.query(`SELECT * FROM services_data WHERE user_acc_id = ${usr_acc_id} AND (status = 'extended' OR status = 'request_for_cancel')`);
-
-                    if(isExtendedOrCancelled && isExtendedOrCancelled.length){
-                        return res.send({status: false,
-                        msg: 'You have Applied a Renewal or Extension for this device, please cancel service first before choosing new service.'});
-                    }
-
+                    let status = rows[0].status
                     if (newService || renewService) {
 
                         let user_credits_q = "SELECT * FROM financial_account_balance WHERE dealer_id=" + dealer_id
@@ -3452,24 +3455,48 @@ exports.extendServices = async function (req, res) {
                                         return
                                     }
                                 }
-                                let prevServiceRecord = await sql.query(`SELECT * FROM services_data WHERE user_acc_id = ${usr_acc_id} AND (status = 'active' OR status = 'request_for_cancel')`)
-                                if (renewService) {
-                                    // console.log(prevServiceRecord);
-                                    let service_expiry_date = moment(prevServiceRecord[0].service_expiry_date)
-                                    let service_start_date = moment(prevServiceRecord[0].start_date)
-                                    // console.log(service_expiry_date, service_start_date);
-                                    let service_months = service_expiry_date.diff(service_start_date, 'months', true)
-                                    expiry_date = moment(prevServiceRecord[0].service_expiry_date, "YYYY/MM/DD").add(service_months, "M").format('YYYY/MM/DD');
+                                let prevServiceRecord = ""
+                                if (finalStatus !== constants.DEVICE_EXPIRED) {
+                                    prevServiceRecord = await sql.query(`SELECT * FROM services_data WHERE user_acc_id = ${usr_acc_id} AND (status = 'active' OR status = 'request_for_cancel')`)
                                 } else {
-                                    expiry_date = moment(rows[0].expiry_date, "YYYY/MM/DD").add(expiry_date, "M").format('YYYY/MM/DD');
+                                    prevServiceRecord = await sql.query(`SELECT * FROM services_data WHERE user_acc_id = ${usr_acc_id} AND status = 'completed'`)
                                 }
-                                let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedDealerType)
-                                if (pay_now) {
-                                    admin_profit = profitLoss.admin_profit - Math.ceil((profitLoss.admin_profit * 0.03))
-                                    dealer_profit = profitLoss.dealer_profit - Math.ceil((profitLoss.dealer_profit * 0.03))
+                                if (prevServiceRecord && prevServiceRecord.length) {
+                                    if (renewService) {
+                                        let service_expiry_date = moment(prevServiceRecord[0].service_expiry_date)
+                                        let service_start_date = moment(prevServiceRecord[0].start_date)
+                                        let service_months = service_expiry_date.diff(service_start_date, 'months', true)
+                                        if (finalStatus === constants.DEVICE_EXPIRED) {
+                                            expiry_date = moment(date_now, "YYYY/MM/DD").add(service_months, "M").format('YYYY/MM/DD');
+                                            status = 'active'
+                                        } else {
+                                            expiry_date = moment(prevServiceRecord[0].service_expiry_date, "YYYY/MM/DD").add(service_months, "M").format('YYYY/MM/DD');
+                                        }
+
+                                    } else {
+                                        console.log(finalStatus);
+                                        if (finalStatus === constants.DEVICE_EXPIRED) {
+                                            expiry_date = moment(date_now, "YYYY/MM/DD").add(expiry_date, "M").format('YYYY/MM/DD');
+                                            console.log("dadasd");
+                                            status = 'active'
+                                        } else {
+                                            expiry_date = moment(rows[0].expiry_date, "YYYY/MM/DD").add(expiry_date, "M").format('YYYY/MM/DD');
+                                        }
+                                    }
+                                    let profitLoss = await helpers.calculateProfitLoss(packages, products, loggedDealerType)
+                                    if (pay_now) {
+                                        admin_profit = profitLoss.admin_profit - Math.ceil((profitLoss.admin_profit * 0.03))
+                                        dealer_profit = profitLoss.dealer_profit - Math.ceil((profitLoss.dealer_profit * 0.03))
+                                    } else {
+                                        admin_profit = profitLoss.admin_profit
+                                        dealer_profit = profitLoss.dealer_profit
+                                    }
                                 } else {
-                                    admin_profit = profitLoss.admin_profit
-                                    dealer_profit = profitLoss.dealer_profit
+                                    res.send({
+                                        status: false,
+                                        msg: "Error: Current Service not found to Extend/Renew Service."
+                                    });
+                                    return
                                 }
                             }
                         } else {
@@ -3498,6 +3525,8 @@ exports.extendServices = async function (req, res) {
                             start_date +
                             "' ,expiry_date = '" +
                             expiry_date +
+                            "' ,status = '" +
+                            status +
                             "' WHERE device_id = '" +
                             usr_device_id +
                             "'";
@@ -3519,10 +3548,11 @@ exports.extendServices = async function (req, res) {
                             }
                             data_plan_price += (Number(data_plans.sim_id2.pkg_price) - discount)
                         }
-
-                        let service_billing = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date , status , service_term) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice - data_plan_price} ,'${rows[0].expiry_date}' ,'${expiry_date}' , 'extended' , '${exp_month}')`;
-                        console.log(service_billing);
-                        let service_data_result = await sql.query(service_billing);
+                        let insert_service_query = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date , status , service_term) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice - data_plan_price} ,'${rows[0].expiry_date}' ,'${expiry_date}' , 'extended' , '${exp_month}')`
+                        if (finalStatus === constants.DEVICE_EXPIRED) {
+                            insert_service_query = `INSERT INTO services_data (user_acc_id , dealer_id , products, packages, total_credits, start_date, service_expiry_date , status , service_term) VALUES (${usr_acc_id},${dealer_id}, '${JSON.stringify(products)}','${JSON.stringify(packages)}',${newServicePrice - data_plan_price} ,'${date_now}' ,'${expiry_date}' , 'active' , '${exp_month}')`
+                        }
+                        let service_data_result = await sql.query(insert_service_query);
                         let service_id = null
                         if (service_data_result.affectedRows) {
                             service_id = service_data_result.insertId
