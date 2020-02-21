@@ -384,9 +384,6 @@ exports.updateProfile = async function (req, res) {
     }
 }
 
-
-
-
 exports.checkProfile = async function (req, res) {
     var verify = req.decoded;
     if (verify) {

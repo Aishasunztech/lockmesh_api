@@ -3,6 +3,11 @@ require("express-group-routes");
 var express = require("express");
 var app = express();
 
+// Security Libraries
+// const helmet = require('helmet');
+var sqlInjection = require('./middlewares/injectable');
+// var expressSanitized = require('express-sanitize-escape');
+
 // libraries
 var path = require("path");
 var cookieParser = require("cookie-parser");
@@ -15,12 +20,9 @@ const expressSwagger = require('express-swagger-generator')(app);
 
 // Application Constants
 const swaggerOptions = require('./config/swaggerOptions');
-const constants = require('./config/constants');
-
-
+const app_constants = require('./config/constants');
 
 app.disable("etag");
-
 
 var serverEnv = "localhost";
 if (process.env.HOST_NAME) serverEnv = process.env.HOST_NAME;
@@ -29,6 +31,8 @@ stackify.start({
 	appName: "LockMesh",
 	env: serverEnv
 });
+
+app.disable('x-powered-by');
 
 // cors enable
 app.options("*", cors());
@@ -39,6 +43,15 @@ app.use(stackify.expressExceptionHandler);
 
 // url logging
 app.use(logger("dev"));
+
+// helmet security protections
+// app.use(helmet())
+
+// SQL injection
+// app.use(sqlInjection);
+
+// escape input
+// app.use(expressSanitized.middleware());
 
 // file uploading max length
 app.use(express.json({ limit: "1000gb" }));
@@ -54,6 +67,7 @@ app.use(
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
+// Allow headers
 app.use(function (req, res, next) {
 	res.header("Access-Control-Allow-Origin", "*");
 	res.header(
@@ -83,7 +97,7 @@ var basic = auth.basic({
 }, (username, password, callback) => {
 	// Custom authentication
 	// Use callback(error) if you want to throw async error.
-	callback(username === constants.BASIC_AUTH_USER && password === constants.BASIC_AUTH_PASSWORD);
+	callback(username === app_constants.BASIC_AUTH_USER && password === app_constants.BASIC_AUTH_PASSWORD);
 }
 );
 
@@ -103,8 +117,5 @@ app.get("/itest", function (req, res) {
 	stackify.log("info", "hey! - iTest failed successfully!!");
 
 });
-
-// app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-require("./routes/index.js")(app);
 
 module.exports = app;

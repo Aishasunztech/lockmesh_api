@@ -41,8 +41,8 @@ module.exports = {
 				return "Every Friday";
 			case 7:
 				return "Every Saturday";
-			
-	
+
+
 			default:
 				return "N/A";
 		}
@@ -2391,26 +2391,90 @@ module.exports = {
 		let updateLastLoginQ = `UPDATE dealers SET last_login = '${moment().format("YYYY/MM/DD HH:mm:ss")}' WHERE dealer_id=${dealerId}`;
 		await sql.query(updateLastLoginQ);
 	},
-	updateSimStatus: (sim_id, status) => {
+	updateSimStatus: (sim_id, status, res = null, isNew = false, data = null) => {
 		app_constants.twilioClient.wireless.sims.list({ iccid: sim_id }).then(response => {
 			if (response && response.length) {
-				app_constants.twilioClient.wireless.sims(response[0].sid).update({ status: status }).then(response => {
+				let updateObject = { status: status }
+				if (isNew) {
+					let date_now = moment().format('YYYY/MM/DD_HH:mm')
+					let unique_name = `LM${data.dealer_pin}_${date_now}_${data.dealer_name}`
+					if (data.device_id) {
+						unique_name = unique_name + `_${data.device_id}`
+					}
+					updateObject = { status: status, uniqueName: unique_name }
+				}
+				if (status == 'reset') {
+					updateObject = { resetStatus: 'resetting' }
+				}
+				app_constants.twilioClient.wireless.sims(response[0].sid).update(updateObject).then(response => {
 					// console.log(response);
 					if (response) {
 						if (status === 'active') {
-							sql.query(`UPDATE sim_ids SET activated = 1 WHERE sim_id = '${sim_id}' AND delete_status = '0'`)
+							sql.query(`UPDATE sim_ids SET activated = 1 , sim_status = 'active' WHERE sim_id = '${sim_id}'`)
+							if (res) {
+								res.send({
+									status: true,
+									msg: "Sim activated successfully."
+								})
+								return;
+							}
 						}
-						else if (status === 'deactivated') {
-							sql.query(`UPDATE sim_ids SET activated = 0 WHERE sim_id = '${sim_id}' AND delete_status = '1'`)
+						else if (status === 'suspended') {
+							sql.query(`UPDATE sim_ids SET activated = 0 , sim_status = 'suspended' WHERE sim_id = '${sim_id}'`)
+							if (res) {
+								res.send({
+									status: true,
+									msg: "Sim suspended successfully."
+								})
+								return;
+							}
+						} else if (status === 'reset') {
+							if (res) {
+								res.send({
+									status: true,
+									msg: "Sim network connectivity reset successfully."
+								})
+								return;
+							}
 						}
-
+					} else {
+						console.log(response);
+						if (res) {
+							res.send({
+								status: false,
+								msg: `ERROR: Internal Server error.`
+							})
+							return;
+						}
 					}
 				}).catch(err => {
-					console.log(err);
+					console.log("ERROR", err);
+					if (res) {
+						res.send({
+							status: false,
+							msg: `ERROR: ${err.message}.`
+						})
+						return;
+					}
 				})
+			} else {
+				if (res) {
+					res.send({
+						status: false,
+						msg: `ERROR: Sim not found on twillio server.`
+					})
+					return;
+				}
 			}
 		}).catch(err => {
-			console.log(err);
+			console.log("GET SIM ERROR", err);
+			if (res) {
+				res.send({
+					status: false,
+					msg: `ERROR: Sim not found on twillio server.`
+				})
+				return;
+			}
 		})
 
 	},
@@ -2421,10 +2485,39 @@ module.exports = {
 	 */
 
 	expireDealerLogin: async function (dealerId) {
-		if(dealerId){
+		if (dealerId) {
 			let loginQ = `UPDATE login_history SET status=0 WHERE dealer_id=${dealerId}`;
 			await sql.query(loginQ);
 		}
 	},
-	
+
+	hasSql: (value) => {
+
+		if (value === null || value === undefined) {
+			return false;
+		}
+
+		// sql regex reference: http://www.symantec.com/connect/articles/detection-sql-injection-and-cross-site-scripting-attacks
+		var sql_meta = new RegExp('(%27)|(\')|(--)|(%23)|(#)', 'i');
+		if (sql_meta.test(value)) {
+			return true;
+		}
+
+		var sql_meta2 = new RegExp('((%3D)|(=))[^\n]*((%27)|(\')|(--)|(%3B)|(;))', 'i');
+		if (sql_meta2.test(value)) {
+			return true;
+		}
+
+		var sql_typical = new RegExp('w*((%27)|(\'))((%6F)|o|(%4F))((%72)|r|(%52))', 'i');
+		if (sql_typical.test(value)) {
+			return true;
+		}
+
+		var sql_union = new RegExp('((%27)|(\'))union', 'i');
+		if (sql_union.test(value)) {
+			return true;
+		}
+
+		return false;
+	}
 }

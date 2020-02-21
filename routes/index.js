@@ -27,6 +27,7 @@ module.exports = function (app) {
 	app.use('/mobile', mobileRoutes);
 	app.use('/signal', signalRoutes);
 	app.use('/s-mail', sMailRoutes)
+	// done
 	app.use('/users', authRoutes);
 	app.use('/users', nonVerifyRoutes);
 
@@ -36,10 +37,8 @@ module.exports = function (app) {
 
 	app.use('/microservice-socket-authentication',
 		MircroServiceSocketAuthentication);
-
-	app.use('/users',
-		authMiddleware,
-		userRoutes);
+	// working
+	app.use('/users', authMiddleware, userRoutes);
 
 	app.group('/api/v1', function (router) {
 		router.use('/mobile', mobileRoutes);

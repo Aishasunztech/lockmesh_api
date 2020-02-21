@@ -3,7 +3,7 @@ var router = express.Router();
 
 
 const mobileController = require('../app/controllers/mobile');
-const mobileValidator = require('../app/validators/mobile_validators');
+// const mobileValidator = require('../app/validators/mobileValidations');
 
 
 

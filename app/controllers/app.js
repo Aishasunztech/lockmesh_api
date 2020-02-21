@@ -104,136 +104,135 @@ exports.removeSMApps = async function (req, res) {
     return;
 }
 
-exports.trasnferApps = async function (req, res) {
+exports.transferApps = async function (req, res) {
 
-    let appKeys = req.body.data
-    var verify = req.decoded;
-    let spaceType = req.body.spaceType ? req.body.spaceType : "";
-
-    console.log('appKeys ==> ', appKeys, "spaceType ==> '", spaceType);
-    // return;
-    let toDelete = (appKeys.length === 0) ? "''" : appKeys.join(',')
     // if (verify.status !== undefined && verify.status == true) {
+    var verify = req.decoded;
+    console.log("check body: ", req.body);
     if (verify) {
-        let dealer_type = verify.user.user_type;
-        let dealer_id = verify.user.id;
-        if (dealer_type === ADMIN) {
-            let deleteNotIn = `DELETE FROM secure_market_apps WHERE apk_id NOT IN ("${toDelete}") AND space_type= '${spaceType}' AND dealer_type = 'admin';`
-            // console.log(deleteNotIn);
-            await sql.query(deleteNotIn);
-        } else {
-            let deleteNotIn = "DELETE FROM secure_market_apps WHERE apk_id NOT IN (" + toDelete + ") AND space_type= '" + spaceType + "' AND dealer_id = '" + dealer_id + "'"
-            // console.log(deleteNotIn);
-            await sql.query(deleteNotIn);
+        try {
+            let appKeys = req.body.data
+            let spaceType = req.body.spaceType ? req.body.spaceType : "";
 
-            let adminAppKeys = await sql.query(`SELECT apk_id FROM secure_market_apps WHERE dealer_type = '${ADMIN}' AND space_type = '${spaceType}'`);
-            adminAppKeys.forEach((item) => {
-                let index = appKeys.indexOf(item.apk_id)
-                if (index !== -1) {
-                    appKeys.splice(index, 1)
+            if (!appKeys || !spaceType) {
+                data = {
+                    status: false,
+                    msg: await helpers.convertToLang(req.translation[""], `Error: Invalid data provided`), // 'Apps Transfered Sussecfully',
+                    data: null
                 }
-            })
-        }
-
-        // let existingApps = await sql.query(`SELECT * FROM secure_market_apps WHERE dealer_id = ${dealer_id} AND space_type = '${spaceType}'`);
-
-        // let copyKeys = appKeys;
-        // let deleteIds = [];
-        // existingApps.forEach((item) => {
-        //     let index = copyKeys.indexOf(item.apk_id)
-        //     if (index !== -1) {
-        //         deleteIds.push(index);
-        //     }
-        // })
-        // appKeys = copyKeys.filter((app, index) => !deleteIds.includes(index));
-        // console.log("copyKeys appKeys ", appKeys)
-
-        // get all secure markete apps
-        let sm_apps = await sql.query(`SELECT * FROM secure_market_apps WHERE space_type = '${spaceType}'`);
-        let sm_app_ids = []
-        if (sm_apps.length) {
-            sm_apps.map((item) => sm_app_ids.push(item.apk_id))
-        }
-        // console.log('check table sm ids:: ', sm_app_ids);
-        if (appKeys.length) {
-            let insertQuery = "INSERT INTO secure_market_apps (dealer_type,dealer_id, apk_id, space_type) VALUES ";
-            let insertValues = ' '
-
-            for (let i = 0; i < appKeys.length; i++) {
-                if (sm_apps.length) {
-                    let check = sm_apps.filter((item) => item.apk_id == appKeys[i] && item.dealer_id === verify.user.dealer_id)
-                    if (check && check.length) {
-                        continue
-                    }
-                }
-                insertValues = insertValues + "('" + dealer_type + "' ," + dealer_id + " , " + appKeys[i] + " , '" + spaceType + "'),"
+                return res.send(data);
             }
 
-            console.log(appKeys, "================> insertQuery + insertValues; ", insertQuery + insertValues)
-            if (insertValues.length > 1) {
-                let query = insertQuery + insertValues;
-                query = query.slice(0, query.length - 1)
-                console.log(query);
-                await sql.query(query);
-            }
-        }
+            console.log('appKeys ==> ', appKeys, "spaceType ==> '", spaceType);
+            // return;
+            let toDelete = (appKeys.length === 0) ? "''" : appKeys.join(',')
+            let dealer_type = verify.user.user_type;
+            let dealer_id = verify.user.id;
 
-        where = '';
-        if (verify.user.user_type !== ADMIN) {
-            apklist = await sql.query(`SELECT apk_details.*, dealer_permissions.permission_id, dealer_permissions.dealer_id, dealer_permissions.permission_type FROM apk_details JOIN dealer_permissions ON (apk_details.id = dealer_permissions.permission_id) WHERE (dealer_permissions.dealer_id='${dealer_id}' OR (dealer_permissions.dealer_id = 0 AND dealer_permissions.dealer_type='admin')) AND apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent' AND dealer_permissions.permission_type = 'apk';`)
-            where = `AND (secure_market_apps.dealer_type = 'admin' OR secure_market_apps.dealer_id = '${dealer_id}')`
+            if (dealer_type === ADMIN) {
+                let deleteNotIn = `DELETE FROM secure_market_apps WHERE apk_id NOT IN (${toDelete}) AND space_type= ? AND dealer_type = 'admin';`
+                // console.log(deleteNotIn);
+                await sql.query(deleteNotIn, [spaceType]);
+            } else {
+                let deleteNotIn = `DELETE FROM secure_market_apps WHERE apk_id NOT IN (${toDelete}) AND space_type= ? AND dealer_id = ?`
+                // console.log(deleteNotIn);
+                await sql.query(deleteNotIn, [spaceType, dealer_id]);
 
-        }
-        else {
-            apklist = await sql.query("select * from apk_details where delete_status=0 AND apk_type != 'permanent'")
-        }
-
-        sql.query("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'" + where + " ORDER BY created_at desc", async function (err, results) {
-            if (err) {
-                console.log(err);
-            }
-
-            if (results.length) {
-
-                let finalApps = results;
-                let adminApps = finalApps.filter((app) => app.dealer_type === ADMIN);
-                // console.log(adminApps.length, "adminApps ", adminApps)
-
-                let deleteIds = [];
-                finalApps.forEach((item, index) => {
-                    for (let i = 0; i < adminApps.length; i++) {
-                        // console.log("ids ",item.id , adminApps[i].id, item.id == adminApps[i].id, item.dealer_type !== ADMIN, adminApps[i].space_type === item.space_type)
-                        if (item.id == adminApps[i].id && item.dealer_type !== ADMIN && adminApps[i].space_type === item.space_type) {
-                            deleteIds.push(index);
-                        }
+                let adminAppKeys = await sql.query(`SELECT apk_id FROM secure_market_apps WHERE dealer_type = '${ADMIN}' AND space_type = '${spaceType}'`);
+                adminAppKeys.forEach((item) => {
+                    let index = appKeys.indexOf(item.apk_id)
+                    if (index !== -1) {
+                        appKeys.splice(index, 1)
                     }
                 })
-
-                results = finalApps.filter((app, index) => !deleteIds.includes(index))
-                // console.log(finalApps,'final result is: ', deleteIds);
-
-            } else {
-                results = [];
             }
 
-            data = {
-                status: true,
-                msg: await helpers.convertToLang(req.translation["MsgConstants.APPS_TRANSFERED_SUSSECFULLY"], `Apps Transfered into ${spaceType.charAt(0).toUpperCase() + spaceType.slice(1)} Space Sussecfully`), // 'Apps Transfered Sussecfully',
-                data: {
-                    marketApplist: results,
-                    availableApps: apklist
+            // get all secure market apps
+            let sm_apps = await sql.query(`SELECT * FROM secure_market_apps WHERE space_type = ?`, [spaceType]);
+            let sm_app_ids = []
+            if (sm_apps.length) {
+                sm_apps.map((item) => sm_app_ids.push(item.apk_id))
+            }
+            // console.log('check table sm ids:: ', sm_app_ids);
+            if (appKeys.length) {
+                let insertQuery = "INSERT INTO secure_market_apps (dealer_type,dealer_id, apk_id, space_type) VALUES ";
+                let insertValues = ' '
+
+                for (let i = 0; i < appKeys.length; i++) {
+                    if (sm_apps.length) {
+                        let check = sm_apps.filter((item) => item.apk_id == appKeys[i] && item.dealer_id === verify.user.dealer_id)
+                        if (check && check.length) {
+                            continue
+                        }
+                    }
+                    insertValues = insertValues + "('" + dealer_type + "' ," + dealer_id + " , " + appKeys[i] + " , '" + spaceType + "'),"
+                }
+
+                console.log(appKeys, "================> insertQuery + insertValues; ", insertQuery + insertValues)
+                if (insertValues.length > 1) {
+                    let query = insertQuery + insertValues;
+                    query = query.slice(0, query.length - 1)
+                    console.log(query);
+                    await sql.query(query);
                 }
             }
-            res.send(data);
-            return
-        })
-    }
-    else {
-        data = {
-            "status": false,
+
+            where = '';
+            if (verify.user.user_type !== ADMIN) {
+                apklist = await sql.query(`SELECT apk_details.*, dealer_permissions.permission_id, dealer_permissions.dealer_id, dealer_permissions.permission_type FROM apk_details JOIN dealer_permissions ON (apk_details.id = dealer_permissions.permission_id) WHERE (dealer_permissions.dealer_id='${dealer_id}' OR (dealer_permissions.dealer_id = 0 AND dealer_permissions.dealer_type='admin')) AND apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent' AND dealer_permissions.permission_type = 'apk';`)
+                where = `AND (secure_market_apps.dealer_type = 'admin' OR secure_market_apps.dealer_id = '${dealer_id}')`
+            } else {
+                apklist = await sql.query("select * from apk_details where delete_status=0 AND apk_type != 'permanent'")
+            }
+
+            sql.query("SELECT apk_details.* ,secure_market_apps.dealer_type , secure_market_apps.dealer_id, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type  from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id where apk_details.delete_status = 0 AND apk_details.apk_type != 'permanent'" + where + " ORDER BY created_at desc", async function (err, results) {
+                if (err) {
+                    console.log(err);
+                }
+
+                if (results && results.length) {
+
+                    let finalApps = results;
+                    let adminApps = finalApps.filter((app) => app.dealer_type === ADMIN);
+                    // console.log(adminApps.length, "adminApps ", adminApps)
+
+                    let deleteIds = [];
+                    finalApps.forEach((item, index) => {
+                        for (let i = 0; i < adminApps.length; i++) {
+                            // console.log("ids ",item.id , adminApps[i].id, item.id == adminApps[i].id, item.dealer_type !== ADMIN, adminApps[i].space_type === item.space_type)
+                            if (item.id == adminApps[i].id && item.dealer_type !== ADMIN && adminApps[i].space_type === item.space_type) {
+                                deleteIds.push(index);
+                            }
+                        }
+                    })
+
+                    results = finalApps.filter((app, index) => !deleteIds.includes(index))
+                    // console.log(finalApps,'final result is: ', deleteIds);
+
+                } else {
+                    results = [];
+                }
+
+                data = {
+                    status: true,
+                    msg: await helpers.convertToLang(req.translation[""], `Apps Transferred into ${spaceType.charAt(0).toUpperCase() + spaceType.slice(1)} Space Successfully`), // 'Apps Transfered Sussecfully',
+                    data: {
+                        marketApplist: results,
+                        availableApps: apklist
+                    }
+                }
+                return res.send(data);
+            })
+        } catch (error) {
+            console.log("Error:", error.message);
+            data = {
+                status: false,
+                msg: await helpers.convertToLang(req.translation[""], `Error: Invalid data provided`), // 'Apps Transfered Sussecfully',
+                data: null
+            }
+            return res.send(data);
         }
-        res.send(data)
-        return;
+
     }
 }
 

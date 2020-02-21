@@ -2,6 +2,10 @@ var express = require('express');
 var router = express.Router();
 var authController = require('../app/controllers/auth')
 
+// validations
+const commonValidators = require('../app/validators/commonValidators');
+const authValidators = require('../app/validators/auth');
+var errorMsgs = commonValidators.responsValidationResults;
 
 router.post('/super_admin_login', authController.superAdminLogin)
 
@@ -16,7 +20,7 @@ router.post('/super_admin_login', authController.superAdminLogin)
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
  */
-router.post('/login', authController.login);
+router.post('/login', [commonValidators.login, errorMsgs], authController.login);
 
 /**
  * @route POST /users/verify_code
@@ -25,6 +29,6 @@ router.post('/login', authController.login);
  * @returns {object} 200 - An array of user info
  * @returns {Error}  default - Unexpected error
  */
-router.post('/verify_code', authController.verifyCode);
+router.post('/verify_code', [authValidators.verifyCode, errorMsgs], authController.verifyCode);
 
 module.exports = router;

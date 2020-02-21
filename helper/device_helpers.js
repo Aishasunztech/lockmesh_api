@@ -3,7 +3,7 @@ const { sql } = require('../config/database');
 var moment = require("moment-strftime");
 var fs = require("fs");
 var path = require('path');
-var general_helpers = require('./general_helper')
+// var general_helpers = require('./general_helper')
 var socket_helpers = require('./socket_helper')
 var forge = require('node-forge');
 
@@ -443,7 +443,7 @@ module.exports = {
             // status = 'Expired';
             status = Constants.DEVICE_EXPIRED;
         }
-        else if ((device.device_status === '0' || device.device_status === 0) && (device.unlink_status === '0' || device.unlink_status === 0) && (device.activation_status === null || device.activation_status === '')) {
+        else if (((device.device_status === '0' || device.device_status === 0) && (device.unlink_status === '0' || device.unlink_status === 0) && (device.activation_status === null || device.activation_status === '')) || (device.relink_status === 1 || device.relink_status === '1')) {
             // status = 'Pending activation';
             status = Constants.DEVICE_PENDING_ACTIVATION;
         }
@@ -505,7 +505,7 @@ module.exports = {
      * String ids of usr_acc table
      */
     getServicesData: async (ids) => {
-        console.log(ids);
+        console.log('get device ids services: ',ids);
         let query = "SELECT * FROM services_data WHERE user_acc_id IN (" + ids + ") AND (end_date IS NULL OR end_date = '') AND (status = 'active' OR status = 'request_for_cancel' OR status = 'extended') "
         let results = await sql.query(query);
         if (results.length) {
@@ -618,18 +618,26 @@ module.exports = {
             return ''
         }
     },
-    saveActionHistory: async (device, action) => {
+    saveActionHistory: async (device, action, loggedInUser = '') => {
         // console.log('SAVE HISTORY', action, device);
-        let query = "INSERT INTO acc_action_history (action, device_id, device_name, session_id, model, ip_address, simno, imei, simno2, imei2, serial_number, mac_address, fcm_token, online, is_sync, flagged, screen_start_date, reject_status, account_email, dealer_id, prnt_dlr_id, link_code, client_id, start_date, expiry_months, expiry_date, activation_code, status, device_status, activation_status, wipe_status, account_status, unlink_status, transfer_status, transfer_user_status, transfered_from, transfered_to, user_transfered_from, user_transfered_to, dealer_name, prnt_dlr_name, user_acc_id, pgp_email, chat_id, sim_id, finalStatus) VALUES "
+        let loggedInDealerId = null;
+        let loggedInDealerType = '';
+        if (loggedInUser) {
+            loggedInDealerId = loggedInUser.id;
+            loggedInDealerType = loggedInUser.user_type;
+        }
+
+        let query = "INSERT INTO acc_action_history (action, device_id, device_name, session_id, model, ip_address, simno, imei, simno2, imei2, serial_number, mac_address, fcm_token, online, is_sync, flagged, screen_start_date, reject_status, account_email, dealer_id, prnt_dlr_id, link_code, client_id, start_date, expiry_months, expiry_date, activation_code, status, device_status, activation_status, wipe_status, account_status, unlink_status, transfer_status, transfer_user_status, transfered_from, transfered_to, user_transfered_from, user_transfered_to, dealer_name, prnt_dlr_name, user_acc_id, pgp_email, chat_id, sim_id, finalStatus, action_by, dealer_type) VALUES "
         let finalQuery = ''
         let accountStatus = '';
         if (device.account_status === 'suspended') {
             accountStatus = device.account_status;
         }
+        let parentDealerId = device.prnt_dlr_id ? device.prnt_dlr_id : '';
         if (action === Constants.DEVICE_UNLINKED || action === Constants.UNLINK_DEVICE_DELETE) {
-            finalQuery = query + "('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','offline','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + device.prnt_dlr_id + "','" + device.link_code + "','" + device.client_id + "','', '" + device.expiry_months + "','','" + device.activation_code + "','',0,null,'" + device.wipe_status + "','" + accountStatus + "',1,'" + device.transfer_status + "','" + device.transfer_user_status + "','" + device.transfered_from + "','" + device.transfered_to + "','" + device.user_transfered_from + "','" + device.user_transfered_to + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','Unlinked')"
+            finalQuery = query + "('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','offline','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + parentDealerId + "','" + device.link_code + "','" + device.client_id + "','', '" + device.expiry_months + "','','" + device.activation_code + "','',0,null,'" + device.wipe_status + "','" + accountStatus + "',1,'" + device.transfer_status + "','" + device.transfer_user_status + "','" + device.transfered_from + "','" + device.transfered_to + "','" + device.user_transfered_from + "','" + device.user_transfered_to + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','Unlinked'," + loggedInDealerId + ", '" + loggedInDealerType + "')"
         } else {
-            finalQuery = query + "('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','" + device.online + "','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + device.prnt_dlr_id + "','" + device.link_code + "', '" + device.client_id + "', '" + device.start_date + "', '" + device.expiry_months + "', '" + device.expiry_date + "','" + device.activation_code + "','" + device.status + "','" + device.device_status + "',0,'" + device.wipe_status + "','" + accountStatus + "','" + device.unlink_status + "','" + device.transfer_status + "','" + device.transfer_user_status + "','" + device.transfered_from + "','" + device.transfered_to + "','" + device.user_transfered_from + "','" + device.user_transfered_to + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','" + device.finalStatus + "')"
+            finalQuery = query + "('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','" + device.online + "','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + parentDealerId + "','" + device.link_code + "', '" + device.client_id + "', '" + device.start_date + "', '" + device.expiry_months + "', '" + device.expiry_date + "','" + device.activation_code + "','" + device.status + "','" + device.device_status + "',0,'" + device.wipe_status + "','" + accountStatus + "','" + device.unlink_status + "','" + device.transfer_status + "','" + device.transfer_user_status + "','" + device.transfered_from + "','" + device.transfered_to + "','" + device.user_transfered_from + "','" + device.user_transfered_to + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','" + device.finalStatus + "'," + loggedInDealerId + ", '" + loggedInDealerType + "')"
         }
         // console.log("saveActionHistory:: ", finalQuery);
         await sql.query(finalQuery)
@@ -872,7 +880,7 @@ module.exports = {
 
     // Bulk History
     saveBuklActionHistory: async (data, action) => {
-        console.log('saveBuklActionHistory ', action, data);
+        // console.log('saveBuklActionHistory ', action, data);
 
         let InsertQuery = `INSERT INTO bulk_device_history (action, dealer_ids, user_ids, device_ids, apps, policy, action_by) VALUES ('${action}', '${JSON.stringify(data.dealer_ids)}', '${JSON.stringify(data.user_ids)}', '${JSON.stringify(data.device_ids)}', '${data.apps ? JSON.stringify(data.apps) : "[]"}', '${data.policy ? JSON.stringify(data.policy) : null}', '${data.action_by}');`;
         console.log(InsertQuery);
@@ -1171,7 +1179,7 @@ module.exports = {
                     sql.query(insertSimIds, function (err, result) {
                         if (result && result.insertId) {
                             if (finalStatus != Constants.DEVICE_PRE_ACTIVATION) {
-                                general_helpers.updateSimStatus(sim_id, 'active')
+                                require('./general_helper').updateSimStatus(sim_id, 'active')
                             }
                         }
                     });
@@ -1220,7 +1228,7 @@ module.exports = {
                     sql.query(insertSimIds, function (err, result) {
                         if (result && result.insertId) {
                             if (finalStatus != constants.DEVICE_PRE_ACTIVATION) {
-                                general_helpers.updateSimStatus(sim_id2, 'active')
+                                require('./general_helper').updateSimStatus(sim_id2, 'active')
                             }
                         }
                     });
@@ -1265,6 +1273,22 @@ module.exports = {
                 let deviceData = await require('./general_helper').getAllRecordbyUserAccId(usr_acc_id)
                 // console.log(deviceData);
                 data.data = [deviceData]
+
+                var d = new Date(deviceData.expiry_date);
+                var n = d.valueOf();
+
+                socket_helpers.deviceInfoUpdated(require("../routes/sockets").baseIo,
+                    device_id,
+                    {
+                        device_id: deviceData.device_id,
+                        expiry_date: n,
+                        user_id: deviceData.user_id,
+                        sim_id: deviceData.sim_id,
+                        sim_id2: deviceData.sim_id2,
+                        pgp_email: deviceData.pgp_email,
+                        chat_id: deviceData.chat_id
+                    }
+                );
             }
         }
         // console.log(data)

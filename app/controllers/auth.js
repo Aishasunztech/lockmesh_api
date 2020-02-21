@@ -16,33 +16,48 @@ var MsgConstants = require('../../constants/MsgConstants');
 
 const constants = require('../../config/constants');
 const { sendEmail } = require('../../lib/email');
-
+// const { validationResult } = require('express-validator');
 
 var data;
+
+
+// exports.responsValidationResults = async function (req, res, next) {
+//     const errors = validationResult(req)
+//     if (!errors.isEmpty()) {
+//         return res.status(422).json({ status: false, errors: errors.array() })
+//     }
+//     next();
+// }
 
 /*****User Login*****/
 exports.login = async function (req, res) {
 	var email = req.body.demail;
 	var pwd = req.body.pwd;
+	if (!email || !pwd) {
+		data = {
+			status: false,
+			msg: 'Bad request',
+		}
+		return res.send(data);
+	}
 	var enc_pwd = md5(pwd);
 	var data = '';
 
 	//check for if email is already registered
-	var userQ = `SELECT * FROM dealers WHERE dealer_email = '${email}' limit 1`;
-	var users = await sql.query(userQ);
+	var userQ = `SELECT * FROM dealers WHERE dealer_email = ? limit 1`;
 
+	var users = await sql.query(userQ, [email]);
 	if (users.length == 0) {
 		data = {
 			status: false,
 			msg: 'User does not exist', // await helpers.convertToLang(req.translation[MsgConstants.USER_DOES_NOT_EXIST], MsgConstants.USER_DOES_NOT_EXIST),
 			data: null
 		}
-		res.send(data);
-		return;
+		return res.send(data);
 	} else {
 
-		var userTypeQuery = `SELECT * FROM user_roles WHERE id =${users[0].type} AND status=1`;
-		var userType = await sql.query(userTypeQuery);
+		var userTypeQuery = `SELECT * FROM user_roles WHERE id =? AND status=1`;
+		var userType = await sql.query(userTypeQuery, [users[0].type]);
 		if (userType.length == 0) {
 
 			data = {
@@ -50,8 +65,7 @@ exports.login = async function (req, res) {
 				msg: 'User does not exist', // await helpers.convertToLang(req.translation[MsgConstants.USER_DOES_NOT_EXIST], MsgConstants.USER_DOES_NOT_EXIST),
 				data: null
 			}
-			res.send(data);
-			return;
+			return res.send(data);
 		} else {
 
 			if (users[0].password === enc_pwd) {
@@ -106,9 +120,9 @@ exports.login = async function (req, res) {
 						helpers.updateDealerLastLogin(users[0].dealer_id);
 
 						var userType = await helpers.getUserType(users[0].dealer_id);
-						var get_connected_devices = await sql.query(`select count(*) AS total FROM usr_acc WHERE dealer_id='${users[0].dealer_id}'`);
-						var ip = req.header('x-real-ip') || req.connection.remoteAddress
-						console.log('object data is ', users[0]);
+						var get_connected_devices = await sql.query(`SELECT COUNT(*) AS total FROM usr_acc WHERE dealer_id='${users[0].dealer_id}'`);
+						var ip = req.header('CF-Connecting-IP')? req.header('CF-Connecting-IP') : req.header('x-real-ip') ? req.header('x-real-ip') : req.connection.remoteAddress
+						console.log('object data is:', users[0]);
 
 						const user = {
 							id: users[0].dealer_id,
@@ -166,7 +180,7 @@ exports.login = async function (req, res) {
 									data = {
 										token: token,
 										status: true,
-										msg: 'User loged in Successfully', // 								expiresIn: constants.EXPIRES_IN, // await helpers.convertToLang(req.translation[MsgConstants.USER_LOGED_IN_SUCCESSFULLY], MsgConstants.USER_LOGED_IN_SUCCESSFULLY),
+										msg: 'User logged in Successfully', // 								expiresIn: constants.EXPIRES_IN, // await helpers.convertToLang(req.translation[MsgConstants.USER_LOGED_IN_SUCCESSFULLY], MsgConstants.USER_LOGED_IN_SUCCESSFULLY),
 										user,
 										two_factor_auth: false,
 									}
@@ -198,9 +212,9 @@ exports.login = async function (req, res) {
 exports.verifyCode = async function (req, res) {
 	let verify_code = req.body.verify_code;
 
-	let checkVerificationQ = `SELECT * FROM dealers WHERE verification_code = '${md5(verify_code)}' LIMIT 1`;
-	let checkRes = await sql.query(checkVerificationQ);
-	if (checkRes.length) {
+	let checkVerificationQ = `SELECT * FROM dealers WHERE verification_code = ? LIMIT 1`;
+	let checkRes = await sql.query(checkVerificationQ, [md5(verify_code)]);
+	if (checkRes && checkRes.length) {
 		let updateVerificationQ = `UPDATE dealers SET verified = 1, verification_code=null WHERE dealer_id= ${checkRes[0].dealer_id}`;
 
 		sql.query(updateVerificationQ, async function (error, response) {
@@ -220,16 +234,14 @@ exports.verifyCode = async function (req, res) {
 						msg: 'Your account is suspended', // await helpers.convertToLang(req.translation[MsgConstants.YOUR_ACCOUNT_IS_SUSPENDED], MsgConstants.YOUR_ACCOUNT_IS_SUSPENDED),
 						data: null
 					}
-					res.send(data);
-					return;
+					return res.send(data);
 				} else if (dealerStatus === app_constants.DEALER_UNLINKED) {
 					data = {
 						status: false,
 						msg: 'Your account is deleted', // await helpers.convertToLang(req.translation[MsgConstants.YOUR_ACCOUNT_IS_DELETED], MsgConstants.YOUR_ACCOUNT_IS_DELETED),
 						data: null
 					}
-					res.status(200).send(data);
-					return;
+					return res.send(data);
 				} else {
 					var userType = await helpers.getUserType(checkRes[0].dealer_id);
 
@@ -282,19 +294,20 @@ exports.verifyCode = async function (req, res) {
 					}, async function (err, token) {
 						if (err) {
 							return res.send({
-								'err': err,
+								err: err,
 								status: false,
+								msg: 'Error: Internal server error'
 							});
 						} else {
 							user.expiresIn = constants.DASHBOARD_EXPIRES_IN;
 							user.verified = checkRes[0].verified;
 							user.token = token;
-							helpers.saveLogin(user, userType, app_constants.TOKEN, 1);
+							await helpers.saveLogin(user, userType, app_constants.TOKEN, 1);
 
 							return res.send({
 								token: token,
 								status: true,
-								msg: 'User loged in Successfully', //  expiresIn: constants.EXPIRES_IN, // await helpers.convertToLang(req.translation[MsgConstants.USER_LOGED_IN_SUCCESSFULLY], MsgConstants.USER_LOGED_IN_SUCCESSFULLY),
+								msg: 'User logged in Successfully', 
 								user
 							});
 						}
@@ -327,13 +340,19 @@ exports.superAdminLogin = async function (req, res) {
 	let password = req.body.password;
 	let email = req.body.email
 	var enc_pwd = md5(password);
-	if (name != undefined && password != undefined && email != undefined && name != null && password != null && email != null && name != '' && password != '' && email != '') {
-		let users = await sql.query(`SELECT * FROM dealers WHERE dealer_name = '${name}' AND dealer_email = '${email}' AND password = '${enc_pwd}' AND type = '5'`)
+
+	if (!name || !password || !email) {
+		return res.send({
+			status: false
+		})
+	} else {
+		let users = await sql.query(`SELECT * FROM dealers WHERE dealer_name = ? AND dealer_email = ? AND password = ? AND type = '5'`, [name, email, enc_pwd])
 		if (users.length) {
 
 			var userType = await helpers.getUserType(users[0].dealer_id);
 			// console.log(userType);
-			var ip = req.header('x-real-ip') || req.connection.remoteAddress
+			var ip = req.header('CF-Connecting-IP')? req.header('CF-Connecting-IP') : req.header('x-real-ip') ? req.header('x-real-ip') : req.connection.remoteAddress
+
 			// console.log('object data is ', users[0]);
 
 			const user = {
@@ -374,7 +393,7 @@ exports.superAdminLogin = async function (req, res) {
 				},
 				constants.SECRET,
 				{
-					expiresIn: constants.EXPIRES_IN
+					expiresIn: constants.DASHBOARD_EXPIRES_IN
 				}, async function (err, token) {
 					if (err) {
 						res.send({
@@ -382,13 +401,13 @@ exports.superAdminLogin = async function (req, res) {
 						});
 						return
 					} else {
-						user.expiresIn = constants.EXPIRES_IN;
+						user.expiresIn = constants.DASHBOARD_EXPIRES_IN;
 						user.token = token;
-						helpers.saveLogin(user, userType, app_constants.TOKEN, 1);
+						await helpers.saveLogin(user, userType, app_constants.TOKEN, 1);
 						data = {
 							status: true,
 							token: token,
-							msg: 'User logged in Successfully', // expiresIn: constants.EXPIRES_IN, // await helpers.convertToLang(req.translation[MsgConstants.USER_LOGED_IN_SUCCESSFULLY], MsgConstants.USER_LOGED_IN_SUCCESSFULLY),
+							msg: 'User logged in Successfully',
 							user,
 						}
 						res.send(data);
@@ -396,18 +415,11 @@ exports.superAdminLogin = async function (req, res) {
 					}
 				}
 			);
-		}
-		else {
+		} else {
 			res.send({
 				status: false,
 			});
 			return
 		}
-	}
-	else {
-		res.send({
-			status: false,
-		});
-		return
 	}
 }

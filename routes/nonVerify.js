@@ -4,6 +4,7 @@ var router = express.Router();
 var path = require('path');
 var fs = require("fs");
 var mime = require('mime');
+var pdf = require('html-pdf');
 var CryptoJS = require("crypto-js");
 var moment = require("moment")
 // const { check, validationResult } = require('express-validator');
@@ -14,14 +15,17 @@ const { sql } = require('../config/database');
 var backupController = require('../app/controllers/backup')
 var languageController = require('../app/controllers/language')
 const reportingController = require('../app/controllers/reports');
-// Model
-var Policy = require('../app/models/Policy');
+
+// Models
+// var Policy = require('../app/models/Policy');
 
 // Helpers and Constants
 const helpers = require('../helper/general_helper');
-const MsgConstants = require('../constants/MsgConstants');
+// const MsgConstants = require('../constants/MsgConstants');
 const constants = require('../constants/Application');
-const { sendEmail } = require("../lib/email");
+// const { sendEmail } = require("../lib/email");
+
+
 /**
  * This function comment is parsed by doctrine
  * @route GET /users/
@@ -33,25 +37,39 @@ const { sendEmail } = require("../lib/email");
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
 
-    
-    sql.getConnection((error, connection)=> {
-        if(error){
-            console.log(error)
-        }
-        connection.beginTransaction(async function(err) {
-            if (err) {
-                console.log(err)
-            };
-            let something = await connection.query("SELECT * FROM devicess");
-            console.log(something);
-            connection.commit(function(err){
-                if(err){
-                    console.log(err)
-                }
-                return res.send('test')
-            })
-        })
-    })
+    // let html = `<div class="ant-modal-content"><div class="ant-modal-body" style="overflow: overlay;"><div><h1 style="text-align: center;">MDM PANEL SERVICES</h1><h4 style="text-align: center;">FLAT/RM H 15/F  SIU KING BLDG 6 ON WAH ST <br> NGAU TAU KOK KLN, HONG KONG</h4><h2>INVOICE</h2><div style="border-top: 2px solid lightgray; border-bottom: 2px solid lightgray; padding-top: 10px; padding-bottom: 10px;"><div class="ant-row"><div class="ant-col-6">Invoice Number:</div><div class="ant-col-6">PI000334</div><div class="ant-col-6">Dealer Name:</div><div class="ant-col-6">HAMZA DAWOOD </div></div><div class="ant-row"><div class="ant-col-6">Invoice Date:</div><div class="ant-col-6">2020/02/19 </div><div class="ant-col-6">Dealer PIN:</div><div class="ant-col-6">541663</div></div><div class="ant-row"><div class="ant-col-6">Balance Due:</div><div class="ant-col-6">200 Credits</div><div class="ant-col-6">SIM ID:</div><div class="ant-col-6">8901260852296619158</div></div></div><div style="margin-top: 20px;"><h4>SIM SERVICES</h4><div class="ant-table-wrapper"><div class="ant-spin-nested-loading"><div class="ant-spin-container"><div class="ant-table ant-table-middle ant-table-scroll-position-left"><div class="ant-table-content"><div class="ant-table-body"><table class=""><colgroup><col><col><col><col><col><col><col></colgroup><thead class="ant-table-thead"><tr><th class="row ant-table-align-center" style="text-align: center;"><div>#</div></th><th class="ant-table-align-center" style="text-align: center;"><div>ITEM</div></th><th class="ant-table-align-center" style="text-align: center;"><div>DESCRPTION</div></th><th class="ant-table-align-center" style="text-align: center;"><div>SERVICE TERM</div></th><th class="ant-table-align-center" style="text-align: center;"><div>UNIT PRICE (CREDITS)</div></th><th class="ant-table-align-center" style="text-align: center;"><div>QUANTITY</div></th><th class="ant-table-align-center" style="text-align: center;"><div>TOTAL</div></th></tr></thead><tbody class="ant-table-tbody"><tr class="ant-table-row ant-table-row-level-0" data-row-key="0"><td class="row" style="text-align: center;"><span class="ant-table-row-indent indent-level-0" style="padding-left: 0px;"></span>1</td><td class="" style="text-align: center;">STAND ALONE SIM</td><td class="" style="text-align: center;">test</td><td class="" style="text-align: center;">1 month</td><td class="" style="text-align: center;">100</td><td class="" style="text-align: center;">1</td><td class="" style="text-align: center;">100</td></tr><tr class="ant-table-row ant-table-row-level-0" data-row-key="1"><td class="row" style="text-align: center;"><span class="ant-table-row-indent indent-level-0" style="padding-left: 0px;"></span>2</td><td class="" style="text-align: center;">Data plan</td><td class="" style="text-align: center;">3GB from LM</td><td class="" style="text-align: center;">1 month</td><td class="" style="text-align: center;">100</td><td class="" style="text-align: center;">1</td><td class="" style="text-align: center;">100</td></tr></tbody></table></div></div></div></div></div></div></div><div style="margin-top: 20px; text-align: right;"><div class="ant-row"><div class="ant-col-16"></div><div class="ant-col-4">Subtotal : </div><div class="ant-col-4">200 Credits</div></div><br><div class="ant-row" style="font-weight: bold;"><div class="ant-col-12"></div><div class="ant-col-8">Total : </div><div class="ant-col-4">200&nbsp;Credits</div></div><div class="ant-row" style="font-weight: bold;"><div class="ant-col-14"></div><div class="ant-col-6">Equivalent USD Price: </div><div class="ant-col-4">$200.00</div></div></div><p style="text-align: center; margin-top: 70px;">Thank you for your business.</p></div></div></div>`
+    // let fileName = "invoice-html-pdf.pdf"
+    // let filePath = path.join(__dirname, "../uploads/" + fileName)
+    // console.log(filePath);
+    // pdf.create(html).toStream(function (err, stream) {
+    //     stream.pipe(fs.createWriteStream(filePath));
+    // });
+
+
+
+    // console.log(req.app);
+
+
+    // transactions
+    // sql.getConnection((error, connection) => {
+    //     if (error) {
+    //         console.log(error)
+    //     }
+    //     connection.beginTransaction(async function (err) {
+    //         if (err) {
+    //             console.log(err)
+    //         };
+    //         let something = await connection.query("SELECT * FROM devices");
+    //         console.log(something);
+    //         connection.commit(function (err) {
+    //             if (err) {
+    //                 console.log(err)
+    //             }
+    //         })
+    //     })
+    // })
+    return res.send('test')
+
     // helpers.updateSimStatus('8901260852293382529', 'deactivated')
     // let attachment = {
     //     fileName: "invoice-PI000045.pdf",
@@ -210,6 +228,81 @@ router.get('/refactor_policy_apps', async function (req, res) {
 
     res.send('test');
 })
+
+router.get('/refactor_policy_apps_icon', async function (req, res) {
+    let policyDefaultAppsQ = '';
+});
+
+router.get('/update_parent_dealer_data_into_user_acc', async function (req, res) {
+    let data = {};
+
+    sql.query(`SELECT * FROM  dealers`, async function (error, result) {
+
+        if (error) {
+            data = {
+                status: false,
+                msg: "Query error"
+            }
+            res.send(data);
+            return;
+        }
+
+        if (result && result.length) {
+            for (let i = 0; i < result.length; i++) {
+
+                let parentDealerId = null;
+                let parentDealerName = '';
+
+                if (result[i].connected_dealer && result[i].type === 3) { // type 3 represent only to sdealer
+                    parentDealerId = result[i].connected_dealer;
+
+                    console.log("Sdealer found :: ===>  Dealer id: ", result[i].dealer_id, "  Parent dealer id: ", parentDealerId);
+
+                    // get parent dealer name
+                    let getParentDealerName = await sql.query(`SELECT dealer_name FROM dealers WHERE dealer_id = ${parentDealerId};`);
+                    if (getParentDealerName && getParentDealerName.length) {
+                        parentDealerName = getParentDealerName[0].dealer_name;
+                    }
+                }
+
+                // Update parent dealer data into usr_acc table
+                let updateUserAcc = `UPDATE usr_acc SET prnt_dlr_id = ${parentDealerId}, prnt_dlr_name = '${parentDealerName}' WHERE dealer_id = ${result[i].dealer_id};`;
+                let updateResults = await sql.query(updateUserAcc);
+
+                if (updateResults && updateResults.affectedRows) {
+                    console.log(` usr_acc table record Update successfully Dealer ID is: ${result[i].dealer_id}`);
+                }
+
+                // Update parent dealer data into acc_action_history table
+                let updateAccActionHistoy = `UPDATE acc_action_history SET prnt_dlr_id = ${parentDealerId}, prnt_dlr_name = '${parentDealerName}' WHERE dealer_id = ${result[i].dealer_id};`;
+                let accHistoryResults = await sql.query(updateAccActionHistoy);
+
+                if (accHistoryResults && accHistoryResults.affectedRows) {
+                    console.log(` acc_action_history table record Update successfully Dealer ID is: ${result[i].dealer_id}`);
+                }
+
+
+                // else {
+                //     console.log(`Not found Parent dealer into usr_acc table of Dealer ID is: ${result[i].dealer_id}`);
+                // }
+            }
+
+            data = {
+                status: true,
+                msg: `All parent dealer id and name Update successfully`
+            }
+            return res.send(data);
+        } else {
+            data = {
+                status: false,
+                msg: "Not found any dealer record"
+            }
+            res.send(data);
+            return;
+        }
+    });
+
+});
 
 router.get('/update_device_columns', async function (req, res) {
     let data = {};
@@ -737,6 +830,24 @@ router.get('/check_available_apps', async function (req, res) {
         }
     })
 })
+
+router.get('/check_apps_in_folder', async function (req, res) {
+    fs.readdir(path.join(__dirname, '../uploads/'), {}, async function (err, files) {
+        if (err) {
+            return res.status(403).send('no files available');
+        }
+        let apkFiles = [];
+        if (files && files.length) {
+            apks = files.filter(el => /\.apk$/.test(el))
+            for (let i = 0; i < apks.length; i++) {
+                let packageName = await helpers.getAPKPackageName(path.join(__dirname, '../uploads/' + apks[i]));
+                apkFiles.push({ file: apks[i], packageName });
+            }
+        }
+        return res.send(apkFiles);
+    });
+})
+
 router.get('/update_dealer_ids_product_tables', async function (req, res) {
     let current_date = moment().format("YYYY-MM-DD HH:mm:ss")
     let usedChatids = "SELECT * FROM chat_ids WHERE used = 1 AND user_acc_id IS NOT NULL"
@@ -773,7 +884,6 @@ router.get('/update_dealer_ids_product_tables', async function (req, res) {
     }
     res.send("UPDATED SUCCESSFULLY")
 })
-
 
 router.get('/add-existing-dealers-accounts', async function (req, res) {
     let query = "SELECT * FROM dealers"

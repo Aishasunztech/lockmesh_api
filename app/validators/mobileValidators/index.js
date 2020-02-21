@@ -2,9 +2,13 @@ const { check } = require('express-validator');
 var validator = require('validator');
 
 
-exports.login = [
+// exports.loginValidation = [
+    // check('demail').isEmail(),
+    // check('pwd').notEmpty()
+    // .withMessage('incorect password')
+    // .isLength({ min: 5 }).withMessage('must be at least 5 chars long')
     // check('mac_address').isMACAddress,
-];
+// ];
 
 exports.systemLogin = [
 

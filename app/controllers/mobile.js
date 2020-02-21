@@ -78,7 +78,7 @@ exports.login = async function (req, resp) {
                     jwt.sign({
                         device
                     }, app_constants.SECRET, {
-                        expiresIn: app_constants.EXPIRES_IN
+                        expiresIn: app_constants.MOBILE_EXPIRES_IN
                     }, (err, token) => {
                         if (err) {
                             data = {
@@ -219,7 +219,7 @@ exports.login = async function (req, resp) {
                                 jwt.sign({
                                     device
                                 }, app_constants.SECRET, {
-                                    expiresIn: app_constants.EXPIRES_IN
+                                    expiresIn: app_constants.MOBILE_EXPIRES_IN
                                 }, (err, token) => {
                                     if (err) {
                                         resp.json({
@@ -285,7 +285,7 @@ exports.systemLogin = async function (req, res) {
         },
         app_constants.SECRET,
         {
-            expiresIn: app_constants.EXPIRES_IN
+            expiresIn: app_constants.MOBILE_EXPIRES_IN
         },
         (err, token) => {
             if (err) {
@@ -336,7 +336,7 @@ exports.linkDevice = async function (req, resp) {
                             console.log('same dealer');
                             let currentDate = moment(new Date()).format("YYYY/MM/DD")
                             if (deviceCheckResponse[0].expiry_date > currentDate) {
-                                var sql1 = `UPDATE  usr_acc SET unlink_status = 0, device_status = 1 , del_status = 0 where device_id=${deviceCheckResponse[0].usr_device_id}`;
+                                var sql1 = `UPDATE  usr_acc SET relink_status = 1, device_status = 1 where device_id=${deviceCheckResponse[0].usr_device_id}`;
                                 await sql.query(sql1)
                                 resp.send({
                                     status: true,
@@ -387,7 +387,7 @@ exports.linkDevice = async function (req, resp) {
                     let one_hour = 1000 * 60 * 60;
                     let elapsed_hours = difference_ms / one_hour;
                     if (elapsed_hours >= 1) {
-                        sendEmail("New Device Request", "You have a new device request", dealer[0].dealer_email, function (error, response) {
+                        sendEmail("New Device Request", "You have a new device request.<br> Device ID : " + deviceId + " <br>", dealer[0].dealer_email, function (error, response) {
                             if (error) console.log(error);
                         });
                     }
@@ -713,11 +713,9 @@ exports.getStatus = async function (req, resp) {
 exports.deviceStatus = async function (req, res) {
     var serial_number = req.body.serial_no;
     var mac = req.body.mac_address;
-    var dealer_pin = req.body.dealer_pin
     var data;
     console.log('serial number: ', serial_number);
     console.log('mac address: ', mac);
-    console.log('dealer pin: ', dealer_pin);
 
     // mac and serial is not provided
     if (!serial_number && !mac) {
@@ -738,16 +736,16 @@ exports.deviceStatus = async function (req, res) {
     // mac address is Dummy and serial number is original
     else if (mac == Constants.PRE_DEFINED_MAC_ADDRESS) {
         console.log("predefined mac:")
-        var deviceQ = `SELECT * FROM devices WHERE  serial_number= '${serial_number}' `;
-        var device = await sql.query(deviceQ);
+        var deviceQ = `SELECT * FROM devices WHERE  serial_number= ? `;
+        var device = await sql.query(deviceQ, [serial_number]);
         if (device.length) {
-            var user_acc = await sql.query("SELECT * FROM usr_acc where device_id = " + device[0].id);
+            var user_acc = await sql.query("SELECT * FROM usr_acc WHERE device_id = ?", [device[0].id]);
             if (user_acc.length > 0) {
 
                 // get user account device status
                 user_acc[0]["flagged"] = device[0].flagged;
                 let deviceStatus = device_helpers.checkStatus(user_acc[0]);
-                console.log("device_status", deviceStatus);
+                console.log("device_status: ", deviceStatus);
 
                 if (user_acc[0].dealer_id !== 0 && user_acc[0].dealer_id !== null) {
 
@@ -767,7 +765,7 @@ exports.deviceStatus = async function (req, res) {
                         jwt.sign({
                             dvc
                         }, app_constants.SECRET, {
-                            expiresIn: app_constants.EXPIRES_IN
+                            expiresIn: app_constants.MOBILE_EXPIRES_IN
                         }, async (err, token) => {
 
                             if (err) {
@@ -850,7 +848,7 @@ exports.deviceStatus = async function (req, res) {
                     jwt.sign({
                         dvc
                     }, app_constants.SECRET, {
-                        expiresIn: app_constants.EXPIRES_IN
+                        expiresIn: app_constants.MOBILE_EXPIRES_IN
                     }, (err, token) => {
 
                         if (err) {
@@ -921,24 +919,23 @@ exports.deviceStatus = async function (req, res) {
     // serial number is Dummy and mac address is original
     else if (serial_number == Constants.PRE_DEFINED_SERIAL_NUMBER) {
         console.log("predefined serial:")
-        var deviceQ = "SELECT * FROM devices WHERE  mac_address= '" + mac + "' ";
-        var device = await sql.query(deviceQ);
+        var deviceQ = "SELECT * FROM devices WHERE  mac_address= ? ";
+        var device = await sql.query(deviceQ, [mac]);
         if (device.length) {
-            var user_acc = await sql.query("SELECT * FROM usr_acc where device_id = " + device[0].id);
+            var user_acc = await sql.query("SELECT * FROM usr_acc WHERE device_id = " + device[0].id);
             if (user_acc.length > 0) {
 
                 // console.log('user_acc[0] ', user_acc[0].transfer_status, user_acc[0].status)
                 // get user account device status
                 user_acc[0]["flagged"] = device[0].flagged;
                 let deviceStatus = device_helpers.checkStatus(user_acc[0]);
-                console.log("device_status", deviceStatus);
+                console.log("device_status: ", deviceStatus);
 
                 if (user_acc[0].dealer_id !== 0 && user_acc[0].dealer_id !== null) {
 
-                    var dealerQuery = "select * from dealers where dealer_id = '" + user_acc[0].dealer_id + "'";
-                    var dealer = await sql.query(dealerQuery);
-                    // reslts2 
-                    if (dealer.length > 0) {
+                    var dealerQuery = `select * from dealers where dealer_id = ?`;
+                    var dealer = await sql.query(dealerQuery, [user_acc[0].dealer_id]);
+                    if (dealer && dealer.length > 0) {
 
                         const dvc = {
                             dId: dealer[0].dealer_id,
@@ -953,7 +950,7 @@ exports.deviceStatus = async function (req, res) {
                         jwt.sign({
                             dvc
                         }, app_constants.SECRET, {
-                            expiresIn: app_constants.EXPIRES_IN
+                            expiresIn: app_constants.MOBILE_EXPIRES_IN
                         }, async (err, token) => {
 
                             if (err) {
@@ -1033,7 +1030,7 @@ exports.deviceStatus = async function (req, res) {
                     jwt.sign({
                         dvc
                     }, app_constants.SECRET, {
-                        expiresIn: app_constants.EXPIRES_IN
+                        expiresIn: app_constants.MOBILE_EXPIRES_IN
                     }, (err, token) => {
 
                         if (err) {
@@ -1042,7 +1039,7 @@ exports.deviceStatus = async function (req, res) {
                             });
                             return;
                         }
-                        //when devcie have no dealer id 
+                        //when device have no dealer id 
                         if (deviceStatus === Constants.DEVICE_ACTIVATED || deviceStatus === Constants.DEVICE_TRIAL || deviceStatus === Constants.DEVICE_SUSPENDED || deviceStatus === Constants.DEVICE_EXPIRED) {
                             var d = new Date(user_acc[0].expiry_date);
                             var n = d.valueOf()
@@ -1107,26 +1104,26 @@ exports.deviceStatus = async function (req, res) {
     // both are original
     else {
         console.log("serial and mac original");
-        var deviceQuery = "SELECT * FROM devices WHERE mac_address = '" + mac + "' AND serial_number = '" + serial_number + "'";
+        var deviceQuery = `SELECT * FROM devices WHERE mac_address = ? AND serial_number = ?`;
 
-        var device = await sql.query(deviceQuery);
+        var device = await sql.query(deviceQuery, [mac, serial_number]);
 
-        if (device.length > 0) {
+        if (device && device.length > 0) {
             var user_acc = await sql.query(`SELECT * FROM usr_acc WHERE device_id = ${device[0].id}`);
-            if (user_acc.length > 0) {
+            if (user_acc && user_acc.length > 0) {
                 // get user account device status
-                console.log('status is: ', device[0].device_id, user_acc[0])
+                // console.log('status is: ', device[0].device_id, user_acc[0])
 
                 user_acc[0]["flagged"] = device[0].flagged;
                 let deviceStatus = device_helpers.checkStatus(user_acc[0]);
-                console.log("device_status", deviceStatus);
+                console.log("device_status: ", deviceStatus);
 
                 if (user_acc[0].dealer_id !== 0 && user_acc[0].dealer_id !== null) {
 
-                    var dealerQuery = "select * from dealers where dealer_id = '" + user_acc[0].dealer_id + "'";
-                    var dealer = await sql.query(dealerQuery);
+                    var dealerQuery = "SELECT * FROM dealers WHERE dealer_id = ?";
+                    var dealer = await sql.query(dealerQuery, [user_acc[0].dealer_id]);
 
-                    if (dealer.length > 0) {
+                    if (dealer && dealer.length > 0) {
 
                         const dvc = {
                             dId: dealer[0].dealer_id,
@@ -1140,14 +1137,13 @@ exports.deviceStatus = async function (req, res) {
                         jwt.sign({
                             dvc
                         }, app_constants.SECRET, {
-                            expiresIn: app_constants.EXPIRES_IN
+                            expiresIn: app_constants.MOBILE_EXPIRES_IN
                         }, async (err, token) => {
 
                             if (err) {
-                                res.json({
-                                    'err': err
+                                return res.send({
+                                    err: err
                                 });
-                                return;
                             }
                             if (deviceStatus === Constants.DEVICE_ACTIVATED || deviceStatus === Constants.DEVICE_TRIAL || deviceStatus === Constants.DEVICE_SUSPENDED || deviceStatus === Constants.DEVICE_EXPIRED) {
                                 var d = new Date(user_acc[0].expiry_date);
@@ -1220,7 +1216,7 @@ exports.deviceStatus = async function (req, res) {
                     jwt.sign({
                         dvc
                     }, app_constants.SECRET, {
-                        expiresIn: app_constants.EXPIRES_IN
+                        expiresIn: app_constants.MOBILE_EXPIRES_IN
                     }, async (err, token) => {
 
                         if (err) {

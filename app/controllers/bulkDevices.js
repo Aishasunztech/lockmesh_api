@@ -43,28 +43,37 @@ exports.bulkDevicesHistory = async function (req, res) {
     var verify = req.decoded;
     let userId = verify.user.id;
 
-    console.log('at bulk history:')
-    // return;
-    if (verify) {
+    try {
 
         var selectQuery = `SELECT * FROM bulk_device_history WHERE action_by = '${userId}'`;
         var getHistory = await sql.query(selectQuery);
 
-        if (getHistory.length) {
+        if (getHistory && getHistory.length) {
             for (let index = 0; index < getHistory.length; index++) {
 
-                // get devices
-                console.log("getHistory[index].device_id ", getHistory[index].device_ids);
+                // get policy
+                let policyName = '';
+                if (getHistory[index].policy && !isNaN(getHistory[index].policy)) {
+                    // console.log('policy is: ', getHistory[index].policy);
+                    let getPolicyQ = `SELECT * FROM policy WHERE id=${getHistory[index].policy}`;
+                    let policy = await sql.query(getPolicyQ)
+                    // // getHistory[index].policy = await helpers.refactorPolicy(policy);
+                    policyName = policy[0].policy_name;
+                }
 
+                // get devices
+                // console.log("getHistory[index].device_id ", getHistory[index].device_ids);
+
+                getHistory[index]["devices"] = "[]";
                 if (JSON.parse(getHistory[index].device_ids).length) {
                     let query = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers ON (usr_acc.dealer_id = dealers.dealer_id) 
                 WHERE devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.device_id IN (${JSON.parse(getHistory[index].device_ids)}) ORDER BY devices.id DESC`;
-                    console.log('query is: ', query);
+                    // console.log('query is: ', query);
 
                     let results = await sql.query(query);
                     // console.log('result is: ', results)
 
-                    if (results.length) {
+                    if (results && results.length) {
                         let devices_acc_array = [];
                         let usr_device_ids_array = []
                         for (let i = 0; i < results.length; i++) {
@@ -226,23 +235,28 @@ exports.bulkDevicesHistory = async function (req, res) {
                             device.validity = checkValue(device.validity);
                         }
 
-                        getHistory[index]["data"] = JSON.stringify(finalResult);
-                    } else {
-                        getHistory[index]["data"] = "[]";
+                        getHistory[index]["devices"] = JSON.stringify(finalResult);
                     }
-                } else {
-                    getHistory[index]["data"] = "[]";
                 }
+                getHistory[index].policy = policyName;
             }
-        }
-        res.send(getHistory);
 
+            res.send({ status: true, history: getHistory });
+        } else {
+            res.send({ status: false });
+        }
+
+    } catch (err) {
+        res.send({ status: false });
     }
 }
 
 // Bulk Devices list
 exports.getFilteredBulkDevices = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
+    let dealer_ids = req.body.dealers;
+    let users = req.body.users;
+
     var where_con = "";
     var where_in_dealer = "";
     var where_in_user = "";
@@ -252,17 +266,16 @@ exports.getFilteredBulkDevices = async function (req, res) {
     let IN_DEALER_ARRAY = [];
     let IN_USER_ARRAY = [];
     let users_list = [];
-
-    if (verify) {
-        if (Object.keys(req.body).length) {
-
+    // console.log(req.body);
+    try {
+        if (dealer_ids || users) {
             // get dealer ids
-            req.body.dealers.forEach((item) => {
+            dealer_ids.forEach((item) => {
                 IN_DEALER_ARRAY.push(item.key);
             })
 
             // get user ids
-            req.body.users.forEach((item) => {
+            users.forEach((item) => {
                 IN_USER_ARRAY.push(`"${item.key}"`);
             })
 
@@ -292,14 +305,16 @@ exports.getFilteredBulkDevices = async function (req, res) {
 
                 // console.log('query is selectUserQuery: ', selectUserQuery)
 
-                let results = await sql.query(selectUserQuery);
-                // console.log('and result is: ', results);
-                if (results.length) {
-                    for (let i = 0; i < results.length; i++) {
-                        let data = await helpers.getAllRecordbyUserID(results[i].user_id)
-                        results[i].devicesList = data
+                let userResults = await sql.query(selectUserQuery);
+                // console.log('and result is: ', userResults);
+                if (userResults && userResults.length) {
+                    for (let i = 0; i < userResults.length; i++) {
+                        if (userResults[i].user_id) {
+                            let data = await helpers.getAllRecordbyUserID(userResults[i].user_id)
+                            userResults[i].devicesList = data
+                        }
                     }
-                    users_list = results;
+                    users_list = userResults;
                 }
             }
 
@@ -329,7 +344,7 @@ exports.getFilteredBulkDevices = async function (req, res) {
 
                 let query = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) 
             WHERE devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 AND usr_acc.device_status != 0 ${where_in_dealer} ${where_in_user} ${where_con} ORDER BY devices.id DESC`;
-                console.log('query is: ', query);
+                // console.log('query is: ', query);
 
                 sql.query(query, async function (error, results, fields) {
                     if (error) throw error;
@@ -493,6 +508,9 @@ exports.getFilteredBulkDevices = async function (req, res) {
             res.send(data);
             return;
         }
+    } catch (error) {
+        console.log("Query Error: ", error);
+        return res.send({ status: false, msg: 'Error while processing!', data: [], users_list });
     }
 };
 
@@ -503,7 +521,8 @@ exports.suspendBulkAccountDevices = async function (req, res) {
     var tod_dat = datetime.create();
     var formatted_dt = tod_dat.format("Y-m-d H:M:S");
     let device_ids = req.body.device_ids;
-
+    console.log(req.body)
+    return
     if (verify && device_ids.length) {
         let userId = verify.user.id;
         console.log("userId ", userId);
@@ -981,7 +1000,7 @@ exports.applyBulkPushApps = async function (req, res) {
             let push_apps = req.body.apps;
             let noOfApps = push_apps.length;
 
-            let apps = push_apps === undefined ? "[]" : JSON.stringify(push_apps);
+            let apps = push_apps ? JSON.stringify(push_apps) : "[]";
 
             let failedToPush = [];
             let queueAppsList = [];
@@ -989,8 +1008,8 @@ exports.applyBulkPushApps = async function (req, res) {
 
             for (let index = 0; index < selectedDevices.length; index++) {
 
-                var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, push_apps, type) VALUES ('${selectedDevices[index].device_id}', ${dealer_id}, ${selectedDevices[index].usrAccId}, '${apps}', 'push_apps');`;
-                console.log("applyQuery for bulk push apps ", applyQuery)
+                var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, push_apps, type, action_by, dealer_type) VALUES ('${selectedDevices[index].device_id}', ${dealer_id}, ${selectedDevices[index].usrAccId}, '${apps}', 'push_apps', ${verify.user.id}, '${verify.user.user_type}');`;
+                // console.log("applyQuery for bulk push apps ", applyQuery)
                 let rslts = await sql.query(applyQuery);
 
                 if (rslts && rslts.affectedRows) {
@@ -999,11 +1018,11 @@ exports.applyBulkPushApps = async function (req, res) {
                     var loadDeviceQ = `INSERT INTO apps_queue_jobs (device_id,action,type,total_apps,is_in_process) VALUES ('${selectedDevices[index].device_id}', 'push', 'push', ${noOfApps}, 1);`;
                     sql.query(loadDeviceQ);
                     if (isOnline) {
-                        console.log("device is online")
+                        // console.log("device is online")
                         socket_helpers.applyPushApps(sockets.baseIo, rslts.insertId, apps, selectedDevices[index].device_id);
                         pushedAppsList.push({ device_id: selectedDevices[index].device_id, usr_device_id: selectedDevices[index].usr_device_id });
                     } else {
-                        console.log("device is offline")
+                        // console.log("device is offline")
                         // socket_helpers.applyPushApps(sockets.baseIo, apps, selectedDevices[index].device_id);
                         queueAppsList.push({ device_id: selectedDevices[index].device_id, usr_device_id: selectedDevices[index].usr_device_id });
                     }
@@ -1109,7 +1128,7 @@ exports.applyBulkPullApps = async function (req, res) {
 
             for (let index = 0; index < selectedDevices.length; index++) {
 
-                var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, pull_apps, type) VALUES ('${selectedDevices[index].device_id}', ${dealer_id}, ${selectedDevices[index].usrAccId}, '${apps}', 'pull_apps');`;
+                var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, pull_apps, type, action_by, dealer_type) VALUES ('${selectedDevices[index].device_id}', ${dealer_id}, ${selectedDevices[index].usrAccId}, '${apps}', 'pull_apps', ${verify.user.id}, '${verify.user.user_type}');`;
                 // console.log("applyQuery for bulk pull apps ", applyQuery)
                 let rslts = await sql.query(applyQuery);
 
@@ -1249,7 +1268,7 @@ exports.unlinkBulkDevices = async function (req, res) {
                         // console.log("device is offline")
                         offlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
                     }
-                    console.log("bulk unlink device databulk: ", device);
+                    // console.log("bulk unlink device databulk: ", device);
                     device_helpers.saveActionHistory(device, constants.DEVICE_UNLINKED);
 
                     try {
@@ -1423,13 +1442,13 @@ exports.wipeBulkDevices = async function (req, res) {
                     var deviceQuery = "select devices.*  ," + usr_acc_query_text + ', dealers.dealer_name,dealers.connected_dealer from devices left join usr_acc on  devices.id = usr_acc.device_id LEFT JOIN dealers on usr_acc.dealer_id = dealers.dealer_id WHERE devices.reject_status = 0 AND devices.id= "' + device_id + '"';
                     var resquery = await sql.query(deviceQuery);
                     if (device_id && resquery && resquery.length) {
-                        var sql1 = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, type) VALUES ('" +
+                        var sql1 = "INSERT INTO device_history (device_id,dealer_id,user_acc_id, type, action_by, dealer_type) VALUES ('" +
                             resquery[0].device_id +
                             "'," +
                             resquery[0].dealer_id +
                             "," +
                             resquery[0].id +
-                            ", 'wipe')";
+                            ", 'wipe', " + verify.user.id + ", '" + verify.user.user_type + "')";
 
                         let results = await sql.query(sql1);
 
@@ -1634,7 +1653,7 @@ exports.applyBulkPolicy = async function (req, res) {
             for (let device of allDevices) {
                 let userAccId = device.usrAccId; // await device_helpers.getUsrAccIDbyDvcId(device.usr_device_id);
 
-                var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type) VALUES ('" + device.device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy')";
+                var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type, action_by, dealer_type) VALUES ('" + device.device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy', " + verify.user.id + ", '" + verify.user.user_type + "')";
                 let policyApplied = await sql.query(applyQuery);
 
                 if (policyApplied && policyApplied.insertId) {
@@ -1692,7 +1711,7 @@ exports.applyBulkPolicy = async function (req, res) {
 
                 req.body["device_ids"] = all_usr_dvc_ids;
                 req.body["action_by"] = dealer_id;
-                req.body["policy"] = policy;
+                req.body["policy"] = policy_id;
                 // console.log('save bulk history')
                 device_helpers.saveBuklActionHistory(req.body, constants.BULK_PUSHED_POLICY);
 
@@ -1971,32 +1990,77 @@ exports.updateBulkMsg = async function (req, res) {
         }
         // end validation process
 
-        if (verify && txtMsg && valid_conditions) {
+        if (req.body.data && txtMsg && valid_conditions) {
             let loggedUserId = verify.user.id
+            // let addNewTask = true;
 
-            let updateMsgQuery = `UPDATE bulk_messages SET msg='${txtMsg}', timer_status = '${timer}', repeat_duration='${repeat}',  date_time='${dateTime}', week_day=${weekDay}, month_date=${monthDate}, month_name= ${monthName} WHERE id = ${updateId}`
-            console.log("updateMsgQuery ", updateMsgQuery);
-            let result = await sql.query(updateMsgQuery);
+            let validToUpdate = await sql.query(`SELECT * FROM bulk_messages WHERE id = ${updateId};`);
 
-            if (result && result.affectedRows) {
+            if (validToUpdate && validToUpdate.length) {
+                // console.log("validToUpdate ", validToUpdate);
+                let editDateTime = validToUpdate[0].date_time;
+                let currentDateTime = moment().tz(app_constants.TIME_ZONE).format(constants.TIMESTAMP_FORMAT);
 
-                // Update task Scheduling data
-                var updateJobQueue = `UPDATE task_schedules SET title = '${txtMsg}', interval_status = '${timer}', interval_time = ${intervalTime}, interval_description = '${repeat}', next_schedule = '${dateTime}', week_day = ${weekDay}, month_day = ${monthDate}, month_name = ${monthName} WHERE task_id = ${updateId} AND action_by = ${loggedUserId} AND status = 'NEW';`;
-                console.log("updateJobQueue ", updateJobQueue);
-                let response_data = await sql.query(updateJobQueue);
+                if (validToUpdate[0].timer_status === "DATE/TIME" && currentDateTime > editDateTime) {
+                    // if (currentDateTime > editDateTime) {
+                    data = {
+                        status: false,
+                        msg: "This message time is passed. You are not allowed to change this message settings."
+                    }
+                    res.send(data);
+                    return
+                    // }
+                } else {
+                    let updateMsgQuery = `UPDATE bulk_messages SET msg='${txtMsg}', timer_status = '${timer}', repeat_duration='${repeat}',  date_time='${dateTime}', week_day=${weekDay}, month_date=${monthDate}, month_name= ${monthName} WHERE id = ${updateId}`
+                    console.log("updateMsgQuery ", updateMsgQuery);
+                    let result = await sql.query(updateMsgQuery);
 
-                data = {
-                    status: true,
-                    msg: "Message Setting update Successfully."
+                    if (result && result.affectedRows) {
+
+
+                        // Update task Scheduling data
+                        // if (addNewTask) {
+                        //     let device_ids = JSON.parse(validToUpdate[0].device_ids);
+                        //     console.log("check device ids: ", device_ids);
+                        //     for (let i = 0; i < device_ids.length; i++) {
+                        //         let getDeviceId = await sql.query(`SELECT device_id FROM devices WHERE id =  ${device_ids[i].device_id}`)
+
+                        //         var insertJobQueue = `INSERT INTO task_schedules (task_id, device_id, title, interval_status, interval_time, interval_description, next_schedule, last_execution_time, week_day, month_day, month_name, status, action_by) 
+                        // VALUES (${updateId}, '${getDeviceId[0].device_id}','${txtMsg}','${timer}', ${intervalTime}, '${repeat}', '${dateTime}', '${dateTime}', ${weekDay}, ${monthDate}, ${monthName}, 'NEW', ${loggedUserId});`;
+                        //         // console.log("insertJobQueue ", insertJobQueue);
+                        //         let response_data = await sql.query(insertJobQueue);
+                        //     }
+
+                        // } else {
+                        var updateJobQueue = `UPDATE task_schedules SET title = '${txtMsg}', interval_status = '${timer}', interval_time = ${intervalTime}, interval_description = '${repeat}', next_schedule = '${dateTime}', week_day = ${weekDay}, month_day = ${monthDate}, month_name = ${monthName} WHERE task_id = ${updateId} AND action_by = ${loggedUserId} AND status = 'NEW';`;
+                        console.log("updateJobQueue ", updateJobQueue);
+                        let response_data = await sql.query(updateJobQueue);
+
+                        // }
+
+                        data = {
+                            status: true,
+                            msg: "Message Setting update Successfully."
+                        }
+                    } else {
+                        data = {
+                            status: false,
+                            msg: "Failed to update message setting."
+                        }
+                    }
+                    res.send(data);
+
+
                 }
+
             } else {
                 data = {
                     status: false,
-                    msg: "Failed to update message setting."
-                }
+                    msg: "record not found to update"
+                };
+                res.send(data);
+                return;
             }
-            res.send(data);
-
         } else {
             data = {
                 status: false,
@@ -2019,78 +2083,72 @@ exports.updateBulkMsg = async function (req, res) {
 // get Bulk messages
 exports.getBulkMsgsList = async function (req, res) {
     try {
-        console.log("req.body =======> ", req.body);
+        // console.log("req.body =======> ", req.body);
         var verify = req.decoded;
         let loggedUserId = verify.user.id;
         let dealerTZ = req.body.timezone;
-      
-        if (verify) {
 
-            var selectQuery = `SELECT id, device_ids, repeat_duration, timer_status, msg, date_time, week_day, month_date, month_name, time, created_at FROM bulk_messages WHERE action_by = '${loggedUserId}' AND delete_status = 0 ORDER BY id DESC;`;
-            var result = await sql.query(selectQuery);
-            // console.log("result ", result)
+        var selectQuery = `SELECT id, device_ids, repeat_duration, timer_status, msg, date_time, week_day, month_date, month_name, time, created_at FROM bulk_messages WHERE action_by = '${loggedUserId}' AND delete_status = 0 ORDER BY id DESC;`;
+        var result = await sql.query(selectQuery);
+        // console.log("result ", result)
 
-            if (result && result.length) {
+        if (result && result.length) {
 
-                for (let msgData of result) {
+            for (let msgData of result) {
 
-                    // get devices list of bulk msgs
-                    let devicesList = "[]";
-                    let deviceIds = msgData.device_ids ? JSON.parse(msgData.device_ids) : [];
-                    // console.log("deviceIds before get detail: ", deviceIds);
-                    if (deviceIds && deviceIds.length) {
-                        let device_detail = await device_helpers.getCompleteDetailOfDevice(deviceIds);
-                        devicesList = JSON.stringify(device_detail);
+                // get devices list of bulk msgs
+                let devicesList = "[]";
+                let deviceIds = msgData.device_ids ? JSON.parse(msgData.device_ids) : [];
+                // console.log("deviceIds before get detail: ", deviceIds);
+                if (deviceIds && deviceIds.length) {
+                    let device_detail = await device_helpers.getCompleteDetailOfDevice(deviceIds);
+                    devicesList = JSON.stringify(device_detail);
+                }
+
+                let duration = msgData.repeat_duration ? msgData.repeat_duration : "NONE";
+
+                // start set interval description w.r.t timer status
+                if (msgData.timer_status === "NOW" || msgData.timer_status === "DATE/TIME") {
+                    duration = `One Time`
+                }
+                else if (msgData.timer_status === "REPEAT") {
+                    if (duration === "DAILY") {
+                        duration = `Everyday`
                     }
-
-                    let duration = msgData.repeat_duration ? msgData.repeat_duration : "NONE";
-
-                    // start set interval description w.r.t timer status
-                    if (msgData.timer_status === "NOW" || msgData.timer_status === "DATE/TIME") {
-                        duration = `One Time`
+                    else if (duration === "WEEKLY") {
+                        duration = await helpers.getWeekDay(msgData.week_day)
                     }
-                    else if (msgData.timer_status === "REPEAT") {
-                        if (duration === "DAILY") {
-                            duration = `Everyday`
-                        }
-                        else if (duration === "WEEKLY") {
-                            duration = await helpers.getWeekDay(msgData.week_day)
-                        }
-                        else if (duration === "MONTHLY") {
-                            duration = `Every month on ${await helpers.checkValue(msgData.month_date)} date`
-                        }
-                        else if (duration === "3 MONTHS") {
-                            duration = `Every 3 months later on ${await helpers.checkValue(msgData.month_date)} date`
-                        }
-                        else if (duration === "6 MONTHS") {
-                            duration = `Every 6 months later on ${await helpers.checkValue(msgData.month_date)} date`
-                        }
-                        else if (duration === "12 MONTHS") {
-                            duration = `Every ${await helpers.getMonthName(msgData.month_name)} on ${await helpers.checkValue(msgData.month_date)} date`
-                        } else {
-                            duration = "N/A"
-                        }
+                    else if (duration === "MONTHLY") {
+                        duration = `Every month on ${await helpers.checkValue(msgData.month_date)} date`
+                    }
+                    else if (duration === "3 MONTHS") {
+                        duration = `Every 3 months later on ${await helpers.checkValue(msgData.month_date)} date`
+                    }
+                    else if (duration === "6 MONTHS") {
+                        duration = `Every 6 months later on ${await helpers.checkValue(msgData.month_date)} date`
+                    }
+                    else if (duration === "12 MONTHS") {
+                        duration = `Every ${await helpers.getMonthName(msgData.month_name)} on ${await helpers.checkValue(msgData.month_date)} date`
                     } else {
                         duration = "N/A"
                     }
-                    // end set interval description w.r.t timer status
-
-                    let convertDateTime = msgData.date_time && msgData.date_time !== "N/A" && msgData.date_time !== "n/a" && msgData.date_time !== "0000-00-00 00:00:00" && dealerTZ ? moment.tz(msgData.date_time, app_constants.TIME_ZONE).tz(dealerTZ).format(constants.TIMESTAMP_FORMAT) : "N/A";
-                    msgData["msg"] = html.unescape(msgData.msg);
-                    msgData["date_time"] = convertDateTime;
-                    msgData["interval_description"] = duration;
-                    msgData["devices"] = devicesList;
+                } else {
+                    duration = "N/A"
                 }
+                // end set interval description w.r.t timer status
 
-                // console.log("final data: ", result);
-                res.send({
-                    status: true,
-                    data: result
-                });
-            } else {
-                res.send({ status: false });
+                let convertDateTime = msgData.date_time && msgData.date_time !== "N/A" && msgData.date_time !== "n/a" && msgData.date_time !== "0000-00-00 00:00:00" && dealerTZ ? moment.tz(msgData.date_time, app_constants.TIME_ZONE).tz(dealerTZ).format(constants.TIMESTAMP_FORMAT) : "N/A";
+                msgData["msg"] = html.unescape(msgData.msg);
+                msgData["date_time"] = convertDateTime;
+                msgData["interval_description"] = duration;
+                msgData["devices"] = devicesList;
             }
-
+            res.send({
+                status: true,
+                data: result
+            });
+        } else {
+            res.send({ status: false });
         }
     } catch (err) {
         console.log(err);
@@ -2101,33 +2159,26 @@ exports.getBulkMsgsList = async function (req, res) {
 
 // delete Bulk message
 exports.deleteBulkMsg = async function (req, res) {
-    console.log("Api called: deleteBulkMsg");
     try {
-
-        var verify = req.decoded;
-        let loggedUserId = verify.user.id;
         let msgId = req.params.id;
-        console.log('at deleteBulkMsg: msgId', msgId)
-        if (verify && msgId) {
+        if (msgId) {
 
             var selectQuery = `UPDATE bulk_messages SET delete_status = 1 WHERE id=${msgId};`;
             var result = await sql.query(selectQuery);
-            // console.log("result ", result)
 
             if (result && result.affectedRows) {
 
+                // delete all queue tasks
                 let deleteJobQueue = `DELETE FROM task_schedules WHERE task_id = ${msgId};`;
-                // console.log("delete api deleteJobQueue ", deleteJobQueue);
                 sql.query(deleteJobQueue);
-                res.send({
+                return res.send({
                     status: true,
                     msg: "Message Delete Successfully"
                 });
-            } else {
-                res.send({ status: false, msg: 'Failded to delete message' });
             }
-
         }
+        return res.send({ status: false, msg: 'Failded to delete message' })
+
     } catch (err) {
         console.log(err);
         res.send({ status: false, msg: 'Failded to delete message' })

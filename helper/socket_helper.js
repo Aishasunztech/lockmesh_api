@@ -2,6 +2,8 @@
 
 // Helpers
 const { sql } = require('../config/database');
+
+// console.log(webIo, deviceIo, baseIo)
 // const device_helpers = require('../helper/device_helpers.js');
 // const general_helpers = require('../helper/general_helper.js');
 
@@ -12,20 +14,37 @@ const Constants = require('../constants/Application');
 
 
 module.exports = {
-    sendRegSim: async (io, device_id, action, data) => {
-        console.log(Constants.SEND_SIM + device_id, 'sendRegSim data is=> ', {
-            action,
-            device_id,
-            entries: (data === undefined || data === null) ? '[]' : JSON.stringify(data),
+    checkSocketVars: () => {
+        const socket_helper = require('../routes/sockets');
+        console.log(socket_helper.deviceIo)
+    },
+
+    // send to device/panel
+    writeImei: (io, setting_id, imei, device_id) => {
+        console.log("write_imei_" + device_id);
+
+        // yeh loading k liye tha
+        // io.emit(Constants.ACTION_IN_PROCESS + device_id, {
+        //     status: true,
+        //     type: 'imei'
+        // })
+
+        io.emit(Constants.WRITE_IMEI + device_id, {
+            setting_id: setting_id,
+            status: true,
+            device_id: device_id,
+            imei: imei
         });
 
-        io.emit(Constants.SEND_SIM + device_id, {
-            action,
-            device_id,
-            entries: (data === undefined || data === null) ? '[]' : JSON.stringify(data),
+        sendSocketDataToDevice(Constants.WRITE_IMEI + device_id, {
+            setting_id: setting_id,
+            status: true,
+            device_id: device_id,
+            imei: imei
         });
     },
 
+    // send to panel 
     updateSimRecord: async function (io, device_id, response, socket = null) {
         // console.log('action is: ', response.action)
         console.log('updateSimRecord response is:: ', response)
@@ -167,113 +186,46 @@ module.exports = {
 
             }
 
-
+            // Backward Compatibility
             io.emit(Constants.RECV_SIM_DATA + device_id, {
                 status: true,
                 unRegSims: dataIs
             });
+
+            // new code
+            sendSocketDataToPanel(Constants.RECV_SIM_DATA + device_id, {
+                status: true,
+                unRegSims: dataIs
+            })
         }
 
     },
 
+    // send to panel
     sendOnlineOfflineStatus: async (io, status, deviceId) => {
         console.log(status, ":", deviceId);
         io.emit(Constants.SEND_ONLINE_OFFLINE_STATUS + deviceId, {
             status: status
         })
+
+        // new code
+        sendSocketDataToPanel(Constants.SEND_ONLINE_OFFLINE_STATUS + deviceId, {
+            status: status
+        })
     },
 
+    // send to panel
     deviceSynced: (io, deviceId, status) => {
         io.emit('device_synced_' + deviceId, status);
+
+        // new code
+        sendSocketDataToPanel('device_synced_' + deviceId, { status: status })
     },
 
-    sendEmit: async (io, setting_id, app_list, passwords, controls, permissions, device_id) => {
-        console.log("applied history ID:", setting_id);
 
-        io.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
-            setting_id: setting_id,
-            device_id: device_id,
-            app_list: (app_list === undefined || app_list === null || app_list === '') ? '[]' : app_list,
-            passwords: (passwords === undefined || passwords === null || passwords === '') ? '{}' : passwords,
-            settings: (controls === undefined || controls === null || controls === '') ? '[]' : controls,
-            extension_list: (permissions == undefined || permissions == null || permissions == '') ? '{}' : permissions,
-            status: true
-        });
-    },
 
-    applyPushApps: (io, setting_id, push_apps, device_id) => {
-        console.log("applied pushApps ID:", setting_id);
 
-        // console.log(Constants.GET_PUSHED_APPS + device_id);
-
-        // yeh loading k liye tha
-        // io.emit(Constants.ACTION_IN_PROCESS + device_id, {
-        //     status: true,
-        //     type: 'push'
-        // })
-
-        io.emit(Constants.GET_PUSHED_APPS + device_id, {
-            setting_id: setting_id,
-            status: true,
-            device_id: device_id,
-            push_apps: push_apps
-        });
-    },
-
-    getPullApps: (io, setting_id, pull_apps, device_id) => {
-        console.log("applied pullApps ID:", setting_id);
-
-        // yeh loading k liye tha
-        // io.emit(Constants.ACTION_IN_PROCESS + device_id, {
-        //     status: true,
-        //     type: 'pull'
-        // })
-
-        io.emit(Constants.GET_PULLED_APPS + device_id, {
-            setting_id: setting_id,
-            status: true,
-            device_id: device_id,
-            pull_apps: pull_apps
-        });
-    },
-
-    writeImei: (io, setting_id, imei, device_id) => {
-        console.log("write_imei_" + device_id);
-
-        // yeh loading k liye tha
-        // io.emit(Constants.ACTION_IN_PROCESS + device_id, {
-        //     status: true,
-        //     type: 'imei'
-        // })
-
-        io.emit(Constants.WRITE_IMEI + device_id, {
-            setting_id: setting_id,
-            status: true,
-            device_id: device_id,
-            imei: imei
-        });
-    },
-
-    syncDevice: async (io, device_id) => {
-        io.emit(Constants.GET_SYNC_STATUS + device_id, {
-            device_id: device_id,
-            apps_status: false,
-            extensions_status: false,
-            settings_status: false,
-            is_sync: false,
-        });
-    },
-
-    // live device status activity
-    sendDeviceStatus: async function (io, device_id, device_status, status = false) {
-        console.log("send device status", device_id, device_status);
-        io.emit(Constants.DEVICE_STATUS + device_id, {
-            device_id: device_id,
-            status: status,
-            msg: device_status
-        });
-    },
-
+    // send to panel
     ackSettingApplied: async function (io, device_id, app_list, extensions, controls) {
         let setting = {};
         if (app_list) {
@@ -288,32 +240,40 @@ module.exports = {
             setting.controls = controls
         }
 
-        io.emit(Constants.ACK_SETTING_APPLIED + device_id, setting);
+        io.emit(Constants.ACK_SETTING_APPLIED + device_id, { setting: setting });
+
+        sendSocketDataToPanel(Constants.ACK_SETTING_APPLIED + device_id, { setting: setting });
     },
 
 
+    // send to panel
     installedApps: async (io, deviceId, dvcId, response) => {
         // console.log("installedApps()", response);
-        let app_list = JSON.parse(response);
+        try {
+            let app_list = JSON.parse(response);
 
-        let application = await require('./device_helpers.js').pushAppProcess(deviceId, dvcId, app_list);
+            let application = await require('./device_helpers.js').pushAppProcess(deviceId, dvcId, app_list);
+            let apps = [];
+            if (application && application.length) {
+                apps = application
+            }
 
-        if (application.length) {
             io.emit(Constants.ACK_INSTALLED_APPS + deviceId, {
-                app_list: application,
+                app_list: apps,
                 status: true
             })
-        } else {
-            io.emit(Constants.ACK_INSTALLED_APPS + deviceId, {
-                app_list: [],
+
+            sendSocketDataToPanel(Constants.ACK_INSTALLED_APPS + deviceId, {
+                app_list: apps,
                 status: true
             })
+        } catch (error) {
+            console.log('install app parsing error:')
         }
-
 
     },
 
-
+    // send to panel
     ackSinglePushApp: async function (io, device_id, dvcId, response) {
         console.log("ackSinglePushApp()");
         // let pushApp = null;
@@ -341,23 +301,40 @@ module.exports = {
         io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
             status: true,
         })
+
+        sendSocketDataToPanel(Constants.ACK_SINGLE_PUSH_APP + device_id, {
+            status: true,
+        })
         // io.emit(Constants.ACK_SINGLE_PUSH_APP + device_id, {
         //     status: true,
         //     pushApp: pushApp
         // })
     },
 
+    // send to panel
     uninstalledApps: async (io, deviceId, dvcId, response) => {
-        console.log("uninstalledApps() ", response);
-        let app_list = JSON.parse(response);
-        await require('./device_helpers.js').pullAppProcess(deviceId, dvcId, app_list);
+        // console.log("uninstalledApps() ", response);
+        try {
+            
+            let app_list = JSON.parse(response);
+            await require('./device_helpers.js').pullAppProcess(deviceId, dvcId, app_list);
+    
+            io.emit(Constants.ACK_UNINSTALLED_APPS + deviceId, {
+                status: true,
+                app_list: app_list
+            })
 
-        io.emit(Constants.ACK_UNINSTALLED_APPS + deviceId, {
-            status: true,
-            app_list: app_list
-        })
+            sendSocketDataToPanel(Constants.ACK_UNINSTALLED_APPS + deviceId, {
+                status: true,
+                app_list: app_list
+            })
+
+        } catch (error) {
+            console.log("uninstall app parsing error:")
+        }
     },
 
+    // send to panel
     ackSinglePullApp: async function (io, device_id, dvc_id, response) {
 
         let pullApp = null;
@@ -387,24 +364,35 @@ module.exports = {
             // pullApp: pullApp
         })
 
+        sendSocketDataToPanel(Constants.ACK_SINGLE_PULL_APP + device_id, {
+            status: response.status,
+            // pullApp: pullApp
+        })
+
     },
 
+    // send to panel
     ackFinishedPolicyStep: async function (io, device_id, user_acc_id) {
         console.log("FINISHED POLICY STEP")
 
         let completeSteps = 0
-        let queueAppsData = await sql.query("SELECT * from policy_queue_jobs where device_id = '" + device_id + "' order by created_at desc limit 1")
-        if (queueAppsData.length) {
+        let queueAppsData = await sql.query(`SELECT * FROM policy_queue_jobs WHERE device_id = '${device_id}' ORDER BY created_at DESC LIMIT 1`)
+        if (queueAppsData && queueAppsData.length) {
 
             completeSteps = queueAppsData[0].complete_steps + 1
-            await sql.query("UPDATE policy_queue_jobs set complete_steps = " + completeSteps + " WHERE device_id = '" + device_id + "'")
+            await sql.query(`UPDATE policy_queue_jobs SET complete_steps = ${completeSteps} WHERE device_id = '${device_id}'`)
 
             io.emit(Constants.FINISH_POLICY_STEP + device_id, {
+                status: true
+            });
+
+            sendSocketDataToPanel(Constants.FINISH_POLICY_STEP + device_id, {
                 status: true
             });
         }
     },
 
+    // send to panel
     ackFinishedWipe: async function (io, device_id, user_acc_id) {
         console.log("DEVICE WIPED SUCCESSFULLY")
 
@@ -414,17 +402,164 @@ module.exports = {
         io.emit(Constants.FINISH_WIPE + device_id, {
             status: true
         });
-    },
-
-    ackImeiChanged: async function (io, device_id) {
-        console.log("IMEI Applied")
-        await sql.query("UPDATE devices set is_push_apps = 0 WHERE device_id = '" + device_id + "'")
-
-        io.emit(Constants.FINISH_IMEI + device_id, {
+        
+        sendSocketDataToPanel(Constants.FINISH_WIPE + device_id, {
             status: true
         });
     },
 
+    // send to panel
+    ackImeiChanged: async function (io, device_id) {
+        console.log("IMEI Applied")
+        await sql.query(`UPDATE devices SET is_push_apps = 0 WHERE device_id = ?`, [device_id]);
+
+        io.emit(Constants.FINISH_IMEI + device_id, {
+            status: true
+        });
+
+        sendSocketDataToPanel(Constants.FINISH_IMEI + device_id, {
+            status: true
+        });
+    },
+    // send to panel
+    sendJobToPanel: function (io, job) {
+        console.log("data emitted on panel successfully");
+        io.emit(Constants.SEND_JOB_TO_PANEL, {job: job});
+        sendSocketDataToPanel(Constants.SEND_JOB_TO_PANEL, {job: job});
+
+    },
+
+    // send to device
+    sendEmit: async (io, setting_id, app_list, passwords, controls, permissions, device_id) => {
+        console.log("applied history ID:", setting_id);
+
+        io.emit(Constants.GET_APPLIED_SETTINGS + device_id, {
+            setting_id: setting_id,
+            device_id: device_id,
+            app_list: (!app_list) ? '[]' : app_list,
+            passwords: (!passwords) ? '{}' : passwords,
+            settings: (!controls) ? '[]' : controls,
+            extension_list: (!permissions) ? '{}' : permissions,
+            status: true
+        });
+
+        sendSocketDataToDevice(Constants.GET_APPLIED_SETTINGS + device_id, {
+            setting_id: setting_id,
+            device_id: device_id,
+            app_list: (!app_list) ? '[]' : app_list,
+            passwords: (!passwords) ? '{}' : passwords,
+            settings: (!controls) ? '[]' : controls,
+            extension_list: (!permissions) ? '{}' : permissions,
+            status: true
+        })
+    },
+
+
+    // send to device
+    sendRegSim: async (io, device_id, action, data) => {
+
+        io.emit(Constants.SEND_SIM + device_id, {
+            action,
+            device_id,
+            entries: (!data) ? '[]' : JSON.stringify(data),
+        });
+
+        sendSocketDataToDevice(Constants.SEND_SIM + device_id, {
+            action,
+            device_id,
+            entries: (!data) ? '[]' : JSON.stringify(data),
+        });
+
+    },
+
+    // send to device/panel
+    applyPushApps: (io, setting_id, push_apps, device_id) => {
+        console.log("applied pushApps ID:", setting_id);
+
+        // console.log(Constants.GET_PUSHED_APPS + device_id);
+
+        // yeh loading k liye tha
+        // io.emit(Constants.ACTION_IN_PROCESS + device_id, {
+        //     status: true,
+        //     type: 'push'
+        // })
+
+        io.emit(Constants.GET_PUSHED_APPS + device_id, {
+            setting_id: setting_id,
+            status: true,
+            device_id: device_id,
+            push_apps: push_apps
+        });
+
+        sendSocketDataToDevice(Constants.GET_PUSHED_APPS + device_id, {
+            setting_id: setting_id,
+            status: true,
+            device_id: device_id,
+            push_apps: push_apps
+        });
+    },
+
+    // send to device/panel
+    getPullApps: (io, setting_id, pull_apps, device_id) => {
+        console.log("applied pullApps ID:", setting_id);
+
+        // yeh loading k liye tha
+        // io.emit(Constants.ACTION_IN_PROCESS + device_id, {
+        //     status: true,
+        //     type: 'pull'
+        // })
+
+        io.emit(Constants.GET_PULLED_APPS + device_id, {
+            setting_id: setting_id,
+            status: true,
+            device_id: device_id,
+            pull_apps: pull_apps
+        });
+
+        sendSocketDataToDevice(Constants.GET_PULLED_APPS + device_id, {
+            setting_id: setting_id,
+            status: true,
+            device_id: device_id,
+            pull_apps: pull_apps
+        });
+    },
+
+    // send to device
+    syncDevice: async (io, device_id) => {
+        io.emit(Constants.GET_SYNC_STATUS + device_id, {
+            device_id: device_id,
+            apps_status: false,
+            extensions_status: false,
+            settings_status: false,
+            is_sync: false,
+        });
+
+        sendSocketDataToDevice(Constants.GET_SYNC_STATUS + device_id, {
+            device_id: device_id,
+            apps_status: false,
+            extensions_status: false,
+            settings_status: false,
+            is_sync: false,
+        });
+    },
+
+    // live device status activity
+    // send to device
+    sendDeviceStatus: async function (io, device_id, device_status, status = false) {
+        console.log("send device status", device_id, device_status);
+        io.emit(Constants.DEVICE_STATUS + device_id, {
+            device_id: device_id,
+            status: status,
+            msg: device_status
+        });
+        
+        sendSocketDataToDevice(Constants.DEVICE_STATUS + device_id, {
+            device_id: device_id,
+            status: status,
+            msg: device_status
+        });
+    },
+    // send to device
     getPolicy: (io, setting_id, device_id, policy) => {
 
         // to send acknowledgement on frontend
@@ -437,15 +572,28 @@ module.exports = {
             io.emit(Constants.GET_POLICY + device_id, {
                 setting_id: setting_id,
                 status: true,
-                app_list: (policy.app_list === undefined || policy.app_list === null || policy.app_list === '') ? '[]' : policy.app_list,
-                settings: (policy.controls === undefined || policy.controls === null || policy.controls === '') ? '[]' : policy.controls,
-                extension_list: (policy.permissions === undefined || policy.permissions === null || policy.permissions === '') ? '[]' : policy.permissions,
-                push_apps: (policy.push_apps === undefined || policy.push_apps === null || policy.push_apps === '') ? '[]' : policy.push_apps,
+                app_list: (!policy.app_list) ? '[]' : policy.app_list,
+                settings: (!policy.controls) ? '[]' : policy.controls,
+                extension_list: (!policy.permissions) ? '[]' : policy.permissions,
+                push_apps: (!policy.push_apps) ? '[]' : policy.push_apps,
                 device_id: device_id,
             });
+            
+            sendSocketDataToDevice(Constants.GET_POLICY + device_id, {
+                setting_id: setting_id,
+                status: true,
+                app_list: (!policy.app_list) ? '[]' : policy.app_list,
+                settings: (!policy.controls) ? '[]' : policy.controls,
+                extension_list: (!policy.permissions) ? '[]' : policy.permissions,
+                push_apps: (!policy.push_apps) ? '[]' : policy.push_apps,
+                device_id: device_id,
+            });
+        } else {
+            console.log('policy not found');
         }
     },
 
+    // send to device
     sendMsgToDevice: async function (io, device_id, job_id, msg, SERVER_TIMEZONE) {
         console.log("data::  ", device_id, msg, job_id, "channel name: ", Constants.SEND_MSG_TO_DEVICE + device_id);
 
@@ -457,19 +605,61 @@ module.exports = {
                 device_id
                 // server_timezone: SERVER_TIMEZONE
             });
+
+            sendSocketDataToDevice(Constants.SEND_MSG_TO_DEVICE + device_id, {
+                status: true,
+                msg,
+                job_id,
+                device_id
+                // server_timezone: SERVER_TIMEZONE
+            });
+        } else {
+            console.log('message not found')
         }
     },
 
+    // send to device
     forceCheckUpdate: async function (io, device_id) {
-        console.log("testing forceupdate", device_id);
+        console.log("testing force update: ", device_id);
         io.emit(Constants.FORCE_UPDATE_CHECK + device_id, {
+            device_id: device_id,
+            status: true
+        });
+        
+        sendSocketDataToDevice(Constants.FORCE_UPDATE_CHECK + device_id, {
             device_id: device_id,
             status: true
         });
     },
 
-    sendJobToPanel: function (io, job) {
-        console.log("data emitted on panel successfully");
-        io.emit(Constants.SEND_JOB_TO_PANEL, job);
+    // send to device
+    deviceInfoUpdated: async function (io, device_id, data) {
+        console.log("DEVICE INFORMATION UPDATED", data);
+        // Backward Compatibility
+        io.emit(Constants.DEVICE_INFO_UPDATED + device_id, {
+            status: true,
+            data: data
+        });
+
+        // New Code
+        sendSocketDataToDevice(Constants.DEVICE_INFO_UPDATED + device_id, {
+            status: true,
+            data: data
+        })
+
+    },
+}
+
+function sendSocketDataToDevice (eventName, payload) {
+    const { deviceIo } = require('../routes/sockets');
+    if(deviceIo){
+        deviceIo.emit(eventName, payload)
+    }
+}
+
+function  sendSocketDataToPanel(eventName, payload) {
+    const { webIo } = require('../routes/sockets');
+    if(webIo){
+        webIo.emit(eventName, payload)
     }
 }
