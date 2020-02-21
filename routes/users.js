@@ -33,6 +33,7 @@ const policyValidators = require('../app/validators/policy');
 const dealerValidators = require('../app/validators/dealer');
 const bulkDevicesValidators = require('../app/validators/bulkDevices');
 const billingValidator = require('../app/validators/billing');
+const simValidator = require('../app/validators/sim');
 var errorMsgs = commonValidators.responsValidationResults;
 
 var helpers = require("../helper/general_helper.js");
@@ -863,7 +864,7 @@ router.get("/get_all_sim_ids", [accountValidators.getAllSimIDs, errorMsgs], acco
  * @security JWT
  */
 
-router.get("/get-standalone-sims", simController.getStandAloneSims);
+router.get("/get-standalone-sims", [simValidator.getStandAloneSims, errorMsgs], simController.getStandAloneSims);
 
 /**
  * @route GET /users/change_sim_status
@@ -873,7 +874,7 @@ router.get("/get-standalone-sims", simController.getStandAloneSims);
  * @security JWT
  */
 
-router.put("/change_sim_status", simController.changeSimStatus);
+router.put("/change_sim_status", [simValidator.changeSimStatus, errorMsgs], simController.changeSimStatus);
 
 /**
  * @route GET /users/resync_ids
@@ -1389,12 +1390,12 @@ router.get("/get_csv_ids", async (req, res) => {
 });
 
 // Sim Module at connect device
-router.post("/sim-register", simController.simRegister);
-router.put("/sim-update", simController.simUpdate);
-router.post("/sim-delete", simController.simDelete);
-router.get("/get-sims/:device_id", simController.getSims);
-router.get("/sim-history/:device_id", simController.simHistory);
-router.get("/get-unRegSims/:device_id", simController.getUnRegisterSims);
+router.post("/sim-register", [simValidator.simRegister, errorMsgs], simController.simRegister);
+router.put("/sim-update", [simValidator.simUpdate, errorMsgs], simController.simUpdate);
+router.post("/sim-delete", [simValidator.simDelete, errorMsgs], simController.simDelete);
+router.get("/get-sims/:device_id", [simValidator.getSims, errorMsgs], simController.getSims);
+router.get("/sim-history/:device_id", [simValidator.simHistory, errorMsgs], simController.simHistory);
+router.get("/get-unRegSims/:device_id", [simValidator.getUnRegisterSims, errorMsgs], simController.getUnRegisterSims);
 
 // Agents
 
@@ -1663,6 +1664,6 @@ router.put('/add-data-plans', ServicesController.addDataLimitsPlans);
 router.put('/reset-pgp-limit', ServicesController.resetPgpLimit);
 
 
-router.post('/add-standalone-sim', simController.addStandAloneSim);
+router.post('/add-standalone-sim', [simValidator.addStandAloneSim, errorMsgs], simController.addStandAloneSim);
 
 module.exports = router;

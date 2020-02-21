@@ -153,75 +153,69 @@ exports.changeSimStatus = async function (req, res) {
 
 exports.simRegister = async function (req, res) {
     var verify = req.decoded;
-    if (verify) {
-        try {
-            let rSim = req.body.data;
-            // console.log('sim-register ', req.body)
+    try {
+        console.log("req.body ", req.body);
+        let rSim = req.body.data;
+        // return res.send({ status: true, msg: 'jkl' });
+        // console.log('sim-register ', req.body)
 
-            let device_id = rSim.device_id;
-            let iccid = rSim.iccid;
-            let name = rSim.name;
-            let sim_id = rSim.sim_id;
-            let note = rSim.note;
-            let guest = rSim.guest;
-            let encrypt = rSim.encrypt;
-            let dataLimit = rSim.data_limit;
-            let status = rSim.status ? rSim.status : null;
+        let device_id = rSim.device_id;
+        let iccid = rSim.iccid;
+        let name = rSim.name;
+        let sim_id = rSim.sim_id;
+        let note = rSim.note;
+        let guest = rSim.guest;
+        let encrypt = rSim.encrypt;
+        let dataLimit = rSim.data_limit;
+        let status = rSim.status ? rSim.status : '';
 
-            let sQry = `SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}' AND delete_status='0'`;
-            // console.log(sQry);
-            let rslt = await sql.query(sQry);
-            // console.log(rslt);
+        let sQry = `SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}' AND delete_status='0'`;
+        // console.log(sQry);
+        let rslt = await sql.query(sQry);
+        // console.log(rslt);
 
-            // let activeSims = await sql.query(`SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}' AND delete_status='0' AND (slotNo = '0' OR slotNo = '1')`);
+        // let activeSims = await sql.query(`SELECT * FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}' AND delete_status='0' AND (slotNo = '0' OR slotNo = '1')`);
 
-            if (rslt.length < 1) {
-                // if (activeSims.length < 2) {
-                //*********/ Asked abaid to remove ingore from insert query **********//
-                var IQry = `INSERT INTO sims (device_id, iccid, name, status, sim_id, note, guest, encrypt, dataLimit, sync, is_changed) 
+        if (rslt.length < 1) {
+            // if (activeSims.length < 2) {
+            //*********/ Asked abaid to remove ingore from insert query **********//
+            var IQry = `INSERT INTO sims (device_id, iccid, name, status, sim_id, note, guest, encrypt, dataLimit, sync, is_changed) 
                 VALUES ('${device_id}', '${iccid}', '${name}', '${status}', '${sim_id}', '${note}', ${guest}, ${encrypt}, 0, '0', '1');`;
-                sql.query(IQry, async function (err, result) {
-                    if (err) {
-                        console.log(err)
-                        res.send({
-                            status: false,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "ERROR"), // "You have already registered this device ID and ICC-ID."
-                        })
-                        return;
-                    };
-                    sql.query(`UPDATE sims SET is_changed = '0' WHERE device_id = '${device_id}' AND iccid = '${iccid}' AND delete_status='1'`)
-                    socket_helpers.sendRegSim(sockets.baseIo, device_id, "sim_update", [rSim]);
-                    device_helpers.saveSimActionHistory(device_id, "NEW_REGISTERED_SIM", [rSim]);
-                    data = {
-                        status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.SIM_REGISTERED_SUCCESSFULLY], "Sim Registered Successfully"), // "Sim Registered Successfully"
-                    }
-                    res.send(data);
+            sql.query(IQry, async function (err, result) {
+                if (err) {
+                    console.log(err)
+                    res.send({
+                        status: false,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "ERROR"), // "You have already registered this device ID and ICC-ID."
+                    })
                     return;
-                })
-
-            } else {
-                res.send({
-                    status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.ALREADY_SIM_REGISTER], "You have already registered this device ID and ICC-ID"), // "You have already registered this device ID and ICC-ID."
-                })
+                };
+                sql.query(`UPDATE sims SET is_changed = '0' WHERE device_id = '${device_id}' AND iccid = '${iccid}' AND delete_status='1'`)
+                socket_helpers.sendRegSim(sockets.baseIo, device_id, "sim_update", [rSim]);
+                device_helpers.saveSimActionHistory(device_id, "NEW_REGISTERED_SIM", [rSim]);
+                data = {
+                    status: true,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.SIM_REGISTERED_SUCCESSFULLY], "Sim Registered Successfully"), // "Sim Registered Successfully"
+                }
+                res.send(data);
                 return;
-            }
-        } catch (error) {
-            console.log(error);
+            })
+
+        } else {
             res.send({
                 status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Error"), // "Error"
+                msg: await helpers.convertToLang(req.translation[MsgConstants.ALREADY_SIM_REGISTER], "You have already registered this device ID and ICC-ID"), // "You have already registered this device ID and ICC-ID."
             })
             return;
         }
-    } else {
-        res.send({
+    } catch (error) {
+        console.log(error);
+        return res.send({
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Error"), // "Error"
+            msg: await helpers.convertToLang(req.translation[""], "Error while processing!"),
         })
-        return;
     }
+
 }
 
 
