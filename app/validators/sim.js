@@ -9,7 +9,7 @@ const simRegisterSchema = [
     { index: 'guest', type: 'regex', pattern: NUMERIC_BOOLEAN_REGEX },
     { index: 'encrypt', type: 'regex', pattern: NUMERIC_BOOLEAN_REGEX },
     { index: 'device_id', type: 'regex', pattern: DEVICE_ID_PATTERN },
-    { index: 'status', type: 'isIn', data: ['Disabled', 'Not Inserted', 'Active', undefined, null, ''] }
+    { index: 'status', type: 'isIn', data: ['Disabled', 'Not Inserted', 'Active', undefined, null, ''], notRequired: true }
 ];
 
 exports.getStandAloneSims = [

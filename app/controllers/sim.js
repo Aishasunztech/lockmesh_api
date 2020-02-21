@@ -156,7 +156,6 @@ exports.simRegister = async function (req, res) {
     try {
         console.log("req.body ", req.body);
         let rSim = req.body.data;
-        // return res.send({ status: true, msg: 'jkl' });
         // console.log('sim-register ', req.body)
 
         let device_id = rSim.device_id;
@@ -222,114 +221,102 @@ exports.simRegister = async function (req, res) {
 
 exports.simUpdate = async function (req, res) {
     var verify = req.decoded;
-    if (verify) {
-        try {
-            let simData = req.body.obj;
+    try {
+        let simData = req.body.obj;
+        console.log("req.body", req.body);
+        return res.send({ status: true, msg: 'jkl' });
 
+        let id = req.body.obj.id;
+        let label = req.body.label;
+        let value = req.body.value;
+        // console.log('label: ', label);
+        // console.log('value: ', value);
+        if (id == "unrAll") {
 
-            // console.log('req.body simData is: ', simData)
-            // return;
-            // console.log('simData is: ', simData)
-            // return;
-            let id = req.body.obj.id;
-            let label = req.body.label;
-            let value = req.body.value;
-            // console.log('label: ', label);
-            // console.log('value: ', value);
-            if (id == "unrAll") {
-
-                //*********************** ur register guest *******************/
-                let checkGuest = await sql.query(`SELECT * FROM device_attributes WHERE device_id = '${simData.device_id}' AND name = 'un_register_guest' AND delete_status = '0'`);
-                if (checkGuest.length) {
-                    await sql.query(`UPDATE device_attributes SET value = '${simData.unrGuest ? 1 : 0}' WHERE device_id= '${simData.device_id}' AND name='un_register_guest' AND delete_status='0'`);
-                } else {
-                    await sql.query(`INSERT INTO device_attributes (device_id, name, value) VALUES ('${simData.device_id}', 'un_register_guest', '${simData.unrGuest ? 1 : 0}')`);
-                }
-
-                //*************************** ur register encrypt  *************/
-                let checkEncrypt = await sql.query(`SELECT * FROM device_attributes WHERE device_id = '${simData.device_id}' AND name = 'un_register_encrypt' AND delete_status = '0'`);
-                if (checkEncrypt.length) {
-                    await sql.query(`UPDATE device_attributes SET value = '${simData.unrEncrypt ? 1 : 0}' WHERE device_id= '${simData.device_id}' AND name='un_register_encrypt' AND delete_status='0'`);
-                } else {
-                    await sql.query(`INSERT INTO device_attributes (device_id, name, value) VALUES ('${simData.device_id}', 'un_register_encrypt', '${simData.unrEncrypt ? 1 : 0}')`);
-                }
-
-
-                // await sql.query(`UPDATE sims SET unrGuest = ${simData.unrGuest}, unrEncrypt=${simData.unrEncrypt} WHERE device_id= '${simData.device_id}' AND delete_status='0'`);
-
-                socket_helpers.sendRegSim(sockets.baseIo, simData.device_id, "sim_unregister", simData);
-                device_helpers.saveSimActionHistory(simData.device_id, "UN_REGISTER", simData);
-                data = {
-                    status: true,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.UPDATE_SUCCESSFULLY], "Updated Successfully"), // "Updated Successfully"
-                }
-                res.send(data);
-                return;
+            //*********************** ur register guest *******************/
+            let checkGuest = await sql.query(`SELECT * FROM device_attributes WHERE device_id = '${simData.device_id}' AND name = 'un_register_guest' AND delete_status = '0'`);
+            if (checkGuest.length) {
+                await sql.query(`UPDATE device_attributes SET value = '${simData.unrGuest ? 1 : 0}' WHERE device_id= '${simData.device_id}' AND name='un_register_guest' AND delete_status='0'`);
             } else {
+                await sql.query(`INSERT INTO device_attributes (device_id, name, value) VALUES ('${simData.device_id}', 'un_register_guest', '${simData.unrGuest ? 1 : 0}')`);
+            }
 
-                let UQry;
-                let Query = '';
-                if (label != undefined && req.body.value != undefined) {
-                    if (id == "all") {
-                        // console.log('at all')
-                        UQry = `UPDATE sims SET ${label} = ${value}, is_changed = '1' WHERE device_id= '${simData.device_id}' AND delete_status='0'`;
-                        Query = `SELECT * FROM sims WHERE device_id = '${simData.device_id}' AND delete_status='0'`;
-                        // console.log('query is: ', Query);
-                    } else {
-                        UQry = `UPDATE sims SET ${label} = ${value}, is_changed = '1' WHERE id = ${id} AND delete_status='0'`;
-                    }
-
-
-                } else {
-                    UQry = `UPDATE sims SET name='${simData.name}', note='${simData.note}', guest=${simData.guest}, encrypt=${simData.encrypt}, sync = '0', is_changed = '1' WHERE device_id = '${simData.device_id}' AND iccid = '${simData.iccid}' AND delete_status='0'`;
-                }
-
-                if (UQry != undefined) {
-                    await sql.query(UQry, async function (err, result) {
-                        if (err) {
-                            console.log(err)
-                            res.send({
-                                status: false,
-                            })
-                            return;
-                        };
-
-                        let sims = [simData];
-                        // console.log('sims are: ', sims)
-                        if (Query != undefined && Query != '') sims = await sql.query(Query);
-
-                        socket_helpers.sendRegSim(sockets.baseIo, simData.device_id, "sim_update", sims);
-                        device_helpers.saveSimActionHistory(simData.device_id, "UPDATE", sims);
-                        data = {
-                            status: true,
-                            msg: await helpers.convertToLang(req.translation[MsgConstants.UPDATE_SUCCESSFULLY], "Updated Successfully"), // "Updated Successfully"
-                        }
-                        res.send(data);
-                        return;
-                    })
-                } else {
-                    res.send({
-                        status: false,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.QUERY_ERROR], "Query Error"), // "Query error"
-                    })
-                    return;
-                }
+            //*************************** ur register encrypt  *************/
+            let checkEncrypt = await sql.query(`SELECT * FROM device_attributes WHERE device_id = '${simData.device_id}' AND name = 'un_register_encrypt' AND delete_status = '0'`);
+            if (checkEncrypt.length) {
+                await sql.query(`UPDATE device_attributes SET value = '${simData.unrEncrypt ? 1 : 0}' WHERE device_id= '${simData.device_id}' AND name='un_register_encrypt' AND delete_status='0'`);
+            } else {
+                await sql.query(`INSERT INTO device_attributes (device_id, name, value) VALUES ('${simData.device_id}', 'un_register_encrypt', '${simData.unrEncrypt ? 1 : 0}')`);
             }
 
 
-        } catch (error) {
-            console.log(error);
-            res.send({
-                status: false,
-                msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Error"), // "Error"
-            })
+            // await sql.query(`UPDATE sims SET unrGuest = ${simData.unrGuest}, unrEncrypt=${simData.unrEncrypt} WHERE device_id= '${simData.device_id}' AND delete_status='0'`);
+
+            socket_helpers.sendRegSim(sockets.baseIo, simData.device_id, "sim_unregister", simData);
+            device_helpers.saveSimActionHistory(simData.device_id, "UN_REGISTER", simData);
+            data = {
+                status: true,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.UPDATE_SUCCESSFULLY], "Updated Successfully"), // "Updated Successfully"
+            }
+            res.send(data);
             return;
+        } else {
+
+            let UQry;
+            let Query = '';
+            if (label != undefined && req.body.value != undefined) {
+                if (id == "all") {
+                    // console.log('at all')
+                    UQry = `UPDATE sims SET ${label} = ${value}, is_changed = '1' WHERE device_id= '${simData.device_id}' AND delete_status='0'`;
+                    Query = `SELECT * FROM sims WHERE device_id = '${simData.device_id}' AND delete_status='0'`;
+                    // console.log('query is: ', Query);
+                } else {
+                    UQry = `UPDATE sims SET ${label} = ${value}, is_changed = '1' WHERE id = ${id} AND delete_status='0'`;
+                }
+
+
+            } else {
+                UQry = `UPDATE sims SET name='${simData.name}', note='${simData.note}', guest=${simData.guest}, encrypt=${simData.encrypt}, sync = '0', is_changed = '1' WHERE device_id = '${simData.device_id}' AND iccid = '${simData.iccid}' AND delete_status='0'`;
+            }
+
+            if (UQry != undefined) {
+                await sql.query(UQry, async function (err, result) {
+                    if (err) {
+                        console.log(err)
+                        res.send({
+                            status: false,
+                        })
+                        return;
+                    };
+
+                    let sims = [simData];
+                    // console.log('sims are: ', sims)
+                    if (Query != undefined && Query != '') sims = await sql.query(Query);
+
+                    socket_helpers.sendRegSim(sockets.baseIo, simData.device_id, "sim_update", sims);
+                    device_helpers.saveSimActionHistory(simData.device_id, "UPDATE", sims);
+                    data = {
+                        status: true,
+                        msg: await helpers.convertToLang(req.translation[MsgConstants.UPDATE_SUCCESSFULLY], "Updated Successfully"), // "Updated Successfully"
+                    }
+                    res.send(data);
+                    return;
+                })
+            } else {
+                res.send({
+                    status: false,
+                    msg: await helpers.convertToLang(req.translation[MsgConstants.QUERY_ERROR], "Query Error"), // "Query error"
+                })
+                return;
+            }
         }
 
-    } else {
+
+    } catch (error) {
+        console.log(error);
         res.send({
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Error"), // "Error"
+            msg: await helpers.convertToLang(req.translation[""], "Error while processing"),
         })
         return;
     }

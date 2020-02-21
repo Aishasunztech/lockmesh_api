@@ -141,7 +141,7 @@ exports.ObjectWithKeys = function (value, data = [], empty = false) {
                     if (!keys.includes(k)) {
                         errors.push(`object must have the following key: ${k}`);
                     }
-                } else if (!keys.includes(k.index)) {
+                } else if (!keys.includes(k.index) && !k.notRequired) {
                     errors.push(`object must have the following key: ${k.index}`)
                 } else {
                     let type = typeof item;
@@ -162,11 +162,9 @@ exports.ObjectWithKeys = function (value, data = [], empty = false) {
                             errors.push(`${k.index} has invalid value ${item} of type ${type}, ${k.type} requried`)
                         }
                     } else if (k.type === 'isIn' && key === k.index && k.data) {
-                        // if (item) {
-                            if (!(k.data.includes(item))) {
-                                errors.push(`${k.index} has invalid value ${item} of type ${type}, ${k.type} requried`)
-                            }
-                        // }
+                        if (!(k.data.includes(item))) {
+                            errors.push(`${k.index} has invalid value ${item} of type ${type}, ${k.type} requried`)
+                        }
                     } else if (k.type === 'regex' && key === k.index && k.pattern) {
                         if (!k.pattern.test(item)) {
                             errors.push(`${k.index} has invalid value ${item}, could not match pattern ${k.pattern}`);
