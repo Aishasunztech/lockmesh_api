@@ -2,22 +2,22 @@ const { check } = require('express-validator');
 
 
 
-exports.createServiceProduct = [
+exports.createServiceProduct = [ // nn
 
 ];
 
-exports.generateRandomUsername = [
+exports.generateRandomUsername = [ // nn
 
 ];
 
-exports.checkUniquePgp = [
+exports.checkUniquePgp = [ // nn
 
 ];
 
-exports.validateSimId = [
+exports.validateSimId = [ // nn
 
 ];
 
-exports.addDataLimitsPlans = [
+exports.addDataLimitsPlans = [ // nn
 
 ];

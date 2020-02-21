@@ -2,10 +2,10 @@ const { check } = require('express-validator');
 
 
 
-// exports.login = [
+exports.login = [
 
-// ];
+];
 
-// exports.verifyCode = [
+exports.verifyCode = [
 
-// ];
+];
