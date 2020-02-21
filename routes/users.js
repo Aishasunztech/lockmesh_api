@@ -216,7 +216,7 @@ router.get("/getServicesHistory/:usr_acc_id", [deviceValidators.getServicesHisto
 
 
 /**UPDATE Device details**/
-router.put("/edit/devices", [deviceValidators.editDevices, errorMsgs], deviceController.editDevices);
+router.put("/edit/devices", [deviceValidators.editDevices, errorMsgs], deviceController.editDevice);
 
 /**EXTEND SERVICE**/
 router.put("/edit-device/extendServices", [deviceValidators.extendServices, errorMsgs], deviceController.extendServices);
