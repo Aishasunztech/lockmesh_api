@@ -3,31 +3,48 @@ const {
     bulk_action_list
 } = require('./commonValidators/constants');
 
-const { isValidTimeZone } = require('./commonValidators/validation_helpers')
-const { DATE_REGEX } = require('../../constants/validation');
+const { isValidTimeZone, arrayOfObjectWithKeys, validArrayWithValues } = require('./commonValidators/validation_helpers')
+const { DATE_REGEX, USER_ID_PATTERN } = require('../../constants/validation');
 exports.bulkDevicesHistory = [ // nn
 
 ];
 
+const filteredBulkDevicesDealersSchema = [{
+    index: 'key',
+    type: 'pk'
+}];
+const filteredBulkDevicesUsersSchema = [{
+    index: 'key',
+    type: 'regex',
+    pattern: USER_ID_PATTERN
+}];
+
 exports.getFilteredBulkDevices = [
     body('dealers')
-        .isArray(),
+        .custom(v => arrayOfObjectWithKeys(v, filteredBulkDevicesDealersSchema, true)),
 
     body('users')
-        .isArray(),
+        .custom(v => arrayOfObjectWithKeys(v, filteredBulkDevicesUsersSchema, true)),
 ];
 
 exports.suspendBulkAccountDevices = [
-    // body('device_ids')
-    //     .notEmpty()
-    //     .isArray(),
+    body('device_ids')
+        .custom((v) => validArrayWithValues(v, 'pk')),
 
-    // body('dealer_ids')
-    //     .notEmpty()
-    //     .isArray(),
+    body('dealer_ids')
+        .custom(v => validArrayWithValues(v, 'pk', null, true)),
 
-    // body('user_ids')
-    //     .isArray(),
+    body('user_ids')
+        .custom((v, { req }) => {
+            let empty = false;
+            try {
+                validArrayWithValues(req.body.dealer_ids, 'pk');
+                empty = true;
+            } catch (err){
+                empty = false;
+            }
+            return validArrayWithValues(v, 'regex', USER_ID_PATTERN, empty);
+        })
 
     // body('apps')
     //     .isArray(),
@@ -38,7 +55,23 @@ exports.suspendBulkAccountDevices = [
 ];
 
 exports.activateBulkDevices = [
+    body('device_ids')
+        .custom((v) => validArrayWithValues(v, 'pk')),
 
+    body('dealer_ids')
+        .custom(v => validArrayWithValues(v, 'pk', null, true)),
+
+    body('user_ids')
+        .custom((v, { req }) => {
+            let empty = false;
+            try {
+                validArrayWithValues(req.body.dealer_ids, 'pk');
+                empty = true;
+            } catch (err){
+                empty = false;
+            }
+            return validArrayWithValues(v, 'regex', USER_ID_PATTERN, empty);
+        })
 ];
 
 exports.getUsersOfDealers = [

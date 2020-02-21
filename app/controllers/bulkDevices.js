@@ -521,8 +521,6 @@ exports.suspendBulkAccountDevices = async function (req, res) {
     var tod_dat = datetime.create();
     var formatted_dt = tod_dat.format("Y-m-d H:M:S");
     let device_ids = req.body.device_ids;
-    console.log(req.body)
-    return
     if (verify && device_ids.length) {
         let userId = verify.user.id;
         console.log("userId ", userId);
