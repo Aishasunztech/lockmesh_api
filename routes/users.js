@@ -199,7 +199,7 @@ router.get("/getServicesHistory/:usr_acc_id", deviceController.getServicesHistor
 
 
 /**UPDATE Device details**/
-router.put("/edit/devices", deviceController.editDevices);
+router.put("/edit/devices", deviceController.editDevice);
 
 /**EXTEND SERVICE**/
 router.put("/edit-device/extendServices", deviceController.extendServices);
