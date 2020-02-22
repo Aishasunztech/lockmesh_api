@@ -615,7 +615,7 @@ exports.editDealers = async function (req, res) {
                 msg: await general_helpers.convertToLang(req.translation[''], "Dealer doesn't exist"), // Dealer not found to Update"
             });
         }
-        
+
         if (dealer && dealer.length) {
             let dealerType = await general_helpers.getUserType(dealer[0].dealer_id)
             if (userType === Constants.SDEALER || (userType === Constants.DEALER && dealerType === Constants.DEALER)) {
@@ -716,7 +716,7 @@ exports.editDealers = async function (req, res) {
 
 exports.setDealerCreditsLimit = async function (req, res) {
     var verify = req.decoded;
-    
+
     // if (verify.status !== undefined && verify.status == true) {
     var credits_limit = req.body.credits_limit;
     var dealer_id = req.body.dealer_id;
@@ -728,7 +728,7 @@ exports.setDealerCreditsLimit = async function (req, res) {
         return res.send(data);
     }
     let userType = verify.user.user_type;
-    credits_limit = (credits_limit <= -1) ? 0 : credits_limit;
+    credits_limit = (credits_limit > -1) ? 0 : credits_limit;
 
     let dealer = await sql.query(`SELECT dealer_id FROM dealers WHERE dealer_id =?`, [dealer_id])
     if (!dealer || !dealer.length) {
@@ -781,7 +781,7 @@ exports.deleteDealer = async function (req, res) {
 
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
-        if(!dealer_id){
+        if (!dealer_id) {
             data = {
                 status: false,
                 msg: await general_helpers.convertToLang(req.translation[MsgConstants.INVALID_DEALER], "Invalid Dealer"), // Invalid Dealer.
@@ -797,7 +797,7 @@ exports.deleteDealer = async function (req, res) {
 
                 var dealerQ = `UPDATE dealers SET unlink_status = 1 WHERE dealer_id = ?`;
                 sql.query(dealerQ, [dealer_id], async function (error, row) {
-                    if(error){
+                    if (error) {
                         console.log('delete dealer error: ', error);
                         data = {
                             status: false,
@@ -806,7 +806,7 @@ exports.deleteDealer = async function (req, res) {
                         res.send(data);
                         return;
                     }
-                    
+
                     if (row && row.affectedRows !== 0) {
 
                         await general_helpers.expireDealerLogin(dealer_id);
