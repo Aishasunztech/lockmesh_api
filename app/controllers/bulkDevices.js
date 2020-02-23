@@ -1227,7 +1227,6 @@ exports.applyBulkPullApps = async function (req, res) {
 
 // Unlink Devices
 exports.unlinkBulkDevices = async function (req, res) {
-
     try {
         var verify = req.decoded;
         // var device_id = req.params.id;
@@ -1757,7 +1756,6 @@ exports.applyBulkPolicy = async function (req, res) {
 
 // Send Messages
 exports.sendBulkMsg = async function (req, res) {
-    console.log("req body sendBulkMsg ==> ", req.body);
     let device_ids = [];
     let user_device_ids = [];
 
@@ -1928,7 +1926,6 @@ exports.sendBulkMsg = async function (req, res) {
 
 // Update Messages
 exports.updateBulkMsg = async function (req, res) {
-    console.log("req body updateBulkMsg ==> ", req.body);
     try {
         var verify = req.decoded;
         let updateId = req.body.data.id;

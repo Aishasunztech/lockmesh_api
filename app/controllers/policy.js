@@ -551,6 +551,10 @@ exports.checkPolicyName = async function (req, res) {
             }
         } catch (error) {
             console.log(error);
+            return res.send({
+                status: false,
+                msg: 'Error! Internel Server Error'
+            })
         }
 
     }
@@ -558,7 +562,6 @@ exports.checkPolicyName = async function (req, res) {
 
 exports.changePolicyStatus = async function (req, res) {
     var verify = req.decoded;
-console.log(req.body)
     if (verify) {
         let id = req.body.id;
         let value = req.body.value ? 1 : 0;
@@ -741,12 +744,15 @@ exports.savePolicy = async function (req, res) {
         }
     } catch (error) {
         console.log(error)
+        return res.send({
+            status: false,
+            msg: 'Error! Internel Server Error'
+        })
     }
 
 }
 
 exports.savePolicyChanges = async function (req, res) {
-    // console.log(req.body)
     try {
         var verify = req.decoded;
         if (verify) {
@@ -899,6 +905,10 @@ exports.applyPolicy = async function (req, res) {
         }
     } catch (error) {
         console.log(error)
+        return res.send({
+            status: false,
+            msg: 'Error! Internel Server Error'
+        })
     }
 }
 
@@ -930,6 +940,10 @@ exports.setDefaultPolicy = async function (req, res) {
         }
     } catch (error) {
         console.log(error);
+        return res.send({
+            status: false,
+            msg: 'Error! Internel Server Error'
+        })
     }
 }
 
