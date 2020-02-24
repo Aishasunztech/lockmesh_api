@@ -1,6 +1,6 @@
 const { check, body, param } = require('express-validator');
 const { ObjectWithKeys } = require('./commonValidators/validation_helpers');
-const { ALPHA_NUMERIC_ICC_ID, DEVICE_ID_PATTERN, NUMERIC_BOOLEAN_REGEX } = require('../../constants/validation');
+const { ALPHA_NUMERIC_ICC_ID, DEVICE_ID_PATTERN, NUMERIC_BOOLEAN_REGEX, SIM_ID_PATTERN } = require('../../constants/validation');
 
 
 // *********************************************** SCHEMAS ********************************************
@@ -41,12 +41,54 @@ const simUpdateLabelValueSchema = [
 
 
 
-exports.getStandAloneSims = [
+exports.getStandAloneSims = [ // nn
 
 ];
 
-exports.changeSimStatus = [
+exports.addStandAloneSim = [
+    body('iccid')
+        .matches(SIM_ID_PATTERN),
 
+    body('name')
+        .optional({ nullable: true })
+        .isString(),
+
+    body('email')
+        .optional({ nullable: true, checkFalsy: true })
+        .isEmail(),
+
+    body('package')
+        .notEmpty()
+        .isInt({ min: 1 }),
+
+
+    body('note')
+        .optional({ nullable: true })
+        .isString(),
+
+    body('data_plan')
+        .optional({ nullable: true })
+        .isString(),
+
+    body('pay_now')
+        .isBoolean(),
+
+    body('total_price')
+        .isInt({ min: 0 }),
+
+    body('paid_by_user')
+        .isIn(['PAID', 'UNPAID']),
+
+];
+
+
+exports.changeSimStatus = [
+    body('id')
+        .isInt({ min: 1 }),
+
+    body('type')
+        .notEmpty()
+        .isIn(['activate', 'suspend', 'reset'])
 ];
 
 exports.simRegister = [
@@ -55,9 +97,6 @@ exports.simRegister = [
 ];
 
 exports.simUpdate = [
-    // body('obj')
-    //     .custom(v => ObjectWithKeys(v, simUpdateSchema)),
-
     body()
         .custom(body => { // body = req.body
             // console.log("body into validation ", body);
@@ -117,8 +156,4 @@ exports.getUnRegisterSims = [
     param('device_id')
         .notEmpty()
         .matches(DEVICE_ID_PATTERN)
-];
-
-exports.addStandAloneSim = [
-
 ];
