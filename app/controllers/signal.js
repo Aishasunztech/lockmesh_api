@@ -20,8 +20,8 @@ exports.validate_chat_id = async function (req, res) {
     FROM chat_ids AS cid 
     JOIN usr_acc AS ua ON cid.user_acc_id = ua.id 
     JOIN devices AS d ON ua.device_id = d.id 
-    WHERE cid.chat_id = '${chat_id}'`
-    let chat_detail_row = await sql.query(chat_detail);
+    WHERE cid.chat_id = ?`
+    let chat_detail_row = await sql.query(chat_detail, [chat_id]);
 
     if (chat_detail_row && chat_detail_row.length > 0) {
         console.log('*********************** chat_detail_row: ', chat_detail_row[0]);

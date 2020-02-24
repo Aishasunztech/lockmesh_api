@@ -31,7 +31,7 @@ exports.createServiceProduct = async function (req, res) {
         let type = req.body.type
         if (type && product_data) {
             if (type === 'pgp_email' && !auto_generated) {
-                let usr_acc = await sql.query(`SELECT pgp_remaining_limit FROM usr_acc WHERE id = ${user_acc_id}`)
+                let usr_acc = await sql.query(`SELECT pgp_remaining_limit FROM usr_acc WHERE id = '${user_acc_id}'`)
                 if (usr_acc && usr_acc.length) {
                     if (usr_acc[0].pgp_remaining_limit < 1) {
                         return res.send({
@@ -356,7 +356,6 @@ exports.validateSimId = async function (req, res) {
 }
 
 exports.addDataLimitsPlans = async function (req, res) {
-    console.log('addDataLimitsPlans', req.body);
     var verify = req.decoded;
     try {
         if (req.body.usr_device_id) {

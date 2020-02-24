@@ -6,7 +6,7 @@ exports.validatePgpEmail = async function (req, res) {
     // let ts = req.body.ts;
 
     console.log('checkPgpEmail:', device_id, pgp_email);
-    
+
     if (!device_id || !pgp_email) {
         return res.status(422).send({
             status: false,
@@ -18,8 +18,8 @@ exports.validatePgpEmail = async function (req, res) {
     FROM pgp_emails AS cid 
     JOIN usr_acc AS ua ON cid.user_acc_id = ua.id 
     JOIN devices AS d ON ua.device_id = d.id 
-    WHERE cid.pgp_email = '${pgp_email}'`
-    let pgpEmailDetailRow = await sql.query(pgpDetailQ);
+    WHERE cid.pgp_email = ?`
+    let pgpEmailDetailRow = await sql.query(pgpDetailQ, [pgp_email]);
 
     if (pgpEmailDetailRow && pgpEmailDetailRow.length > 0) {
         console.log('pgpEmailDetailRow: ', pgpEmailDetailRow[0]);
