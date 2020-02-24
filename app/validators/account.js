@@ -1,9 +1,9 @@
-const { check } = require('express-validator');
+const { check, body } = require('express-validator');
+const { DEVICE_ID_PATTERN } = require('../../constants/validation');
 
 exports.getProfiles = [
-    check('device_id')
-        .exists()
-        .notEmpty()
+    body('device_id')
+        .matches(DEVICE_ID_PATTERN)
 ];
 
 exports.saveNewData = [
