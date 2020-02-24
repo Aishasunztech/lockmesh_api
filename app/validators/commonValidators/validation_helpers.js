@@ -216,7 +216,7 @@ exports.isValidTimeZone = function (tz, nullable = true) {
 }
 
 exports.validateSimId = function (value) {
-    if (["", null, "N/A"].includes(value)) {
+    if (['', null, 'N/A'].includes(value)){
         return true;
     } else if (SIM_ID_PATTERN.test(value)) {
         return true;
