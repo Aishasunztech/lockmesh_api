@@ -16,6 +16,23 @@ const socket_helpers = require('../helper/socket_helper');
 const constants = require('../constants/Application');
 const app_constants = require("../config/constants");
 
+/**
+ * =================
+ * Asterisk. E.g. *
+ * Ranges. E.g. 1-3,5
+ * Steps. E.g. *'/2
+ * =================
+ * Seconds: 0-59
+ * Minutes: 0-59
+ * Hours: 0-23
+ * Day of Month: 1-31
+ * Months: 0-11 (Jan-Dec)
+ * Day of Week: 0-6 (Sun-Sat)
+ *
+ *   *         *       *         *            *       *
+ * Seconds  Minutes  Hours  (Days of Month)  Months  Weekday
+ */
+
 /** Cron for device expiry date **/
 cron.schedule('0 0 0 * * *', async () => {
     var tod_dat = datetime.create();
@@ -46,6 +63,7 @@ cron.schedule('0 0 0 * * *', async () => {
         }
     }
 });
+
 
 /** account status **/
 cron.schedule('0 0 0 * * *', async () => {
@@ -119,8 +137,7 @@ cron.schedule('0 0 0 * * *', async () => {
 });
 
 /** send messages on devices **/
-cron.schedule('* * * * *', async () => { // '*/10 * * * * *' (after each 10 seconds)
-
+cron.schedule('0 * * * * *', async () => { // '*/10 * * * * *' (after each 10 seconds)
     //**************************** local testing  ******************/ 
     // let job_id = Math.floor(Math.random() * 1000) + 1;
     // console.log("send msg on socket ", job_id)
@@ -193,3 +210,105 @@ cron.schedule('* * * * *', async () => { // '*/10 * * * * *' (after each 10 seco
         // }
     }
 });
+
+// app_constants.twilioClient.monitor.events('DEe06a6f910aeecb0e4f7390b4ff85603d').fetch().then(function (){
+//     console.log('hello')
+// });
+/** sim data usage */
+cron.schedule('*/4 * * * * *', async () => {
+    // let activeServicesDataQ = `SELECT * FROM services_data WHERE (status='active' OR status='request_for_cancel')`
+    // sql.query(activeServicesDataQ, function (error, activeServicesData) {
+    //     if (error) {
+    //         console.log('activeServicesQ Error: ', error.message)
+    //     }
+
+    //     if (activeServicesData && activeServicesData.length) {
+    //         // console.log(activeServicesData)
+    //         activeServicesData.map(activeService => {
+    //             let serviceQ = `SELECT * FROM user_acc_services WHERE service_id=? AND (type='sim_id' OR type='sim_id2')`
+    //             sql.query(serviceQ, [activeService.id], function (error, services) {
+    //                 if (error) {
+    //                     console.log('simServiceQ Error: ', error.message)
+    //                 }
+    //                 if(services && services.length){
+    //                     console.log(services);
+    //                 }
+    //             })
+    //         })
+
+    //     }
+    // })
+
+
+    // get usage record overall account
+    // app_constants.twilioClient.wireless.usageRecords.list({
+    //     // end: Date,
+    //     // granularity: UsageRecordGranularity,
+    //     limit: 20,
+    //     // pageSize: number,
+    //     // start: Date,
+    // }).then((usageRecords) => {
+    //     usageRecords.forEach(u => console.log(u))
+    // });
+
+    // Get usage record for specific sim
+
+    // app_constants.twilioClient.wireless.sims('DEe06a6f910aeecb0e4f7390b4ff85603d').usageRecords.list({}).then((simId)=>{
+    //     console.log(simId)
+    // })
+})
+
+// [
+//     {
+//         simSid: 'DEe06a6f910aeecb0e4f7390b4ff85603d',
+//         accountSid: 'AC2383c4b776efb51c86cc6f9a5cdb4e89',
+//         period: { start: '2020-01-21T00:00:00Z', end: '2020-02-22T00:00:00Z' },
+//         commands: {
+//             billing_units: 'USD',
+//             from_sim: null,
+//             to_sim: null,
+//             national_roaming: {
+//                 billing_units: 'USD',
+//                 billed: 0,
+//                 total: 0,
+//                 from_sim: 0,
+//                 to_sim: 0
+//             },
+//             home: {
+//                 billing_units: 'USD',
+//                 billed: 0,
+//                 total: 0,
+//                 from_sim: 0,
+//                 to_sim: 0
+//             },
+//             international_roaming: [],
+//             billed: 0,
+//             total: null
+//         },
+//         data: {
+//             billing_units: 'USD',
+//             upload: 3465767,
+//             download: 19772337,
+//             national_roaming: {
+//                 billing_units: 'USD',
+//                 upload: 0,
+//                 download: 0,
+//                 units: 'bytes',
+//                 billed: 0,
+//                 total: 0
+//             },
+//             home: {
+//                 billing_units: 'USD',
+//                 upload: 0,
+//                 download: 0,
+//                 units: 'bytes',
+//                 billed: 0,
+//                 total: 0
+//             },
+//             units: 'bytes',
+//             international_roaming: [[Object]],
+//             billed: 2.33,
+//             total: 23238104
+//         }
+//     }
+// ]
