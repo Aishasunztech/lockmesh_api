@@ -1817,6 +1817,8 @@ exports.sendBulkMsg = async function (req, res) {
                     valid_conditions = false;
                 }
                 // intervalTime = 525949;
+            } else {
+                valid_conditions = false;
             }
         }
         else { // 04

@@ -224,7 +224,7 @@ exports.simUpdate = async function (req, res) {
     try {
         let simData = req.body.obj;
         console.log("req.body", req.body);
-        return res.send({ status: true, msg: 'jkl' });
+        // return res.send({ status: true, msg: 'jkl' });
 
         let id = req.body.obj.id;
         let label = req.body.label;
@@ -324,48 +324,26 @@ exports.simUpdate = async function (req, res) {
 
 exports.simDelete = async function (req, res) {
     var verify = req.decoded;
-    if (verify) {
-        try {
+    try {
+        console.log('body is: ', req.body);
+        let simData = req.body;
+        let device_id = simData.device_id;
+        let iccid = simData.iccid;
 
-            // console.log('body is: ', req.body);
+        // let dQry = `DELETE FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
+        let dQry = `UPDATE sims SET delete_status='1', is_changed='1' WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
+        let results = await sql.query(dQry);
 
-            // return;
-            let simData = req.body;
-            let device_id = simData.device_id;
-            let iccid = simData.iccid;
-
-            if (device_id != undefined && iccid != undefined) {
-                // let dQry = `DELETE FROM sims WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
-                let dQry = `UPDATE sims SET delete_status='1', is_changed='1' WHERE device_id = '${device_id}' AND iccid = '${iccid}'`;
-
-                sql.query(dQry, async function (err, result) {
-                    if (err) {
-                        console.log(err)
-                        res.send({
-                            status: false,
-                        })
-                        return;
-                    };
-
-                    socket_helpers.sendRegSim(sockets.baseIo, device_id, "sim_delete", [simData.iccid]);
-                    device_helpers.saveSimActionHistory(device_id, "DELETE", [simData.iccid]);
-                    data = {
-                        status: true,
-                        msg: await helpers.convertToLang(req.translation[MsgConstants.SIM_DELETE_SUCCESSFULLY], "Sim Deleted Successfully"), // "Sim Deleted Successfully"
-                    }
-                    res.send(data);
-                    return;
-                })
-            } else {
-                res.send({
-                    status: false,
-                    msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "ERROR"), // "ERROR"
-                })
-                return;
+        if (results && results.affectedRows) {
+            socket_helpers.sendRegSim(sockets.baseIo, device_id, "sim_delete", [simData.iccid]);
+            device_helpers.saveSimActionHistory(device_id, "DELETE", [simData.iccid]);
+            data = {
+                status: true,
+                msg: await helpers.convertToLang(req.translation[MsgConstants.SIM_DELETE_SUCCESSFULLY], "Sim Deleted Successfully"), // "Sim Deleted Successfully"
             }
-
-        } catch (error) {
-            console.log(error);
+            res.send(data);
+            return;
+        } else {
             res.send({
                 status: false,
                 msg: await helpers.convertToLang(req.translation[MsgConstants.SOMETHING_WRONG_DELETE_SIM], "Error: could not delete sim record"), // "Error: could not delete sim record"
@@ -373,10 +351,11 @@ exports.simDelete = async function (req, res) {
             return;
         }
 
-    } else {
+    } catch (error) {
+        console.log(error);
         res.send({
             status: false,
-            msg: await helpers.convertToLang(req.translation[MsgConstants.ERROR], "Error"), // "Error"
+            msg: await helpers.convertToLang(req.translation[""], "Error while processing"),
         })
         return;
     }
@@ -449,46 +428,39 @@ exports.getSims = async function (req, res) {
 
 exports.simHistory = async function (req, res) {
     var verify = req.decoded;
-    if (verify) {
-        try {
-            if (req.params.device_id) {
-                var IQry = `SELECT * FROM sims WHERE device_id= '${req.params.device_id}' AND delete_status = '1'`;
-                sql.query(IQry, async function (err, result) {
-                    // console.log("=======================================")
-                    // console.log('result is :', result)
-                    if (err) {
-                        console.log(err);
-                        throw err;
+    try {
+        if (req.params.device_id) {
+            var IQry = `SELECT * FROM sims WHERE device_id= '${req.params.device_id}' AND delete_status = '1'`;
+            sql.query(IQry, async function (err, result) {
+                // console.log('result is :', result)
+                if (err) {
+                    console.log(err);
+                    throw err;
+                }
+                if (result.length > 0) {
+                    data = {
+                        status: true,
+                        data: result
                     }
-                    if (result.length > 0) {
-                        data = {
-                            status: true,
-                            data: result
-                        }
-                    } else {
-                        data = {
-                            status: false,
-                            data: []
-                        }
+                } else {
+                    data = {
+                        status: false,
+                        data: []
                     }
-                    res.send(data);
+                }
+                res.send(data);
+            })
 
-                })
-
-                // return;
-            } else {
-                res.send({
-                    status: false,
-                })
-                // return;
-            }
-        } catch (error) {
-            console.log(error);
+        } else {
             res.send({
                 status: false,
             })
-            // return;
         }
+    } catch (error) {
+        console.log(error);
+        res.send({
+            status: false,
+        })
     }
 }
 
@@ -497,25 +469,24 @@ exports.getUnRegisterSims = async function (req, res) {
     var verify = req.decoded;
     let deviceId = req.params.device_id;
     // console.log("getUnRegisterSims device is: ", deviceId);
-    if (verify && deviceId) {
-
+    try {
+        // check device is online or offline
         let online = await device_helpers.isDeviceOnline(deviceId);
-        // console.log(deviceId, 'check device online ', online);
 
         if (online) {
-
             socket_helpers.sendRegSim(sockets.baseIo, deviceId, "sim_inserted");
             res.send({
                 status: false,
             })
-            return;
         } else {
             res.send({
                 status: true,
             })
-            return;
         }
 
+    } catch (err) {
+        console.log(err)
+        res.send({ status: false })
     }
 }
 
@@ -523,6 +494,8 @@ exports.getUnRegisterSims = async function (req, res) {
 exports.addStandAloneSim = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
+        console.log('body is: ', req.body);
+        return res.send({ status: true, msg: 'done' })
         let sim_id = req.body.iccid
         let package_id = req.body.package
         let data_plan_id = req.body.data_plan
