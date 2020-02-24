@@ -1655,8 +1655,8 @@ exports.getHardwares = async function (req, res) {
                         return
                     }
 
-                    if (reslt) {
-                        if (reslt.length) {
+                    if (reslt && reslt.length) {
+                        
                             // if (verify.user.user_type !== SDEALER) {
                             for (var i = 0; i < reslt.length; i++) {
                                 if (verify.user.user_type === ADMIN) {
@@ -1723,7 +1723,7 @@ exports.getHardwares = async function (req, res) {
 
                             })
                             return
-                        }
+                    
                     } else {
                         res.send({
                             status: true,

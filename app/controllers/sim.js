@@ -82,6 +82,9 @@ exports.getStandAloneSims = async function (req, res) {
 exports.changeSimStatus = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
+
+        // console.log("body: ", req.body);
+        // return res.send({ status: false, msg: 'done' })
         let id = req.body.id
         let type = req.body.type
         let user_id = verify.user.id
@@ -161,7 +164,7 @@ exports.changeSimStatus = async function (req, res) {
 exports.simRegister = async function (req, res) {
     var verify = req.decoded;
     try {
-        console.log("req.body ", req.body);
+        // console.log("req.body ", req.body);
         let rSim = req.body.data;
         // console.log('sim-register ', req.body)
 
@@ -501,8 +504,8 @@ exports.getUnRegisterSims = async function (req, res) {
 exports.addStandAloneSim = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
-        console.log('body is: ', req.body);
-        return res.send({ status: true, msg: 'done' })
+        // console.log('body is: ', req.body);
+        // return res.send({ status: false, msg: 'done' })
         let sim_id = req.body.iccid
         let package_id = req.body.package
         let data_plan_id = req.body.data_plan

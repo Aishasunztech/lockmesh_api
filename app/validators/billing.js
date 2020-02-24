@@ -114,6 +114,7 @@ exports.saveSaPackage = [
         .isInt({min: 1}),
 
     body('data.pkgFeatures')
+        .optional()
         .custom(v => ObjectWithKeys(v, savePackageSchema))
         .custom(v => atLeastOneTrueRequired(v)),
 
