@@ -6,7 +6,7 @@ exports.validatePgpEmail = async function (req, res) {
     // let ts = req.body.ts;
 
     console.log('checkPgpEmail:', device_id, pgp_email);
-    
+
     if (!device_id || !pgp_email) {
         return res.status(422).send({
             status: false,
