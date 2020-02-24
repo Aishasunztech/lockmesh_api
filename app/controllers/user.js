@@ -338,6 +338,10 @@ exports.undoDeleteUser = async function (req, res) {
             sql.query(deleteUserQ, async function (err, result) {
                 if (err) {
                     console.log(err)
+                    return res.send({
+                        status: false,
+                        msg: 'Error: Internel Server Error'
+                    })
                 }
                 if (result && result.affectedRows !== 0) {
                     data = {
@@ -377,6 +381,10 @@ exports.updateProfile = async function (req, res) {
 
             if (error) {
                 console.log(error);
+                return res.send({
+                    status: false,
+                    msg: 'Error: Internel Server Error'
+                })
             }
             if (status) {
                 data = {
@@ -408,6 +416,10 @@ exports.checkProfile = async function (req, res) {
                 //response.end(JSON.stringify(rows));
                 if (error) {
                     console.log(error);
+                    return res.send({
+                        status: false,
+                        msg: 'Error: Internel Server Error'
+                    })
                 }
                 if (results.affectedRows == 0) {
                     data = {

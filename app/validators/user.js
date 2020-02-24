@@ -68,10 +68,10 @@ exports.updateProfile = [
         .isString(),
 
     body('tel_no')
-        .isString(),
+        .isMobilePhone(),
 
     body('website')
-        .isString(),
+        .isFQDN(),
 
     body('dealerId')
         .isInt({min: 1})

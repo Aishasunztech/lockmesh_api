@@ -330,7 +330,7 @@ router.post('/edit/user', [userValidators.editUser, errorMsgs], userController.e
  */
 
 /*** DELETE User ***/
-router.put("/delete_user/:user_id", [userValidators.deleteUser, errorMsgs], userController.deleteUser);
+router.put("/delete_user/:undoDeleteUser", [userValidators.deleteUser, errorMsgs], userController.deleteUser);
 
 /**
  * @route PUT /users/undo_delete_user/{user_id}
@@ -357,7 +357,7 @@ router.put('/undo_delete_user/:user_id', userController.undoDeleteUser);
  */
 
 /**UPDATE Profile details  **/
-router.put('/updateProfile/:id', userController.updateProfile);
+router.put('/updateProfile/:id', [userValidators.updateProfile, errorMsgs], userController.updateProfile);
 
 /**
  * @route POST /users/resetpwd
