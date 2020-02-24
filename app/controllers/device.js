@@ -820,7 +820,12 @@ exports.acceptDevice = async function (req, res) {
                                                             let insertSimIds = `INSERT INTO sim_ids (sim_id , user_acc_id , start_date , dealer_id , used , uploaded_by , uploaded_by_id) VALUES ('${sim_id}' , ${usr_acc_id} , '${start_date}' , ${dealer_id} , 1 , '${verify.user.user_type}' , '${verify.user.id}')`;
                                                             let simIdInsertResult = await sql.query(insertSimIds)
                                                             if (simIdInsertResult.affectedRows) {
-                                                                helpers.updateSimStatus(sim_id, 'active')
+                                                                let sim_data = {
+                                                                    dealer_name: checkUnique,
+                                                                    dealer_pin: loggedDealer.link_code
+                                                                }
+                                                                helpers.updateSimStatus(sim_id, 'active', null, true, sim_data)
+
 
                                                                 let getsimID = "SELECT * FROM sim_ids WHERE sim_id = '" + sim_id + "'"
                                                                 sql.query(getsimID, function (err, result) {

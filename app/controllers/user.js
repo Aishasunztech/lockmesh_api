@@ -149,8 +149,8 @@ exports.addUser = async function (req, res) {
         var userName = req.body.name;
         var userEmail = req.body.email;
 
-        var userId = randomize('0', 6);
-        userId = 'ID' + await helpers.checkUserId(userId)
+        var userId = await helpers.generateUserId()
+
         var user_pwd = generator.generate({
             length: 10,
             numbers: true

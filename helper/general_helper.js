@@ -544,15 +544,27 @@ module.exports = {
 			return code;
 		}
 	},
-	checkUserId: async function (userId) {
+	generateUserId: async function () {
+		let userId = 'ID' + randomize('0', 6);
 		let query =
 			"select user_id from users where user_id = '" + userId + "';";
 		let result = await sql.query(query);
 		if (result.length > 1) {
-			userId = randomize("0", 6);
-			this.checkUserId(userId);
+			this.generateUserId();
 		} else {
 			return userId;
+		}
+	},
+
+	generateStandaloneSimId: async function () {
+		let standalone_sim_id = 'LM' + randomize('0', 6);
+		let query =
+			"select standalone_sim_id from standalone_sim_acc where standalone_sim_id = '" + standalone_sim_id + "';";
+		let result = await sql.query(query);
+		if (result.length > 1) {
+			this.generateStandaloneSimId();
+		} else {
+			return standalone_sim_id;
 		}
 	},
 	getExpDateByMonth: function (currentDate, expiryMonth) {
@@ -2394,11 +2406,11 @@ module.exports = {
 		await sql.query(updateLastLoginQ);
 	},
 	updateSimStatus: (sim_id, status, res = null, isNew = false, data = null, sid = null) => {
-		console.log(sid);
+		// console.log(sid);
 		if (sid) {
 			let updateObject = { status: status }
 			if (isNew) {
-				let date_now = moment().format('YYYY/MM/DD_HH:mm')
+				let date_now = moment().format('YYYY/MM/DD_HH:mm:ss')
 				let unique_name = `LM${data.dealer_pin}_${date_now}_${data.dealer_name}`
 				if (data.device_id) {
 					unique_name = unique_name + `_${data.device_id}`
@@ -2464,7 +2476,7 @@ module.exports = {
 				if (response && response.length) {
 					let updateObject = { status: status }
 					if (isNew) {
-						let date_now = moment().format('YYYY/MM/DD_HH:mm')
+						let date_now = moment().format('YYYY/MM/DD_HH:mm:ss')
 						let unique_name = `LM${data.dealer_pin}_${date_now}_${data.dealer_name}`
 						if (data.device_id) {
 							unique_name = unique_name + `_${data.device_id}`

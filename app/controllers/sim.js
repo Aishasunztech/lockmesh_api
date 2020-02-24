@@ -2,6 +2,7 @@
 var empty = require('is-empty');
 var moment = require('moment');
 var path = require("path");
+var randomize = require('randomatic');
 
 // custom libraries
 const { sql } = require('../../config/database');
@@ -22,12 +23,13 @@ const { sendEmail } = require("../../lib/email");
 
 
 
+
 exports.getStandAloneSims = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
         let loggedInId = verify.user.id
         let loggedInType = verify.user.user_type
-        var SQry = `SELECT s.* , sas.term , sas.end_date , d.device_id FROM sim_ids as s LEFT JOIN usr_acc as u on s.user_acc_id = u.id LEFT JOIN devices as d ON d.id= u.device_id LEFT JOIN standalone_sims as sas ON sas.sim_id = s.id WHERE s.delete_status = '0' AND ( s.delete_status = '0' OR sas.status = 'active' OR sas.status = 'completed') `;
+        var SQry = `SELECT s.* , sas.term , sas.end_date , d.device_id FROM sim_ids as s LEFT JOIN usr_acc as u on s.user_acc_id = u.id LEFT JOIN devices as d ON d.id= u.device_id LEFT JOIN standalone_sims_data as sas ON sas.sim_id = s.id WHERE s.delete_status = '0' AND ( s.delete_status = '0' OR sas.status = 'active' OR sas.status = 'completed') `;
         if (loggedInType !== constants.ADMIN) {
             SQry = SQry + `AND (s.dealer_id = ${loggedInId} OR s.uploaded_by_id = ${loggedInId}) `
         }
@@ -566,6 +568,7 @@ exports.addStandAloneSim = async function (req, res) {
         let date_now = moment().format('YYYY/MM/DD')
         let term = req.body.term
         let loggedDealer = {}
+
         sql.getConnection(async (error, connection) => {
             if (error) {
                 console.log(error)
@@ -662,7 +665,7 @@ exports.addStandAloneSim = async function (req, res) {
                                                             msg: await helpers.convertToLang(req.translation[""], "ERROR: Internal server error.")
                                                         })
                                                     }
-                                                    console.log(package_id, data_plan_id, pkg_term);
+                                                    // console.log(package_id, data_plan_id, pkg_term);
                                                     if (packages && packages.length) {
                                                         let data_plan_package = null
                                                         let admin_cost = 0
@@ -717,11 +720,11 @@ exports.addStandAloneSim = async function (req, res) {
                                                                     admin_profit = profitLoss.admin_profit
                                                                     dealer_profit = profitLoss.dealer_profit
                                                                 }
-
-                                                                let inserQuery = `INSERT INTO sim_ids (sim_id , used , dealer_id , start_date , uploaded_by , uploaded_by_id , type , name , email , note) VALUES (?,?,?,?,?,?,?,?,?,?)`
-                                                                let values = [sim_id, 1, user_id, date_now, user_type, user_id, 'standalone', name, email, note]
-                                                                sql.query(inserQuery, values, function (err, insertResult) {
-                                                                    if (err) {
+                                                                var standaloneSimId = await helpers.generateStandaloneSimId()
+                                                                let insertStandaloneAccountQ = `INSERT INTO standalone_sim_acc (standalone_sim_id , dealer_id , name , email , note , start_date , expiry_date , term ) VALUES(?,?,?,?,?,?,?,?)`
+                                                                let standaloneAccValues = [standaloneSimId, user_id, name, email, note, date_now, expiry_date, term]
+                                                                sql.query(insertStandaloneAccountQ, standaloneAccValues, function (standaloneError, standalone_acc_reslt) {
+                                                                    if (standaloneError) {
                                                                         console.log(err);
                                                                         connection.rollback()
                                                                         return res.send({
@@ -729,216 +732,237 @@ exports.addStandAloneSim = async function (req, res) {
                                                                             msg: "ERROR: Internal server error."
                                                                         })
                                                                     }
-                                                                    if (insertResult && insertResult.insertId) {
-                                                                        let sim_t_id = insertResult.insertId
-                                                                        let inserStandaloneQuery = `INSERT INTO standalone_sims (sim_id ,iccid , dealer_id , dealer_type , package_data , sale_price , admin_cost , dealer_cost , term , start_date , end_date) VALUES (?,?,?,?,?,?,?,?,?,?,?)`
-                                                                        let standAloneValues = [sim_t_id, sim_id, user_id, user_type, JSON.stringify(packages), discounted_total_price, admin_cost, dealer_cost, term, date_now, expiry_date]
-                                                                        sql.query(inserStandaloneQuery, standAloneValues, async function (error, insertResultStandAlone) {
-                                                                            if (error) {
-                                                                                console.log(error);
+                                                                    if (standalone_acc_reslt && standalone_acc_reslt.insertId) {
+                                                                        let standalone_acc_id = standalone_acc_reslt.insertId
+                                                                        let inserQuery = `INSERT INTO sim_ids (sim_id , standalone_acc_id ,used , dealer_id , start_date , uploaded_by , uploaded_by_id , type , name , email , note) VALUES (?,?,?,?,?,?,?,?,?,?,?)`
+                                                                        let values = [sim_id, standalone_acc_id, 1, user_id, date_now, user_type, user_id, 'standalone', name, email, note]
+                                                                        sql.query(inserQuery, values, async function (err, insertResult) {
+                                                                            if (err) {
+                                                                                console.log(err);
                                                                                 connection.rollback()
                                                                                 return res.send({
                                                                                     status: false,
                                                                                     msg: "ERROR: Internal server error."
                                                                                 })
                                                                             }
-                                                                            if (insertResultStandAlone && insertResultStandAlone.insertId) {
-                                                                                let standalone_t_id = insertResultStandAlone.insertId
-                                                                                if (data_plan_package) {
-                                                                                    let data_plan_package_data = [{
-                                                                                        data_limit: data_plan_package.data_limit,
-                                                                                        pkg_price: data_plan_package.pkg_price,
-                                                                                        term: term,
-                                                                                        added_date: date_now
-                                                                                    }]
-                                                                                    let inserDataPlanQuery = `INSERT INTO sim_data_plans (service_id ,data_plan_package , total_price , sim_type , total_data  , start_date , type) VALUES (?,?,?,?,?,?,?)`
-                                                                                    let dataPlanValues = [standalone_t_id, JSON.stringify(data_plan_package_data), data_plan_package.pkg_price, 'sim_id', data_plan_package.data_limit, date_now, 'standalone']
-                                                                                    let insertResultDataPlan = await sql.query(inserDataPlanQuery, dataPlanValues)
-                                                                                    if (!insertResultDataPlan || !insertResultDataPlan.insertId) {
-                                                                                        connection.rollback()
-                                                                                        console.log("Data Plan failed to add.");
-                                                                                        return res.send({
-                                                                                            status: false,
-                                                                                            msg: "ERROR: Sim not added. Please try again."
-                                                                                        })
-                                                                                    }
-                                                                                }
-                                                                                let inv_no = await helpers.getInvoiceId()
-                                                                                let fileName = "invoice-" + inv_no + ".pdf"
-                                                                                let filePath = path.join(__dirname, "../../uploads/" + fileName)
-                                                                                let invoiceData = await sql.query(`INSERT INTO invoices (inv_no,sim_t_id,dealer_id,file_name ,end_user_payment_status , type) VALUES('${inv_no}',${sim_t_id},${user_id}, '${fileName}' , '${paid_by_user}' , 'standalone_sim')`)
-                                                                                let invoice_status = pay_now ? "PAID" : "UNPAID"
-                                                                                let transection_data = {
-                                                                                    sim_iccid: sim_id,
-                                                                                    standalone_service_id: standalone_t_id
-                                                                                }
-                                                                                if (pay_now) {
-                                                                                    let transection_credits = `INSERT INTO financial_account_transections (user_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits , invoice_id) VALUES (${user_id} ,'${JSON.stringify(transection_data)}' ,${discounted_total_price} ,'credit' , 'transferred' , 'standalone_sim' , ${discounted_total_price} , ${0} , ${invoiceData.insertId})`
-                                                                                    let inserteddata = await sql.query(transection_credits)
-                                                                                    if (!inserteddata || !inserteddata.insertId) {
-                                                                                        connection.rollback()
-                                                                                        console.log("Data Plan failed to add.");
-                                                                                        return res.send({
-                                                                                            status: false,
-                                                                                            msg: "ERROR: Sim not added. Please try again."
-                                                                                        })
-                                                                                    }
-                                                                                }
-                                                                                else {
-                                                                                    let transection_due_credits = discounted_total_price;
-                                                                                    if (dealer_account.credits > 0) {
-                                                                                        transection_due_credits = discounted_total_price - dealer_account.credits
-                                                                                        paid_credits = dealer_account.credits
-                                                                                        let transection_credits = `INSERT INTO financial_account_transections (user_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits, invoice_id) VALUES (${user_id} ,'${JSON.stringify(transection_data)}' ,${discounted_total_price} ,'credit' , 'pending' , 'standalone_sim' , ${paid_credits} , ${transection_due_credits} , ${invoiceData.insertId})`
-                                                                                        let inserteddata = await sql.query(transection_credits)
-                                                                                        if (!inserteddata || !inserteddata.insertId) {
-                                                                                            connection.rollback()
-                                                                                            console.log("Data Plan failed to add.");
-                                                                                            return res.send({
-                                                                                                status: false,
-                                                                                                msg: "ERROR: Sim not added. Please try again."
-                                                                                            })
-                                                                                        }
-                                                                                        dealer_credits_remaining = false
-                                                                                        invoice_status = "PARTIALLY PAID"
-                                                                                    } else {
-                                                                                        let transection_credits = `INSERT INTO financial_account_transections (user_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits, invoice_id) VALUES (${user_id} ,'${JSON.stringify(transection_data)}' ,${discounted_total_price} ,'credit' , 'pending' , 'standalone_sim' , 0 ,${discounted_total_price} , ${invoiceData.insertId})`
-                                                                                        let inserteddata = await sql.query(transection_credits)
-                                                                                        if (!inserteddata || !inserteddata.insertId) {
-                                                                                            connection.rollback()
-                                                                                            console.log("Data Plan failed to add.");
-                                                                                            return res.send({
-                                                                                                status: false,
-                                                                                                msg: "ERROR: Sim not added. Please try again."
-                                                                                            })
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                                let profit_transection_status = 'holding'
-                                                                                if (pay_now) {
-                                                                                    profit_transection_status = 'transferred'
+                                                                            if (insertResult && insertResult.insertId) {
+                                                                                let sim_t_id = insertResult.insertId
 
-                                                                                }
-                                                                                if (admin_profit !== 0) {
-                                                                                    let type = 'debit'
-                                                                                    if (admin_profit < 0) {
-                                                                                        type = 'credit'
-                                                                                    }
-                                                                                    let admin_profit_query = `INSERT INTO financial_account_transections (user_id, transection_data ,credits , transection_type , status , type) VALUES (${admin_data[0].dealer_id} ,'${JSON.stringify(transection_data)}', ${admin_profit} ,'${type}', '${profit_transection_status}', 'standalone_sim')`
-                                                                                    let profit_result = await sql.query(admin_profit_query);
-                                                                                    if (profit_result && profit_result.length) {
-                                                                                        if (pay_now) {
-                                                                                            let update_admin_credits = `UPDATE financial_account_balance SET credits = credits + ${admin_profit} WHERE dealer_id = ${admin_data[0].dealer_id}`
-                                                                                            await sql.query(update_admin_credits)
-                                                                                        }
-                                                                                    } else {
+
+                                                                                let inserStandaloneQuery = `INSERT INTO standalone_sims_data (standalone_acc_id, sim_id ,iccid , dealer_id , dealer_type , package_data , sale_price , admin_cost , dealer_cost , term , start_date , end_date) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`
+                                                                                let standAloneValues = [standalone_acc_id, sim_t_id, sim_id, user_id, user_type, JSON.stringify(packages), discounted_total_price, admin_cost, dealer_cost, term, date_now, expiry_date]
+                                                                                sql.query(inserStandaloneQuery, standAloneValues, async function (error, insertResultStandAlone) {
+                                                                                    if (error) {
+                                                                                        console.log(error);
                                                                                         connection.rollback()
+                                                                                        return res.send({
+                                                                                            status: false,
+                                                                                            msg: "ERROR: Internal server error."
+                                                                                        })
                                                                                     }
-                                                                                }
-                                                                                if (user_type === constants.SDEALER) {
-                                                                                    if (dealer_profit !== 0) {
-                                                                                        let type = 'debit'
-                                                                                        if (dealer_profit < 0) {
-                                                                                            type = 'credit'
+                                                                                    if (insertResultStandAlone && insertResultStandAlone.insertId) {
+                                                                                        let standalone_t_id = insertResultStandAlone.insertId
+                                                                                        if (data_plan_package) {
+                                                                                            let data_plan_package_data = [{
+                                                                                                data_limit: data_plan_package.data_limit,
+                                                                                                pkg_price: data_plan_package.pkg_price,
+                                                                                                term: term,
+                                                                                                added_date: date_now
+                                                                                            }]
+                                                                                            let inserDataPlanQuery = `INSERT INTO sim_data_plans (standalone_service_id ,data_plan_package , total_price , sim_type , total_data  , start_date , type) VALUES (?,?,?,?,?,?,?)`
+                                                                                            let dataPlanValues = [standalone_t_id, JSON.stringify(data_plan_package_data), data_plan_package.pkg_price, 'sim_id', data_plan_package.data_limit, date_now, 'standalone']
+                                                                                            let insertResultDataPlan = await sql.query(inserDataPlanQuery, dataPlanValues)
+                                                                                            if (!insertResultDataPlan || !insertResultDataPlan.insertId) {
+                                                                                                connection.rollback()
+                                                                                                console.log("Data Plan failed to add.");
+                                                                                                return res.send({
+                                                                                                    status: false,
+                                                                                                    msg: "ERROR: Sim not added. Please try again."
+                                                                                                })
+                                                                                            }
                                                                                         }
-                                                                                        let dealer_profit_query = `INSERT INTO financial_account_transections (user_id, transection_data ,credits , transection_type , status , type) VALUES (${user.connected_dealer},'${JSON.stringify(transection_data)}', ${dealer_profit} ,'${type}', '${profit_transection_status}', 'standalone_sim')`
-                                                                                        let profit_result = await sql.query(dealer_profit_query);
-                                                                                        if (profit_result && profit_result.length && pay_now) {
-                                                                                            if (pay_now) {
-                                                                                                let update_admin_credits = `UPDATE financial_account_balance SET credits = credits + ${dealer_profit} WHERE dealer_id = ${user.connected_dealer}`
-                                                                                                let updatedResult = await sql.query(update_admin_credits)
-                                                                                                if (!updatedResult || updatedResult.affectedRows < 0) {
+                                                                                        let inv_no = await helpers.getInvoiceId()
+                                                                                        let fileName = "invoice-" + inv_no + ".pdf"
+                                                                                        let filePath = path.join(__dirname, "../../uploads/" + fileName)
+                                                                                        let invoiceData = await sql.query(`INSERT INTO invoices (inv_no,sim_t_id,dealer_id,file_name ,end_user_payment_status , type) VALUES('${inv_no}',${sim_t_id},${user_id}, '${fileName}' , '${paid_by_user}' , 'standalone_sim')`)
+                                                                                        let invoice_status = pay_now ? "PAID" : "UNPAID"
+                                                                                        let transection_data = {
+                                                                                            sim_iccid: sim_id,
+                                                                                            standalone_service_id: standalone_t_id
+                                                                                        }
+                                                                                        if (pay_now) {
+                                                                                            let transection_credits = `INSERT INTO financial_account_transections (user_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits , invoice_id) VALUES (${user_id} ,'${JSON.stringify(transection_data)}' ,${discounted_total_price} ,'credit' , 'transferred' , 'standalone_sim' , ${discounted_total_price} , ${0} , ${invoiceData.insertId})`
+                                                                                            let inserteddata = await sql.query(transection_credits)
+                                                                                            if (!inserteddata || !inserteddata.insertId) {
+                                                                                                connection.rollback()
+                                                                                                console.log("Data Plan failed to add.");
+                                                                                                return res.send({
+                                                                                                    status: false,
+                                                                                                    msg: "ERROR: Sim not added. Please try again."
+                                                                                                })
+                                                                                            }
+                                                                                        }
+                                                                                        else {
+                                                                                            let transection_due_credits = discounted_total_price;
+                                                                                            if (dealer_account.credits > 0) {
+                                                                                                transection_due_credits = discounted_total_price - dealer_account.credits
+                                                                                                paid_credits = dealer_account.credits
+                                                                                                let transection_credits = `INSERT INTO financial_account_transections (user_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits, invoice_id) VALUES (${user_id} ,'${JSON.stringify(transection_data)}' ,${discounted_total_price} ,'credit' , 'pending' , 'standalone_sim' , ${paid_credits} , ${transection_due_credits} , ${invoiceData.insertId})`
+                                                                                                let inserteddata = await sql.query(transection_credits)
+                                                                                                if (!inserteddata || !inserteddata.insertId) {
+                                                                                                    connection.rollback()
+                                                                                                    console.log("Data Plan failed to add.");
+                                                                                                    return res.send({
+                                                                                                        status: false,
+                                                                                                        msg: "ERROR: Sim not added. Please try again."
+                                                                                                    })
+                                                                                                }
+                                                                                                dealer_credits_remaining = false
+                                                                                                invoice_status = "PARTIALLY PAID"
+                                                                                            } else {
+                                                                                                let transection_credits = `INSERT INTO financial_account_transections (user_id, transection_data, credits ,transection_type , status , type ,paid_credits , due_credits, invoice_id) VALUES (${user_id} ,'${JSON.stringify(transection_data)}' ,${discounted_total_price} ,'credit' , 'pending' , 'standalone_sim' , 0 ,${discounted_total_price} , ${invoiceData.insertId})`
+                                                                                                let inserteddata = await sql.query(transection_credits)
+                                                                                                if (!inserteddata || !inserteddata.insertId) {
+                                                                                                    connection.rollback()
+                                                                                                    console.log("Data Plan failed to add.");
+                                                                                                    return res.send({
+                                                                                                        status: false,
+                                                                                                        msg: "ERROR: Sim not added. Please try again."
+                                                                                                    })
+                                                                                                }
+                                                                                            }
+                                                                                        }
+                                                                                        let profit_transection_status = 'holding'
+                                                                                        if (pay_now) {
+                                                                                            profit_transection_status = 'transferred'
+
+                                                                                        }
+                                                                                        if (admin_profit !== 0) {
+                                                                                            let type = 'debit'
+                                                                                            if (admin_profit < 0) {
+                                                                                                type = 'credit'
+                                                                                            }
+                                                                                            let admin_profit_query = `INSERT INTO financial_account_transections (user_id, transection_data ,credits , transection_type , status , type) VALUES (${admin_data[0].dealer_id} ,'${JSON.stringify(transection_data)}', ${admin_profit} ,'${type}', '${profit_transection_status}', 'standalone_sim')`
+                                                                                            let profit_result = await sql.query(admin_profit_query);
+                                                                                            if (profit_result && profit_result.length) {
+                                                                                                if (pay_now) {
+                                                                                                    let update_admin_credits = `UPDATE financial_account_balance SET credits = credits + ${admin_profit} WHERE dealer_id = ${admin_data[0].dealer_id}`
+                                                                                                    await sql.query(update_admin_credits)
+                                                                                                }
+                                                                                            } else {
+                                                                                                connection.rollback()
+                                                                                            }
+                                                                                        }
+                                                                                        if (user_type === constants.SDEALER) {
+                                                                                            if (dealer_profit !== 0) {
+                                                                                                let type = 'debit'
+                                                                                                if (dealer_profit < 0) {
+                                                                                                    type = 'credit'
+                                                                                                }
+                                                                                                let dealer_profit_query = `INSERT INTO financial_account_transections (user_id, transection_data ,credits , transection_type , status , type) VALUES (${user.connected_dealer},'${JSON.stringify(transection_data)}', ${dealer_profit} ,'${type}', '${profit_transection_status}', 'standalone_sim')`
+                                                                                                let profit_result = await sql.query(dealer_profit_query);
+                                                                                                if (profit_result && profit_result.length && pay_now) {
+                                                                                                    if (pay_now) {
+                                                                                                        let update_admin_credits = `UPDATE financial_account_balance SET credits = credits + ${dealer_profit} WHERE dealer_id = ${user.connected_dealer}`
+                                                                                                        let updatedResult = await sql.query(update_admin_credits)
+                                                                                                        if (!updatedResult || updatedResult.affectedRows < 0) {
+                                                                                                            connection.rollback()
+                                                                                                        }
+                                                                                                    }
+                                                                                                } else {
                                                                                                     connection.rollback()
                                                                                                 }
                                                                                             }
-                                                                                        } else {
+                                                                                        }
+                                                                                        let update_dealer_credits = `UPDATE financial_account_balance SET credits = credits - ${discounted_total_price} WHERE dealer_id = ${user_id}`
+                                                                                        let updatedResult = await sql.query(update_dealer_credits)
+                                                                                        if (!updatedResult || updatedResult.affectedRows < 0) {
                                                                                             connection.rollback()
                                                                                         }
-                                                                                    }
-                                                                                }
-                                                                                let update_dealer_credits = `UPDATE financial_account_balance SET credits = credits - ${discounted_total_price} WHERE dealer_id = ${user_id}`
-                                                                                let updatedResult = await sql.query(update_dealer_credits)
-                                                                                if (!updatedResult || updatedResult.affectedRows < 0) {
-                                                                                    connection.rollback()
-                                                                                }
-                                                                                let user_credits = "SELECT * FROM financial_account_balance WHERE dealer_id=" + user_id
-                                                                                let account_balance = await sql.query(user_credits)
-                                                                                const invoice = {
-                                                                                    shipping: {
-                                                                                        name: verify.user.dealer_name,
-                                                                                        dealer_pin: verify.user.link_code,
-                                                                                        sim_id: sim_id,
-                                                                                    },
-                                                                                    products: [],
-                                                                                    packages: packages,
-                                                                                    hardwares: [],
-                                                                                    pay_now: pay_now,
-                                                                                    discount: discount,
-                                                                                    discountPercent: "3%",
-                                                                                    quantity: 1,
-                                                                                    subtotal: total_price,
-                                                                                    paid: discounted_total_price,
-                                                                                    invoice_nr: inv_no,
-                                                                                    invoice_status: invoice_status,
-                                                                                    paid_credits: paid_credits,
-                                                                                    expiry_date: expiry_date,
-                                                                                    type: 'standalone_sim'
-                                                                                };
-                                                                                await createInvoice(invoice, filePath)
+                                                                                        let user_credits = "SELECT * FROM financial_account_balance WHERE dealer_id=" + user_id
+                                                                                        let account_balance = await sql.query(user_credits)
+                                                                                        const invoice = {
+                                                                                            shipping: {
+                                                                                                name: verify.user.dealer_name,
+                                                                                                dealer_pin: verify.user.link_code,
+                                                                                                sim_id: sim_id,
+                                                                                            },
+                                                                                            products: [],
+                                                                                            packages: packages,
+                                                                                            hardwares: [],
+                                                                                            pay_now: pay_now,
+                                                                                            discount: discount,
+                                                                                            discountPercent: "3%",
+                                                                                            quantity: 1,
+                                                                                            subtotal: total_price,
+                                                                                            paid: discounted_total_price,
+                                                                                            invoice_nr: inv_no,
+                                                                                            invoice_status: invoice_status,
+                                                                                            paid_credits: paid_credits,
+                                                                                            expiry_date: expiry_date,
+                                                                                            type: 'standalone_sim'
+                                                                                        };
+                                                                                        await createInvoice(invoice, filePath)
 
-                                                                                let attachment = {
-                                                                                    fileName: fileName,
-                                                                                    file: filePath
-                                                                                }
+                                                                                        let attachment = {
+                                                                                            fileName: fileName,
+                                                                                            file: filePath
+                                                                                        }
 
 
-                                                                                html = 'You have added a new standalone sim with ICCID :  ' + sim_id + '.<br>Your Invoice is attached below. <br>';
+                                                                                        html = 'You have added a new standalone sim with ICCID :  ' + sim_id + '.<br>Your Invoice is attached below. <br>';
 
-                                                                                sendEmail("NEW STANDALONE SIM ADDED", html, verify.user.dealer_email, null, attachment);
+                                                                                        sendEmail("NEW STANDALONE SIM ADDED", html, verify.user.dealer_email, null, attachment);
 
-                                                                                let dealer_data = {
-                                                                                    dealer_name: loggedDealer.dealer_name,
-                                                                                    dealer_pin: loggedDealer.link_code
-                                                                                }
-                                                                                helpers.updateSimStatus(sim_id, 'active', null, true, dealer_data)
+                                                                                        let sim_data = {
+                                                                                            dealer_name: loggedDealer.dealer_name,
+                                                                                            dealer_pin: loggedDealer.link_code
+                                                                                        }
+                                                                                        helpers.updateSimStatus(sim_id, 'active', null, true, sim_data)
 
 
-                                                                                var SimQry = `SELECT s.* , d.device_id FROM sim_ids as s LEFT JOIN usr_acc as u on s.user_acc_id = u.id LEFT JOIN devices as d ON d.id= u.device_id LEFT JOIN standalone_sims as sas ON sas.sim_id = s.id WHERE s.id = ${sim_t_id} AND sas.id = ${standalone_t_id}`;
-                                                                                console.log(SimQry);
-                                                                                sql.query(SimQry, async function (err, result) {
-                                                                                    if (err) {
-                                                                                        console.log(err);
+                                                                                        var SimQry = `SELECT s.* , d.device_id FROM sim_ids as s LEFT JOIN usr_acc as u on s.user_acc_id = u.id LEFT JOIN devices as d ON d.id= u.device_id LEFT JOIN standalone_sims_data as sas ON sas.sim_id = s.id WHERE s.id = ${sim_t_id} AND sas.id = ${standalone_t_id}`;
+                                                                                        sql.query(SimQry, async function (err, result) {
+                                                                                            if (err) {
+                                                                                                console.log(err);
+                                                                                                connection.rollback()
+                                                                                                return res.send({
+                                                                                                    status: false,
+                                                                                                    msg: "ERROR: Sim not added. Please try again."
+                                                                                                })
+                                                                                            }
+                                                                                            if (result && result.length) {
+                                                                                                // connection.commit(function (commitErr) {
+                                                                                                //     if (commitErr) {
+                                                                                                //         console.log(commitErr)
+                                                                                                //         return res.send({
+                                                                                                //             status: false,
+                                                                                                //             msg: "ERROR: Sim not added. Please try again."
+                                                                                                //         })
+                                                                                                //     } else {
+                                                                                                //     }
+                                                                                                // })
+                                                                                                console.log("Standalone Sim added Successfully");
+                                                                                                return res.send({
+                                                                                                    status: true,
+                                                                                                    msg: "Stand Alone Sim added Successfully.",
+                                                                                                    data: result[0],
+                                                                                                    credits: account_balance[0] ? account_balance[0].credits : 0,
+                                                                                                })
+                                                                                            }
+                                                                                        })
+                                                                                    } else {
                                                                                         connection.rollback()
+                                                                                        console.log("Standalone Sim data failed to add.");
                                                                                         return res.send({
                                                                                             status: false,
                                                                                             msg: "ERROR: Sim not added. Please try again."
-                                                                                        })
-                                                                                    }
-                                                                                    if (result && result.length) {
-                                                                                        // connection.commit(function (commitErr) {
-                                                                                        //     if (commitErr) {
-                                                                                        //         console.log(commitErr)
-                                                                                        //         return res.send({
-                                                                                        //             status: false,
-                                                                                        //             msg: "ERROR: Sim not added. Please try again."
-                                                                                        //         })
-                                                                                        //     } else {
-                                                                                        //     }
-                                                                                        // })
-
-
-                                                                                        console.log("Standalone Sim added Successfully");
-                                                                                        return res.send({
-                                                                                            status: true,
-                                                                                            msg: "Stand Alone Sim added Successfully.",
-                                                                                            data: result[0],
-                                                                                            credits: account_balance[0] ? account_balance[0].credits : 0,
                                                                                         })
                                                                                     }
                                                                                 })
                                                                             } else {
                                                                                 connection.rollback()
-                                                                                console.log("Standalone Sim data failed to add.");
+                                                                                console.log("Standalone Sim Account data failed to add.");
                                                                                 return res.send({
                                                                                     status: false,
                                                                                     msg: "ERROR: Sim not added. Please try again."
