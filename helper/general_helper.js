@@ -2461,7 +2461,7 @@ module.exports = {
 				if (res) {
 					res.send({
 						status: false,
-						msg: `ERROR: Sim not found on twillio server.`
+						msg: `ERROR: Sim not found on twilio server.`
 					})
 					return;
 				}
@@ -2471,7 +2471,7 @@ module.exports = {
 			if (res) {
 				res.send({
 					status: false,
-					msg: `ERROR: Sim not found on twillio server.`
+					msg: `ERROR: Sim not found on twilio server.`
 				})
 				return;
 			}
