@@ -149,7 +149,7 @@ exports.ObjectWithKeys = function (value, data = [], empty = false) {
                     if (!keys.includes(k)) {
                         errors.push(`object must have the following key: ${k}`);
                     }
-                } else if (!keys.includes(k.index)) {
+                } else if (!keys.includes(k.index) && !k.notRequired) {
                     errors.push(`object must have the following key: ${k.index}`)
                 } else {
                     let type = typeof item;

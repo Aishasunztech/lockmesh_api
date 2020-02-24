@@ -47,7 +47,22 @@ module.exports = function (app) {
 		router.use('/agent', agentAuthMiddleware, agentRoutes);
 	});
 
+
 	app.group('/api/v2', function (router) {
+		router.use('/mobile', mobileV2Routes);
+
+		router.use('/agent', agentAuth);
+		router.use('/agent', agentAuthMiddleware, agentRoutes);
+	});
+	
+	app.group('/v1', function (router) {
+		router.use('/mobile', mobileRoutes);
+
+		router.use('/agent', agentAuth);
+		router.use('/agent', agentAuthMiddleware, agentRoutes);
+	});
+	
+	app.group('/v2', function (router) {
 		router.use('/mobile', mobileV2Routes);
 
 		router.use('/agent', agentAuth);

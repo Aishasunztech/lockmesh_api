@@ -1527,6 +1527,22 @@ exports.getDomains = async function (req, res) {
             results[i].dealers = permissionDealers.allDealers;
             results[i].statusAll = permissionDealers.statusAll;
 
+            // // get dealer name
+            // if (results[i].dealer_type === ADMIN) {
+            //     results[i].permission_by = ADMIN;
+            // } else if (results[i].dealer_type === DEALER || results[i].dealer_type === SDEALER) {
+            //     let dealerName = await sql.query(`SELECT dealer_name FROM dealers WHERE dealer_id = '${results[i].permission_by}'`);
+            //     // console.log("dealerName ", dealerName);
+            //     results[i].permission_by = dealerName[0].dealer_name ? dealerName[0].dealer_name : 'N/A';
+            // } else {
+            //     results[i].permission_by = 'N/A';
+            // }
+
+            // if (!results[i].dealer_type) {
+            //     results[i].dealer_type = 'N/A';
+            // }
+
+
             // if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
             //     // console.log('set permisin for all dealers ')
 
