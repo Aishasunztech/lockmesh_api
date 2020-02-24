@@ -71,6 +71,10 @@ exports.devices = async function (req, res) {
             };
             if (error) {
                 console.log(error);
+                return res.send({
+                    status: false,
+                    msg: 'Error: Internel Server Error'
+                });
 
             };
 

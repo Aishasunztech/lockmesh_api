@@ -1,38 +1,31 @@
-const { check, body } = require('express-validator');
+const { check, body, param } = require('express-validator');
 const { DEVICE_ID_PATTERN } = require('../../constants/validation');
-
+const { isObject } = require('../validators/commonValidators/validation_helpers');
 exports.getProfiles = [
     body('device_id')
         .matches(DEVICE_ID_PATTERN)
 ];
 
 exports.saveNewData = [
-    check('type')
-        .exists()
+    body('type')
         .notEmpty()
         .isString(),
 
-    check('newData')
-        .exists()
-        .notEmpty()
+    body('newData')
         .isArray()
 ];
 
 exports.importIDs = [
-    check('fieldName')
-        .exists()
+    param('fieldName')
         .notEmpty()
         .isString(),
 
-    check('parsedData')
-        .exists()
-        .notEmpty()
+    body('parsedData')
         .isArray()
 ];
 
 exports.exportIDs = [
-    check('fieldName')
-        .exists()
+    param('fieldName')
         .notEmpty()
         .isString()
 ];
@@ -82,126 +75,100 @@ exports.getUsedChatIDs = [ // nn
 ];
 
 exports.deleteCSV = [
-    check('fieldName')
-        .exists()
+    param('fieldName')
         .notEmpty()
         .isString(),
 
     check('ids')
-        .exists()
-        .notEmpty()
         .isArray()
 ];
 
 exports.purchaseCredits = [
-    check('data.credits')
-        .exists()
+    body('data.credits')
+        .isInt(),
+
+    body('data.method')
         .notEmpty(),
 
-    check('data.method')
-        .exists()
+    body('data.total')
+        .isInt(),
+
+    body('data.currency_price')
         .notEmpty(),
 
-    check('data.total')
-        .exists()
-        .notEmpty(),
+    body('data.promo_code')
+        .optional()
+        .isString(),
 
-    check('data.currency_price')
-        .exists()
-        .notEmpty(),
-
-    check('data.promo_code')
-        .exists()
-        .notEmpty(),
-
-    check('data.currency')
+    body('data.currency')
         .exists()
         .notEmpty(),
 
 ];
 
 exports.purchaseCredits_CC = [
-    check('creditInfo.credits')
-        .exists()
-        .notEmpty(),
+    body('creditInfo.credits')
+        .isInt(),
 
-    check('creditInfo.method')
-        .exists()
-        .notEmpty(),
+    body('creditInfo.method')
+        .notEmpty()
+        .isString(),
 
-    check('creditInfo.total')
-        .exists()
-        .notEmpty(),
+    body('creditInfo.total')
+        .notEmpty()
+        .isInt(),
 
-    check('creditInfo.currency_price')
-        .exists()
-        .notEmpty(),
+    body('creditInfo.currency_price')
+        .notEmpty()
+        .isInt(),
 
-    check('creditInfo.promo_code')
-        .exists()
-        .notEmpty(),
+    body('creditInfo.promo_code')
+        .optional()
+        .isString(),
 
-    check('creditInfo.currency')
-        .exists()
-        .notEmpty(),
+    body('creditInfo.currency')
+        .notEmpty()
+        .isString(),
 
-    check('cardInfo.number')
-        .exists()
-        .notEmpty(),
+    body('cardInfo.number')
+        .isCreditCard(),
 
-    check('cardInfo.name')
-        .exists()
-        .notEmpty(),
+    body('cardInfo.name')
+        .notEmpty()
+        .isString(),
 
-    check('cardInfo.cvc')
-        .exists()
-        .notEmpty(),
+    body('cardInfo.cvc')
+        .notEmpty()
+        .matches(/^[0-9]{3,4}$/),
 
-    check('cardInfo.expiry')
-        .exists()
-        .notEmpty(),
-
+    body('cardInfo.expiry')
+        .matches(/^((0[1-9]|1[0-2]))\/[0-9]{2}$/),
 ];
 
 exports.saveProfile = [
-    check('profileName')
-        .exists()
-        .notEmpty(),
+    body('profileName')
+        .notEmpty()
+        .isString(),
 
-    check('usr_acc_id')
-        .exists()
-        .notEmpty(),
+    body('usr_acc_id')
+        .isInt({min:1}),
 
     check('device_setting.app_list')
-        .exists()
-        .notEmpty(),
+        .isArray(),
 
     check('device_setting.passwords')
-        .exists()
-        .notEmpty(),
+        .custom(v => isObject(v)),
 
     check('device_setting.controls')
-        .exists()
-        .notEmpty(),
+        .isArray(),
 
     check('device_setting.extensions')
-        .exists()
-        .notEmpty()
+        .isArray()
 
 ];
 
-exports.savePackagePermissions = [
-    check('action')
-        .exists()
-        .notEmpty(),
+exports.savePackagePermissions = [ // nn
 
-    check('package_id')
-        .exists()
-        .notEmpty(),
-
-    check('dealers')
-        .exists()
-        .notEmpty()
 ];
 
 exports.ackCreditRequest = [
@@ -229,40 +196,36 @@ exports.getDomains = [ // nn
 
 
 exports.addDomain = [
-    check('data.domain')
-        .exists()
+    body('data.domain')
         .notEmpty(),
 ];
 
 exports.editDomain = [
-    check('data.domain')
+    body('data.domain')
         .exists()
         .notEmpty(),
 
-    check('data.oldDomain')
+    body('data.oldDomain')
         .exists()
         .notEmpty(),
 
 ];
 
 exports.deleteDomain = [
-    check('data.domain_name')
-        .exists()
+    body('data.domain_name')
         .notEmpty()
 
 ];
 
 exports.getLatestPaymentHistory = [
-    check('type')
-        .exists()
+    body('type')
         .notEmpty(),
 
-    check('status')
-        .exists()
-        .notEmpty(),
+    body('status')
+        .optional()
+        .isString(),
 
-    check('limit')
-        .exists()
+    body('limit')
         .notEmpty()
 ];
 

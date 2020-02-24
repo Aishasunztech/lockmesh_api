@@ -389,11 +389,11 @@ exports.extendServices = [
 
     body('prevSimId')
         .optional()
-        .isInt(),
+        .custom(v => validateSimId(v)),
 
     body('prevSimId2')
         .optional()
-        .isInt(),
+        .custom(v => validateSimId(v)),
 
     body('finalStatus')
         .optional()
@@ -401,7 +401,7 @@ exports.extendServices = [
 
     body('sim_id')
         .optional()
-        .isInt(),
+        .custom(v => validateSimId(v)),
 
     body('sim_id2')
         .optional()

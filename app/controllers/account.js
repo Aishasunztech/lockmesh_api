@@ -44,6 +44,12 @@ exports.getProfiles = async function (req, res) {
 
             // console.log("getprofiles query", query);
             sql.query(query, async function (error, results) {
+                if(error){
+                    return res.send({
+                        status: false,
+                        msg: 'Error: Internel Server Error'
+                    });
+                }
 
                 for (var i = 0; i < results.length; i++) {
                     // console.log('push apps', results[i].controls)
@@ -281,6 +287,10 @@ exports.exportIDs = async (req, res) => {
             sql.query(query, async (error, response) => {
                 if (error) {
                     console.log(error);
+                    return res.send({
+                        status: false,
+                        msg: 'Error: Internel Server Error'
+                    })
                 }
                 if (response.length) {
                     var data = [];
@@ -893,6 +903,10 @@ exports.purchaseCredits = async function (req, res) {
             }
         } catch (error) {
             console.log(error);
+            return res.send({
+                status: false,
+                msg: 'Error: Internel Server Error'
+            })
         }
 
     }
@@ -1138,6 +1152,10 @@ exports.saveProfile = async function (req, res) {
         }
     } catch (error) {
         console.log(error)
+        return res.send({
+            status: false,
+            msg: 'Error! Internel Server Error'
+        })
     }
 }
 
@@ -1324,6 +1342,11 @@ exports.savePackagePermissions = async function (req, res) {
 }
 
 exports.ackCreditRequest = async function (req, res) {
+    console.log(req.body);
+    return res.send({
+        status: false,
+        msg: ''
+    })
     var verify = req.decoded; // await verifyToken(req, res);
 
     if (verify) {
