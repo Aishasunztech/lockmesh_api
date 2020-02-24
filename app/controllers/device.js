@@ -2751,7 +2751,6 @@ exports.editDevice = async function (req, res) {
                                             if (result && result.insertId) {
                                                 if (finalStatus != constants.DEVICE_PRE_ACTIVATION) {
                                                     helpers.updateSimStatus(sim_id2, 'active')
-
                                                 }
                                             }
                                         });
@@ -7471,7 +7470,7 @@ exports.writeIMEI = async function (req, res) {
                                             MsgConstants
                                                 .RESTART_DEVICE_REQUIRED_TO_APPLY_IMEI
                                             ],
-                                            " on Device.Restart device is required to apply IMEI."
+                                            " on Device. Restart device is required to apply IMEI."
                                         )
                                     };
                                     res.send(data);
@@ -7553,7 +7552,7 @@ exports.writeIMEI = async function (req, res) {
                                         MsgConstants
                                             .RESTART_DEVICE_REQUIRED_TO_APPLY_IMEI
                                         ],
-                                        " on Device.Restart device is required to apply IMEI."
+                                        " on Device. Restart device is required to apply IMEI."
                                     )
                                 };
                                 res.send(data);

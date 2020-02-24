@@ -27,11 +27,12 @@ exports.getStandAloneSims = async function (req, res) {
     if (verify) {
         let loggedInId = verify.user.id
         let loggedInType = verify.user.user_type
-        var SQry = `SELECT s.* , d.device_id FROM sim_ids as s LEFT JOIN usr_acc as u on s.user_acc_id = u.id LEFT JOIN devices as d ON d.id= u.device_id LEFT JOIN standalone_sims as sas ON sas.sim_id = s.sim_id WHERE s.delete_status = '0' AND ( s.delete_status = '0' OR sas.status = 'active' OR sas.status = 'completed') `;
+        var SQry = `SELECT s.* , sas.term , sas.end_date , d.device_id FROM sim_ids as s LEFT JOIN usr_acc as u on s.user_acc_id = u.id LEFT JOIN devices as d ON d.id= u.device_id LEFT JOIN standalone_sims as sas ON sas.sim_id = s.id WHERE s.delete_status = '0' AND ( s.delete_status = '0' OR sas.status = 'active' OR sas.status = 'completed') `;
         if (loggedInType !== constants.ADMIN) {
             SQry = SQry + `AND (s.dealer_id = ${loggedInId} OR s.uploaded_by_id = ${loggedInId}) `
         }
         SQry = SQry + ` ORDER BY s.created_at DESC`
+        // console.log(SQry);
         sql.query(SQry, async function (err, result) {
             // console.log("=======================================")
             // console.log('result is :', result)
@@ -44,10 +45,16 @@ exports.getStandAloneSims = async function (req, res) {
             };
             if (result.length > 0) {
                 result.map(item => {
+                    // console.log(item);
                     item.device_id = helpers.checkValue(item.device_id)
                     item.term = helpers.checkValue(item.term)
                     item.start_date = helpers.checkValue(item.start_date)
-                    item.expiry_date = helpers.checkValue(item.expiry_date)
+                    if (item.type === 'standalone') {
+                        item.expiry_date = moment(item.end_date).format('YYYY/MM/DD')
+                    }
+                    else {
+                        item.expiry_date = helpers.checkValue(item.expiry_date)
+                    }
                 })
                 data = {
                     status: true,
@@ -97,7 +104,7 @@ exports.changeSimStatus = async function (req, res) {
                     let sim = results[0]
                     if (type === 'activate') {
                         if (sim.sim_status !== 'active') {
-                            helpers.updateSimStatus(sim.sim_id, 'active', res)
+                            helpers.updateSimStatus(sim.sim_id, 'active', res, null, null, results[0].sid)
                         } else {
                             res.send({
                                 status: false,
@@ -107,7 +114,7 @@ exports.changeSimStatus = async function (req, res) {
                         }
                     } else if (type === 'suspend') {
                         if (sim.sim_status !== 'suspended') {
-                            await helpers.updateSimStatus(sim.sim_id, 'suspended', res)
+                            await helpers.updateSimStatus(sim.sim_id, 'suspended', res, null, null, results[0].sid)
                         } else {
                             res.send({
                                 status: false,
@@ -117,7 +124,7 @@ exports.changeSimStatus = async function (req, res) {
                         }
                     }
                     else if (type === 'reset') {
-                        await helpers.updateSimStatus(sim.sim_id, 'reset', res)
+                        await helpers.updateSimStatus(sim.sim_id, 'reset', res, null, null, results[0].sid)
                     } else {
                         res.send({
                             status: false,
