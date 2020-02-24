@@ -44,6 +44,12 @@ exports.getProfiles = async function (req, res) {
 
             // console.log("getprofiles query", query);
             sql.query(query, async function (error, results) {
+                if(error){
+                    return res.send({
+                        status: false,
+                        msg: 'Error: Internel Server Error'
+                    });
+                }
 
                 for (var i = 0; i < results.length; i++) {
                     // console.log('push apps', results[i].controls)
@@ -281,6 +287,10 @@ exports.exportIDs = async (req, res) => {
             sql.query(query, async (error, response) => {
                 if (error) {
                     console.log(error);
+                    return res.send({
+                        status: false,
+                        msg: 'Error: Internel Server Error'
+                    })
                 }
                 if (response.length) {
                     var data = [];
@@ -893,6 +903,10 @@ exports.purchaseCredits = async function (req, res) {
             }
         } catch (error) {
             console.log(error);
+            return res.send({
+                status: false,
+                msg: 'Error: Internel Server Error'
+            })
         }
 
     }
@@ -1138,6 +1152,10 @@ exports.saveProfile = async function (req, res) {
         }
     } catch (error) {
         console.log(error)
+        return res.send({
+            status: false,
+            msg: 'Error! Internel Server Error'
+        })
     }
 }
 
@@ -1324,6 +1342,11 @@ exports.savePackagePermissions = async function (req, res) {
 }
 
 exports.ackCreditRequest = async function (req, res) {
+    console.log(req.body);
+    return res.send({
+        status: false,
+        msg: ''
+    })
     var verify = req.decoded; // await verifyToken(req, res);
 
     if (verify) {
@@ -1526,6 +1549,22 @@ exports.getDomains = async function (req, res) {
 
             results[i].dealers = permissionDealers.allDealers;
             results[i].statusAll = permissionDealers.statusAll;
+
+            // // get dealer name
+            // if (results[i].dealer_type === ADMIN) {
+            //     results[i].permission_by = ADMIN;
+            // } else if (results[i].dealer_type === DEALER || results[i].dealer_type === SDEALER) {
+            //     let dealerName = await sql.query(`SELECT dealer_name FROM dealers WHERE dealer_id = '${results[i].permission_by}'`);
+            //     // console.log("dealerName ", dealerName);
+            //     results[i].permission_by = dealerName[0].dealer_name ? dealerName[0].dealer_name : 'N/A';
+            // } else {
+            //     results[i].permission_by = 'N/A';
+            // }
+
+            // if (!results[i].dealer_type) {
+            //     results[i].dealer_type = 'N/A';
+            // }
+
 
             // if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
             //     // console.log('set permisin for all dealers ')

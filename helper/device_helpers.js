@@ -633,7 +633,7 @@ module.exports = {
         if (device.account_status === 'suspended') {
             accountStatus = device.account_status;
         }
-        let parentDealerId = device.prnt_dlr_id ? device.prnt_dlr_id : '';
+        let parentDealerId = (device.prnt_dlr_id && device.prnt_dlr_id !== "N/A") ? device.prnt_dlr_id : 0;
         if (action === Constants.DEVICE_UNLINKED || action === Constants.UNLINK_DEVICE_DELETE) {
             finalQuery = query + "('" + action + "','" + device.device_id + "','" + device.name + "','" + device.session_id + "' ,'" + device.model + "','" + device.ip_address + "','" + device.simno + "','" + device.imei + "','" + device.simno2 + "','" + device.imei2 + "','" + device.serial_number + "','" + device.mac_address + "','" + device.fcm_token + "','offline','" + device.is_sync + "','" + device.flagged + "','" + device.screen_start_date + "','" + device.reject_status + "','" + device.account_email + "','" + device.dealer_id + "','" + parentDealerId + "','" + device.link_code + "','" + device.client_id + "','', '" + device.expiry_months + "','','" + device.activation_code + "','',0,null,'" + device.wipe_status + "','" + accountStatus + "',1,'" + device.transfer_status + "','" + device.transfer_user_status + "','" + device.transfered_from + "','" + device.transfered_to + "','" + device.user_transfered_from + "','" + device.user_transfered_to + "','" + device.dealer_name + "','" + device.prnt_dlr_name + "','" + device.id + "','" + device.pgp_email + "','" + device.chat_id + "','" + device.sim_id + "','Unlinked'," + loggedInDealerId + ", '" + loggedInDealerType + "')"
         } else {

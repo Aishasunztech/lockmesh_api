@@ -193,12 +193,14 @@ module.exports = {
 		}
 	},
 	getComponentIdByUri: async function (componentUri) {
-		// console.log(componentUri);
+		console.log(componentUri);
 
 		if (componentUri.includes("/connect-device/")) {
 			componentUri = "/connect-device/:deviceId";
 		} else if (componentUri.includes('/connect-dealer/')) {
 			componentUri = '/connect-dealer'
+		} else if (componentUri.includes('/connect-sim/')) {
+			componentUri = '/connect-sim'
 		}
 		console.log("componentUri:", componentUri);
 		// this query should be based on ComponentName, not on ComponentUri
@@ -2391,91 +2393,159 @@ module.exports = {
 		let updateLastLoginQ = `UPDATE dealers SET last_login = '${moment().format("YYYY/MM/DD HH:mm:ss")}' WHERE dealer_id=${dealerId}`;
 		await sql.query(updateLastLoginQ);
 	},
-	updateSimStatus: (sim_id, status, res = null, isNew = false, data = null) => {
-		app_constants.twilioClient.wireless.sims.list({ iccid: sim_id }).then(response => {
-			if (response && response.length) {
-				let updateObject = { status: status }
-				if (isNew) {
-					let date_now = moment().format('YYYY/MM/DD_HH:mm')
-					let unique_name = `LM${data.dealer_pin}_${date_now}_${data.dealer_name}`
-					if (data.device_id) {
-						unique_name = unique_name + `_${data.device_id}`
-					}
-					updateObject = { status: status, uniqueName: unique_name }
+	updateSimStatus: (sim_id, status, res = null, isNew = false, data = null, sid = null) => {
+		console.log(sid);
+		if (sid) {
+			let updateObject = { status: status }
+			if (isNew) {
+				let date_now = moment().format('YYYY/MM/DD_HH:mm')
+				let unique_name = `LM${data.dealer_pin}_${date_now}_${data.dealer_name}`
+				if (data.device_id) {
+					unique_name = unique_name + `_${data.device_id}`
 				}
-				if (status == 'reset') {
-					updateObject = { resetStatus: 'resetting' }
-				}
-				app_constants.twilioClient.wireless.sims(response[0].sid).update(updateObject).then(response => {
-					// console.log(response);
-					if (response) {
-						if (status === 'active') {
-							sql.query(`UPDATE sim_ids SET activated = 1 , sim_status = 'active' WHERE sim_id = '${sim_id}'`)
-							if (res) {
-								res.send({
-									status: true,
-									msg: "Sim activated successfully."
-								})
-								return;
-							}
-						}
-						else if (status === 'suspended') {
-							sql.query(`UPDATE sim_ids SET activated = 0 , sim_status = 'suspended' WHERE sim_id = '${sim_id}'`)
-							if (res) {
-								res.send({
-									status: true,
-									msg: "Sim suspended successfully."
-								})
-								return;
-							}
-						} else if (status === 'reset') {
-							if (res) {
-								res.send({
-									status: true,
-									msg: "Sim network connectivity reset successfully."
-								})
-								return;
-							}
-						}
-					} else {
-						console.log(response);
-						if (res) {
-							res.send({
-								status: false,
-								msg: `ERROR: Internal Server error.`
-							})
-							return;
-						}
-					}
-				}).catch(err => {
-					console.log("ERROR", err);
-					if (res) {
-						res.send({
-							status: false,
-							msg: `ERROR: ${err.message}.`
-						})
-						return;
-					}
-				})
-			} else {
-				if (res) {
-					res.send({
-						status: false,
-						msg: `ERROR: Sim not found on twillio server.`
-					})
-					return;
-				}
+				updateObject = { status: status, uniqueName: unique_name }
 			}
-		}).catch(err => {
-			console.log("GET SIM ERROR", err);
-			if (res) {
-				res.send({
-					status: false,
-					msg: `ERROR: Sim not found on twillio server.`
-				})
-				return;
+			if (status == 'reset') {
+				updateObject = { resetStatus: 'resetting' }
 			}
-		})
+			// app_constants.twilioClient.wireless.sims(sid).update(updateObject).then(rsp => {
+			// 	// console.log(rsp);
+			// 	if (rsp) {
+			// 		if (status === 'active') {
+			// 			sql.query(`UPDATE sim_ids SET activated = 1 , sim_status = 'active'  WHERE sim_id = '${sim_id}'`)
+			// 			if (res) {
+			// 				res.send({
+			// 					status: true,
+			// 					msg: "Sim activated successfully."
+			// 				})
+			// 				return;
+			// 			}
+			// 		}
+			// 		else if (status === 'suspended') {
+			// 			sql.query(`UPDATE sim_ids SET activated = 0 , sim_status = 'suspended' WHERE sim_id = '${sim_id}'`)
+			// 			if (res) {
+			// 				res.send({
+			// 					status: true,
+			// 					msg: "Sim suspended successfully."
+			// 				})
+			// 				return;
+			// 			}
+			// 		} else if (status === 'reset') {
+			// 			if (res) {
+			// 				res.send({
+			// 					status: true,
+			// 					msg: "Sim network connectivity reset successfully."
+			// 				})
+			// 				return;
+			// 			}
+			// 		}
+			// 	} else {
+			// 		console.log(rsp);
+			// 		if (res) {
+			// 			res.send({
+			// 				status: false,
+			// 				msg: `ERROR: Internal Server error.`
+			// 			})
+			// 			return;
+			// 		}
+			// 	}
+			// }).catch(err => {
+			// 	console.log("ERROR", err);
+			// 	if (res) {
+			// 		res.send({
+			// 			status: false,
+			// 			msg: `ERROR: ${err.message}.`
+			// 		})
+			// 		return;
+			// 	}
+			// })
+		} else {
+			// app_constants.twilioClient.wireless.sims.list({ iccid: sim_id }).then(response => {
+			// 	if (response && response.length) {
+			// 		let updateObject = { status: status }
+			// 		if (isNew) {
+			// 			let date_now = moment().format('YYYY/MM/DD_HH:mm')
+			// 			let unique_name = `LM${data.dealer_pin}_${date_now}_${data.dealer_name}`
+			// 			if (data.device_id) {
+			// 				unique_name = unique_name + `_${data.device_id}`
+			// 			}
+			// 			updateObject = { status: status, uniqueName: unique_name }
+			// 		}
+			// 		if (status == 'reset') {
+			// 			updateObject = { resetStatus: 'resetting' }
+			// 		}
+			// 		app_constants.twilioClient.wireless.sims(response[0].sid).update(updateObject).then(rsp => {
+			// 			// console.log(rsp);
+			// 			if (rsp) {
+			// 				if (status === 'active') {
+			// 					sql.query(`UPDATE sim_ids SET activated = 1 , sim_status = 'active' , sid = '${response[0].sid}' WHERE sim_id = '${sim_id}'`)
+			// 					if (res) {
+			// 						res.send({
+			// 							status: true,
+			// 							msg: "Sim activated successfully."
+			// 						})
+			// 						return;
+			// 					}
+			// 				}
+			// 				else if (status === 'suspended') {
+			// 					sql.query(`UPDATE sim_ids SET activated = 0 , sim_status = 'suspended' , sid = '${response[0].sid}' WHERE sim_id = '${sim_id}'`)
+			// 					if (res) {
+			// 						res.send({
+			// 							status: true,
+			// 							msg: "Sim suspended successfully."
+			// 						})
+			// 						return;
+			// 					}
+			// 				} else if (status === 'reset') {
+			// 					if (res) {
+			// 						sql.query(`UPDATE sim_ids SET sid = '${response[0].sid}' WHERE sim_id = '${sim_id}'`)
+			// 						res.send({
+			// 							status: true,
+			// 							msg: "Sim network connectivity reset successfully."
+			// 						})
+			// 						return;
+			// 					}
+			// 				}
+			// 			} else {
+			// 				console.log(rsp);
+			// 				if (res) {
+			// 					res.send({
+			// 						status: false,
+			// 						msg: `ERROR: Internal Server error.`
+			// 					})
+			// 					return;
+			// 				}
+			// 			}
+			// 		}).catch(err => {
+			// 			console.log("ERROR", err);
+			// 			if (res) {
+			// 				res.send({
+			// 					status: false,
+			// 					msg: `ERROR: ${err.message}.`
+			// 				})
+			// 				return;
+			// 			}
+			// 		})
+			// 	} else {
+			// 		if (res) {
+			// 			res.send({
+			// 				status: false,
+			// 				msg: `ERROR: Sim not found on twillio server.`
+			// 			})
+			// 			return;
+			// 		}
+			// 	}
+			// }).catch(err => {
+			// 	console.log("GET SIM ERROR", err);
+			// 	if (res) {
+			// 		res.send({
+			// 			status: false,
+			// 			msg: `ERROR: Sim not found on twillio server.`
+			// 		})
+			// 		return;
+			// 	}
+			// })
+		}
 
 	},
 
