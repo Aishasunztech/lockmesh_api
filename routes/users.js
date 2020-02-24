@@ -305,7 +305,7 @@ router.get("/dealer/update_dealer_pins", [dealerValidators.updateDealerPins, err
  */
 
 /*** Add User ***/
-router.post("/add/user", userController.addUser);
+router.post("/add/user", [userValidators.addUser, errorMsgs], userController.addUser);
 
 /**
  * @route POST /users/edit/user
@@ -318,7 +318,7 @@ router.post("/add/user", userController.addUser);
  * @security JWT
  */
 /*** Edit User ***/
-router.post('/edit/user', userController.editUser);
+router.post('/edit/user', [userValidators.editUser, errorMsgs], userController.editUser);
 
 /**
  * @route PUT /users/delete_user/{user_id}
@@ -330,7 +330,7 @@ router.post('/edit/user', userController.editUser);
  */
 
 /*** DELETE User ***/
-router.put("/delete_user/:user_id", userController.deleteUser);
+router.put("/delete_user/:user_id", [userValidators.deleteUser, errorMsgs], userController.deleteUser);
 
 /**
  * @route PUT /users/undo_delete_user/{user_id}
@@ -1144,7 +1144,7 @@ router.get("/get_imei_history/:device_id", [deviceValidators.getIMEI_History, er
 router.get("/userList", userController.getAllUsers);
 
 //GET User List against device dealer
-router.post("/userListOfDevice", userController.getDealerUsers);
+router.post("/userListOfDevice", [userValidators.getDealerUsers, errorMsgs], userController.getDealerUsers);
 
 /*Transfer Apps to secure market */
 router.post("/transferApps", [appValidators.transferApps, errorMsgs], appController.transferApps);

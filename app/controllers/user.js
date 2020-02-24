@@ -42,6 +42,10 @@ exports.getAllUsers = async function (req, res) {
             sql.query("select dealer_id from dealers where connected_dealer = '" + verify.user.id + "' AND  type = 3 order by created DESC", async function (error, result) {
                 if (error) {
                     console.log(error);
+                    return res.send({
+                        status: false,
+                        msg: 'Error: Internel Server Error'
+                    });
                 }
                 dealer = [verify.user.id]
                 console.log(result);
@@ -137,7 +141,6 @@ exports.getDealerUsers = async function (req, res) {
 }
 
 exports.addUser = async function (req, res) {
-
     res.setHeader('Content-Type', 'application/json');
 
     var verify = req.decoded;
@@ -174,6 +177,10 @@ exports.addUser = async function (req, res) {
             sql.query(sql1, async function (error, rows) {
                 if (error) {
                     console.log(error);
+                    return res.send({
+                        status: false,
+                        msg: 'Error: Internel Server Error'
+                    });
                 }
 
                 var html = 'User details are : <br> ' +
@@ -208,7 +215,6 @@ exports.addUser = async function (req, res) {
 }
 
 exports.editUser = async function (req, res) {
-
     res.setHeader('Content-Type', 'application/json');
 
     var verify = req.decoded;
@@ -236,6 +242,10 @@ exports.editUser = async function (req, res) {
             sql.query(sql1, async function (error, rows) {
                 if (error) {
                     console.log(error);
+                    return res.send({
+                        status: false,
+                        msg: 'Error: Internel Server Error'
+                    });
                 }
 
                 if (PrevUserData[0].email != userEmail) {
@@ -284,6 +294,10 @@ exports.deleteUser = async function (req, res) {
             sql.query(deleteUserQ, async function (err, result) {
                 if (err) {
                     console.log(err)
+                    return res.send({
+                        status: false,
+                        msg: 'Error: Internel Server Error'
+                    });
                 }
                 if (result && result.affectedRows !== 0) {
                     data = {

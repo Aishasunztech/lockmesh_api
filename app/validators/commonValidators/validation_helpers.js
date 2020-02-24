@@ -38,6 +38,10 @@ exports.arrayOfObjectWithKeys = function (value, obj = [], allowEmptyArray = fal
                         if (!(/^(true|false)$/.test(current))) {
                             errors.push(`${k.index} has invalid value ${current} of type ${valType}, ${k.type} requried`);
                         }
+                    } else if (k.type === 'isIn' && key === k.index && k.data) {
+                        if (!(k.data.includes(item))) {
+                            errors.push(`${k.index} has invalid value ${item} of type ${type}, ${k.type} requried`)
+                        }
                     } else if (typeof current !== k.type) {
                         errors.push(`${k.index} has invalid value ${current} of type ${valType}, ${k.type} required`);
                     }
@@ -94,6 +98,10 @@ exports.ObjectOfObjectWithKeys = function (value, obj = [], allowEmptyObject = f
                     } else if (k.type === 'boolean') {
                         if (!(/^(true|false)$/.test(current))) {
                             errors.push(`${k.index} has invalid value ${current} of type ${valType}, ${k.type} requried`);
+                        }
+                    } else if (k.type === 'isIn' && key === k.index && k.data) {
+                        if (!(k.data.includes(item))) {
+                            errors.push(`${k.index} has invalid value ${item} of type ${type}, ${k.type} requried`)
                         }
                     } else if (typeof current !== k.type) {
                         errors.push(`${k.index} has invalid value ${current} of type ${valType}, ${k.type} required`);
@@ -263,6 +271,10 @@ exports.validArrayWithValues = function (value, type = '', pattern = '', empty =
                 if (!(/^(true|false)$/.test(current))) {
                     errors.push(`${k.index} has invalid value ${current} of type ${valType}, ${k.type} requried`);
                 }
+            } else if (k.type === 'isIn' && key === k.index && k.data) {
+                if (!(k.data.includes(item))) {
+                    errors.push(`${k.index} has invalid value ${item} of type ${type}, ${k.type} requried`)
+                }
             } else if (typeof key !== type) {
                 errors.push(`data has invalid value ${key} of type ${typeof key}, ${type} required`);
             }
@@ -277,5 +289,17 @@ exports.validArrayWithValues = function (value, type = '', pattern = '', empty =
             return true;
         }
         throw new Error('empty array not allowed');
+    }
+}
+
+exports.validateJSONObject = function (value, cb = null, params = []){
+    try {
+        let parsed = JSON.parse(value);
+        if(typeof cb === 'function'){
+            cb(parsed, params);
+        }
+        return true;
+    } catch (err){
+        throw new Error(err);
     }
 }
