@@ -175,15 +175,13 @@ exports.apkList = async function (req, res) {
 
 exports.checkApkName = async function (req, res) {
     var verify = req.decoded;
-console.log("body ", req.body);
-    if (verify) {
         try {
 
             let apkName = req.body.name;
             let apk_id = req.body.apk_id
             let query = '';
 
-            if (!empty(apkName)) {
+            if (apkName) {
                 if (apk_id == '') {
                     query = "SELECT * from apk_details where app_name = '" + apkName + "' AND delete_status != 1"
                 } else {
@@ -208,9 +206,10 @@ console.log("body ", req.body);
             }
         } catch (error) {
             console.log(error);
+            res.send({
+                status: false,
+            })
         }
-
-    }
 }
 
 exports.uploadApk = async function (req, res) {
@@ -428,7 +427,7 @@ exports.addApk = async function (req, res) {
     console.log("check body: ", req.body);
     res.setHeader('Content-Type', 'multipart/form-data');
     var verify = req.decoded;
-    if (verify) {
+    
         try {
             let logo = req.body.logo;
             let apk = req.body.apk;
@@ -535,7 +534,7 @@ exports.addApk = async function (req, res) {
             };
             return res.send(data);
         }
-    }
+    
 }
 
 exports.editApk = async function (req, res) {

@@ -44,7 +44,7 @@ exports.getProfiles = async function (req, res) {
 
             // console.log("getprofiles query", query);
             sql.query(query, async function (error, results) {
-                if(error){
+                if (error) {
                     return res.send({
                         status: false,
                         msg: 'Error: Internel Server Error'
@@ -1342,14 +1342,8 @@ exports.savePackagePermissions = async function (req, res) {
 }
 
 exports.ackCreditRequest = async function (req, res) {
-    console.log(req.body);
-    return res.send({
-        status: false,
-        msg: ''
-    })
     var verify = req.decoded; // await verifyToken(req, res);
 
-    if (verify) {
         try {
             let credits = req.body.data.credits
             let dealer_id = req.body.data.dealer_id
@@ -1458,6 +1452,12 @@ exports.ackCreditRequest = async function (req, res) {
                         return
                     })
                 }
+            } else {
+                res.send({
+                    status: false,
+                    msg: "Data not validated."
+                })
+                return
             }
         } catch (error) {
             console.log(error)
@@ -1467,40 +1467,7 @@ exports.ackCreditRequest = async function (req, res) {
             })
             return
         }
-    }
 }
-
-// exports.getDomains = async function (req, res) {
-//     var verify = req.decoded;
-
-//     if (verify) {
-//         let dealer_id = verify.user.dealer_id;
-//         let selectDomains = await sql.query(`SELECT * FROM domains`);
-//         // console.log(verify, 'get domains:: ', selectDomains);
-
-//         if (selectDomains.length) {
-//             if (verify.user.user_type !== ADMIN) {
-//                 let selectPermisions = await sql.query(`SELECT * FROM dealer_permissions WHERE dealer_id = ${dealer_id} AND permission_type = 'domain'`);
-//                 // console.log("selectPermisions ", selectPermisions)
-
-//                 let prmIds = selectPermisions.map((p) => p.permission_id);
-//                 // console.log("prmIds ", prmIds)
-//                 selectDomains = selectDomains.filter((prm) => prmIds.includes(prm.id));
-//             }
-
-//             // console.log("selectDomains final:: ", selectDomains);
-//             res.send({
-//                 status: true,
-//                 domains: selectDomains
-//             })
-//         } else {
-//             res.send({
-//                 status: true,
-//                 domains: []
-//             })
-//         }
-//     }
-// }
 
 exports.getDomains = async function (req, res) {
     var verify = req.decoded;
@@ -1524,7 +1491,7 @@ exports.getDomains = async function (req, res) {
         } else {
             selectQ = `SELECT * FROM domains WHERE delete_status = 0`;
         }
-        console.log("selectDomains selectQ ", selectQ)
+        // console.log("selectDomains selectQ ", selectQ)
         let selectDomains = await sql.query(selectQ);
 
         // get all dealers under admin or sdealers under dealer
@@ -1549,22 +1516,6 @@ exports.getDomains = async function (req, res) {
 
             results[i].dealers = permissionDealers.allDealers;
             results[i].statusAll = permissionDealers.statusAll;
-
-            // // get dealer name
-            // if (results[i].dealer_type === ADMIN) {
-            //     results[i].permission_by = ADMIN;
-            // } else if (results[i].dealer_type === DEALER || results[i].dealer_type === SDEALER) {
-            //     let dealerName = await sql.query(`SELECT dealer_name FROM dealers WHERE dealer_id = '${results[i].permission_by}'`);
-            //     // console.log("dealerName ", dealerName);
-            //     results[i].permission_by = dealerName[0].dealer_name ? dealerName[0].dealer_name : 'N/A';
-            // } else {
-            //     results[i].permission_by = 'N/A';
-            // }
-
-            // if (!results[i].dealer_type) {
-            //     results[i].dealer_type = 'N/A';
-            // }
-
 
             // if (permissionDealers && permissionDealers.length && permissionDealers[0].dealer_id === 0) {
             //     // console.log('set permisin for all dealers ')
@@ -1629,7 +1580,7 @@ exports.getDomains = async function (req, res) {
             results[i].permission_count = permissionC;
         }
 
-        console.log('get domains:: ', results);
+        // console.log('get domains:: ', results);
         if (results && results.length) {
             res.send({
                 status: true,
@@ -1647,8 +1598,7 @@ exports.getDomains = async function (req, res) {
 
 exports.addDomain = async function (req, res) {
     var verify = req.decoded;
-
-    if (verify) {
+    try {
         let domain = req.body.data.domain
         let alreadyAdded = await sql.query(`SELECT * FROM domains WHERE name = '${domain}' AND delete_status = 0`)
         if (alreadyAdded && alreadyAdded.length) {
@@ -1678,11 +1628,18 @@ exports.addDomain = async function (req, res) {
                 }
             })
         }
+    } catch (err) {
+        console.log(err);
+        res.send({
+            status: false,
+            msg: 'Error while processing'
+        })
+        return
     }
 }
 exports.editDomain = async function (req, res) {
     var verify = req.decoded;
-    if (verify) {
+    try {
         let domain = req.body.data.domain
         let oldDomain = req.body.data.oldDomain
         console.log(oldDomain);
@@ -1714,11 +1671,18 @@ exports.editDomain = async function (req, res) {
                 }
             })
         }
+    } catch (err) {
+        console.log(err);
+        res.send({
+            status: false,
+            msg: 'Error while processing'
+        })
+        return
     }
 }
 exports.deleteDomain = async function (req, res) {
     var verify = req.decoded;
-    if (verify) {
+    try {
         let domain_name = req.body.data.domain_name
         let alreadyAdded = await sql.query(`SELECT * FROM domains WHERE name = '${domain_name}'`)
         if (alreadyAdded.length == 0) {
@@ -1748,6 +1712,13 @@ exports.deleteDomain = async function (req, res) {
                 }
             })
         }
+    } catch (err) {
+        console.log(err);
+        res.send({
+            status: false,
+            msg: 'Error while processing'
+        })
+        return
     }
 }
 exports.getLatestPaymentHistory = async function (req, res) {

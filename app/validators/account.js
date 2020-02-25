@@ -151,7 +151,7 @@ exports.saveProfile = [
         .isString(),
 
     body('usr_acc_id')
-        .isInt({min:1}),
+        .isInt({ min: 1 }),
 
     check('device_setting.app_list')
         .isArray(),
@@ -197,17 +197,20 @@ exports.getDomains = [ // nn
 
 exports.addDomain = [
     body('data.domain')
-        .notEmpty(),
+        .notEmpty()
+        .isFQDN(),
 ];
 
 exports.editDomain = [
     body('data.domain')
         .exists()
-        .notEmpty(),
+        .notEmpty()
+        .isFQDN(),
 
     body('data.oldDomain')
         .exists()
-        .notEmpty(),
+        .notEmpty()
+        .isFQDN()
 
 ];
 

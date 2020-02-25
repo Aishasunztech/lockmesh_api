@@ -1,4 +1,4 @@
-const { check } = require('express-validator');
+const { check, param, body } = require('express-validator');
 
 
 
@@ -7,59 +7,58 @@ exports.getAgentList = [ // nn
 ];
 
 exports.addAgent = [
-    check('name')
-        .exists()
-        .notEmpty(),
+    // body('name')
+    //     .exists()
+    //     .notEmpty(),
 
-    check('email')
-        .exists()
-        .notEmpty(),
+    // body('email')
+    //     .exists()
+    //     .notEmpty(),
 
-    check('type')
-        .exists()
-        .notEmpty(),
+    // body('type')
+    //     .exists()
+    //     .notEmpty(),
 
 ];
 
 exports.updateAgent = [
-    check('agent_id')
-        .exists()
-        .notEmpty(),
+    // body('agent_id')
+    //     .exists()
+    //     .notEmpty(),
 
-    check('name')
-        .exists()
-        .notEmpty(),
+    // body('name')
+    //     .exists()
+    //     .notEmpty(),
 
-    check('email')
-        .exists()
-        .notEmpty(),
+    // body('email')
+    //     .exists()
+    //     .notEmpty(),
 
-    check('type')
-        .exists()
-        .notEmpty(),
+    // body('type')
+    //     .exists()
+    //     .notEmpty(),
 ];
 
 exports.changeStatus = [
-    // p
-    check('agent_id')
-        .exists()
-        .notEmpty(),
+    // param('agent_id')
+    //     .exists()
+    //     .notEmpty(),
 
-    check('status')
-        .exists()
-        .notEmpty()
+    // body('status')
+    //     .exists()
+    //     .notEmpty()
 ];
 
 exports.resetPwd = [
-    check('agent_id')
-        .exists()
-        .notEmpty(),
+    // body('agent_id')
+    //     .exists()
+    //     .notEmpty(),
 ];
 
 exports.deleteAgent = [
-    check('agent_id')
-        .exists()
-        .notEmpty(),
+    // body('agent_id')
+    //     .exists()
+    //     .notEmpty(),
 ];
 
 exports.updateProfile = [

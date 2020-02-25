@@ -1,34 +1,25 @@
-const { check } = require('express-validator');
+const { check, body } = require('express-validator');
 
 exports.addAclModule = [
-    check('title')
-        .exists()
+    body('title')
         .notEmpty()
         .isString(),
 
-    check('componentName')
-        .exists()
+    body('componentName')
         .notEmpty()
         .isString(),
 
-    check('uri')
-        .exists()
+    body('uri')
         .notEmpty()
         .isString(),
 
-    check('admin')
-        .exists()
-        .notEmpty()
+    body('admin')
         .isBoolean(),
 
-    check('dealer')
-        .exists()
-        .notEmpty()
+    body('dealer')
         .isBoolean(),
 
-    check('sdealer')
-        .exists()
-        .notEmpty()
+    body('sdealer')
         .isBoolean()
 
 ];
@@ -38,9 +29,8 @@ exports.getAllowedComponents = [ // nn
 ];
 
 exports.checkComponent = [
-    check('ComponentUri')
-        .exists()
-        .notEmpty(),
+    // body('ComponentUri')
+    //     .isIn(['/connect-device/', '/connect-dealer/', '/connect-sim/'])
 ];
 
 exports.isAdmin = [ // nn

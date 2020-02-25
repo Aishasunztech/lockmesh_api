@@ -1,33 +1,25 @@
 const { check, body } = require('express-validator');
+const { validArrayWithValues } = require('./commonValidators/validation_helpers')
 
 exports.removeSMApps = [
-    check('data')
-        .exists()
-        .notEmpty()
+    body('data')
         .custom(data => {
-            if (checkArrayAndString(data, ['all'])) {          
-              throw new Error('bad request')
+            if (data && (data === "all" || validArrayWithValues(data, 'pk'))) {
+                return true;
+            } else {
+                return false;
             }
-          })
-        ,
+        }),
 
     check('spaceType')
-        .exists()
-        .notEmpty()
-        .isAlpha()
         .isIn(['guest', 'encrypted'])
 ];
 
 exports.transferApps = [
     body('data')
-        .exists()
-        .notEmpty()
-        .isArray(),  // check array length not empty
+        .custom(data => validArrayWithValues(data, 'pk')),
 
     body('spaceType')
-        .exists()
-        .notEmpty()
-        .isAlpha()
         .isIn(['guest', 'encrypted'])
 ];
 
