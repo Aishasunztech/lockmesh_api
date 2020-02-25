@@ -1,7 +1,5 @@
 const { check } = require('express-validator');
 
-// include common validations
-
 exports.devices = [
 
 ];

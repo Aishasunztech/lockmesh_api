@@ -5,12 +5,11 @@ exports.apkList = [ // nn
 ];
 
 exports.checkApkName = [
-    // check('apk_id')
-    //     .exists()
-    //     .notEmpty(),
+    body('apk_id')
+        .optional({ checkFalsy: true, nullable: true })
+        .isInt(),
 
-    check('name')
-        .exists()
+    body('name')
         .notEmpty()
         .isAlphanumeric(),
 
@@ -20,7 +19,6 @@ exports.checkApkName = [
 exports.uploadApk = [
     // query
     query('fieldName')
-        .exists()
         .notEmpty(),
 
     // query('screen')
@@ -54,58 +52,48 @@ exports.uploadApk = [
 
 exports.addApk = [
     body('logo')
-        .exists()
         .notEmpty()
         .isString(),
 
     body('apk')
-        .exists()
         .notEmpty()
         .isString(),
 
     body('name')
-        .exists()
         .notEmpty()
         .isString()
 ];
 
 exports.editApk = [
     body('apk_id')
-        .exists()
         .notEmpty()
         .isNumeric(),
 
     body('logo')
-        .exists()
         .notEmpty()
         .isString(),
 
     body('apk')
-        .exists()
         .notEmpty()
         .isString(),
 
     body('name')
-        .exists()
         .notEmpty()
         .isString()
 ];
 
 exports.deleteApk = [
     body('apk_id')
-        .exists()
         .notEmpty()
         .isNumeric(),
 ];
 
 exports.toggle = [
     body('apk_id')
-        .exists()
         .notEmpty()
         .isNumeric(),
 
     body('status')
-        .exists()
         .notEmpty()
         .isAlpha()
         .isIn(['off', 'On']),
@@ -113,29 +101,23 @@ exports.toggle = [
 
 exports.saveApkPermission = [
     // body('action')
-    //     .exists()
     //     .notEmpty(),
 
     // body('apkId')
-    //     .exists()
     //     .notEmpty(),
 
     // body('dealers')
-    //     .exists()
     //     .notEmpty(),
 ];
 
 exports.savePolicyPermissions = [
     // check('action')
-    //     .exists()
     //     .notEmpty(),
 
     // check('policyId')
-    //     .exists()
     //     .notEmpty(),
 
     // check('dealers')
-    //     .exists()
     //     .notEmpty(),
 ];
 
@@ -143,17 +125,14 @@ exports.savePolicyPermissions = [
 exports.handleUninstallApk = [
     // param
     param('apk_id')
-        .exists()
         .notEmpty()
         .isNumeric(),
 
     body('spaceType')
-        .exists()
         .notEmpty()
         .isAlpha()
         .isIn(['guest', 'encrypted']),
 
     // body('value')
-    //     .exists()
     //     .notEmpty(),
 ];

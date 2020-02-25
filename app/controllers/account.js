@@ -44,7 +44,7 @@ exports.getProfiles = async function (req, res) {
 
             // console.log("getprofiles query", query);
             sql.query(query, async function (error, results) {
-                if(error){
+                if (error) {
                     return res.send({
                         status: false,
                         msg: 'Error: Internel Server Error'
@@ -1647,8 +1647,7 @@ exports.getDomains = async function (req, res) {
 
 exports.addDomain = async function (req, res) {
     var verify = req.decoded;
-
-    if (verify) {
+    try {
         let domain = req.body.data.domain
         let alreadyAdded = await sql.query(`SELECT * FROM domains WHERE name = '${domain}' AND delete_status = 0`)
         if (alreadyAdded && alreadyAdded.length) {
@@ -1678,11 +1677,18 @@ exports.addDomain = async function (req, res) {
                 }
             })
         }
+    } catch (err) {
+        console.log(err);
+        res.send({
+            status: false,
+            msg: 'Error while processing'
+        })
+        return
     }
 }
 exports.editDomain = async function (req, res) {
     var verify = req.decoded;
-    if (verify) {
+    try {
         let domain = req.body.data.domain
         let oldDomain = req.body.data.oldDomain
         console.log(oldDomain);
@@ -1714,11 +1720,18 @@ exports.editDomain = async function (req, res) {
                 }
             })
         }
+    } catch (err) {
+        console.log(err);
+        res.send({
+            status: false,
+            msg: 'Error while processing'
+        })
+        return
     }
 }
 exports.deleteDomain = async function (req, res) {
     var verify = req.decoded;
-    if (verify) {
+    try {
         let domain_name = req.body.data.domain_name
         let alreadyAdded = await sql.query(`SELECT * FROM domains WHERE name = '${domain_name}'`)
         if (alreadyAdded.length == 0) {
@@ -1748,6 +1761,13 @@ exports.deleteDomain = async function (req, res) {
                 }
             })
         }
+    } catch (err) {
+        console.log(err);
+        res.send({
+            status: false,
+            msg: 'Error while processing'
+        })
+        return
     }
 }
 exports.getLatestPaymentHistory = async function (req, res) {
