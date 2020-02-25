@@ -568,6 +568,7 @@ exports.addStandAloneSim = async function (req, res) {
         let date_now = moment().format('YYYY/MM/DD')
         let term = req.body.term
         let loggedDealer = {}
+        let recurring = req.body.recurring
 
         sql.getConnection(async (error, connection) => {
             if (error) {
@@ -721,8 +722,8 @@ exports.addStandAloneSim = async function (req, res) {
                                                                     dealer_profit = profitLoss.dealer_profit
                                                                 }
                                                                 var standaloneSimId = await helpers.generateStandaloneSimId()
-                                                                let insertStandaloneAccountQ = `INSERT INTO standalone_sim_acc (standalone_sim_id , dealer_id , name , email , note , start_date , expiry_date , term ) VALUES(?,?,?,?,?,?,?,?)`
-                                                                let standaloneAccValues = [standaloneSimId, user_id, name, email, note, date_now, expiry_date, term]
+                                                                let insertStandaloneAccountQ = `INSERT INTO standalone_sim_acc (standalone_sim_id , dealer_id , name , email , note , start_date , expiry_date , term , recurring ) VALUES(?,?,?,?,?,?,?,?,?)`
+                                                                let standaloneAccValues = [standaloneSimId, user_id, name, email, note, date_now, expiry_date, term, recurring]
                                                                 sql.query(insertStandaloneAccountQ, standaloneAccValues, function (standaloneError, standalone_acc_reslt) {
                                                                     if (standaloneError) {
                                                                         console.log(err);
