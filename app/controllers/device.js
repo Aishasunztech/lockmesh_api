@@ -2736,7 +2736,6 @@ exports.editDevice = async function (req, res) {
                                             if (result && result.insertId) {
                                                 if (finalStatus != constants.DEVICE_PRE_ACTIVATION) {
                                                     helpers.updateSimStatus(sim_id2, 'active')
-
                                                 }
                                             }
                                         });
