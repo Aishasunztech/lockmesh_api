@@ -1071,10 +1071,7 @@ exports.activateDealer = async function (req, res) {
 
 
 exports.resetPwd = async function (req, res) {
-    console.log(req.body);
-    // return res.send({status:false, msg: 'kjk'})
     var verify = req.decoded;
-    // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
         var isReset = false;
 

@@ -29,8 +29,8 @@ exports.getAllowedComponents = [ // nn
 ];
 
 exports.checkComponent = [
-    body('ComponentUri')
-        .isIn(['/connect-device/', '/connect-dealer/', '/connect-sim/'])
+    // body('ComponentUri')
+    //     .isIn(['/connect-device/', '/connect-dealer/', '/connect-sim/'])
 ];
 
 exports.isAdmin = [ // nn

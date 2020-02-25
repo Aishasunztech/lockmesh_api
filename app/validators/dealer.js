@@ -98,9 +98,9 @@ exports.activateDealer = [
 ];
 
 exports.resetPwd = [
-    // body('pageName')
-    //     .notEmpty()
-    //     .isIn(add_dealer_roles),
+    body('pageName')
+        .notEmpty()
+        .isIn(add_dealer_roles),
 
     // body('newpwd')
     //     .notEmpty()
@@ -110,13 +110,13 @@ exports.resetPwd = [
     //     .notEmpty()
     //     .isNumeric(),
 
-    // body('dealer_id')
-    //     .notEmpty()
-    //     .isNumeric(),
+    body('dealer_id')
+        .notEmpty()
+        .isInt({ min: 1 }),
 
-    // body('dealer_email')
-    //     .notEmpty()
-    //     .isEmail(),
+    body('dealer_email')
+        .notEmpty()
+        .isEmail(),
 ];
 
 exports.connectDealer = [
