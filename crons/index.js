@@ -240,6 +240,13 @@ cron.schedule('*/4 * * * * *', async () => {
     // })
 
 
+    // get usage records for all sims
+    // app_constants.twilioClient.usage.records.daily.each((usageRecords) => {
+    //     // console.log(usageRecords)
+    //     // usageRecords.forEach(u => console.log(u))
+    // })
+
+
     // get usage record overall account
     // app_constants.twilioClient.wireless.usageRecords.list({
     //     // end: Date,
@@ -250,6 +257,9 @@ cron.schedule('*/4 * * * * *', async () => {
     // }).then((usageRecords) => {
     //     usageRecords.forEach(u => console.log(u))
     // });
+    // console.log()
+    
+    
 
     // Get usage record for specific sim
 
