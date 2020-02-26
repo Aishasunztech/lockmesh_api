@@ -265,7 +265,7 @@ exports.validateSimId = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
         let sim_id = req.body.sim_id
-        let user_acc_id = req.body.user_acc_id ? req.body.user_acc_id : null
+        let user_acc_id = req.body.user_acc_id ? req.body.user_acc_id : ""
         if (sim_id) {
             if (sim_id.length < 19 || sim_id.length > 20) {
                 res.send({
@@ -274,11 +274,14 @@ exports.validateSimId = async function (req, res) {
                 })
                 return
             } else {
-                let selectSimQ = `SELECT * FROM sim_ids WHERE sim_id = '${sim_id}' AND delete_status = '0' AND user_acc_id  !=${user_acc_id}`
+                let selectSimQ = `SELECT * FROM sim_ids WHERE sim_id = '${sim_id}' AND delete_status = '0'`
+                if (user_acc_id) {
+                    selectSimQ = selectSimQ + ` AND (user_acc_id  !='${user_acc_id}' OR (type = 'standalone' AND user_acc_id IS NULL))`
+                }
                 console.log(selectSimQ);
                 let simFound = await sql.query(selectSimQ)
                 if (simFound && simFound.length) {
-                    console.log("sdasd");
+                    // console.log("sdasd");
                     res.send({
                         status: false,
                         msg: "ERROR: THIS ICCID IS IN USE, PLEASE TRY ANOTHER ONE"

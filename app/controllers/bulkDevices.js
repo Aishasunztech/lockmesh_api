@@ -43,14 +43,13 @@ exports.bulkDevicesHistory = async function (req, res) {
     var verify = req.decoded;
     let userId = verify.user.id;
 
-    console.log('at bulk history:')
+    // console.log('at bulk history:', userId)
     // return;
-    if (verify) {
-
+    try {
         var selectQuery = `SELECT * FROM bulk_device_history WHERE action_by = '${userId}'`;
         var getHistory = await sql.query(selectQuery);
 
-        if (getHistory.length) {
+        if (getHistory && getHistory.length) {
             for (let index = 0; index < getHistory.length; index++) {
 
                 // get policy
@@ -242,10 +241,15 @@ exports.bulkDevicesHistory = async function (req, res) {
                 }
                 getHistory[index].policy = policyName;
             }
+            res.send(getHistory);
+        } else {
+            res.send({ status: false })
         }
-        // console.log("getHistory ", getHistory);
-        res.send(getHistory);
+        // console.log("getHistory ", getHistory.length);
 
+    } catch (err) {
+        console.log(err);
+        res.send({ status: false })
     }
 }
 

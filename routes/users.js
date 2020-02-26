@@ -199,7 +199,7 @@ router.get("/getServicesHistory/:usr_acc_id", deviceController.getServicesHistor
 
 
 /**UPDATE Device details**/
-router.put("/edit/devices", deviceController.editDevices);
+router.put("/edit/devices", deviceController.editDevice);
 
 /**EXTEND SERVICE**/
 router.put("/edit-device/extendServices", deviceController.extendServices);
@@ -1644,5 +1644,8 @@ router.post('/validate_sim_id', ServicesController.validateSimId);
 router.put('/add-data-plans', ServicesController.addDataLimitsPlans);
 
 router.put('/reset-pgp-limit', ServicesController.resetPgpLimit);
+
+
+router.post('/add-standalone-sim', simController.addStandAloneSim);
 
 module.exports = router;
