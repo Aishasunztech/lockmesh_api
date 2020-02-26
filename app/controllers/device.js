@@ -7691,6 +7691,7 @@ exports.getActivities = async function (req, res) {
                     constants.DEVICE_PENDING_ACTIVATION ||
                     accResults[i].action == constants.DEVICE_PRE_ACTIVATION ||
                     accResults[i].action === constants.DEVICE_EXPIRED ||
+                    accResults[i].action === constants.DEVICE_WIPE ||
                     accResults[i].action == "DELETE"
                 ) {
                     continue;
