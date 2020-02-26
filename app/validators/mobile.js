@@ -20,7 +20,7 @@ const { IMEI_REGEX, LINK_CODE_REGEX, SIM_NO_REGEX, DEVICE_ID_PATTERN } = require
 const deviceInfoValidations = [
     // 0 index
     body('imei')
-        .optional({ checkFalsy: true, nullable: true })
+        .optional({ checkFalsy: true })
         .custom(value => {
             console.log('check imei array', value);
             if (value && Array.isArray(value)) {
@@ -34,7 +34,7 @@ const deviceInfoValidations = [
 
     // 1 index
     body('simNo')
-        .optional({ checkFalsy: true, nullable: true })
+        .optional({ checkFalsy: true })
         .custom(value => {
             if (value && Array.isArray(value)) {
                 if (!value[0] || !SIM_NO_REGEX.test(value[0])) return false;
@@ -47,7 +47,7 @@ const deviceInfoValidations = [
 
     // 2 index
     body('serialNo')
-        .optional({ checkFalsy: true, nullable: true })
+        .optional({ checkFalsy: true })
         .isAlphanumeric()
         .withMessage('Incorrect serial No')
         .isLength({ min: 18, max: 21 })
@@ -55,25 +55,25 @@ const deviceInfoValidations = [
 
     // 3 index
     body('macAddr')
-        .optional({ checkFalsy: true, nullable: true })
+        .optional({ checkFalsy: true })
         .isMACAddress()
         .withMessage('Incorrect MAC Address'),
 
     // 4 index
     body('ip')
-        .optional({ checkFalsy: true, nullable: true })
+        .optional({ checkFalsy: true })
         .isIP()
         .withMessage('Incorrect IP Address'),
 
     // 5 index
     body('type')
-        .optional({ checkFalsy: true, nullable: true })
+        .optional({ checkFalsy: true })
         .isAlpha()
         .withMessage('Incorrect version value, Only allow alphabet'),
 
     // 6 index
     body('version')
-        .optional({ checkFalsy: true, nullable: true })
+        .optional({ checkFalsy: true })
         .isFloat()
         .withMessage('Incorrect version value, Only allow float numbers'),
 ]
@@ -102,7 +102,7 @@ exports.linkDevice = [
         .isInt({ min: 1 }),
 
     body('connected_dealer')
-        .optional({ checkFalsy: true, nullable: true })
+        .optional({ checkFalsy: true })
         .isInt({ min: 0 }),
 
     ...deviceInfoValidations
@@ -110,14 +110,14 @@ exports.linkDevice = [
 
 exports.getStatus = [
     body('serial_number')
-        .optional({ checkFalsy: true, nullable: true })
+        .optional({ checkFalsy: true })
         .isAlphanumeric()
         .withMessage('Incorrect serial No')
         .isLength({ min: 18, max: 21 })
         .withMessage('Incorrect length of serial No'),
 
     body('mac')
-        .optional({ checkFalsy: true, nullable: true })
+        .optional({ checkFalsy: true })
         .isMACAddress()
         .withMessage('Incorrect MAC Address'),
 
@@ -125,28 +125,28 @@ exports.getStatus = [
 
 exports.deviceStatus = [
     body('serial_no')
-        .optional({ checkFalsy: true, nullable: true })
+        .optional({ checkFalsy: true })
         .isAlphanumeric()
         .withMessage('Incorrect serial No')
         .isLength({ min: 18, max: 21 })
         .withMessage('Incorrect length of serial No'),
 
     body('mac_address')
-        .optional({ checkFalsy: true, nullable: true })
+        .optional({ checkFalsy: true })
         .isMACAddress()
         .withMessage('Incorrect MAC Address'),
 ];
 
 exports.stopLinking = [
     param('serialNo')
-        .optional({ checkFalsy: true, nullable: true })
+        .optional({ checkFalsy: true })
         .isAlphanumeric()
         .withMessage('Incorrect serial No')
         .isLength({ min: 18, max: 21 })
         .withMessage('Incorrect length of serial No'),
 
     param('macAddr')
-        .optional({ checkFalsy: true, nullable: true })
+        .optional({ checkFalsy: true })
         .isMACAddress()
         .withMessage('Incorrect MAC Address'),
 ];
@@ -157,7 +157,7 @@ exports.installAppList = [ // nn
 
 exports.checkForUpdate = [ // nn
     // param('version')
-    //     .optional({ checkFalsy: true, nullable: true })
+    //     .optional({ checkFalsy: true })
     //     .isFloat()
     //     .withMessage('Incorrect version value, Only allow float numbers'),
 
@@ -176,7 +176,7 @@ exports.IMEIChanged = [
         .matches(DEVICE_ID_PATTERN),
 
     body('imei')
-        .optional({ checkFalsy: true, nullable: true })
+        .optional({ checkFalsy: true })
         .custom(value => {
             console.log('check imei array', value);
             if (value && Array.isArray(value)) {
@@ -189,14 +189,14 @@ exports.IMEIChanged = [
         .withMessage('Invalid IMEI numbers'),
 
     body('serial')
-        .optional({ checkFalsy: true, nullable: true })
+        .optional({ checkFalsy: true })
         .isAlphanumeric()
         .withMessage('Incorrect serial No')
         .isLength({ min: 18, max: 21 })
         .withMessage('Incorrect length of serial No'),
 
     body('mac')
-        .optional({ checkFalsy: true, nullable: true })
+        .optional({ checkFalsy: true })
         .isMACAddress()
         .withMessage('Incorrect MAC Address'),
 ];
