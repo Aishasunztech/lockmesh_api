@@ -11,7 +11,7 @@ exports.removeSMApps = [
             }
         }),
 
-    check('spaceType')
+    body('spaceType')
         .isIn(['guest', 'encrypted'])
 ];
 

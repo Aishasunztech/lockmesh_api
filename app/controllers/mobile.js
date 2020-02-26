@@ -309,146 +309,155 @@ exports.linkDevice = async function (req, resp) {
 
     var reslt = await verifyToken(req, resp);
     if (reslt.status == true) {
-        let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address, type, version } = device_helpers.getDeviceInfo(req);
-        // console.log("serial no", serial_number);
-        // console.log("mac address", mac_address);
-        console.log(type, version);
-        if (!empty(serial_number) && !empty(mac_address)) {
-            var dId = req.body.dId;
-            var connected_dealer = (req.body.connected_dealer === undefined || req.body.connected_dealer === null) ? 0 : req.body.connected_dealer;
-            var dealerQ = "select * from dealers where dealer_id = '" + dId + "'";
-            let dealer = await sql.query(dealerQ);
-            // console.log("dealer query", dealer)
-            // res2 = dealer
-            if (dealer.length) {
-                var deviceId = await helpers.getDeviceId(serial_number, mac_address);
-                //deviceId = await helpers.checkDeviceId(deviceId, serial_number, mac_address);
+        try {
+            let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address, type, version } = device_helpers.getDeviceInfo(req);
+            // console.log("serial no", serial_number);
+            // console.log("mac address", mac_address);
+            console.log(type, version);
+            if (serial_number && mac_address) {
+                var dId = req.body.dId;
+                var connected_dealer = (req.body.connected_dealer === undefined || req.body.connected_dealer === null) ? 0 : req.body.connected_dealer;
+                var dealerQ = "select * from dealers where dealer_id = '" + dId + "'";
+                let dealer = await sql.query(dealerQ);
+                // console.log("dealer query", dealer)
+                // res2 = dealer
+                if (dealer.length) {
+                    var deviceId = await helpers.getDeviceId(serial_number, mac_address);
+                    //deviceId = await helpers.checkDeviceId(deviceId, serial_number, mac_address);
 
 
-                var deviceCheckQuery = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND devices.device_id = '${deviceId}' ORDER BY devices.id DESC`;
-                console.log(deviceCheckQuery);
-                let deviceCheckResponse = await sql.query(deviceCheckQuery);
-                console.log(deviceCheckResponse);
-                if (deviceCheckResponse.length) {
-                    console.log(deviceCheckResponse[0]);
-                    if (deviceCheckResponse[0].unlink_status == 1) {
-                        if (deviceCheckResponse[0].dealer_id == dId) {
-                            console.log('same dealer');
-                            let currentDate = moment(new Date()).format("YYYY/MM/DD")
-                            if (deviceCheckResponse[0].expiry_date > currentDate) {
-                                var sql1 = `UPDATE  usr_acc SET relink_status = 1, device_status = 1 where device_id=${deviceCheckResponse[0].usr_device_id}`;
-                                await sql.query(sql1)
-                                resp.send({
-                                    status: true,
-                                    device_id: deviceId,
-                                    msg: "Device Linked.",
-                                    dealer_pin: dealer[0].link_code
-                                });
-                                return
+                    var deviceCheckQuery = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND usr_acc.del_status = 0 AND devices.device_id = '${deviceId}' ORDER BY devices.id DESC`;
+                    console.log(deviceCheckQuery);
+                    let deviceCheckResponse = await sql.query(deviceCheckQuery);
+                    console.log(deviceCheckResponse);
+                    if (deviceCheckResponse.length) {
+                        console.log(deviceCheckResponse[0]);
+                        if (deviceCheckResponse[0].unlink_status == 1) {
+                            if (deviceCheckResponse[0].dealer_id == dId) {
+                                console.log('same dealer');
+                                let currentDate = moment(new Date()).format("YYYY/MM/DD")
+                                if (deviceCheckResponse[0].expiry_date > currentDate) {
+                                    var sql1 = `UPDATE  usr_acc SET relink_status = 1, device_status = 1 where device_id=${deviceCheckResponse[0].usr_device_id}`;
+                                    await sql.query(sql1)
+                                    resp.send({
+                                        status: true,
+                                        device_id: deviceId,
+                                        msg: "Device Linked.",
+                                        dealer_pin: dealer[0].link_code
+                                    });
+                                    return
+                                } else {
+                                    console.log('Services Expire: Should delete device');
+                                    var deleteSql1 = `DELETE FROM usr_acc where device_id=${deviceCheckResponse[0].usr_device_id}`;
+                                    await sql.query(deleteSql1)
+                                    console.log(deleteSql1);
+                                    var sqlDevice = "DELETE from devices where device_id = '" + deviceId + "'";
+                                    console.log(sqlDevice);
+                                    await sql.query(sqlDevice);
+                                }
                             } else {
-                                console.log('Services Expire: Should delete device');
+                                console.log('dealer not same: Should delete device');
                                 var deleteSql1 = `DELETE FROM usr_acc where device_id=${deviceCheckResponse[0].usr_device_id}`;
-                                await sql.query(deleteSql1)
                                 console.log(deleteSql1);
+                                await sql.query(deleteSql1)
                                 var sqlDevice = "DELETE from devices where device_id = '" + deviceId + "'";
                                 console.log(sqlDevice);
                                 await sql.query(sqlDevice);
+
                             }
                         } else {
-                            console.log('dealer not same: Should delete device');
-                            var deleteSql1 = `DELETE FROM usr_acc where device_id=${deviceCheckResponse[0].usr_device_id}`;
-                            console.log(deleteSql1);
-                            await sql.query(deleteSql1)
-                            var sqlDevice = "DELETE from devices where device_id = '" + deviceId + "'";
-                            console.log(sqlDevice);
-                            await sql.query(sqlDevice);
-
+                            console.log('Some thing bad happend. user should not be here. Device already exist.', deviceId);
+                            resp.send({
+                                status: false,
+                                msg: "Devices already exist."
+                            });
+                            return
                         }
-                    } else {
-                        console.log('Some thing bad happend. user should not be here. Device already exist.', deviceId);
-                        resp.send({
-                            status: false,
-                            msg: "Devices already exist."
-                        });
-                        return
                     }
-                }
 
 
-                var lastLinkAttemptQ = `SELECT * FROM acc_action_history 
+                    var lastLinkAttemptQ = `SELECT * FROM acc_action_history 
                     WHERE action = '${Constants.DEVICE_PENDING_ACTIVATION}' AND device_id = '${deviceId}' 
                     ORDER BY id DESC LIMIT 1`;
-                let lastLinkAttempt = await sql.query(lastLinkAttemptQ);
-                if (lastLinkAttempt.length) {
-                    let createdDateTime = new Date(lastLinkAttempt[0].created_at);
-                    let dateNow = new Date();
-                    let difference_ms = dateNow.getTime() - createdDateTime.getTime();
-                    //Get 1 hour in milliseconds
-                    let one_hour = 1000 * 60 * 60;
-                    let elapsed_hours = difference_ms / one_hour;
-                    if (elapsed_hours >= 1) {
-                        sendEmail("New Device Request", "You have a new device request.<br> Device ID : " + deviceId + " <br>", dealer[0].dealer_email, function (error, response) {
-                            if (error) console.log(error);
-                        });
-                    }
-                }
-
-
-                let insertDevice = "INSERT INTO devices (device_id, imei, imei2, ip_address, simno, simno2, serial_number, mac_address, online) values(?,?,?,?,?,?,?,?,?)";
-                sql.query(insertDevice, [deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, Constants.DEVICE_OFFLINE], function (error, deviceRes) {
-                    // console.log("Insert Query" , insertDevice, [deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, 'On']);
-                    if (error) {
-                        //throw Error(error);
-                        console.log(error);
-                        resp.send({
-                            status: false,
-                            msg: error
-                        });
-                        return false;
-                    }
-                    let dvc_id = deviceRes.insertId;
-                    let insertUserAcc = "";
-                    let values;
-                    // console.log("dealer", dealer[0].dealer_id);
-                    if (connected_dealer !== 0) {
-
-                        insertUserAcc = "INSERT INTO usr_acc (device_id, dealer_id, link_code, prnt_dlr_id,type,version) values(?,?,?,?,?,?)";
-                        values = [dvc_id, dealer[0].dealer_id, dealer[0].link_code, connected_dealer, type, version];
-                    } else {
-                        insertUserAcc = "INSERT INTO usr_acc (device_id, dealer_id, link_code,type,version) values(?,?,?,?,?,?)";
-                        values = [dvc_id, dealer[0].dealer_id, dealer[0].link_code, type, version];
+                    let lastLinkAttempt = await sql.query(lastLinkAttemptQ);
+                    if (lastLinkAttempt.length) {
+                        let createdDateTime = new Date(lastLinkAttempt[0].created_at);
+                        let dateNow = new Date();
+                        let difference_ms = dateNow.getTime() - createdDateTime.getTime();
+                        //Get 1 hour in milliseconds
+                        let one_hour = 1000 * 60 * 60;
+                        let elapsed_hours = difference_ms / one_hour;
+                        if (elapsed_hours >= 1) {
+                            sendEmail("New Device Request", "You have a new device request.<br> Device ID : " + deviceId + " <br>", dealer[0].dealer_email, function (error, response) {
+                                if (error) console.log(error);
+                            });
+                        }
                     }
 
-                    sql.query(insertUserAcc, values, async function (error, rows) {
-                        if (error) throw error;
-                        // console.log();
-                        let record = await helpers.getAllRecordbyDeviceId(deviceId);
-                        // console.log("dasdsd", record);
-                        device_helpers.saveActionHistory(record, Constants.DEVICE_PENDING_ACTIVATION)
-                        device_helpers.saveImeiHistory(deviceId, serial_number, mac_address, imei1, imei2)
-                        resp.send({
-                            status: true,
-                            device_id: deviceId,
-                            msg: "Device Linked.",
-                            dealer_pin: dealer[0].link_code
 
+                    let insertDevice = "INSERT INTO devices (device_id, imei, imei2, ip_address, simno, simno2, serial_number, mac_address, online) values(?,?,?,?,?,?,?,?,?)";
+                    sql.query(insertDevice, [deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, Constants.DEVICE_OFFLINE], function (error, deviceRes) {
+                        // console.log("Insert Query" , insertDevice, [deviceId, imei1, imei2, ip, simNo1, simNo2, serial_number, mac_address, 'On']);
+                        if (error) {
+                            //throw Error(error);
+                            console.log(error);
+                            resp.send({
+                                status: false,
+                                msg: error
+                            });
+                            return false;
+                        }
+                        let dvc_id = deviceRes.insertId;
+                        let insertUserAcc = "";
+                        let values;
+                        // console.log("dealer", dealer[0].dealer_id);
+                        if (connected_dealer !== 0) {
+
+                            insertUserAcc = "INSERT INTO usr_acc (device_id, dealer_id, link_code, prnt_dlr_id,type,version) values(?,?,?,?,?,?)";
+                            values = [dvc_id, dealer[0].dealer_id, dealer[0].link_code, connected_dealer, type, version];
+                        } else {
+                            insertUserAcc = "INSERT INTO usr_acc (device_id, dealer_id, link_code,type,version) values(?,?,?,?,?,?)";
+                            values = [dvc_id, dealer[0].dealer_id, dealer[0].link_code, type, version];
+                        }
+
+                        sql.query(insertUserAcc, values, async function (error, rows) {
+                            if (error) throw error;
+                            // console.log();
+                            let record = await helpers.getAllRecordbyDeviceId(deviceId);
+                            // console.log("dasdsd", record);
+                            device_helpers.saveActionHistory(record, Constants.DEVICE_PENDING_ACTIVATION)
+                            device_helpers.saveImeiHistory(deviceId, serial_number, mac_address, imei1, imei2)
+                            resp.send({
+                                status: true,
+                                device_id: deviceId,
+                                msg: "Device Linked.",
+                                dealer_pin: dealer[0].link_code
+
+                            });
+                            return
                         });
-                        return
+
                     });
 
-                });
-
+                } else {
+                    resp.send({
+                        status: false,
+                        msg: "dealer not found"
+                    });
+                    return
+                }
             } else {
                 resp.send({
                     status: false,
-                    msg: "dealer not found"
-                });
+                    msg: "information not provided"
+                })
                 return
             }
-        } else {
+        } catch (err) {
+            console.log("linkDevice api: ", err);
             resp.send({
                 status: false,
-                msg: "information not provided"
+                msg: "Error while processing"
             })
             return
         }
@@ -460,7 +469,7 @@ exports.getStatus = async function (req, resp) {
     if (reslt.status == true) {
         var serial_number = req.body.serial_number;
         var mac = req.body.mac;
-        if (!empty(serial_number) && !empty(mac)) {
+        if (serial_number && mac) {
 
             if (serial_number === Constants.PRE_DEFINED_SERIAL_NUMBER && mac === Constants.PRE_DEFINED_MAC_ADDRESS) {
                 data = {
@@ -700,6 +709,12 @@ exports.getStatus = async function (req, resp) {
                     resp.send(data);
                 }
             }
+        } else {
+            data = {
+                "status": false,
+                "msg": "Information not provided."
+            };
+            resp.send(data);
         }
     } else {
         data = {
@@ -1326,7 +1341,7 @@ exports.stopLinking = async function (req, res) {
     // console.log("mac_address", mac_address);
     // console.log("serialNo", serial_number);
     if (reslt.status == true) {
-        if (!empty(mac_address) && !empty(serial_number)) {
+        if (mac_address && serial_number) {
             let deviceQ = "SELECT id ,device_id FROM devices WHERE mac_address='" + mac_address + "' AND serial_number='" + serial_number + "'";
             sql.query(deviceQ, async function (error, resp) {
                 if (error) throw (error);
@@ -1366,42 +1381,58 @@ exports.stopLinking = async function (req, res) {
 }
 
 exports.installAppList = async function (req, res) {
-    sql.query("select * from apk_details where status='On' and delete_status='0'", function (err, rows) {
+    try {
+        sql.query("select * from apk_details where status='On' and delete_status='0'", function (err, rows) {
 
-        if (err) throw err;
-
-        var data = [];
-        if (rows.length > 0) {
-
-            for (var i = 0; i < rows.length; i++) {
-
-                dta = {
-                    "apk_name": rows[i].app_name,
-                    "logo": rows[i].logo,
-                    "apk": rows[i].apk,
-                    "apk_status": rows[i].status,
-                    "package_name": rows[i].package_name,
-                    "apk_size": rows[i].apk_size,
-                    "version_code": rows[i].version_code,
+            if (err) {
+                data = {
+                    "status": false,
+                    "msg": "No result found"
                 }
-                data.push(dta);
-            }
-            //   console.log(data);
-            //res.json("status" : true , result : data);
-            return res.json({
-                success: true,
-                list: data
-            });
+                res.send(data);
+            };
 
-        } else {
-            data = {
-                "status": false,
-                "msg": "No result found"
+            var data = [];
+            if (rows.length > 0) {
+
+                for (var i = 0; i < rows.length; i++) {
+
+                    dta = {
+                        "apk_name": rows[i].app_name,
+                        "logo": rows[i].logo,
+                        "apk": rows[i].apk,
+                        "apk_status": rows[i].status,
+                        "package_name": rows[i].package_name,
+                        "apk_size": rows[i].apk_size,
+                        "version_code": rows[i].version_code,
+                    }
+                    data.push(dta);
+                }
+                //   console.log(data);
+                //res.json("status" : true , result : data);
+                return res.json({
+                    success: true,
+                    list: data
+                });
+
+            } else {
+                data = {
+                    "status": false,
+                    "msg": "No result found"
+                }
+                res.send(data);
             }
-            res.send(data);
+
+        });
+
+    } catch (err) {
+        console.log("installAppList api: ", err);
+        data = {
+            "status": false,
+            "msg": "No result found"
         }
-
-    });
+        res.send(data);
+    }
 }
 
 exports.checkForUpdate = async (req, res) => {
@@ -1495,44 +1526,62 @@ exports.IMEIChanged = async function (req, res) {
         res.send({
             status: response
         })
+    } else {
+        res.send({
+            status: false
+        })
     }
 }
 
 exports.adminSMAppList = async function (req, res) {
     let data = [];
-    sql.query("SELECT apk_details.*, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type FROM apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id WHERE apk_details.delete_status = 0 AND secure_market_apps.dealer_type = 'admin'", function (err, results) {
-        if (err) {
-            console.log(err);
-        };
-        if (results.length) {
-            for (var i = 0; i < results.length; i++) {
-                dta = {
-                    apk_name: results[i].app_name,
-                    logo: results[i].logo,
-                    apk: results[i].apk,
-                    apk_status: results[i].status,
-                    space_type: results[i].space_type,
-                    package_name: results[i].package_name,
-                    is_restrict_uninstall: results[i].is_restrict_uninstall,
-                    apk_size: results[i].apk_size,
-                    version_code: results[i].version_code
+    try {
+        sql.query("SELECT apk_details.*, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type FROM apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id WHERE apk_details.delete_status = 0 AND secure_market_apps.dealer_type = 'admin'", function (err, results) {
+            if (err) {
+                console.log("adminSMAppList api ", err);
+                data = {
+                    status: false,
+                    msg: "No result found"
                 }
-                data.push(dta);
+                return res.send(data);
+            };
+            if (results.length) {
+                for (var i = 0; i < results.length; i++) {
+                    dta = {
+                        apk_name: results[i].app_name,
+                        logo: results[i].logo,
+                        apk: results[i].apk,
+                        apk_status: results[i].status,
+                        space_type: results[i].space_type,
+                        package_name: results[i].package_name,
+                        is_restrict_uninstall: results[i].is_restrict_uninstall,
+                        apk_size: results[i].apk_size,
+                        version_code: results[i].version_code
+                    }
+                    data.push(dta);
+                }
+                //   console.log(data);
+                //res.json("status" : true , result : data);
+                return res.json({
+                    success: true,
+                    list: data
+                });
+            } else {
+                data = {
+                    status: false,
+                    msg: "No result found"
+                }
+                return res.send(data);
             }
-            //   console.log(data);
-            //res.json("status" : true , result : data);
-            return res.json({
-                success: true,
-                list: data
-            });
-        } else {
-            data = {
-                status: false,
-                msg: "No result found"
-            }
-            return res.send(data);
+        })
+    } catch (err) {
+        console.log("adminSMAppList api ", err);
+        data = {
+            status: false,
+            msg: "No result found"
         }
-    })
+        return res.send(data);
+    }
 }
 
 exports.SMAppList = async function (req, res) {
@@ -1544,6 +1593,11 @@ exports.SMAppList = async function (req, res) {
         sql.query("SELECT apk_details.*, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id WHERE apk_details.delete_status = 0 AND (secure_market_apps.dealer_id = '" + dealer_id + "' OR dealer_type = 'admin')", function (err, results) {
             if (err) {
                 console.log(err);
+                data = {
+                    status: false,
+                    msg: "No result found"
+                }
+                return res.send(data);
             };
 
             if (results.length) {
@@ -1591,84 +1645,29 @@ exports.adminSMAppList_V2 = async function (req, res) {
     console.log('space type is  ', spaceType);
     // res.send({ status: true, spaceType: spaceType }); 
     // return;
-
-    let data = [];
-    sql.query(`SELECT apk_details.*, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type FROM apk_details JOIN secure_market_apps ON (secure_market_apps.apk_id = apk_details.id) WHERE apk_details.delete_status = 0 AND secure_market_apps.dealer_type = 'admin' AND secure_market_apps.space_type = '${spaceType}'`, function (err, results) {
-        if (err) {
-            console.log(err);
-        };
-        if (results.length) {
-            for (var i = 0; i < results.length; i++) {
-                dta = {
-                    apk_name: results[i].app_name,
-                    logo: results[i].logo,
-                    apk: results[i].apk,
-                    apk_status: results[i].status,
-                    space_type: results[i].space_type,
-                    package_name: results[i].package_name,
-                    is_restrict_uninstall: results[i].is_restrict_uninstall,
-                    apk_size: results[i].apk_size,
-                    version_code: results[i].version_code
-                }
-                data.push(dta);
-            }
-            //   console.log(data);
-            //res.json("status" : true , result : data);
-            return res.json({
-                success: true,
-                list: data
-            });
-        } else {
-            data = {
-                status: false,
-                msg: "No result found"
-            }
-            return res.send(data);
-        }
-    })
-}
-
-exports.SMAppList_V2 = async function (req, res) {
-    let data = [];
-    let spaceType = req.params.spaceType;
-    let dealer_id = await helpers.getDealerIDByLinkOrActivation(req.params.linkCode)
-
-    // console.log("req.params.linkCode ", req.params.linkCode)
-    // console.log("dealer_id ", dealer_id)
-
-    if (dealer_id) {
-        sql.query(`SELECT apk_details.*, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type, secure_market_apps.dealer_type from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id WHERE apk_details.delete_status = 0 AND secure_market_apps.space_type = '${spaceType}' AND (secure_market_apps.dealer_id = '${dealer_id}' OR dealer_type = 'admin')`, function (err, results) {
+    try {
+        let data = [];
+        sql.query(`SELECT apk_details.*, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type FROM apk_details JOIN secure_market_apps ON (secure_market_apps.apk_id = apk_details.id) WHERE apk_details.delete_status = 0 AND secure_market_apps.dealer_type = 'admin' AND secure_market_apps.space_type = '${spaceType}'`, function (err, results) {
             if (err) {
                 console.log(err);
+                data = {
+                    status: false,
+                    msg: "No result found"
+                }
+                return res.send(data);
             };
-
             if (results.length) {
-                let adminApps = results.filter((app) => app.dealer_type === "admin");
-                // console.log(adminApps.length, "adminApps ", adminApps)
-
-                let deleteIds = [];
-                results.forEach((item, index) => {
-                    for (let i = 0; i < adminApps.length; i++) {
-                        if (item.id == adminApps[i].id && item.dealer_type !== "admin" && adminApps[i].space_type === item.space_type) {
-                            deleteIds.push(index);
-                        }
-                    }
-                })
-                let finalApps = results.filter((app, index) => !deleteIds.includes(index))
-
-
-                for (var i = 0; i < finalApps.length; i++) {
+                for (var i = 0; i < results.length; i++) {
                     dta = {
-                        apk_name: finalApps[i].app_name,
-                        logo: finalApps[i].logo,
-                        apk: finalApps[i].apk,
-                        apk_status: finalApps[i].status,
-                        space_type: finalApps[i].space_type,
-                        dealer_type: finalApps[i].dealer_type,
-                        package_name: finalApps[i].package_name,
-                        is_restrict_uninstall: finalApps[i].is_restrict_uninstall,
-                        apk_size: finalApps[i].apk_size,
-                        version_code: finalApps[i].version_code
+                        apk_name: results[i].app_name,
+                        logo: results[i].logo,
+                        apk: results[i].apk,
+                        apk_status: results[i].status,
+                        space_type: results[i].space_type,
+                        package_name: results[i].package_name,
+                        is_restrict_uninstall: results[i].is_restrict_uninstall,
+                        apk_size: results[i].apk_size,
+                        version_code: results[i].version_code
                     }
                     data.push(dta);
                 }
@@ -1686,7 +1685,90 @@ exports.SMAppList_V2 = async function (req, res) {
                 return res.send(data);
             }
         })
-    } else {
+
+    } catch (err) {
+        console.log(err);
+        data = {
+            status: false,
+            msg: "No result found"
+        }
+        return res.send(data);
+    }
+}
+
+exports.SMAppList_V2 = async function (req, res) {
+    try {
+        let data = [];
+        let spaceType = req.params.spaceType;
+        let dealer_id = await helpers.getDealerIDByLinkOrActivation(req.params.linkCode)
+
+        // console.log("req.params.linkCode ", req.params.linkCode)
+        // console.log("dealer_id ", dealer_id)
+
+        if (dealer_id) {
+            sql.query(`SELECT apk_details.*, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type, secure_market_apps.dealer_type from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id WHERE apk_details.delete_status = 0 AND secure_market_apps.space_type = '${spaceType}' AND (secure_market_apps.dealer_id = '${dealer_id}' OR dealer_type = 'admin')`, function (err, results) {
+                if (err) {
+                    console.log(err);
+                    data = {
+                        status: false,
+                        msg: "No result found"
+                    }
+                    return res.send(data);
+                };
+
+                if (results.length) {
+                    let adminApps = results.filter((app) => app.dealer_type === "admin");
+                    // console.log(adminApps.length, "adminApps ", adminApps)
+
+                    let deleteIds = [];
+                    results.forEach((item, index) => {
+                        for (let i = 0; i < adminApps.length; i++) {
+                            if (item.id == adminApps[i].id && item.dealer_type !== "admin" && adminApps[i].space_type === item.space_type) {
+                                deleteIds.push(index);
+                            }
+                        }
+                    })
+                    let finalApps = results.filter((app, index) => !deleteIds.includes(index))
+
+
+                    for (var i = 0; i < finalApps.length; i++) {
+                        dta = {
+                            apk_name: finalApps[i].app_name,
+                            logo: finalApps[i].logo,
+                            apk: finalApps[i].apk,
+                            apk_status: finalApps[i].status,
+                            space_type: finalApps[i].space_type,
+                            dealer_type: finalApps[i].dealer_type,
+                            package_name: finalApps[i].package_name,
+                            is_restrict_uninstall: finalApps[i].is_restrict_uninstall,
+                            apk_size: finalApps[i].apk_size,
+                            version_code: finalApps[i].version_code
+                        }
+                        data.push(dta);
+                    }
+                    //   console.log(data);
+                    //res.json("status" : true , result : data);
+                    return res.json({
+                        success: true,
+                        list: data
+                    });
+                } else {
+                    data = {
+                        status: false,
+                        msg: "No result found"
+                    }
+                    return res.send(data);
+                }
+            })
+        } else {
+            data = {
+                status: false,
+                msg: "No result found"
+            }
+            return res.send(data);
+        }
+    } catch (err) {
+        console.log(err);
         data = {
             status: false,
             msg: "No result found"
@@ -1701,91 +1783,103 @@ exports.SMAppListV3 = async function (req, res) {
     let linkCode = req.body.linkCode;
     let querySM = ''
 
-    // if linkCode is available then send both admin and dealer apps other wise send on admin permitted apps
-    if (!linkCode) {
+    try {
+        // if linkCode is available then send both admin and dealer apps other wise send on admin permitted apps
+        if (!linkCode) {
 
-        querySM = `SELECT apk_details.*, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type FROM apk_details JOIN secure_market_apps ON (secure_market_apps.apk_id = apk_details.id) WHERE apk_details.delete_status = 0 AND secure_market_apps.dealer_type = 'admin' AND secure_market_apps.space_type = '${spaceType}'`;
-    } else {
-        let dealer_id = await helpers.getDealerIDByLinkOrActivation(linkCode)
-        if (!dealer_id) {
             querySM = `SELECT apk_details.*, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type FROM apk_details JOIN secure_market_apps ON (secure_market_apps.apk_id = apk_details.id) WHERE apk_details.delete_status = 0 AND secure_market_apps.dealer_type = 'admin' AND secure_market_apps.space_type = '${spaceType}'`;
         } else {
-            querySM = `SELECT apk_details.*, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type, secure_market_apps.dealer_type from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id WHERE apk_details.delete_status = 0 AND secure_market_apps.space_type = '${spaceType}' AND (secure_market_apps.dealer_id = '${dealer_id}' OR dealer_type = 'admin')`
+            let dealer_id = await helpers.getDealerIDByLinkOrActivation(linkCode)
+            if (!dealer_id) {
+                querySM = `SELECT apk_details.*, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type FROM apk_details JOIN secure_market_apps ON (secure_market_apps.apk_id = apk_details.id) WHERE apk_details.delete_status = 0 AND secure_market_apps.dealer_type = 'admin' AND secure_market_apps.space_type = '${spaceType}'`;
+            } else {
+                querySM = `SELECT apk_details.*, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type, secure_market_apps.dealer_type from apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id WHERE apk_details.delete_status = 0 AND secure_market_apps.space_type = '${spaceType}' AND (secure_market_apps.dealer_id = '${dealer_id}' OR dealer_type = 'admin')`
+            }
         }
-    }
 
 
-    sql.query(querySM, function (err, results) {
-        console.log("check error and result: ", err, results);
-        // if (err) {
-        //     data = {
-        //         status: false,
-        //         msg: "No result found"
-        //     }
-        //     return res.send(data);
-        // };
+        sql.query(querySM, function (err, results) {
+            console.log("check error and result: ", err, results);
+            // if (err) {
+            //     data = {
+            //         status: false,
+            //         msg: "No result found"
+            //     }
+            //     return res.send(data);
+            // };
 
-        let apps = [];
-        data = {
+            let apps = [];
+            data = {
+                status: true,
+                success: true,
+                msg: "No result found",
+                list: []
+            }
+
+
+            if (results && results.length) {
+                let finalApps = []
+                if (linkCode) {
+
+                    let adminApps = results.filter((app) => app.dealer_type === "admin");
+                    // console.log(adminApps.length, "adminApps ", adminApps)
+
+                    let deleteIds = [];
+                    results.forEach((item, index) => {
+                        for (let i = 0; i < adminApps.length; i++) {
+                            if (item.id == adminApps[i].id && item.dealer_type !== "admin" && adminApps[i].space_type === item.space_type) {
+                                deleteIds.push(index);
+                            }
+                        }
+                    })
+                    finalApps = results.filter((app, index) => !deleteIds.includes(index))
+                } else {
+                    finalApps = results;
+                }
+
+
+                for (var i = 0; i < finalApps.length; i++) {
+                    dta = {
+                        apk_name: finalApps[i].app_name,
+                        logo: finalApps[i].logo,
+                        apk: finalApps[i].apk,
+                        apk_status: finalApps[i].status,
+                        space_type: finalApps[i].space_type,
+                        // dealer_type: finalApps[i].dealer_type,
+                        package_name: finalApps[i].package_name,
+                        is_restrict_uninstall: finalApps[i].is_restrict_uninstall,
+                        apk_size: finalApps[i].apk_size,
+                        version_code: finalApps[i].version_code
+                    }
+                    apps.push(dta);
+                }
+                //   console.log(data);
+                //res.json("status" : true , result : data);
+                data = {
+                    success: true,
+                    status: true,
+                    list: apps
+                }
+            }
+            // else {
+            //     data = {
+            //         status: true,
+            //         msg: "No result found",
+            //         list: apps
+            //     }
+            // }
+            return res.send(data);
+        })
+
+    } catch (err) {
+        console.log(err);
+        return res.send({
             status: true,
             success: true,
             msg: "No result found",
             list: []
-        }
-
-        if (results && results.length) {
-            let finalApps = []
-            if (linkCode) {
-
-                let adminApps = results.filter((app) => app.dealer_type === "admin");
-                // console.log(adminApps.length, "adminApps ", adminApps)
-
-                let deleteIds = [];
-                results.forEach((item, index) => {
-                    for (let i = 0; i < adminApps.length; i++) {
-                        if (item.id == adminApps[i].id && item.dealer_type !== "admin" && adminApps[i].space_type === item.space_type) {
-                            deleteIds.push(index);
-                        }
-                    }
-                })
-                finalApps = results.filter((app, index) => !deleteIds.includes(index))
-            } else {
-                finalApps = results;
-            }
-
-
-            for (var i = 0; i < finalApps.length; i++) {
-                dta = {
-                    apk_name: finalApps[i].app_name,
-                    logo: finalApps[i].logo,
-                    apk: finalApps[i].apk,
-                    apk_status: finalApps[i].status,
-                    space_type: finalApps[i].space_type,
-                    // dealer_type: finalApps[i].dealer_type,
-                    package_name: finalApps[i].package_name,
-                    is_restrict_uninstall: finalApps[i].is_restrict_uninstall,
-                    apk_size: finalApps[i].apk_size,
-                    version_code: finalApps[i].version_code
-                }
-                apps.push(dta);
-            }
-            //   console.log(data);
-            //res.json("status" : true , result : data);
-            data = {
-                success: true,
-                status: true,
-                list: apps
-            }
-        }
-        // else {
-        //     data = {
-        //         status: true,
-        //         msg: "No result found",
-        //         list: apps
-        //     }
-        // }
-        return res.send(data);
-    })
+        });
+    }
 }
 
 async function getUserAccService(user_acc) {

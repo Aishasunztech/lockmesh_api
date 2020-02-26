@@ -116,8 +116,8 @@ exports.removeSMApps = async function (req, res) {
 }
 
 exports.transferApps = async function (req, res) {
-    console.log(req.body);
-    return res.send({ status: false, msg: 'jkl' })
+    // console.log(req.body);
+    // return res.send({ status: false, msg: 'jkl' })
     var verify = req.decoded;
     try {
         let appKeys = req.body.data
