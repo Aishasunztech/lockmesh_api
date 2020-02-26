@@ -505,7 +505,7 @@ module.exports = {
      * String ids of usr_acc table
      */
     getServicesData: async (ids) => {
-        console.log('get device ids services: ',ids);
+        console.log('get device ids services: ', ids);
         let query = "SELECT * FROM services_data WHERE user_acc_id IN (" + ids + ") AND (end_date IS NULL OR end_date = '') AND (status = 'active' OR status = 'request_for_cancel' OR status = 'extended') "
         let results = await sql.query(query);
         if (results.length) {
@@ -715,12 +715,12 @@ module.exports = {
         var simNo1 = null;
         var simNo2 = null;
         //geting imei's
-        if (imei !== undefined) {
+        if (imei && Array.isArray(imei)) {
             imei1 = (imei[0] !== undefined && imei[0] !== null && imei[0] !== 'null') ? imei[0] : null;
             imei2 = (imei[1] !== undefined && imei[0] !== null && imei[1] !== 'null') ? imei[1] : null;
         }
 
-        if (simNo !== undefined) {
+        if (simNo && Array.isArray(simNo)) {
             simNo1 = (simNo[0] !== undefined && simNo[0] !== null && simNo[0] !== 'null') ? simNo[0] : null;
             simNo2 = (simNo[1] !== undefined && simNo[1] !== null && simNo[0] !== 'null') ? simNo[1] : null;
         }
