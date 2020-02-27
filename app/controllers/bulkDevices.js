@@ -43,8 +43,9 @@ exports.bulkDevicesHistory = async function (req, res) {
     var verify = req.decoded;
     let userId = verify.user.id;
 
+    // console.log('at bulk history:', userId)
+    // return;
     try {
-
         var selectQuery = `SELECT * FROM bulk_device_history WHERE action_by = '${userId}'`;
         var getHistory = await sql.query(selectQuery);
 
@@ -247,6 +248,7 @@ exports.bulkDevicesHistory = async function (req, res) {
         }
 
     } catch (err) {
+        console.log(err);
         res.send({ status: false });
     }
 }
