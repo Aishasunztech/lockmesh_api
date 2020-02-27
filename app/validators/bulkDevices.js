@@ -111,9 +111,6 @@ exports.activateBulkDevices = [
         })
 ];
 
-exports.getUsersOfDealers = [
-
-];
 exports.applyBulkPushApps = [
     body('selectedDevices')
         .custom((v) => arrayOfObjectWithKeys(v, BulkDeviceIdsSchema)),

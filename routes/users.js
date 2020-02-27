@@ -1629,8 +1629,6 @@ router.post("/bulk-unlink", [bulkDevicesValidators.unlinkBulkDevices, errorMsgs]
 
 router.post("/bulk-wipe", [bulkDevicesValidators.wipeBulkDevices, errorMsgs], bulkDevicesController.wipeBulkDevices);
 
-// router.post("/getUsersOfDealers", [bulkDevicesValidators.getUsersOfDealers , errorMsgs], bulkDevicesController.getUsersOfDealers);
-
 router.post("/apply_bulk_pushapps", [bulkDevicesValidators.applyBulkPushApps, errorMsgs], bulkDevicesController.applyBulkPushApps);
 
 router.post("/apply_bulk_pullapps", [bulkDevicesValidators.applyBulkPullApps, errorMsgs], bulkDevicesController.applyBulkPullApps);
