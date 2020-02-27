@@ -595,7 +595,7 @@ module.exports = {
 
     // send to device
     sendMsgToDevice: async function (io, device_id, job_id, msg, SERVER_TIMEZONE) {
-        console.log("data::  ", device_id, msg, job_id, "channel name: ", Constants.SEND_MSG_TO_DEVICE + device_id);
+        // console.log("data::  ", device_id, msg, job_id, "channel name: ", Constants.SEND_MSG_TO_DEVICE + device_id);
 
         if (msg) {
             io.emit(Constants.SEND_MSG_TO_DEVICE + device_id, {
