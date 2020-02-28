@@ -1,5 +1,5 @@
 const { check, body, param } = require('express-validator');
-const { IMEI_REGEX, LINK_CODE_REGEX, SIM_NO_REGEX, DEVICE_ID_PATTERN } = require('../../constants/validation');
+const { IMEI_REGEX, LINK_CODE_REGEX, SIM_NO_REGEX, SIM_ID_PATTERN, DEVICE_ID_PATTERN } = require('../../constants/validation');
 
 // 0 => imei1, imei2,
 // 1 =>  simNo1, simNo2,
@@ -37,8 +37,8 @@ const deviceInfoValidations = [
         .optional({ checkFalsy: true })
         .custom(value => {
             if (value && Array.isArray(value)) {
-                if (!value[0] || !SIM_NO_REGEX.test(value[0])) return false;
-                if (!value[1] || !SIM_NO_REGEX.test(value[1])) return false;
+                if (value[0] && !SIM_ID_PATTERN.test(value[0])) return false;
+                if (value[1] && !SIM_ID_PATTERN.test(value[1])) return false;
                 return true;
             }
             return false;
@@ -50,8 +50,9 @@ const deviceInfoValidations = [
         .optional({ checkFalsy: true })
         .isAlphanumeric()
         .withMessage('Incorrect serial No')
-        .isLength({ min: 18, max: 21 })
-        .withMessage('Incorrect length of serial No'),
+        // .isLength({ min: 18, max: 21 })
+        // .withMessage('Incorrect length of serial No'),
+        ,
 
     // 3 index
     body('macAddr')
@@ -74,7 +75,7 @@ const deviceInfoValidations = [
     // 6 index
     body('version')
         .optional({ checkFalsy: true })
-        .isFloat()
+        .matches(/^([0-9]+)(\.[0-9]+)*$/)
         .withMessage('Incorrect version value, Only allow float numbers'),
 ]
 
@@ -113,8 +114,9 @@ exports.getStatus = [
         .optional({ checkFalsy: true })
         .isAlphanumeric()
         .withMessage('Incorrect serial No')
-        .isLength({ min: 18, max: 21 })
-        .withMessage('Incorrect length of serial No'),
+        // .isLength({ min: 18, max: 21 })
+        // .withMessage('Incorrect length of serial No'),
+        ,
 
     body('mac')
         .optional({ checkFalsy: true })
@@ -128,8 +130,9 @@ exports.deviceStatus = [
         .optional({ checkFalsy: true })
         .isAlphanumeric()
         .withMessage('Incorrect serial No')
-        .isLength({ min: 18, max: 21 })
-        .withMessage('Incorrect length of serial No'),
+        // .isLength({ min: 18, max: 21 })
+        // .withMessage('Incorrect length of serial No'),
+        ,
 
     body('mac_address')
         .optional({ checkFalsy: true })
@@ -142,8 +145,9 @@ exports.stopLinking = [
         .optional({ checkFalsy: true })
         .isAlphanumeric()
         .withMessage('Incorrect serial No')
-        .isLength({ min: 18, max: 21 })
-        .withMessage('Incorrect length of serial No'),
+        // .isLength({ min: 18, max: 21 })
+        // .withMessage('Incorrect length of serial No'),
+        ,
 
     param('macAddr')
         .optional({ checkFalsy: true })
@@ -192,8 +196,9 @@ exports.IMEIChanged = [
         .optional({ checkFalsy: true })
         .isAlphanumeric()
         .withMessage('Incorrect serial No')
-        .isLength({ min: 18, max: 21 })
-        .withMessage('Incorrect length of serial No'),
+        // .isLength({ min: 18, max: 21 })
+        // .withMessage('Incorrect length of serial No'),
+        ,
 
     body('mac')
         .optional({ checkFalsy: true })

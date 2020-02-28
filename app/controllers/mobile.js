@@ -31,6 +31,10 @@ let usr_acc_query_text = Constants.usr_acc_query_text;
 
 // without token
 exports.login = async function (req, resp) {
+    
+    console.log("*********************************************************************")
+    console.log("************************ LOG-IN API **********************************")
+    console.log("*********************************************************************")
 
     var linkCode = req.body.link_code;
     let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address, type, version } = device_helpers.getDeviceInfo(req);
@@ -273,6 +277,10 @@ exports.login = async function (req, resp) {
 
 // without token
 exports.systemLogin = async function (req, res) {
+    console.log("*********************************************************************")
+    console.log("************************ SYSTEM-LOGIN API **********************************")
+    console.log("*********************************************************************")
+
     let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = device_helpers.getDeviceInfo(req);
     console.log("valid mac address: ", validator.isMACAddress(mac_address))
     const systemInfo = {
@@ -306,6 +314,10 @@ exports.systemLogin = async function (req, res) {
 }
 
 exports.linkDevice = async function (req, resp) {
+
+    console.log("*********************************************************************")
+    console.log("************************ LINK-DEVICE API **********************************")
+    console.log("*********************************************************************")
 
     var reslt = await verifyToken(req, resp);
     if (reslt.status == true) {
@@ -465,6 +477,10 @@ exports.linkDevice = async function (req, resp) {
 }
 
 exports.getStatus = async function (req, resp) {
+    console.log("*********************************************************************")
+    console.log("************************ GET-STATUS API **********************************")
+    console.log("*********************************************************************")
+
     var reslt = await verifyToken(req, resp);
     if (reslt.status == true) {
         var serial_number = req.body.serial_number;
@@ -726,6 +742,10 @@ exports.getStatus = async function (req, resp) {
 }
 
 exports.deviceStatus = async function (req, res) {
+    console.log("*********************************************************************")
+    console.log("************************ DEVICE-STATUS API **********************************")
+    console.log("*********************************************************************")
+
     var serial_number = req.body.serial_no;
     var mac = req.body.mac_address;
     var data;
@@ -1333,6 +1353,10 @@ exports.deviceStatus = async function (req, res) {
 }
 
 exports.stopLinking = async function (req, res) {
+    console.log("*********************************************************************")
+    console.log("************************ STOP-LINKING API **********************************")
+    console.log("*********************************************************************")
+
     res.setHeader('Content-Type', 'application/json');
     var reslt = await verifyToken(req, res);
     //console.log(req);
@@ -1381,6 +1405,10 @@ exports.stopLinking = async function (req, res) {
 }
 
 exports.installAppList = async function (req, res) {
+    console.log("*********************************************************************")
+    console.log("************************ INSTALL-APP-LIST API **********************************")
+    console.log("*********************************************************************")
+
     try {
         sql.query("select * from apk_details where status='On' and delete_status='0'", function (err, rows) {
 
@@ -1436,6 +1464,10 @@ exports.installAppList = async function (req, res) {
 }
 
 exports.checkForUpdate = async (req, res) => {
+    console.log("*********************************************************************")
+    console.log("************************ CHECK-FOR-UPDATE API **********************************")
+    console.log("*********************************************************************")
+
     res.setHeader('Content-Type', 'application/json');
 
     let verify = await verifyToken(req, res);
@@ -1482,6 +1514,10 @@ exports.checkForUpdate = async (req, res) => {
 }
 
 exports.getUpdate = async (req, res) => {
+    console.log("*********************************************************************")
+    console.log("************************ GET-UPDATE API **********************************")
+    console.log("*********************************************************************")
+
     // let verify = await verifyToken(req, res);
     // if (verify.status) {
     if (fs.existsSync(path.join(__dirname, "../../uploads/" + req.params.apk + '.apk'))) {
@@ -1507,6 +1543,10 @@ exports.getUpdate = async (req, res) => {
 }
 
 exports.IMEIChanged = async function (req, res) {
+    console.log("*********************************************************************")
+    console.log("************************ IMEI-CHANGED API **********************************")
+    console.log("*********************************************************************")
+
     let deviceId = req.body.device_id;
     var imei = req.body.imei;
     var serial_number = req.body.serial;
@@ -1534,6 +1574,10 @@ exports.IMEIChanged = async function (req, res) {
 }
 
 exports.adminSMAppList = async function (req, res) {
+    console.log("*********************************************************************")
+    console.log("************************ ADMIN-SM-APP-LIST API **********************************")
+    console.log("*********************************************************************")
+
     let data = [];
     try {
         sql.query("SELECT apk_details.*, secure_market_apps.is_restrict_uninstall, secure_market_apps.space_type FROM apk_details JOIN secure_market_apps ON secure_market_apps.apk_id = apk_details.id WHERE apk_details.delete_status = 0 AND secure_market_apps.dealer_type = 'admin'", function (err, results) {
@@ -1585,6 +1629,10 @@ exports.adminSMAppList = async function (req, res) {
 }
 
 exports.SMAppList = async function (req, res) {
+    console.log("*********************************************************************")
+    console.log("************************ SM-APP-LIST API **********************************")
+    console.log("*********************************************************************")
+
     let data = [];
 
     let dealer_id = await helpers.getDealerIDByLinkOrActivation(req.params.linkCode)
@@ -1639,6 +1687,10 @@ exports.SMAppList = async function (req, res) {
 }
 
 exports.adminSMAppList_V2 = async function (req, res) {
+    console.log("*********************************************************************")
+    console.log("************************ ADMIN-SM-APP-LIST_V2 API **********************************")
+    console.log("*********************************************************************")
+
 
     let spaceType = req.params.spaceType;
 
@@ -1697,6 +1749,10 @@ exports.adminSMAppList_V2 = async function (req, res) {
 }
 
 exports.SMAppList_V2 = async function (req, res) {
+    console.log("*********************************************************************")
+    console.log("************************ SM-APP-LIST_V2 API **********************************")
+    console.log("*********************************************************************")
+
     try {
         let data = [];
         let spaceType = req.params.spaceType;
@@ -1778,6 +1834,10 @@ exports.SMAppList_V2 = async function (req, res) {
 }
 
 exports.SMAppListV3 = async function (req, res) {
+    console.log("*********************************************************************")
+    console.log("************************ SM-APP-LIST-V3 API **********************************")
+    console.log("*********************************************************************")
+    
     let data = [];
     let spaceType = req.body.spaceType;
     let linkCode = req.body.linkCode;
@@ -1799,7 +1859,7 @@ exports.SMAppListV3 = async function (req, res) {
 
 
         sql.query(querySM, function (err, results) {
-            console.log("check error and result: ", err, results);
+            // console.log("check error and result: ", err, results);
             // if (err) {
             //     data = {
             //         status: false,
