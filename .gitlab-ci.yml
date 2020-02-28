@@ -80,6 +80,7 @@ deploy_LiveLM_API:
     - ssh-add <(echo "$PRIVATE_KEY")
     - rm -rf .git
     - ssh -o StrictHostKeyChecking=no web@178.128.202.140 "cd /var/www/html/${WORK_DIR}; git reset --hard; git pull origin ${BRANCH}; npm install; sequelize-cli db:migrate --env lm_server; pm2 reload lockmesh; exit"
+    - ssh -o StrictHostKeyChecking=no web@46.101.175.250 "cd /var/www/html/${WORK_DIR}; git reset --hard; git pull origin ${BRANCH}; npm install; sequelize-cli db:migrate --env lm_server; pm2 reload lockmesh; exit"
   only:
     - master
 
