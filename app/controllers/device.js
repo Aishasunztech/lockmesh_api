@@ -71,6 +71,10 @@ exports.devices = async function (req, res) {
             };
             if (error) {
                 console.log(error);
+                return res.send({
+                    status: false,
+                    msg: 'Error: Internel Server Error'
+                });
 
             };
 
@@ -401,6 +405,13 @@ exports.acceptDevice = async function (req, res) {
         let pay_now = req.body.pay_now
         let userData = await helpers.getUserDataByUserId(user_id);
 
+        if(!userData.length){
+            return res.send({
+                status: false,
+                msg: `Error: User Data not found against userId: ${user_id}.`
+            });
+        }
+
         let device_id = req.body.device_id;
         let device_name = userData[0].name;
         let device_email = userData[0].email;
@@ -411,9 +422,9 @@ exports.acceptDevice = async function (req, res) {
         let usr_acc_id = req.body.usr_acc_id;
         let usr_device_id = req.body.usr_device_id;
         let policy_id = req.body.policy_id;
-        let sim_id = req.body.sim_id == undefined ? "" : req.body.sim_id;
+        let sim_id = req.body.sim_id ? req.body.sim_id : '';
         var sim_id2 = req.body.sim_id2 ? req.body.sim_id2 : '';
-        let chat_id = req.body.chat_id == undefined ? "" : req.body.chat_id;
+        let chat_id = req.body.chat_id ? req.body.chat_id : "";
         let pgp_email = req.body.pgp_email == undefined ? "" : req.body.pgp_email;
         var trial_status = 0;
 
@@ -471,10 +482,10 @@ exports.acceptDevice = async function (req, res) {
 
         if (packages.length) {
             packages.map((item) => {
-                if (item.pkg_features.sim_id) {
+                if (item.pkg_features && item.pkg_features.sim_id) {
                     sim_id_included = true
                 }
-                if (item.pkg_features.sim_id2) {
+                if (item.pkg_features && item.pkg_features.sim_id2) {
                     sim_id2_included = true
                 }
             })
@@ -992,7 +1003,7 @@ exports.acceptDevice = async function (req, res) {
                                                     }
 
 
-                                                    if (policy_id !== '') {
+                                                    if (policy_id) {
                                                         var slctpolicy = "select * from policy where id = " + policy_id + "";
                                                         let policy = await sql.query(slctpolicy);
                                                         var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type, action_by, dealer_type) VALUES ('" + device_id + "' ," + dealer_id + "," + usr_acc_id + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy', " + verify.user.id + ", '" + verify.user.user_type + "')";
@@ -1200,10 +1211,10 @@ exports.createDeviceProfile = async function (req, res) {
 
         if (packages.length) {
             packages.map((item) => {
-                if (item.pkg_features.sim_id) {
+                if (item.pkg_features && item.pkg_features.sim_id) {
                     sim_id_included = true
                 }
-                if (item.pkg_features.sim_id2) {
+                if (item.pkg_features && item.pkg_features.sim_id2) {
                     sim_id2_included = true
                 }
             })
@@ -1324,20 +1335,20 @@ exports.createDeviceProfile = async function (req, res) {
 
                                             if (packages.length) {
                                                 packages.map((item) => {
-                                                    if (item.pkg_features.sim_id) {
+                                                    if (item.pkg_features && item.pkg_features.sim_id) {
                                                         sim_id = (sim_ids[0]) ? sim_ids[0].sim_id : null;
                                                         if (sim_id) {
                                                             sim_ids.shift();
                                                         }
                                                     }
-                                                    if (item.pkg_features.sim_id2) {
+                                                    if (item.pkg_features && item.pkg_features.sim_id2) {
                                                         sim_id2 = (sim_ids[0]) ? sim_ids[0].sim_id : null;
                                                         if (sim_id) {
                                                             sim_ids.shift();
                                                         }
                                                     }
 
-                                                    if (item.pkg_features.chat_id) {
+                                                    if (item.pkg_features && item.pkg_features.chat_id) {
                                                         chat_id = (chat_ids[i]) ? chat_ids[i].chat_id : null;
                                                     }
                                                     if (item.pkg_features.pgp_email) {
@@ -2481,6 +2492,8 @@ exports.editDevice = async function (req, res) {
                                     client_id +
                                     "', device_status = 1, unlink_status=0 ,  start_date = '" +
                                     start_date +
+                                    "', expiry_months = '" +
+                                    exp_month +
                                     "' WHERE device_id = '" +
                                     usr_device_id +
                                     "'";
@@ -2496,6 +2509,8 @@ exports.editDevice = async function (req, res) {
                                     start_date +
                                     "' ,expiry_date = '" +
                                     expiry_date +
+                                    "', expiry_months = '" +
+                                    exp_month +
                                     "' WHERE device_id = '" +
                                     usr_device_id +
                                     "'";
@@ -2513,6 +2528,8 @@ exports.editDevice = async function (req, res) {
                                     client_id +
                                     "', device_status = 0, unlink_status=0 ,start_date = '" +
                                     start_date +
+                                    "', expiry_months = '" +
+                                    exp_month +
                                     "' WHERE device_id = '" +
                                     usr_device_id +
                                     "'";
@@ -2530,6 +2547,8 @@ exports.editDevice = async function (req, res) {
                                     start_date +
                                     "', expiry_date = '" +
                                     expiry_date +
+                                    "', expiry_months = '" +
+                                    exp_month +
                                     "' WHERE device_id = '" +
                                     usr_device_id +
                                     "'";
@@ -3246,7 +3265,6 @@ exports.editDevice = async function (req, res) {
 exports.extendServices = async function (req, res) {
     res.setHeader("Content-Type", "application/json");
     var verify = req.decoded; // await verifyToken(req, res);
-
     if (verify) {
         if (!empty(req.body.usr_device_id)) {
 
@@ -3840,13 +3858,14 @@ exports.cancelExtendedServices = async function (req, res) {
     res.setHeader("Content-Type", "application/json");
     var verify = req.decoded; // await verifyToken(req, res);
     if (verify) {
-        if (!empty(req.body.service_id)) {
+        if (req.body.service_id && req.body.user_acc_id) {
             let service_id = req.body.service_id
             let user_acc_id = req.body.user_acc_id
+            let dealer_id = verify.user.id;
             // console.log(req.body);
-            let extendedServicesData = `SELECT * FROM services_data WHERE id = ${service_id} AND status = 'extended' AND user_acc_id = ${user_acc_id}`
+            let extendedServicesData = "SELECT * FROM services_data WHERE id = ? AND status = 'extended' AND user_acc_id = ? AND dealer_id = ?";
 
-            sql.query(extendedServicesData, async function (err, result) {
+            sql.query(extendedServicesData, [service_id, user_acc_id, dealer_id], async function (err, result) {
                 if (err) {
                     console.log(err);
                     res.send({
@@ -4084,10 +4103,11 @@ exports.getServiceRefund = async function (req, res) {
     var verify = req.decoded; // await verifyToken(req, res);
 
     if (verify) {
-        let service_id = req.body.service_id
-        console.log(service_id);
+        let service_id = req.body.service_id;
+        let user_acc_id = req.body.user_acc_id;
+        let dealer_id = verify.user.id;
         if (service_id) {
-            sql.query("SELECT * from services_data WHERE id = " + service_id, async function (err, result) {
+            sql.query("SELECT * from services_data WHERE id = ? AND user_acc_id = ? AND dealer_id = ?", [service_id, user_acc_id, dealer_id], async function (err, result) {
                 if (err) {
                     res.send({
                         status: false,
@@ -4138,8 +4158,10 @@ exports.getServiceRefund = async function (req, res) {
     }
 };
 
+
+// unused api
+// not validated
 exports.deleteDevice = async function (req, res) {
-    // console.log(req.body);
     var verify = req.decoded; // await verifyToken(req, res);
 
     // if (verify.status !== undefined && verify.status == true) {
@@ -5002,7 +5024,7 @@ exports.transferDeviceProfile = async function (req, res) {
             console.log(flagged_device, reqDevice);
             let date_now = moment().format('YYYY/MM/DD')
             // Get data of Flagged Device
-            var SelectFlaggedDeviceDetail = `SELECT ${usr_acc_query_text} FROM usr_acc WHERE device_id = ${flagged_device.usr_device_id} AND id = ${flagged_device.id}`;
+            var SelectFlaggedDeviceDetail = `SELECT ${usr_acc_query_text} FROM usr_acc LEFT JOIN devices ON (usr_acc.device_id=devices.id) WHERE usr_acc.device_id = ${flagged_device.usr_device_id} AND usr_acc.id = ${flagged_device.id} and devices.flagged != 'Not flagged'`;
             sql.query(SelectFlaggedDeviceDetail, async function (err, rsltq) {
                 if (err) {
                     console.log(err);
@@ -5506,7 +5528,6 @@ exports.transferDeviceProfile = async function (req, res) {
 exports.transferHistory = async function (req, res) {
     res.setHeader('Content-Type', 'application/json');
     var verify = req.decoded;
-    console.log("transferHistory device id: ", req.params.device_id)
     if (verify) {
         try {
             if (req.params.device_id) {
@@ -6927,6 +6948,7 @@ exports.applyPushApps = async function (req, res) {
 };
 
 exports.applyPullApps = async function (req, res) {
+    console.log(req.body);
     try {
         var verify = req.decoded;
 
@@ -7906,6 +7928,10 @@ exports.resetChatPin = async function (req, res) {
             }
         }).catch((err) => {
             console.log(err);
+            res.status(200).send({
+                msg: "Not Found",
+                status: false
+            });
         });
     }
 
@@ -7926,9 +7952,14 @@ exports.changeSchatPinStatus = async function (req, res) {
         if (req.body.type === 'disable') {
             type = 'disabled';
             URL = 'https://signal.lockmesh.com/v1/accounts/pin/disable?chat_id=' + chat_id;
-        } else {
+        } else if(req.body.type === 'enable') {
             type = 'enabled';
             URL = 'https://signal.lockmesh.com/v1/accounts/pin/enable?chat_id=' + chat_id;
+        } else {
+            return res.send({
+                msg: "Error: Invalid option for type",
+                status: false
+            });
         }
 
 

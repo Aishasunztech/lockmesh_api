@@ -5,17 +5,18 @@ const fs    = require('fs');
 const path  = require("path");
 const { sql } = require("../../config/database");
 
-let productData = {};
-let invoiceData = {};
-let hardwareData = {};
 let paymentHistoryData = {};
-let graceDaysData = {};
-let salesData = [];
 
 exports.generateProductReport = async function (req, res) {
+    let productData = {
+        "CHAT": [],
+        "PGP": [],
+        "SIM": [],
+        "VPN": []
+    };
     let verify = req.decoded;
 
-    if (verify) {
+    try {
 
         let user_type = verify.user.user_type;
         let product = req.body.product;
@@ -32,28 +33,34 @@ exports.generateProductReport = async function (req, res) {
             status: false,
         };
 
+        let sDealerIds = [];
+        if(user_type == Constants.DEALER){
+            sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
+        }
+
         if (type && type == 'USED') {
             condition += ' AND parentTable.used = 1'
         } else if (type && type == 'UNUSED') {
             condition += ' AND parentTable.used = 0'
         }
 
-        if (dealer == '' && user_type == Constants.DEALER) {
-            let sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
+        if ((dealer == '' || dealer == verify.user.id) && user_type == Constants.DEALER) {
             if (sDealerIds.length > 0) {
                 condition += ' AND parentTable.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
             } else {
                 condition += ' AND parentTable.dealer_id = ' + verify.user.id
             }
-        } else if (dealer) {
-            condition += ' AND parentTable.dealer_id = ' + dealer
+        } else if (sDealerIds.length && sDealerIds.includes(dealer)) {
+            condition += ` AND parentTable.dealer_id = '${dealer}'`
+        } else if(dealer != '' && user_type == Constants.ADMIN){
+            condition += ` AND parentTable.dealer_id = '${dealer}'`
         }
 
-        if (from) {
+        if (from && moment(from, 'YYYY-MM-DD').isValid()) {
             condition += ' AND DATE(parentTable.created_at) >= "' + moment(from).format('YYYY-MM-DD') + '"'
         }
 
-        if (to) {
+        if (to && moment(to, 'YYYY-MM-DD').isValid()) {
             condition += ' AND DATE(parentTable.created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
         }
 
@@ -109,6 +116,17 @@ exports.generateProductReport = async function (req, res) {
 
         return res.send(response);
 
+    } catch(err){
+        console.log(err);
+        return res.send({
+            status: true,
+            data: {
+                "CHAT": [],
+                "PGP": [],
+                "SIM": [],
+                "VPN": []
+            }
+        });
     }
 
 };
@@ -116,8 +134,9 @@ exports.generateProductReport = async function (req, res) {
 
 
 exports.generateInvoiceReport = async function (req, res) {
+    let invoiceData = {};
     let verify = req.decoded;
-    if (verify) {
+    try {
 
         let user_type = verify.user.user_type;
         let dealer = req.body.dealer;
@@ -126,26 +145,29 @@ exports.generateInvoiceReport = async function (req, res) {
         let device = req.body.device;
         let payment_status = req.body.payment_status;
         let condition = '';
+        let sDealerIds = [];
 
-
-        if (dealer == '' && user_type == Constants.DEALER) {
-
-            let sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
+        if(user_type == Constants.DEALER){
+            sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
+        }
+        if ((dealer == '' || dealer == verify.user.id) && user_type == Constants.DEALER) {
             if (sDealerIds.length > 0) {
                 condition += ' AND i.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
             } else {
                 condition += ' AND i.dealer_id = ' + verify.user.id
             }
-        } else if (dealer) {
-            condition += ' AND i.dealer_id = ' + dealer
+        } else if (sDealerIds.length && sDealerIds.includes(dealer)) {
+            condition += ` AND i.dealer_id = '${dealer}'`
+        } else if(dealer != '' && user_type == Constants.ADMIN){
+            condition += ` AND i.dealer_id = '${dealer}'`
         }
 
 
-        if (from) {
+        if (from && moment(from, 'YYYY-MM-DD').isValid()) {
             condition += ' AND DATE(i.created_at) >= "' + moment(from).format('YYYY-MM-DD') + '"'
         }
 
-        if (to) {
+        if (to && moment(to, 'YYYY-MM-DD').isValid()) {
             condition += ' AND DATE(i.created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
         }
 
@@ -177,15 +199,19 @@ exports.generateInvoiceReport = async function (req, res) {
         };
 
         return res.send(response);
+    } catch(err) {
+        return res.send({
+            data: [],
+            status: true
+        });
     }
 
 };
 
 exports.generatePaymentHistoryReport = async function (req, res) {
-
     let verify = req.decoded;
 
-    if (verify) {
+    try {
 
         let user_type = verify.user.user_type;
         let dealer = req.body.dealer;
@@ -200,25 +226,30 @@ exports.generatePaymentHistoryReport = async function (req, res) {
         let response = {
             status: false,
         };
+        let sDealerIds = [];
+        let deviceIds = [];
+        if(user_type == Constants.DEALER){
+            sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
+        }
 
-        if (dealer == '' && user_type == Constants.DEALER) {
-
-            let sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
+        if ((dealer == '' || dealer == verify.user.id) && user_type == Constants.DEALER) {
             if (sDealerIds.length > 0) {
                 condition += ' AND fat.user_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
             } else {
                 condition += ' AND fat.user_id = ' + verify.user.id
             }
 
-        } else if (dealer) {
-            condition += ' AND fat.user_id = ' + dealer
+        } else if (sDealerIds.length && sDealerIds.includes(dealer)) {
+            condition += ` AND fat.user_id = '${dealer}'`
+        } else if (dealer != '' && user_type == Constants.ADMIN){
+            condition += ` AND fat.user_id = '${dealer}'`
         }
 
-        if (from) {
+        if (from && moment(from, 'YYYY-MM-DD').isValid()) {
             condition += ' AND DATE(fat.created_at) >= "' + moment(from).format('YYYY-MM-DD') + '"'
         }
 
-        if (to) {
+        if (to && moment(to, 'YYYY-MM-DD').isValid()) {
             condition += ' AND DATE(fat.created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
         }
 
@@ -249,15 +280,22 @@ exports.generatePaymentHistoryReport = async function (req, res) {
         };
 
         return res.send(response);
+    } catch(err) {
+        console.log(err);
+        return res.send({
+            status: true,
+            data: []
+        });
     }
 
 };
 
 exports.generateHardwareReport = async function (req, res) {
 
+    let hardwareData = [];
     let verify = req.decoded;
 
-    if (verify) {
+    try {
 
         let user_type = verify.user.user_type;
         let dealer = req.body.dealer;
@@ -267,30 +305,35 @@ exports.generateHardwareReport = async function (req, res) {
         let condition = '';
         let response = {};
         let device = req.body.device;
+        let sDealerIds = [];
 
         if (hardware) {
             condition += ' AND hd.hardware_name = "' + hardware + '"'
         }
 
-        if (dealer == '' && user_type == Constants.DEALER) {
+        if(user_type == Constants.DEALER){
+            sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
+        }
 
-            let sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
+        if ((dealer == '' || dealer == verify.user.id) && user_type == Constants.DEALER) {
             if (sDealerIds.length > 0) {
                 condition += ' AND hd.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
             } else {
                 condition += ' AND hd.dealer_id = ' + verify.user.id
             }
 
-        } else if (dealer) {
-            condition += ' AND hd.dealer_id = ' + dealer
+        } else if (sDealerIds.length && sDealerIds.includes(dealer)) {
+            condition += ` AND hd.dealer_id = '${dealer}'`
+        } else if(dealer != '' && user_type == Constants.ADMIN){
+            condition += ` AND hd.dealer_id = '${dealer}'`
         }
 
-        if (from) {
-            condition += ' AND DATE(hd.created_at) >= ' + moment(from).format('YYYY-MM-DD')
+        if (from && moment(from, 'YYYY-MM-DD').isValid()) {
+            condition += ' AND DATE(hd.created_at) >= "' + moment(from).format('YYYY-MM-DD') + '"'
         }
 
-        if (to) {
-            condition += ' AND DATE(hd.created_at) <= ' + moment(to).format('YYYY-MM-DD')
+        if (to && moment(to, 'YYYY-MM-DD').isValid()) {
+            condition += ' AND DATE(hd.created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
         }
 
         if (device == Constants.DEVICE_PRE_ACTIVATION) {
@@ -303,7 +346,7 @@ exports.generateHardwareReport = async function (req, res) {
 
         hardwareData = await sql.query(`SELECT hd.*, d.device_id, ua.link_code as dealer_pin FROM hardwares_data as hd
         JOIN usr_acc as ua on ua.id = hd.user_acc_id 
-        JOIN devices as d on ua.device_id = d.id 
+        JOIN devices as d on ua.device_id = d.id
         WHERE hd.status = 'returned' ${condition} ORDER BY hd.id DESC`);
 
         response = {
@@ -312,6 +355,11 @@ exports.generateHardwareReport = async function (req, res) {
         };
 
         return res.send(response);
+    } catch(err) {
+        return res.send({
+            data: [],
+            status: true
+        })
     }
 
 };
@@ -342,27 +390,32 @@ exports.generateSalesReport = async function (req, res) {
         let totalSale = 0;
         let totalProfitLoss = 0;
         let response = {};
+        let sDealerIds = [];
+        if(user_type == Constants.DEALER){
+            sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
+        }
 
         if (productType == 'PACKAGES' || productType == 'ALL') {
 
-            if (dealer == '' && user_type == Constants.DEALER) {
+            if ((dealer == '' || dealer == verify.user.id) && user_type == Constants.DEALER) {
 
-                let sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
                 if (sDealerIds.length > 0) {
                     condition += ' AND ua.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
                 } else {
                     condition += ' AND ua.dealer_id = ' + verify.user.id
                 }
 
-            } else if (dealer) {
-                condition += ' AND ua.dealer_id = ' + dealer
+            } else if (sDealerIds.length && sDealerIds.includes(dealer)) {
+                condition += ` AND ua.dealer_id = '${dealer}'`
+            } else if(dealer != '' && user_type == Constants.ADMIN){
+                condition += ` AND ua.dealer_id = '${dealer}'`
             }
 
-            if (from) {
+            if (from && moment(from, "YYYY-MM-DD").isValid()) {
                 condition += ' AND DATE(ss.created_at) >= "' + moment(from).format('YYYY-MM-DD') + '"'
             }
 
-            if (to) {
+            if (to && moment(to, "YYYY-MM-DD").isValid()) {
                 condition += ' AND DATE(ss.created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
             }
 
@@ -510,22 +563,23 @@ exports.generateSalesReport = async function (req, res) {
 
             if (dealer == '' && user_type == Constants.DEALER) {
 
-                let sDealerIds = await generalHelper.getSdealersByDealerId(verify.user.id);
                 if (sDealerIds.length > 0) {
                     hardwareCondition += ' AND hd.dealer_id IN (' + verify.user.id + ',' + sDealerIds.join(',') + ')'
                 } else {
                     hardwareCondition += ' AND hd.dealer_id = ' + verify.user.id
                 }
 
-            } else if (dealer) {
-                hardwareCondition += ' AND hd.dealer_id = ' + dealer
+            } else if (sDealerIds.length && sDealerIds.includes(dealer)) {
+                hardwareCondition += ` AND hd.dealer_id = '${dealer}'`
+            } else if(dealer != '' && user_type == Constants.ADMIN){
+                hardwareCondition += ` AND hd.dealer_id = '${dealer}'`
             }
 
-            if (from) {
+            if (from && moment(from, 'YYYY-MM-DD').isValid()) {
                 hardwareCondition += ' AND DATE(hd.created_at) >= "' + moment(from).format('YYYY-MM-DD') + '"'
             }
 
-            if (to) {
+            if (to && moment(to, 'YYYY-MM-DD').isValid()) {
                 hardwareCondition += ' AND DATE(hd.created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
             }
 
@@ -668,15 +722,11 @@ exports.generateSalesReport = async function (req, res) {
             'totalProfitLoss': totalSale - totalCost,
         };
 
-        console.log(hardwaresData);
-
         response = {
             data: [...packagesData, ...productsData, ...hardwaresData],
             saleInfo,
             status: true,
         };
-
-        console.log(response);
 
         return res.send(response);
     }
@@ -685,11 +735,13 @@ exports.generateSalesReport = async function (req, res) {
 };
 
 exports.generateGraceDaysReport = async function (req, res) {
+    console.clear();
+    console.log(req.body);
+    let graceDaysData = [];
 
     let verify = req.decoded;
 
     if (verify) {
-
         let user_type = verify.user.user_type;
         let dealer = req.body.dealer;
         let from = req.body.from;
@@ -697,6 +749,10 @@ exports.generateGraceDaysReport = async function (req, res) {
         let type = req.body.type;
         let transaction_type = req.body.transaction_type;
         let device = req.body.device;
+        
+        if(user_type == Constants.DEALER || Constants.SDEALER){
+            return res.send({status: false, data: []});
+        }
 
         let condition = '';
 
@@ -705,20 +761,27 @@ exports.generateGraceDaysReport = async function (req, res) {
         };
 
         if (dealer) {
-            condition += ' AND gdh.dealer_id = ' + dealer
+            condition += ` AND gdh.dealer_id = '${dealer}'`
         }
 
-        if (from) {
+        if (from && moment(from, 'YYYY-MM-DD').isValid()) {
             condition += ' AND DATE(gdh.created_at) >= "' + moment(from).format('YYYY-MM-DD') + '"'
         }
 
-        if (to) {
+        if (to && moment(to, 'YYYY-MM-DD').isValid()) {
             condition += ' AND DATE(gdh.created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
         }
 
         if (device) {
             condition += ' AND d.device_id = "' + device + '"'
         }
+
+        console.log(`SELECT gdh.*, d.device_id as device_id, ua.link_code as dealer_pin FROM grace_days_histories as gdh 
+        JOIN usr_acc as ua 
+    on ua.id = gdh.user_acc_id 
+        JOIN devices as d 
+    on ua.device_id = d.id
+    WHERE gdh.id IS NOT NULL ${condition} ORDER BY gdh.id DESC`);
 
         graceDaysData = await sql.query(`SELECT gdh.*, d.device_id as device_id, ua.link_code as dealer_pin FROM grace_days_histories as gdh 
             JOIN usr_acc as ua 

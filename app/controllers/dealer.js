@@ -333,6 +333,7 @@ exports.getUserDealers = async function (req, res) {
 
 exports.getDealers = async function (req, res) {
     var verify = req.decoded;
+    console.log(req.params)
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
         let where = "";
@@ -413,7 +414,7 @@ exports.getDealers = async function (req, res) {
         } else {
             return res.send({
                 status: false,
-                msg: "Error in query " + error,
+                msg: "Error in query ",
                 data: []
             });
         }
@@ -425,7 +426,7 @@ exports.getDealers = async function (req, res) {
 exports.addDealer = async function (req, res) {
 
     var verify = req.decoded;
-
+    console.log(req.body)
     // if (verify.status !== undefined && verify.status == true) {
 
     var dealerName = req.body.name;
@@ -596,6 +597,7 @@ exports.addDealer = async function (req, res) {
 
 exports.editDealers = async function (req, res) {
     var verify = req.decoded;
+    console.log(req.body)
     // if (verify.status !== undefined && verify.status == true) {
     var name = req.body.name;
     var email = req.body.email;
@@ -853,7 +855,7 @@ exports.deleteDealer = async function (req, res) {
 /** Undo Dealer / S-Dealer **/
 exports.undoDealer = async function (req, res) {
     var verify = req.decoded;
-
+    // console.log(req.body)
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
         var loggedInuid = verify.user.id;
@@ -1069,9 +1071,7 @@ exports.activateDealer = async function (req, res) {
 
 
 exports.resetPwd = async function (req, res) {
-
     var verify = req.decoded;
-    // if (verify.status !== undefined && verify.status == true) {
     if (verify) {
         var isReset = false;
 
@@ -2065,14 +2065,17 @@ exports.getDropdownSelectedItems = async function (req, res) {
 exports.saveDropDown = async function (req, res) {
     var verify = req.decoded;
     if (verify) {
+        // console.log(req.body);
+        // return res.send({ status: false });
 
         var selected_items = req.body.selected_items;
         var dropdownType = req.body.pageName;
         var dealer_id = verify.user.id;
+        console.log('dealer_id ', dealer_id);
         var sQuery = `SELECT * FROM dealer_dropdown_list WHERE dealer_id = ${dealer_id} AND type ='${dropdownType}'`;
 
         var sResult = await sql.query(sQuery);
-
+        // console.log("sResult ", sResult)
         if (sResult.length == 0) {
             sql.query(`insert into dealer_dropdown_list (dealer_id, selected_items, type) values (${dealer_id}, '${selected_items}', '${dropdownType}')`, async function (err, rslts) {
                 if (err) {
@@ -2129,6 +2132,12 @@ exports.getPagination = async function (req, res) {
         sql.query("select record_per_page from dealer_pagination where dealer_id = " + dealer_id + " AND type = '" + dropdownType + "'", async function (err, rslts) {
             if (err) {
                 console.log(err)
+                data = {
+                    "status": false,
+                    "msg": await general_helpers.convertToLang(req.translation[MsgConstants.NO_DATA_FOUND], "No result found"), // No data found",
+                    "data": '10'
+                };
+                res.send(data);
             }
 
             if (rslts.length == 0) {
@@ -2281,6 +2290,8 @@ exports.updateDealerPins = async function (req, res) {
  */
 exports.twoFactorAuth = async function (req, res) {
     var verify = req.decoded;
+    console.log(req.body);
+    // return res.send({status: false, msg: 'kl'})
     // if (verify['status'] !== undefined && verify.status === true) {
     if (verify) {
         let loggedDealerId = verify.user.id;
@@ -2911,6 +2922,8 @@ exports.connectDealerDomainsPermissions = async function (req, res) {
 }
 
 exports.setDealerDemosLimit = async function (req, res) {
+    // console.log(req.body);
+    // return res.send({ status: false })
     var verify = req.decoded;
     // if (verify.status !== undefined && verify.status == true) {
     if (verify) {

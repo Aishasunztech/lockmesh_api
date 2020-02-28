@@ -1,19 +1,9 @@
 // Libraries
-const multer = require("multer");
-var path = require("path");
-var fs = require("fs");
-var mime = require("mime");
-var XLSX = require("xlsx");
-var empty = require("is-empty");
 const axios = require("axios");
-// var moment = require("moment-strftime");
 var moment = require('moment');
-var randomize = require("randomatic");
-var datetime = require("node-datetime");
 var html = require('html-escaper');
 
 // custom Libraries
-const { sendEmail } = require("../../lib/email");
 const sockets = require("../../routes/sockets");
 
 // helpers
@@ -21,8 +11,6 @@ const { sql } = require("../../config/database");
 const device_helpers = require("../../helper/device_helpers");
 const helpers = require("../../helper/general_helper");
 const socket_helpers = require("../../helper/socket_helper");
-// const verifyToken = require("../../config/auth");
-// const sockets = require("../../routes/sockets");
 
 // constants
 const constants = require("../../constants/Application");
@@ -30,12 +18,8 @@ var MsgConstants = require("../../constants/MsgConstants");
 const app_constants = require("../../config/constants");
 
 // constants
-
 let usr_acc_query_text = constants.usr_acc_query_text; //"usr_acc.id, usr_acc.user_id, usr_acc.device_id as usr_device_id,usr_acc.account_email,usr_acc.account_name,usr_acc.dealer_id,usr_acc.prnt_dlr_id,usr_acc.link_code,usr_acc.client_id,usr_acc.start_date,usr_acc.expiry_months,usr_acc.expiry_date,usr_acc.activation_code,usr_acc.status,usr_acc.device_status,usr_acc.activation_status,usr_acc.account_status,usr_acc.unlink_status,usr_acc.transfer_status, usr_acc.transfer_user_status, usr_acc.transfered_from,usr_acc.transfered_to, usr_acc.user_transfered_from, usr_acc.user_transfered_to,usr_acc.dealer_name,usr_acc.prnt_dlr_name,usr_acc.del_status,usr_acc.note,usr_acc.validity, usr_acc.batch_no,usr_acc.type,usr_acc.version"
-
-
 var data;
-
 
 
 // get history
@@ -43,8 +27,6 @@ exports.bulkDevicesHistory = async function (req, res) {
     var verify = req.decoded;
     let userId = verify.user.id;
 
-    // console.log('at bulk history:', userId)
-    // return;
     try {
         var selectQuery = `SELECT * FROM bulk_device_history WHERE action_by = '${userId}'`;
         var getHistory = await sql.query(selectQuery);
@@ -55,7 +37,6 @@ exports.bulkDevicesHistory = async function (req, res) {
                 // get policy
                 let policyName = '';
                 if (getHistory[index].policy && !isNaN(getHistory[index].policy)) {
-                    // console.log('policy is: ', getHistory[index].policy);
                     let getPolicyQ = `SELECT * FROM policy WHERE id=${getHistory[index].policy}`;
                     let policy = await sql.query(getPolicyQ)
                     // // getHistory[index].policy = await helpers.refactorPolicy(policy);
@@ -63,18 +44,14 @@ exports.bulkDevicesHistory = async function (req, res) {
                 }
 
                 // get devices
-                // console.log("getHistory[index].device_id ", getHistory[index].device_ids);
-
                 getHistory[index]["devices"] = "[]";
                 if (JSON.parse(getHistory[index].device_ids).length) {
                     let query = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers ON (usr_acc.dealer_id = dealers.dealer_id) 
                 WHERE devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.device_id IN (${JSON.parse(getHistory[index].device_ids)}) ORDER BY devices.id DESC`;
-                    // console.log('query is: ', query);
 
                     let results = await sql.query(query);
-                    // console.log('result is: ', results)
 
-                    if (results.length) {
+                    if (results && results.length) {
                         let devices_acc_array = [];
                         let usr_device_ids_array = []
                         for (let i = 0; i < results.length; i++) {
@@ -83,9 +60,7 @@ exports.bulkDevicesHistory = async function (req, res) {
                         }
                         let user_acc_ids = devices_acc_array.join()
                         let usr_device_ids = usr_device_ids_array.join()
-                        // let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
-                        // let sim_ids = await device_helpers.getSimids(user_acc_ids);
-                        // let chat_ids = await device_helpers.getChatids(user_acc_ids);
+
                         let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
                         let servicesData = await device_helpers.getServicesData(user_acc_ids)
                         let servicesIds = servicesData.map(item => { return item.id })
@@ -131,19 +106,6 @@ exports.bulkDevicesHistory = async function (req, res) {
                                     }
                                 })
                             }
-                            // let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === results[i].id);
-                            // if (pgp_email) {
-                            //     results[i].pgp_email = pgp_email.pgp_email
-                            // }
-                            // let sim_idArray = sim_ids.filter(sim_id => sim_id.user_acc_id === results[i].id);
-                            // if (sim_idArray && sim_idArray.length) {
-                            //     results[i].sim_id = sim_idArray[0].sim_id
-                            //     results[i].sim_id2 = sim_idArray[1] ? sim_idArray[1].sim_id : "N/A"
-                            // }
-                            // let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === results[i].id);
-                            // if (chat_id) {
-                            //     results[i].chat_id = chat_id.chat_id
-                            // }
 
                             let sim_id_data_plan = data_plans.filter((item) => item.sim_type == 'sim_id')
                             results[0].sim_id_data_plan = sim_id_data_plan[0]
@@ -241,265 +203,219 @@ exports.bulkDevicesHistory = async function (req, res) {
                 }
                 getHistory[index].policy = policyName;
             }
-            res.send(getHistory);
+
+            res.send({ status: true, history: getHistory });
         } else {
-            res.send({ status: false })
+            res.send({ status: false });
         }
-        // console.log("getHistory ", getHistory.length);
 
     } catch (err) {
         console.log(err);
-        res.send({ status: false })
+        res.send({ status: false });
     }
 }
 
 // Bulk Devices list
 exports.getFilteredBulkDevices = async function (req, res) {
-    var verify = req.decoded; // await verifyToken(req, res);
+    var verify = req.decoded;
+    let dealer_ids = req.body.dealers;
+    let users = req.body.users;
+
     var where_con = "";
     var where_in_dealer = "";
     var where_in_user = "";
     let newArray = [];
 
-    // console.log('getFilteredBulkDevices ==========> ', req.body);
     let IN_DEALER_ARRAY = [];
     let IN_USER_ARRAY = [];
     let users_list = [];
-
     try {
-        if (verify) {
-            if (Object.keys(req.body).length) {
+        if (dealer_ids || users) {
+            // get dealer ids
+            dealer_ids.forEach((item) => {
+                IN_DEALER_ARRAY.push(item.key);
+            })
 
-                // get dealer ids
-                req.body.dealers.forEach((item) => {
-                    IN_DEALER_ARRAY.push(item.key);
-                })
+            // get user ids
+            users.forEach((item) => {
+                IN_USER_ARRAY.push(`"${item.key}"`);
+            })
 
-                // get user ids
-                req.body.users.forEach((item) => {
-                    IN_USER_ARRAY.push(`"${item.key}"`);
-                })
+            // where in condition for dealers
+            if (IN_DEALER_ARRAY.length) {
+                where_in_dealer = `AND usr_acc.dealer_id IN (${IN_DEALER_ARRAY})`
+            }
 
-                // where in condition for dealers
-                if (IN_DEALER_ARRAY.length) {
-                    where_in_dealer = `AND usr_acc.dealer_id IN (${IN_DEALER_ARRAY})`
+            // where in condition for users
+            if (IN_USER_ARRAY.length) {
+                where_in_user = `AND usr_acc.user_id IN (${IN_USER_ARRAY})`
+            }
+
+            if (verify.user.user_type == "admin") {
+
+                let selectUserQuery = "";
+                if (IN_DEALER_ARRAY.length > 0) {
+                    selectUserQuery = `SELECT * FROM users WHERE del_status =0 AND dealer_id IN (${IN_DEALER_ARRAY}) ORDER BY created_at DESC`;
+                } else {
+                    selectUserQuery = `SELECT * FROM users WHERE del_status =0 ORDER BY created_at DESC`;
                 }
 
-                // where in condition for users
-                if (IN_USER_ARRAY.length) {
-                    where_in_user = `AND usr_acc.user_id IN (${IN_USER_ARRAY})`
-                }
-
-                // console.log('arrary of dealer ids ', IN_DEALER_ARRAY);
-                // console.log('arrary of user ids ', IN_USER_ARRAY);
-
-
-
-                if (verify.user.user_type == "admin") {
-
-                    let selectUserQuery = "";
-                    if (IN_DEALER_ARRAY.length > 0) {
-                        selectUserQuery = `SELECT * FROM users WHERE del_status =0 AND dealer_id IN (${IN_DEALER_ARRAY}) ORDER BY created_at DESC`;
-                    } else {
-                        selectUserQuery = `SELECT * FROM users WHERE del_status =0 ORDER BY created_at DESC`;
-                    }
-
-                    // console.log('query is selectUserQuery: ', selectUserQuery)
-
-                    let userResults = await sql.query(selectUserQuery);
-                    // console.log('and result is: ', userResults);
-                    if (userResults && userResults.length) {
-                        for (let i = 0; i < userResults.length; i++) {
-                            if (userResults[i].user_id) {
-                                let data = await helpers.getAllRecordbyUserID(userResults[i].user_id)
-                                userResults[i].devicesList = data
-                            }
+                let userResults = await sql.query(selectUserQuery);
+                if (userResults && userResults.length) {
+                    for (let i = 0; i < userResults.length; i++) {
+                        if (userResults[i].user_id) {
+                            let data = await helpers.getAllRecordbyUserID(userResults[i].user_id)
+                            userResults[i].devicesList = data
                         }
-                        users_list = userResults;
                     }
+                    users_list = userResults;
                 }
+            }
 
 
+            if (where_in_dealer != "" || where_in_user != "") {
 
-                if (where_in_dealer != "" || where_in_user != "") {
-                    // let unlinkQ = '';
-                    // if (verify.user.user_type !== constants.ADMIN) {
-                    //     if (verify.user.user_type === constants.DEALER) {
-                    //         where_con = ` AND (usr_acc.dealer_id =${
-                    //             verify.user.id
-                    //             } OR usr_acc.prnt_dlr_id = ${verify.user.id})`;
-                    //         unlinkQ = `SELECT * From acc_action_history WHERE action = 'UNLINKED' AND dealer_id = ${
-                    //             verify.user.id
-                    //             } AND del_status IS NULL`;
-
-                    //     } else {
-                    //         where_con = ` AND usr_acc.dealer_id = ${verify.user.id} `;
-                    //         unlinkQ = `SELECT * From acc_action_history WHERE action = 'UNLINKED' AND dealer_id = ${
-                    //             verify.user.id
-                    //             } AND del_status IS NULL`;
-                    //     }
-                    // } else {
-                    //     unlinkQ = `SELECT * From acc_action_history WHERE action = 'UNLINKED' AND del_status IS NULL `;
-                    // }
-                    // newArray = await sql.query(unlinkQ);
-
-                    let query = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) 
+                let query = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices LEFT JOIN usr_acc ON  ( devices.id = usr_acc.device_id ) LEFT JOIN dealers on (usr_acc.dealer_id = dealers.dealer_id) 
             WHERE devices.reject_status = 0 AND usr_acc.del_status = 0 AND usr_acc.unlink_status = 0 AND usr_acc.device_status != 0 ${where_in_dealer} ${where_in_user} ${where_con} ORDER BY devices.id DESC`;
-                    // console.log('query is: ', query);
+                // console.log('query is: ', query);
 
-                    sql.query(query, async function (error, results, fields) {
-                        if (error) throw error;
-                        // console.log('result is: ', results)
+                sql.query(query, async function (error, results, fields) {
+                    if (error) throw error;
+                    // console.log('result is: ', results)
 
-                        if (results.length) {
-                            let devices_acc_array = [];
-                            let usr_device_ids_array = []
-                            for (let i = 0; i < results.length; i++) {
-                                devices_acc_array.push(results[i].id)
-                                usr_device_ids_array.push(results[i].usr_device_id)
-                            }
-                            let user_acc_ids = devices_acc_array.join()
-                            let usr_device_ids = usr_device_ids_array.join()
-                            let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
-                            let sim_ids = await device_helpers.getSimids(user_acc_ids);
-                            let chat_ids = await device_helpers.getChatids(user_acc_ids);
-                            let servicesData = await device_helpers.getServicesData(user_acc_ids)
-
-                            // let loginHistoryData = await device_helpers.getLastLoginDetail(usr_device_ids)
-
-                            for (var i = 0; i < results.length; i++) {
-                                let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === results[i].id);
-                                if (pgp_email) {
-                                    results[i].pgp_email = pgp_email.pgp_email
-                                }
-                                let sim_idArray = sim_ids.filter(sim_id => sim_id.user_acc_id === results[i].id);
-                                if (sim_idArray && sim_idArray.length) {
-                                    results[i].sim_id = sim_idArray[0].sim_id
-                                    results[i].sim_id2 = sim_idArray[1] ? sim_idArray[1].sim_id : "N/A"
-                                }
-                                let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === results[i].id);
-                                if (chat_id) {
-                                    results[i].chat_id = chat_id.chat_id
-                                }
-                                let services = servicesData.find(data => data.user_acc_id === results[i].id);
-                                if (services) {
-                                    results[i].services = services
-                                }
-                                // let lastOnline = loginHistoryData.find(record => record.device_id == results[i].usr_device_id);
-                                // if (lastOnline) {
-                                results[i].lastOnline = results[i].last_login
-                                // }
-                                results[i].finalStatus = device_helpers.checkStatus(
-                                    results[i]
-                                );
-                                results[i].validity = await device_helpers.checkRemainDays(
-                                    results[i].created_at,
-                                    results[i].validity
-                                );
-                            }
-                        } else {
-                            data = {
-                                status: true,
-                                data: [],
-                                users_list
-                            };
-                            res.send(data);
-                            return;
+                    if (results.length) {
+                        let devices_acc_array = [];
+                        let usr_device_ids_array = []
+                        for (let i = 0; i < results.length; i++) {
+                            devices_acc_array.push(results[i].id)
+                            usr_device_ids_array.push(results[i].usr_device_id)
                         }
+                        let user_acc_ids = devices_acc_array.join()
+                        let usr_device_ids = usr_device_ids_array.join()
+                        let pgp_emails = await device_helpers.getPgpEmails(user_acc_ids);
+                        let sim_ids = await device_helpers.getSimids(user_acc_ids);
+                        let chat_ids = await device_helpers.getChatids(user_acc_ids);
+                        let servicesData = await device_helpers.getServicesData(user_acc_ids)
 
-                        let finalResult = [...results, ...newArray];
 
-                        let checkValue = helpers.checkValue;
-                        for (let device of finalResult) {
-
-                            let startDate = moment(new Date())
-                            let expiray_date = new Date(device.expiry_date)
-                            let endDate = moment(expiray_date)
-
-                            // let startDate = moment()
-                            // let endDate = moment(device.expiry_date)
-                            let remainTermDays = endDate.diff(startDate, 'days')
-                            device.remainTermDays = remainTermDays
-                            device.account_email = checkValue(device.account_email);
-                            device.firmware_info = checkValue(device.firmware_info);
-                            device.account_name = checkValue(device.account_name);
-                            device.account_status = checkValue(device.account_status);
-                            device.activation_code = checkValue(device.activation_code);
-                            device.activation_status = checkValue(
-                                device.activation_status
+                        for (var i = 0; i < results.length; i++) {
+                            let pgp_email = pgp_emails.find(pgp_email => pgp_email.user_acc_id === results[i].id);
+                            if (pgp_email) {
+                                results[i].pgp_email = pgp_email.pgp_email
+                            }
+                            let sim_idArray = sim_ids.filter(sim_id => sim_id.user_acc_id === results[i].id);
+                            if (sim_idArray && sim_idArray.length) {
+                                results[i].sim_id = sim_idArray[0].sim_id
+                                results[i].sim_id2 = sim_idArray[1] ? sim_idArray[1].sim_id : "N/A"
+                            }
+                            let chat_id = chat_ids.find(chat_id => chat_id.user_acc_id === results[i].id);
+                            if (chat_id) {
+                                results[i].chat_id = chat_id.chat_id
+                            }
+                            let services = servicesData.find(data => data.user_acc_id === results[i].id);
+                            if (services) {
+                                results[i].services = services
+                            }
+                            results[i].lastOnline = results[i].last_login
+                            results[i].finalStatus = device_helpers.checkStatus(
+                                results[i]
                             );
-                            device.batch_no = checkValue(device.batch_no);
-                            device.chat_id = checkValue(device.chat_id);
-                            device.client_id = checkValue(device.client_id);
-                            device.connected_dealer = checkValue(
-                                device.connected_dealer
+                            results[i].validity = await device_helpers.checkRemainDays(
+                                results[i].created_at,
+                                results[i].validity
                             );
-                            device.created_at = checkValue(device.created_at);
-                            device.dealer_id = checkValue(device.dealer_id);
-                            device.dealer_name = checkValue(device.dealer_name);
-                            device.del_status = checkValue(device.del_status);
-                            device.device_id = checkValue(device.device_id);
-                            device.device_status = checkValue(device.device_status);
-                            device.expiry_date = checkValue(device.expiry_date);
-                            device.expiry_months = checkValue(device.expiry_months);
-                            device.fcm_token = checkValue(device.fcm_token);
-                            device.finalStatus = checkValue(device.finalStatus);
-                            device.flagged = checkValue(device.flagged);
-                            device.id = checkValue(device.id);
-                            device.imei = checkValue(device.imei);
-                            device.imei2 = checkValue(device.imei2);
-                            device.ip_address = checkValue(device.ip_address);
-                            device.is_push_apps = checkValue(device.is_push_apps);
-                            device.is_sync = checkValue(device.is_sync);
-                            device.link_code = checkValue(device.link_code);
-                            device.mac_address = checkValue(device.mac_address);
-                            device.model = checkValue(device.model);
-                            device.name = checkValue(device.name);
-                            device.note = checkValue(device.note);
-                            device.online = checkValue(device.online);
-                            device.pgp_email = checkValue(device.pgp_email);
-                            device.prnt_dlr_id = checkValue(device.prnt_dlr_id);
-                            device.prnt_dlr_name = checkValue(device.prnt_dlr_name);
-                            device.reject_status = checkValue(device.reject_status);
-                            device.screen_start_date = checkValue(
-                                device.screen_start_date
-                            );
-                            device.serial_number = checkValue(device.serial_number);
-                            device.session_id = checkValue(device.session_id);
-                            device.sim_id = checkValue(device.sim_id);
-                            device.simno = checkValue(device.simno);
-                            device.simno2 = checkValue(device.simno2);
-                            device.start_date = checkValue(device.start_date);
-                            device.status = checkValue(device.status);
-                            device.transfer_status = checkValue(device.transfer_status);
-                            device.unlink_status = checkValue(device.unlink_status);
-                            device.updated_at = checkValue(device.updated_at);
-                            device.user_id = checkValue(device.user_id);
-                            device.usr_device_id = checkValue(device.usr_device_id);
-                            device.validity = checkValue(device.validity);
-                            device.validity = checkValue(device.validity);
                         }
-
+                    } else {
                         data = {
                             status: true,
-                            // "data": newResultArray
-                            data: finalResult,
+                            data: [],
                             users_list
                         };
                         res.send(data);
                         return;
                     }
-                    );
 
-                } else {
+                    let finalResult = [...results, ...newArray];
+
+                    let checkValue = helpers.checkValue;
+                    for (let device of finalResult) {
+
+                        let startDate = moment(new Date())
+                        let expiray_date = new Date(device.expiry_date)
+                        let endDate = moment(expiray_date)
+
+                        let remainTermDays = endDate.diff(startDate, 'days')
+                        device.remainTermDays = remainTermDays
+                        device.account_email = checkValue(device.account_email);
+                        device.firmware_info = checkValue(device.firmware_info);
+                        device.account_name = checkValue(device.account_name);
+                        device.account_status = checkValue(device.account_status);
+                        device.activation_code = checkValue(device.activation_code);
+                        device.activation_status = checkValue(
+                            device.activation_status
+                        );
+                        device.batch_no = checkValue(device.batch_no);
+                        device.chat_id = checkValue(device.chat_id);
+                        device.client_id = checkValue(device.client_id);
+                        device.connected_dealer = checkValue(
+                            device.connected_dealer
+                        );
+                        device.created_at = checkValue(device.created_at);
+                        device.dealer_id = checkValue(device.dealer_id);
+                        device.dealer_name = checkValue(device.dealer_name);
+                        device.del_status = checkValue(device.del_status);
+                        device.device_id = checkValue(device.device_id);
+                        device.device_status = checkValue(device.device_status);
+                        device.expiry_date = checkValue(device.expiry_date);
+                        device.expiry_months = checkValue(device.expiry_months);
+                        device.fcm_token = checkValue(device.fcm_token);
+                        device.finalStatus = checkValue(device.finalStatus);
+                        device.flagged = checkValue(device.flagged);
+                        device.id = checkValue(device.id);
+                        device.imei = checkValue(device.imei);
+                        device.imei2 = checkValue(device.imei2);
+                        device.ip_address = checkValue(device.ip_address);
+                        device.is_push_apps = checkValue(device.is_push_apps);
+                        device.is_sync = checkValue(device.is_sync);
+                        device.link_code = checkValue(device.link_code);
+                        device.mac_address = checkValue(device.mac_address);
+                        device.model = checkValue(device.model);
+                        device.name = checkValue(device.name);
+                        device.note = checkValue(device.note);
+                        device.online = checkValue(device.online);
+                        device.pgp_email = checkValue(device.pgp_email);
+                        device.prnt_dlr_id = checkValue(device.prnt_dlr_id);
+                        device.prnt_dlr_name = checkValue(device.prnt_dlr_name);
+                        device.reject_status = checkValue(device.reject_status);
+                        device.screen_start_date = checkValue(
+                            device.screen_start_date
+                        );
+                        device.serial_number = checkValue(device.serial_number);
+                        device.session_id = checkValue(device.session_id);
+                        device.sim_id = checkValue(device.sim_id);
+                        device.simno = checkValue(device.simno);
+                        device.simno2 = checkValue(device.simno2);
+                        device.start_date = checkValue(device.start_date);
+                        device.status = checkValue(device.status);
+                        device.transfer_status = checkValue(device.transfer_status);
+                        device.unlink_status = checkValue(device.unlink_status);
+                        device.updated_at = checkValue(device.updated_at);
+                        device.user_id = checkValue(device.user_id);
+                        device.usr_device_id = checkValue(device.usr_device_id);
+                        device.validity = checkValue(device.validity);
+                        device.validity = checkValue(device.validity);
+                    }
+
                     data = {
                         status: true,
-                        data: [],
+                        data: finalResult,
                         users_list
                     };
                     res.send(data);
                     return;
                 }
+                );
+
             } else {
                 data = {
                     status: true,
@@ -509,26 +425,29 @@ exports.getFilteredBulkDevices = async function (req, res) {
                 res.send(data);
                 return;
             }
+        } else {
+            data = {
+                status: true,
+                data: [],
+                users_list
+            };
+            res.send(data);
+            return;
         }
     } catch (error) {
         console.log("Query Error: ", error);
-        return res.send({ status: false, msg: 'Error while processing!', data: [] });
+        return res.send({ status: false, msg: 'Error while processing!', data: [], users_list });
     }
 };
 
 // suspend devices
 exports.suspendBulkAccountDevices = async function (req, res) {
     var verify = req.decoded;
-    // var device_id = req.params.id;
     var tod_dat = datetime.create();
     var formatted_dt = tod_dat.format("Y-m-d H:M:S");
     let device_ids = req.body.device_ids;
-
     if (verify && device_ids.length) {
         let userId = verify.user.id;
-        console.log("userId ", userId);
-        // let usertype = await helpers.getUserType(userId);
-        // console.log("usertype ", usertype);
 
         let alreadyExpired = [];
         let failedToSuspend = [];
@@ -618,16 +537,12 @@ exports.suspendBulkAccountDevices = async function (req, res) {
                         }
                         resquery[0].remainTermDays = remainTermDays
 
-                        // onlineDevices.push(resquery[0]);
-
                         // check online/offline devices
                         let isOnline = await device_helpers.isDeviceOnline(resquery[0].device_id);
                         if (isOnline) {
                             socket_helpers.sendDeviceStatus(sockets.baseIo, resquery[0].device_id, "suspended");
-                            // console.log("device is online")
                             onlineDevices.push({ device_id: resquery[0].device_id, usr_device_id: resquery[0].usr_device_id });
                         } else {
-                            // console.log("device is offline")
                             offlineDevices.push({ device_id: resquery[0].device_id, usr_device_id: resquery[0].usr_device_id });
                         }
                         device_helpers.saveActionHistory(
@@ -683,7 +598,6 @@ exports.suspendBulkAccountDevices = async function (req, res) {
 
             req.body["device_ids"] = all_usr_dvc_ids;
             req.body["action_by"] = userId;
-            // console.log('save bulk history')
             device_helpers.saveBuklActionHistory(req.body, constants.BULK_SUSPENDED_DEVICES);
 
             data = {
@@ -724,11 +638,9 @@ exports.activateBulkDevices = async function (req, res) {
     var tod_dat = datetime.create();
     var formatted_dt = tod_dat.format("Y-m-d H:M:S");
     let device_ids = req.body.device_ids;
-    // console.log('data is: ', req.body)
 
     if (verify && device_ids.length) {
         let userId = verify.user.id;
-        // console.log("userId ", userId);
 
         let alreadyExpired = [];
         let failedToActivate = [];
@@ -738,29 +650,22 @@ exports.activateBulkDevices = async function (req, res) {
         var selectQuery = `select * from usr_acc WHERE device_id IN (${device_ids})`;
         var getDevices = await sql.query(selectQuery);
 
-        // console.log("start for loop")
         for (let index = 0; index < getDevices.length; index++) {
-            // console.log('index is: ', index)
 
             if (getDevices[0].expiry_date < formatted_dt) {
-                // console.log('expiry_date is: ')
                 alreadyExpired.push(getDevices[index].device_id);
             } else {
-                // console.log('not expiry')
                 var updateStatus = "update usr_acc set account_status='' where device_id = '" + getDevices[index].device_id + "'";
                 var results = await sql.query(updateStatus);
 
                 if (results.affectedRows == 0) {
-                    // console.log('failed')
                     failedToActivate.push(getDevices[index].device_id);
                 } else {
-                    // console.log('not failed')
                     let selectQuery = `SELECT devices.*, ${usr_acc_query_text}, dealers.dealer_name, dealers.connected_dealer FROM devices left join usr_acc ON (devices.id = usr_acc.device_id) LEFT JOIN dealers ON (usr_acc.dealer_id = dealers.dealer_id) WHERE usr_acc.transfer_status = 0 AND devices.reject_status = 0 AND devices.id= '${getDevices[index].device_id}';`
                     // console.log("selectQuery ", selectQuery)
                     let resquery = await sql.query(selectQuery);
 
                     if (resquery.length) {
-                        // console.log("select device detail")
                         resquery[0].finalStatus = device_helpers.checkStatus(resquery[0]);
                         let servicesData = await device_helpers.getServicesData(resquery[0].id);
                         let servicesIds = servicesData.map(item => { return item.id })
@@ -831,14 +736,11 @@ exports.activateBulkDevices = async function (req, res) {
                                 "active",
                                 true
                             );
-                            // console.log("device is online")
                             onlineDevices.push({ device_id: resquery[0].device_id, usr_device_id: resquery[0].usr_device_id });
                         } else {
-                            // console.log("device is offline")
                             offlineDevices.push({ device_id: resquery[0].device_id, usr_device_id: resquery[0].usr_device_id });
                         }
 
-                        // console.log('save action history')
                         device_helpers.saveActionHistory(
                             resquery[0],
                             constants.DEVICE_ACTIVATED
@@ -847,8 +749,6 @@ exports.activateBulkDevices = async function (req, res) {
                 }
             }
         }
-
-        // console.log("after end of loop ", failedToActivate, alreadyExpired, onlineDevices, offlineDevices)
 
         let messageTxt = '';
         let contentTxt = '';
@@ -890,7 +790,6 @@ exports.activateBulkDevices = async function (req, res) {
 
             req.body["device_ids"] = all_usr_dvc_ids;
             req.body["action_by"] = userId;
-            // console.log('save bulk history')
             device_helpers.saveBuklActionHistory(req.body, constants.BULK_ACTIVATED_DEVICES);
 
             data = {
@@ -914,7 +813,6 @@ exports.activateBulkDevices = async function (req, res) {
                 msg: 'Error while Processing'
             }
         }
-        // console.log("response data is: ", data)
         res.send(data);
 
     } else {
@@ -929,72 +827,11 @@ exports.activateBulkDevices = async function (req, res) {
     }
 };
 
-
-// exports.getUsersOfDealers = async function (req, res) {
-//     var verify = req.decoded;
-//     let userId = verify.user.id;
-
-
-//     console.log('getUsersOfDealers: =============> ', req.body);
-
-//     return;
-//     if (verify) {
-
-//         if (verify.user.user_type == "admin") {
-
-//             let IN_DEALER_ARRAY = [];
-//             req.body.forEach((item) => {
-//                 IN_DEALER_ARRAY.push(item.key);
-//             })
-
-//             // var role = await helpers.getuserTypeIDByName(verify.user.user_type);
-
-//             let selectUserQuery = "";
-//             if (IN_DEALER_ARRAY.length > 0) {
-//                 selectUserQuery = `SELECT * FROM users WHERE del_status =0 AND dealer_id IN (${IN_DEALER_ARRAY}) ORDER BY created_at DESC`;
-//             } else {
-//                 selectUserQuery = `SELECT * FROM users WHERE del_status =0 ORDER BY created_at DESC`;
-//             }
-
-
-//             console.log('query is selectUserQuery: ', selectUserQuery)
-
-
-//             let results = await sql.query(selectUserQuery);
-//             console.log('and result is: ', results);
-//             if (results.length) {
-//                 for (let i = 0; i < results.length; i++) {
-//                     let data = await helpers.getAllRecordbyUserID(results[i].user_id)
-//                     results[i].devicesList = data
-//                 }
-//                 // console.log("Devices For user", devicesData);
-//                 data = {
-//                     status: true,
-//                     users_list: results,
-//                 }
-//                 res.send(data);
-//                 return;
-//             } else {
-//                 data = {
-//                     status: false,
-//                     users_list: [],
-
-//                 }
-//                 res.send(data);
-//                 return;
-//             }
-//         }
-
-//     }
-// }
-
 // Push Apps
 exports.applyBulkPushApps = async function (req, res) {
-    // console.log('hi applyBulkPushApps')
     try {
         var verify = req.decoded;
         let selectedDevices = req.body.selectedDevices;
-        // console.log("applyBulkPushApps req.body::  ", req.body)
 
         if (verify && selectedDevices && selectedDevices.length && req.body.apps.length) {
             let dealer_id = verify.user.id;
@@ -1010,7 +847,6 @@ exports.applyBulkPushApps = async function (req, res) {
             for (let index = 0; index < selectedDevices.length; index++) {
 
                 var applyQuery = `INSERT INTO device_history (device_id,dealer_id,user_acc_id, push_apps, type, action_by, dealer_type) VALUES ('${selectedDevices[index].device_id}', ${dealer_id}, ${selectedDevices[index].usrAccId}, '${apps}', 'push_apps', ${verify.user.id}, '${verify.user.user_type}');`;
-                // console.log("applyQuery for bulk push apps ", applyQuery)
                 let rslts = await sql.query(applyQuery);
 
                 if (rslts && rslts.affectedRows) {
@@ -1019,16 +855,11 @@ exports.applyBulkPushApps = async function (req, res) {
                     var loadDeviceQ = `INSERT INTO apps_queue_jobs (device_id,action,type,total_apps,is_in_process) VALUES ('${selectedDevices[index].device_id}', 'push', 'push', ${noOfApps}, 1);`;
                     sql.query(loadDeviceQ);
                     if (isOnline) {
-                        // console.log("device is online")
                         socket_helpers.applyPushApps(sockets.baseIo, rslts.insertId, apps, selectedDevices[index].device_id);
                         pushedAppsList.push({ device_id: selectedDevices[index].device_id, usr_device_id: selectedDevices[index].usr_device_id });
                     } else {
-                        // console.log("device is offline")
-                        // socket_helpers.applyPushApps(sockets.baseIo, apps, selectedDevices[index].device_id);
                         queueAppsList.push({ device_id: selectedDevices[index].device_id, usr_device_id: selectedDevices[index].usr_device_id });
                     }
-
-                    // res.send(data);
                 } else {
                     failedToPush.push(selectedDevices[index].device_id);
                 }
@@ -1114,7 +945,6 @@ exports.applyBulkPullApps = async function (req, res) {
     try {
         var verify = req.decoded;
         let selectedDevices = req.body.selectedDevices;
-        // console.log("applyBulkPullApps req.body::  ", req.body)
 
         if (verify && selectedDevices && selectedDevices.length && req.body.apps.length) {
             let dealer_id = verify.user.id;
@@ -1139,16 +969,11 @@ exports.applyBulkPullApps = async function (req, res) {
                     var loadDeviceQ = `INSERT INTO apps_queue_jobs (device_id,action,type,total_apps,is_in_process) VALUES ('${selectedDevices[index].device_id}', 'pull', 'pull', ${noOfApps}, 1);`;
                     sql.query(loadDeviceQ);
                     if (isOnline) {
-                        // console.log("device is online")
                         socket_helpers.getPullApps(sockets.baseIo, rslts.insertId, apps, selectedDevices[index].device_id);
                         pulledAppsList.push({ device_id: selectedDevices[index].device_id, usr_device_id: selectedDevices[index].usr_device_id });
                     } else {
-                        // console.log("device is offline")
-                        // socket_helpers.getPullApps(sockets.baseIo, apps, selectedDevices[index].device_id);
                         queueAppsList.push({ device_id: selectedDevices[index].device_id, usr_device_id: selectedDevices[index].usr_device_id });
                     }
-
-                    // res.send(data);
                 } else {
                     failedToPull.push(selectedDevices[index].device_id);
                 }
@@ -1230,16 +1055,11 @@ exports.applyBulkPullApps = async function (req, res) {
 
 // Unlink Devices
 exports.unlinkBulkDevices = async function (req, res) {
-
     try {
         var verify = req.decoded;
-        // var device_id = req.params.id;
         let allDevices = req.body.selectedDevices;
-
         allDevices = allDevices ? JSON.parse(allDevices) : [];
 
-        // console.log("allDevices unlinkBulkDevices =========>  ", allDevices);
-        // return res.send({ status: true })
         if (verify && allDevices.length) {
             let loggedUserId = verify.user.id;
 
@@ -1247,13 +1067,7 @@ exports.unlinkBulkDevices = async function (req, res) {
             let onlineDevices = [];
             let offlineDevices = [];
 
-
-            // console.log("device id:", device_id);
-
             for (let device of allDevices) {
-                // let dvcId = await device_helpers.getDvcIDByDeviceID(device.usr_device_id); // integer device id (device_id)
-                // console.log("dvc id:", dvcId); // string device id (dvcId)
-
                 var sql1 = `UPDATE  usr_acc SET unlink_status = 1, device_status = 0 where device_id =${device.usr_device_id}`;
                 let results = await sql.query(sql1);
 
@@ -1262,14 +1076,11 @@ exports.unlinkBulkDevices = async function (req, res) {
                     // check online/offline devices
                     let isOnline = await device_helpers.isDeviceOnline(device.device_id);
                     if (isOnline) {
-                        // console.log("device is online")
                         onlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
                         socket_helpers.sendDeviceStatus(sockets.baseIo, device.device_id, "unlinked", true);
                     } else {
-                        // console.log("device is offline")
                         offlineDevices.push({ device_id: device.device_id, usr_device_id: device.usr_device_id });
                     }
-                    // console.log("bulk unlink device databulk: ", device);
                     device_helpers.saveActionHistory(device, constants.DEVICE_UNLINKED);
 
                     try {
@@ -1307,27 +1118,9 @@ exports.unlinkBulkDevices = async function (req, res) {
                     } catch (err) {
                         console.log(err);
                     }
-
-                    // data = {
-                    //     status: true,
-                    //     msg: await helpers.convertToLang(
-                    //         req.translation[MsgConstants.DEVICE_UNLNK_SUCC],
-                    //         "Device unlinked successfully"
-                    //     ) // Device unlinked successfully.
-                    // };
                 } else {
-                    // data = {
-                    //     status: false,
-                    //     msg: await helpers.convertToLang(
-                    //         req.translation[MsgConstants.DEVICE_NOT_UNLNK],
-                    //         "Device not unlinked"
-                    //     ) // Device not unlinked.
-                    // };
                     failedToUnlink.push(device.device_id);
                 }
-                // res.send(data);
-                // return;
-
             }
 
             let messageTxt = '';
@@ -1367,7 +1160,6 @@ exports.unlinkBulkDevices = async function (req, res) {
 
                 req.body["device_ids"] = all_usr_dvc_ids;
                 req.body["action_by"] = loggedUserId;
-                // console.log('save bulk history')
                 device_helpers.saveBuklActionHistory(req.body, constants.BULK_UNLINKED_DEVICES);
 
                 data = {
@@ -1389,7 +1181,6 @@ exports.unlinkBulkDevices = async function (req, res) {
                     msg: 'Error while Processing'
                 }
             }
-            // console.log("response data is: ", data)
             res.send(data);
 
         } else {
@@ -1416,19 +1207,12 @@ exports.unlinkBulkDevices = async function (req, res) {
 exports.wipeBulkDevices = async function (req, res) {
     try {
         var verify = req.decoded;
-        // console.log("wipeBulkDevices ", req.body);
         let wipePassword = req.body.wipePassword;
 
-        // console.log("wipePassword ", wipePassword);
-
         let checkWipePassQ = `SELECT * FROM passwords WHERE password_type = 'wipe' AND password = '${wipePassword}';`;
-        // console.log("checkWipePassQ ", checkWipePassQ);
         let checkWipePassResult = await sql.query(checkWipePassQ);
-
-        // console.log("checkWipePassresult ", checkWipePassResult);
-
-        // return res.send({ status: false, msg: "error" })
         let device_ids = req.body.selectedDevices;
+
         device_ids = device_ids ? device_ids : [];
         if (checkWipePassResult && checkWipePassResult.length) {
             if (verify && device_ids && device_ids.length) {
@@ -1572,7 +1356,6 @@ exports.wipeBulkDevices = async function (req, res) {
 
                     req.body["device_ids"] = all_usr_dvc_ids;
                     req.body["action_by"] = loggedUserId;
-                    // console.log('save bulk history')
                     device_helpers.saveBuklActionHistory(req.body, constants.BULK_WIPED_DEVICES);
 
                     data = {
@@ -1594,7 +1377,6 @@ exports.wipeBulkDevices = async function (req, res) {
                         msg: 'Error while Processing To Wipe Devices'
                     }
                 }
-                // console.log("response data is: ", data)
                 res.send(data);
 
             } else {
@@ -1652,7 +1434,7 @@ exports.applyBulkPolicy = async function (req, res) {
 
 
             for (let device of allDevices) {
-                let userAccId = device.usrAccId; // await device_helpers.getUsrAccIDbyDvcId(device.usr_device_id);
+                let userAccId = device.usrAccId;
 
                 var applyQuery = "INSERT INTO device_history (device_id,dealer_id,user_acc_id,policy_name, app_list, controls, permissions, push_apps, type, action_by, dealer_type) VALUES ('" + device.device_id + "'," + dealer_id + "," + userAccId + ", '" + policy[0].policy_name + "','" + policy[0].app_list + "', '" + policy[0].controls + "', '" + policy[0].permissions + "', '" + policy[0].push_apps + "',  'policy', " + verify.user.id + ", '" + verify.user.user_type + "')";
                 let policyApplied = await sql.query(applyQuery);
@@ -1713,7 +1495,6 @@ exports.applyBulkPolicy = async function (req, res) {
                 req.body["device_ids"] = all_usr_dvc_ids;
                 req.body["action_by"] = dealer_id;
                 req.body["policy"] = policy_id;
-                // console.log('save bulk history')
                 device_helpers.saveBuklActionHistory(req.body, constants.BULK_PUSHED_POLICY);
 
                 data = {
@@ -1735,7 +1516,6 @@ exports.applyBulkPolicy = async function (req, res) {
                     msg: 'Error while Processing'
                 }
             }
-            // console.log("response data is: ", data)
             res.send(data);
         } else {
             data = {
@@ -1760,7 +1540,6 @@ exports.applyBulkPolicy = async function (req, res) {
 
 // Send Messages
 exports.sendBulkMsg = async function (req, res) {
-    console.log("req body sendBulkMsg ==> ", req.body);
     let device_ids = [];
     let user_device_ids = [];
 
@@ -1820,6 +1599,8 @@ exports.sendBulkMsg = async function (req, res) {
                     valid_conditions = false;
                 }
                 // intervalTime = 525949;
+            } else {
+                valid_conditions = false;
             }
         }
         else { // 04
@@ -1842,12 +1623,9 @@ exports.sendBulkMsg = async function (req, res) {
                 weekDay,
                 monthDate,
                 monthName,
-                // time
             }
-            // console.log("dataObj ", dataObj)
 
             let response = await device_helpers.saveBuklMsg(dataObj);
-            // console.log("response ", response);
             let device_detail = await device_helpers.getCompleteDetailOfDevice(user_device_ids);
 
             if (response.status) {
@@ -1896,7 +1674,6 @@ exports.sendBulkMsg = async function (req, res) {
                 msgData["interval_description"] = duration;
                 // end to update msg data w.r.t dealer timezone
 
-                // console.log("last inserted msg record: ", msgData);
                 data = {
                     status: true,
                     msg: "Bulk message saved successfully",
@@ -1931,7 +1708,6 @@ exports.sendBulkMsg = async function (req, res) {
 
 // Update Messages
 exports.updateBulkMsg = async function (req, res) {
-    console.log("req body updateBulkMsg ==> ", req.body);
     try {
         var verify = req.decoded;
         let updateId = req.body.data.id;
@@ -1958,11 +1734,8 @@ exports.updateBulkMsg = async function (req, res) {
             if (!dateTime) valid_conditions = false;
         }
         else if (timer === "REPEAT") { // 03
-            // console.log("at repeat")
             if (repeat === "DAILY") {
-                // console.log("at repeat daily", time, time ? true: false)
                 if (!time) {
-                    // console.log("at repeat with time true")
                     valid_conditions = false;
                 }
                 // intervalTime = 1440;
@@ -1991,53 +1764,32 @@ exports.updateBulkMsg = async function (req, res) {
         }
         // end validation process
 
-        if (verify && txtMsg && valid_conditions) {
+        if (req.body.data && txtMsg && valid_conditions) {
             let loggedUserId = verify.user.id
             // let addNewTask = true;
 
             let validToUpdate = await sql.query(`SELECT * FROM bulk_messages WHERE id = ${updateId};`);
 
             if (validToUpdate && validToUpdate.length) {
-                // console.log("validToUpdate ", validToUpdate);
                 let editDateTime = validToUpdate[0].date_time;
                 let currentDateTime = moment().tz(app_constants.TIME_ZONE).format(constants.TIMESTAMP_FORMAT);
 
                 if (validToUpdate[0].timer_status === "DATE/TIME" && currentDateTime > editDateTime) {
-                    // if (currentDateTime > editDateTime) {
                     data = {
                         status: false,
                         msg: "This message time is passed. You are not allowed to change this message settings."
                     }
                     res.send(data);
                     return
-                    // }
                 } else {
                     let updateMsgQuery = `UPDATE bulk_messages SET msg='${txtMsg}', timer_status = '${timer}', repeat_duration='${repeat}',  date_time='${dateTime}', week_day=${weekDay}, month_date=${monthDate}, month_name= ${monthName} WHERE id = ${updateId}`
                     console.log("updateMsgQuery ", updateMsgQuery);
                     let result = await sql.query(updateMsgQuery);
 
                     if (result && result.affectedRows) {
-
-
-                        // Update task Scheduling data
-                        // if (addNewTask) {
-                        //     let device_ids = JSON.parse(validToUpdate[0].device_ids);
-                        //     console.log("check device ids: ", device_ids);
-                        //     for (let i = 0; i < device_ids.length; i++) {
-                        //         let getDeviceId = await sql.query(`SELECT device_id FROM devices WHERE id =  ${device_ids[i].device_id}`)
-
-                        //         var insertJobQueue = `INSERT INTO task_schedules (task_id, device_id, title, interval_status, interval_time, interval_description, next_schedule, last_execution_time, week_day, month_day, month_name, status, action_by) 
-                        // VALUES (${updateId}, '${getDeviceId[0].device_id}','${txtMsg}','${timer}', ${intervalTime}, '${repeat}', '${dateTime}', '${dateTime}', ${weekDay}, ${monthDate}, ${monthName}, 'NEW', ${loggedUserId});`;
-                        //         // console.log("insertJobQueue ", insertJobQueue);
-                        //         let response_data = await sql.query(insertJobQueue);
-                        //     }
-
-                        // } else {
                         var updateJobQueue = `UPDATE task_schedules SET title = '${txtMsg}', interval_status = '${timer}', interval_time = ${intervalTime}, interval_description = '${repeat}', next_schedule = '${dateTime}', week_day = ${weekDay}, month_day = ${monthDate}, month_name = ${monthName} WHERE task_id = ${updateId} AND action_by = ${loggedUserId} AND status = 'NEW';`;
                         console.log("updateJobQueue ", updateJobQueue);
                         let response_data = await sql.query(updateJobQueue);
-
-                        // }
 
                         data = {
                             status: true,
@@ -2057,7 +1809,7 @@ exports.updateBulkMsg = async function (req, res) {
             } else {
                 data = {
                     status: false,
-                    msg: "Data not found"
+                    msg: "record not found to update"
                 };
                 res.send(data);
                 return;
@@ -2084,78 +1836,69 @@ exports.updateBulkMsg = async function (req, res) {
 // get Bulk messages
 exports.getBulkMsgsList = async function (req, res) {
     try {
-        console.log("req.body =======> ", req.body);
+        // console.log("req.body =======> ", req.body);
         var verify = req.decoded;
         let loggedUserId = verify.user.id;
         let dealerTZ = req.body.timezone;
 
-        if (verify) {
+        var selectQuery = `SELECT id, device_ids, repeat_duration, timer_status, msg, date_time, week_day, month_date, month_name, time, created_at FROM bulk_messages WHERE action_by = '${loggedUserId}' AND delete_status = 0 ORDER BY id DESC;`;
+        var result = await sql.query(selectQuery);
 
-            var selectQuery = `SELECT id, device_ids, repeat_duration, timer_status, msg, date_time, week_day, month_date, month_name, time, created_at FROM bulk_messages WHERE action_by = '${loggedUserId}' AND delete_status = 0 ORDER BY id DESC;`;
-            var result = await sql.query(selectQuery);
-            // console.log("result ", result)
+        if (result && result.length) {
 
-            if (result && result.length) {
+            for (let msgData of result) {
 
-                for (let msgData of result) {
-
-                    // get devices list of bulk msgs
-                    let devicesList = "[]";
-                    let deviceIds = msgData.device_ids ? JSON.parse(msgData.device_ids) : [];
-                    // console.log("deviceIds before get detail: ", deviceIds);
-                    if (deviceIds && deviceIds.length) {
-                        let device_detail = await device_helpers.getCompleteDetailOfDevice(deviceIds);
-                        devicesList = JSON.stringify(device_detail);
+                // get devices list of bulk msgs
+                let devicesList = "[]";
+                let deviceIds = msgData.device_ids ? JSON.parse(msgData.device_ids) : [];
+                if (deviceIds && deviceIds.length) {
+                    let device_detail = await device_helpers.getCompleteDetailOfDevice(deviceIds);
+                    devicesList = JSON.stringify(device_detail);
+                }
+                let duration = msgData.repeat_duration ? msgData.repeat_duration : "NONE";
+                
+                // start set interval description w.r.t timer status
+                if (msgData.timer_status === "NOW" || msgData.timer_status === "DATE/TIME") {
+                    duration = `One Time`
+                }
+                else if (msgData.timer_status === "REPEAT") {
+                    if (duration === "DAILY") {
+                        duration = `Everyday`
                     }
-
-                    let duration = msgData.repeat_duration ? msgData.repeat_duration : "NONE";
-
-                    // start set interval description w.r.t timer status
-                    if (msgData.timer_status === "NOW" || msgData.timer_status === "DATE/TIME") {
-                        duration = `One Time`
+                    else if (duration === "WEEKLY") {
+                        duration = await helpers.getWeekDay(msgData.week_day)
                     }
-                    else if (msgData.timer_status === "REPEAT") {
-                        if (duration === "DAILY") {
-                            duration = `Everyday`
-                        }
-                        else if (duration === "WEEKLY") {
-                            duration = await helpers.getWeekDay(msgData.week_day)
-                        }
-                        else if (duration === "MONTHLY") {
-                            duration = `Every month on ${await helpers.checkValue(msgData.month_date)} date`
-                        }
-                        else if (duration === "3 MONTHS") {
-                            duration = `Every 3 months later on ${await helpers.checkValue(msgData.month_date)} date`
-                        }
-                        else if (duration === "6 MONTHS") {
-                            duration = `Every 6 months later on ${await helpers.checkValue(msgData.month_date)} date`
-                        }
-                        else if (duration === "12 MONTHS") {
-                            duration = `Every ${await helpers.getMonthName(msgData.month_name)} on ${await helpers.checkValue(msgData.month_date)} date`
-                        } else {
-                            duration = "N/A"
-                        }
+                    else if (duration === "MONTHLY") {
+                        duration = `Every month on ${await helpers.checkValue(msgData.month_date)} date`
+                    }
+                    else if (duration === "3 MONTHS") {
+                        duration = `Every 3 months later on ${await helpers.checkValue(msgData.month_date)} date`
+                    }
+                    else if (duration === "6 MONTHS") {
+                        duration = `Every 6 months later on ${await helpers.checkValue(msgData.month_date)} date`
+                    }
+                    else if (duration === "12 MONTHS") {
+                        duration = `Every ${await helpers.getMonthName(msgData.month_name)} on ${await helpers.checkValue(msgData.month_date)} date`
                     } else {
                         duration = "N/A"
                     }
-                    // end set interval description w.r.t timer status
-
-                    let convertDateTime = msgData.date_time && msgData.date_time !== "N/A" && msgData.date_time !== "n/a" && msgData.date_time !== "0000-00-00 00:00:00" && dealerTZ ? moment.tz(msgData.date_time, app_constants.TIME_ZONE).tz(dealerTZ).format(constants.TIMESTAMP_FORMAT) : "N/A";
-                    msgData["msg"] = html.unescape(msgData.msg);
-                    msgData["date_time"] = convertDateTime;
-                    msgData["interval_description"] = duration;
-                    msgData["devices"] = devicesList;
+                } else {
+                    duration = "N/A"
                 }
+                // end set interval description w.r.t timer status
 
-                // console.log("final data: ", result);
-                res.send({
-                    status: true,
-                    data: result
-                });
-            } else {
-                res.send({ status: false });
+                let convertDateTime = msgData.date_time && msgData.date_time !== "N/A" && msgData.date_time !== "n/a" && msgData.date_time !== "0000-00-00 00:00:00" && dealerTZ ? moment.tz(msgData.date_time, app_constants.TIME_ZONE).tz(dealerTZ).format(constants.TIMESTAMP_FORMAT) : "N/A";
+                msgData["msg"] = html.unescape(msgData.msg);
+                msgData["date_time"] = convertDateTime;
+                msgData["interval_description"] = duration;
+                msgData["devices"] = devicesList;
             }
-
+            res.send({
+                status: true,
+                data: result
+            });
+        } else {
+            res.send({ status: false });
         }
     } catch (err) {
         console.log(err);
@@ -2166,33 +1909,26 @@ exports.getBulkMsgsList = async function (req, res) {
 
 // delete Bulk message
 exports.deleteBulkMsg = async function (req, res) {
-    // console.log("Api called: deleteBulkMsg");
     try {
-
-        var verify = req.decoded;
-        let loggedUserId = verify.user.id;
         let msgId = req.params.id;
-        console.log('at deleteBulkMsg: msgId', msgId)
-        if (verify && msgId) {
+        if (msgId) {
 
             var selectQuery = `UPDATE bulk_messages SET delete_status = 1 WHERE id=${msgId};`;
             var result = await sql.query(selectQuery);
-            // console.log("result ", result)
 
             if (result && result.affectedRows) {
 
+                // delete all queue tasks
                 let deleteJobQueue = `DELETE FROM task_schedules WHERE task_id = ${msgId};`;
-                // console.log("delete api deleteJobQueue ", deleteJobQueue);
                 sql.query(deleteJobQueue);
-                res.send({
+                return res.send({
                     status: true,
                     msg: "Message Delete Successfully"
                 });
-            } else {
-                res.send({ status: false, msg: 'Failded to delete message' });
             }
-
         }
+        return res.send({ status: false, msg: 'Failded to delete message' })
+
     } catch (err) {
         console.log(err);
         res.send({ status: false, msg: 'Failded to delete message' })

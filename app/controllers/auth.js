@@ -16,9 +16,18 @@ var MsgConstants = require('../../constants/MsgConstants');
 
 const constants = require('../../config/constants');
 const { sendEmail } = require('../../lib/email');
-
+// const { validationResult } = require('express-validator');
 
 var data;
+
+
+// exports.responsValidationResults = async function (req, res, next) {
+//     const errors = validationResult(req)
+//     if (!errors.isEmpty()) {
+//         return res.status(422).json({ status: false, errors: errors.array() })
+//     }
+//     next();
+// }
 
 /*****User Login*****/
 exports.login = async function (req, res) {
