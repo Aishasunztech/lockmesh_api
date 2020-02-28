@@ -32,7 +32,7 @@ exports.createServiceProduct = async function (req, res) {
                     if (usr_acc[0].pgp_remaining_limit < 1) {
                         return res.send({
                             status: false,
-                            msg: "ERROR: You are not allowed to create new PGP EMAIL. Your Max limit has been exeeded to create PGP EMAILS on this device."
+                            msg: "ERROR: You are not allowed to create new PGP EMAIL. Your Max limit has been exceeded to create PGP EMAILS on this device."
                         })
                     }
                 }
@@ -43,7 +43,7 @@ exports.createServiceProduct = async function (req, res) {
                     if (checkExisted && checkExisted.length) {
                         return res.send({
                             status: false,
-                            msg: "ERROR: Username not available.Please choose another username."
+                            msg: "ERROR: Username not available. Please choose another username."
                         })
                     }
                     product_data.pgp_email = pgp_email
@@ -208,13 +208,17 @@ exports.checkUniquePgp = async function (req, res) {
             console.log('checkExistingEmailQuery:', checkExistingEmailQuery);
             let checkExisted = await sql.query(checkExistingEmailQuery)
             if (checkExisted && checkExisted.length) {
-                res.send({
+                // if email exists in local db but not on server then create email on server
+
+                return res.send({
                     status: false,
                     msg: "ERROR: Username not available"
                 })
-                return
             } else {
-                axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { headers: {} }).then((response) => {
+
+                axios.post(app_constants.SUPERADMIN_LOGIN_URL, app_constants.SUPERADMIN_USER_CREDENTIALS, { 
+                    headers: {} 
+                }).then((response) => {
                     if (response.data.status) {
                         let data = {
                             label: app_constants.APP_TITLE,
