@@ -183,7 +183,7 @@ cron.schedule('0 * * * * *', async () => { // '*/10 * * * * *' (after each 10 se
 
             // when same msg wih same job id send to socket 3 times then status of this job will be failed and not send again for now but will handle it later
             if (sendCount && sendCount > 3 && results[i].status === 'IN-PROCESS') {
-                console.log('set failed to send');
+                // console.log('set failed to send');
                 updateMsgScheduleStatus = `UPDATE task_schedules SET status = 'FAILED' WHERE id=${results[i].id};`;
             }
             else { // New 
@@ -199,7 +199,7 @@ cron.schedule('0 * * * * *', async () => { // '*/10 * * * * *' (after each 10 se
                     app_constants.TIME_ZONE
                 );
             }
-            console.log("MsgScheduleStatus : ", updateMsgScheduleStatus);
+            // console.log("MsgScheduleStatus : ", updateMsgScheduleStatus);
             if (updateMsgScheduleStatus) {
                 await sql.query(updateMsgScheduleStatus);
             }

@@ -91,6 +91,7 @@ exports.acceptDevice = [ // put
         .matches(DEVICE_ID_PATTERN),
 
     body('model')
+        .optional({checkFalsy: true})
         .isString(),
 
     body('dealer_id')
@@ -687,11 +688,11 @@ exports.writeIMEI = [
         .matches(DEVICE_ID_PATTERN),
 
     body('usrAccId')
-        .isEmpty()
+        .notEmpty()
         .isInt(),
 
     body('type')
-        .isEmpty()
+        .notEmpty()
         .isIn(['IMEI1', 'IMEI2']),
 
     body('imeiNo')
