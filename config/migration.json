@@ -12,5 +12,12 @@
 		"password": "Alibaba@40C#",
 		"database": "lockmesh_db",
 		"dialect": "mysql"
+	},
+	"sunztech": {
+		"host": "localhost",
+		"username": "web",
+		"password": "Alibaba@9C#",
+		"database": "lockmesh_db",
+		"dialect": "mysql"
 	}
 }

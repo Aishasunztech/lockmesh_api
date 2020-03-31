@@ -69,6 +69,21 @@ if (HOST_NAME) {
 			break;
 		}
 
+		case "SunzTech": {
+			URL = "https://mdm-lm.sunztech.com";
+			SUPERADMIN_URL = "https://mdm-sa.sunztech.com";
+			SUPERADMIN_URL_API = "https://mdm-sa.sunztech.com/api"
+			TIME_ZONE = 'Europe/London';
+
+			DB_USERNAME = "web";
+			DB_PASSWORD = "Alibaba@9C#";
+
+			// Email
+			SMTP_FROM_EMAIL = "admin@lockmesh.com";
+			SMTP_FROM_NAME = "Admin";
+			break;
+		}
+
 		case "PreDev": {
 			URL = "https://predev.lockmesh.com";
 			SUPERADMIN_URL = "https://dev.meshguard.co";

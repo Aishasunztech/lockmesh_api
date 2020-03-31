@@ -13,7 +13,10 @@
             "env_dev_lockmesh": {
                 "HOST_NAME": "LockMesh Dev",
                 "APP_ENV": "development"
-
+            },
+            "env_sunztech": {
+                "HOST_NAME": "SunzTech",
+                "APP_ENV": "production"
             },
             "env_predev": {
                 "HOST_NAME": "PreDev",
